@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 
 use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use Psr\Log\LoggerInterface;
@@ -16,6 +17,9 @@ use Psr\Log\NullLogger;
  * Handshake sequence:
  *   1. SERVER <name> <password> <hopcount> <SID> :<description>
  *
+ * After the IRCD burst completes it sends ENDBURST. We must respond with
+ * our own ENDBURST to mark that we have finished syncing.
+ *
  * The SID is a 3-character alphanumeric server identifier unique on the network.
  */
 class InspIRCdProtocolHandler extends AbstractProtocolHandler
@@ -24,8 +28,9 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
 
     public function __construct(
         private readonly string $sid = 'A0A',
-        private readonly LoggerInterface $logger = new NullLogger(),
+        LoggerInterface $logger = new NullLogger(),
     ) {
+        parent::__construct($logger);
     }
 
     public function getProtocolName(): string
@@ -59,5 +64,22 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
             'server' => (string) $link->serverName,
             'sid'    => $this->sid,
         ]);
+    }
+
+    /**
+     * Handles InspIRCd-specific incoming commands on top of the base PING/PONG.
+     *
+     * ENDBURST: the InspIRCd equivalent of EOS. We must respond with our own
+     * ENDBURST so InspIRCd knows we are ready after the initial sync.
+     */
+    public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        parent::handleIncoming($message, $connection);
+
+        if ('ENDBURST' === $message->command) {
+            $endburst = sprintf(':%s ENDBURST', $this->sid);
+            $connection->writeLine($endburst);
+            $this->logger->info('Sent ENDBURST — initial burst and sync complete.', ['sid' => $this->sid]);
+        }
     }
 }
