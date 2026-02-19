@@ -30,6 +30,18 @@ services:
         arguments:
             $handlers: !tagged_iterator irc.protocol_handler
 
+    # --- CLI command — inject .env defaults so the command runs without arguments ---
+
+    App\UI\CLI\ConnectCommand:
+        arguments:
+            $defaultServerName:  '%irc.server_name%'
+            $defaultHost:        '%irc.ircd_host%'
+            $defaultPort:        '%irc.ircd_port%'
+            $defaultPassword:    '%irc.link_password%'
+            $defaultDescription: '%irc.description%'
+            $defaultProtocol:    '%irc.protocol%'
+            $defaultUseTls:      '%irc.use_tls%'
+
     # --- Protocol handlers (tagged for auto-registration into the registry) ---
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
