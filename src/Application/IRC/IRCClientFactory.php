@@ -7,6 +7,8 @@ namespace App\Application\IRC;
 use App\Domain\IRC\Connection\ConnectionFactoryInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerRegistryInterface;
 use App\Domain\IRC\Server\ServerLink;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -19,14 +21,15 @@ class IRCClientFactory
         private readonly ProtocolHandlerRegistryInterface $protocolRegistry,
         private readonly ConnectionFactoryInterface $connectionFactory,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
     public function create(string $protocolName, ServerLink $link): IRCClient
     {
-        $protocol = $this->protocolRegistry->get($protocolName);
+        $protocol   = $this->protocolRegistry->get($protocolName);
         $connection = $this->connectionFactory->create($link);
 
-        return new IRCClient($connection, $protocol, $this->eventDispatcher);
+        return new IRCClient($connection, $protocol, $this->eventDispatcher, $this->logger);
     }
 }

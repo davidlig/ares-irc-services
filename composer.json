@@ -11,10 +11,9 @@
         "symfony/dotenv": "7.4.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "7.4.*",
+        "symfony/monolog-bundle": "*",
         "symfony/runtime": "7.4.*",
         "symfony/yaml": "7.4.*"
-    },
-    "require-dev": {
     },
     "config": {
         "allow-plugins": {

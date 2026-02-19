@@ -10,6 +10,8 @@ use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Domain\IRC\Server\ServerLink;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -18,17 +20,30 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  */
 class IRCClient
 {
+    private ?ServerLink $activeLink = null;
+
     public function __construct(
         private readonly ConnectionInterface $connection,
         private readonly ProtocolHandlerInterface $protocol,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
     public function connect(ServerLink $link): void
     {
+        $this->logger->info('Initiating S2S link.', [
+            'server'   => (string) $link->serverName,
+            'host'     => (string) $link->host,
+            'port'     => $link->port->value,
+            'protocol' => $this->protocol->getProtocolName(),
+            'tls'      => $link->useTls,
+        ]);
+
         $this->connection->connect();
         $this->protocol->performHandshake($this->connection, $link);
+        $this->activeLink = $link;
+
         $this->eventDispatcher->dispatch(new ConnectionEstablishedEvent($link));
     }
 
@@ -38,6 +53,10 @@ class IRCClient
      */
     public function run(): void
     {
+        $this->logger->info('Entering read loop.', [
+            'protocol' => $this->protocol->getProtocolName(),
+        ]);
+
         while ($this->connection->isConnected()) {
             $rawLine = $this->connection->readLine();
 
@@ -53,17 +72,22 @@ class IRCClient
             $message = $this->protocol->parseRawLine($rawLine);
             $this->eventDispatcher->dispatch(new MessageReceivedEvent($message));
         }
+
+        $this->logger->warning('Read loop terminated: connection closed by remote host.');
     }
 
     public function disconnect(?string $reason = null): void
     {
-        $link = null;
+        $this->logger->info('Disconnecting.', ['reason' => $reason ?? 'none']);
 
-        if ($link !== null) {
-            $this->eventDispatcher->dispatch(new ConnectionLostEvent($link, $reason));
+        if ($this->activeLink !== null) {
+            $this->eventDispatcher->dispatch(
+                new ConnectionLostEvent($this->activeLink, $reason)
+            );
         }
 
         $this->connection->disconnect();
+        $this->activeLink = null;
     }
 
     public function getProtocolName(): string

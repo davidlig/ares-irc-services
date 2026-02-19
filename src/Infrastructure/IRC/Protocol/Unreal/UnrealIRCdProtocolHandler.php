@@ -7,6 +7,8 @@ namespace App\Infrastructure\IRC\Protocol\Unreal;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Implements the UnrealIRCd 4.x / 5.x / 6.x server-to-server link protocol.
@@ -45,6 +47,7 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 
     public function __construct(
         private readonly string $sid = '001',
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -60,17 +63,33 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 
     public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
     {
-        // Step 1 — link password
+        $this->logger->debug('Starting UnrealIRCd handshake.', [
+            'server' => (string) $link->serverName,
+            'sid'    => $this->sid,
+        ]);
+
+        // Step 1 — link password (not logged to avoid leaking credentials)
         $connection->writeLine(sprintf('PASS :%s', $link->password));
 
         // Step 2 — EAUTH + SID: this is what tells UnrealIRCd we speak the 4.x+ protocol.
         //          Sending PROTOCTL without EAUTH causes the LINK_OLD_PROTOCOL rejection.
-        $connection->writeLine(sprintf('PROTOCTL EAUTH=%s SID=%s', $link->serverName, $this->sid));
+        $eauth = sprintf('PROTOCTL EAUTH=%s SID=%s', $link->serverName, $this->sid);
+        $connection->writeLine($eauth);
+        $this->logger->debug('> ' . $eauth);
 
         // Step 3 — advertise supported capabilities
-        $connection->writeLine(sprintf('PROTOCTL %s', implode(' ', self::CAPABILITIES)));
+        $caps = sprintf('PROTOCTL %s', implode(' ', self::CAPABILITIES));
+        $connection->writeLine($caps);
+        $this->logger->debug('> ' . $caps);
 
         // Step 4 — introduce our server
-        $connection->writeLine(sprintf('SERVER %s 1 :%s', $link->serverName, $link->description));
+        $server = sprintf('SERVER %s 1 :%s', $link->serverName, $link->description);
+        $connection->writeLine($server);
+        $this->logger->debug('> ' . $server);
+
+        $this->logger->info('UnrealIRCd handshake sent.', [
+            'server' => (string) $link->serverName,
+            'caps'   => self::CAPABILITIES,
+        ]);
     }
 }

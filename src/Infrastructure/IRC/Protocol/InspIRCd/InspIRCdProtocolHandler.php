@@ -7,6 +7,8 @@ namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Implements the InspIRCd SpanTree server-to-server link protocol (v1.2+).
@@ -22,6 +24,7 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
 
     public function __construct(
         private readonly string $sid = 'A0A',
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -32,6 +35,11 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
 
     public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
     {
+        $this->logger->debug('Starting InspIRCd handshake.', [
+            'server' => (string) $link->serverName,
+            'sid'    => $this->sid,
+        ]);
+
         $connection->writeLine(sprintf(
             'SERVER %s %s 0 %s :%s',
             $link->serverName,
@@ -39,5 +47,17 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
             $this->sid,
             $link->description,
         ));
+
+        // Password is intentionally omitted from the log to avoid leaking credentials
+        $this->logger->debug(sprintf('> SERVER %s *** 0 %s :%s',
+            $link->serverName,
+            $this->sid,
+            $link->description,
+        ));
+
+        $this->logger->info('InspIRCd handshake sent.', [
+            'server' => (string) $link->serverName,
+            'sid'    => $this->sid,
+        ]);
     }
 }

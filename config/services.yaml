@@ -8,9 +8,9 @@ parameters:
     irc.link_password: '%env(IRC_LINK_PASSWORD)%'
     irc.description:   '%env(IRC_DESCRIPTION)%'
     irc.protocol:      '%env(IRC_PROTOCOL)%'
-    irc.use_tls:          '%env(bool:IRC_USE_TLS)%'
-    irc.unreal_sid:       '%env(IRC_UNREAL_SID)%'
-    irc.inspircd_sid:     '%env(IRC_INSPIRCD_SID)%'
+    irc.use_tls:       '%env(bool:IRC_USE_TLS)%'
+    irc.unreal_sid:    '%env(IRC_UNREAL_SID)%'
+    irc.inspircd_sid:  '%env(IRC_INSPIRCD_SID)%'
 
 services:
     _defaults:
@@ -24,11 +24,19 @@ services:
 
     App\Domain\IRC\Connection\ConnectionFactoryInterface:
         class: App\Infrastructure\IRC\Connection\SocketConnectionFactory
+        arguments:
+            $logger: '@monolog.logger.irc'
 
     App\Domain\IRC\Protocol\ProtocolHandlerRegistryInterface:
         class: App\Infrastructure\IRC\Protocol\ProtocolHandlerRegistry
         arguments:
             $handlers: !tagged_iterator irc.protocol_handler
+
+    # --- Application services — inject the irc Monolog channel ---------------
+
+    App\Application\IRC\IRCClientFactory:
+        arguments:
+            $logger: '@monolog.logger.irc'
 
     # --- CLI command — inject .env defaults so the command runs without arguments ---
 
@@ -46,10 +54,19 @@ services:
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
         arguments:
-            $sid: '%irc.unreal_sid%'
+            $sid:    '%irc.unreal_sid%'
+            $logger: '@monolog.logger.irc'
         tags: ['irc.protocol_handler']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
-            $sid: '%irc.inspircd_sid%'
+            $sid:    '%irc.inspircd_sid%'
+            $logger: '@monolog.logger.irc'
         tags: ['irc.protocol_handler']
+
+    # --- Event subscriber — logs domain events to the irc channel ------------
+
+    App\Infrastructure\IRC\Logging\IRCEventSubscriber:
+        arguments:
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']

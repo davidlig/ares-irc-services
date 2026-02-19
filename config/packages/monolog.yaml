@@ -1,0 +1,67 @@
+monolog:
+    channels:
+        - irc          # All IRC protocol traffic and link lifecycle events
+        - deprecation  # Symfony deprecation notices
+
+    handlers:
+        # -----------------------------------------------------------------------
+        # IRC channel — debug level, daily rotation, 30-day retention
+        # Captures every incoming/outgoing message and connection event.
+        # -----------------------------------------------------------------------
+        irc_rotating:
+            type:      rotating_file
+            path:      '%kernel.logs_dir%/irc.log'
+            level:     debug
+            max_files: 30
+            channels:  [irc]
+
+        # -----------------------------------------------------------------------
+        # Application log — info level, daily rotation, 30-day retention
+        # General app events (startup, errors, framework, etc.) excluding IRC
+        # traffic and Symfony deprecations.
+        # -----------------------------------------------------------------------
+        app_rotating:
+            type:      rotating_file
+            path:      '%kernel.logs_dir%/ares.log'
+            level:     info
+            max_files: 30
+            channels:  ['!irc', '!deprecation', '!event']
+
+        # -----------------------------------------------------------------------
+        # Error aggregation — error level, daily rotation, 30-day retention
+        # All channels feed into this file so critical issues are easy to find.
+        # -----------------------------------------------------------------------
+        error_rotating:
+            type:      rotating_file
+            path:      '%kernel.logs_dir%/error.log'
+            level:     error
+            max_files: 30
+            channels:  ['!event']
+
+when@dev:
+    monolog:
+        handlers:
+            # Print all logs to the terminal in development
+            console:
+                type:                   console
+                process_psr_3_messages: false
+                channels:               ['!event']
+            # Override app log to debug level so nothing is hidden during dev
+            app_rotating:
+                type:      rotating_file
+                path:      '%kernel.logs_dir%/ares.log'
+                level:     debug
+                max_files: 30
+                channels:  ['!irc', '!deprecation', '!event']
+
+when@test:
+    monolog:
+        handlers:
+            main:
+                type:         fingers_crossed
+                action_level: error
+                handler:      nested
+            nested:
+                type:  stream
+                path:  '%kernel.logs_dir%/%kernel.environment%.log'
+                level: debug
