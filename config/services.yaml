@@ -19,5 +19,22 @@ services:
     App\:
         resource: '../src/'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    # Interface bindings
+    App\Domain\IRC\Connection\ConnectionFactoryInterface:
+        class: App\Infrastructure\IRC\Connection\SocketConnectionFactory
+
+    App\Domain\IRC\Protocol\ProtocolHandlerRegistryInterface:
+        class: App\Infrastructure\IRC\Protocol\ProtocolHandlerRegistry
+        arguments:
+            $handlers: !tagged_iterator irc.protocol_handler
+
+    # Tag all ProtocolHandlerInterface implementations for auto-registration
+    App\Infrastructure\IRC\Protocol\AbstractProtocolHandler:
+        abstract: true
+        tags: ['irc.protocol_handler']
+
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
+        parent: App\Infrastructure\IRC\Protocol\AbstractProtocolHandler
+
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
+        parent: App\Infrastructure\IRC\Protocol\AbstractProtocolHandler
