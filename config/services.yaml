@@ -1,25 +1,26 @@
 # yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
 
-# This file is the entry point to configure your own services.
-# Files in the packages/ subdirectory configure your dependencies.
-# See also https://symfony.com/doc/current/service_container/import.html
-
-# Put parameters here that don't need to change on each machine where the app is deployed
-# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    # IRC link parameters — values come from environment variables (see .env)
+    irc.server_name:   '%env(IRC_SERVER_NAME)%'
+    irc.ircd_host:     '%env(IRC_IRCD_HOST)%'
+    irc.ircd_port:     '%env(int:IRC_IRCD_PORT)%'
+    irc.link_password: '%env(IRC_LINK_PASSWORD)%'
+    irc.description:   '%env(IRC_DESCRIPTION)%'
+    irc.protocol:      '%env(IRC_PROTOCOL)%'
+    irc.use_tls:       '%env(bool:IRC_USE_TLS)%'
+    irc.sid:           '%env(IRC_SID)%'
 
 services:
-    # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        autowire: true
+        autoconfigure: true
 
-    # makes classes in src/ available to be used as services
-    # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
 
-    # Interface bindings
+    # --- Interface bindings ---------------------------------------------------
+
     App\Domain\IRC\Connection\ConnectionFactoryInterface:
         class: App\Infrastructure\IRC\Connection\SocketConnectionFactory
 
@@ -28,9 +29,12 @@ services:
         arguments:
             $handlers: !tagged_iterator irc.protocol_handler
 
-    # Tag each concrete protocol handler for auto-registration into the registry
+    # --- Protocol handlers (tagged for auto-registration into the registry) ---
+
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
         tags: ['irc.protocol_handler']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
+        arguments:
+            $sid: '%irc.sid%'
         tags: ['irc.protocol_handler']

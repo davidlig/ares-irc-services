@@ -1,0 +1,9 @@
+# Ares IRC Services — application-level configuration.
+# All values are driven by environment variables defined in .env / .env.local.
+# Do NOT hardcode secrets here.
+
+when@prod:
+    framework:
+        # Disable debug toolbar and profiler in production.
+        profiler:
+            enabled: false
