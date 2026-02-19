@@ -8,8 +8,9 @@ parameters:
     irc.link_password: '%env(IRC_LINK_PASSWORD)%'
     irc.description:   '%env(IRC_DESCRIPTION)%'
     irc.protocol:      '%env(IRC_PROTOCOL)%'
-    irc.use_tls:       '%env(bool:IRC_USE_TLS)%'
-    irc.sid:           '%env(IRC_SID)%'
+    irc.use_tls:          '%env(bool:IRC_USE_TLS)%'
+    irc.unreal_sid:       '%env(IRC_UNREAL_SID)%'
+    irc.inspircd_sid:     '%env(IRC_INSPIRCD_SID)%'
 
 services:
     _defaults:
@@ -32,9 +33,11 @@ services:
     # --- Protocol handlers (tagged for auto-registration into the registry) ---
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
+        arguments:
+            $sid: '%irc.unreal_sid%'
         tags: ['irc.protocol_handler']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
-            $sid: '%irc.sid%'
+            $sid: '%irc.inspircd_sid%'
         tags: ['irc.protocol_handler']

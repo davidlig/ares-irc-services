@@ -60,7 +60,8 @@ IRC_LINK_PASSWORD=<your link password>
 IRC_DESCRIPTION="Ares IRC Services"
 IRC_PROTOCOL=unreal                    # or: inspircd
 IRC_USE_TLS=false
-IRC_SID=A0A                            # InspIRCd only — unique 3-char SID
+IRC_UNREAL_SID=001                     # UnrealIRCd only — unique 3-digit numeric SID (e.g. 001)
+IRC_INSPIRCD_SID=A0A                   # InspIRCd only   — unique 3-char alphanumeric SID (e.g. A0A)
 ```
 
 > **Never commit `.env.local`** — it is already listed in `.gitignore`.
@@ -148,6 +149,11 @@ All arguments at a glance:
 | `description` | Text shown in `/MAP` and `/LINKS` |
 | `--protocol` / `-p` | `unreal` or `inspircd` (default: `unreal`) |
 | `--tls` | Wrap the connection in TLS |
+
+> **UnrealIRCd note:** Ares uses the 4.x / 5.x / 6.x protocol. The handshake sends
+> `PROTOCTL EAUTH=<name> SID=<sid>` before the capability list, which is required for
+> UnrealIRCd to accept the link. Omitting `EAUTH`/`SID` causes the
+> `LINK_OLD_PROTOCOL` rejection.
 
 ---
 
