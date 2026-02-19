@@ -28,13 +28,9 @@ services:
         arguments:
             $handlers: !tagged_iterator irc.protocol_handler
 
-    # Tag all ProtocolHandlerInterface implementations for auto-registration
-    App\Infrastructure\IRC\Protocol\AbstractProtocolHandler:
-        abstract: true
+    # Tag each concrete protocol handler for auto-registration into the registry
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
         tags: ['irc.protocol_handler']
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
-        parent: App\Infrastructure\IRC\Protocol\AbstractProtocolHandler
-
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
-        parent: App\Infrastructure\IRC\Protocol\AbstractProtocolHandler
+        tags: ['irc.protocol_handler']
