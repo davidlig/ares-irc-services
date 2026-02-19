@@ -119,36 +119,29 @@ Also ensure the `spanningtree` module is loaded.
 
 ## Running the services
 
-Connect to an IRCD using the configured environment values:
+All arguments are **optional**. When omitted, each one falls back to the corresponding
+environment variable defined in `.env.local`.
 
 ```bash
-php bin/console irc:connect \
-    "$IRC_SERVER_NAME" \
-    "$IRC_IRCD_HOST" \
-    "$IRC_IRCD_PORT" \
-    "$IRC_LINK_PASSWORD" \
-    "$IRC_DESCRIPTION" \
-    --protocol="$IRC_PROTOCOL"
-```
+# Use every value from .env.local — no arguments needed
+php bin/console irc:connect
 
-With TLS:
-
-```bash
+# Override individual values on the fly
 php bin/console irc:connect services.example.com irc.example.com 6697 secret \
     "Ares IRC Services" --protocol=unreal --tls
 ```
 
-All arguments at a glance:
+### Argument / option reference
 
-| Argument / Option | Description |
-|---|---|
-| `server-name` | FQDN Ares presents to the IRCD |
-| `host` | IRCD hostname or IP |
-| `port` | IRCD server-link port |
-| `password` | Link password |
-| `description` | Text shown in `/MAP` and `/LINKS` |
-| `--protocol` / `-p` | `unreal` or `inspircd` (default: `unreal`) |
-| `--tls` | Wrap the connection in TLS |
+| Argument / Option | Env var fallback | Description |
+|---|---|---|
+| `server-name` | `IRC_SERVER_NAME` | FQDN Ares presents to the IRCD |
+| `host` | `IRC_IRCD_HOST` | IRCD hostname or IP |
+| `port` | `IRC_IRCD_PORT` | IRCD server-link port |
+| `password` | `IRC_LINK_PASSWORD` | Link password |
+| `description` | `IRC_DESCRIPTION` | Text shown in `/MAP` and `/LINKS` |
+| `--protocol` / `-p` | `IRC_PROTOCOL` | `unreal` or `inspircd` |
+| `--tls` | `IRC_USE_TLS` | Wrap the connection in TLS |
 
 > **UnrealIRCd note:** Ares uses the 4.x / 5.x / 6.x protocol. The handshake sends
 > `PROTOCTL EAUTH=<name> SID=<sid>` before the capability list, which is required for
