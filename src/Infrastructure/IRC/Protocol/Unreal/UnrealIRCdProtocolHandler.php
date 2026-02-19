@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\Unreal;
 
 use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use Psr\Log\LoggerInterface;
@@ -19,6 +20,10 @@ use Psr\Log\NullLogger;
  *                                                   UnrealIRCd treats the link as 3.2.x and rejects it
  *   3. PROTOCTL <capabilities>
  *   4. SERVER <name> 1 :<description>
+ *
+ * After the IRCD burst completes it sends EOS. We must respond with our own EOS
+ * to mark that we have finished syncing. Failure to do so causes an immediate
+ * clean disconnect ("Success" error code).
  *
  * The SID must be a unique 3-digit numeric assigned to this server on the network.
  * See https://www.unrealircd.org/docs/Server_protocol:Server_ID
@@ -47,8 +52,9 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 
     public function __construct(
         private readonly string $sid = '001',
-        private readonly LoggerInterface $logger = new NullLogger(),
+        LoggerInterface $logger = new NullLogger(),
     ) {
+        parent::__construct($logger);
     }
 
     public function getProtocolName(): string
@@ -91,5 +97,41 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
             'server' => (string) $link->serverName,
             'caps'   => self::CAPABILITIES,
         ]);
+    }
+
+    /**
+     * Handles UnrealIRCd-specific incoming commands on top of the base PING/PONG.
+     *
+     * EOS (End of Sync): the IRCD sends EOS when it finishes its burst. We must
+     * respond with our own EOS so UnrealIRCd knows we are ready. Failing to send
+     * EOS causes an immediate clean disconnect ("Success" error code).
+     */
+    public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        parent::handleIncoming($message, $connection);
+
+        match ($message->command) {
+            'EOS'     => $this->handleEos($connection),
+            'NETINFO' => $this->handleNetinfo($message, $connection),
+            default   => null,
+        };
+    }
+
+    private function handleEos(ConnectionInterface $connection): void
+    {
+        $eos = sprintf(':%s EOS', $this->sid);
+        $connection->writeLine($eos);
+        $this->logger->info('Sent EOS — initial burst and sync complete.', ['sid' => $this->sid]);
+    }
+
+    private function handleNetinfo(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        // Mirror back a minimal NETINFO so UnrealIRCd accepts the link state.
+        // Fields: <max_global> <timestamp> <protocol_version> <cloak_hash> 0 0 0 :<network_name>
+        $networkName = $message->trailing ?? 'IRC Network';
+        $netinfo     = sprintf('NETINFO 0 %d 6100 * 0 0 0 :%s', time(), $networkName);
+
+        $connection->writeLine($netinfo);
+        $this->logger->debug('> ' . $netinfo);
     }
 }

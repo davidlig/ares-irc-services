@@ -16,6 +16,14 @@ interface ProtocolHandlerInterface
     public function performHandshake(ConnectionInterface $connection, ServerLink $link): void;
 
     /**
+     * Handles an incoming message from the IRCD.
+     *
+     * Called for every parsed message in the read loop. Implementations must
+     * respond to mandatory protocol commands (e.g. PING → PONG, EOS → EOS).
+     */
+    public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void;
+
+    /**
      * Parses a raw IRC line into an IRCMessage.
      */
     public function parseRawLine(string $rawLine): IRCMessage;
