@@ -18,7 +18,7 @@ parameters:
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
 
     # Maintenance scheduler
-    maintenance.purge_pending_interval: '%env(int:MAINTENANCE_PURGE_PENDING_INTERVAL)%'
+    maintenance.interval: '%env(int:MAINTENANCE_INTERVAL)%'
 
     # NickServ pseudo-client
     nickserv.nick:     '%env(NICKSERV_NICK)%'
@@ -206,7 +206,7 @@ services:
 
     App\Application\NickServ\Maintenance\PurgeExpiredPendingTask:
         arguments:
-            $intervalSeconds: '%maintenance.purge_pending_interval%'
+            $intervalSeconds: '%maintenance.interval%'
             $logger:          '@monolog.logger.irc'
         tags: ['maintenance.task']
 
