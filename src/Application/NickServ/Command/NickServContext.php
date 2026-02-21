@@ -73,6 +73,17 @@ class NickServContext
     }
 
     /**
+     * Translate using an explicit language instead of the sender's language.
+     * Useful when the message targets another user (e.g. KILL reason for a ghost).
+     */
+    public function transIn(string $key, array $params = [], string $language = ''): string
+    {
+        $lang = $language !== '' ? $language : $this->language;
+
+        return $this->translator->trans($key, $this->wrapParams($params), 'nickserv', $lang);
+    }
+
+    /**
      * Ensures each parameter key is wrapped with % for Symfony's strtr-based translator.
      * Idempotent: keys already wrapped are left unchanged.
      *
