@@ -32,11 +32,14 @@ class NickServContext
     /**
      * Translate a message key and send it as a NOTICE to the command sender.
      *
-     * @param array<string, mixed> $params ICU / named placeholder parameters
+     * Parameter keys are automatically wrapped with % so callers can write
+     * ['nickname' => 'foo'] instead of ['%nickname%' => 'foo'].
+     *
+     * @param array<string, mixed> $params Named placeholder parameters
      */
     public function reply(string $key, array $params = []): void
     {
-        $message = $this->translator->trans($key, $params, 'nickserv', $this->language);
+        $message = $this->translator->trans($key, $this->wrapParams($params), 'nickserv', $this->language);
         $this->sendRaw($message);
     }
 
@@ -66,7 +69,24 @@ class NickServContext
 
     public function trans(string $key, array $params = []): string
     {
-        return $this->translator->trans($key, $params, 'nickserv', $this->language);
+        return $this->translator->trans($key, $this->wrapParams($params), 'nickserv', $this->language);
+    }
+
+    /**
+     * Ensures each parameter key is wrapped with % for Symfony's strtr-based translator.
+     * Idempotent: keys already wrapped are left unchanged.
+     *
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private function wrapParams(array $params): array
+    {
+        $wrapped = [];
+        foreach ($params as $key => $value) {
+            $wrapped['%' . trim((string) $key, '%') . '%'] = $value;
+        }
+
+        return $wrapped;
     }
 
     private function sendRaw(string $message): void
