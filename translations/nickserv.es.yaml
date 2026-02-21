@@ -11,21 +11,21 @@
 #   \x0314 = gris oscuro (14 decimal)  ← CORRECTO
 #   \x030F = color 0 + letra "F"       ← ERROR (0F es hex, no decimal)
 
-unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x02/msg NickServ HELP\x02."
+unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg NickServ HELP\x03."
 
 error:
   syntax:         "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 Este comando está restringido a Operadores IRC."
-  not_identified: "\x0304✗\x03 No estás identificado. Usa \x02/msg NickServ IDENTIFY <nickname> <contraseña>\x02"
+  not_identified: "\x0304✗\x03 No estás identificado. Usa \x0303/msg NickServ IDENTIFY <nickname> <contraseña>\x03"
 
 # --- REGISTER ---------------------------------------------------------------
 register:
   syntax:           "REGISTER <contraseña> <email>"
   short:            "Registra tu nick en los servicios."
-  help:             "Inicia el registro de tu apodo actual. Se enviará un token de verificación\nal correo indicado. El registro se completará cuando ejecutes\n\x02/msg NickServ VERIFY <token>\x02. El token expira en 1 hora.\nSi no te llega, revisa la carpeta de spam o usa \x02RESEND\x02."
-  pending:          "\x0307→\x03 Se ha enviado un token de verificación a \x02%email%\x02.\n  Ejecuta \x02/msg NickServ VERIFY <token>\x02 para completar el registro.\n  ¿No te llega? Revisa spam o usa \x02/msg NickServ RESEND\x02\n  El token expirará en \x021 hora\x02."
+  help:             "Inicia el registro de tu apodo actual. Se enviará un token de verificación\nal correo indicado. El registro se completará cuando ejecutes\n\x0303/msg NickServ VERIFY <token>\x03. El token expira en 1 hora.\nSi no te llega, revisa la carpeta de spam o usa \x0303RESEND\x03."
+  pending:          "\x0307→\x03 Se ha enviado un token de verificación a \x02%email%\x02.\n  Ejecuta \x0303/msg NickServ VERIFY <token>\x03 para completar el registro.\n  ¿No te llega? Revisa spam o usa \x0303/msg NickServ RESEND\x03\n  El token expirará en \x021 hora\x02."
   already_registered: "\x0304✗\x03 El nickname \x02%nickname%\x02 ya está registrado."
-  already_pending:  "\x0304✗\x03 El nickname \x02%nickname%\x02 ya tiene un registro pendiente de verificación.\n  Usa \x02/msg NickServ VERIFY <token>\x02 o \x02/msg NickServ RESEND\x02."
+  already_pending:  "\x0304✗\x03 El nickname \x02%nickname%\x02 ya tiene un registro pendiente de verificación.\n  Usa \x0303/msg NickServ VERIFY <token>\x03 o \x0303/msg NickServ RESEND\x03."
   forbidden:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no puede ser registrado en esta red."
   invalid_email:    "\x0304✗\x03 La dirección de correo electrónico no es válida."
 
@@ -35,7 +35,7 @@ verify:
   short:            "Confirma tu dirección de email y activa tu cuenta."
   help:             "Completa el registro verificando el token enviado a tu correo.\nEl token tiene una validez de 1 hora desde el momento del registro."
   success:          "\x0303✔\x03 El nickname \x02%nickname%\x02 ha sido registrado y ya estás identificado."
-  invalid_token:    "\x0304✗\x03 El token no es válido o ha expirado. Usa \x02/msg NickServ REGISTER\x02 para iniciar el proceso de nuevo."
+  invalid_token:    "\x0304✗\x03 El token no es válido o ha expirado. Usa \x0303/msg NickServ REGISTER\x03 para iniciar el proceso de nuevo."
   no_pending:       "\x0304✗\x03 No tienes ningún registro pendiente de verificación."
 
 # --- RESEND -----------------------------------------------------------------
@@ -57,7 +57,7 @@ identify:
   invalid_credentials: "\x0304✗\x03 Contraseña incorrecta. Inténtalo de nuevo."
   ghost_released:   "\x0307⚡\x03 La sesión fantasma que ocupaba \x02%nickname%\x02 ha sido desconectada."
   kill_reason:      "Nick %nickname% reclamado por %source% (el propietario registrado se ha identificado)"
-  pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email.\n  Ejecuta \x02/msg NickServ VERIFY <token>\x02 o \x02/msg NickServ RESEND\x02."
+  pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email.\n  Ejecuta \x0303/msg NickServ VERIFY <token>\x03 o \x0303/msg NickServ RESEND\x03."
   suspended:        "\x0304✗\x03 El nickname \x02%nickname%\x02 está suspendido. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no puede ser utilizado en esta red."
 
@@ -142,8 +142,8 @@ help:
   command_line:     "  \x0307%command%\x03%description%"
   subcommand_line:  "  \x0307%command%\x03%description%"
   options_header:   "\x02\x0314Opciones:\x03\x0F"
-  general_footer:   "Usa \x02/msg NickServ HELP <comando>\x02 para más información."
-  set_sub_footer:   "Usa \x02/msg NickServ HELP %command% <opción>\x02 para más información."
+  general_footer:   "Usa \x0303/msg NickServ HELP <comando>\x03 para más información."
+  set_sub_footer:   "Usa \x0303/msg NickServ HELP %command% <opción>\x03 para más información."
   command_header:   "\x02Ayuda para %command%:\x02"
   syntax_label:     "\x0307Sintaxis:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
@@ -152,4 +152,4 @@ help:
 # --- Nick Protection --------------------------------------------------------
 protection:
   nick_in_use:      "\x0304⚠\x03 El nick \x02%nickname%\x02 está registrado. Serás renombrado si no te identificas."
-  renamed_to:       "\x0307→\x03 Has sido renombrado a \x02%guest_nick%\x02. Para recuperar tu nick:\n\x02/msg NickServ IDENTIFY %nickname% <contraseña>\x02"
+  renamed_to:       "\x0307→\x03 Has sido renombrado a \x02%guest_nick%\x02. Para recuperar tu nick:\n\x0303/msg NickServ IDENTIFY %nickname% <contraseña>\x03"
