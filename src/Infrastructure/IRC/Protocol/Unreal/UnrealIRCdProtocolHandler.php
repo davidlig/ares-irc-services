@@ -36,17 +36,22 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
     /**
      * PROTOCTL capability tokens supported by Ares.
      * Reference: https://www.unrealircd.org/docs/Server_protocol:PROTOCTL_command
+     *
+     * UMODE2 is required so that UnrealIRCd 6 propagates user-mode changes
+     * (including the +r mode set by SVSLOGIN) back to us via UMODE2 messages.
      */
     private const CAPABILITIES = [
         'NOQUIT',    // Suppress QUIT for each user on netsplit
         'NICKv2',    // Extended NICK command
         'SJOIN',     // Channel sync via SJOIN
+        'SJOIN2',    // SJOIN v2 extension
         'SJ3',       // SJOIN extension
         'CLK',       // Clock / timestamp support  ← required in 4.x+
         'TKLEXT',    // Extended TKL (ban) support
         'TKLEXT2',   // Extended TKL v2            ← required in 4.x+
         'NICKIP',    // Include IP in NICK
-        'ESVID',     // Extended SVS commands
+        'ESVID',     // Extended SVS commands (SVSLOGIN)
+        'UMODE2',    // User-mode change propagation via S2S (required for SVSLOGIN +r)
         'MLOCK',     // Channel mode-lock
         'EXTSWHOIS', // Extended /WHOIS lines
     ];

@@ -93,18 +93,37 @@ class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
     }
 
     /**
-     * Authenticate a user via SVSLOGIN (UnrealIRCd 6+).
-     * Sets the account name shown in /WHOIS and automatically grants +r mode.
-     * Pass '0' as $accountName to log the user out.
+     * Authenticate a user by setting the +r (registered nick) user mode (UnrealIRCd 6+).
+     *
+     * SVS2MODE format (from src/modules/svsmode.c):
+     *   :<server> SVS2MODE <target_uid_or_nick> <modes>
+     *   parv[1] = target (UID or nick), parv[2] = mode string — NO timestamp.
+     *
+     * SVS2MODE (show_change=1) is used instead of SVSMODE so that the IRCd
+     * sends a ":server MODE nick :+r" notification to the user's IRC client.
+     *
+     * Note: this does NOT set the services account name shown in /WHOIS as
+     * "is logged in as <account>". If that is needed, add a SVSLOGIN call:
+     *   :<server> SVSLOGIN * <target_uid> <account_name>
+     *
+     * Pass '0' as $accountName to log a user out (-r removes +r).
+     *
+     * Source MUST be the services server SID, not a pseudo-client UID.
      */
     public function setUserAccount(string $targetUid, string $accountName): void
     {
-        $this->write(sprintf(':%s SVSLOGIN %s %s', $this->nickservUid, $targetUid, $accountName));
+        $logout = ($accountName === '0');
+
+        $this->write(sprintf(':%s SVS2MODE %s %s', $this->serverSid, $targetUid, $logout ? '-r' : '+r'));
     }
 
+    /**
+     * Set raw user modes via SVSMODE (silent — user's client is NOT notified).
+     * Do NOT include a timestamp; parv format is: <target> <modes>.
+     */
     public function setUserMode(string $targetUid, string $modes): void
     {
-        $this->write(sprintf(':%s SVSMODE %s %d %s', $this->nickservUid, $targetUid, time(), $modes));
+        $this->write(sprintf(':%s SVSMODE %s %s', $this->serverSid, $targetUid, $modes));
     }
 
     public function forceNick(string $targetUid, string $newNick): void

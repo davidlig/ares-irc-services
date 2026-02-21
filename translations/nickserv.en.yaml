@@ -82,5 +82,5 @@ help:
 
 # --- Nick Protection --------------------------------------------------------
 protection:
-  nick_in_use:      "Nick \x02%nickname%\x02 is registered. Please identify with \x02/msg NickServ IDENTIFY <password>\x02 or you will be renamed."
-  renamed_to:       "You have been renamed to \x02%guest_nick%\x02 because you did not identify for the registered nick."
+  nick_in_use:      "Nick \x02%nickname%\x02 is registered and owned by another user. You will be renamed automatically."
+  renamed_to:       "You have been renamed to \x02%guest_nick%\x02. To reclaim your nick use: \x02/msg NickServ IDENTIFY %nickname% <password>\x02"
