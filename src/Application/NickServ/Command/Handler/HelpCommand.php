@@ -142,6 +142,7 @@ final class HelpCommand implements NickServCommandInterface
 
         $context->replyRaw(' ');
         $context->reply('help.general_footer');
+        $context->reply('help.footer');
     }
 
     // -------------------------------------------------------------------------
@@ -170,6 +171,7 @@ final class HelpCommand implements NickServCommandInterface
             $context->reply('help.set_sub_footer', ['command' => $handler->getName()]);
         }
 
+        $context->replyRaw(' ');
         $context->reply('help.syntax_label', ['syntax' => $context->trans($handler->getSyntaxKey())]);
         $context->reply('help.footer');
     }
@@ -182,6 +184,7 @@ final class HelpCommand implements NickServCommandInterface
     {
         $this->sendHeader($context, $parentName . ' ' . $sub['name']);
         $context->reply($sub['help_key']);
+        $context->replyRaw(' ');
         $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
         $context->reply('help.footer');
     }
@@ -204,14 +207,17 @@ final class HelpCommand implements NickServCommandInterface
 
     /**
      * Sends a coloured section header:
-     *   \x02\x0307 ■ TITLE \x0F\x030F─────────────────\x03
+     *   \x02\x0307 ℹ TITLE \x0F\x0314─────────────────\x03
+     *
+     * ℹ (U+2139 INFORMATION SOURCE) replaces the old ■ block.
+     * Visible width = 1 (ℹ) + 1 (space) + 1 (space before dashes) + title length + 1 space.
      */
     private function sendHeader(NickServContext $context, string $title): void
     {
-        $visible  = 4 + mb_strlen($title) + 1; // " ■ " + title + " "
-        $dashes   = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
-        // \x0307 = orange, \x0F = format reset, \x0314 = dark grey (decimal 14, NOT hex 0F)
-        $line     = "\x02\x0307 ■ " . $title . " \x0F\x0314" . $dashes . "\x03";
+        $visible = 4 + mb_strlen($title) + 1; // " ℹ " + title + " "
+        $dashes  = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
+        // \x0307 = orange, \x0F = format reset, \x0314 = dark grey (decimal 14)
+        $line    = "\x02\x0307 ℹ " . $title . " \x0F\x0314" . $dashes . "\x03";
         $context->replyRaw($line);
     }
 }
