@@ -7,8 +7,10 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -78,12 +80,11 @@ final class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
-        // IDENTIFY <nickname> <password> — nickname is always required
         $targetNick = $context->args[0];
         $password   = $context->args[1];
 
-        // Already identified as this nick — skip silently.
-        if ($sender->isIdentified() && strcasecmp($sender->getNick()->value, $targetNick) === 0) {
+        if ($this->isAlreadyIdentified($sender, $targetNick)) {
+            $context->reply('identify.already_identified', ['nickname' => $targetNick]);
             return;
         }
 
@@ -101,44 +102,77 @@ final class IdentifyCommand implements NickServCommandInterface
 
         $account->markSeen();
         $this->nickRepository->save($account);
-
-        // Track this session so onUserQuit can find the account even if the
-        // user later changes to a different nick before disconnecting.
         $this->identifiedRegistry->register($sender->uid->value, $account->getNickname());
 
-        // Kill any ghost/usurper session currently holding the target nick.
-        try {
-            $currentHolder = $this->userRepository->findByNick(new Nick($targetNick));
-            if ($currentHolder !== null && $currentHolder->uid->value !== $sender->uid->value) {
-                // Translate the kill reason in the registered account's language so
-                // the message is meaningful in the server logs. Include the source nick
-                // so it is clear who triggered the reclaim.
-                $killReason = $context->transIn(
-                    'identify.kill_reason',
-                    [
-                        'nickname' => $targetNick,
-                        'source'   => $sender->getNick()->value,
-                    ],
-                    $account->getLanguage(),
-                );
+        $this->releaseGhostIfPresent($context, $sender, $account, $targetNick);
+        $this->applyIrcSession($context, $sender, $account, $targetNick);
 
-                $context->getNotifier()->killUser($currentHolder->uid->value, $killReason);
-                $context->reply('identify.ghost_released', ['nickname' => $targetNick]);
-            }
-        } catch (\InvalidArgumentException) {
-            // Unreachable in practice: $targetNick passed NickServ's arg validation.
+        $context->reply('identify.success', ['nickname' => $account->getNickname()]);
+    }
+
+    /**
+     * Returns true when the user is already authenticated as the target nick,
+     * using the in-memory registry as primary source of truth and the IRCd +r
+     * mode as fallback after a service restart (when the registry is empty).
+     */
+    private function isAlreadyIdentified(NetworkUser $sender, string $targetNick): bool
+    {
+        $registeredNick = $this->identifiedRegistry->findNick($sender->uid->value);
+        if ($registeredNick !== null && strcasecmp($registeredNick, $targetNick) === 0) {
+            return true;
         }
 
-        // Restore registered nick if the sender is on a different nick (e.g. a guest nick).
-        // forceNick() marks the UID in PendingNickRestoreRegistry so NickProtectionSubscriber
-        // ignores the resulting NICK echo without triggering protection again.
+        if ($sender->isIdentified() && strcasecmp($sender->getNick()->value, $targetNick) === 0) {
+            $this->identifiedRegistry->register($sender->uid->value, $targetNick);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Kills the ghost/usurper session holding the target nick, if any.
+     */
+    private function releaseGhostIfPresent(
+        NickServContext $context,
+        NetworkUser $sender,
+        RegisteredNick $account,
+        string $targetNick,
+    ): void {
+        try {
+            $currentHolder = $this->userRepository->findByNick(new Nick($targetNick));
+        } catch (\InvalidArgumentException) {
+            return;
+        }
+
+        if ($currentHolder === null || $currentHolder->uid->value === $sender->uid->value) {
+            return;
+        }
+
+        $killReason = $context->transIn(
+            'identify.kill_reason',
+            ['nickname' => $targetNick, 'source' => $sender->getNick()->value],
+            $account->getLanguage(),
+        );
+
+        $context->getNotifier()->killUser($currentHolder->uid->value, $killReason);
+        $context->reply('identify.ghost_released', ['nickname' => $targetNick]);
+    }
+
+    /**
+     * Restores the registered nick (if the user is on a guest nick) and sets
+     * the +r (identified) mode via SVS2MODE.
+     */
+    private function applyIrcSession(
+        NickServContext $context,
+        NetworkUser $sender,
+        RegisteredNick $account,
+        string $targetNick,
+    ): void {
         if (strcasecmp($sender->getNick()->value, $targetNick) !== 0) {
             $context->getNotifier()->forceNick($sender->uid->value, $account->getNickname());
         }
 
-        // Set +r (registered/identified) mode via SVS2MODE (UnrealIRCd 6).
         $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
-
-        $context->reply('identify.success', ['nickname' => $account->getNickname()]);
     }
 }
