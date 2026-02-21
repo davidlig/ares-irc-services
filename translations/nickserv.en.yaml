@@ -1,0 +1,81 @@
+# NickServ translations — English
+# Domain: nickserv
+
+unknown_command: "Unknown command '%command%'. Use /msg NickServ HELP for a list of commands."
+
+error:
+  syntax:         "Incorrect syntax. Use: %syntax%"
+  oper_only:      "This command is restricted to IRC Operators."
+  not_identified: "You are not identified. Please use /msg NickServ IDENTIFY <password>"
+
+# --- REGISTER ---------------------------------------------------------------
+register:
+  syntax:           "REGISTER <password> <email>"
+  help:             "Registers your current nickname. Choose a strong password and provide a valid email address. Once registered, your nick is protected from unauthorized use."
+  success:          "Nickname %nickname% has been successfully registered and you are now identified."
+  already_registered: "Nickname %nickname% is already registered."
+  invalid_email:    "The email address provided is not valid."
+
+# --- IDENTIFY ---------------------------------------------------------------
+identify:
+  syntax:           "IDENTIFY [nickname] <password>"
+  help:             "Authenticates you with NickServ. If you omit the nickname, your current nick is used."
+  success:          "You are now identified as %nickname%."
+  not_registered:   "Nickname %nickname% is not registered."
+  invalid_credentials: "Password incorrect. Please try again."
+
+# --- INFO -------------------------------------------------------------------
+info:
+  syntax:           "INFO <nickname>"
+  help:             "Displays registration information for a nickname."
+  not_registered:   "Nickname %nickname% is not registered."
+  private:          "Nickname %nickname% information is private."
+  header:           "Information for nickname \002%nickname%\002:"
+  registered_at:    "  Registered     : %date%"
+  last_seen_online: "  Last seen      : \0033NOW ONLINE\003"
+  last_seen_at:     "  Last seen      : %date%"
+  last_seen_never:  "  Last seen      : Never"
+  last_quit:        "  Last quit msg  : %message%"
+  email:            "  Email          : %email%"
+  footer:           "End of INFO."
+
+# --- SET --------------------------------------------------------------------
+set:
+  syntax:           "SET <option> <value>"
+  help:             "Changes your NickServ settings. Options: PASSWORD, EMAIL, LANGUAGE, PRIVATE."
+  unknown_option:   "Unknown option '%option%'. Available options: %options%."
+
+  password:
+    syntax:         "SET PASSWORD <new_password>"
+    success:        "Your password has been updated successfully."
+
+  email:
+    syntax:         "SET EMAIL <new_email>"
+    success:        "Your email has been updated to %email%."
+
+  language:
+    syntax:         "SET LANGUAGE <code>"
+    success:        "Language changed to '%language%'."
+    invalid:        "Unsupported language. Available languages: %languages%."
+
+  private:
+    syntax:         "SET PRIVATE ON|OFF"
+    on:             "Your account information is now \002private\002."
+    off:            "Your account information is now \002public\002."
+
+# --- HELP -------------------------------------------------------------------
+help:
+  syntax:           "HELP [command]"
+  help:             "Displays help for NickServ commands."
+  general_header:   "\002NickServ commands:\002"
+  command_line:     "  %command% — %syntax%"
+  general_footer:   "Use /msg NickServ HELP <command> for more information."
+  command_header:   "\002Help for %command%:\002"
+  syntax_label:     "\002Syntax:\002 %syntax%"
+  footer:           "End of HELP."
+  unknown_command:  "No help available for '%command%'."
+
+# --- Nick Protection --------------------------------------------------------
+protection:
+  nick_in_use:      "This nickname (%nickname%) is registered. Please identify with /msg NickServ IDENTIFY <password>"
+  renamed_to:       "You have been renamed to \002%guest_nick%\002 because you did not identify for the registered nick."

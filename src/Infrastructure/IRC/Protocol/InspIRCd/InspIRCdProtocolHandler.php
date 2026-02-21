@@ -10,6 +10,7 @@ use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Implements the InspIRCd SpanTree server-to-server link protocol (v1.2+).
@@ -29,8 +30,9 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
     public function __construct(
         private readonly string $sid = 'A0A',
         LoggerInterface $logger = new NullLogger(),
+        ?EventDispatcherInterface $eventDispatcher = null,
     ) {
-        parent::__construct($logger);
+        parent::__construct($logger, $eventDispatcher);
     }
 
     public function getProtocolName(): string
@@ -77,6 +79,8 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
         parent::handleIncoming($message, $connection);
 
         if ('ENDBURST' === $message->command) {
+            $this->dispatchBurstComplete($connection, $this->sid);
+
             $endburst = sprintf(':%s ENDBURST', $this->sid);
             $connection->writeLine($endburst);
             $this->logger->info('Sent ENDBURST — initial burst and sync complete.', ['sid' => $this->sid]);
