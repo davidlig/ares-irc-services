@@ -34,26 +34,30 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
     private const PROTOCOL_NAME = 'unreal';
 
     /**
-     * PROTOCTL capability tokens supported by Ares.
+     * PROTOCTL capability tokens announced to UnrealIRCd.
      * Reference: https://www.unrealircd.org/docs/Server_protocol:PROTOCTL_command
      *
-     * UMODE2 is required so that UnrealIRCd 6 propagates user-mode changes
-     * (including the +r mode set by SVSLOGIN) back to us via UMODE2 messages.
+     * Aligned with Anope's capability set for maximum compatibility.
      */
     private const CAPABILITIES = [
-        'NOQUIT',    // Suppress QUIT for each user on netsplit
-        'NICKv2',    // Extended NICK command
+        'NOQUIT',    // Suppress per-user QUIT flood on netsplit
+        'NICKv2',    // Extended NICK command with extra fields
         'SJOIN',     // Channel sync via SJOIN
         'SJOIN2',    // SJOIN v2 extension
-        'SJ3',       // SJOIN extension
-        'CLK',       // Clock / timestamp support  ← required in 4.x+
+        'SJ3',       // SJOIN v3 extension
+        'CLK',       // Clock / timestamp support (required in 4.x+)
         'TKLEXT',    // Extended TKL (ban) support
-        'TKLEXT2',   // Extended TKL v2            ← required in 4.x+
-        'NICKIP',    // Include IP in NICK
-        'ESVID',     // Extended SVS commands (SVSLOGIN)
-        'UMODE2',    // User-mode change propagation via S2S (required for SVSLOGIN +r)
-        'MLOCK',     // Channel mode-lock
-        'EXTSWHOIS', // Extended /WHOIS lines
+        'TKLEXT2',   // Extended TKL v2 (required in 4.x+)
+        'NICKIP',    // Include IP (base64) in UID/NICK
+        'ESVID',     // Extended SVS commands (SVSNICK, SVS2MODE, SVSMODE…)
+        'UMODE2',    // S2S user-mode change propagation
+        'MLOCK',     // Channel mode-lock notifications
+        'EXTSWHOIS', // Extended SWHOIS lines
+        'VHP',       // Include real vhost in UID (virtual-host pass-through)
+        'BIGLINES',  // Allow lines up to 16 384 bytes (avoids truncation on large SJOIN)
+        'MTAGS',     // IRCv3 message tags pass-through
+        'NEXTBANS',  // Named extended bans
+        'SJSBY',     // Include setter + set-timestamp for list-mode entries
     ];
 
     public function __construct(
