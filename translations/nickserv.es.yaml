@@ -33,6 +33,7 @@ identify:
   short:            "Acredita tu identidad como dueño de un nickname."
   help:             "Autentica tu sesión con NickServ indicando tu nickname y contraseña.\nTras identificarte recibirás el modo registrado \x02+r\x02 y, si estabas usando\nun nick de invitado, recuperarás tu nick registrado automáticamente."
   success:          "\x0303✔\x03 Ahora estás identificado como \x02%nickname%\x02."
+  already_identified: "\x0307ℹ\x03 Ya estás identificado como \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   invalid_credentials: "\x0304✗\x03 Contraseña incorrecta. Inténtalo de nuevo."
   ghost_released:   "\x0307⚡\x03 La sesión fantasma que ocupaba \x02%nickname%\x02 ha sido desconectada."
