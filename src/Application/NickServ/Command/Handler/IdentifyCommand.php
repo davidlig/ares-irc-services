@@ -95,6 +95,24 @@ final class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
+        if ($account->isPending()) {
+            $context->reply('identify.pending', ['nickname' => $targetNick]);
+            return;
+        }
+
+        if ($account->isSuspended()) {
+            $context->reply('identify.suspended', [
+                'nickname' => $targetNick,
+                'reason'   => $account->getReason() ?? '',
+            ]);
+            return;
+        }
+
+        if ($account->isForbidden()) {
+            $context->reply('identify.forbidden', ['nickname' => $targetNick]);
+            return;
+        }
+
         if (!$account->verifyPassword($password)) {
             $context->reply('identify.invalid_credentials');
             return;
