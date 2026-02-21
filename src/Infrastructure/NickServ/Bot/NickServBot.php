@@ -86,7 +86,9 @@ class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
         foreach (explode("\n", $message) as $line) {
-            $line = trim($line);
+            // Skip truly empty string artifacts produced by a trailing \n in a
+            // multi-line translation value, but keep intentional blank lines
+            // (those that contain at least a space) so sections can be separated.
             if ($line === '') {
                 continue;
             }
