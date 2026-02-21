@@ -55,6 +55,21 @@ final class SetCommand implements NickServCommandInterface
         return 'set.help';
     }
 
+    public function getShortDescKey(): string
+    {
+        return 'set.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [
+            ['name' => 'PASSWORD', 'desc_key' => 'set.password.short'],
+            ['name' => 'EMAIL',    'desc_key' => 'set.email.short'],
+            ['name' => 'LANGUAGE', 'desc_key' => 'set.language.short'],
+            ['name' => 'PRIVATE',  'desc_key' => 'set.private.short'],
+        ];
+    }
+
     public function isOperOnly(): bool
     {
         return false;
