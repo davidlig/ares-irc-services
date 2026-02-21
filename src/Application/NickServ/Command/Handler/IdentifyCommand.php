@@ -6,6 +6,7 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -21,6 +22,7 @@ final class IdentifyCommand implements NickServCommandInterface
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NetworkUserRepositoryInterface $userRepository,
+        private readonly IdentifiedSessionRegistry $identifiedRegistry,
     ) {
     }
 
@@ -99,6 +101,10 @@ final class IdentifyCommand implements NickServCommandInterface
 
         $account->markSeen();
         $this->nickRepository->save($account);
+
+        // Track this session so onUserQuit can find the account even if the
+        // user later changes to a different nick before disconnecting.
+        $this->identifiedRegistry->register($sender->uid->value, $account->getNickname());
 
         // Kill any ghost/usurper session currently holding the target nick.
         try {

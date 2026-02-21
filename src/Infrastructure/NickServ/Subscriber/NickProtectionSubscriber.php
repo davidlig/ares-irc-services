@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Subscriber;
 
+use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
@@ -44,6 +45,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly NickServBot $nickServBot,
         private readonly PendingNickRestoreRegistry $pendingRegistry,
+        private readonly IdentifiedSessionRegistry $identifiedRegistry,
         private readonly TranslatorInterface $translator,
         private readonly string $guestPrefix = 'Guest-',
         private readonly string $defaultLanguage = 'en',
@@ -210,14 +212,34 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
     public function onUserQuit(UserQuitNetworkEvent $event): void
     {
+        // Primary lookup: current nick at quit time.
         $account = $this->nickRepository->findByNick($event->nick->value);
+
+        // Fallback: the user may have changed nick (e.g. 'david') after identifying
+        // as a registered nick ('davidlig'). Look up via the session registry.
+        if ($account === null) {
+            $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
+            if ($registeredNick !== null) {
+                $account = $this->nickRepository->findByNick($registeredNick);
+            }
+        }
+
+        // Always clean up the session registry entry for this UID.
+        $this->identifiedRegistry->remove($event->uid->value);
 
         if ($account === null) {
             return;
         }
 
         $account->markSeen();
-        $account->updateQuitMessage($event->reason ?: null);
+
+        // Build quit message including the user's IRC origin (ident@host).
+        $origin = $event->ident !== '' ? $event->ident . '@' . $event->displayHost : $event->displayHost;
+        $stored = $event->reason !== ''
+            ? sprintf('%s (%s)', $event->reason, $origin)
+            : ($origin !== '' ? $origin : null);
+
+        $account->updateQuitMessage($stored);
         $this->nickRepository->save($account);
     }
 }
