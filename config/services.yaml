@@ -70,3 +70,18 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
+
+    # --- Network state repositories (in-memory, live for the duration of the link) ---
+
+    App\Domain\IRC\Repository\NetworkUserRepositoryInterface:
+        class: App\Infrastructure\IRC\Network\InMemoryNetworkUserRepository
+
+    App\Domain\IRC\Repository\ChannelRepositoryInterface:
+        class: App\Infrastructure\IRC\Network\InMemoryChannelRepository
+
+    # --- Network state subscriber — maintains user/channel state from protocol messages ---
+
+    App\Infrastructure\IRC\Network\NetworkStateSubscriber:
+        arguments:
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
