@@ -9,14 +9,15 @@
 unknown_command: "Comando desconocido \x02%command%\x02. Usa \x02/msg NickServ HELP\x02 para ver la lista de comandos."
 
 error:
-  syntax:         "Sintaxis incorrecta. Usa: \x02%syntax%\x02"
+  syntax:         "Sintaxis incorrecta. Uso: \x02%syntax%\x02"
   oper_only:      "Este comando está restringido a Operadores IRC."
   not_identified: "No estás identificado. Usa \x02/msg NickServ IDENTIFY <contraseña>\x02"
 
 # --- REGISTER ---------------------------------------------------------------
 register:
   syntax:           "REGISTER <contraseña> <email>"
-  help:             "Registra tu apodo actual. Elige una contraseña segura y proporciona un correo válido. Una vez registrado, tu nick queda protegido ante usos no autorizados."
+  short:            "Registra tu nick en los servicios."
+  help:             "Registra tu apodo actual en los servicios. Debes elegir una contraseña segura y proporcionar una dirección de correo electrónico válida. Una vez registrado, tu nick queda protegido ante usos no autorizados: cualquier usuario que lo ocupe sin identificarse será renombrado automáticamente."
   success:          "El nickname \x02%nickname%\x02 ha sido registrado correctamente y ya estás identificado."
   already_registered: "El nickname \x02%nickname%\x02 ya está registrado."
   invalid_email:    "La dirección de correo electrónico proporcionada no es válida."
@@ -24,7 +25,8 @@ register:
 # --- IDENTIFY ---------------------------------------------------------------
 identify:
   syntax:           "IDENTIFY [nickname] <contraseña>"
-  help:             "Te autentica con NickServ. Si omites el nickname, se usa el que tienes actualmente."
+  short:            "Acredita tu identidad como dueño de un nickname."
+  help:             "Autentica tu sesión con NickServ. Si omites el nickname, se utiliza el nick que tienes en ese momento. Tras identificarte correctamente se te asignará el modo registrado \x02+r\x02 y recuperarás tu nick si estabas usando uno de invitado."
   success:          "Ahora estás identificado como \x02%nickname%\x02."
   not_registered:   "El nickname \x02%nickname%\x02 no está registrado."
   invalid_credentials: "Contraseña incorrecta. Inténtalo de nuevo."
@@ -32,7 +34,8 @@ identify:
 # --- INFO -------------------------------------------------------------------
 info:
   syntax:           "INFO <nickname>"
-  help:             "Muestra información de registro de un nickname."
+  short:            "Muestra la información de un nickname registrado."
+  help:             "Muestra los datos de registro de un nickname: fecha de alta, estado de conexión, último mensaje de salida y correo electrónico. El correo solo es visible para el propio propietario identificado. Si la cuenta tiene activada la opción PRIVATE, la información no se mostrará al resto de usuarios."
   not_registered:   "El nickname \x02%nickname%\x02 no está registrado."
   private:          "La información del nickname \x02%nickname%\x02 es privada."
   header:           "Información del usuario \x02%nickname%\x02:"
@@ -47,33 +50,41 @@ info:
 # --- SET --------------------------------------------------------------------
 set:
   syntax:           "SET <opción> <valor>"
-  help:             "Modifica tu configuración de NickServ. Opciones: PASSWORD, EMAIL, LANGUAGE, PRIVATE."
+  short:            "Modifica tu configuración de NickServ."
+  help:             "Modifica la configuración de tu cuenta. Debes estar identificado para usar este comando."
   unknown_option:   "Opción desconocida \x02%option%\x02. Opciones disponibles: %options%."
 
   password:
     syntax:         "SET PASSWORD <nueva_contraseña>"
+    short:          "Cambia la contraseña de tu cuenta."
     success:        "Tu contraseña ha sido actualizada correctamente."
 
   email:
     syntax:         "SET EMAIL <nuevo_email>"
+    short:          "Cambia el correo electrónico asociado a tu cuenta."
     success:        "Tu correo ha sido actualizado a \x02%email%\x02."
 
   language:
     syntax:         "SET LANGUAGE <código>"
+    short:          "Cambia el idioma en el que los servicios se comunican contigo."
     success:        "Idioma cambiado a \x02%language%\x02."
     invalid:        "Idioma no soportado. Idiomas disponibles: %languages%."
 
   private:
     syntax:         "SET PRIVATE ON|OFF"
+    short:          "Activa o desactiva la privacidad de tu información."
     on:             "La información de tu cuenta es ahora \x02privada\x02."
     off:            "La información de tu cuenta es ahora \x02pública\x02."
 
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [comando]"
-  help:             "Muestra la ayuda de los comandos de NickServ."
+  short:            "Muestra la ayuda de los comandos de NickServ."
+  help:             "Muestra la ayuda general de NickServ o la información detallada de un comando concreto."
+  intro:            "NickServ es el encargado de la gestión y protección de nicknames."
   general_header:   "\x02Comandos de NickServ:\x02"
-  command_line:     "  \x02%command%\x02 %syntax%"
+  command_line:     "  \x02%command%\x02%description%"
+  subcommand_line:  "  \x02%command%\x02%description%"
   general_footer:   "Usa \x02/msg NickServ HELP <comando>\x02 para más información."
   command_header:   "\x02Ayuda para %command%:\x02"
   syntax_label:     "\x02Sintaxis:\x02 %syntax%"

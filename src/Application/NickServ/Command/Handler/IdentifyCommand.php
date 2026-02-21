@@ -47,6 +47,16 @@ final class IdentifyCommand implements NickServCommandInterface
         return 'identify.help';
     }
 
+    public function getShortDescKey(): string
+    {
+        return 'identify.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
     public function isOperOnly(): bool
     {
         return false;

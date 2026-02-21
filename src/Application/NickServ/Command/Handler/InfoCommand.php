@@ -50,6 +50,16 @@ final class InfoCommand implements NickServCommandInterface
         return 'info.help';
     }
 
+    public function getShortDescKey(): string
+    {
+        return 'info.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
     public function isOperOnly(): bool
     {
         return false;

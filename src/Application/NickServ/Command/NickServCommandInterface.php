@@ -41,6 +41,21 @@ interface NickServCommandInterface
     public function getHelpKey(): string;
 
     /**
+     * Translation key for the one-line description shown in the general HELP listing.
+     * E.g. "register.short".
+     */
+    public function getShortDescKey(): string;
+
+    /**
+     * Sub-commands shown when HELP <command> is requested for commands with options.
+     * Returns an array of ['name' => string, 'desc_key' => string] entries.
+     * Return an empty array for commands without sub-options.
+     *
+     * @return array<int, array{name: string, desc_key: string}>
+     */
+    public function getSubCommandHelp(): array;
+
+    /**
      * Whether only IRC network operators may use this command.
      * Non-oper users receive a permission-denied notice.
      */

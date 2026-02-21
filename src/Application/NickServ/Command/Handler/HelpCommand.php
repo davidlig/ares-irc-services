@@ -47,6 +47,16 @@ final class HelpCommand implements NickServCommandInterface
         return 'help.help';
     }
 
+    public function getShortDescKey(): string
+    {
+        return 'help.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
     public function isOperOnly(): bool
     {
         return false;
@@ -72,16 +82,12 @@ final class HelpCommand implements NickServCommandInterface
             return;
         }
 
-        // Skip oper-only commands for regular users
         if ($handler->isOperOnly() && !$sender->isOper()) {
             $context->reply('help.unknown_command', ['command' => $targetCmd]);
             return;
         }
 
-        $context->reply('help.command_header', ['command' => $handler->getName()]);
-        $context->reply($handler->getHelpKey());
-        $context->reply('help.syntax_label', ['syntax' => $context->trans($handler->getSyntaxKey())]);
-        $context->reply('help.footer');
+        $this->showCommandHelp($context, $handler);
     }
 
     private function showGeneralHelp(NickServContext $context): void
@@ -89,18 +95,45 @@ final class HelpCommand implements NickServCommandInterface
         $isOper   = $context->sender?->isOper() ?? false;
         $commands = $context->getRegistry()->all();
 
+        $context->reply('help.intro');
+        $context->replyRaw(' ');
         $context->reply('help.general_header');
 
         foreach ($commands as $command) {
+            if ($command->getName() === 'HELP') {
+                continue;
+            }
+
             if ($command->isOperOnly() && !$isOper) {
                 continue;
             }
+
             $context->reply('help.command_line', [
-                'command' => str_pad($command->getName(), 12),
-                'syntax'  => $context->trans($command->getSyntaxKey()),
+                'command'     => str_pad($command->getName(), 12),
+                'description' => $context->trans($command->getShortDescKey()),
             ]);
         }
 
         $context->reply('help.general_footer');
+    }
+
+    private function showCommandHelp(NickServContext $context, \App\Application\NickServ\Command\NickServCommandInterface $handler): void
+    {
+        $context->reply('help.command_header', ['command' => $handler->getName()]);
+        $context->reply($handler->getHelpKey());
+
+        $subCmds = $handler->getSubCommandHelp();
+
+        if ($subCmds !== []) {
+            foreach ($subCmds as $sub) {
+                $context->reply('help.subcommand_line', [
+                    'command'     => str_pad($sub['name'], 10),
+                    'description' => $context->trans($sub['desc_key']),
+                ]);
+            }
+        }
+
+        $context->reply('help.syntax_label', ['syntax' => $context->trans($handler->getSyntaxKey())]);
+        $context->reply('help.footer');
     }
 }
