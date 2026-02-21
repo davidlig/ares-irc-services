@@ -10,6 +10,7 @@ use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Exception\NickAlreadyRegisteredException;
 use App\Domain\NickServ\Exception\InvalidCredentialsException;
+use App\Infrastructure\IRC\Security\SensitiveDataRedactor;
 use App\Infrastructure\NickServ\Bot\NickServBot;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -76,7 +77,7 @@ class NickServMessageSubscriber implements EventSubscriberInterface
             'NickServ: command from %s [%s]: %s',
             $sender->getNick()->value,
             $sender->uid->value,
-            $text,
+            SensitiveDataRedactor::redactNickServCommand($text),
         ));
 
         try {
@@ -90,7 +91,7 @@ class NickServMessageSubscriber implements EventSubscriberInterface
             $this->logger->error('NickServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'sender'    => $sender->uid->value,
-                'text'      => $text,
+                'text'      => SensitiveDataRedactor::redactNickServCommand($text),
             ]);
         }
     }

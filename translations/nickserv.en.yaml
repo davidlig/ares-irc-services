@@ -3,31 +3,35 @@
 #
 # IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
 #   \x02        bold on/off
-#   \x03NN      color (01=black, 03=green, 04=red, 07=orange, 0F=light grey, 14=grey)
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
 #   \x03        reset color
 #   \x0F        reset all formatting
+#
+# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark grey (14 decimal)  ← CORRECT
+#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
 
-unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x02/msg NickServ HELP\x02 for a list of commands."
+unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x02/msg NickServ HELP\x02."
 
 error:
   syntax:         "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 This command is restricted to IRC Operators."
-  not_identified: "\x0304✗\x03 You are not identified. Please use \x02/msg NickServ IDENTIFY <password>\x02"
+  not_identified: "\x0304✗\x03 You are not identified. Use \x02/msg NickServ IDENTIFY <nickname> <password>\x02"
 
 # --- REGISTER ---------------------------------------------------------------
 register:
   syntax:           "REGISTER <password> <email>"
   short:            "Register your nickname with the services."
-  help:             "Registers your current nickname with NickServ. Once registered, your nick is protected: anyone using it without identifying will be renamed to a guest nick automatically. Choose a strong password and provide a valid email address."
+  help:             "Registers your current nickname with NickServ. Once registered, your nick\nis protected: anyone using it without identifying will be renamed to a guest\nnick automatically. Choose a strong password and provide a valid email."
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 has been successfully registered and you are now identified."
   already_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is already registered."
   invalid_email:    "\x0304✗\x03 The email address provided is not valid."
 
 # --- IDENTIFY ---------------------------------------------------------------
 identify:
-  syntax:           "IDENTIFY [nickname] <password>"
+  syntax:           "IDENTIFY <nickname> <password>"
   short:            "Identify yourself as the owner of a nickname."
-  help:             "Authenticates your session with NickServ. If you omit the nickname, your current nick is used. After a successful identification you will receive the registered mode \x02+r\x02 and, if you were using a guest nick, your registered nick will be restored."
+  help:             "Authenticates your session with NickServ using your nickname and password.\nAfter a successful identification you will receive the registered mode \x02+r\x02\nand, if you were using a guest nick, your registered nick will be restored."
   success:          "\x0303✔\x03 You are now identified as \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   invalid_credentials: "\x0304✗\x03 Incorrect password. Please try again."
@@ -36,48 +40,48 @@ identify:
 info:
   syntax:           "INFO <nickname>"
   short:            "Display information about a registered nickname."
-  help:             "Shows registration details for a nickname: registration date, connection status, last quit message, and email address. The email is only visible to the owner when identified. If the account has PRIVATE enabled, the information will not be shown to other users."
+  help:             "Shows registration details for a nickname: registration date, connection\nstatus, last quit message, and email address. The email is only visible to\nthe owner when identified. With PRIVATE ON only the owner and IRC Operators\ncan view the information."
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   private:          "\x0304✗\x03 Nickname \x02%nickname%\x02 information is private."
   header:           "\x02Information for nickname \x0307%nickname%\x03:\x02"
-  registered_at:    "  \x030FRegistered    \x03 : %date%"
-  last_seen_online: "  \x030FLast seen     \x03 : \x0303● NOW ONLINE\x03"
-  last_seen_at:     "  \x030FLast seen     \x03 : %date%"
-  last_seen_never:  "  \x030FLast seen     \x03 : Never"
-  last_quit:        "  \x030FLast quit msg \x03 : %message%"
-  email:            "  \x030FEmail         \x03 : %email%"
-  footer:           "\x030F─────────────────────────────\x03"
+  registered_at:    "  \x0314Registered\x03     : %date%"
+  last_seen_online: "  \x0314Last seen\x03      : \x0303● NOW ONLINE\x03"
+  last_seen_at:     "  \x0314Last seen\x03      : %date%"
+  last_seen_never:  "  \x0314Last seen\x03      : Never"
+  last_quit:        "  \x0314Last quit msg\x03  : %message%"
+  email:            "  \x0314Email\x03          : %email%"
+  footer:           "\x0314─────────────────────────────\x03"
 
 # --- SET --------------------------------------------------------------------
 set:
   syntax:           "SET <option> <value>"
   short:            "Change your NickServ account settings."
-  help:             "Modifies your NickServ account settings. You must be identified to use this command."
+  help:             "Modifies your NickServ account settings.\nYou must be identified to use this command."
   unknown_option:   "\x0304✗\x03 Unknown option \x02%option%\x02. Available options: %options%."
 
   password:
     syntax:         "SET PASSWORD <new_password>"
     short:          "Change your account password."
-    help:           "Changes the password for your NickServ account. The new password takes effect immediately. Choose a strong password that you do not use on other services, at least 6 characters long."
+    help:           "Changes the password for your NickServ account. The new password takes\neffect immediately. Choose a strong password of at least 6 characters\nthat you do not use on other services."
     success:        "\x0303✔\x03 Your password has been updated successfully."
 
   email:
     syntax:         "SET EMAIL <new_email>"
     short:          "Change the email address linked to your account."
-    help:           "Updates the email address associated with your account. Your email is used for account recovery and is only visible to you when identified."
+    help:           "Updates the email address associated with your account. Your email is used\nfor account recovery and is only visible to you when identified."
     success:        "\x0303✔\x03 Your email has been updated to \x02%email%\x02."
 
   language:
     syntax:         "SET LANGUAGE <code>"
     short:          "Change the language the services use to communicate with you."
-    help:           "Changes the language NickServ and other services use when talking to you. The change takes effect from your next connection. Available languages: \x02es\x02 (Spanish), \x02en\x02 (English)."
+    help:           "Changes the language NickServ and other services use when talking to you.\nAvailable languages: \x02es\x02 (Spanish), \x02en\x02 (English)."
     success:        "\x0303✔\x03 Language changed to \x02%language%\x02."
     invalid:        "\x0304✗\x03 Unsupported language. Available languages: %languages%."
 
   private:
     syntax:         "SET PRIVATE ON|OFF"
     short:          "Enable or disable privacy for your account information."
-    help:           "Controls whether your account information (INFO) is visible to other users. With PRIVATE ON only you and IRC Operators can view your details. With PRIVATE OFF your information is public."
+    help:           "Controls the visibility of your account information in the INFO command.\nWith \x02PRIVATE ON\x02 only you and IRC Operators can view your details.\nWith \x02PRIVATE OFF\x02 your information is public to everyone."
     on:             "\x0303✔\x03 Your account information is now \x02private\x02."
     off:            "\x0303✔\x03 Your account information is now \x02public\x02."
 
@@ -85,21 +89,21 @@ set:
 help:
   syntax:           "HELP [command]"
   short:            "Display help for NickServ commands."
-  help:             "Displays general NickServ help or detailed information for a specific command."
+  help:             "Displays general NickServ help or detailed information\nfor a specific command."
   header_title:     "NickServ"
   intro:            "Nickname registration and protection service for the IRC network."
-  general_header:   "\x02\x030FAvailable commands:\x03\x0F"
+  general_header:   "\x02\x0314Available commands:\x03\x0F"
   command_line:     "  \x0307%command%\x03%description%"
   subcommand_line:  "  \x0307%command%\x03%description%"
-  options_header:   "\x02\x030FOptions:\x03\x0F"
+  options_header:   "\x02\x0314Options:\x03\x0F"
   general_footer:   "Use \x02/msg NickServ HELP <command>\x02 for more information."
   set_sub_footer:   "Use \x02/msg NickServ HELP %command% <option>\x02 for more information."
   command_header:   "\x02Help for %command%:\x02"
   syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
-  footer:           "\x030F─────────────────────────────\x03"
+  footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 No help available for \x02%command%\x02."
 
 # --- Nick Protection --------------------------------------------------------
 protection:
   nick_in_use:      "\x0304⚠\x03 Nick \x02%nickname%\x02 is registered. You will be renamed if you do not identify."
-  renamed_to:       "\x0307→\x03 You have been renamed to \x02%guest_nick%\x02. To reclaim your nick: \x02/msg NickServ IDENTIFY %nickname% <password>\x02"
+  renamed_to:       "\x0307→\x03 You have been renamed to \x02%guest_nick%\x02. To reclaim your nick:\n\x02/msg NickServ IDENTIFY %nickname% <password>\x02"
