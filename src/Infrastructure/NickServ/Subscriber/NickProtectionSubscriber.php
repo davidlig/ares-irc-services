@@ -110,7 +110,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
         $warning = $this->translator->trans(
             'protection.nick_in_use',
-            ['nickname' => $nick],
+            ['%nickname%' => $nick],
             'nickserv',
             $language,
         );
@@ -121,7 +121,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
         $renameMsg = $this->translator->trans(
             'protection.renamed_to',
-            ['guest_nick' => $guestNick],
+            ['%guest_nick%' => $guestNick],
             'nickserv',
             $language,
         );
