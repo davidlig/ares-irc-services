@@ -167,13 +167,17 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
+    App\Application\NickServ\IdentifiedSessionRegistry:
+        class: App\Application\NickServ\IdentifiedSessionRegistry
+
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
         arguments:
-            $userRepository:  '@App\Domain\IRC\Repository\NetworkUserRepositoryInterface'
-            $pendingRegistry: '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
-            $guestPrefix:     '%services.guest_prefix%'
-            $defaultLanguage: '%services.default_language%'
-            $logger:          '@monolog.logger.irc'
+            $userRepository:      '@App\Domain\IRC\Repository\NetworkUserRepositoryInterface'
+            $pendingRegistry:     '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
+            $identifiedRegistry:  '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $guestPrefix:         '%services.guest_prefix%'
+            $defaultLanguage:     '%services.default_language%'
+            $logger:              '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     # --- UserLanguageResolver — shared across all services ----------------------

@@ -6,6 +6,7 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Exception\NickAlreadyRegisteredException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -20,6 +21,7 @@ final class RegisterCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly IdentifiedSessionRegistry $identifiedRegistry,
     ) {
     }
 
@@ -102,6 +104,10 @@ final class RegisterCommand implements NickServCommandInterface
         $this->nickRepository->save($registered);
 
         $context->getNotifier()->setUserAccount($sender->uid->value, $nick);
+
+        // Track this session so onUserQuit can find the account if the user
+        // later changes nick before disconnecting.
+        $this->identifiedRegistry->register($sender->uid->value, $nick);
 
         $context->reply('register.success', ['nickname' => $nick]);
     }

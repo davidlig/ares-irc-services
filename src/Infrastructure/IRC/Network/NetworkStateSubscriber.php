@@ -189,7 +189,17 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         $nick = $user->getNick();
         $uid  = $user->uid;
 
-        // Remove user from all channels
+        // Dispatch BEFORE removal so subscribers can still access user data
+        // (ident/host are captured here and embedded in the event).
+        $this->eventDispatcher->dispatch(new UserQuitNetworkEvent(
+            uid:         $uid,
+            nick:        $nick,
+            reason:      $reason,
+            ident:       $user->ident->value,
+            displayHost: $user->getDisplayHost(),
+        ));
+
+        // Remove user from all channels and from the in-memory repository.
         foreach ($this->channelRepository->all() as $channel) {
             $channel->removeMember($uid);
         }
@@ -197,8 +207,6 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         $this->userRepository->removeByUid($uid);
 
         $this->logger->info(sprintf('User quit: %s [%s] — %s', $nick->value, $uid->value, $reason));
-
-        $this->eventDispatcher->dispatch(new UserQuitNetworkEvent($uid, $nick, $reason));
     }
 
     // -------------------------------------------------------------------------
