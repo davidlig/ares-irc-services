@@ -112,8 +112,12 @@ services:
 
     # --- NickServ Bot pseudo-client ---------------------------------------------
 
+    App\Infrastructure\NickServ\PendingNickRestoreRegistry:
+        class: App\Infrastructure\NickServ\PendingNickRestoreRegistry
+
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
+            $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
             $serverSid:          '%irc.unreal_sid%'
             $servicesHostname:   '%services.hostname%'
             $nickservUid:        '%nickserv.uid%'
@@ -165,6 +169,8 @@ services:
 
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
         arguments:
+            $userRepository:  '@App\Domain\IRC\Repository\NetworkUserRepositoryInterface'
+            $pendingRegistry: '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
             $guestPrefix:     '%services.guest_prefix%'
             $defaultLanguage: '%services.default_language%'
             $logger:          '@monolog.logger.irc'
