@@ -36,6 +36,7 @@ identify:
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   invalid_credentials: "\x0304✗\x03 Contraseña incorrecta. Inténtalo de nuevo."
   ghost_released:   "\x0307⚡\x03 La sesión fantasma que ocupaba \x02%nickname%\x02 ha sido desconectada."
+  kill_reason:      "Nick %nickname% reclamado por %source% (el propietario registrado se ha identificado)"
 
 # --- INFO -------------------------------------------------------------------
 info:

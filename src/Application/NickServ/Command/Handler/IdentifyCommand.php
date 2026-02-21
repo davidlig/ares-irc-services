@@ -110,10 +110,19 @@ final class IdentifyCommand implements NickServCommandInterface
         try {
             $currentHolder = $this->userRepository->findByNick(new Nick($targetNick));
             if ($currentHolder !== null && $currentHolder->uid->value !== $sender->uid->value) {
-                $context->getNotifier()->killUser(
-                    $currentHolder->uid->value,
-                    sprintf('Nick %s reclaimed: the registered owner has identified.', $targetNick),
+                // Translate the kill reason in the registered account's language so
+                // the message is meaningful in the server logs. Include the source nick
+                // so it is clear who triggered the reclaim.
+                $killReason = $context->transIn(
+                    'identify.kill_reason',
+                    [
+                        'nickname' => $targetNick,
+                        'source'   => $sender->getNick()->value,
+                    ],
+                    $account->getLanguage(),
                 );
+
+                $context->getNotifier()->killUser($currentHolder->uid->value, $killReason);
                 $context->reply('identify.ghost_released', ['nickname' => $targetNick]);
             }
         } catch (\InvalidArgumentException) {
