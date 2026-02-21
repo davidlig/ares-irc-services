@@ -35,6 +35,7 @@ identify:
   success:          "\x0303✔\x03 You are now identified as \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   invalid_credentials: "\x0304✗\x03 Incorrect password. Please try again."
+  ghost_released:   "\x0307⚡\x03 The ghost session holding \x02%nickname%\x02 has been disconnected."
 
 # --- INFO -------------------------------------------------------------------
 info:
