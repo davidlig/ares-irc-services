@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\IRC;
 
+use App\Application\Maintenance\MaintenanceScheduler;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
@@ -26,6 +27,7 @@ class IRCClient
         private readonly ConnectionInterface $connection,
         private readonly ProtocolHandlerInterface $protocol,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly MaintenanceScheduler $maintenanceScheduler,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -61,6 +63,7 @@ class IRCClient
             $rawLine = $this->connection->readLine();
 
             if ($rawLine === null) {
+                $this->maintenanceScheduler->tick();
                 usleep(10_000);
                 continue;
             }

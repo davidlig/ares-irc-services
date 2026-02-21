@@ -22,10 +22,29 @@ error:
 register:
   syntax:           "REGISTER <contraseña> <email>"
   short:            "Registra tu nick en los servicios."
-  help:             "Registra tu apodo actual en los servicios. Una vez registrado, tu nick\nqueda protegido: quien lo ocupe sin identificarse será renombrado a un nick\nde invitado. Elige una contraseña segura y proporciona un correo válido."
-  success:          "\x0303✔\x03 El nickname \x02%nickname%\x02 ha sido registrado y ya estás identificado."
+  help:             "Inicia el registro de tu apodo actual. Se enviará un token de verificación\nal correo indicado. El registro se completará cuando ejecutes\n\x02/msg NickServ VERIFY <token>\x02. El token expira en 1 hora.\nSi no te llega, revisa la carpeta de spam o usa \x02RESEND\x02."
+  pending:          "\x0307→\x03 Se ha enviado un token de verificación a \x02%email%\x02.\n  Ejecuta \x02/msg NickServ VERIFY <token>\x02 para completar el registro.\n  ¿No te llega? Revisa spam o usa \x02/msg NickServ RESEND\x02\n  El token expirará en \x021 hora\x02."
   already_registered: "\x0304✗\x03 El nickname \x02%nickname%\x02 ya está registrado."
+  already_pending:  "\x0304✗\x03 El nickname \x02%nickname%\x02 ya tiene un registro pendiente de verificación.\n  Usa \x02/msg NickServ VERIFY <token>\x02 o \x02/msg NickServ RESEND\x02."
+  forbidden:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no puede ser registrado en esta red."
   invalid_email:    "\x0304✗\x03 La dirección de correo electrónico no es válida."
+
+# --- VERIFY -----------------------------------------------------------------
+verify:
+  syntax:           "VERIFY <token>"
+  short:            "Confirma tu dirección de email y activa tu cuenta."
+  help:             "Completa el registro verificando el token enviado a tu correo.\nEl token tiene una validez de 1 hora desde el momento del registro."
+  success:          "\x0303✔\x03 El nickname \x02%nickname%\x02 ha sido registrado y ya estás identificado."
+  invalid_token:    "\x0304✗\x03 El token no es válido o ha expirado. Usa \x02/msg NickServ REGISTER\x02 para iniciar el proceso de nuevo."
+  no_pending:       "\x0304✗\x03 No tienes ningún registro pendiente de verificación."
+
+# --- RESEND -----------------------------------------------------------------
+resend:
+  syntax:           "RESEND"
+  short:            "Reenvía el token de verificación a tu correo."
+  help:             "Reenvía el token de verificación a la dirección de correo indicada\ndurante el registro. Solo funciona si tienes un registro pendiente."
+  success:          "\x0307→\x03 Token de verificación reenviado a \x02%email%\x02."
+  no_pending:       "\x0304✗\x03 No tienes ningún registro pendiente de verificación."
 
 # --- IDENTIFY ---------------------------------------------------------------
 identify:
@@ -38,6 +57,27 @@ identify:
   invalid_credentials: "\x0304✗\x03 Contraseña incorrecta. Inténtalo de nuevo."
   ghost_released:   "\x0307⚡\x03 La sesión fantasma que ocupaba \x02%nickname%\x02 ha sido desconectada."
   kill_reason:      "Nick %nickname% reclamado por %source% (el propietario registrado se ha identificado)"
+  pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email.\n  Ejecuta \x02/msg NickServ VERIFY <token>\x02 o \x02/msg NickServ RESEND\x02."
+  suspended:        "\x0304✗\x03 El nickname \x02%nickname%\x02 está suspendido. Motivo: %reason%"
+  forbidden:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no puede ser utilizado en esta red."
+
+# --- STATUS -----------------------------------------------------------------
+status:
+  syntax:           "STATUS <nickname>"
+  short:            "Muestra el estado de registro de un nickname."
+  help:             "Muestra el estado actual de un nickname: si está registrado,\npendiente de verificación, suspendido o prohibido."
+  header:           "\x02Estado del nick \x0307%nickname%\x03:\x02"
+  unregistered:     "  \x0314Estado\x03          : Sin registrar"
+  pending:          "  \x0314Estado\x03          : \x0307Pendiente de validación\x03"
+  pending_expires:  "  \x0314Expira en\x03       : %minutes% minuto(s)"
+  registered:       "  \x0314Estado\x03          : \x0303Registrado\x03"
+  suspended:        "  \x0314Estado\x03          : \x0304Suspendido\x03"
+  suspended_reason: "  \x0314Motivo\x03          : %reason%"
+  forbidden:        "  \x0314Estado\x03          : \x0304Prohibido\x03"
+  forbidden_reason: "  \x0314Motivo\x03          : %reason%"
+  online_now:       "  \x0314Propietario\x03     : \x0303● Conectado ahora\x03"
+  registered_at:    "  \x0314Registrado\x03      : %date%"
+  footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
 info:
@@ -47,6 +87,9 @@ info:
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   private:          "\x0304✗\x03 La información del nickname \x02%nickname%\x02 es privada."
   header:           "\x02Información del usuario \x0307%nickname%\x03:\x02"
+  status:           "  \x0314Estado\x03          : %status%"
+  status_registered:  "\x0303Registrado\x03"
+  status_suspended:   "\x0304Suspendido\x03"
   registered_at:    "  \x0314Fecha registro\x03  : %date%"
   last_seen_online: "  \x0314Última conexión\x03 : \x0303● CONECTADO AHORA\x03"
   last_seen_at:     "  \x0314Última conexión\x03 : %date%"

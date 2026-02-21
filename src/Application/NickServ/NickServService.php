@@ -7,6 +7,7 @@ namespace App\Application\NickServ;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
+use App\Application\NickServ\PendingVerificationRegistry;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -25,6 +26,7 @@ class NickServService
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickServNotifierInterface $notifier,
         private readonly TranslatorInterface $translator,
+        private readonly PendingVerificationRegistry $pendingVerificationRegistry,
         private readonly string $defaultLanguage = 'en',
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
@@ -62,14 +64,15 @@ class NickServService
 
         // Build context
         $context = new NickServContext(
-            sender:        $sender,
-            senderAccount: $account,
-            command:       $cmdName,
-            args:          $args,
-            notifier:      $this->notifier,
-            translator:    $this->translator,
-            language:      $language,
-            registry:      $this->commandRegistry,
+            sender:                      $sender,
+            senderAccount:               $account,
+            command:                     $cmdName,
+            args:                        $args,
+            notifier:                    $this->notifier,
+            translator:                  $this->translator,
+            language:                    $language,
+            registry:                    $this->commandRegistry,
+            pendingVerificationRegistry: $this->pendingVerificationRegistry,
         );
 
         // Oper-only guard

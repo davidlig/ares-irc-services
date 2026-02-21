@@ -96,7 +96,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         $nick    = $user->getNick()->value;
         $account = $this->nickRepository->findByNick($nick);
 
-        if ($account === null) {
+        if ($account === null || !$account->isRegistered()) {
             return;
         }
 
@@ -168,7 +168,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         $newNick = $event->newNick->value;
         $account = $this->nickRepository->findByNick($newNick);
 
-        if ($account === null) {
+        if ($account === null || !$account->isRegistered()) {
             return;
         }
 

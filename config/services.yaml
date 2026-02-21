@@ -17,6 +17,9 @@ parameters:
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
 
+    # Maintenance scheduler
+    maintenance.purge_pending_interval: '%env(int:MAINTENANCE_PURGE_PENDING_INTERVAL)%'
+
     # NickServ pseudo-client
     nickserv.nick:     '%env(NICKSERV_NICK)%'
     nickserv.ident:    '%env(NICKSERV_IDENT)%'
@@ -141,6 +144,15 @@ services:
     App\Application\NickServ\Command\Handler\RegisterCommand:
         tags: ['nickserv.command']
 
+    App\Application\NickServ\Command\Handler\VerifyCommand:
+        tags: ['nickserv.command']
+
+    App\Application\NickServ\Command\Handler\ResendCommand:
+        tags: ['nickserv.command']
+
+    App\Application\NickServ\Command\Handler\StatusCommand:
+        tags: ['nickserv.command']
+
     App\Application\NickServ\Command\Handler\IdentifyCommand:
         tags: ['nickserv.command']
 
@@ -152,6 +164,14 @@ services:
 
     App\Application\NickServ\Command\Handler\HelpCommand:
         tags: ['nickserv.command']
+
+    # --- NickServ registries ----------------------------------------------------
+
+    App\Application\NickServ\IdentifiedSessionRegistry:
+        class: App\Application\NickServ\IdentifiedSessionRegistry
+
+    App\Application\NickServ\PendingVerificationRegistry:
+        class: App\Application\NickServ\PendingVerificationRegistry
 
     # --- NickServ Service -------------------------------------------------------
 
@@ -167,9 +187,6 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Application\NickServ\IdentifiedSessionRegistry:
-        class: App\Application\NickServ\IdentifiedSessionRegistry
-
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
         arguments:
             $userRepository:      '@App\Domain\IRC\Repository\NetworkUserRepositoryInterface'
@@ -179,6 +196,19 @@ services:
             $defaultLanguage:     '%services.default_language%'
             $logger:              '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
+
+    # --- Maintenance system -----------------------------------------------------
+
+    App\Application\Maintenance\MaintenanceScheduler:
+        arguments:
+            $tasks:  !tagged_iterator maintenance.task
+            $logger: '@monolog.logger.irc'
+
+    App\Application\NickServ\Maintenance\PurgeExpiredPendingTask:
+        arguments:
+            $intervalSeconds: '%maintenance.purge_pending_interval%'
+            $logger:          '@monolog.logger.irc'
+        tags: ['maintenance.task']
 
     # --- UserLanguageResolver — shared across all services ----------------------
 

@@ -9,6 +9,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\NickServ\ValueObject\NickStatus;
 
 /**
  * INFO <nickname>
@@ -52,7 +53,7 @@ final class InfoCommand implements NickServCommandInterface
 
     public function getOrder(): int
     {
-        return 3;
+        return 6;
     }
 
     public function getShortDescKey(): string
@@ -77,7 +78,7 @@ final class InfoCommand implements NickServCommandInterface
 
         $account = $this->nickRepository->findByNick($targetNick);
 
-        if ($account === null) {
+        if ($account === null || $account->isForbidden() || $account->isPending()) {
             $context->reply('info.not_registered', ['nickname' => $targetNick]);
             return;
         }
@@ -86,7 +87,6 @@ final class InfoCommand implements NickServCommandInterface
         $isOwner = $sender !== null
             && strcasecmp($sender->getNick()->value, $account->getNickname()) === 0;
 
-        // If the account is private and the requester is not the owner (or oper in the future)
         if ($account->isPrivate() && !$isOwner) {
             $context->reply('info.private', ['nickname' => $account->getNickname()]);
             return;
@@ -94,9 +94,15 @@ final class InfoCommand implements NickServCommandInterface
 
         $context->reply('info.header', ['nickname' => $account->getNickname()]);
 
-        // Registration date
+        $statusKey = match ($account->getStatus()) {
+            NickStatus::Registered => 'info.status_registered',
+            NickStatus::Suspended  => 'info.status_suspended',
+            default                => 'info.status_registered',
+        };
+        $context->reply('info.status', ['status' => $context->trans($statusKey)]);
+
         $context->reply('info.registered_at', [
-            'date' => $account->getRegisteredAt()->format('d/m/Y H:i'),
+            'date' => $account->getRegisteredAt()?->format('d/m/Y H:i') ?? '—',
         ]);
 
         // Last seen — if online show ONLINE, otherwise the date
@@ -121,8 +127,7 @@ final class InfoCommand implements NickServCommandInterface
             $context->reply('info.last_quit', ['message' => $account->getLastQuitMessage()]);
         }
 
-        // Email — visible only to the owner (and future oper support)
-        if ($isOwner) {
+        if ($isOwner && $account->getEmail() !== null) {
             $context->reply('info.email', ['email' => $account->getEmail()]);
         }
 

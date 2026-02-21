@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command;
 
+use App\Application\NickServ\PendingVerificationRegistry;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -26,6 +27,7 @@ class NickServContext
         private readonly TranslatorInterface $translator,
         private readonly string $language,
         private readonly NickServCommandRegistry $registry,
+        private readonly PendingVerificationRegistry $pendingVerificationRegistry,
     ) {
     }
 
@@ -65,6 +67,11 @@ class NickServContext
     public function getRegistry(): NickServCommandRegistry
     {
         return $this->registry;
+    }
+
+    public function getPendingVerificationRegistry(): PendingVerificationRegistry
+    {
+        return $this->pendingVerificationRegistry;
     }
 
     public function trans(string $key, array $params = []): string
