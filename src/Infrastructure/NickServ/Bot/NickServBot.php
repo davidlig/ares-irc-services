@@ -135,6 +135,12 @@ class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
         $this->write(sprintf(':%s SVSNICK %s %s %d', $this->serverSid, $targetUid, $newNick, time()));
     }
 
+    public function killUser(string $targetUid, string $reason): void
+    {
+        // :<server> KILL <target> :<reason>
+        $this->write(sprintf(':%s KILL %s :%s', $this->serverSid, $targetUid, $reason));
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

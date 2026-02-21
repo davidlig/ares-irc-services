@@ -33,4 +33,11 @@ interface NickServNotifierInterface
      * Used for nick protection: rename to guest nick on timeout.
      */
     public function forceNick(string $targetUid, string $newNick): void;
+
+    /**
+     * Disconnect a user from the network (KILL).
+     * Used to free a registered nick held by a ghost or usurper session
+     * so the rightful owner can reclaim it via IDENTIFY.
+     */
+    public function killUser(string $targetUid, string $reason): void;
 }

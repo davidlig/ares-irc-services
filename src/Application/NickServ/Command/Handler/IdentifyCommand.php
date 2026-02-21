@@ -6,6 +6,8 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
+use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -18,6 +20,7 @@ final class IdentifyCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly NetworkUserRepositoryInterface $userRepository,
     ) {
     }
 
@@ -77,6 +80,11 @@ final class IdentifyCommand implements NickServCommandInterface
         $targetNick = $context->args[0];
         $password   = $context->args[1];
 
+        // Already identified as this nick — skip silently.
+        if ($sender->isIdentified() && strcasecmp($sender->getNick()->value, $targetNick) === 0) {
+            return;
+        }
+
         $account = $this->nickRepository->findByNick($targetNick);
 
         if ($account === null) {
@@ -92,15 +100,28 @@ final class IdentifyCommand implements NickServCommandInterface
         $account->markSeen();
         $this->nickRepository->save($account);
 
-        // Step 1 — restore the registered nick (if the user is on a guest nick).
-        // forceNick() marks the UID in PendingNickRestoreRegistry so that the
-        // NickProtectionSubscriber ignores the NICK echo without triggering protection.
-        $currentNick = $sender->getNick()->value;
-        if (strtolower($currentNick) !== strtolower($targetNick)) {
+        // Kill any ghost/usurper session currently holding the target nick.
+        try {
+            $currentHolder = $this->userRepository->findByNick(new Nick($targetNick));
+            if ($currentHolder !== null && $currentHolder->uid->value !== $sender->uid->value) {
+                $context->getNotifier()->killUser(
+                    $currentHolder->uid->value,
+                    sprintf('Nick %s reclaimed: the registered owner has identified.', $targetNick),
+                );
+                $context->reply('identify.ghost_released', ['nickname' => $targetNick]);
+            }
+        } catch (\InvalidArgumentException) {
+            // Unreachable in practice: $targetNick passed NickServ's arg validation.
+        }
+
+        // Restore registered nick if the sender is on a different nick (e.g. a guest nick).
+        // forceNick() marks the UID in PendingNickRestoreRegistry so NickProtectionSubscriber
+        // ignores the resulting NICK echo without triggering protection again.
+        if (strcasecmp($sender->getNick()->value, $targetNick) !== 0) {
             $context->getNotifier()->forceNick($sender->uid->value, $account->getNickname());
         }
 
-        // Step 2 — set +r on the IRCd (SVS2MODE, UnrealIRCd 6).
+        // Set +r (registered/identified) mode via SVS2MODE (UnrealIRCd 6).
         $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
 
         $context->reply('identify.success', ['nickname' => $account->getNickname()]);
