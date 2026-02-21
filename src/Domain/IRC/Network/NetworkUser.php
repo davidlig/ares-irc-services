@@ -72,6 +72,41 @@ class NetworkUser
         $this->modes = $modes;
     }
 
+    /**
+     * Applies a mode change string (e.g. "+r", "-r", "+ix-w") to the current modes.
+     *
+     * Called when the IRCd sends UMODE2 to propagate a mode change (e.g. after SVSLOGIN sets +r).
+     */
+    public function applyModeChange(string $modeStr): void
+    {
+        // Strip leading '+' from current modes (stored as "+iwx" or "iwx")
+        $current = str_split(ltrim($this->modes, '+'));
+
+        $adding = true;
+
+        foreach (str_split($modeStr) as $char) {
+            if ($char === '+') {
+                $adding = true;
+                continue;
+            }
+
+            if ($char === '-') {
+                $adding = false;
+                continue;
+            }
+
+            if ($adding) {
+                if (!in_array($char, $current, true)) {
+                    $current[] = $char;
+                }
+            } else {
+                $current = array_values(array_filter($current, static fn($c) => $c !== $char));
+            }
+        }
+
+        $this->modes = '+' . implode('', $current);
+    }
+
     public function isOper(): bool
     {
         return str_contains($this->modes, 'o') || str_contains($this->modes, 'O');

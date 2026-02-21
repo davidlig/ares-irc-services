@@ -54,13 +54,15 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         $message = $event->message;
 
         match ($message->command) {
-            'UID'  => $this->handleUid($message),
-            'NICK' => $this->handleNick($message),
-            'QUIT' => $this->handleQuit($message),
-            'SJOIN' => $this->handleSjoin($message),
-            'PART' => $this->handlePart($message),
-            'KICK' => $this->handleKick($message),
-            default => null,
+            'UID'    => $this->handleUid($message),
+            'NICK'   => $this->handleNick($message),
+            'QUIT'   => $this->handleQuit($message),
+            'SJOIN'  => $this->handleSjoin($message),
+            'PART'   => $this->handlePart($message),
+            'KICK'   => $this->handleKick($message),
+            'UMODE2' => $this->handleUmode2($message),
+            'MD'     => $this->handleMd($message),
+            default  => null,
         };
     }
 
@@ -399,6 +401,56 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         $this->eventDispatcher->dispatch(
             new UserLeftChannelEvent($target->uid, $target->getNick(), $channelName, $reason, wasKicked: true)
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // UMODE2 — user mode change propagation from S2S (e.g. SVSLOGIN sets +r)
+    // Syntax: :uid UMODE2 <modestring>
+    // -------------------------------------------------------------------------
+    private function handleUmode2(IRCMessage $message): void
+    {
+        $sourceId = $message->prefix ?? '';
+        $modeStr  = $message->params[0] ?? $message->trailing ?? '';
+
+        if ('' === $sourceId || '' === $modeStr) {
+            return;
+        }
+
+        $user = $this->resolveUser($sourceId);
+
+        if (null === $user) {
+            return;
+        }
+
+        $user->applyModeChange($modeStr);
+
+        $this->logger->debug(sprintf(
+            'UMODE2: %s [%s] modes → %s',
+            $user->getNick()->value,
+            $user->uid->value,
+            $user->getModes(),
+        ));
+    }
+
+    // -------------------------------------------------------------------------
+    // MD — metadata update; we track "account" metadata to know SVSLOGIN worked
+    // Syntax: :server MD client <uid> <key> [:<value>]
+    // -------------------------------------------------------------------------
+    private function handleMd(IRCMessage $message): void
+    {
+        if (($message->params[0] ?? '') !== 'client') {
+            return;
+        }
+
+        $uidStr = $message->params[1] ?? '';
+        $key    = $message->params[2] ?? '';
+        $value  = $message->trailing ?? ($message->params[3] ?? '');
+
+        if ('' === $uidStr || $key !== 'account') {
+            return;
+        }
+
+        $this->logger->debug(sprintf('MD: client %s account = %s', $uidStr, $value));
     }
 
     // -------------------------------------------------------------------------

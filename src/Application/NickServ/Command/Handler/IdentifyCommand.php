@@ -84,14 +84,19 @@ final class IdentifyCommand implements NickServCommandInterface
         $account->markSeen();
         $this->nickRepository->save($account);
 
-        // Authenticate via SVSLOGIN — sets account name and grants +r automatically (UnrealIRCd 6+)
-        $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
-
-        // If the user is under a guest nick, restore their registered nickname
+        // Step 1 — restore the registered nick first (if the user is on a guest nick).
+        // SVSNICK must come BEFORE SVSLOGIN so that when UnrealIRCd processes the
+        // login the user already has their registered nick; some builds reject or
+        // immediately re-strip +r when the nick and account name differ at the time
+        // SVSLOGIN is processed.
         $currentNick = $sender->getNick()->value;
         if (strtolower($currentNick) !== strtolower($targetNick)) {
             $context->getNotifier()->forceNick($sender->uid->value, $account->getNickname());
         }
+
+        // Step 2 — authenticate via SVSLOGIN + SVSMODE +r (UnrealIRCd 6).
+        // This must follow SVSNICK so the nick and account name are consistent.
+        $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
 
         $context->reply('identify.success', ['nickname' => $account->getNickname()]);
     }
