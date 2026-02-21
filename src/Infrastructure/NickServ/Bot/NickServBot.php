@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\NickServ\Bot;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
+use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
@@ -48,14 +49,16 @@ class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
-        $this->introduce($event->serverSid);
+        // Use the event's connection directly — ActiveConnectionHolder may not
+        // have stored it yet (it subscribes at priority -999, after this handler).
+        $this->introduce($event->connection, $event->serverSid);
     }
 
     /**
      * Sends the UID line to introduce NickServ to the network.
      * Must be called before our EOS so the IRCd registers the pseudo-client.
      */
-    private function introduce(string $serverSid): void
+    private function introduce(ConnectionInterface $connection, string $serverSid): void
     {
         $ts  = time();
         $uid = sprintf(
@@ -69,7 +72,7 @@ class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
             $this->nickservRealname,
         );
 
-        $this->connectionHolder->writeLine($uid);
+        $connection->writeLine($uid);
 
         $this->logger->info('NickServ introduced to network.', [
             'uid'  => $this->nickservUid,
@@ -80,32 +83,44 @@ class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
 
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
-        // Split multi-line messages (translations may include \n)
         foreach (explode("\n", $message) as $line) {
             $line = trim($line);
             if ($line === '') {
                 continue;
             }
-            $this->connectionHolder->writeLine(
-                sprintf(':%s NOTICE %s :%s', $this->nickservUid, $targetUidOrNick, $line)
-            );
+            $this->write(sprintf(':%s NOTICE %s :%s', $this->nickservUid, $targetUidOrNick, $line));
         }
+    }
+
+    /**
+     * Authenticate a user via SVSLOGIN (UnrealIRCd 6+).
+     * Sets the account name shown in /WHOIS and automatically grants +r mode.
+     * Pass '0' as $accountName to log the user out.
+     */
+    public function setUserAccount(string $targetUid, string $accountName): void
+    {
+        $this->write(sprintf(':%s SVSLOGIN %s %s', $this->nickservUid, $targetUid, $accountName));
     }
 
     public function setUserMode(string $targetUid, string $modes): void
     {
-        // SVSMODE requires ulines in UnrealIRCd
-        $this->connectionHolder->writeLine(
-            sprintf(':%s SVSMODE %s %d %s', $this->nickservUid, $targetUid, time(), $modes)
-        );
+        $this->write(sprintf(':%s SVSMODE %s %d %s', $this->nickservUid, $targetUid, time(), $modes));
     }
 
     public function forceNick(string $targetUid, string $newNick): void
     {
-        // SVSNICK requires ulines in UnrealIRCd
-        $this->connectionHolder->writeLine(
-            sprintf(':%s SVSNICK %s %s %d', $this->serverSid, $targetUid, $newNick, time())
-        );
+        $this->write(sprintf(':%s SVSNICK %s %s %d', $this->serverSid, $targetUid, $newNick, time()));
+    }
+
+    private function write(string $line): void
+    {
+        if (!$this->connectionHolder->isConnected()) {
+            $this->logger->warning('NickServBot: cannot write — no active connection.', ['line' => $line]);
+            return;
+        }
+
+        $this->connectionHolder->writeLine($line);
+        $this->logger->debug('> ' . $line);
     }
 
     public function getNick(): string

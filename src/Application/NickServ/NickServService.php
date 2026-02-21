@@ -69,6 +69,7 @@ class NickServService
             notifier:      $this->notifier,
             translator:    $this->translator,
             language:      $language,
+            registry:      $this->commandRegistry,
         );
 
         // Oper-only guard

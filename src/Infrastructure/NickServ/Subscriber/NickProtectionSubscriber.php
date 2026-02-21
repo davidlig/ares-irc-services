@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Subscriber;
 
+use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
+use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\Bot\NickServBot;
 use Psr\Log\LoggerInterface;
@@ -16,17 +18,24 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * Protects registered nicknames from being used by unidentified users.
  *
- * On user join (UID received):
- *   1. If the nick is registered and the user already has +r mode → mark as
- *      auto-identified (the IRCd trusts the mode from the previous session).
- *   2. If the nick is registered and the user does NOT have +r → send a
- *      warning notice and immediately rename them to Guest-XXXXXXX.
+ * During the initial server burst, UIDs arrive before the connection is ready
+ * for writing. Those users are queued and processed when the burst ends
+ * (NetworkBurstCompleteEvent, after ActiveConnectionHolder stores the connection).
+ *
+ * On user join (post-burst):
+ *   1. Registered nick + +r mode → mark seen (auto-identified from previous session).
+ *   2. Registered nick + no +r  → warning notice + SVSNICK to Guest-XXXXXXX.
  *
  * On user quit:
  *   - Updates last_seen_at and last_quit_message in the database.
  */
 class NickProtectionSubscriber implements EventSubscriberInterface
 {
+    private bool $burstComplete = false;
+
+    /** @var NetworkUser[] Users received during the burst, processed after EOS. */
+    private array $pendingUsers = [];
+
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickServBot $nickServBot,
@@ -40,14 +49,42 @@ class NickProtectionSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            UserJoinedNetworkEvent::class => ['onUserJoined', 0],
-            UserQuitNetworkEvent::class   => ['onUserQuit', 0],
+            UserJoinedNetworkEvent::class    => ['onUserJoined', 0],
+            UserQuitNetworkEvent::class      => ['onUserQuit', 0],
+            // Priority -1000: fires after ActiveConnectionHolder (priority -999) has stored the connection.
+            NetworkBurstCompleteEvent::class => ['onBurstComplete', -1000],
         ];
     }
 
     public function onUserJoined(UserJoinedNetworkEvent $event): void
     {
-        $user    = $event->user;
+        if (!$this->burstComplete) {
+            // Connection not yet available — queue for post-burst processing.
+            $this->pendingUsers[] = $event->user;
+            return;
+        }
+
+        $this->enforceProtection($event->user);
+    }
+
+    /**
+     * Called after the network burst ends and the connection is ready.
+     * Processes all users that joined during the burst.
+     */
+    public function onBurstComplete(NetworkBurstCompleteEvent $event): void
+    {
+        $this->burstComplete = true;
+
+        $pending            = $this->pendingUsers;
+        $this->pendingUsers = [];
+
+        foreach ($pending as $user) {
+            $this->enforceProtection($user);
+        }
+    }
+
+    private function enforceProtection(NetworkUser $user): void
+    {
         $nick    = $user->getNick()->value;
         $account = $this->nickRepository->findByNick($nick);
 

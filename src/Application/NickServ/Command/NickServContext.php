@@ -25,6 +25,7 @@ class NickServContext
         private readonly NickServNotifierInterface $notifier,
         private readonly TranslatorInterface $translator,
         private readonly string $language,
+        private readonly NickServCommandRegistry $registry,
     ) {
     }
 
@@ -56,6 +57,11 @@ class NickServContext
     public function getLanguage(): string
     {
         return $this->language;
+    }
+
+    public function getRegistry(): NickServCommandRegistry
+    {
+        return $this->registry;
     }
 
     public function trans(string $key, array $params = []): string

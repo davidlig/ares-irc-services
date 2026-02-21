@@ -86,8 +86,8 @@ final class RegisterCommand implements NickServCommandInterface
 
         $this->nickRepository->save($registered);
 
-        // Set +r mode on the IRCd to mark the user as identified
-        $context->getNotifier()->setUserMode($sender->uid->value, '+r');
+        // Authenticate via SVSLOGIN — sets account name and grants +r automatically (UnrealIRCd 6+)
+        $context->getNotifier()->setUserAccount($sender->uid->value, $nick);
 
         $context->reply('register.success', ['nickname' => $nick]);
     }

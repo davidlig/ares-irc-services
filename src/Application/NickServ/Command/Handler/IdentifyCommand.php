@@ -84,8 +84,14 @@ final class IdentifyCommand implements NickServCommandInterface
         $account->markSeen();
         $this->nickRepository->save($account);
 
-        // Grant +r mode on the IRCd
-        $context->getNotifier()->setUserMode($sender->uid->value, '+r');
+        // Authenticate via SVSLOGIN — sets account name and grants +r automatically (UnrealIRCd 6+)
+        $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
+
+        // If the user is under a guest nick, restore their registered nickname
+        $currentNick = $sender->getNick()->value;
+        if (strtolower($currentNick) !== strtolower($targetNick)) {
+            $context->getNotifier()->forceNick($sender->uid->value, $account->getNickname());
+        }
 
         $context->reply('identify.success', ['nickname' => $account->getNickname()]);
     }
