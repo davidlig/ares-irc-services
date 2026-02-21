@@ -82,6 +82,12 @@ class NetworkUser
         return str_contains($this->modes, 'B');
     }
 
+    /** Returns true when the IRCd has set the +r (registered/identified) mode. */
+    public function isIdentified(): bool
+    {
+        return str_contains($this->modes, 'r');
+    }
+
     /**
      * Decodes the base64-encoded binary IP to a human-readable address.
      */

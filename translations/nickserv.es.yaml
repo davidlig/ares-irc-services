@@ -1,0 +1,81 @@
+# NickServ translations — Español
+# Domain: nickserv
+
+unknown_command: "Comando desconocido '%command%'. Usa /msg NickServ HELP para ver la lista de comandos."
+
+error:
+  syntax:         "Sintaxis incorrecta. Usa: %syntax%"
+  oper_only:      "Este comando está restringido a Operadores IRC."
+  not_identified: "No estás identificado. Usa /msg NickServ IDENTIFY <contraseña>"
+
+# --- REGISTER ---------------------------------------------------------------
+register:
+  syntax:           "REGISTER <contraseña> <email>"
+  help:             "Registra tu apodo actual. Elige una contraseña segura y proporciona un correo válido. Una vez registrado, tu nick queda protegido ante usos no autorizados."
+  success:          "El nickname %nickname% ha sido registrado correctamente y ya estás identificado."
+  already_registered: "El nickname %nickname% ya está registrado."
+  invalid_email:    "La dirección de correo electrónico proporcionada no es válida."
+
+# --- IDENTIFY ---------------------------------------------------------------
+identify:
+  syntax:           "IDENTIFY [nickname] <contraseña>"
+  help:             "Te autentica con NickServ. Si omites el nickname, se usa el que tienes actualmente."
+  success:          "Ahora estás identificado como %nickname%."
+  not_registered:   "El nickname %nickname% no está registrado."
+  invalid_credentials: "Contraseña incorrecta. Inténtalo de nuevo."
+
+# --- INFO -------------------------------------------------------------------
+info:
+  syntax:           "INFO <nickname>"
+  help:             "Muestra información de registro de un nickname."
+  not_registered:   "El nickname %nickname% no está registrado."
+  private:          "La información del nickname %nickname% es privada."
+  header:           "Información del usuario \002%nickname%\002:"
+  registered_at:    "  Fecha registro  : %date%"
+  last_seen_online: "  Última conexión : \0033CONECTADO AHORA\003"
+  last_seen_at:     "  Última conexión : %date%"
+  last_seen_never:  "  Última conexión : Nunca"
+  last_quit:        "  Último mensaje  : %message%"
+  email:            "  Correo          : %email%"
+  footer:           "Fin de INFO."
+
+# --- SET --------------------------------------------------------------------
+set:
+  syntax:           "SET <opción> <valor>"
+  help:             "Modifica tu configuración de NickServ. Opciones: PASSWORD, EMAIL, LANGUAGE, PRIVATE."
+  unknown_option:   "Opción desconocida '%option%'. Opciones disponibles: %options%."
+
+  password:
+    syntax:         "SET PASSWORD <nueva_contraseña>"
+    success:        "Tu contraseña ha sido actualizada correctamente."
+
+  email:
+    syntax:         "SET EMAIL <nuevo_email>"
+    success:        "Tu correo ha sido actualizado a %email%."
+
+  language:
+    syntax:         "SET LANGUAGE <código>"
+    success:        "Idioma cambiado a '%language%'."
+    invalid:        "Idioma no soportado. Idiomas disponibles: %languages%."
+
+  private:
+    syntax:         "SET PRIVATE ON|OFF"
+    on:             "La información de tu cuenta es ahora \002privada\002."
+    off:            "La información de tu cuenta es ahora \002pública\002."
+
+# --- HELP -------------------------------------------------------------------
+help:
+  syntax:           "HELP [comando]"
+  help:             "Muestra la ayuda de los comandos de NickServ."
+  general_header:   "\002Comandos de NickServ:\002"
+  command_line:     "  %command% — %syntax%"
+  general_footer:   "Usa /msg NickServ HELP <comando> para más información."
+  command_header:   "\002Ayuda para %command%:\002"
+  syntax_label:     "\002Sintaxis:\002 %syntax%"
+  footer:           "Fin de HELP."
+  unknown_command:  "No hay ayuda disponible para '%command%'."
+
+# --- Nick Protection --------------------------------------------------------
+protection:
+  nick_in_use:      "Este nickname (%nickname%) está registrado. Identifícate con /msg NickServ IDENTIFY <contraseña>"
+  renamed_to:       "Has sido renombrado a \002%guest_nick%\002 porque no te has identificado con el nick registrado."

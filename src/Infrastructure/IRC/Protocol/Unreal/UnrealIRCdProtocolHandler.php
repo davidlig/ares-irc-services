@@ -10,6 +10,7 @@ use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Implements the UnrealIRCd 4.x / 5.x / 6.x server-to-server link protocol.
@@ -53,8 +54,9 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
     public function __construct(
         private readonly string $sid = '001',
         LoggerInterface $logger = new NullLogger(),
+        ?EventDispatcherInterface $eventDispatcher = null,
     ) {
-        parent::__construct($logger);
+        parent::__construct($logger, $eventDispatcher);
     }
 
     public function getProtocolName(): string
@@ -119,6 +121,9 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 
     private function handleEos(ConnectionInterface $connection): void
     {
+        // Allow service bots to introduce their pseudo-clients before our EOS.
+        $this->dispatchBurstComplete($connection, $this->sid);
+
         $eos = sprintf(':%s EOS', $this->sid);
         $connection->writeLine($eos);
         $this->logger->info('Sent EOS — initial burst and sync complete.', ['sid' => $this->sid]);

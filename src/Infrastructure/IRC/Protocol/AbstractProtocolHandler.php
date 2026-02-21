@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol;
 
+use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Provides RFC 1459 parsing/formatting and universal protocol commands
@@ -22,7 +24,18 @@ abstract class AbstractProtocolHandler implements ProtocolHandlerInterface
 {
     public function __construct(
         protected readonly LoggerInterface $logger = new NullLogger(),
+        protected readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {
+    }
+
+    /**
+     * Dispatches NetworkBurstCompleteEvent so service bots can introduce
+     * themselves BEFORE we send our own EOS/ENDBURST.
+     * Must be called by concrete handlers right before sending their EOS.
+     */
+    protected function dispatchBurstComplete(ConnectionInterface $connection, string $sid): void
+    {
+        $this->eventDispatcher?->dispatch(new NetworkBurstCompleteEvent($connection, $sid));
     }
 
     public function parseRawLine(string $rawLine): IRCMessage
