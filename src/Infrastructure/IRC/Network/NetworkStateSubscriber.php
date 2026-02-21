@@ -157,6 +157,11 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         $oldNick = $user->getNick();
         $user->changeNick($newNick);
 
+        // UnrealIRCd strips +r on every nick change but does NOT send UMODE2 -r to
+        // services. We mirror the server behaviour here so the in-memory state stays
+        // consistent.
+        $user->applyModeChange('-r');
+
         $this->logger->info(sprintf('Nick change: %s → %s [%s]', $oldNick->value, $newNick->value, $user->uid->value));
 
         $this->eventDispatcher->dispatch(new UserNickChangedEvent($user->uid, $oldNick, $newNick));

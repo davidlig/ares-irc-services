@@ -6,10 +6,13 @@ namespace App\Infrastructure\NickServ\Subscriber;
 
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
+use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use App\Domain\IRC\Network\NetworkUser;
+use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\Bot\NickServBot;
+use App\Infrastructure\NickServ\PendingNickRestoreRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -38,7 +41,9 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly NickServBot $nickServBot,
+        private readonly PendingNickRestoreRegistry $pendingRegistry,
         private readonly TranslatorInterface $translator,
         private readonly string $guestPrefix = 'Guest-',
         private readonly string $defaultLanguage = 'en',
@@ -51,6 +56,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         return [
             UserJoinedNetworkEvent::class    => ['onUserJoined', 0],
             UserQuitNetworkEvent::class      => ['onUserQuit', 0],
+            UserNickChangedEvent::class      => ['onNickChanged', 0],
             // Priority -1000: fires after ActiveConnectionHolder (priority -999) has stored the connection.
             NetworkBurstCompleteEvent::class => ['onBurstComplete', -1000],
         ];
@@ -135,6 +141,71 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             $user->uid->value,
             $guestNick,
         ));
+    }
+
+    /**
+     * Fires whenever a user changes their nickname.
+     *
+     * Two cases require action:
+     *   1. New nick is registered and user is not identified → warn + rename.
+     *   2. Nick change was triggered by our own SVSNICK (IDENTIFY flow) → skip.
+     *
+     * NOTE: NetworkStateSubscriber strips +r from memory on every nick change
+     * (mirroring the IRCd behaviour). So isIdentified() is reliable here and
+     * we do NOT need the pre-emptive applyModeChange('+r') in command handlers.
+     *
+     * Nick changes during the burst are intentionally skipped — they are already
+     * covered by the post-burst pending queue populated by onUserJoined.
+     */
+    public function onNickChanged(UserNickChangedEvent $event): void
+    {
+        if (!$this->burstComplete) {
+            return;
+        }
+
+        $newNick = $event->newNick->value;
+        $account = $this->nickRepository->findByNick($newNick);
+
+        if ($account === null) {
+            return;
+        }
+
+        $user = $this->userRepository->findByUid($event->uid);
+
+        if ($user === null) {
+            return;
+        }
+
+        // This nick change was triggered by our own SVSNICK (e.g. IDENTIFY flow).
+        // Protection must not be re-triggered — SVS2MODE +r is already on its way.
+        if ($this->pendingRegistry->consume($event->uid->value)) {
+            $this->logger->info(sprintf(
+                'Nick change: %s [%s] → %s — SVSNICK restore, skipping protection',
+                $event->oldNick->value,
+                $event->uid->value,
+                $newNick,
+            ));
+            return;
+        }
+
+        if ($user->isIdentified()) {
+            $this->logger->info(sprintf(
+                'Nick change: %s [%s] → %s — already identified, OK',
+                $event->oldNick->value,
+                $event->uid->value,
+                $newNick,
+            ));
+            return;
+        }
+
+        $this->logger->info(sprintf(
+            'Nick change: %s [%s] → %s — not identified, enforcing protection',
+            $event->oldNick->value,
+            $event->uid->value,
+            $newNick,
+        ));
+
+        $this->enforceProtection($user);
     }
 
     public function onUserQuit(UserQuitNetworkEvent $event): void
