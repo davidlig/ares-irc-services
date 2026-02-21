@@ -36,9 +36,20 @@ class NickServCommandRegistry
         return $this->map[strtoupper($name)] ?? null;
     }
 
-    /** @return NickServCommandInterface[] unique command instances */
+    /** @return NickServCommandInterface[] unique command instances (one per handler, aliases deduplicated) */
     public function all(): array
     {
-        return array_unique(array_values($this->map));
+        $seen   = [];
+        $unique = [];
+
+        foreach ($this->map as $command) {
+            $id = spl_object_id($command);
+            if (!isset($seen[$id])) {
+                $seen[$id] = true;
+                $unique[]  = $command;
+            }
+        }
+
+        return $unique;
     }
 }

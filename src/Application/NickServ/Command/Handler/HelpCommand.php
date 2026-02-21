@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
-use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 
 /**
@@ -13,12 +12,14 @@ use App\Application\NickServ\Command\NickServContext;
  *
  * Without arguments: lists all available commands.
  * With a command name: shows the full help text for that command.
+ *
+ * The registry is obtained from the context to avoid a circular dependency:
+ * NickServCommandRegistry → HelpCommand → NickServCommandRegistry.
  */
 final class HelpCommand implements NickServCommandInterface
 {
-    public function __construct(
-        private readonly NickServCommandRegistry $registry,
-    ) {
+    public function __construct()
+    {
     }
 
     public function getName(): string
@@ -64,7 +65,7 @@ final class HelpCommand implements NickServCommandInterface
         }
 
         $targetCmd = strtoupper($context->args[0]);
-        $handler   = $this->registry->find($targetCmd);
+        $handler   = $context->getRegistry()->find($targetCmd);
 
         if ($handler === null) {
             $context->reply('help.unknown_command', ['command' => $targetCmd]);
@@ -86,7 +87,7 @@ final class HelpCommand implements NickServCommandInterface
     private function showGeneralHelp(NickServContext $context): void
     {
         $isOper   = $context->sender?->isOper() ?? false;
-        $commands = $this->registry->all();
+        $commands = $context->getRegistry()->all();
 
         $context->reply('help.general_header');
 
