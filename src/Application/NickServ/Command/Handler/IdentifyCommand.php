@@ -9,11 +9,10 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
- * IDENTIFY [nickname] <password>
+ * IDENTIFY <nickname> <password>
  *
  * Authenticates a user against a registered nickname.
- * If nickname is omitted, uses the user's current nick.
- * On success: sets +r mode on the IRCd.
+ * On success: restores the registered nick (if needed) and sets +r mode.
  */
 final class IdentifyCommand implements NickServCommandInterface
 {
@@ -34,7 +33,7 @@ final class IdentifyCommand implements NickServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 1;
+        return 2;
     }
 
     public function getSyntaxKey(): string
@@ -74,15 +73,9 @@ final class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
-        // IDENTIFY <password>  → identify as current nick
-        // IDENTIFY <nickname> <password> → identify as a different nick
-        if (count($context->args) >= 2) {
-            $targetNick = $context->args[0];
-            $password   = $context->args[1];
-        } else {
-            $targetNick = $sender->getNick()->value;
-            $password   = $context->args[0];
-        }
+        // IDENTIFY <nickname> <password> — nickname is always required
+        $targetNick = $context->args[0];
+        $password   = $context->args[1];
 
         $account = $this->nickRepository->findByNick($targetNick);
 

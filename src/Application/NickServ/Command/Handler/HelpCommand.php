@@ -210,7 +210,8 @@ final class HelpCommand implements NickServCommandInterface
     {
         $visible  = 4 + mb_strlen($title) + 1; // " ■ " + title + " "
         $dashes   = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
-        $line     = "\x02\x0307 ■ " . $title . " \x0F\x030F" . $dashes . "\x03";
+        // \x0307 = orange, \x0F = format reset, \x0314 = dark grey (decimal 14, NOT hex 0F)
+        $line     = "\x02\x0307 ■ " . $title . " \x0F\x0314" . $dashes . "\x03";
         $context->replyRaw($line);
     }
 }
