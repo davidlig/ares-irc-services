@@ -48,6 +48,11 @@ final class RegisterCommand implements NickServCommandInterface
         return 'register.help';
     }
 
+    public function getOrder(): int
+    {
+        return 1;
+    }
+
     public function getShortDescKey(): string
     {
         return 'register.short';

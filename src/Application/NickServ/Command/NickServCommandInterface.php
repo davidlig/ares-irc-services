@@ -41,6 +41,12 @@ interface NickServCommandInterface
     public function getHelpKey(): string;
 
     /**
+     * Display order in the general HELP listing (lower = shown first).
+     * Use high values (e.g. 99) to place utility commands at the end.
+     */
+    public function getOrder(): int;
+
+    /**
      * Translation key for the one-line description shown in the general HELP listing.
      * E.g. "register.short".
      */
@@ -48,10 +54,15 @@ interface NickServCommandInterface
 
     /**
      * Sub-commands shown when HELP <command> is requested for commands with options.
-     * Returns an array of ['name' => string, 'desc_key' => string] entries.
+     * Each entry must contain:
+     *   - name       Primary name shown in the listing (e.g. "PASSWORD")
+     *   - desc_key   Translation key for the one-line description
+     *   - help_key   Translation key for the full help text (HELP CMD SUBOPTION)
+     *   - syntax_key Translation key for the usage line
+     *
      * Return an empty array for commands without sub-options.
      *
-     * @return array<int, array{name: string, desc_key: string}>
+     * @return array<int, array{name: string, desc_key: string, help_key: string, syntax_key: string}>
      */
     public function getSubCommandHelp(): array;
 
