@@ -42,7 +42,7 @@ final class SetCommand implements NickServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 2;
+        return 1;
     }
 
     public function getSyntaxKey(): string
@@ -55,6 +55,11 @@ final class SetCommand implements NickServCommandInterface
         return 'set.help';
     }
 
+    public function getOrder(): int
+    {
+        return 4;
+    }
+
     public function getShortDescKey(): string
     {
         return 'set.short';
@@ -63,10 +68,30 @@ final class SetCommand implements NickServCommandInterface
     public function getSubCommandHelp(): array
     {
         return [
-            ['name' => 'PASSWORD', 'desc_key' => 'set.password.short'],
-            ['name' => 'EMAIL',    'desc_key' => 'set.email.short'],
-            ['name' => 'LANGUAGE', 'desc_key' => 'set.language.short'],
-            ['name' => 'PRIVATE',  'desc_key' => 'set.private.short'],
+            [
+                'name'       => 'PASSWORD',
+                'desc_key'   => 'set.password.short',
+                'help_key'   => 'set.password.help',
+                'syntax_key' => 'set.password.syntax',
+            ],
+            [
+                'name'       => 'EMAIL',
+                'desc_key'   => 'set.email.short',
+                'help_key'   => 'set.email.help',
+                'syntax_key' => 'set.email.syntax',
+            ],
+            [
+                'name'       => 'LANGUAGE',
+                'desc_key'   => 'set.language.short',
+                'help_key'   => 'set.language.help',
+                'syntax_key' => 'set.language.syntax',
+            ],
+            [
+                'name'       => 'PRIVATE',
+                'desc_key'   => 'set.private.short',
+                'help_key'   => 'set.private.help',
+                'syntax_key' => 'set.private.syntax',
+            ],
         ];
     }
 
@@ -126,6 +151,11 @@ final class SetCommand implements NickServCommandInterface
 
     private function handleEmail(NickServContext $context, string $nick, string $value): void
     {
+        if ('' === $value) {
+            $context->reply('error.syntax', ['syntax' => $context->trans('set.email.syntax')]);
+            return;
+        }
+
         if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
             $context->reply('register.invalid_email');
             return;
@@ -140,6 +170,11 @@ final class SetCommand implements NickServCommandInterface
 
     private function handleLanguage(NickServContext $context, string $nick, string $value): void
     {
+        if ('' === $value) {
+            $context->reply('error.syntax', ['syntax' => $context->trans('set.language.syntax')]);
+            return;
+        }
+
         $lang = strtolower($value);
 
         if (!in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
