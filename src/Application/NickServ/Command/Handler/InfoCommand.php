@@ -85,9 +85,9 @@ final readonly class InfoCommand implements NickServCommandInterface
             return;
         }
 
-        // Is the requester the owner?
         $isOwner = null !== $sender
             && 0 === strcasecmp($sender->getNick()->value, $account->getNickname());
+        $isOwnerIdentified = $isOwner && $sender->isIdentified();
 
         if ($account->isPrivate() && !$isOwner) {
             $context->reply('info.private', ['nickname' => $account->getNickname()]);
@@ -131,11 +131,11 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.last_quit', ['message' => $account->getLastQuitMessage()]);
         }
 
-        if ($isOwner && null !== $account->getEmail()) {
+        if ($isOwnerIdentified && null !== $account->getEmail()) {
             $context->reply('info.email', ['email' => $account->getEmail()]);
         }
 
-        if ($isOwner && null !== $account->getVhost() && '' !== $account->getVhost()) {
+        if ($isOwnerIdentified && null !== $account->getVhost() && '' !== $account->getVhost()) {
             $context->reply('info.vhost', ['vhost' => $account->getVhost()]);
         }
 
