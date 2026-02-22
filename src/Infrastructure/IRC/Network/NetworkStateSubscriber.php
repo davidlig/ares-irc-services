@@ -37,12 +37,17 @@ class NetworkStateSubscriber implements EventSubscriberInterface
     ) {
     }
 
+    /**
+     * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.
+     *
+     * @see https://symfony.com/doc/7.4/event_dispatcher.html
+     */
     public static function getSubscribedEvents(): array
     {
         return [
             UserJoinedNetworkEvent::class => ['onUserJoinedNetwork', 0],
             UserQuitNetworkEvent::class => ['onUserQuitNetwork', 0],
-            UserNickChangedEvent::class => ['onUserNickChanged', 0],
+            UserNickChangedEvent::class => ['onUserNickChanged', 10],
             UserModeChangedEvent::class => ['onUserModeChanged', 0],
             ChannelSyncedEvent::class => ['onChannelSynced', 0],
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],

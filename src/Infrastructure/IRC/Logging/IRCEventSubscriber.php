@@ -27,12 +27,17 @@ class IRCEventSubscriber implements EventSubscriberInterface
     ) {
     }
 
+    /**
+     * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.
+     *
+     * @see https://symfony.com/doc/7.4/event_dispatcher.html
+     */
     public static function getSubscribedEvents(): array
     {
         return [
-            ConnectionEstablishedEvent::class => 'onConnectionEstablished',
-            ConnectionLostEvent::class => 'onConnectionLost',
-            MessageReceivedEvent::class => 'onMessageReceived',
+            ConnectionEstablishedEvent::class => ['onConnectionEstablished', 0],
+            ConnectionLostEvent::class => ['onConnectionLost', 0],
+            MessageReceivedEvent::class => ['onMessageReceived', 0],
         ];
     }
 
