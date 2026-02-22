@@ -189,6 +189,31 @@ services:
     App\Application\NickServ\Command\Handler\HelpCommand:
         tags: ['nickserv.command']
 
+    # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---
+
+    Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage: ~
+
+    Symfony\Component\Security\Core\Authorization\AccessDecisionManager:
+        arguments:
+            $voters:
+                - '@App\Infrastructure\NickServ\Security\Voter\NickServIdentifiedOwnerVoter'
+                - '@App\Infrastructure\NickServ\Security\Voter\OperVoter'
+
+    Symfony\Component\Security\Core\Authorization\AuthorizationChecker:
+        arguments:
+            $tokenStorage: '@Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage'
+            $accessDecisionManager: '@Symfony\Component\Security\Core\Authorization\AccessDecisionManager'
+
+    App\Application\NickServ\Security\AuthorizationContextInterface:
+        class: App\Infrastructure\NickServ\Security\SymfonyAuthorizationContext
+        arguments:
+            $tokenStorage: '@Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage'
+
+    App\Application\NickServ\Security\AuthorizationCheckerInterface:
+        class: App\Infrastructure\NickServ\Security\SymfonyAuthorizationCheckerAdapter
+        arguments:
+            $authorizationChecker: '@Symfony\Component\Security\Core\Authorization\AuthorizationChecker'
+
     # --- NickServ registries ----------------------------------------------------
 
     App\Application\NickServ\IdentifiedSessionRegistry:
@@ -204,8 +229,10 @@ services:
 
     App\Application\NickServ\NickServService:
         arguments:
-            $defaultLanguage: '%services.default_language%'
-            $logger:          '@monolog.logger.irc'
+            $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
+            $authorizationChecker:  '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
+            $defaultLanguage:      '%services.default_language%'
+            $logger:               '@monolog.logger.irc'
 
     # --- NickServ Subscribers ---------------------------------------------------
 

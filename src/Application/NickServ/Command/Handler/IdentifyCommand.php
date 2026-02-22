@@ -74,6 +74,11 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return false;
     }
 
+    public function getRequiredPermission(): ?string
+    {
+        return null;
+    }
+
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;

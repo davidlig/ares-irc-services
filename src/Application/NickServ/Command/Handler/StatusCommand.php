@@ -76,6 +76,11 @@ final readonly class StatusCommand implements NickServCommandInterface
         return false;
     }
 
+    public function getRequiredPermission(): ?string
+    {
+        return null;
+    }
+
     public function execute(NickServContext $context): void
     {
         $targetNick = $context->args[0];
