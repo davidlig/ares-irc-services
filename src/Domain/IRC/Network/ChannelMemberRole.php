@@ -37,6 +37,22 @@ enum ChannelMemberRole: string
     }
 
     /**
+     * Maps MODE command letter (e.g. +o, +v) to role. Used when parsing MODE #channel ±modes.
+     * UnrealIRCd / RFC: v=voice, h=halfop, o=op, a=admin, q=owner.
+     */
+    public static function fromModeLetter(string $letter): ?self
+    {
+        return match (strtolower($letter)) {
+            'v' => self::Voice,
+            'h' => self::HalfOp,
+            'o' => self::Op,
+            'a' => self::Admin,
+            'q' => self::Owner,
+            default => null,
+        };
+    }
+
+    /**
      * Extracts all prefix characters from the start of an SJOIN member entry
      * and returns the highest privilege role.
      * e.g. "+@James" → Op  (@ > +).
