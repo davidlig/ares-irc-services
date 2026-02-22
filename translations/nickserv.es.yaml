@@ -112,10 +112,12 @@ set:
     success:        "\x0303✔\x03 Tu contraseña ha sido actualizada correctamente."
 
   email:
-    syntax:         "SET EMAIL <nuevo_email>"
-    short:          "Cambia el correo electrónico de tu cuenta."
-    help:           "Actualiza el correo electrónico asociado a tu cuenta. El correo es\nutilizado para recuperación de contraseña y solo es visible para ti\ncuando estás identificado."
+    syntax:         "SET EMAIL <nuevo_email> [token]"
+    short:          "Cambia el correo electrónico de tu cuenta (confirmación en dos pasos)."
+    help:           "Cambio de correo en dos pasos por seguridad.\n1) \x0303SET EMAIL <nuevo_email>\x03 — se envía un token a tu correo actual.\n2) \x0303SET EMAIL <nuevo_email> <token>\x03 — confirmas con el token recibido.\nEl token expira en 1 hora."
     success:        "\x0303✔\x03 Tu correo ha sido actualizado a \x02%email%\x02."
+    pending_sent:   "\x0307→\x03 Se ha enviado un token de confirmación a \x02%current_email%\x02.\n  Para confirmar el cambio a \x02%new_email%\x02 ejecuta:\n  \x0303/msg NickServ SET EMAIL %new_email% <token>\x03\n  El token expira en 1 hora."
+    invalid_token:  "\x0304✗\x03 El token no es válido o ha expirado. Solicita uno nuevo con \x0303SET EMAIL <nuevo_email>\x03."
 
   language:
     syntax:         "SET LANGUAGE <código>"
