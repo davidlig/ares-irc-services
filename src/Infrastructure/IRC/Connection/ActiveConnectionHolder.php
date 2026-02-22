@@ -22,10 +22,15 @@ class ActiveConnectionHolder implements EventSubscriberInterface
 {
     private ?ConnectionInterface $connection = null;
 
+    /**
+     * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.
+     *
+     * @see https://symfony.com/doc/7.4/event_dispatcher.html
+     */
     public static function getSubscribedEvents(): array
     {
         return [
-            NetworkBurstCompleteEvent::class => ['onBurstComplete', -999],
+            NetworkBurstCompleteEvent::class => ['onBurstComplete', 0],
         ];
     }
 

@@ -43,18 +43,22 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
     ) {
     }
 
+    /**
+     * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.
+     *
+     * @see https://symfony.com/doc/7.4/event_dispatcher.html
+     */
     public static function getSubscribedEvents(): array
     {
         return [
-            // Priority 100: runs before the protocol handler sends our EOS (priority 0)
             NetworkBurstCompleteEvent::class => ['onBurstComplete', 100],
         ];
     }
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
-        // Use the event's connection directly — ActiveConnectionHolder may not
-        // have stored it yet (it subscribes at priority -999, after this handler).
+        // Use the event's connection directly — ActiveConnectionHolder (0) stores it
+        // after we run; NickProtectionSubscriber (-256) processes pending users last.
         $this->introduce($event->connection, $event->serverSid);
     }
 
