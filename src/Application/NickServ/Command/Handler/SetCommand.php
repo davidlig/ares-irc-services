@@ -6,6 +6,8 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\PendingEmailChangeRegistry;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -15,7 +17,8 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
  *
  * Supported options:
  *   SET PASSWORD <new_password>
- *   SET EMAIL    <new_email>
+ *   SET EMAIL    <new_email>              — request change (token sent to current email)
+ *   SET EMAIL    <new_email> <token>      — confirm change with token
  *   SET LANGUAGE <code>       (en | es | …)
  *   SET PRIVATE  ON|OFF
  */
@@ -27,6 +30,7 @@ final class SetCommand implements NickServCommandInterface
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly PendingEmailChangeRegistry $pendingEmailChangeRegistry,
     ) {
     }
 
@@ -151,21 +155,57 @@ final class SetCommand implements NickServCommandInterface
 
     private function handleEmail(NickServContext $context, string $nick, string $value): void
     {
-        if ('' === $value) {
+        $parts    = explode(' ', $value, 2);
+        $newEmail = trim($parts[0] ?? '');
+        $token    = isset($parts[1]) ? trim($parts[1]) : null;
+
+        if ('' === $newEmail) {
             $context->reply('error.syntax', ['syntax' => $context->trans('set.email.syntax')]);
             return;
         }
 
-        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
             $context->reply('register.invalid_email');
             return;
         }
 
         $account = $this->nickRepository->findByNick($nick);
-        $account?->changeEmail($value);
+        if ($account === null || $account->getEmail() === null) {
+            $context->reply('error.not_identified');
+            return;
+        }
+
+        if ($token !== null && $token !== '') {
+            $this->confirmEmailChange($context, $nick, $newEmail, $token, $account);
+            return;
+        }
+
+        $this->requestEmailChange($context, $nick, $newEmail, $account->getEmail());
+    }
+
+    private function requestEmailChange(NickServContext $context, string $nick, string $newEmail, string $currentEmail): void
+    {
+        $token = bin2hex(random_bytes(16));
+        $this->pendingEmailChangeRegistry->store($nick, $newEmail, $token);
+
+        // TODO: send token to $currentEmail via MailerInterface once implemented.
+        $context->reply('set.email.pending_sent', [
+            'current_email' => $currentEmail,
+            'new_email'    => $newEmail,
+        ]);
+    }
+
+    private function confirmEmailChange(NickServContext $context, string $nick, string $newEmail, string $token, RegisteredNick $account): void
+    {
+        if (!$this->pendingEmailChangeRegistry->consume($nick, $newEmail, $token)) {
+            $context->reply('set.email.invalid_token');
+            return;
+        }
+
+        $account->changeEmail($newEmail);
         $this->nickRepository->save($account);
 
-        $context->reply('set.email.success', ['email' => $value]);
+        $context->reply('set.email.success', ['email' => $newEmail]);
     }
 
     private function handleLanguage(NickServContext $context, string $nick, string $value): void

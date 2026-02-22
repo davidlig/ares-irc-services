@@ -173,6 +173,9 @@ services:
     App\Application\NickServ\PendingVerificationRegistry:
         class: App\Application\NickServ\PendingVerificationRegistry
 
+    App\Application\NickServ\PendingEmailChangeRegistry:
+        class: App\Application\NickServ\PendingEmailChangeRegistry
+
     # --- NickServ Service -------------------------------------------------------
 
     App\Application\NickServ\NickServService:

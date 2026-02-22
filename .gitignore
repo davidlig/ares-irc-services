@@ -10,4 +10,5 @@
 ###< symfony/framework-bundle ###
 
 /.cursorrules
+/.roo/
 /docs
