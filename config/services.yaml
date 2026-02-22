@@ -104,7 +104,23 @@ services:
     App\Domain\IRC\Repository\ChannelRepositoryInterface:
         class: App\Infrastructure\IRC\Network\InMemoryChannelRepository
 
-    # --- Network state subscriber — maintains user/channel state from protocol messages ---
+    # --- Network state: protocol router (wire → domain events) + subscriber (domain events → repos) ---
+
+    App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Network\ProtocolNetworkStateRouter:
+        arguments:
+            $protocol: '%irc.protocol%'
+            $adapters:
+                unreal: '@App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter'
+                inspircd: '@App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter'
+        tags: ['kernel.event_subscriber']
 
     App\Infrastructure\IRC\Network\NetworkStateSubscriber:
         arguments:
