@@ -108,14 +108,15 @@ final readonly class InfoCommand implements NickServCommandInterface
             'date' => $account->getRegisteredAt()?->format('d/m/Y H:i') ?? '—',
         ]);
 
-        // Last seen — if online show ONLINE, otherwise the date
+        // Last seen — show "now online" only when the user is identified (+r).
+        // Unauthenticated users must not be shown as connected (privacy / IRCd rules).
         try {
             $onlineUser = $this->userRepository->findByNick(new Nick($account->getNickname()));
         } catch (InvalidArgumentException) {
             $onlineUser = null;
         }
 
-        if (null !== $onlineUser) {
+        if (null !== $onlineUser && $onlineUser->isIdentified()) {
             $context->reply('info.last_seen_online');
         } elseif (null !== $account->getLastSeenAt()) {
             $context->reply('info.last_seen_at', [
