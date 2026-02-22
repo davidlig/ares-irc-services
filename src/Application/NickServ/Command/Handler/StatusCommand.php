@@ -17,9 +17,9 @@ use InvalidArgumentException;
  * STATUS <nickname>.
  *
  * Displays the registration state of a nickname:
- *   - Not registered
+ *   - Not registered (offline) / Sin registrar (online)
  *   - Pending verification (with expiry countdown)
- *   - Registered (with online indicator and registration date)
+ *   - Registered: Not connected / Not identified / Identified
  *   - Suspended (with reason)
  *   - Forbidden (with reason)
  */
@@ -89,7 +89,7 @@ final readonly class StatusCommand implements NickServCommandInterface
         $context->replyRaw($context->trans('status.header', ['nickname' => $targetNick]));
 
         if (null === $account) {
-            $context->replyRaw($context->trans('status.unregistered'));
+            $this->replyUnregistered($context, $targetNick);
             $context->replyRaw($context->trans('status.footer'));
 
             return;
@@ -97,12 +97,27 @@ final readonly class StatusCommand implements NickServCommandInterface
 
         match ($account->getStatus()) {
             NickStatus::Pending => $this->replyPending($context, $account->getExpiresAt()),
-            NickStatus::Registered => $this->replyRegistered($context, $targetNick, $account->getRegisteredAt()),
+            NickStatus::Registered => $this->replyRegistered($context, $targetNick),
             NickStatus::Suspended => $this->replySuspended($context, $account->getReason()),
             NickStatus::Forbidden => $this->replyForbidden($context, $account->getReason()),
         };
 
         $context->replyRaw($context->trans('status.footer'));
+    }
+
+    private function replyUnregistered(NickServContext $context, string $targetNick): void
+    {
+        try {
+            $onlineUser = $this->userRepository->findByNick(new Nick($targetNick));
+        } catch (InvalidArgumentException) {
+            $onlineUser = null;
+        }
+
+        if (null === $onlineUser) {
+            $context->replyRaw($context->trans('status.not_registered_offline'));
+        } else {
+            $context->replyRaw($context->trans('status.unregistered'));
+        }
     }
 
     private function replyPending(NickServContext $context, ?DateTimeImmutable $expiresAt): void
@@ -115,25 +130,20 @@ final readonly class StatusCommand implements NickServCommandInterface
         }
     }
 
-    private function replyRegistered(
-        NickServContext $context,
-        string $targetNick,
-        ?DateTimeImmutable $registeredAt,
-    ): void {
-        $context->replyRaw($context->trans('status.registered'));
-
+    private function replyRegistered(NickServContext $context, string $targetNick): void
+    {
         try {
             $onlineUser = $this->userRepository->findByNick(new Nick($targetNick));
-            if (null !== $onlineUser) {
-                $context->replyRaw($context->trans('status.online_now'));
-            }
         } catch (InvalidArgumentException) {
+            $onlineUser = null;
         }
 
-        if (null !== $registeredAt) {
-            $context->replyRaw($context->trans('status.registered_at', [
-                'date' => $registeredAt->format('d/m/Y H:i'),
-            ]));
+        if (null === $onlineUser) {
+            $context->replyRaw($context->trans('status.not_connected'));
+        } elseif (!$onlineUser->isIdentified()) {
+            $context->replyRaw($context->trans('status.not_identified'));
+        } else {
+            $context->replyRaw($context->trans('status.identified'));
         }
     }
 
