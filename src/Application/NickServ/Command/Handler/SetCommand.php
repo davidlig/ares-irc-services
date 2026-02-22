@@ -8,6 +8,7 @@ use App\Application\Mail\MailerInterface;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\PendingEmailChangeRegistry;
+use App\Application\NickServ\Security\NickServPermission;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use InvalidArgumentException;
@@ -126,6 +127,11 @@ final readonly class SetCommand implements NickServCommandInterface
         return false;
     }
 
+    public function getRequiredPermission(): ?string
+    {
+        return NickServPermission::IDENTIFIED_OWNER;
+    }
+
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;
@@ -133,16 +139,9 @@ final readonly class SetCommand implements NickServCommandInterface
             return;
         }
 
-        // Must be identified to use SET
+        // Permission check (identified owner) is enforced by NickServService via Security.
         $account = $context->senderAccount;
         if (null === $account) {
-            $context->reply('error.not_identified');
-
-            return;
-        }
-
-        // Owner check: SET is only allowed for the nick you are currently using
-        if (0 !== strcasecmp($sender->getNick()->value, $account->getNickname())) {
             $context->reply('error.not_identified');
 
             return;

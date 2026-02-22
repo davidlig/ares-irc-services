@@ -7,6 +7,9 @@ namespace App\Application\NickServ;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Application\NickServ\Security\AuthorizationContextInterface;
+use App\Application\NickServ\Security\NickServPermission;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -26,6 +29,8 @@ use const PREG_SPLIT_NO_EMPTY;
 class NickServService
 {
     public function __construct(
+        private readonly AuthorizationContextInterface $authorizationContext,
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
         private readonly NickServCommandRegistry $commandRegistry,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickServNotifierInterface $notifier,
@@ -80,29 +85,44 @@ class NickServService
             pendingVerificationRegistry: $this->pendingVerificationRegistry,
         );
 
-        // Oper-only guard
-        if ($handler->isOperOnly() && !$sender->isOper()) {
-            $context->reply('error.oper_only');
+        // Set Security token for this request (cleared at the end)
+        $this->authorizationContext->setCurrentUser($sender);
 
-            return;
+        try {
+            // Oper-only guard (via Security voter)
+            if ($handler->isOperOnly() && !$this->authorizationChecker->isGranted(NickServPermission::NETWORK_OPER, $context)) {
+                $context->reply('error.oper_only');
+
+                return;
+            }
+
+            // Required permission guard (e.g. identified owner for SET)
+            $requiredPermission = $handler->getRequiredPermission();
+            if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
+                $context->reply('error.not_identified');
+
+                return;
+            }
+
+            // Minimum args guard
+            if (count($args) < $handler->getMinArgs()) {
+                $context->reply('error.syntax', [
+                    'syntax' => $context->trans($handler->getSyntaxKey()),
+                ]);
+
+                return;
+            }
+
+            $this->logger->debug(sprintf(
+                'NickServ: %s executed %s [args: %d]',
+                $sender->getNick()->value,
+                $cmdName,
+                count($args),
+            ));
+
+            $handler->execute($context);
+        } finally {
+            $this->authorizationContext->clear();
         }
-
-        // Minimum args guard
-        if (count($args) < $handler->getMinArgs()) {
-            $context->reply('error.syntax', [
-                'syntax' => $context->trans($handler->getSyntaxKey()),
-            ]);
-
-            return;
-        }
-
-        $this->logger->debug(sprintf(
-            'NickServ: %s executed %s [args: %d]',
-            $sender->getNick()->value,
-            $cmdName,
-            count($args),
-        ));
-
-        $handler->execute($context);
     }
 }

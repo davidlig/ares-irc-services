@@ -73,6 +73,12 @@ interface NickServCommandInterface
      */
     public function isOperOnly(): bool;
 
+    /**
+     * Permission attribute required to run this command (e.g. identified owner).
+     * Null means no permission check. Checked via Symfony Security isGranted() before execute().
+     */
+    public function getRequiredPermission(): ?string;
+
     /** Execute the command. All communication is done via $context->reply(). */
     public function execute(NickServContext $context): void;
 }
