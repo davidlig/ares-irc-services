@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\IRC\Network;
 
+use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
@@ -28,6 +29,9 @@ class NetworkUser
     private string $virtualHost;
 
     private string $modes;
+
+    /** @var array<string, string> lowercase channel name => original value (for O(1) QUIT over user's channels only) */
+    private array $channelNames = [];
 
     public function __construct(
         public readonly Uid $uid,
@@ -56,6 +60,26 @@ class NetworkUser
     public function changeNick(Nick $newNick): void
     {
         $this->nick = $newNick;
+    }
+
+    public function addChannel(ChannelName $name): void
+    {
+        $this->channelNames[strtolower($name->value)] = $name->value;
+    }
+
+    public function removeChannel(ChannelName $name): void
+    {
+        unset($this->channelNames[strtolower($name->value)]);
+    }
+
+    /**
+     * Channel name values this user is in (for QUIT: only touch these channels).
+     *
+     * @return string[]
+     */
+    public function getChannelNames(): array
+    {
+        return array_values($this->channelNames);
     }
 
     public function getVirtualHost(): string
