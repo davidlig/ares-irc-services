@@ -49,7 +49,7 @@ class SocketConnection implements ConnectionInterface
             context: stream_context_create(),
         );
 
-        if ($socket === false) {
+        if (false === $socket) {
             $this->status = ConnectionStatus::Error;
 
             $this->logger->error('TCP connection failed.', [
@@ -73,7 +73,7 @@ class SocketConnection implements ConnectionInterface
 
     public function disconnect(): void
     {
-        if ($this->socket !== null) {
+        if (null !== $this->socket) {
             fclose($this->socket);
             $this->socket = null;
         }
@@ -102,7 +102,7 @@ class SocketConnection implements ConnectionInterface
 
         $line = fgets($this->socket);
 
-        if ($line === false) {
+        if (false === $line) {
             return null;
         }
 
@@ -111,7 +111,7 @@ class SocketConnection implements ConnectionInterface
 
     public function isConnected(): bool
     {
-        return $this->socket !== null && !feof($this->socket);
+        return null !== $this->socket && !feof($this->socket);
     }
 
     public function getStatus(): ConnectionStatus

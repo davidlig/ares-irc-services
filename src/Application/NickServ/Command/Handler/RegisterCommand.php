@@ -19,7 +19,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The account is created in PENDING status; the user must run VERIFY <token>
  * to activate it. A verification token is sent by email.
  */
-final class RegisterCommand implements NickServCommandInterface
+final readonly class RegisterCommand implements NickServCommandInterface
 {
     private const TOKEN_TTL_SECONDS = 3600;
 
@@ -78,7 +78,7 @@ final class RegisterCommand implements NickServCommandInterface
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;
-        if ($sender === null) {
+        if (null === $sender) {
             return;
         }
 
@@ -93,7 +93,7 @@ final class RegisterCommand implements NickServCommandInterface
 
         $existing = $this->nickRepository->findByNick($nick);
 
-        if ($existing !== null) {
+        if (null !== $existing) {
             $context->reply(match ($existing->getStatus()) {
                 NickStatus::Pending    => 'register.already_pending',
                 NickStatus::Forbidden  => 'register.forbidden',

@@ -26,7 +26,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   - The services server must be listed in ulines{} to use SVSMODE/SVSNICK.
  *   - Example:  ulines { "ares-services.davidlig.net"; };
  */
-class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
+readonly class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
@@ -89,7 +89,7 @@ class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
             // Skip truly empty string artifacts produced by a trailing \n in a
             // multi-line translation value, but keep intentional blank lines
             // (those that contain at least a space) so sections can be separated.
-            if ($line === '') {
+            if ('' === $line) {
                 continue;
             }
             $this->write(sprintf(':%s NOTICE %s :%s', $this->nickservUid, $targetUidOrNick, $line));
@@ -116,7 +116,7 @@ class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
      */
     public function setUserAccount(string $targetUid, string $accountName): void
     {
-        $logout = ($accountName === '0');
+        $logout = ('0' === $accountName);
 
         $this->write(sprintf(':%s SVS2MODE %s %s', $this->serverSid, $targetUid, $logout ? '-r' : '+r'));
     }

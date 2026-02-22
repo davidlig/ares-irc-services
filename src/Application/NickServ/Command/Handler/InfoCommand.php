@@ -18,7 +18,7 @@ use App\Domain\NickServ\ValueObject\NickStatus;
  * Email is only visible to the owner (same UID) or IRC operators (future).
  * Private accounts hide the info block from non-owners.
  */
-final class InfoCommand implements NickServCommandInterface
+final readonly class InfoCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -78,14 +78,14 @@ final class InfoCommand implements NickServCommandInterface
 
         $account = $this->nickRepository->findByNick($targetNick);
 
-        if ($account === null || $account->isForbidden() || $account->isPending()) {
+        if (null === $account || $account->isForbidden() || $account->isPending()) {
             $context->reply('info.not_registered', ['nickname' => $targetNick]);
             return;
         }
 
         // Is the requester the owner?
-        $isOwner = $sender !== null
-            && strcasecmp($sender->getNick()->value, $account->getNickname()) === 0;
+        $isOwner = null !== $sender
+            && 0 === strcasecmp($sender->getNick()->value, $account->getNickname());
 
         if ($account->isPrivate() && !$isOwner) {
             $context->reply('info.private', ['nickname' => $account->getNickname()]);
@@ -112,9 +112,9 @@ final class InfoCommand implements NickServCommandInterface
             $onlineUser = null;
         }
 
-        if ($onlineUser !== null) {
+        if (null !== $onlineUser) {
             $context->reply('info.last_seen_online');
-        } elseif ($account->getLastSeenAt() !== null) {
+        } elseif (null !== $account->getLastSeenAt()) {
             $context->reply('info.last_seen_at', [
                 'date' => $account->getLastSeenAt()->format('d/m/Y H:i'),
             ]);
@@ -127,7 +127,7 @@ final class InfoCommand implements NickServCommandInterface
             $context->reply('info.last_quit', ['message' => $account->getLastQuitMessage()]);
         }
 
-        if ($isOwner && $account->getEmail() !== null) {
+        if ($isOwner && null !== $account->getEmail()) {
             $context->reply('info.email', ['email' => $account->getEmail()]);
         }
 

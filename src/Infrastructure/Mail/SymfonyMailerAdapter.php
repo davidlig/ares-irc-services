@@ -11,7 +11,7 @@ use Symfony\Component\Mime\Email;
 /**
  * Sends emails via Symfony Mailer.
  */
-final class SymfonyMailerAdapter implements MailerInterface
+final readonly class SymfonyMailerAdapter implements MailerInterface
 {
     public function __construct(
         private readonly SymfonyMailerInterface $mailer,

@@ -45,7 +45,7 @@ enum ChannelMemberRole: string
         $found = self::None;
         $priority = [self::None, self::Voice, self::HalfOp, self::Op, self::Admin, self::Owner];
 
-        while ($entry !== '' && in_array($entry[0], $prefixChars, true)) {
+        while ('' !== $entry && in_array($entry[0], $prefixChars, true)) {
             $role = self::fromSjoinPrefix($entry[0]);
             if (array_search($role, $priority, true) > array_search($found, $priority, true)) {
                 $found = $role;

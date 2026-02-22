@@ -16,7 +16,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
  * verification token sent to the user's email. On success the account
  * transitions from PENDING to REGISTERED and the user is identified.
  */
-final class VerifyCommand implements NickServCommandInterface
+final readonly class VerifyCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -72,7 +72,7 @@ final class VerifyCommand implements NickServCommandInterface
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;
-        if ($sender === null) {
+        if (null === $sender) {
             return;
         }
 
@@ -81,7 +81,7 @@ final class VerifyCommand implements NickServCommandInterface
 
         $account = $this->nickRepository->findByNick($nick);
 
-        if ($account === null || !$account->isPending()) {
+        if (null === $account || !$account->isPending()) {
             $context->reply('verify.no_pending');
             return;
         }

@@ -243,7 +243,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         }
 
         $channel  = $this->channelRepository->findByName($channelName);
-        $isNewChannel = $channel === null;
+        $isNewChannel = null === $channel;
 
         if ($isNewChannel) {
             $channel = new Channel(
@@ -255,7 +255,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             // Update modes if we're receiving an SJOIN for an existing channel
             // (e.g. during re-sync or mode correction)
             if ('' !== $modeStr) {
-                $channel->setModes($modeStr);
+                $channel->updateModes($modeStr);
             }
         }
 
@@ -271,7 +271,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             // Strip optional SJSBY extended info prefix: <setat,setby>
             if (str_starts_with($entry, '<')) {
                 $closingPos = strpos($entry, '>');
-                if ($closingPos !== false) {
+                if (false !== $closingPos) {
                     $entry = substr($entry, $closingPos + 1);
                 }
             }
@@ -279,17 +279,17 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             $firstChar = $entry[0] ?? '';
 
             // Mode list entries
-            if ($firstChar === '&') {
+            if ('&' === $firstChar) {
                 $channel->addBan(substr($entry, 1));
                 continue;
             }
 
-            if ($firstChar === '"') {
+            if ('"' === $firstChar) {
                 $channel->addExempt(substr($entry, 1));
                 continue;
             }
 
-            if ($firstChar === "'") {
+            if ("'" === $firstChar) {
                 $channel->addInviteException(substr($entry, 1));
                 continue;
             }
@@ -451,7 +451,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
     // -------------------------------------------------------------------------
     private function handleMd(IRCMessage $message): void
     {
-        if (($message->params[0] ?? '') !== 'client') {
+        if ('client' !== ($message->params[0] ?? '')) {
             return;
         }
 
@@ -459,7 +459,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         $key    = $message->params[2] ?? '';
         $value  = $message->trailing ?? ($message->params[3] ?? '');
 
-        if ('' === $uidStr || $key !== 'account') {
+        if ('' === $uidStr || 'account' !== $key) {
             return;
         }
 

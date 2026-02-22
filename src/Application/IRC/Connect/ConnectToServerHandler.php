@@ -12,7 +12,7 @@ use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 
-class ConnectToServerHandler
+readonly class ConnectToServerHandler
 {
     public function __construct(
         private readonly IRCClientFactory $clientFactory,

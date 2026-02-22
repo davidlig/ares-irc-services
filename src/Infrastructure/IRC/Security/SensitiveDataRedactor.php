@@ -13,7 +13,7 @@ namespace App\Infrastructure\IRC\Security;
  *   IDENTIFY  <nick> <password>    → IDENTIFY <nick> ******
  *   SET PASSWORD <new_password>    → SET PASSWORD ******
  */
-final class SensitiveDataRedactor
+final readonly class SensitiveDataRedactor
 {
     private const MASK = '******';
 

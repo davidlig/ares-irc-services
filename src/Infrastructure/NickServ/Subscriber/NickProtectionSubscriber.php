@@ -96,7 +96,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         $nick    = $user->getNick()->value;
         $account = $this->nickRepository->findByNick($nick);
 
-        if ($account === null || !$account->isRegistered()) {
+        if (null === $account || !$account->isRegistered()) {
             return;
         }
 
@@ -168,13 +168,13 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         $newNick = $event->newNick->value;
         $account = $this->nickRepository->findByNick($newNick);
 
-        if ($account === null || !$account->isRegistered()) {
+        if (null === $account || !$account->isRegistered()) {
             return;
         }
 
         $user = $this->userRepository->findByUid($event->uid);
 
-        if ($user === null) {
+        if (null === $user) {
             return;
         }
 
@@ -217,9 +217,9 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
         // Fallback: the user may have changed nick (e.g. 'david') after identifying
         // as a registered nick ('davidlig'). Look up via the session registry.
-        if ($account === null) {
+        if (null === $account) {
             $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
-            if ($registeredNick !== null) {
+            if (null !== $registeredNick) {
                 $account = $this->nickRepository->findByNick($registeredNick);
             }
         }
@@ -227,17 +227,17 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         // Always clean up the session registry entry for this UID.
         $this->identifiedRegistry->remove($event->uid->value);
 
-        if ($account === null) {
+        if (null === $account) {
             return;
         }
 
         $account->markSeen();
 
         // Build quit message including the user's IRC origin (ident@host).
-        $origin = $event->ident !== '' ? $event->ident . '@' . $event->displayHost : $event->displayHost;
-        $stored = $event->reason !== ''
+        $origin = '' !== $event->ident ? $event->ident . '@' . $event->displayHost : $event->displayHost;
+        $stored = '' !== $event->reason
             ? sprintf('%s (%s)', $event->reason, $origin)
-            : ($origin !== '' ? $origin : null);
+            : ('' !== $origin ? $origin : null);
 
         $account->updateQuitMessage($stored);
         $this->nickRepository->save($account);

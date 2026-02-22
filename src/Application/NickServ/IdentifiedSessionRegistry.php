@@ -13,10 +13,15 @@ namespace App\Application\NickServ;
  * that the correct registered account is updated even if the user had
  * changed to a different nick (e.g. 'david') before quitting.
  */
-final class IdentifiedSessionRegistry
+final readonly class IdentifiedSessionRegistry
 {
     /** @var array<string, string> uid → registered nick */
-    private array $sessions = [];
+    private array $sessions;
+
+    public function __construct()
+    {
+        $this->sessions = [];
+    }
 
     public function register(string $uid, string $registeredNick): void
     {
