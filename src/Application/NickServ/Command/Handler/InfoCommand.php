@@ -134,6 +134,10 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.email', ['email' => $account->getEmail()]);
         }
 
+        if ($isOwner && null !== $account->getVhost() && '' !== $account->getVhost()) {
+            $context->reply('info.vhost', ['vhost' => $account->getVhost()]);
+        }
+
         $context->reply('info.footer');
     }
 }

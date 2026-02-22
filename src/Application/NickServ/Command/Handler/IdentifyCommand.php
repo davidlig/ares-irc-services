@@ -200,5 +200,10 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         }
 
         $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
+
+        $vhost = $account->getVhost();
+        if (null !== $vhost && '' !== $vhost) {
+            $context->getNotifier()->setUserVhost($sender->uid->value, $vhost);
+        }
     }
 }
