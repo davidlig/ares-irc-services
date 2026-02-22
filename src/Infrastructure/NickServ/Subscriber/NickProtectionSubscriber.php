@@ -55,15 +55,18 @@ class NickProtectionSubscriber implements EventSubscriberInterface
     ) {
     }
 
+    /**
+     * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.
+     *
+     * @see https://symfony.com/doc/7.4/event_dispatcher.html
+     */
     public static function getSubscribedEvents(): array
     {
         return [
             UserJoinedNetworkEvent::class => ['onUserJoined', 0],
             UserQuitNetworkEvent::class => ['onUserQuit', 0],
-            // Priority 10: run after NetworkStateSubscriber (0) so the user's nick is already updated.
-            UserNickChangedEvent::class => ['onNickChanged', 10],
-            // Priority -1000: fires after ActiveConnectionHolder (priority -999) has stored the connection.
-            NetworkBurstCompleteEvent::class => ['onBurstComplete', -1000],
+            UserNickChangedEvent::class => ['onNickChanged', 0],
+            NetworkBurstCompleteEvent::class => ['onBurstComplete', -256],
         ];
     }
 
@@ -166,28 +169,26 @@ class NickProtectionSubscriber implements EventSubscriberInterface
      */
     public function onNickChanged(UserNickChangedEvent $event): void
     {
+        $this->logger->debug(sprintf(
+            'NickProtection onNickChanged: old=%s new=%s uid=%s burstComplete=%s',
+            $event->oldNick->value,
+            $event->newNick->value,
+            $event->uid->value,
+            $this->burstComplete ? 'yes' : 'no',
+        ));
+
         if (!$this->burstComplete) {
             return;
         }
 
         $newNick = $event->newNick->value;
-        $account = $this->nickRepository->findByNick($newNick);
 
-        if (null === $account || !$account->isRegistered()) {
-            return;
-        }
-
-        $user = $this->userRepository->findByUid($event->uid);
-
-        if (null === $user) {
-            return;
-        }
-
-        // This nick change was triggered by our own SVSNICK (e.g. IDENTIFY flow).
-        // Protection must not be re-triggered — SVS2MODE +r is already on its way.
-        if ($this->pendingRegistry->consume($event->uid->value)) {
+        // Consume mark when we see our "rename to Guest" echo (new nick = Guest-*).
+        // Must run before account check so we consume here; otherwise we return early
+        // (Guest is not registered) and the mark would still be set when user does /nick <registered>.
+        if (str_starts_with($newNick, $this->guestPrefix) && $this->pendingRegistry->consume($event->uid->value)) {
             $this->logger->info(sprintf(
-                'Nick change: %s [%s] → %s — SVSNICK restore, skipping protection',
+                'Nick change: %s [%s] → %s — SVSNICK to Guest echo, skipping protection',
                 $event->oldNick->value,
                 $event->uid->value,
                 $newNick,
@@ -196,7 +197,52 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if ($user->isIdentified()) {
+        $account = $this->nickRepository->findByNick($newNick);
+
+        if (null === $account || !$account->isRegistered()) {
+            $this->logger->debug(sprintf(
+                'NickProtection onNickChanged: skip (account null or not registered for %s)',
+                $newNick,
+            ));
+
+            return;
+        }
+
+        // Resolve user by UID. NetworkStateSubscriber (10) has already run and
+        // updated the in-memory user's nick; we run at 10 so the user object is up to date.
+        // Using findByUid avoids depending on byNick index update order.
+        $user = $this->userRepository->findByUid($event->uid);
+
+        if (null === $user) {
+            $this->logger->debug(sprintf(
+                'NickProtection onNickChanged: skip (user null for uid %s)',
+                $event->uid->value,
+            ));
+
+            return;
+        }
+
+        // Skip protection when this NICK is the echo of our "restore after IDENTIFY" SVSNICK:
+        // old nick is Guest-*, new nick is registered. UMODE2 +r may arrive after the NICK.
+        if (str_starts_with($event->oldNick->value, $this->guestPrefix) && $this->pendingRegistry->consume($event->uid->value)) {
+            $this->logger->info(sprintf(
+                'Nick change: %s [%s] → %s — SVSNICK restore echo, skipping protection',
+                $event->oldNick->value,
+                $event->uid->value,
+                $newNick,
+            ));
+
+            return;
+        }
+
+        $identified = $user->isIdentified();
+        $this->logger->debug(sprintf(
+            'NickProtection onNickChanged: user modes=%s isIdentified=%s',
+            $user->getModes(),
+            $identified ? 'yes' : 'no',
+        ));
+
+        if ($identified) {
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — already identified, OK',
                 $event->oldNick->value,
