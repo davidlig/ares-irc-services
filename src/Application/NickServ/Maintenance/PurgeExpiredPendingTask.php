@@ -14,7 +14,7 @@ use Psr\Log\LoggerInterface;
  * Order 100: runs first in the NickServ maintenance range so that expired
  * pending entries are gone before any subsequent task might reference them.
  */
-final class PurgeExpiredPendingTask implements MaintenanceTaskInterface
+final readonly class PurgeExpiredPendingTask implements MaintenanceTaskInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,

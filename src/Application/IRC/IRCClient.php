@@ -62,7 +62,7 @@ class IRCClient
         while ($this->connection->isConnected()) {
             $rawLine = $this->connection->readLine();
 
-            if ($rawLine === null) {
+            if (null === $rawLine) {
                 $this->maintenanceScheduler->tick();
                 usleep(10_000);
                 continue;
@@ -88,7 +88,7 @@ class IRCClient
     {
         $this->logger->info('Disconnecting.', ['reason' => $reason ?? 'none']);
 
-        if ($this->activeLink !== null) {
+        if (null !== $this->activeLink) {
             $this->eventDispatcher->dispatch(
                 new ConnectionLostEvent($this->activeLink, $reason)
             );

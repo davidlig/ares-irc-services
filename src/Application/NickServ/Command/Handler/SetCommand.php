@@ -24,11 +24,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *   SET LANGUAGE <code>       (en | es | …)
  *   SET PRIVATE  ON|OFF
  */
-final class SetCommand implements NickServCommandInterface
+final readonly class SetCommand implements NickServCommandInterface
 {
     private const SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE'];
-
-    private const SUPPORTED_LANGUAGES = ['en', 'es'];
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -111,13 +109,13 @@ final class SetCommand implements NickServCommandInterface
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;
-        if ($sender === null) {
+        if (null === $sender) {
             return;
         }
 
         // Must be identified to use SET
         $account = $context->senderAccount;
-        if ($account === null) {
+        if (null === $account) {
             $context->reply('error.not_identified');
             return;
         }
@@ -174,12 +172,12 @@ final class SetCommand implements NickServCommandInterface
         }
 
         $account = $this->nickRepository->findByNick($nick);
-        if ($account === null || $account->getEmail() === null) {
+        if (null === $account || null === $account->getEmail()) {
             $context->reply('error.not_identified');
             return;
         }
 
-        if ($token !== null && $token !== '') {
+        if (null !== $token && '' !== $token) {
             $this->confirmEmailChange($context, $nick, $newEmail, $token, $account);
             return;
         }
@@ -228,21 +226,24 @@ final class SetCommand implements NickServCommandInterface
             return;
         }
 
-        $lang = strtolower($value);
+        $account = $this->nickRepository->findByNick($nick);
+        if (null === $account) {
+            return;
+        }
 
-        if (!in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
+        try {
+            $account->changeLanguage($value);
+        } catch (\InvalidArgumentException) {
             $context->reply('set.language.invalid', [
-                'languages' => implode(', ', self::SUPPORTED_LANGUAGES),
+                'languages' => implode(', ', RegisteredNick::SUPPORTED_LANGUAGES),
             ]);
             return;
         }
 
-        $account = $this->nickRepository->findByNick($nick);
-        $account?->changeLanguage($lang);
         $this->nickRepository->save($account);
 
         // Reply in the NEW language so the user sees confirmation in their chosen language
-        $context->reply('set.language.success', ['language' => $lang]);
+        $context->reply('set.language.success', ['language' => $account->getLanguage()]);
     }
 
     private function handlePrivate(NickServContext $context, string $nick, string $value): void
@@ -255,7 +256,7 @@ final class SetCommand implements NickServCommandInterface
         }
 
         $account = $this->nickRepository->findByNick($nick);
-        $account?->setPrivate('ON' === $flag);
+        $account?->switchPrivate('ON' === $flag);
         $this->nickRepository->save($account);
 
         $context->reply('ON' === $flag ? 'set.private.on' : 'set.private.off');

@@ -50,7 +50,7 @@ class NickServService
 
         $handler = $this->commandRegistry->find($cmdName);
 
-        if ($handler === null) {
+        if (null === $handler) {
             $this->notifier->sendNotice(
                 $sender->uid->value,
                 $this->translator->trans('unknown_command', ['command' => $cmdName], 'nickserv', $this->defaultLanguage)

@@ -57,7 +57,7 @@ class NetworkUser
         return $this->virtualHost;
     }
 
-    public function setVirtualHost(string $host): void
+    public function updateVirtualHost(string $host): void
     {
         $this->virtualHost = $host;
     }
@@ -67,7 +67,7 @@ class NetworkUser
         return $this->modes;
     }
 
-    public function setModes(string $modes): void
+    public function updateModes(string $modes): void
     {
         $this->modes = $modes;
     }
@@ -85,12 +85,12 @@ class NetworkUser
         $adding = true;
 
         foreach (str_split($modeStr) as $char) {
-            if ($char === '+') {
+            if ('+' === $char) {
                 $adding = true;
                 continue;
             }
 
-            if ($char === '-') {
+            if ('-' === $char) {
                 $adding = false;
                 continue;
             }
@@ -100,7 +100,7 @@ class NetworkUser
                     $current[] = $char;
                 }
             } else {
-                $current = array_values(array_filter($current, static fn($c) => $c !== $char));
+                $current = array_values(array_filter($current, static fn($c) => $char !== $c));
             }
         }
 
@@ -134,13 +134,13 @@ class NetworkUser
 
         $binary = base64_decode($this->ipBase64, strict: true);
 
-        if ($binary === false) {
+        if (false === $binary) {
             return $this->ipBase64;
         }
 
         $ip = inet_ntop($binary);
 
-        return $ip !== false ? $ip : $this->ipBase64;
+        return false !== $ip ? $ip : $this->ipBase64;
     }
 
     public function getDisplayHost(): string

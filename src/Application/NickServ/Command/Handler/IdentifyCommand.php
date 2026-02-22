@@ -19,7 +19,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
  * Authenticates a user against a registered nickname.
  * On success: restores the registered nick (if needed) and sets +r mode.
  */
-final class IdentifyCommand implements NickServCommandInterface
+final readonly class IdentifyCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -76,7 +76,7 @@ final class IdentifyCommand implements NickServCommandInterface
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;
-        if ($sender === null) {
+        if (null === $sender) {
             return;
         }
 
@@ -90,7 +90,7 @@ final class IdentifyCommand implements NickServCommandInterface
 
         $account = $this->nickRepository->findByNick($targetNick);
 
-        if ($account === null) {
+        if (null === $account) {
             $context->reply('identify.not_registered', ['nickname' => $targetNick]);
             return;
         }
@@ -136,11 +136,11 @@ final class IdentifyCommand implements NickServCommandInterface
     private function isAlreadyIdentified(NetworkUser $sender, string $targetNick): bool
     {
         $registeredNick = $this->identifiedRegistry->findNick($sender->uid->value);
-        if ($registeredNick !== null && strcasecmp($registeredNick, $targetNick) === 0) {
+        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $targetNick)) {
             return true;
         }
 
-        if ($sender->isIdentified() && strcasecmp($sender->getNick()->value, $targetNick) === 0) {
+        if ($sender->isIdentified() && 0 === strcasecmp($sender->getNick()->value, $targetNick)) {
             $this->identifiedRegistry->register($sender->uid->value, $targetNick);
             return true;
         }
@@ -163,7 +163,7 @@ final class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
-        if ($currentHolder === null || $currentHolder->uid->value === $sender->uid->value) {
+        if (null === $currentHolder || $sender->uid->value === $currentHolder->uid->value) {
             return;
         }
 

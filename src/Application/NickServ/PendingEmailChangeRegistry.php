@@ -13,12 +13,17 @@ namespace App\Application\NickServ;
  *
  * Token is sent to the CURRENT email so only the legitimate owner can confirm.
  */
-final class PendingEmailChangeRegistry
+final readonly class PendingEmailChangeRegistry
 {
     private const TTL_SECONDS = 3600;
 
     /** @var array<string, array{newEmail: string, token: string, expiresAt: \DateTimeImmutable}> */
-    private array $entries = [];
+    private array $entries;
+
+    public function __construct()
+    {
+        $this->entries = [];
+    }
 
     public function store(string $nickname, string $newEmail, string $token): void
     {
@@ -38,7 +43,7 @@ final class PendingEmailChangeRegistry
         $key   = strtolower($nickname);
         $entry = $this->entries[$key] ?? null;
 
-        if ($entry === null) {
+        if (null === $entry) {
             return false;
         }
 

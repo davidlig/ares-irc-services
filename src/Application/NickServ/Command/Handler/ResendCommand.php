@@ -16,7 +16,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Regenerates and resends the verification token to the email address
  * provided during REGISTER. Only works while the account is in PENDING status.
  */
-final class ResendCommand implements NickServCommandInterface
+final readonly class ResendCommand implements NickServCommandInterface
 {
     private const TOKEN_TTL_SECONDS = 3600;
 
@@ -75,14 +75,14 @@ final class ResendCommand implements NickServCommandInterface
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;
-        if ($sender === null) {
+        if (null === $sender) {
             return;
         }
 
         $nick    = $sender->getNick()->value;
         $account = $this->nickRepository->findByNick($nick);
 
-        if ($account === null || !$account->isPending()) {
+        if (null === $account || !$account->isPending()) {
             $context->reply('resend.no_pending');
             return;
         }
@@ -93,7 +93,7 @@ final class ResendCommand implements NickServCommandInterface
         $context->getPendingVerificationRegistry()->store($nick, $token, $expiresAt);
 
         $recipientEmail = $account->getEmail() ?? '';
-        if ($recipientEmail !== '') {
+        if ('' !== $recipientEmail) {
             try {
                 $locale = $context->getLanguage();
                 $subject = $this->translator->trans('resend_verification_subject', [], 'mail', $locale);

@@ -17,7 +17,7 @@ use App\Application\NickServ\Command\NickServContext;
  * The registry is obtained from the context to avoid a circular dependency:
  * NickServCommandRegistry → HelpCommand → NickServCommandRegistry.
  */
-final class HelpCommand implements NickServCommandInterface
+final readonly class HelpCommand implements NickServCommandInterface
 {
     /** Number of visible chars to reserve for command/option names in listings. */
     private const CMD_PAD  = 12;
@@ -78,7 +78,7 @@ final class HelpCommand implements NickServCommandInterface
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;
-        if ($sender === null) {
+        if (null === $sender) {
             return;
         }
 
@@ -90,7 +90,7 @@ final class HelpCommand implements NickServCommandInterface
         $targetCmd = strtoupper($context->args[0]);
         $handler   = $context->getRegistry()->find($targetCmd);
 
-        if ($handler === null || ($handler->isOperOnly() && !$sender->isOper())) {
+        if (null === $handler || ($handler->isOperOnly() && !$sender->isOper())) {
             $context->reply('help.unknown_command', ['command' => $targetCmd]);
             return;
         }
@@ -100,7 +100,7 @@ final class HelpCommand implements NickServCommandInterface
             $subName = strtoupper($context->args[1]);
             $subCmd  = $this->findSubCommand($handler, $subName);
 
-            if ($subCmd !== null) {
+            if (null !== $subCmd) {
                 $this->showSubCommandHelp($context, $handler->getName(), $subCmd);
                 return;
             }
@@ -126,7 +126,7 @@ final class HelpCommand implements NickServCommandInterface
         $context->reply('help.general_header');
 
         foreach ($commands as $command) {
-            if ($command->getName() === 'HELP') {
+            if ('HELP' === $command->getName()) {
                 continue;
             }
 
@@ -156,7 +156,7 @@ final class HelpCommand implements NickServCommandInterface
 
         $subCmds = $handler->getSubCommandHelp();
 
-        if ($subCmds !== []) {
+        if ([] !== $subCmds) {
             $context->replyRaw(' ');
             $context->reply('help.options_header');
 

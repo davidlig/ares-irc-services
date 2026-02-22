@@ -26,7 +26,7 @@ readonly class IRCMessage
     {
         $parts = [];
 
-        if ($this->prefix !== null) {
+        if (null !== $this->prefix) {
             $parts[] = ':' . $this->prefix;
         }
 
@@ -36,7 +36,7 @@ readonly class IRCMessage
             $parts[] = $param;
         }
 
-        if ($this->trailing !== null) {
+        if (null !== $this->trailing) {
             $parts[] = ':' . $this->trailing;
         }
 
@@ -55,7 +55,7 @@ readonly class IRCMessage
             $rawLine = substr($rawLine, $spacePos + 1);
         }
 
-        if (($colonPos = strpos($rawLine, ' :')) !== false) {
+        if (false !== ($colonPos = strpos($rawLine, ' :'))) {
             $trailing = substr($rawLine, $colonPos + 2);
             $rawLine = substr($rawLine, 0, $colonPos);
         }
@@ -66,7 +66,7 @@ readonly class IRCMessage
         return new self(
             command: $command,
             prefix: $prefix,
-            params: array_values(array_filter($parts, static fn (string $p): bool => $p !== '')),
+            params: array_values(array_filter($parts, static fn (string $p): bool => '' !== $p)),
             trailing: $trailing,
         );
     }

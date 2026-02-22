@@ -21,7 +21,7 @@ use App\Domain\NickServ\ValueObject\NickStatus;
  *   - Suspended (with reason)
  *   - Forbidden (with reason)
  */
-final class StatusCommand implements NickServCommandInterface
+final readonly class StatusCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -81,7 +81,7 @@ final class StatusCommand implements NickServCommandInterface
 
         $context->replyRaw($context->trans('status.header', ['nickname' => $targetNick]));
 
-        if ($account === null) {
+        if (null === $account) {
             $context->replyRaw($context->trans('status.unregistered'));
             $context->replyRaw($context->trans('status.footer'));
             return;
@@ -101,7 +101,7 @@ final class StatusCommand implements NickServCommandInterface
     {
         $context->replyRaw($context->trans('status.pending'));
 
-        if ($expiresAt !== null) {
+        if (null !== $expiresAt) {
             $minutes = max(0, (int) ceil(($expiresAt->getTimestamp() - time()) / 60));
             $context->replyRaw($context->trans('status.pending_expires', ['minutes' => $minutes]));
         }
@@ -116,13 +116,13 @@ final class StatusCommand implements NickServCommandInterface
 
         try {
             $onlineUser = $this->userRepository->findByNick(new Nick($targetNick));
-            if ($onlineUser !== null) {
+            if (null !== $onlineUser) {
                 $context->replyRaw($context->trans('status.online_now'));
             }
         } catch (\InvalidArgumentException) {
         }
 
-        if ($registeredAt !== null) {
+        if (null !== $registeredAt) {
             $context->replyRaw($context->trans('status.registered_at', [
                 'date' => $registeredAt->format('d/m/Y H:i'),
             ]));
@@ -133,7 +133,7 @@ final class StatusCommand implements NickServCommandInterface
     {
         $context->replyRaw($context->trans('status.suspended'));
 
-        if ($reason !== null) {
+        if (null !== $reason) {
             $context->replyRaw($context->trans('status.suspended_reason', ['reason' => $reason]));
         }
     }
@@ -142,7 +142,7 @@ final class StatusCommand implements NickServCommandInterface
     {
         $context->replyRaw($context->trans('status.forbidden'));
 
-        if ($reason !== null) {
+        if (null !== $reason) {
             $context->replyRaw($context->trans('status.forbidden_reason', ['reason' => $reason]));
         }
     }

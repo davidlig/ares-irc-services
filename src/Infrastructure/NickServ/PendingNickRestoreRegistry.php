@@ -9,10 +9,15 @@ namespace App\Infrastructure\NickServ;
  * (e.g. during the IDENTIFY flow). Used by NickProtectionSubscriber to suppress
  * false protection triggers when the NICK echo arrives before the UMODE2 +r.
  */
-final class PendingNickRestoreRegistry
+final readonly class PendingNickRestoreRegistry
 {
     /** @var array<string, bool> */
-    private array $pending = [];
+    private array $pending;
+
+    public function __construct()
+    {
+        $this->pending = [];
+    }
 
     public function mark(string $uid): void
     {

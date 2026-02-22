@@ -68,7 +68,7 @@ class NickServMessageSubscriber implements EventSubscriberInterface
             // Source may be a nick string (legacy)
         }
 
-        if ($sender === null) {
+        if (null === $sender) {
             $this->logger->warning('NickServ: could not resolve sender UID: ' . $sourceId);
             return;
         }
@@ -98,7 +98,7 @@ class NickServMessageSubscriber implements EventSubscriberInterface
 
     private function isAddressedToNickServ(string $target): bool
     {
-        return strcasecmp($target, $this->nickServBot->getNick()) === 0
-            || $target === $this->nickServBot->getUid();
+        return 0 === strcasecmp($target, $this->nickServBot->getNick())
+            || $this->nickServBot->getUid() === $target;
     }
 }

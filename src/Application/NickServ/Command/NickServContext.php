@@ -85,7 +85,7 @@ class NickServContext
      */
     public function transIn(string $key, array $params = [], string $language = ''): string
     {
-        $lang = $language !== '' ? $language : $this->language;
+        $lang = '' !== $language ? $language : $this->language;
 
         return $this->translator->trans($key, $this->wrapParams($params), 'nickserv', $lang);
     }
@@ -109,7 +109,7 @@ class NickServContext
 
     private function sendRaw(string $message): void
     {
-        if ($this->sender === null) {
+        if (null === $this->sender) {
             return;
         }
 

@@ -22,6 +22,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(columns: ['status', 'expires_at'], name: 'idx_status_expires')]
 class RegisteredNick
 {
+    /** Supported BCP-47 language tags for account preferences. */
+    public const SUPPORTED_LANGUAGES = ['en', 'es'];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -44,11 +47,30 @@ class RegisteredNick
 
     /** Null for FORBIDDEN entries. */
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private ?string $email;
+    private ?string $email {
+        set(?string $value) {
+            if (null !== $value && false === filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                throw new \InvalidArgumentException('Invalid email address.');
+            }
+            $this->email = $value;
+        }
+    }
 
     /** BCP-47 language tag: 'en', 'es', etc. */
     #[ORM\Column(type: 'string', length: 10)]
-    private string $language;
+    private string $language {
+        set(string $value) {
+            $lang = strtolower($value);
+            if (!\in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
+                throw new \InvalidArgumentException(sprintf(
+                    'Unsupported language "%s". Supported: %s.',
+                    $value,
+                    implode(', ', self::SUPPORTED_LANGUAGES),
+                ));
+            }
+            $this->language = $lang;
+        }
+    }
 
     /** Null for FORBIDDEN entries. */
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
@@ -157,28 +179,28 @@ class RegisteredNick
 
     public function isPending(): bool
     {
-        return $this->status === NickStatus::Pending;
+        return NickStatus::Pending === $this->status;
     }
 
     public function isRegistered(): bool
     {
-        return $this->status === NickStatus::Registered;
+        return NickStatus::Registered === $this->status;
     }
 
     public function isSuspended(): bool
     {
-        return $this->status === NickStatus::Suspended;
+        return NickStatus::Suspended === $this->status;
     }
 
     public function isForbidden(): bool
     {
-        return $this->status === NickStatus::Forbidden;
+        return NickStatus::Forbidden === $this->status;
     }
 
     public function isExpired(): bool
     {
-        return $this->status === NickStatus::Pending
-            && $this->expiresAt !== null
+        return NickStatus::Pending === $this->status
+            && null !== $this->expiresAt
             && $this->expiresAt < new \DateTimeImmutable();
     }
 
@@ -280,14 +302,14 @@ class RegisteredNick
         $this->lastQuitMessage = $message;
     }
 
-    public function setPrivate(bool $private): void
+    public function switchPrivate(bool $private): void
     {
         $this->private = $private;
     }
 
     public function verifyPassword(string $plainPassword): bool
     {
-        if ($this->passwordHash === null) {
+        if (null === $this->passwordHash) {
             return false;
         }
 

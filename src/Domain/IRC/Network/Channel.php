@@ -80,7 +80,7 @@ class Channel
         return $this->modes;
     }
 
-    public function setModes(string $modes): void
+    public function updateModes(string $modes): void
     {
         $this->modes = $modes;
     }
@@ -102,7 +102,7 @@ class Channel
         return $this->topic;
     }
 
-    public function setTopic(?string $topic): void
+    public function updateTopic(?string $topic): void
     {
         $this->topic = $topic;
     }
@@ -118,7 +118,7 @@ class Channel
 
     public function removeBan(string $mask): void
     {
-        $this->bans = array_filter($this->bans, static fn (string $m): bool => $m !== $mask);
+        $this->bans = array_filter($this->bans, static fn (string $m): bool => $mask !== $m);
     }
 
     /** @return string[] */
@@ -138,7 +138,7 @@ class Channel
 
     public function removeExempt(string $mask): void
     {
-        $this->exempts = array_filter($this->exempts, static fn (string $m): bool => $m !== $mask);
+        $this->exempts = array_filter($this->exempts, static fn (string $m): bool => $mask !== $m);
     }
 
     /** @return string[] */
@@ -160,7 +160,7 @@ class Channel
     {
         $this->inviteExceptions = array_filter(
             $this->inviteExceptions,
-            static fn (string $m): bool => $m !== $mask
+            static fn (string $m): bool => $mask !== $m
         );
     }
 

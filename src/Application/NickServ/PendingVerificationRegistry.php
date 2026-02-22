@@ -16,10 +16,15 @@ namespace App\Application\NickServ;
  * as long as the service is running. Expired entries are either consumed by
  * VERIFY (which rejects them) or cleaned up by PurgeExpiredPendingTask.
  */
-final class PendingVerificationRegistry
+final readonly class PendingVerificationRegistry
 {
     /** @var array<string, array{token: string, expiresAt: \DateTimeImmutable}> */
-    private array $entries = [];
+    private array $entries;
+
+    public function __construct()
+    {
+        $this->entries = [];
+    }
 
     public function store(string $nickname, string $token, \DateTimeImmutable $expiresAt): void
     {
@@ -39,7 +44,7 @@ final class PendingVerificationRegistry
         $key   = strtolower($nickname);
         $entry = $this->entries[$key] ?? null;
 
-        if ($entry === null) {
+        if (null === $entry) {
             return false;
         }
 

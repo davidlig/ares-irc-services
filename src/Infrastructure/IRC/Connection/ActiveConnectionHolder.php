@@ -46,6 +46,6 @@ class ActiveConnectionHolder implements EventSubscriberInterface
 
     public function isConnected(): bool
     {
-        return $this->connection !== null;
+        return null !== $this->connection;
     }
 }

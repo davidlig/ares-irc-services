@@ -28,7 +28,7 @@ readonly class Uid
 
     public function equals(self $other): bool
     {
-        return $this->value === $other->value;
+        return $other->value === $this->value;
     }
 
     public function __toString(): string
