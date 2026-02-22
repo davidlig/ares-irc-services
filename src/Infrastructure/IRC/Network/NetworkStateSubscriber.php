@@ -34,7 +34,8 @@ use function sprintf;
 
 /**
  * Listens to every incoming IRC message and maintains an in-memory picture of
- * the network state: users (UID / NICK / QUIT) and channels (SJOIN / PART / KICK).
+ * the network state: users (UID / NICK / QUIT) and channels (SJOIN / PART / KICK
+ * / MODE / TOPIC for UnrealIRCd; FJOIN / FMODE / LMODE / FTOPIC for InspIRCd).
  *
  * Dispatches domain events so that service modules can react to state changes.
  */
@@ -68,6 +69,12 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             'KICK' => $this->handleKick($message),
             'UMODE2' => $this->handleUmode2($message),
             'MD' => $this->handleMd($message),
+            'TOPIC' => $this->handleTopic($message),
+            'MODE' => $this->handleMode($message),
+            'FJOIN' => $this->handleFjoin($message),
+            'FMODE' => $this->handleFmode($message),
+            'LMODE' => $this->handleLmode($message),
+            'FTOPIC' => $this->handleFtopic($message),
             default => null,
         };
     }
@@ -483,6 +490,329 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         }
 
         $this->logger->debug(sprintf('MD: client %s account = %s', $uidStr, $value));
+    }
+
+    // -------------------------------------------------------------------------
+    // TOPIC — channel topic (UnrealIRCd S2S)
+    // Syntax: TOPIC channel set-by set-when :topic text
+    // -------------------------------------------------------------------------
+    private function handleTopic(IRCMessage $message): void
+    {
+        $channelStr = $message->params[0] ?? '';
+        $topic = $message->trailing;
+
+        if ('' === $channelStr) {
+            return;
+        }
+
+        try {
+            $channelName = new ChannelName($channelStr);
+        } catch (InvalidArgumentException) {
+            return;
+        }
+
+        $channel = $this->channelRepository->findByName($channelName);
+        if (null === $channel) {
+            return;
+        }
+
+        $channel->updateTopic($topic);
+        $this->channelRepository->save($channel);
+        $this->logger->debug(sprintf('TOPIC %s: %s', $channelStr, $topic ?? '(cleared)'));
+    }
+
+    // -------------------------------------------------------------------------
+    // MODE — channel mode change (UnrealIRCd S2S)
+    // Syntax: :source MODE #channel ±modes [params...]
+    // Prefix modes (v,h,o,a,q) and list modes (b,e,I) are applied to our state.
+    // -------------------------------------------------------------------------
+    private function handleMode(IRCMessage $message): void
+    {
+        if (count($message->params) < 2) {
+            return;
+        }
+
+        $channelStr = $message->params[0];
+        $modeStr = $message->params[1];
+        $modeParams = array_slice($message->params, 2);
+        if (null !== $message->trailing && '' !== $message->trailing) {
+            $modeParams[] = $message->trailing;
+        }
+
+        try {
+            $channelName = new ChannelName($channelStr);
+        } catch (InvalidArgumentException) {
+            return;
+        }
+
+        $channel = $this->channelRepository->findByName($channelName);
+        if (null === $channel) {
+            return;
+        }
+
+        $paramIdx = 0;
+        $adding = true;
+
+        foreach (str_split($modeStr) as $char) {
+            if ('+' === $char) {
+                $adding = true;
+                continue;
+            }
+            if ('-' === $char) {
+                $adding = false;
+                continue;
+            }
+
+            $role = ChannelMemberRole::fromModeLetter($char);
+            if (null !== $role) {
+                if ($paramIdx >= count($modeParams)) {
+                    break;
+                }
+                $targetId = $modeParams[$paramIdx];
+                ++$paramIdx;
+                $user = $this->resolveUser($targetId);
+                if (null !== $user) {
+                    $channel->syncMember($user->uid, $adding ? $role : ChannelMemberRole::None);
+                }
+                continue;
+            }
+
+            if ('b' === $char || 'e' === $char || 'I' === $char) {
+                if ($paramIdx >= count($modeParams)) {
+                    break;
+                }
+                $mask = $modeParams[$paramIdx];
+                ++$paramIdx;
+                if ('b' === $char) {
+                    $adding ? $channel->addBan($mask) : $channel->removeBan($mask);
+                } elseif ('e' === $char) {
+                    $adding ? $channel->addExempt($mask) : $channel->removeExempt($mask);
+                } else {
+                    $adding ? $channel->addInviteException($mask) : $channel->removeInviteException($mask);
+                }
+            }
+        }
+
+        $this->channelRepository->save($channel);
+    }
+
+    // -------------------------------------------------------------------------
+    // FJOIN — InspIRCd channel sync (equivalent to SJOIN)
+    // Syntax: :sid FJOIN #channel timestamp +modes param :prefix,uid:mid [prefix,uid:mid ...]
+    // -------------------------------------------------------------------------
+    private function handleFjoin(IRCMessage $message): void
+    {
+        if (count($message->params) < 3) {
+            return;
+        }
+
+        $channelStr = $message->params[0];
+        $timestamp = (int) $message->params[1];
+        $modeStr = $message->params[2] ?? '';
+        $buffer = trim($message->trailing ?? '');
+
+        try {
+            $channelName = new ChannelName($channelStr);
+        } catch (InvalidArgumentException) {
+            return;
+        }
+
+        $channel = $this->channelRepository->findByName($channelName);
+        $isNewChannel = null === $channel;
+
+        if ($isNewChannel) {
+            $channel = new Channel(
+                name: $channelName,
+                modes: $modeStr,
+                createdAt: new DateTimeImmutable('@' . $timestamp),
+            );
+        } else {
+            if ('' !== $modeStr) {
+                $channel->updateModes($modeStr);
+            }
+        }
+
+        $joinedUids = [];
+
+        foreach (explode(' ', $buffer) as $entry) {
+            $entry = trim($entry);
+            if ('' === $entry) {
+                continue;
+            }
+
+            $comma = strpos($entry, ',');
+            $colon = strpos($entry, ':');
+            if (false === $comma || false === $colon || $colon < $comma) {
+                continue;
+            }
+
+            $prefixLetter = substr($entry, 0, $comma);
+            $uidStr = substr($entry, $comma + 1, $colon - $comma - 1);
+
+            try {
+                $uid = new Uid($uidStr);
+            } catch (InvalidArgumentException) {
+                continue;
+            }
+
+            $role = ChannelMemberRole::fromModeLetter($prefixLetter) ?? ChannelMemberRole::None;
+            $channel->syncMember($uid, $role);
+            $joinedUids[] = $uid;
+
+            $joinedUser = $this->userRepository->findByUid($uid);
+            $joinedUser?->addChannel($channelName);
+        }
+
+        $this->channelRepository->save($channel);
+
+        if ($isNewChannel) {
+            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
+        } else {
+            foreach ($joinedUids as $uid) {
+                $member = $channel->getMember($uid);
+                $role = $member?->role ?? ChannelMemberRole::None;
+                $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $channelName, $role));
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // FMODE — InspIRCd channel mode change (settings, not prefix/list)
+    // Syntax: :source FMODE #channel timestamp ±modes [params...]
+    // We only update the channel mode string; prefix/list changes use LMODE or MODE.
+    // -------------------------------------------------------------------------
+    private function handleFmode(IRCMessage $message): void
+    {
+        if (count($message->params) < 3) {
+            return;
+        }
+
+        $channelStr = $message->params[0];
+        $modeStr = $message->params[2] ?? '';
+
+        try {
+            $channelName = new ChannelName($channelStr);
+        } catch (InvalidArgumentException) {
+            return;
+        }
+
+        $channel = $this->channelRepository->findByName($channelName);
+        if (null === $channel) {
+            return;
+        }
+
+        $current = $channel->getModes();
+        $channel->updateModes($this->mergeModeString($current, $modeStr));
+        $this->channelRepository->save($channel);
+    }
+
+    // -------------------------------------------------------------------------
+    // LMODE — InspIRCd list mode sync (+b, +e, +I)
+    // Syntax: :sid LMODE #channel timestamp mode mask [timestamp setter] ...
+    // -------------------------------------------------------------------------
+    private function handleLmode(IRCMessage $message): void
+    {
+        if (count($message->params) < 4) {
+            return;
+        }
+
+        $channelStr = $message->params[0];
+        $modeChar = $message->params[2] ?? '';
+
+        try {
+            $channelName = new ChannelName($channelStr);
+        } catch (InvalidArgumentException) {
+            return;
+        }
+
+        $channel = $this->channelRepository->findByName($channelName);
+        if (null === $channel) {
+            return;
+        }
+
+        $params = array_slice($message->params, 3);
+        if (null !== $message->trailing && '' !== $message->trailing) {
+            $params[] = $message->trailing;
+        }
+
+        for ($i = 0; $i < count($params); $i += 3) {
+            $mask = $params[$i] ?? '';
+            if ('' === $mask) {
+                break;
+            }
+            if ('b' === $modeChar) {
+                $channel->addBan($mask);
+            } elseif ('e' === $modeChar) {
+                $channel->addExempt($mask);
+            } elseif ('I' === $modeChar) {
+                $channel->addInviteException($mask);
+            }
+        }
+
+        $this->channelRepository->save($channel);
+    }
+
+    // -------------------------------------------------------------------------
+    // FTOPIC — InspIRCd channel topic
+    // Syntax: :source FTOPIC #channel createts topicts [setter] :topic
+    // -------------------------------------------------------------------------
+    private function handleFtopic(IRCMessage $message): void
+    {
+        if (count($message->params) < 2) {
+            return;
+        }
+
+        $channelStr = $message->params[0];
+        $topic = $message->trailing;
+
+        try {
+            $channelName = new ChannelName($channelStr);
+        } catch (InvalidArgumentException) {
+            return;
+        }
+
+        $channel = $this->channelRepository->findByName($channelName);
+        if (null === $channel) {
+            return;
+        }
+
+        $channel->updateTopic($topic);
+        $this->channelRepository->save($channel);
+    }
+
+    /**
+     * Merges a delta mode string (e.g. +nt -k) into current. Simple concat; no dedup.
+     */
+    private function mergeModeString(string $current, string $delta): string
+    {
+        if ('' === $delta) {
+            return $current;
+        }
+        $base = str_replace(['+', '-'], '', $current);
+        $add = '';
+        $remove = '';
+        $adding = true;
+        foreach (str_split($delta) as $c) {
+            if ('+' === $c) {
+                $adding = true;
+                continue;
+            }
+            if ('-' === $c) {
+                $adding = false;
+                continue;
+            }
+            if ($adding) {
+                $add .= $c;
+                $remove = str_replace($c, '', $remove);
+            } else {
+                $remove .= $c;
+                $add = str_replace($c, '', $add);
+            }
+        }
+        $base = preg_replace('/[' . preg_quote($remove, '/') . ']/', '', $base) ?? $base;
+        $base .= $add;
+
+        return '' === $base ? '' : '+' . $base;
     }
 
     // -------------------------------------------------------------------------
