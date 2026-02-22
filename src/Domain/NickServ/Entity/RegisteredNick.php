@@ -5,7 +5,14 @@ declare(strict_types=1);
 namespace App\Domain\NickServ\Entity;
 
 use App\Domain\NickServ\ValueObject\NickStatus;
+use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
+use InvalidArgumentException;
+
+use function in_array;
+use function sprintf;
+
+use const FILTER_VALIDATE_EMAIL;
 
 /**
  * A registered (or pending/suspended/forbidden) IRC nickname.
@@ -50,7 +57,7 @@ class RegisteredNick
     private ?string $email {
         set(?string $value) {
             if (null !== $value && false === filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                throw new \InvalidArgumentException('Invalid email address.');
+                throw new InvalidArgumentException('Invalid email address.');
             }
             $this->email = $value;
         }
@@ -61,12 +68,8 @@ class RegisteredNick
     private string $language {
         set(string $value) {
             $lang = strtolower($value);
-            if (!\in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
-                throw new \InvalidArgumentException(sprintf(
-                    'Unsupported language "%s". Supported: %s.',
-                    $value,
-                    implode(', ', self::SUPPORTED_LANGUAGES),
-                ));
+            if (!in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
+                throw new InvalidArgumentException(sprintf('Unsupported language "%s". Supported: %s.', $value, implode(', ', self::SUPPORTED_LANGUAGES)));
             }
             $this->language = $lang;
         }
@@ -74,18 +77,18 @@ class RegisteredNick
 
     /** Null for FORBIDDEN entries. */
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $registeredAt;
+    private ?DateTimeImmutable $registeredAt;
 
     /** Only set while status is PENDING; null once the account is activated. */
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $expiresAt = null;
+    private ?DateTimeImmutable $expiresAt = null;
 
     /** Human-readable reason for SUSPENDED or FORBIDDEN status. */
     #[ORM\Column(type: 'string', length: 512, nullable: true)]
     private ?string $reason = null;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $lastSeenAt = null;
+    private ?DateTimeImmutable $lastSeenAt = null;
 
     #[ORM\Column(type: 'string', length: 512, nullable: true)]
     private ?string $lastQuitMessage = null;
@@ -106,17 +109,17 @@ class RegisteredNick
         string $passwordHash,
         string $email,
         string $language,
-        \DateTimeImmutable $expiresAt,
+        DateTimeImmutable $expiresAt,
     ): self {
-        $nick               = new self();
-        $nick->nickname     = $nickname;
+        $nick = new self();
+        $nick->nickname = $nickname;
         $nick->nicknameLower = strtolower($nickname);
-        $nick->status       = NickStatus::Pending;
+        $nick->status = NickStatus::Pending;
         $nick->passwordHash = $passwordHash;
-        $nick->email        = $email;
-        $nick->language     = $language;
-        $nick->registeredAt = new \DateTimeImmutable();
-        $nick->expiresAt    = $expiresAt;
+        $nick->email = $email;
+        $nick->language = $language;
+        $nick->registeredAt = new DateTimeImmutable();
+        $nick->expiresAt = $expiresAt;
 
         return $nick;
     }
@@ -129,15 +132,15 @@ class RegisteredNick
         string $reason,
         string $language = 'en',
     ): self {
-        $nick               = new self();
-        $nick->nickname     = $nickname;
+        $nick = new self();
+        $nick->nickname = $nickname;
         $nick->nicknameLower = strtolower($nickname);
-        $nick->status       = NickStatus::Forbidden;
+        $nick->status = NickStatus::Forbidden;
         $nick->passwordHash = null;
-        $nick->email        = null;
-        $nick->language     = $language;
+        $nick->email = null;
+        $nick->language = $language;
         $nick->registeredAt = null;
-        $nick->reason       = $reason;
+        $nick->reason = $reason;
 
         return $nick;
     }
@@ -151,7 +154,7 @@ class RegisteredNick
      */
     public function activate(): void
     {
-        $this->status    = NickStatus::Registered;
+        $this->status = NickStatus::Registered;
         $this->expiresAt = null;
     }
 
@@ -201,7 +204,7 @@ class RegisteredNick
     {
         return NickStatus::Pending === $this->status
             && null !== $this->expiresAt
-            && $this->expiresAt < new \DateTimeImmutable();
+            && $this->expiresAt < new DateTimeImmutable();
     }
 
     // -------------------------------------------------------------------------
@@ -243,12 +246,12 @@ class RegisteredNick
         return $this->language;
     }
 
-    public function getRegisteredAt(): ?\DateTimeImmutable
+    public function getRegisteredAt(): ?DateTimeImmutable
     {
         return $this->registeredAt;
     }
 
-    public function getExpiresAt(): ?\DateTimeImmutable
+    public function getExpiresAt(): ?DateTimeImmutable
     {
         return $this->expiresAt;
     }
@@ -258,7 +261,7 @@ class RegisteredNick
         return $this->reason;
     }
 
-    public function getLastSeenAt(): ?\DateTimeImmutable
+    public function getLastSeenAt(): ?DateTimeImmutable
     {
         return $this->lastSeenAt;
     }
@@ -294,7 +297,7 @@ class RegisteredNick
 
     public function markSeen(): void
     {
-        $this->lastSeenAt = new \DateTimeImmutable();
+        $this->lastSeenAt = new DateTimeImmutable();
     }
 
     public function updateQuitMessage(?string $message): void

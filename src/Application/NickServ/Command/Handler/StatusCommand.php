@@ -10,9 +10,11 @@ use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
+use DateTimeImmutable;
+use InvalidArgumentException;
 
 /**
- * STATUS <nickname>
+ * STATUS <nickname>.
  *
  * Displays the registration state of a nickname:
  *   - Not registered
@@ -77,27 +79,28 @@ final readonly class StatusCommand implements NickServCommandInterface
     public function execute(NickServContext $context): void
     {
         $targetNick = $context->args[0];
-        $account    = $this->nickRepository->findByNick($targetNick);
+        $account = $this->nickRepository->findByNick($targetNick);
 
         $context->replyRaw($context->trans('status.header', ['nickname' => $targetNick]));
 
         if (null === $account) {
             $context->replyRaw($context->trans('status.unregistered'));
             $context->replyRaw($context->trans('status.footer'));
+
             return;
         }
 
         match ($account->getStatus()) {
-            NickStatus::Pending    => $this->replyPending($context, $account->getExpiresAt()),
+            NickStatus::Pending => $this->replyPending($context, $account->getExpiresAt()),
             NickStatus::Registered => $this->replyRegistered($context, $targetNick, $account->getRegisteredAt()),
-            NickStatus::Suspended  => $this->replySuspended($context, $account->getReason()),
-            NickStatus::Forbidden  => $this->replyForbidden($context, $account->getReason()),
+            NickStatus::Suspended => $this->replySuspended($context, $account->getReason()),
+            NickStatus::Forbidden => $this->replyForbidden($context, $account->getReason()),
         };
 
         $context->replyRaw($context->trans('status.footer'));
     }
 
-    private function replyPending(NickServContext $context, ?\DateTimeImmutable $expiresAt): void
+    private function replyPending(NickServContext $context, ?DateTimeImmutable $expiresAt): void
     {
         $context->replyRaw($context->trans('status.pending'));
 
@@ -110,7 +113,7 @@ final readonly class StatusCommand implements NickServCommandInterface
     private function replyRegistered(
         NickServContext $context,
         string $targetNick,
-        ?\DateTimeImmutable $registeredAt,
+        ?DateTimeImmutable $registeredAt,
     ): void {
         $context->replyRaw($context->trans('status.registered'));
 
@@ -119,7 +122,7 @@ final readonly class StatusCommand implements NickServCommandInterface
             if (null !== $onlineUser) {
                 $context->replyRaw($context->trans('status.online_now'));
             }
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
         }
 
         if (null !== $registeredAt) {

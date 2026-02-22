@@ -8,6 +8,8 @@ use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\Repository\ChannelRepositoryInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
 
+use function count;
+
 class InMemoryChannelRepository implements ChannelRepositoryInterface
 {
     /** @var array<string, Channel> keyed by lowercase channel name */

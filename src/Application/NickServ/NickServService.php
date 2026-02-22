@@ -7,12 +7,16 @@ namespace App\Application\NickServ;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\PendingVerificationRegistry;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
+
+use function count;
+use function sprintf;
+
+use const PREG_SPLIT_NO_EMPTY;
 
 /**
  * Routes a raw command string (from a PRIVMSG to NickServ) to the correct
@@ -40,9 +44,9 @@ class NickServService
      */
     public function dispatch(string $rawText, NetworkUser $sender): void
     {
-        $parts   = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY);
+        $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY);
         $cmdName = strtoupper(array_shift($parts) ?? '');
-        $args    = $parts;
+        $args = $parts;
 
         if ('' === $cmdName) {
             return;
@@ -55,29 +59,31 @@ class NickServService
                 $sender->uid->value,
                 $this->translator->trans('unknown_command', ['command' => $cmdName], 'nickserv', $this->defaultLanguage)
             );
+
             return;
         }
 
         // Resolve account + language
-        $account  = $this->nickRepository->findByNick($sender->getNick()->value);
+        $account = $this->nickRepository->findByNick($sender->getNick()->value);
         $language = $account?->getLanguage() ?? $this->defaultLanguage;
 
         // Build context
         $context = new NickServContext(
-            sender:                      $sender,
-            senderAccount:               $account,
-            command:                     $cmdName,
-            args:                        $args,
-            notifier:                    $this->notifier,
-            translator:                  $this->translator,
-            language:                    $language,
-            registry:                    $this->commandRegistry,
+            sender: $sender,
+            senderAccount: $account,
+            command: $cmdName,
+            args: $args,
+            notifier: $this->notifier,
+            translator: $this->translator,
+            language: $language,
+            registry: $this->commandRegistry,
             pendingVerificationRegistry: $this->pendingVerificationRegistry,
         );
 
         // Oper-only guard
         if ($handler->isOperOnly() && !$sender->isOper()) {
             $context->reply('error.oper_only');
+
             return;
         }
 
@@ -86,6 +92,7 @@ class NickServService
             $context->reply('error.syntax', [
                 'syntax' => $context->trans($handler->getSyntaxKey()),
             ]);
+
             return;
         }
 

@@ -10,10 +10,18 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use InvalidArgumentException;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Throwable;
+
+use function array_slice;
+use function in_array;
+
+use const FILTER_VALIDATE_EMAIL;
+use const PASSWORD_ARGON2ID;
 
 /**
- * SET <option> <value>
+ * SET <option> <value>.
  *
  * Allows a registered and identified user to change their NickServ settings.
  *
@@ -75,27 +83,27 @@ final readonly class SetCommand implements NickServCommandInterface
     {
         return [
             [
-                'name'       => 'PASSWORD',
-                'desc_key'   => 'set.password.short',
-                'help_key'   => 'set.password.help',
+                'name' => 'PASSWORD',
+                'desc_key' => 'set.password.short',
+                'help_key' => 'set.password.help',
                 'syntax_key' => 'set.password.syntax',
             ],
             [
-                'name'       => 'EMAIL',
-                'desc_key'   => 'set.email.short',
-                'help_key'   => 'set.email.help',
+                'name' => 'EMAIL',
+                'desc_key' => 'set.email.short',
+                'help_key' => 'set.email.help',
                 'syntax_key' => 'set.email.syntax',
             ],
             [
-                'name'       => 'LANGUAGE',
-                'desc_key'   => 'set.language.short',
-                'help_key'   => 'set.language.help',
+                'name' => 'LANGUAGE',
+                'desc_key' => 'set.language.short',
+                'help_key' => 'set.language.help',
                 'syntax_key' => 'set.language.syntax',
             ],
             [
-                'name'       => 'PRIVATE',
-                'desc_key'   => 'set.private.short',
-                'help_key'   => 'set.private.help',
+                'name' => 'PRIVATE',
+                'desc_key' => 'set.private.short',
+                'help_key' => 'set.private.help',
                 'syntax_key' => 'set.private.syntax',
             ],
         ];
@@ -117,25 +125,27 @@ final readonly class SetCommand implements NickServCommandInterface
         $account = $context->senderAccount;
         if (null === $account) {
             $context->reply('error.not_identified');
+
             return;
         }
 
         // Owner check: SET is only allowed for the nick you are currently using
-        if (strcasecmp($sender->getNick()->value, $account->getNickname()) !== 0) {
+        if (0 !== strcasecmp($sender->getNick()->value, $account->getNickname())) {
             $context->reply('error.not_identified');
+
             return;
         }
 
         $option = strtoupper($context->args[0]);
-        $value  = implode(' ', array_slice($context->args, 1));
+        $value = implode(' ', array_slice($context->args, 1));
 
         match ($option) {
             'PASSWORD' => $this->handlePassword($context, $account->getNickname(), $value),
-            'EMAIL'    => $this->handleEmail($context, $account->getNickname(), $value),
+            'EMAIL' => $this->handleEmail($context, $account->getNickname(), $value),
             'LANGUAGE' => $this->handleLanguage($context, $account->getNickname(), $value),
-            'PRIVATE'  => $this->handlePrivate($context, $account->getNickname(), $value),
-            default    => $context->reply('set.unknown_option', [
-                'option'  => $option,
+            'PRIVATE' => $this->handlePrivate($context, $account->getNickname(), $value),
+            default => $context->reply('set.unknown_option', [
+                'option' => $option,
                 'options' => implode(', ', self::SUPPORTED_OPTIONS),
             ]),
         };
@@ -145,6 +155,7 @@ final readonly class SetCommand implements NickServCommandInterface
     {
         if ('' === $value) {
             $context->reply('error.syntax', ['syntax' => $context->trans('set.password.syntax')]);
+
             return;
         }
 
@@ -157,28 +168,32 @@ final readonly class SetCommand implements NickServCommandInterface
 
     private function handleEmail(NickServContext $context, string $nick, string $value): void
     {
-        $parts    = explode(' ', $value, 2);
+        $parts = explode(' ', $value, 2);
         $newEmail = trim($parts[0] ?? '');
-        $token    = isset($parts[1]) ? trim($parts[1]) : null;
+        $token = isset($parts[1]) ? trim($parts[1]) : null;
 
         if ('' === $newEmail) {
             $context->reply('error.syntax', ['syntax' => $context->trans('set.email.syntax')]);
+
             return;
         }
 
         if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
             $context->reply('register.invalid_email');
+
             return;
         }
 
         $account = $this->nickRepository->findByNick($nick);
         if (null === $account || null === $account->getEmail()) {
             $context->reply('error.not_identified');
+
             return;
         }
 
         if (null !== $token && '' !== $token) {
             $this->confirmEmailChange($context, $nick, $newEmail, $token, $account);
+
             return;
         }
 
@@ -195,14 +210,15 @@ final readonly class SetCommand implements NickServCommandInterface
             $subject = $this->translator->trans('email_change_token_subject', [], 'mail', $locale);
             $body = $this->translator->trans('email_change_token_body', ['%new_email%' => $newEmail, '%token%' => $token], 'mail', $locale);
             $this->mailer->send($currentEmail, $subject, $body);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $context->reply('error.mail_failed');
+
             return;
         }
 
         $context->reply('set.email.pending_sent', [
             'current_email' => $currentEmail,
-            'new_email'    => $newEmail,
+            'new_email' => $newEmail,
         ]);
     }
 
@@ -210,6 +226,7 @@ final readonly class SetCommand implements NickServCommandInterface
     {
         if (!$this->pendingEmailChangeRegistry->consume($nick, $newEmail, $token)) {
             $context->reply('set.email.invalid_token');
+
             return;
         }
 
@@ -223,6 +240,7 @@ final readonly class SetCommand implements NickServCommandInterface
     {
         if ('' === $value) {
             $context->reply('error.syntax', ['syntax' => $context->trans('set.language.syntax')]);
+
             return;
         }
 
@@ -233,10 +251,11 @@ final readonly class SetCommand implements NickServCommandInterface
 
         try {
             $account->changeLanguage($value);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             $context->reply('set.language.invalid', [
                 'languages' => implode(', ', RegisteredNick::SUPPORTED_LANGUAGES),
             ]);
+
             return;
         }
 
@@ -252,6 +271,7 @@ final readonly class SetCommand implements NickServCommandInterface
 
         if (!in_array($flag, ['ON', 'OFF'], true)) {
             $context->reply('error.syntax', ['syntax' => $context->trans('set.private.syntax')]);
+
             return;
         }
 

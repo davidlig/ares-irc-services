@@ -7,6 +7,7 @@ namespace App\Infrastructure\NickServ\Doctrine;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterface
@@ -36,7 +37,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
 
     public function existsByNick(string $nickname): bool
     {
-        return $this->findByNick($nickname) !== null;
+        return null !== $this->findByNick($nickname);
     }
 
     public function deleteExpiredPending(): int
@@ -49,7 +50,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
                  AND n.expiresAt < :now'
             )
             ->setParameter('status', NickStatus::Pending)
-            ->setParameter('now', new \DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable())
             ->execute();
     }
 

@@ -8,6 +8,8 @@ use App\Application\Maintenance\MaintenanceTaskInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
+use function sprintf;
+
 /**
  * Removes PENDING nick registrations whose verification token has expired.
  *

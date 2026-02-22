@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ;
 
+use DateTimeImmutable;
+
 /**
  * In-memory store for email verification tokens issued during REGISTER.
  *
@@ -18,7 +20,7 @@ namespace App\Application\NickServ;
  */
 final readonly class PendingVerificationRegistry
 {
-    /** @var array<string, array{token: string, expiresAt: \DateTimeImmutable}> */
+    /** @var array<string, array{token: string, expiresAt: DateTimeImmutable}> */
     private array $entries;
 
     public function __construct()
@@ -26,10 +28,10 @@ final readonly class PendingVerificationRegistry
         $this->entries = [];
     }
 
-    public function store(string $nickname, string $token, \DateTimeImmutable $expiresAt): void
+    public function store(string $nickname, string $token, DateTimeImmutable $expiresAt): void
     {
         $this->entries[strtolower($nickname)] = [
-            'token'     => $token,
+            'token' => $token,
             'expiresAt' => $expiresAt,
         ];
     }
@@ -41,15 +43,16 @@ final readonly class PendingVerificationRegistry
      */
     public function consume(string $nickname, string $token): bool
     {
-        $key   = strtolower($nickname);
+        $key = strtolower($nickname);
         $entry = $this->entries[$key] ?? null;
 
         if (null === $entry) {
             return false;
         }
 
-        if ($entry['expiresAt'] < new \DateTimeImmutable()) {
+        if ($entry['expiresAt'] < new DateTimeImmutable()) {
             unset($this->entries[$key]);
+
             return false;
         }
 
@@ -58,6 +61,7 @@ final readonly class PendingVerificationRegistry
         }
 
         unset($this->entries[$key]);
+
         return true;
     }
 

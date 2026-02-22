@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ;
 
+use DateTimeImmutable;
+
+use function sprintf;
+
 /**
  * In-memory store for pending email change confirmations.
  *
@@ -17,7 +21,7 @@ final readonly class PendingEmailChangeRegistry
 {
     private const TTL_SECONDS = 3600;
 
-    /** @var array<string, array{newEmail: string, token: string, expiresAt: \DateTimeImmutable}> */
+    /** @var array<string, array{newEmail: string, token: string, expiresAt: DateTimeImmutable}> */
     private array $entries;
 
     public function __construct()
@@ -28,9 +32,9 @@ final readonly class PendingEmailChangeRegistry
     public function store(string $nickname, string $newEmail, string $token): void
     {
         $this->entries[strtolower($nickname)] = [
-            'newEmail'  => $newEmail,
-            'token'     => $token,
-            'expiresAt' => new \DateTimeImmutable(sprintf('+%d seconds', self::TTL_SECONDS)),
+            'newEmail' => $newEmail,
+            'token' => $token,
+            'expiresAt' => new DateTimeImmutable(sprintf('+%d seconds', self::TTL_SECONDS)),
         ];
     }
 
@@ -40,23 +44,25 @@ final readonly class PendingEmailChangeRegistry
      */
     public function consume(string $nickname, string $newEmail, string $token): bool
     {
-        $key   = strtolower($nickname);
+        $key = strtolower($nickname);
         $entry = $this->entries[$key] ?? null;
 
         if (null === $entry) {
             return false;
         }
 
-        if ($entry['expiresAt'] < new \DateTimeImmutable()) {
+        if ($entry['expiresAt'] < new DateTimeImmutable()) {
             unset($this->entries[$key]);
+
             return false;
         }
 
-        if (strcasecmp($entry['newEmail'], $newEmail) !== 0 || !hash_equals($entry['token'], $token)) {
+        if (0 !== strcasecmp($entry['newEmail'], $newEmail) || !hash_equals($entry['token'], $token)) {
             return false;
         }
 
         unset($this->entries[$key]);
+
         return true;
     }
 

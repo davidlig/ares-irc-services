@@ -8,13 +8,17 @@ use App\Application\NickServ\NickServService;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Uid;
-use App\Domain\NickServ\Exception\NickAlreadyRegisteredException;
 use App\Domain\NickServ\Exception\InvalidCredentialsException;
+use App\Domain\NickServ\Exception\NickAlreadyRegisteredException;
 use App\Infrastructure\IRC\Security\SensitiveDataRedactor;
 use App\Infrastructure\NickServ\Bot\NickServBot;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Throwable;
+
+use function sprintf;
 
 /**
  * Listens for PRIVMSG messages directed to NickServ and routes them
@@ -47,8 +51,8 @@ class NickServMessageSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $target  = $message->params[0] ?? '';
-        $text    = $message->trailing ?? '';
+        $target = $message->params[0] ?? '';
+        $text = $message->trailing ?? '';
         $sourceId = $message->prefix ?? '';
 
         // Check if the PRIVMSG is addressed to NickServ
@@ -64,12 +68,13 @@ class NickServMessageSubscriber implements EventSubscriberInterface
         $sender = null;
         try {
             $sender = $this->userRepository->findByUid(new Uid($sourceId));
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             // Source may be a nick string (legacy)
         }
 
         if (null === $sender) {
             $this->logger->warning('NickServ: could not resolve sender UID: ' . $sourceId);
+
             return;
         }
 
@@ -87,11 +92,11 @@ class NickServMessageSubscriber implements EventSubscriberInterface
             $this->nickServBot->sendNotice($sender->uid->value, $e->getMessage());
         } catch (InvalidCredentialsException $e) {
             $this->nickServBot->sendNotice($sender->uid->value, $e->getMessage());
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->logger->error('NickServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
-                'sender'    => $sender->uid->value,
-                'text'      => SensitiveDataRedactor::redactNickServCommand($text),
+                'sender' => $sender->uid->value,
+                'text' => SensitiveDataRedactor::redactNickServCommand($text),
             ]);
         }
     }

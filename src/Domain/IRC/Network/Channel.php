@@ -6,6 +6,11 @@ namespace App\Domain\IRC\Network;
 
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
+use DateTimeImmutable;
+use DateTimeInterface;
+
+use function count;
+use function in_array;
 
 /**
  * IRC channel aggregate root.
@@ -28,12 +33,13 @@ class Channel
     private array $inviteExceptions = [];
 
     private ?string $topic = null;
+
     private string $modes;
 
     public function __construct(
         public readonly ChannelName $name,
         string $modes = '',
-        private \DateTimeImmutable $createdAt = new \DateTimeImmutable(),
+        private DateTimeImmutable $createdAt = new DateTimeImmutable(),
     ) {
         $this->modes = $modes;
     }
@@ -85,12 +91,12 @@ class Channel
         $this->modes = $modes;
     }
 
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function updateCreatedAt(\DateTimeImmutable $ts): void
+    public function updateCreatedAt(DateTimeImmutable $ts): void
     {
         $this->createdAt = $ts;
     }
@@ -173,11 +179,11 @@ class Channel
     public function toArray(): array
     {
         return [
-            'name'      => $this->name->value,
-            'modes'     => $this->modes,
-            'topic'     => $this->topic,
-            'members'   => $this->getMemberCount(),
-            'createdAt' => $this->createdAt->format(\DateTimeInterface::ATOM),
+            'name' => $this->name->value,
+            'modes' => $this->modes,
+            'topic' => $this->topic,
+            'members' => $this->getMemberCount(),
+            'createdAt' => $this->createdAt->format(DateTimeInterface::ATOM),
         ];
     }
 }

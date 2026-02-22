@@ -61,7 +61,7 @@ abstract class AbstractProtocolHandler implements ProtocolHandlerInterface
     {
         if ('PING' === $message->command) {
             $target = $message->trailing ?? ($message->params[0] ?? '');
-            $pong   = 'PONG :' . $target;
+            $pong = 'PONG :' . $target;
 
             $connection->writeLine($pong);
             $this->logger->debug('> ' . $pong);

@@ -8,7 +8,7 @@ use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 
 /**
- * HELP [command [sub-option]]
+ * HELP [command [sub-option]].
  *
  * Without arguments:   lists all available commands with short descriptions.
  * HELP <command>:      full help for the command, including sub-option table.
@@ -20,7 +20,8 @@ use App\Application\NickServ\Command\NickServContext;
 final readonly class HelpCommand implements NickServCommandInterface
 {
     /** Number of visible chars to reserve for command/option names in listings. */
-    private const CMD_PAD  = 12;
+    private const CMD_PAD = 12;
+
     private const SUBS_PAD = 10;
 
     /** Total visible width used for the decorative header line. */
@@ -84,24 +85,27 @@ final readonly class HelpCommand implements NickServCommandInterface
 
         if (empty($context->args)) {
             $this->showGeneralHelp($context);
+
             return;
         }
 
         $targetCmd = strtoupper($context->args[0]);
-        $handler   = $context->getRegistry()->find($targetCmd);
+        $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler || ($handler->isOperOnly() && !$sender->isOper())) {
             $context->reply('help.unknown_command', ['command' => $targetCmd]);
+
             return;
         }
 
         // HELP SET PASSWORD — drill into a sub-option
-        if (isset($context->args[1]) && $handler->getSubCommandHelp() !== []) {
+        if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
             $subName = strtoupper($context->args[1]);
-            $subCmd  = $this->findSubCommand($handler, $subName);
+            $subCmd = $this->findSubCommand($handler, $subName);
 
             if (null !== $subCmd) {
                 $this->showSubCommandHelp($context, $handler->getName(), $subCmd);
+
                 return;
             }
         }
@@ -115,10 +119,10 @@ final readonly class HelpCommand implements NickServCommandInterface
 
     private function showGeneralHelp(NickServContext $context): void
     {
-        $isOper   = $context->sender?->isOper() ?? false;
+        $isOper = $context->sender?->isOper() ?? false;
         $commands = $context->getRegistry()->all();
 
-        usort($commands, static fn($a, $b) => $a->getOrder() <=> $b->getOrder());
+        usort($commands, static fn ($a, $b) => $a->getOrder() <=> $b->getOrder());
 
         $this->sendHeader($context, $context->trans('help.header_title'));
         $context->reply('help.intro');
@@ -135,7 +139,7 @@ final readonly class HelpCommand implements NickServCommandInterface
             }
 
             $context->reply('help.command_line', [
-                'command'     => str_pad($command->getName(), self::CMD_PAD),
+                'command' => str_pad($command->getName(), self::CMD_PAD),
                 'description' => $context->trans($command->getShortDescKey()),
             ]);
         }
@@ -162,7 +166,7 @@ final readonly class HelpCommand implements NickServCommandInterface
 
             foreach ($subCmds as $sub) {
                 $context->reply('help.subcommand_line', [
-                    'command'     => str_pad($sub['name'], self::SUBS_PAD),
+                    'command' => str_pad($sub['name'], self::SUBS_PAD),
                     'description' => $context->trans($sub['desc_key']),
                 ]);
             }
@@ -215,9 +219,9 @@ final readonly class HelpCommand implements NickServCommandInterface
     private function sendHeader(NickServContext $context, string $title): void
     {
         $visible = 4 + mb_strlen($title) + 1; // " ℹ " + title + " "
-        $dashes  = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
+        $dashes = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
         // \x0307 = orange, \x0F = format reset, \x0314 = dark grey (decimal 14)
-        $line    = "\x02\x0307 ℹ " . $title . " \x0F\x0314" . $dashes . "\x03";
+        $line = "\x02\x0307 ℹ " . $title . " \x0F\x0314" . $dashes . "\x03";
         $context->replyRaw($line);
     }
 }

@@ -7,6 +7,10 @@ namespace App\Domain\IRC\Network;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use DateTimeImmutable;
+use DateTimeInterface;
+
+use function in_array;
 
 /**
  * Represents a user currently connected to the IRC network.
@@ -20,7 +24,9 @@ use App\Domain\IRC\ValueObject\Uid;
 class NetworkUser
 {
     private Nick $nick;
+
     private string $virtualHost;
+
     private string $modes;
 
     public function __construct(
@@ -31,15 +37,15 @@ class NetworkUser
         public readonly string $cloakedHost,
         string $virtualHost,
         string $modes,
-        public readonly \DateTimeImmutable $connectedAt,
+        public readonly DateTimeImmutable $connectedAt,
         public readonly string $realName,
         public readonly string $serverSid,
         public readonly string $ipBase64,
         public readonly int $serviceStamp = 0,
     ) {
-        $this->nick        = $nick;
+        $this->nick = $nick;
         $this->virtualHost = $virtualHost;
-        $this->modes       = $modes;
+        $this->modes = $modes;
     }
 
     public function getNick(): Nick
@@ -100,7 +106,7 @@ class NetworkUser
                     $current[] = $char;
                 }
             } else {
-                $current = array_values(array_filter($current, static fn($c) => $char !== $c));
+                $current = array_values(array_filter($current, static fn ($c) => $char !== $c));
             }
         }
 
@@ -151,18 +157,18 @@ class NetworkUser
     public function toArray(): array
     {
         return [
-            'uid'         => $this->uid->value,
-            'nick'        => $this->nick->value,
-            'ident'       => $this->ident->value,
-            'hostname'    => $this->hostname,
+            'uid' => $this->uid->value,
+            'nick' => $this->nick->value,
+            'ident' => $this->ident->value,
+            'hostname' => $this->hostname,
             'cloakedHost' => $this->cloakedHost,
             'virtualHost' => $this->virtualHost,
             'displayHost' => $this->getDisplayHost(),
-            'modes'       => $this->modes,
-            'realName'    => $this->realName,
-            'server'      => $this->serverSid,
-            'ip'          => $this->getIpAddress(),
-            'connectedAt' => $this->connectedAt->format(\DateTimeInterface::ATOM),
+            'modes' => $this->modes,
+            'realName' => $this->realName,
+            'server' => $this->serverSid,
+            'ip' => $this->getIpAddress(),
+            'connectedAt' => $this->connectedAt->format(DateTimeInterface::ATOM),
         ];
     }
 }

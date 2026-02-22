@@ -12,6 +12,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function sprintf;
+
 /**
  * Implements the UnrealIRCd 4.x / 5.x / 6.x server-to-server link protocol.
  *
@@ -35,7 +37,7 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 
     /**
      * PROTOCTL capability tokens announced to UnrealIRCd.
-     * Reference: https://www.unrealircd.org/docs/Server_protocol:PROTOCTL_command
+     * Reference: https://www.unrealircd.org/docs/Server_protocol:PROTOCTL_command.
      *
      * Aligned with Anope's capability set for maximum compatibility.
      */
@@ -82,7 +84,7 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
     {
         $this->logger->debug('Starting UnrealIRCd handshake.', [
             'server' => (string) $link->serverName,
-            'sid'    => $this->sid,
+            'sid' => $this->sid,
         ]);
 
         // Step 1 — link password (not logged to avoid leaking credentials)
@@ -106,7 +108,7 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 
         $this->logger->info('UnrealIRCd handshake sent.', [
             'server' => (string) $link->serverName,
-            'caps'   => self::CAPABILITIES,
+            'caps' => self::CAPABILITIES,
         ]);
     }
 
@@ -122,9 +124,9 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
         parent::handleIncoming($message, $connection);
 
         match ($message->command) {
-            'EOS'     => $this->handleEos($connection),
+            'EOS' => $this->handleEos($connection),
             'NETINFO' => $this->handleNetinfo($message, $connection),
-            default   => null,
+            default => null,
         };
     }
 
@@ -143,7 +145,7 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
         // Mirror back a minimal NETINFO so UnrealIRCd accepts the link state.
         // Fields: <max_global> <timestamp> <protocol_version> <cloak_hash> 0 0 0 :<network_name>
         $networkName = $message->trailing ?? 'IRC Network';
-        $netinfo     = sprintf('NETINFO 0 %d 6100 * 0 0 0 :%s', time(), $networkName);
+        $netinfo = sprintf('NETINFO 0 %d 6100 * 0 0 0 :%s', time(), $networkName);
 
         $connection->writeLine($netinfo);
         $this->logger->debug('> ' . $netinfo);

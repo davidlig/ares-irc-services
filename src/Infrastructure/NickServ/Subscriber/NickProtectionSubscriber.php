@@ -19,6 +19,8 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function sprintf;
+
 /**
  * Protects registered nicknames from being used by unidentified users.
  *
@@ -56,9 +58,9 @@ class NickProtectionSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            UserJoinedNetworkEvent::class    => ['onUserJoined', 0],
-            UserQuitNetworkEvent::class      => ['onUserQuit', 0],
-            UserNickChangedEvent::class      => ['onNickChanged', 0],
+            UserJoinedNetworkEvent::class => ['onUserJoined', 0],
+            UserQuitNetworkEvent::class => ['onUserQuit', 0],
+            UserNickChangedEvent::class => ['onNickChanged', 0],
             // Priority -1000: fires after ActiveConnectionHolder (priority -999) has stored the connection.
             NetworkBurstCompleteEvent::class => ['onBurstComplete', -1000],
         ];
@@ -69,6 +71,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         if (!$this->burstComplete) {
             // Connection not yet available — queue for post-burst processing.
             $this->pendingUsers[] = $event->user;
+
             return;
         }
 
@@ -83,7 +86,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
     {
         $this->burstComplete = true;
 
-        $pending            = $this->pendingUsers;
+        $pending = $this->pendingUsers;
         $this->pendingUsers = [];
 
         foreach ($pending as $user) {
@@ -93,7 +96,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
     private function enforceProtection(NetworkUser $user): void
     {
-        $nick    = $user->getNick()->value;
+        $nick = $user->getNick()->value;
         $account = $this->nickRepository->findByNick($nick);
 
         if (null === $account || !$account->isRegistered()) {
@@ -110,6 +113,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
                 $nick,
                 $user->uid->value,
             ));
+
             return;
         }
 
@@ -187,6 +191,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
                 $event->uid->value,
                 $newNick,
             ));
+
             return;
         }
 
@@ -197,6 +202,7 @@ class NickProtectionSubscriber implements EventSubscriberInterface
                 $event->uid->value,
                 $newNick,
             ));
+
             return;
         }
 

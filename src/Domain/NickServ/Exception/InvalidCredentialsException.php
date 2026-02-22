@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\NickServ\Exception;
 
-final class InvalidCredentialsException extends \DomainException
+use DomainException;
+
+final class InvalidCredentialsException extends DomainException
 {
     public function __construct()
     {

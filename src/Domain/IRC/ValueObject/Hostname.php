@@ -4,21 +4,27 @@ declare(strict_types=1);
 
 namespace App\Domain\IRC\ValueObject;
 
+use InvalidArgumentException;
+
+use function sprintf;
+
+use const FILTER_FLAG_HOSTNAME;
+use const FILTER_VALIDATE_DOMAIN;
+use const FILTER_VALIDATE_IP;
+
 readonly class Hostname
 {
     public function __construct(public readonly string $value)
     {
         if ('' === $value) {
-            throw new \InvalidArgumentException('Hostname cannot be empty.');
+            throw new InvalidArgumentException('Hostname cannot be empty.');
         }
 
-        $isValidDomain = filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false;
-        $isValidIp = filter_var($value, FILTER_VALIDATE_IP) !== false;
+        $isValidDomain = false !== filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME);
+        $isValidIp = false !== filter_var($value, FILTER_VALIDATE_IP);
 
         if (!$isValidDomain && !$isValidIp) {
-            throw new \InvalidArgumentException(
-                sprintf('"%s" is not a valid hostname or IP address.', $value)
-            );
+            throw new InvalidArgumentException(sprintf('"%s" is not a valid hostname or IP address.', $value));
         }
     }
 

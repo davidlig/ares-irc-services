@@ -10,9 +10,10 @@ use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
+use InvalidArgumentException;
 
 /**
- * INFO <nickname>
+ * INFO <nickname>.
  *
  * Shows public registration details for a nickname.
  * Email is only visible to the owner (same UID) or IRC operators (future).
@@ -73,13 +74,14 @@ final readonly class InfoCommand implements NickServCommandInterface
 
     public function execute(NickServContext $context): void
     {
-        $sender     = $context->sender;
+        $sender = $context->sender;
         $targetNick = $context->args[0];
 
         $account = $this->nickRepository->findByNick($targetNick);
 
         if (null === $account || $account->isForbidden() || $account->isPending()) {
             $context->reply('info.not_registered', ['nickname' => $targetNick]);
+
             return;
         }
 
@@ -89,6 +91,7 @@ final readonly class InfoCommand implements NickServCommandInterface
 
         if ($account->isPrivate() && !$isOwner) {
             $context->reply('info.private', ['nickname' => $account->getNickname()]);
+
             return;
         }
 
@@ -96,8 +99,8 @@ final readonly class InfoCommand implements NickServCommandInterface
 
         $statusKey = match ($account->getStatus()) {
             NickStatus::Registered => 'info.status_registered',
-            NickStatus::Suspended  => 'info.status_suspended',
-            default                => 'info.status_registered',
+            NickStatus::Suspended => 'info.status_suspended',
+            default => 'info.status_registered',
         };
         $context->reply('info.status', ['status' => $context->trans($statusKey)]);
 
@@ -108,7 +111,7 @@ final readonly class InfoCommand implements NickServCommandInterface
         // Last seen — if online show ONLINE, otherwise the date
         try {
             $onlineUser = $this->userRepository->findByNick(new Nick($account->getNickname()));
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             $onlineUser = null;
         }
 
@@ -123,7 +126,7 @@ final readonly class InfoCommand implements NickServCommandInterface
         }
 
         // Last quit message
-        if ($account->getLastQuitMessage() !== null) {
+        if (null !== $account->getLastQuitMessage()) {
             $context->reply('info.last_quit', ['message' => $account->getLastQuitMessage()]);
         }
 

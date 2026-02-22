@@ -8,10 +8,14 @@ use App\Application\Mail\MailerInterface;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use DateTimeImmutable;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Throwable;
+
+use function sprintf;
 
 /**
- * RESEND
+ * RESEND.
  *
  * Regenerates and resends the verification token to the email address
  * provided during REGISTER. Only works while the account is in PENDING status.
@@ -79,16 +83,17 @@ final readonly class ResendCommand implements NickServCommandInterface
             return;
         }
 
-        $nick    = $sender->getNick()->value;
+        $nick = $sender->getNick()->value;
         $account = $this->nickRepository->findByNick($nick);
 
         if (null === $account || !$account->isPending()) {
             $context->reply('resend.no_pending');
+
             return;
         }
 
-        $token     = bin2hex(random_bytes(16));
-        $expiresAt = new \DateTimeImmutable(sprintf('+%d seconds', self::TOKEN_TTL_SECONDS));
+        $token = bin2hex(random_bytes(16));
+        $expiresAt = new DateTimeImmutable(sprintf('+%d seconds', self::TOKEN_TTL_SECONDS));
 
         $context->getPendingVerificationRegistry()->store($nick, $token, $expiresAt);
 
@@ -99,8 +104,9 @@ final readonly class ResendCommand implements NickServCommandInterface
                 $subject = $this->translator->trans('resend_verification_subject', [], 'mail', $locale);
                 $body = $this->translator->trans('resend_verification_body', ['%nickname%' => $nick, '%token%' => $token], 'mail', $locale);
                 $this->mailer->send($recipientEmail, $subject, $body);
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 $context->reply('error.mail_failed');
+
                 return;
             }
         }

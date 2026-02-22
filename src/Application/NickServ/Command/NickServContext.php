@@ -95,6 +95,7 @@ class NickServContext
      * Idempotent: keys already wrapped are left unchanged.
      *
      * @param array<string, mixed> $params
+     *
      * @return array<string, mixed>
      */
     private function wrapParams(array $params): array
