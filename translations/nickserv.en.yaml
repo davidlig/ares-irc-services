@@ -97,6 +97,7 @@ info:
   last_seen_never:  "  \x0314Last seen\x03      : Never"
   last_quit:        "  \x0314Last quit msg\x03  : %message%"
   email:            "  \x0314Email\x03          : %email%"
+  vhost:            "  \x0314VHost\x03           : %vhost%"
   footer:           "\x0314─────────────────────────────\x03"
 
 # --- SET --------------------------------------------------------------------
@@ -133,6 +134,14 @@ set:
     help:           "Controls the visibility of your account information in the INFO command.\nWith \x02PRIVATE ON\x02 only you and IRC Operators can view your details.\nWith \x02PRIVATE OFF\x02 your information is public to everyone."
     on:             "\x0303✔\x03 Your account information is now \x02private\x02."
     off:            "\x0303✔\x03 Your account information is now \x02public\x02."
+
+  vhost:
+    syntax:         "SET VHOST <vhost>|OFF"
+    short:          "Set or clear your custom virtual host (displayed hostname)."
+    help:           "Sets a custom hostname that others see when you are identified.\nUse \x02SET VHOST OFF\x02 to clear it and use your default/cloak. Only letters,\ndigits, hyphens and dots are allowed; max 255 characters."
+    success:        "\x0303✔\x03 Your virtual host has been set to \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 Your virtual host has been cleared."
+    invalid:       "\x0304✗\x03 Invalid vhost. Use only letters, digits, hyphens and dots (max 255 characters)."
 
 # --- HELP -------------------------------------------------------------------
 help:

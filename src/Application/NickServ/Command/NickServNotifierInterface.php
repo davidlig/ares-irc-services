@@ -40,4 +40,11 @@ interface NickServNotifierInterface
      * so the rightful owner can reclaim it via IDENTIFY.
      */
     public function killUser(string $targetUid, string $reason): void;
+
+    /**
+     * Set or clear a user's virtual host via SVSHOST (UnrealIRCd).
+     * When $vhost is empty string, the implementation must send the IRCD
+     * command that clears the vhost (e.g. SVSHOST with :* or equivalent).
+     */
+    public function setUserVhost(string $targetUid, string $vhost): void;
 }

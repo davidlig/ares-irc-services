@@ -97,6 +97,10 @@ class RegisteredNick
     #[ORM\Column(type: 'boolean')]
     private bool $private = false;
 
+    /** Custom virtual host (displayed hostname). Null = use default/cloak. */
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $vhost = null;
+
     // -------------------------------------------------------------------------
     // Named constructors
     // -------------------------------------------------------------------------
@@ -276,6 +280,11 @@ class RegisteredNick
         return $this->private;
     }
 
+    public function getVhost(): ?string
+    {
+        return $this->vhost;
+    }
+
     // -------------------------------------------------------------------------
     // Mutation methods (only for REGISTERED/PENDING accounts)
     // -------------------------------------------------------------------------
@@ -308,6 +317,15 @@ class RegisteredNick
     public function switchPrivate(bool $private): void
     {
         $this->private = $private;
+    }
+
+    /**
+     * Set or clear the account's custom virtual host.
+     * Null clears the vhost (user will show default/cloak).
+     */
+    public function changeVhost(?string $vhost): void
+    {
+        $this->vhost = $vhost;
     }
 
     public function verifyPassword(string $plainPassword): bool

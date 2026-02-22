@@ -145,6 +145,18 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
         $this->write(sprintf(':%s KILL %s :%s', $this->serverSid, $targetUid, $reason));
     }
 
+    /**
+     * Set or clear a user's virtual host via SVSHOST (UnrealIRCd).
+     * Set: :<serverSid> SVSHOST <targetUid> :<vhost>
+     * Clear: :<serverSid> SVSHOST <targetUid> :*
+     * (UnrealIRCd accepts :* to remove vhost; see server protocol / HELPOP SVSCMDS).
+     */
+    public function setUserVhost(string $targetUid, string $vhost): void
+    {
+        $hostParam = '' !== $vhost ? $vhost : '*';
+        $this->write(sprintf(':%s SVSHOST %s :%s', $this->serverSid, $targetUid, $hostParam));
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

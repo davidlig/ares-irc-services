@@ -16,6 +16,7 @@ use Throwable;
 
 use function array_slice;
 use function in_array;
+use function strlen;
 
 use const FILTER_VALIDATE_EMAIL;
 use const PASSWORD_ARGON2ID;
@@ -34,7 +35,12 @@ use const PASSWORD_ARGON2ID;
  */
 final readonly class SetCommand implements NickServCommandInterface
 {
-    private const SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE'];
+    private const SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE', 'VHOST'];
+
+    /** Max length for vhost (IRCD/DB limit). Allowed: hostname-like (letters, digits, hyphens, dots). */
+    private const VHOST_MAX_LENGTH = 255;
+
+    private const VHOST_PATTERN = '/^[a-zA-Z0-9.\-]+$/';
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -106,6 +112,12 @@ final readonly class SetCommand implements NickServCommandInterface
                 'help_key' => 'set.private.help',
                 'syntax_key' => 'set.private.syntax',
             ],
+            [
+                'name' => 'VHOST',
+                'desc_key' => 'set.vhost.short',
+                'help_key' => 'set.vhost.help',
+                'syntax_key' => 'set.vhost.syntax',
+            ],
         ];
     }
 
@@ -144,6 +156,7 @@ final readonly class SetCommand implements NickServCommandInterface
             'EMAIL' => $this->handleEmail($context, $account->getNickname(), $value),
             'LANGUAGE' => $this->handleLanguage($context, $account->getNickname(), $value),
             'PRIVATE' => $this->handlePrivate($context, $account->getNickname(), $value),
+            'VHOST' => $this->handleVhost($context, $account->getNickname(), $value),
             default => $context->reply('set.unknown_option', [
                 'option' => $option,
                 'options' => implode(', ', self::SUPPORTED_OPTIONS),
@@ -280,5 +293,38 @@ final readonly class SetCommand implements NickServCommandInterface
         $this->nickRepository->save($account);
 
         $context->reply('ON' === $flag ? 'set.private.on' : 'set.private.off');
+    }
+
+    private function handleVhost(NickServContext $context, string $nick, string $value): void
+    {
+        $normalized = trim($value);
+        $clearKeywords = ['OFF', ''];
+        if ('' === $normalized || in_array(strtoupper($normalized), $clearKeywords, true)) {
+            $account = $this->nickRepository->findByNick($nick);
+            if (null !== $account) {
+                $account->changeVhost(null);
+                $this->nickRepository->save($account);
+                $context->getNotifier()->setUserVhost($context->sender->uid->value, '');
+            }
+            $context->reply('set.vhost.cleared');
+
+            return;
+        }
+
+        if (strlen($normalized) > self::VHOST_MAX_LENGTH || 1 !== preg_match(self::VHOST_PATTERN, $normalized)) {
+            $context->reply('set.vhost.invalid');
+
+            return;
+        }
+
+        $account = $this->nickRepository->findByNick($nick);
+        if (null === $account) {
+            return;
+        }
+
+        $account->changeVhost($normalized);
+        $this->nickRepository->save($account);
+        $context->getNotifier()->setUserVhost($context->sender->uid->value, $normalized);
+        $context->reply('set.vhost.success', ['vhost' => $normalized]);
     }
 }
