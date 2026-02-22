@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
+use App\Application\Mail\MailerInterface;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * REGISTER <password> <email>
  *
  * Starts the registration flow for the user's current nickname.
  * The account is created in PENDING status; the user must run VERIFY <token>
- * to activate it. A verification token is logged (email delivery is a
- * future infrastructure concern).
+ * to activate it. A verification token is sent by email.
  */
 final class RegisterCommand implements NickServCommandInterface
 {
@@ -24,6 +25,8 @@ final class RegisterCommand implements NickServCommandInterface
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly MailerInterface $mailer,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -113,10 +116,17 @@ final class RegisterCommand implements NickServCommandInterface
 
         $this->nickRepository->save($registered);
 
-        // TODO: send $token by email via MailerInterface once implemented.
-        // For now the token is stored in context for VERIFY to consume via
-        // a shared in-memory PendingVerificationRegistry (wired in services.yaml).
         $context->getPendingVerificationRegistry()->store($nick, $token, $expiresAt);
+
+        try {
+            $locale = $context->getLanguage();
+            $subject = $this->translator->trans('register_verification_subject', [], 'mail', $locale);
+            $body = $this->translator->trans('register_verification_body', ['%nickname%' => $nick, '%token%' => $token], 'mail', $locale);
+            $this->mailer->send($email, $subject, $body);
+        } catch (\Throwable) {
+            $context->reply('error.mail_failed');
+            return;
+        }
 
         $context->reply('register.pending', ['email' => $email]);
     }

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
+use App\Application\Mail\MailerInterface;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * SET <option> <value>
@@ -31,6 +33,8 @@ final class SetCommand implements NickServCommandInterface
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly PendingEmailChangeRegistry $pendingEmailChangeRegistry,
+        private readonly MailerInterface $mailer,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -188,7 +192,16 @@ final class SetCommand implements NickServCommandInterface
         $token = bin2hex(random_bytes(16));
         $this->pendingEmailChangeRegistry->store($nick, $newEmail, $token);
 
-        // TODO: send token to $currentEmail via MailerInterface once implemented.
+        try {
+            $locale = $context->getLanguage();
+            $subject = $this->translator->trans('email_change_token_subject', [], 'mail', $locale);
+            $body = $this->translator->trans('email_change_token_body', ['%new_email%' => $newEmail, '%token%' => $token], 'mail', $locale);
+            $this->mailer->send($currentEmail, $subject, $body);
+        } catch (\Throwable) {
+            $context->reply('error.mail_failed');
+            return;
+        }
+
         $context->reply('set.email.pending_sent', [
             'current_email' => $currentEmail,
             'new_email'    => $newEmail,
