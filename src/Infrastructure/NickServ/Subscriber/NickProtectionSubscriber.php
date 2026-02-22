@@ -60,7 +60,8 @@ class NickProtectionSubscriber implements EventSubscriberInterface
         return [
             UserJoinedNetworkEvent::class => ['onUserJoined', 0],
             UserQuitNetworkEvent::class => ['onUserQuit', 0],
-            UserNickChangedEvent::class => ['onNickChanged', 0],
+            // Priority 10: run after NetworkStateSubscriber (0) so the user's nick is already updated.
+            UserNickChangedEvent::class => ['onNickChanged', 10],
             // Priority -1000: fires after ActiveConnectionHolder (priority -999) has stored the connection.
             NetworkBurstCompleteEvent::class => ['onBurstComplete', -1000],
         ];
