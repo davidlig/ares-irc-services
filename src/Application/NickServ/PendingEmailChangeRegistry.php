@@ -17,7 +17,7 @@ use function sprintf;
  *
  * Token is sent to the CURRENT email so only the legitimate owner can confirm.
  */
-final readonly class PendingEmailChangeRegistry
+final class PendingEmailChangeRegistry
 {
     private const TTL_SECONDS = 3600;
 

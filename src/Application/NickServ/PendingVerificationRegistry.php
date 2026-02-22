@@ -18,7 +18,7 @@ use DateTimeImmutable;
  * as long as the service is running. Expired entries are either consumed by
  * VERIFY (which rejects them) or cleaned up by PurgeExpiredPendingTask.
  */
-final readonly class PendingVerificationRegistry
+final class PendingVerificationRegistry
 {
     /** @var array<string, array{token: string, expiresAt: DateTimeImmutable}> */
     private array $entries;
