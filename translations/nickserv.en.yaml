@@ -17,6 +17,7 @@ error:
   syntax:         "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 This command is restricted to IRC Operators."
   not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg NickServ IDENTIFY <nickname> <password>\x03"
+  mail_failed:    "\x0304✗\x03 The email could not be sent. Check your address or try again later."
 
 # --- REGISTER ---------------------------------------------------------------
 register:

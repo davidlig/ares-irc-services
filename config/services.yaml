@@ -27,6 +27,9 @@ parameters:
     # UID = SID (3 chars) + AAAAAA — derived at runtime from IRC_UNREAL_SID
     nickserv.uid:      '%env(NICKSERV_UID)%'
 
+    # Mailer (verification and email-change emails)
+    mailer.from: '%env(MAILER_FROM)%'
+
 services:
     _defaults:
         autowire: true
@@ -46,6 +49,11 @@ services:
         class: App\Infrastructure\IRC\Protocol\ProtocolHandlerRegistry
         arguments:
             $handlers: !tagged_iterator irc.protocol_handler
+
+    App\Application\Mail\MailerInterface:
+        class: App\Infrastructure\Mail\SymfonyMailerAdapter
+        arguments:
+            $from: '%mailer.from%'
 
     # --- Application services — inject the irc Monolog channel ---------------
 

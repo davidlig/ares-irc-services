@@ -1,0 +1,44 @@
+# Email content — domain: mail (plain text, no IRC codes)
+# Placeholders: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — verification token
+register_verification_subject: "NickServ: verify your nickname registration"
+register_verification_body: |
+  Hello,
+
+  You requested to register the nickname "%nickname%" on the IRC network.
+
+  Your verification token is: %token%
+
+  To complete registration, send this command to NickServ (replace <token> with the token above):
+    /msg NickServ VERIFY %token%
+
+  The token expires in 1 hour. If you did not request this, please ignore this email.
+
+# RESEND — same as register, resend of token
+resend_verification_subject: "NickServ: your verification token (resend)"
+resend_verification_body: |
+  Hello,
+
+  You requested a new verification token for the nickname "%nickname%".
+
+  Your verification token is: %token%
+
+  To complete registration, send to NickServ:
+    /msg NickServ VERIFY %token%
+
+  The token expires in 1 hour. If you did not request this, please ignore this email.
+
+# SET EMAIL — confirmation token sent to current email
+email_change_token_subject: "NickServ: confirm your new email address"
+email_change_token_body: |
+  Hello,
+
+  You requested to change the email address for your NickServ account to: %new_email%
+
+  Your confirmation token is: %token%
+
+  To confirm the change, send to NickServ:
+    /msg NickServ SET EMAIL %new_email% %token%
+
+  The token expires in 1 hour. If you did not request this change, please ignore this email.

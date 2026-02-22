@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
+use App\Application\Mail\MailerInterface;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * RESEND
@@ -20,6 +22,8 @@ final class ResendCommand implements NickServCommandInterface
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly MailerInterface $mailer,
+        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -88,7 +92,19 @@ final class ResendCommand implements NickServCommandInterface
 
         $context->getPendingVerificationRegistry()->store($nick, $token, $expiresAt);
 
-        // TODO: deliver $token via MailerInterface once implemented.
-        $context->reply('resend.success', ['email' => $account->getEmail() ?? '']);
+        $recipientEmail = $account->getEmail() ?? '';
+        if ($recipientEmail !== '') {
+            try {
+                $locale = $context->getLanguage();
+                $subject = $this->translator->trans('resend_verification_subject', [], 'mail', $locale);
+                $body = $this->translator->trans('resend_verification_body', ['%nickname%' => $nick, '%token%' => $token], 'mail', $locale);
+                $this->mailer->send($recipientEmail, $subject, $body);
+            } catch (\Throwable) {
+                $context->reply('error.mail_failed');
+                return;
+            }
+        }
+
+        $context->reply('resend.success', ['email' => $recipientEmail]);
     }
 }
