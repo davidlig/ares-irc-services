@@ -36,6 +36,10 @@ class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface
 
     public function updateNick(Uid $uid, Nick $oldNick, Nick $newNick): void
     {
+        $user = $this->users[$uid->value] ?? null;
+        if (null !== $user) {
+            $user->changeNick($newNick);
+        }
         unset($this->byNick[strtolower($oldNick->value)]);
         $this->byNick[strtolower($newNick->value)] = $uid->value;
     }
