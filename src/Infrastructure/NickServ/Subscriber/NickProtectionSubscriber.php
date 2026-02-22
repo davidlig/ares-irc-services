@@ -235,6 +235,20 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // Skip protection when this UID was just identified: IdentifyCommand registers before
+        // sending SVSNICK/SVS2MODE, so when the NICK echo arrives +r may not be in state yet.
+        $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
+        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $newNick)) {
+            $this->logger->info(sprintf(
+                'Nick change: %s [%s] → %s — identified in registry, skipping protection',
+                $event->oldNick->value,
+                $event->uid->value,
+                $newNick,
+            ));
+
+            return;
+        }
+
         $identified = $user->isIdentified();
         $this->logger->debug(sprintf(
             'NickProtection onNickChanged: user modes=%s isIdentified=%s',
