@@ -28,7 +28,7 @@ return (new PhpCsFixer\Config())
         'yoda_style' => [
             'equal' => true,
             'identical' => true,
-            'less_and_greater' => null, // Optional for < and >
+            'less_and_greater' => null,
         ],
 
         // Arrays and formatting
@@ -62,5 +62,4 @@ return (new PhpCsFixer\Config())
     ])
     ->setRiskyAllowed(true)
     ->setFinder($finder)
-    ->setCacheFile('.php-cs-fixer.cache') // Make sure to add this file to your .gitignore
-;
+    ->setCacheFile('.php-cs-fixer.cache');
