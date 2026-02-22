@@ -13,6 +13,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function sprintf;
+
 /**
  * Represents NickServ as a pseudo-client (service bot) on the IRC network.
  *
@@ -62,7 +64,7 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
      */
     private function introduce(ConnectionInterface $connection, string $serverSid): void
     {
-        $ts  = time();
+        $ts = time();
         $uid = sprintf(
             ':%s UID %s 1 %d %s %s %s 0 +Sio * * * :%s',
             $serverSid,
@@ -77,7 +79,7 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
         $connection->writeLine($uid);
 
         $this->logger->info('NickServ introduced to network.', [
-            'uid'  => $this->nickservUid,
+            'uid' => $this->nickservUid,
             'nick' => $this->nickservNick,
             'host' => $this->servicesHostname,
         ]);
@@ -147,6 +149,7 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
     {
         if (!$this->connectionHolder->isConnected()) {
             $this->logger->warning('NickServBot: cannot write — no active connection.', ['line' => $line]);
+
             return;
         }
 

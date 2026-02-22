@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\IRC\Network;
 
+use function in_array;
+
 /**
  * Channel privilege levels as transmitted in SJOIN buffers.
  *
@@ -15,21 +17,21 @@ namespace App\Domain\IRC\Network;
  */
 enum ChannelMemberRole: string
 {
-    case None   = '';
-    case Voice  = '+';   // +v
+    case None = '';
+    case Voice = '+';   // +v
     case HalfOp = '%';   // +h
-    case Op     = '@';   // +o
-    case Admin  = '~';   // +a  (SJOIN uses ~, not & like /NAMES)
-    case Owner  = '*';   // +q  (SJOIN uses *)
+    case Op = '@';   // +o
+    case Admin = '~';   // +a  (SJOIN uses ~, not & like /NAMES)
+    case Owner = '*';   // +q  (SJOIN uses *)
 
     public static function fromSjoinPrefix(string $prefix): self
     {
-        return match($prefix) {
-            '+'     => self::Voice,
-            '%'     => self::HalfOp,
-            '@'     => self::Op,
-            '~'     => self::Admin,
-            '*'     => self::Owner,
+        return match ($prefix) {
+            '+' => self::Voice,
+            '%' => self::HalfOp,
+            '@' => self::Op,
+            '~' => self::Admin,
+            '*' => self::Owner,
             default => self::None,
         };
     }
@@ -37,7 +39,7 @@ enum ChannelMemberRole: string
     /**
      * Extracts all prefix characters from the start of an SJOIN member entry
      * and returns the highest privilege role.
-     * e.g. "+@James" → Op  (@ > +)
+     * e.g. "+@James" → Op  (@ > +).
      */
     public static function fromSjoinEntry(string &$entry): self
     {
@@ -58,13 +60,13 @@ enum ChannelMemberRole: string
 
     public function label(): string
     {
-        return match($this) {
-            self::None   => 'none',
-            self::Voice  => 'voice',
+        return match ($this) {
+            self::None => 'none',
+            self::Voice => 'voice',
             self::HalfOp => 'halfop',
-            self::Op     => 'op',
-            self::Admin  => 'admin',
-            self::Owner  => 'owner',
+            self::Op => 'op',
+            self::Admin => 'admin',
+            self::Owner => 'owner',
         };
     }
 }

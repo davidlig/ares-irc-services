@@ -18,6 +18,7 @@ interface NickServCommandInterface
 
     /**
      * Alternative names that also trigger this command.
+     *
      * @return string[]
      */
     public function getAliases(): array;
@@ -58,7 +59,7 @@ interface NickServCommandInterface
      *   - name       Primary name shown in the listing (e.g. "PASSWORD")
      *   - desc_key   Translation key for the one-line description
      *   - help_key   Translation key for the full help text (HELP CMD SUBOPTION)
-     *   - syntax_key Translation key for the usage line
+     *   - syntax_key Translation key for the usage line.
      *
      * Return an empty array for commands without sub-options.
      *

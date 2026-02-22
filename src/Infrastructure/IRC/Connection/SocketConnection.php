@@ -8,6 +8,11 @@ use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Connection\ConnectionStatus;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use RuntimeException;
+
+use function sprintf;
+
+use const STREAM_CLIENT_CONNECT;
 
 class SocketConnection implements ConnectionInterface
 {
@@ -27,7 +32,7 @@ class SocketConnection implements ConnectionInterface
 
     public function connect(): void
     {
-        $scheme  = $this->useTls ? 'tls' : 'tcp';
+        $scheme = $this->useTls ? 'tls' : 'tcp';
         $address = sprintf('%s://%s:%d', $scheme, $this->host, $this->port);
 
         $this->logger->info('Opening TCP connection.', [
@@ -37,7 +42,7 @@ class SocketConnection implements ConnectionInterface
 
         $this->status = ConnectionStatus::Connecting;
 
-        $errorCode    = 0;
+        $errorCode = 0;
         $errorMessage = '';
 
         $socket = stream_socket_client(
@@ -54,13 +59,11 @@ class SocketConnection implements ConnectionInterface
 
             $this->logger->error('TCP connection failed.', [
                 'address' => $address,
-                'code'    => $errorCode,
-                'error'   => $errorMessage,
+                'code' => $errorCode,
+                'error' => $errorMessage,
             ]);
 
-            throw new \RuntimeException(
-                sprintf('Failed to connect to %s: [%d] %s', $address, $errorCode, $errorMessage)
-            );
+            throw new RuntimeException(sprintf('Failed to connect to %s: [%d] %s', $address, $errorCode, $errorMessage));
         }
 
         stream_set_blocking($socket, false);
@@ -88,7 +91,7 @@ class SocketConnection implements ConnectionInterface
     public function writeLine(string $data): void
     {
         if (!$this->isConnected()) {
-            throw new \RuntimeException('Cannot write: connection is not open.');
+            throw new RuntimeException('Cannot write: connection is not open.');
         }
 
         fwrite($this->socket, $data . "\r\n");

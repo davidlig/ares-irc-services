@@ -18,7 +18,7 @@ interface MaintenanceTaskInterface
 {
     /**
      * Unique task identifier used for logging and last-run tracking.
-     * Convention: 'service.description'  e.g. 'nickserv.purge_expired_pending'
+     * Convention: 'service.description'  e.g. 'nickserv.purge_expired_pending'.
      */
     public function getName(): string;
 

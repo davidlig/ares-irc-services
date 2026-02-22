@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Application\Maintenance;
 
 use Psr\Log\LoggerInterface;
+use Throwable;
+
+use function sprintf;
 
 /**
  * Runs registered MaintenanceTaskInterface instances from the IRC event loop.
@@ -51,7 +54,7 @@ final class MaintenanceScheduler
             try {
                 $task->run();
                 $this->lastRun[$task->getName()] = $now;
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $this->logger->error(sprintf(
                     'Maintenance task [%s] failed; cycle aborted: %s',
                     $task->getName(),

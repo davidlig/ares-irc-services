@@ -21,10 +21,16 @@ use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use DateTimeImmutable;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+
+use function array_slice;
+use function count;
+use function sprintf;
 
 /**
  * Listens to every incoming IRC message and maintains an in-memory picture of
@@ -54,15 +60,15 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         $message = $event->message;
 
         match ($message->command) {
-            'UID'    => $this->handleUid($message),
-            'NICK'   => $this->handleNick($message),
-            'QUIT'   => $this->handleQuit($message),
-            'SJOIN'  => $this->handleSjoin($message),
-            'PART'   => $this->handlePart($message),
-            'KICK'   => $this->handleKick($message),
+            'UID' => $this->handleUid($message),
+            'NICK' => $this->handleNick($message),
+            'QUIT' => $this->handleQuit($message),
+            'SJOIN' => $this->handleSjoin($message),
+            'PART' => $this->handlePart($message),
+            'KICK' => $this->handleKick($message),
             'UMODE2' => $this->handleUmode2($message),
-            'MD'     => $this->handleMd($message),
-            default  => null,
+            'MD' => $this->handleMd($message),
+            default => null,
         };
     }
 
@@ -77,41 +83,43 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             $this->logger->warning('Malformed UID message (not enough params)', [
                 'raw' => $message->toRawLine(),
             ]);
+
             return;
         }
 
         [, , $timestamp, $username, $hostname, $uidStr, $serviceStamp, $umodes, $virthost, $cloakedHost, $ipBase64]
             = $message->params;
 
-        $nickStr  = $message->params[0];
-        $gecos    = $message->trailing ?? '';
+        $nickStr = $message->params[0];
+        $gecos = $message->trailing ?? '';
         $serverSid = $message->prefix ?? '';
 
         try {
-            $nick  = new Nick($nickStr);
-            $uid   = new Uid($uidStr);
+            $nick = new Nick($nickStr);
+            $uid = new Uid($uidStr);
             $ident = new Ident($username);
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             $this->logger->warning('UID skipped: invalid value — ' . $e->getMessage(), [
                 'raw' => $message->toRawLine(),
             ]);
+
             return;
         }
 
-        $connectedAt = new \DateTimeImmutable('@' . $timestamp);
+        $connectedAt = new DateTimeImmutable('@' . $timestamp);
 
         $user = new NetworkUser(
-            uid:          $uid,
-            nick:         $nick,
-            ident:        $ident,
-            hostname:     $hostname,
-            cloakedHost:  $cloakedHost,
-            virtualHost:  $virthost,
-            modes:        $umodes,
-            connectedAt:  $connectedAt,
-            realName:     $gecos,
-            serverSid:    $serverSid,
-            ipBase64:     $ipBase64,
+            uid: $uid,
+            nick: $nick,
+            ident: $ident,
+            hostname: $hostname,
+            cloakedHost: $cloakedHost,
+            virtualHost: $virthost,
+            modes: $umodes,
+            connectedAt: $connectedAt,
+            realName: $gecos,
+            serverSid: $serverSid,
+            ipBase64: $ipBase64,
             serviceStamp: (int) $serviceStamp,
         );
 
@@ -135,7 +143,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
     private function handleNick(IRCMessage $message): void
     {
         $newNickStr = $message->params[0] ?? '';
-        $sourceId   = $message->prefix ?? '';
+        $sourceId = $message->prefix ?? '';
 
         if ('' === $newNickStr || '' === $sourceId) {
             return;
@@ -145,12 +153,13 @@ class NetworkStateSubscriber implements EventSubscriberInterface
 
         if (null === $user) {
             $this->logger->warning('NICK received for unknown source: ' . $sourceId);
+
             return;
         }
 
         try {
             $newNick = new Nick($newNickStr);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return;
         }
 
@@ -174,7 +183,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
     private function handleQuit(IRCMessage $message): void
     {
         $sourceId = $message->prefix ?? '';
-        $reason   = $message->trailing ?? '';
+        $reason = $message->trailing ?? '';
 
         if ('' === $sourceId) {
             return;
@@ -187,15 +196,15 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         }
 
         $nick = $user->getNick();
-        $uid  = $user->uid;
+        $uid = $user->uid;
 
         // Dispatch BEFORE removal so subscribers can still access user data
         // (ident/host are captured here and embedded in the event).
         $this->eventDispatcher->dispatch(new UserQuitNetworkEvent(
-            uid:         $uid,
-            nick:        $nick,
-            reason:      $reason,
-            ident:       $user->ident->value,
+            uid: $uid,
+            nick: $nick,
+            reason: $reason,
+            ident: $user->ident->value,
             displayHost: $user->getDisplayHost(),
         ));
 
@@ -225,14 +234,15 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $timestamp   = (int) $message->params[0];
-        $channelStr  = $message->params[1];
-        $buffer      = trim($message->trailing ?? '');
+        $timestamp = (int) $message->params[0];
+        $channelStr = $message->params[1];
+        $buffer = trim($message->trailing ?? '');
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             $this->logger->warning('SJOIN: invalid channel name: ' . $channelStr);
+
             return;
         }
 
@@ -242,14 +252,14 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             $modeStr = implode(' ', array_slice($message->params, 2));
         }
 
-        $channel  = $this->channelRepository->findByName($channelName);
+        $channel = $this->channelRepository->findByName($channelName);
         $isNewChannel = null === $channel;
 
         if ($isNewChannel) {
             $channel = new Channel(
-                name:      $channelName,
-                modes:     $modeStr,
-                createdAt: new \DateTimeImmutable('@' . $timestamp),
+                name: $channelName,
+                modes: $modeStr,
+                createdAt: new DateTimeImmutable('@' . $timestamp),
             );
         } else {
             // Update modes if we're receiving an SJOIN for an existing channel
@@ -299,7 +309,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
 
             try {
                 $uid = new Uid($entry);
-            } catch (\InvalidArgumentException) {
+            } catch (InvalidArgumentException) {
                 $this->logger->debug('SJOIN: skipping non-UID member entry: ' . $entry);
                 continue;
             }
@@ -340,9 +350,9 @@ class NetworkStateSubscriber implements EventSubscriberInterface
     // -------------------------------------------------------------------------
     private function handlePart(IRCMessage $message): void
     {
-        $sourceId   = $message->prefix ?? '';
+        $sourceId = $message->prefix ?? '';
         $channelStr = $message->params[0] ?? '';
-        $reason     = $message->trailing ?? '';
+        $reason = $message->trailing ?? '';
 
         if ('' === $sourceId || '' === $channelStr) {
             return;
@@ -356,7 +366,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return;
         }
 
@@ -382,8 +392,8 @@ class NetworkStateSubscriber implements EventSubscriberInterface
     private function handleKick(IRCMessage $message): void
     {
         $channelStr = $message->params[0] ?? '';
-        $targetId   = $message->params[1] ?? '';
-        $reason     = $message->trailing ?? '';
+        $targetId = $message->params[1] ?? '';
+        $reason = $message->trailing ?? '';
 
         if ('' === $channelStr || '' === $targetId) {
             return;
@@ -397,7 +407,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
 
         try {
             $channelName = new ChannelName($channelStr);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return;
         }
 
@@ -423,7 +433,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
     private function handleUmode2(IRCMessage $message): void
     {
         $sourceId = $message->prefix ?? '';
-        $modeStr  = $message->params[0] ?? $message->trailing ?? '';
+        $modeStr = $message->params[0] ?? $message->trailing ?? '';
 
         if ('' === $sourceId || '' === $modeStr) {
             return;
@@ -456,8 +466,8 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         }
 
         $uidStr = $message->params[1] ?? '';
-        $key    = $message->params[2] ?? '';
-        $value  = $message->trailing ?? ($message->params[3] ?? '');
+        $key = $message->params[2] ?? '';
+        $value = $message->trailing ?? ($message->params[3] ?? '');
 
         if ('' === $uidStr || 'account' !== $key) {
             return;
@@ -480,14 +490,14 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         if (preg_match('/^[0-9][0-9A-Z]{8}$/', $sourceId)) {
             try {
                 return $this->userRepository->findByUid(new Uid($sourceId));
-            } catch (\InvalidArgumentException) {
+            } catch (InvalidArgumentException) {
             }
         }
 
         // Fallback: resolve by nick (old-style or pre-burst messages)
         try {
             return $this->userRepository->findByNick(new Nick($sourceId));
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
         }
 
         return null;

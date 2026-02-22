@@ -10,7 +10,7 @@ use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
- * VERIFY <token>
+ * VERIFY <token>.
  *
  * Completes the registration started by REGISTER by validating the
  * verification token sent to the user's email. On success the account
@@ -77,17 +77,19 @@ final readonly class VerifyCommand implements NickServCommandInterface
         }
 
         $token = $context->args[0];
-        $nick  = $sender->getNick()->value;
+        $nick = $sender->getNick()->value;
 
         $account = $this->nickRepository->findByNick($nick);
 
         if (null === $account || !$account->isPending()) {
             $context->reply('verify.no_pending');
+
             return;
         }
 
         if (!$context->getPendingVerificationRegistry()->consume($nick, $token)) {
             $context->reply('verify.invalid_token');
+
             return;
         }
 

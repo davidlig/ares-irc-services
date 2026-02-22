@@ -13,6 +13,9 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Throwable;
+
+use function sprintf;
 
 #[AsCommand(
     name: 'irc:connect',
@@ -79,20 +82,20 @@ class ConnectCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $serverName  = (string) ($input->getArgument('server-name') ?? $this->defaultServerName);
-        $host        = (string) ($input->getArgument('host')        ?? $this->defaultHost);
-        $port        = (int)    ($input->getArgument('port')        ?? $this->defaultPort);
-        $password    = (string) ($input->getArgument('password')    ?? $this->defaultPassword);
+        $serverName = (string) ($input->getArgument('server-name') ?? $this->defaultServerName);
+        $host = (string) ($input->getArgument('host') ?? $this->defaultHost);
+        $port = (int) ($input->getArgument('port') ?? $this->defaultPort);
+        $password = (string) ($input->getArgument('password') ?? $this->defaultPassword);
         $description = (string) ($input->getArgument('description') ?? $this->defaultDescription);
-        $protocol    = (string) ($input->getOption('protocol')      ?? $this->defaultProtocol);
-        $useTls      = $input->getOption('tls') ? true : $this->defaultUseTls;
+        $protocol = (string) ($input->getOption('protocol') ?? $this->defaultProtocol);
+        $useTls = $input->getOption('tls') ? true : $this->defaultUseTls;
 
         $io->title('Ares IRC Services');
         $io->definitionList(
             ['Server name' => $serverName],
-            ['Host'        => sprintf('%s:%d', $host, $port)],
-            ['Protocol'    => $protocol],
-            ['TLS'         => $useTls ? 'yes' : 'no'],
+            ['Host' => sprintf('%s:%d', $host, $port)],
+            ['Protocol' => $protocol],
+            ['TLS' => $useTls ? 'yes' : 'no'],
         );
 
         try {
@@ -113,7 +116,7 @@ class ConnectCommand extends Command
             $client->run();
 
             $io->warning('Connection closed by remote host.');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $io->error($e->getMessage());
 
             return Command::FAILURE;

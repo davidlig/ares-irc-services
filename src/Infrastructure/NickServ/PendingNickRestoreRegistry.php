@@ -32,6 +32,7 @@ final readonly class PendingNickRestoreRegistry
     {
         if (isset($this->pending[$uid])) {
             unset($this->pending[$uid]);
+
             return true;
         }
 

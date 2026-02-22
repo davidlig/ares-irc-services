@@ -29,7 +29,7 @@ class IRCClientFactory
 
     public function create(string $protocolName, ServerLink $link): IRCClient
     {
-        $protocol   = $this->protocolRegistry->get($protocolName);
+        $protocol = $this->protocolRegistry->get($protocolName);
         $connection = $this->connectionFactory->create($link);
 
         return new IRCClient(

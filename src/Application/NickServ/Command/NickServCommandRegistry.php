@@ -39,14 +39,14 @@ class NickServCommandRegistry
     /** @return NickServCommandInterface[] unique command instances (one per handler, aliases deduplicated) */
     public function all(): array
     {
-        $seen   = [];
+        $seen = [];
         $unique = [];
 
         foreach ($this->map as $command) {
             $id = spl_object_id($command);
             if (!isset($seen[$id])) {
                 $seen[$id] = true;
-                $unique[]  = $command;
+                $unique[] = $command;
             }
         }
 

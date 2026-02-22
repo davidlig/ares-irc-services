@@ -35,11 +35,11 @@ class IRCClient
     public function connect(ServerLink $link): void
     {
         $this->logger->info('Initiating S2S link.', [
-            'server'   => (string) $link->serverName,
-            'host'     => (string) $link->host,
-            'port'     => $link->port->value,
+            'server' => (string) $link->serverName,
+            'host' => (string) $link->host,
+            'port' => $link->port->value,
             'protocol' => $this->protocol->getProtocolName(),
-            'tls'      => $link->useTls,
+            'tls' => $link->useTls,
         ]);
 
         $this->connection->connect();

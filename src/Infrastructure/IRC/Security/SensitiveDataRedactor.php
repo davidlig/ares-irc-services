@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Security;
 
+use function count;
+
 /**
  * Masks passwords and credentials in NickServ command strings
  * before they are written to log files.
@@ -20,7 +22,7 @@ final readonly class SensitiveDataRedactor
     public static function redactNickServCommand(string $text): string
     {
         $parts = preg_split('/\s+/', trim($text), 4);
-        $cmd   = strtoupper($parts[0] ?? '');
+        $cmd = strtoupper($parts[0] ?? '');
 
         switch ($cmd) {
             case 'REGISTER':
@@ -40,7 +42,7 @@ final readonly class SensitiveDataRedactor
 
             case 'SET':
                 // SET PASSWORD <new_password> — mask position 2
-                if (isset($parts[1]) && strtoupper($parts[1]) === 'PASSWORD' && isset($parts[2])) {
+                if (isset($parts[1]) && 'PASSWORD' === strtoupper($parts[1]) && isset($parts[2])) {
                     $parts[2] = self::MASK;
                 }
                 break;

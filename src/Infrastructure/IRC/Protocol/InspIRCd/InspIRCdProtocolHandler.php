@@ -12,6 +12,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function sprintf;
+
 /**
  * Implements the InspIRCd SpanTree server-to-server link protocol (v1.2+).
  *
@@ -44,7 +46,7 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
     {
         $this->logger->debug('Starting InspIRCd handshake.', [
             'server' => (string) $link->serverName,
-            'sid'    => $this->sid,
+            'sid' => $this->sid,
         ]);
 
         $connection->writeLine(sprintf(
@@ -56,7 +58,8 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
         ));
 
         // Password is intentionally omitted from the log to avoid leaking credentials
-        $this->logger->debug(sprintf('> SERVER %s *** 0 %s :%s',
+        $this->logger->debug(sprintf(
+            '> SERVER %s *** 0 %s :%s',
             $link->serverName,
             $this->sid,
             $link->description,
@@ -64,7 +67,7 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
 
         $this->logger->info('InspIRCd handshake sent.', [
             'server' => (string) $link->serverName,
-            'sid'    => $this->sid,
+            'sid' => $this->sid,
         ]);
     }
 

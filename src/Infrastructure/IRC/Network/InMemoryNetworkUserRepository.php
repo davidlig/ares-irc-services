@@ -9,6 +9,8 @@ use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 
+use function count;
+
 class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface
 {
     /** @var array<string, NetworkUser> keyed by UID string */

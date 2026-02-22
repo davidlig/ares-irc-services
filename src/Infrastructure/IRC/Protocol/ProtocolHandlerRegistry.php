@@ -6,6 +6,9 @@ namespace App\Infrastructure\IRC\Protocol;
 
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerRegistryInterface;
+use InvalidArgumentException;
+
+use function sprintf;
 
 class ProtocolHandlerRegistry implements ProtocolHandlerRegistryInterface
 {
@@ -13,7 +16,7 @@ class ProtocolHandlerRegistry implements ProtocolHandlerRegistryInterface
     private array $handlers = [];
 
     /**
-     * @param iterable<ProtocolHandlerInterface> $handlers Tagged services injected by Symfony DI.
+     * @param iterable<ProtocolHandlerInterface> $handlers tagged services injected by Symfony DI
      */
     public function __construct(iterable $handlers = [])
     {
@@ -30,11 +33,7 @@ class ProtocolHandlerRegistry implements ProtocolHandlerRegistryInterface
     public function get(string $protocolName): ProtocolHandlerInterface
     {
         if (!$this->supports($protocolName)) {
-            throw new \InvalidArgumentException(sprintf(
-                'No protocol handler registered for "%s". Available protocols: %s.',
-                $protocolName,
-                implode(', ', $this->getRegisteredProtocols()),
-            ));
+            throw new InvalidArgumentException(sprintf('No protocol handler registered for "%s". Available protocols: %s.', $protocolName, implode(', ', $this->getRegisteredProtocols())));
         }
 
         return $this->handlers[$protocolName];

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Domain\IRC\ValueObject;
 
+use InvalidArgumentException;
+
+use function sprintf;
+
 /**
  * Unique User ID in UnrealIRCd format: <SID:3chars><random:6chars> = 9 alphanumeric chars.
  * The first 3 characters identify the server (SID).
@@ -15,9 +19,7 @@ readonly class Uid
     public function __construct(public readonly string $value)
     {
         if (!preg_match('/^[0-9A-Z]{9}$/', $value)) {
-            throw new \InvalidArgumentException(
-                sprintf('"%s" is not a valid UID. Expected 9 uppercase alphanumeric characters.', $value)
-            );
+            throw new InvalidArgumentException(sprintf('"%s" is not a valid UID. Expected 9 uppercase alphanumeric characters.', $value));
         }
     }
 

@@ -12,9 +12,10 @@ use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use InvalidArgumentException;
 
 /**
- * IDENTIFY <nickname> <password>
+ * IDENTIFY <nickname> <password>.
  *
  * Authenticates a user against a registered nickname.
  * On success: restores the registered nick (if needed) and sets +r mode.
@@ -81,10 +82,11 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         }
 
         $targetNick = $context->args[0];
-        $password   = $context->args[1];
+        $password = $context->args[1];
 
         if ($this->isAlreadyIdentified($sender, $targetNick)) {
             $context->reply('identify.already_identified', ['nickname' => $targetNick]);
+
             return;
         }
 
@@ -92,29 +94,34 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
         if (null === $account) {
             $context->reply('identify.not_registered', ['nickname' => $targetNick]);
+
             return;
         }
 
         if ($account->isPending()) {
             $context->reply('identify.pending', ['nickname' => $targetNick]);
+
             return;
         }
 
         if ($account->isSuspended()) {
             $context->reply('identify.suspended', [
                 'nickname' => $targetNick,
-                'reason'   => $account->getReason() ?? '',
+                'reason' => $account->getReason() ?? '',
             ]);
+
             return;
         }
 
         if ($account->isForbidden()) {
             $context->reply('identify.forbidden', ['nickname' => $targetNick]);
+
             return;
         }
 
         if (!$account->verifyPassword($password)) {
             $context->reply('identify.invalid_credentials');
+
             return;
         }
 
@@ -142,6 +149,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
         if ($sender->isIdentified() && 0 === strcasecmp($sender->getNick()->value, $targetNick)) {
             $this->identifiedRegistry->register($sender->uid->value, $targetNick);
+
             return true;
         }
 
@@ -159,7 +167,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
     ): void {
         try {
             $currentHolder = $this->userRepository->findByNick(new Nick($targetNick));
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             return;
         }
 
@@ -187,7 +195,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         RegisteredNick $account,
         string $targetNick,
     ): void {
-        if (strcasecmp($sender->getNick()->value, $targetNick) !== 0) {
+        if (0 !== strcasecmp($sender->getNick()->value, $targetNick)) {
             $context->getNotifier()->forceNick($sender->uid->value, $account->getNickname());
         }
 
