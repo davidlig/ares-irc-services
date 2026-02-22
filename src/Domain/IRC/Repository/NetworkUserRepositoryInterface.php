@@ -14,6 +14,11 @@ interface NetworkUserRepositoryInterface
 
     public function removeByUid(Uid $uid): void;
 
+    /**
+     * Updates the nick index when a user changes nick (keeps findByNick O(1)).
+     */
+    public function updateNick(Uid $uid, Nick $oldNick, Nick $newNick): void;
+
     public function findByUid(Uid $uid): ?NetworkUser;
 
     public function findByNick(Nick $nick): ?NetworkUser;

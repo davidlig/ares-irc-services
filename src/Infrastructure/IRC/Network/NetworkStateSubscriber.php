@@ -165,6 +165,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
 
         $oldNick = $user->getNick();
         $user->changeNick($newNick);
+        $this->userRepository->updateNick($user->uid, $oldNick, $newNick);
 
         // UnrealIRCd strips +r on every nick change but does NOT send UMODE2 -r to
         // services. We mirror the server behaviour here so the in-memory state stays
@@ -208,9 +209,10 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             displayHost: $user->getDisplayHost(),
         ));
 
-        // Remove user from all channels and from the in-memory repository.
-        foreach ($this->channelRepository->all() as $channel) {
-            $channel->removeMember($uid);
+        // Remove user only from channels they are in (O(channels user is in) instead of O(all channels)).
+        foreach ($user->getChannelNames() as $channelNameStr) {
+            $channel = $this->channelRepository->findByName(new ChannelName($channelNameStr));
+            $channel?->removeMember($uid);
         }
 
         $this->userRepository->removeByUid($uid);
@@ -320,6 +322,11 @@ class NetworkStateSubscriber implements EventSubscriberInterface
 
         $this->channelRepository->save($channel);
 
+        foreach ($joinedUids as [$uid]) {
+            $joinedUser = $this->userRepository->findByUid($uid);
+            $joinedUser?->addChannel($channelName);
+        }
+
         if ($isNewChannel) {
             $this->logger->info(sprintf(
                 'Channel synced: %s [%s, %d members]',
@@ -372,6 +379,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
 
         $channel = $this->channelRepository->findByName($channelName);
         $channel?->removeMember($user->uid);
+        $user->removeChannel($channelName);
 
         $this->logger->info(sprintf(
             'User %s parted %s [%s]',
@@ -413,6 +421,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
 
         $channel = $this->channelRepository->findByName($channelName);
         $channel?->removeMember($target->uid);
+        $target->removeChannel($channelName);
 
         $this->logger->info(sprintf(
             'User %s was kicked from %s [%s]',
