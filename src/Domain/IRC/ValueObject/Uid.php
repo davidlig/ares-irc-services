@@ -7,25 +7,33 @@ namespace App\Domain\IRC\ValueObject;
 use InvalidArgumentException;
 
 use function sprintf;
+use function strlen;
 
 /**
- * Unique User ID in UnrealIRCd format: <SID:3chars><random:6chars> = 9 alphanumeric chars.
- * The first 3 characters identify the server (SID).
+ * Opaque unique identifier for a user session on the IRC network.
  *
- * Example: 001R2OC01
+ * The domain does not assume any format or length; it is defined by the
+ * protocol (UnrealIRCd, InspIRCd, etc.). Adapters in Infrastructure map
+ * the IRCd's native user ID to this value object. This keeps the domain
+ * decoupled from any specific IRCd.
  */
 readonly class Uid
 {
+    private const MAX_LENGTH = 128;
+
     public function __construct(public readonly string $value)
     {
-        if (!preg_match('/^[0-9A-Z]{9}$/', $value)) {
-            throw new InvalidArgumentException(sprintf('"%s" is not a valid UID. Expected 9 uppercase alphanumeric characters.', $value));
+        if ('' === $value) {
+            throw new InvalidArgumentException('UID cannot be empty.');
         }
-    }
 
-    public function getSid(): string
-    {
-        return substr($this->value, 0, 3);
+        if (strlen($value) > self::MAX_LENGTH) {
+            throw new InvalidArgumentException(sprintf('UID must not exceed %d characters.', self::MAX_LENGTH));
+        }
+
+        if (1 === preg_match('/[\x00-\x1F\x7F]/', $value)) {
+            throw new InvalidArgumentException('UID must not contain control characters.');
+        }
     }
 
     public function equals(self $other): bool
