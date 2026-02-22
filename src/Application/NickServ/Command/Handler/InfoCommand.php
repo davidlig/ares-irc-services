@@ -84,8 +84,19 @@ final readonly class InfoCommand implements NickServCommandInterface
 
         $account = $this->nickRepository->findByNick($targetNick);
 
-        if (null === $account || $account->isForbidden() || $account->isPending()) {
+        if (null === $account || $account->isPending()) {
             $context->reply('info.not_registered', ['nickname' => $targetNick]);
+
+            return;
+        }
+
+        if ($account->isForbidden()) {
+            $context->reply('info.header', ['nickname' => $account->getNickname()]);
+            $context->reply('info.status', ['status' => $context->trans('info.status_forbidden')]);
+            if (null !== $account->getReason()) {
+                $context->reply('info.reason', ['reason' => $account->getReason()]);
+            }
+            $context->reply('info.footer');
 
             return;
         }
@@ -108,6 +119,10 @@ final readonly class InfoCommand implements NickServCommandInterface
             default => 'info.status_registered',
         };
         $context->reply('info.status', ['status' => $context->trans($statusKey)]);
+
+        if ($account->isSuspended() && null !== $account->getReason()) {
+            $context->reply('info.reason', ['reason' => $account->getReason()]);
+        }
 
         $context->reply('info.registered_at', [
             'date' => $account->getRegisteredAt()?->format('d/m/Y H:i') ?? '—',
