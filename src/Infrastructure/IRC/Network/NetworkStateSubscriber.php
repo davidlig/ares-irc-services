@@ -4,47 +4,35 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network;
 
+use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
-use App\Domain\IRC\Event\MessageReceivedEvent;
+use App\Domain\IRC\Event\ChannelTopicChangedEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
+use App\Domain\IRC\Event\UserModeChangedEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
-use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Network\Channel;
-use App\Domain\IRC\Network\ChannelMemberRole;
-use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\Repository\ChannelRepositoryInterface;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
-use App\Domain\IRC\ValueObject\Ident;
-use App\Domain\IRC\ValueObject\Nick;
-use App\Domain\IRC\ValueObject\Uid;
-use DateTimeImmutable;
-use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-use function array_slice;
-use function count;
 use function sprintf;
 
 /**
- * Listens to every incoming IRC message and maintains an in-memory picture of
- * the network state: users (UID / NICK / QUIT) and channels (SJOIN / PART / KICK
- * / MODE / TOPIC for UnrealIRCd; FJOIN / FMODE / LMODE / FTOPIC for InspIRCd).
- *
- * Dispatches domain events so that service modules can react to state changes.
+ * Listens only to domain events and maintains in-memory network state (repos).
+ * Protocol-specific parsing is done by adapters (Unreal / InspIRCd) which
+ * dispatch these events; this subscriber is the single place that writes to
+ * ChannelRepository and NetworkUserRepository.
  */
 class NetworkStateSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly ChannelRepositoryInterface $channelRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -52,793 +40,97 @@ class NetworkStateSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            MessageReceivedEvent::class => ['onMessageReceived', 0],
+            UserJoinedNetworkEvent::class => ['onUserJoinedNetwork', 0],
+            UserQuitNetworkEvent::class => ['onUserQuitNetwork', 0],
+            UserNickChangedEvent::class => ['onUserNickChanged', 0],
+            UserModeChangedEvent::class => ['onUserModeChanged', 0],
+            ChannelSyncedEvent::class => ['onChannelSynced', 0],
+            UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
+            UserLeftChannelEvent::class => ['onUserLeftChannel', 0],
+            ChannelModesChangedEvent::class => ['onChannelModesChanged', 0],
+            ChannelTopicChangedEvent::class => ['onChannelTopicChanged', 0],
         ];
     }
 
-    public function onMessageReceived(MessageReceivedEvent $event): void
+    public function onUserJoinedNetwork(UserJoinedNetworkEvent $event): void
     {
-        $message = $event->message;
-
-        match ($message->command) {
-            'UID' => $this->handleUid($message),
-            'NICK' => $this->handleNick($message),
-            'QUIT' => $this->handleQuit($message),
-            'SJOIN' => $this->handleSjoin($message),
-            'PART' => $this->handlePart($message),
-            'KICK' => $this->handleKick($message),
-            'UMODE2' => $this->handleUmode2($message),
-            'MD' => $this->handleMd($message),
-            'TOPIC' => $this->handleTopic($message),
-            'MODE' => $this->handleMode($message),
-            'FJOIN' => $this->handleFjoin($message),
-            'FMODE' => $this->handleFmode($message),
-            'LMODE' => $this->handleLmode($message),
-            'FTOPIC' => $this->handleFtopic($message),
-            default => null,
-        };
+        $this->userRepository->add($event->user);
     }
 
-    // -------------------------------------------------------------------------
-    // UID — user introduction during burst or new connection
-    // Syntax: :SID UID nickname hopcount timestamp username hostname uid
-    //                servicestamp umodes virthost cloakedhost ip :gecos
-    // -------------------------------------------------------------------------
-    private function handleUid(IRCMessage $message): void
+    public function onUserQuitNetwork(UserQuitNetworkEvent $event): void
     {
-        if (count($message->params) < 11) {
-            $this->logger->warning('Malformed UID message (not enough params)', [
-                'raw' => $message->toRawLine(),
-            ]);
-
-            return;
-        }
-
-        [, , $timestamp, $username, $hostname, $uidStr, $serviceStamp, $umodes, $virthost, $cloakedHost, $ipBase64]
-            = $message->params;
-
-        $nickStr = $message->params[0];
-        $gecos = $message->trailing ?? '';
-        $serverSid = $message->prefix ?? '';
-
-        try {
-            $nick = new Nick($nickStr);
-            $uid = new Uid($uidStr);
-            $ident = new Ident($username);
-        } catch (InvalidArgumentException $e) {
-            $this->logger->warning('UID skipped: invalid value — ' . $e->getMessage(), [
-                'raw' => $message->toRawLine(),
-            ]);
-
-            return;
-        }
-
-        $connectedAt = new DateTimeImmutable('@' . $timestamp);
-
-        $user = new NetworkUser(
-            uid: $uid,
-            nick: $nick,
-            ident: $ident,
-            hostname: $hostname,
-            cloakedHost: $cloakedHost,
-            virtualHost: $virthost,
-            modes: $umodes,
-            connectedAt: $connectedAt,
-            realName: $gecos,
-            serverSid: $serverSid,
-            ipBase64: $ipBase64,
-            serviceStamp: (int) $serviceStamp,
-        );
-
-        $this->userRepository->add($user);
-
-        $this->logger->info(sprintf(
-            'User joined network: %s (%s@%s) [%s]',
-            $nick->value,
-            $ident->value,
-            $user->getDisplayHost(),
-            $uid->value,
-        ));
-
-        $this->eventDispatcher->dispatch(new UserJoinedNetworkEvent($user));
-    }
-
-    // -------------------------------------------------------------------------
-    // NICK — nick change
-    // Syntax: :uid NICK newnick :timestamp
-    // -------------------------------------------------------------------------
-    private function handleNick(IRCMessage $message): void
-    {
-        $newNickStr = $message->params[0] ?? '';
-        $sourceId = $message->prefix ?? '';
-
-        if ('' === $newNickStr || '' === $sourceId) {
-            return;
-        }
-
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            $this->logger->warning('NICK received for unknown source: ' . $sourceId);
-
-            return;
-        }
-
-        try {
-            $newNick = new Nick($newNickStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $oldNick = $user->getNick();
-        $user->changeNick($newNick);
-        $this->userRepository->updateNick($user->uid, $oldNick, $newNick);
-
-        // UnrealIRCd strips +r on every nick change but does NOT send UMODE2 -r to
-        // services. We mirror the server behaviour here so the in-memory state stays
-        // consistent.
-        $user->applyModeChange('-r');
-
-        $this->logger->info(sprintf('Nick change: %s → %s [%s]', $oldNick->value, $newNick->value, $user->uid->value));
-
-        $this->eventDispatcher->dispatch(new UserNickChangedEvent($user->uid, $oldNick, $newNick));
-    }
-
-    // -------------------------------------------------------------------------
-    // QUIT — user disconnected
-    // Syntax: :uid QUIT :reason
-    // -------------------------------------------------------------------------
-    private function handleQuit(IRCMessage $message): void
-    {
-        $sourceId = $message->prefix ?? '';
-        $reason = $message->trailing ?? '';
-
-        if ('' === $sourceId) {
-            return;
-        }
-
-        $user = $this->resolveUser($sourceId);
-
+        $user = $this->userRepository->findByUid($event->uid);
         if (null === $user) {
             return;
         }
 
-        $nick = $user->getNick();
-        $uid = $user->uid;
-
-        // Dispatch BEFORE removal so subscribers can still access user data
-        // (ident/host are captured here and embedded in the event).
-        $this->eventDispatcher->dispatch(new UserQuitNetworkEvent(
-            uid: $uid,
-            nick: $nick,
-            reason: $reason,
-            ident: $user->ident->value,
-            displayHost: $user->getDisplayHost(),
-        ));
-
-        // Remove user only from channels they are in (O(channels user is in) instead of O(all channels)).
         foreach ($user->getChannelNames() as $channelNameStr) {
             $channel = $this->channelRepository->findByName(new ChannelName($channelNameStr));
-            $channel?->removeMember($uid);
+            if (null !== $channel) {
+                $channel->removeMember($event->uid);
+                $this->channelRepository->save($channel);
+            }
         }
 
-        $this->userRepository->removeByUid($uid);
-
-        $this->logger->info(sprintf('User quit: %s [%s] — %s', $nick->value, $uid->value, $reason));
+        $this->userRepository->removeByUid($event->uid);
+        $this->logger->info(sprintf('User quit: %s [%s] — %s', $event->nick->value, $event->uid->value, $event->reason));
     }
 
-    // -------------------------------------------------------------------------
-    // SJOIN — channel state sync (burst) or user join (post-burst)
-    // Syntax: :SID SJOIN timestamp #channel [+modes [modeParams...]] :buffer
-    //
-    // Buffer entries:
-    //   - Users (UID with optional privilege prefixes): +@001AAAAAB
-    //   - Bans:            &mask
-    //   - Exemptions:      "mask
-    //   - Invite excepts:  'mask
-    // -------------------------------------------------------------------------
-    private function handleSjoin(IRCMessage $message): void
+    public function onUserNickChanged(UserNickChangedEvent $event): void
     {
-        if (count($message->params) < 2) {
-            return;
+        $this->userRepository->updateNick($event->uid, $event->oldNick, $event->newNick);
+    }
+
+    public function onUserModeChanged(UserModeChangedEvent $event): void
+    {
+        $user = $this->userRepository->findByUid($event->uid);
+        if (null !== $user) {
+            $user->applyModeChange($event->modeDelta);
         }
+    }
 
-        $timestamp = (int) $message->params[0];
-        $channelStr = $message->params[1];
-        $buffer = trim($message->trailing ?? '');
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            $this->logger->warning('SJOIN: invalid channel name: ' . $channelStr);
-
-            return;
-        }
-
-        // Collect mode string (params[2] starts with +) and any mode parameters
-        $modeStr = '';
-        if (isset($message->params[2]) && str_starts_with($message->params[2], '+')) {
-            $modeStr = implode(' ', array_slice($message->params, 2));
-        }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        $isNewChannel = null === $channel;
-
-        if ($isNewChannel) {
-            $channel = new Channel(
-                name: $channelName,
-                modes: $modeStr,
-                createdAt: new DateTimeImmutable('@' . $timestamp),
-            );
-        } else {
-            // Update modes if we're receiving an SJOIN for an existing channel
-            // (e.g. during re-sync or mode correction)
-            if ('' !== $modeStr) {
-                $channel->updateModes($modeStr);
-            }
-        }
-
-        $joinedUids = [];
-
-        foreach (explode(' ', $buffer) as $entry) {
-            $entry = trim($entry);
-
-            if ('' === $entry) {
-                continue;
-            }
-
-            // Strip optional SJSBY extended info prefix: <setat,setby>
-            if (str_starts_with($entry, '<')) {
-                $closingPos = strpos($entry, '>');
-                if (false !== $closingPos) {
-                    $entry = substr($entry, $closingPos + 1);
-                }
-            }
-
-            $firstChar = $entry[0] ?? '';
-
-            // Mode list entries
-            if ('&' === $firstChar) {
-                $channel->addBan(substr($entry, 1));
-                continue;
-            }
-
-            if ('"' === $firstChar) {
-                $channel->addExempt(substr($entry, 1));
-                continue;
-            }
-
-            if ("'" === $firstChar) {
-                $channel->addInviteException(substr($entry, 1));
-                continue;
-            }
-
-            // Member entry — strip privilege prefixes
-            $role = ChannelMemberRole::fromSjoinEntry($entry);
-
-            try {
-                $uid = new Uid($entry);
-            } catch (InvalidArgumentException) {
-                $this->logger->debug('SJOIN: skipping non-UID member entry: ' . $entry);
-                continue;
-            }
-
-            $channel->syncMember($uid, $role);
-            $joinedUids[] = [$uid, $role];
-        }
-
+    public function onChannelSynced(ChannelSyncedEvent $event): void
+    {
+        $channel = $event->channel;
         $this->channelRepository->save($channel);
 
-        foreach ($joinedUids as [$uid]) {
-            $joinedUser = $this->userRepository->findByUid($uid);
-            $joinedUser?->addChannel($channelName);
-        }
-
-        if ($isNewChannel) {
-            $this->logger->info(sprintf(
-                'Channel synced: %s [%s, %d members]',
-                $channelName->value,
-                $modeStr ?: 'no modes',
-                $channel->getMemberCount(),
-            ));
-
-            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
-        } else {
-            // Post-burst join(s) — dispatch individual join events
-            foreach ($joinedUids as [$uid, $role]) {
-                $this->logger->info(sprintf(
-                    'User %s joined %s [role: %s]',
-                    $uid->value,
-                    $channelName->value,
-                    $role->label(),
-                ));
-
-                $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $channelName, $role));
+        foreach ($channel->getMembers() as $member) {
+            $joinedUser = $this->userRepository->findByUid($member->uid);
+            if (null !== $joinedUser) {
+                $joinedUser->addChannel($channel->name);
             }
         }
     }
 
-    // -------------------------------------------------------------------------
-    // PART — user leaves a channel voluntarily
-    // Syntax: :uid PART #channel [:reason]
-    // -------------------------------------------------------------------------
-    private function handlePart(IRCMessage $message): void
+    public function onUserJoinedChannel(UserJoinedChannelEvent $event): void
     {
-        $sourceId = $message->prefix ?? '';
-        $channelStr = $message->params[0] ?? '';
-        $reason = $message->trailing ?? '';
-
-        if ('' === $sourceId || '' === $channelStr) {
-            return;
-        }
-
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            return;
-        }
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        $channel?->removeMember($user->uid);
-        $user->removeChannel($channelName);
-
-        $this->logger->info(sprintf(
-            'User %s parted %s [%s]',
-            $user->getNick()->value,
-            $channelName->value,
-            $reason,
-        ));
-
-        $this->eventDispatcher->dispatch(
-            new UserLeftChannelEvent($user->uid, $user->getNick(), $channelName, $reason, wasKicked: false)
-        );
-    }
-
-    // -------------------------------------------------------------------------
-    // KICK — a user is removed from a channel by another user or server
-    // Syntax: :sourceUid KICK #channel targetUid [:reason]
-    // -------------------------------------------------------------------------
-    private function handleKick(IRCMessage $message): void
-    {
-        $channelStr = $message->params[0] ?? '';
-        $targetId = $message->params[1] ?? '';
-        $reason = $message->trailing ?? '';
-
-        if ('' === $channelStr || '' === $targetId) {
-            return;
-        }
-
-        $target = $this->resolveUser($targetId);
-
-        if (null === $target) {
-            return;
-        }
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        $channel?->removeMember($target->uid);
-        $target->removeChannel($channelName);
-
-        $this->logger->info(sprintf(
-            'User %s was kicked from %s [%s]',
-            $target->getNick()->value,
-            $channelName->value,
-            $reason,
-        ));
-
-        $this->eventDispatcher->dispatch(
-            new UserLeftChannelEvent($target->uid, $target->getNick(), $channelName, $reason, wasKicked: true)
-        );
-    }
-
-    // -------------------------------------------------------------------------
-    // UMODE2 — user mode change propagation from S2S (e.g. SVSLOGIN sets +r)
-    // Syntax: :uid UMODE2 <modestring>
-    // -------------------------------------------------------------------------
-    private function handleUmode2(IRCMessage $message): void
-    {
-        $sourceId = $message->prefix ?? '';
-        $modeStr = $message->params[0] ?? $message->trailing ?? '';
-
-        if ('' === $sourceId || '' === $modeStr) {
-            return;
-        }
-
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            return;
-        }
-
-        $user->applyModeChange($modeStr);
-
-        $this->logger->debug(sprintf(
-            'UMODE2: %s [%s] modes → %s',
-            $user->getNick()->value,
-            $user->uid->value,
-            $user->getModes(),
-        ));
-    }
-
-    // -------------------------------------------------------------------------
-    // MD — metadata update; we track "account" metadata to know SVSLOGIN worked
-    // Syntax: :server MD client <uid> <key> [:<value>]
-    // -------------------------------------------------------------------------
-    private function handleMd(IRCMessage $message): void
-    {
-        if ('client' !== ($message->params[0] ?? '')) {
-            return;
-        }
-
-        $uidStr = $message->params[1] ?? '';
-        $key = $message->params[2] ?? '';
-        $value = $message->trailing ?? ($message->params[3] ?? '');
-
-        if ('' === $uidStr || 'account' !== $key) {
-            return;
-        }
-
-        $this->logger->debug(sprintf('MD: client %s account = %s', $uidStr, $value));
-    }
-
-    // -------------------------------------------------------------------------
-    // TOPIC — channel topic (UnrealIRCd S2S)
-    // Syntax: TOPIC channel set-by set-when :topic text
-    // -------------------------------------------------------------------------
-    private function handleTopic(IRCMessage $message): void
-    {
-        $channelStr = $message->params[0] ?? '';
-        $topic = $message->trailing;
-
-        if ('' === $channelStr) {
-            return;
-        }
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $channel->updateTopic($topic);
-        $this->channelRepository->save($channel);
-        $this->logger->debug(sprintf('TOPIC %s: %s', $channelStr, $topic ?? '(cleared)'));
-    }
-
-    // -------------------------------------------------------------------------
-    // MODE — channel mode change (UnrealIRCd S2S)
-    // Syntax: :source MODE #channel ±modes [params...]
-    // Prefix modes (v,h,o,a,q) and list modes (b,e,I) are applied to our state.
-    // -------------------------------------------------------------------------
-    private function handleMode(IRCMessage $message): void
-    {
-        if (count($message->params) < 2) {
-            return;
-        }
-
-        $channelStr = $message->params[0];
-        $modeStr = $message->params[1];
-        $modeParams = array_slice($message->params, 2);
-        if (null !== $message->trailing && '' !== $message->trailing) {
-            $modeParams[] = $message->trailing;
-        }
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $paramIdx = 0;
-        $adding = true;
-
-        foreach (str_split($modeStr) as $char) {
-            if ('+' === $char) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $char) {
-                $adding = false;
-                continue;
-            }
-
-            $role = ChannelMemberRole::fromModeLetter($char);
-            if (null !== $role) {
-                if ($paramIdx >= count($modeParams)) {
-                    break;
-                }
-                $targetId = $modeParams[$paramIdx];
-                ++$paramIdx;
-                $user = $this->resolveUser($targetId);
-                if (null !== $user) {
-                    $channel->syncMember($user->uid, $adding ? $role : ChannelMemberRole::None);
-                }
-                continue;
-            }
-
-            if ('b' === $char || 'e' === $char || 'I' === $char) {
-                if ($paramIdx >= count($modeParams)) {
-                    break;
-                }
-                $mask = $modeParams[$paramIdx];
-                ++$paramIdx;
-                if ('b' === $char) {
-                    $adding ? $channel->addBan($mask) : $channel->removeBan($mask);
-                } elseif ('e' === $char) {
-                    $adding ? $channel->addExempt($mask) : $channel->removeExempt($mask);
-                } else {
-                    $adding ? $channel->addInviteException($mask) : $channel->removeInviteException($mask);
-                }
-            }
-        }
-
-        $this->channelRepository->save($channel);
-    }
-
-    // -------------------------------------------------------------------------
-    // FJOIN — InspIRCd channel sync (equivalent to SJOIN)
-    // Syntax: :sid FJOIN #channel timestamp +modes param :prefix,uid:mid [prefix,uid:mid ...]
-    // -------------------------------------------------------------------------
-    private function handleFjoin(IRCMessage $message): void
-    {
-        if (count($message->params) < 3) {
-            return;
-        }
-
-        $channelStr = $message->params[0];
-        $timestamp = (int) $message->params[1];
-        $modeStr = $message->params[2] ?? '';
-        $buffer = trim($message->trailing ?? '');
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        $isNewChannel = null === $channel;
-
-        if ($isNewChannel) {
-            $channel = new Channel(
-                name: $channelName,
-                modes: $modeStr,
-                createdAt: new DateTimeImmutable('@' . $timestamp),
-            );
-        } else {
-            if ('' !== $modeStr) {
-                $channel->updateModes($modeStr);
-            }
-        }
-
-        $joinedUids = [];
-
-        foreach (explode(' ', $buffer) as $entry) {
-            $entry = trim($entry);
-            if ('' === $entry) {
-                continue;
-            }
-
-            $comma = strpos($entry, ',');
-            $colon = strpos($entry, ':');
-            if (false === $comma || false === $colon || $colon < $comma) {
-                continue;
-            }
-
-            $prefixLetter = substr($entry, 0, $comma);
-            $uidStr = substr($entry, $comma + 1, $colon - $comma - 1);
-
-            try {
-                $uid = new Uid($uidStr);
-            } catch (InvalidArgumentException) {
-                continue;
-            }
-
-            $role = ChannelMemberRole::fromModeLetter($prefixLetter) ?? ChannelMemberRole::None;
-            $channel->syncMember($uid, $role);
-            $joinedUids[] = $uid;
-
-            $joinedUser = $this->userRepository->findByUid($uid);
-            $joinedUser?->addChannel($channelName);
-        }
-
-        $this->channelRepository->save($channel);
-
-        if ($isNewChannel) {
-            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
-        } else {
-            foreach ($joinedUids as $uid) {
-                $member = $channel->getMember($uid);
-                $role = $member?->role ?? ChannelMemberRole::None;
-                $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $channelName, $role));
-            }
+        $user = $this->userRepository->findByUid($event->uid);
+        if (null !== $user) {
+            $user->addChannel($event->channel);
         }
     }
 
-    // -------------------------------------------------------------------------
-    // FMODE — InspIRCd channel mode change (settings, not prefix/list)
-    // Syntax: :source FMODE #channel timestamp ±modes [params...]
-    // We only update the channel mode string; prefix/list changes use LMODE or MODE.
-    // -------------------------------------------------------------------------
-    private function handleFmode(IRCMessage $message): void
+    public function onUserLeftChannel(UserLeftChannelEvent $event): void
     {
-        if (count($message->params) < 3) {
-            return;
+        $user = $this->userRepository->findByUid($event->uid);
+        if (null !== $user) {
+            $user->removeChannel($event->channel);
         }
 
-        $channelStr = $message->params[0];
-        $modeStr = $message->params[2] ?? '';
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            return;
+        $channel = $this->channelRepository->findByName($event->channel);
+        if (null !== $channel) {
+            $channel->removeMember($event->uid);
+            $this->channelRepository->save($channel);
         }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $current = $channel->getModes();
-        $channel->updateModes($this->mergeModeString($current, $modeStr));
-        $this->channelRepository->save($channel);
     }
 
-    // -------------------------------------------------------------------------
-    // LMODE — InspIRCd list mode sync (+b, +e, +I)
-    // Syntax: :sid LMODE #channel timestamp mode mask [timestamp setter] ...
-    // -------------------------------------------------------------------------
-    private function handleLmode(IRCMessage $message): void
+    public function onChannelModesChanged(ChannelModesChangedEvent $event): void
     {
-        if (count($message->params) < 4) {
-            return;
-        }
-
-        $channelStr = $message->params[0];
-        $modeChar = $message->params[2] ?? '';
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $params = array_slice($message->params, 3);
-        if (null !== $message->trailing && '' !== $message->trailing) {
-            $params[] = $message->trailing;
-        }
-
-        for ($i = 0; $i < count($params); $i += 3) {
-            $mask = $params[$i] ?? '';
-            if ('' === $mask) {
-                break;
-            }
-            if ('b' === $modeChar) {
-                $channel->addBan($mask);
-            } elseif ('e' === $modeChar) {
-                $channel->addExempt($mask);
-            } elseif ('I' === $modeChar) {
-                $channel->addInviteException($mask);
-            }
-        }
-
-        $this->channelRepository->save($channel);
+        $this->channelRepository->save($event->channel);
     }
 
-    // -------------------------------------------------------------------------
-    // FTOPIC — InspIRCd channel topic
-    // Syntax: :source FTOPIC #channel createts topicts [setter] :topic
-    // -------------------------------------------------------------------------
-    private function handleFtopic(IRCMessage $message): void
+    public function onChannelTopicChanged(ChannelTopicChangedEvent $event): void
     {
-        if (count($message->params) < 2) {
-            return;
-        }
-
-        $channelStr = $message->params[0];
-        $topic = $message->trailing;
-
-        try {
-            $channelName = new ChannelName($channelStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $channel->updateTopic($topic);
-        $this->channelRepository->save($channel);
-    }
-
-    /**
-     * Merges a delta mode string (e.g. +nt -k) into current. Simple concat; no dedup.
-     */
-    private function mergeModeString(string $current, string $delta): string
-    {
-        if ('' === $delta) {
-            return $current;
-        }
-        $base = str_replace(['+', '-'], '', $current);
-        $add = '';
-        $remove = '';
-        $adding = true;
-        foreach (str_split($delta) as $c) {
-            if ('+' === $c) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $c) {
-                $adding = false;
-                continue;
-            }
-            if ($adding) {
-                $add .= $c;
-                $remove = str_replace($c, '', $remove);
-            } else {
-                $remove .= $c;
-                $add = str_replace($c, '', $add);
-            }
-        }
-        $base = preg_replace('/[' . preg_quote($remove, '/') . ']/', '', $base) ?? $base;
-        $base .= $add;
-
-        return '' === $base ? '' : '+' . $base;
-    }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Resolves a user by UID string (preferred) or by nick as fallback.
-     * UnrealIRCd sends UIDs in server-sourced commands; nick-sourced is legacy.
-     */
-    private function resolveUser(string $sourceId): ?NetworkUser
-    {
-        // UIDs are 9 uppercase alphanumeric chars starting with a digit
-        if (preg_match('/^[0-9][0-9A-Z]{8}$/', $sourceId)) {
-            try {
-                return $this->userRepository->findByUid(new Uid($sourceId));
-            } catch (InvalidArgumentException) {
-            }
-        }
-
-        // Fallback: resolve by nick (old-style or pre-burst messages)
-        try {
-            return $this->userRepository->findByNick(new Nick($sourceId));
-        } catch (InvalidArgumentException) {
-        }
-
-        return null;
+        $this->channelRepository->save($event->channel);
     }
 }
