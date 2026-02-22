@@ -156,8 +156,10 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
 
         $this->logger->info(sprintf('Nick change: %s → %s [%s]', $oldNick->value, $newNick->value, $user->uid->value));
 
-        // Dispatch -r first so nick-protection sees the user as not identified when handling the nick change.
-        // UnrealIRCd strips +r on every nick change but does NOT send UMODE2 -r to services.
+        // Apply -r to the in-memory user before dispatching so nick-protection always sees
+        // the user as not identified, regardless of listener order. UnrealIRCd strips +r on
+        // every nick change but does NOT send UMODE2 -r to services.
+        $user->applyModeChange('-r');
         $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '-r'));
         $this->eventDispatcher->dispatch(new UserNickChangedEvent($user->uid, $oldNick, $newNick));
     }
