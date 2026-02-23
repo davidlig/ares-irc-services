@@ -20,6 +20,7 @@ use Throwable;
 use function function_exists;
 use function sprintf;
 
+use const SIGHUP;
 use const SIGINT;
 use const SIGTERM;
 
@@ -163,6 +164,10 @@ class ConnectCommand extends Command
         });
         pcntl_signal(SIGTERM, static function () use ($client): void {
             $client->disconnect('SIGTERM');
+        });
+        // When terminal is closed, SIGHUP is sent; handle it so finally runs and consumer is stopped
+        pcntl_signal(SIGHUP, static function () use ($client): void {
+            $client->disconnect('SIGHUP');
         });
     }
 }
