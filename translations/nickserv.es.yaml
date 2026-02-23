@@ -134,6 +134,14 @@ set:
     success:        "\x0303✔\x03 Idioma cambiado a \x02%language%\x02."
     invalid:        "\x0304✗\x03 Idioma no soportado. Idiomas disponibles: %languages%."
 
+  timezone:
+    syntax:         "SET TIMEZONE <zona>|OFF"
+    short:          "Establece la zona horaria para mostrar fechas (ej. INFO)."
+    help:           "Establece la zona horaria con la que NickServ muestra las fechas (ej. en INFO).\nUsa una zona válida de PHP (ej. \x02UTC\x02, \x02Europe/Madrid\x02, \x02America/New_York\x02).\nUsa \x02SET TIMEZONE OFF\x02 para quitarla y usar la predeterminada de la red."
+    success:        "\x0303✔\x03 Zona horaria establecida en \x02%timezone%\x02. Las fechas se mostrarán en esta zona."
+    cleared:        "\x0303✔\x03 Zona horaria quitada. Las fechas usarán la predeterminada de la red."
+    invalid:        "\x0304✗\x03 Zona horaria no válida \x02%timezone%\x02. Usa un identificador válido (ej. UTC, Europe/Madrid)."
+
   private:
     syntax:         "SET PRIVATE ON|OFF"
     short:          "Activa o desactiva la privacidad de tu información."

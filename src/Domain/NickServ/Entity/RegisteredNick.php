@@ -7,6 +7,8 @@ namespace App\Domain\NickServ\Entity;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
+use DateTimeZone;
+use Exception;
 use InvalidArgumentException;
 
 use function in_array;
@@ -82,6 +84,9 @@ class RegisteredNick
 
     /** Custom virtual host (displayed hostname). Null = use default/cloak. */
     private ?string $vhost = null;
+
+    /** PHP timezone identifier for date display (e.g. Europe/Madrid). Null = use services default. */
+    private ?string $timezone = null;
 
     /**
      * Creates a new pending registration awaiting email verification.
@@ -251,6 +256,11 @@ class RegisteredNick
         return $this->vhost;
     }
 
+    public function getTimezone(): ?string
+    {
+        return $this->timezone;
+    }
+
     public function changePassword(string $newHash): void
     {
         $this->passwordHash = $newHash;
@@ -297,6 +307,30 @@ class RegisteredNick
     public function changeVhost(?string $vhost): void
     {
         $this->vhost = $vhost;
+    }
+
+    /**
+     * Set or clear the account's timezone for date display.
+     * Null or empty clears it (services default will be used).
+     *
+     * @throws InvalidArgumentException if the timezone identifier is not valid
+     */
+    public function changeTimezone(?string $timezone): void
+    {
+        if (null === $timezone || '' === trim($timezone)) {
+            $this->timezone = null;
+
+            return;
+        }
+
+        $tz = trim($timezone);
+        try {
+            new DateTimeZone($tz);
+        } catch (Exception) {
+            throw new InvalidArgumentException(sprintf('Invalid timezone "%s". Use a valid PHP timezone (e.g. UTC, Europe/Madrid).', $timezone));
+        }
+
+        $this->timezone = $tz;
     }
 
     public function verifyPassword(string $plainPassword): bool

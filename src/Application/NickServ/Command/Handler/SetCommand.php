@@ -12,6 +12,7 @@ use App\Application\NickServ\Set\SetLanguageHandler;
 use App\Application\NickServ\Set\SetOptionHandlerInterface;
 use App\Application\NickServ\Set\SetPasswordHandler;
 use App\Application\NickServ\Set\SetPrivateHandler;
+use App\Application\NickServ\Set\SetTimezoneHandler;
 use App\Application\NickServ\Set\SetVhostHandler;
 
 use function array_slice;
@@ -31,10 +32,11 @@ use function strtoupper;
  *   SET LANGUAGE <code>       (en | es | …)
  *   SET PRIVATE  ON|OFF
  *   SET VHOST    <vhost>|OFF
+ *   SET TIMEZONE <timezone>|OFF
  */
 final readonly class SetCommand implements NickServCommandInterface
 {
-    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE', 'VHOST'];
+    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE', 'VHOST', 'TIMEZONE'];
 
     /** @var array<string, SetOptionHandlerInterface> */
     private array $handlers;
@@ -44,6 +46,7 @@ final readonly class SetCommand implements NickServCommandInterface
         SetEmailHandler $setEmailHandler,
         SetLanguageHandler $setLanguageHandler,
         SetPrivateHandler $setPrivateHandler,
+        SetTimezoneHandler $setTimezoneHandler,
         SetVhostHandler $setVhostHandler,
     ) {
         $this->handlers = [
@@ -51,6 +54,7 @@ final readonly class SetCommand implements NickServCommandInterface
             'EMAIL' => $setEmailHandler,
             'LANGUAGE' => $setLanguageHandler,
             'PRIVATE' => $setPrivateHandler,
+            'TIMEZONE' => $setTimezoneHandler,
             'VHOST' => $setVhostHandler,
         ];
     }
@@ -116,6 +120,12 @@ final readonly class SetCommand implements NickServCommandInterface
                 'desc_key' => 'set.private.short',
                 'help_key' => 'set.private.help',
                 'syntax_key' => 'set.private.syntax',
+            ],
+            [
+                'name' => 'TIMEZONE',
+                'desc_key' => 'set.timezone.short',
+                'help_key' => 'set.timezone.help',
+                'syntax_key' => 'set.timezone.syntax',
             ],
             [
                 'name' => 'VHOST',

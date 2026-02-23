@@ -26,6 +26,8 @@ class NickServContext
         private readonly NickServNotifierInterface $notifier,
         private readonly TranslatorInterface $translator,
         private readonly string $language,
+        /** PHP timezone identifier (e.g. UTC, Europe/Madrid) used when displaying dates. */
+        private readonly string $timezone,
         private readonly NickServCommandRegistry $registry,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
     ) {
@@ -62,6 +64,11 @@ class NickServContext
     public function getLanguage(): string
     {
         return $this->language;
+    }
+
+    public function getTimezone(): string
+    {
+        return $this->timezone;
     }
 
     public function getRegistry(): NickServCommandRegistry

@@ -15,6 +15,7 @@ parameters:
     # Services global settings
     services.hostname:         '%env(IRC_SERVICES_HOST)%'
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
+    services.default_timezone: '%env(default:UTC:SERVICES_DEFAULT_TIMEZONE)%'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
 
     # Maintenance scheduler
@@ -283,6 +284,7 @@ services:
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker:  '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
             $defaultLanguage:      '%services.default_language%'
+            $defaultTimezone:      '%services.default_timezone%'
             $logger:               '@monolog.logger.irc'
 
     # --- NickServ Subscribers ---------------------------------------------------
