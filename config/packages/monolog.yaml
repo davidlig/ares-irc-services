@@ -1,9 +1,21 @@
 monolog:
     channels:
         - irc          # All IRC protocol traffic and link lifecycle events
+        - maintenance  # Maintenance cycles and task execution (purge expired, etc.)
         - deprecation  # Symfony deprecation notices
 
     handlers:
+        # -----------------------------------------------------------------------
+        # Maintenance channel — info level, daily rotation, 30-day retention
+        # All maintenance cycle and task logs in one place.
+        # -----------------------------------------------------------------------
+        maintenance_rotating:
+            type:      rotating_file
+            path:      '%kernel.logs_dir%/maintenance.log'
+            level:     info
+            max_files: 30
+            channels:  [maintenance]
+
         # -----------------------------------------------------------------------
         # IRC channel — debug level, daily rotation, 30-day retention
         # Captures every incoming/outgoing message and connection event.
@@ -25,7 +37,7 @@ monolog:
             path:      '%kernel.logs_dir%/ares.log'
             level:     info
             max_files: 30
-            channels:  ['!irc', '!deprecation', '!event']
+            channels:  ['!irc', '!maintenance', '!deprecation', '!event']
 
         # -----------------------------------------------------------------------
         # Error aggregation — error level, daily rotation, 30-day retention

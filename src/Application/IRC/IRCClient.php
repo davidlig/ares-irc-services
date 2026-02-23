@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\IRC;
 
+use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\Maintenance\Message\RunMaintenanceCycle;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
@@ -31,6 +32,7 @@ class IRCClient
         private readonly ProtocolHandlerInterface $protocol,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly MessageBusInterface $messageBus,
+        private readonly BurstCompleteRegistry $burstCompleteRegistry,
         private readonly int $maintenanceDispatchIntervalSeconds,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
@@ -64,14 +66,17 @@ class IRCClient
         ]);
 
         while ($this->connection->isConnected()) {
+            $now = hrtime(true) / 1_000_000_000.0;
+            if ($this->burstCompleteRegistry->isBurstComplete()
+                && ($now - $this->lastMaintenanceDispatch) >= (float) $this->maintenanceDispatchIntervalSeconds
+            ) {
+                $this->messageBus->dispatch(new RunMaintenanceCycle());
+                $this->lastMaintenanceDispatch = $now;
+            }
+
             $rawLine = $this->connection->readLine();
 
             if (null === $rawLine) {
-                $now = hrtime(true) / 1_000_000_000.0;
-                if (($now - $this->lastMaintenanceDispatch) >= (float) $this->maintenanceDispatchIntervalSeconds) {
-                    $this->messageBus->dispatch(new RunMaintenanceCycle());
-                    $this->lastMaintenanceDispatch = $now;
-                }
                 usleep(10_000);
                 continue;
             }

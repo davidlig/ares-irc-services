@@ -43,6 +43,10 @@ final class MaintenanceScheduler
     public function tick(): void
     {
         $now = hrtime(true) / 1_000_000_000.0;
+        $cycleStart = hrtime(true);
+        $tasksRun = [];
+
+        $this->logger->info('Maintenance cycle started');
 
         foreach ($this->sortedTasks as $task) {
             $last = $this->lastRun[$task->getName()] ?? 0.0;
@@ -52,17 +56,33 @@ final class MaintenanceScheduler
             }
 
             try {
+                $taskStart = hrtime(true);
                 $task->run();
                 $this->lastRun[$task->getName()] = $now;
+                $durationMs = (hrtime(true) - $taskStart) / 1_000_000.0;
+                $tasksRun[] = $task->getName();
+
+                $this->logger->info('Maintenance task executed', [
+                    'task' => $task->getName(),
+                    'duration_ms' => round($durationMs, 2),
+                ]);
             } catch (Throwable $e) {
-                $this->logger->error(sprintf(
-                    'Maintenance task [%s] failed; cycle aborted: %s',
-                    $task->getName(),
-                    $e->getMessage(),
-                ), ['exception' => $e]);
+                $this->logger->error('Maintenance cycle aborted', [
+                    'task' => $task->getName(),
+                    'error' => $e->getMessage(),
+                    'tasks_completed' => $tasksRun,
+                    'exception' => $e,
+                ]);
 
                 return;
             }
         }
+
+        $cycleDurationMs = (hrtime(true) - $cycleStart) / 1_000_000.0;
+        $this->logger->info('Maintenance cycle completed', [
+            'tasks_run' => $tasksRun,
+            'tasks_count' => count($tasksRun),
+            'cycle_duration_ms' => round($cycleDurationMs, 2),
+        ]);
     }
 }

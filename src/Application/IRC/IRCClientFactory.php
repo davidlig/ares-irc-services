@@ -23,6 +23,7 @@ class IRCClientFactory
         private readonly ConnectionFactoryInterface $connectionFactory,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly MessageBusInterface $messageBus,
+        private readonly BurstCompleteRegistry $burstCompleteRegistry,
         private readonly int $maintenanceDispatchIntervalSeconds,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
@@ -38,6 +39,7 @@ class IRCClientFactory
             $protocol,
             $this->eventDispatcher,
             $this->messageBus,
+            $this->burstCompleteRegistry,
             $this->maintenanceDispatchIntervalSeconds,
             $this->logger,
         );

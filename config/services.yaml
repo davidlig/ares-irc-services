@@ -285,12 +285,12 @@ services:
     App\Application\Maintenance\MaintenanceScheduler:
         arguments:
             $tasks:  !tagged_iterator maintenance.task
-            $logger: '@monolog.logger.irc'
+            $logger: '@monolog.logger.maintenance'
 
     App\Application\NickServ\Maintenance\PurgeExpiredPendingTask:
         arguments:
             $intervalSeconds: '%maintenance.interval%'
-            $logger:          '@monolog.logger.irc'
+            $logger:          '@monolog.logger.maintenance'
         tags: ['maintenance.task']
 
     # --- UserLanguageResolver — shared across all services ----------------------
