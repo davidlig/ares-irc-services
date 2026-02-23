@@ -4,21 +4,19 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network\Adapter;
 
-use App\Domain\IRC\Event\ChannelModesChangedEvent;
-use App\Domain\IRC\Event\ChannelSyncedEvent;
-use App\Domain\IRC\Event\ChannelTopicChangedEvent;
-use App\Domain\IRC\Event\UserJoinedChannelEvent;
+use App\Domain\IRC\Event\FjoinReceivedEvent;
+use App\Domain\IRC\Event\FmodeReceivedEvent;
+use App\Domain\IRC\Event\FtopicReceivedEvent;
+use App\Domain\IRC\Event\KickReceivedEvent;
+use App\Domain\IRC\Event\LmodeReceivedEvent;
+use App\Domain\IRC\Event\NickChangeReceivedEvent;
+use App\Domain\IRC\Event\PartReceivedEvent;
+use App\Domain\IRC\Event\QuitReceivedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
-use App\Domain\IRC\Event\UserLeftChannelEvent;
-use App\Domain\IRC\Event\UserNickChangedEvent;
-use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\Network\NetworkStateAdapterInterface;
 use App\Domain\IRC\Network\NetworkUser;
-use App\Domain\IRC\Repository\ChannelRepositoryInterface;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
@@ -33,10 +31,7 @@ use function array_slice;
 use function base64_encode;
 use function count;
 use function inet_pton;
-use function preg_quote;
-use function preg_replace;
-use function str_replace;
-use function str_split;
+use function sprintf;
 
 /**
  * InspIRCd protocol adapter: parses UID, NICK, QUIT, FJOIN, FMODE, LMODE,
@@ -48,8 +43,6 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly ChannelRepositoryInterface $channelRepository,
-        private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -78,7 +71,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
     /**
      * InspIRCd UID format: uuid timestamp nickname real_host displayed_host [real_user] displayed_user ip connect_time modes [mode_params] :realname
      * 1205: 0=uuid, 1=ts, 2=nick, 3=real_host, 4=displayed_host, 5=displayed_user, 6=ip, 7=connect_time, 8=modes, 9+=mode_params
-     * 1206+: 0=uuid, 1=ts, 2=nick, 3=real_host, 4=displayed_host, 5=real_user, 6=displayed_user, 7=ip, 8=connect_time, 9=modes, 10+=mode_params
+     * 1206+: 0=uuid, 1=ts, 2=nick, 3=real_host, 4=displayed_host, 5=real_user, 6=displayed_user, 7=ip, 8=connect_time, 9=modes, 10+=mode_params.
      */
     private function handleUid(IRCMessage $message): void
     {
@@ -171,21 +164,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            return;
-        }
-
-        try {
-            $newNick = new Nick($newNickStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $oldNick = $user->getNick();
-
-        $this->eventDispatcher->dispatch(new UserNickChangedEvent($user->uid, $oldNick, $newNick));
+        $this->eventDispatcher->dispatch(new NickChangeReceivedEvent($sourceId, $newNickStr));
     }
 
     private function handleQuit(IRCMessage $message): void
@@ -197,19 +176,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            return;
-        }
-
-        $this->eventDispatcher->dispatch(new UserQuitNetworkEvent(
-            uid: $user->uid,
-            nick: $user->getNick(),
-            reason: $reason,
-            ident: $user->ident->value,
-            displayHost: $user->getDisplayHost(),
-        ));
+        $this->eventDispatcher->dispatch(new QuitReceivedEvent($sourceId, $reason));
     }
 
     private function handleFjoin(IRCMessage $message): void
@@ -229,23 +196,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $channel = $this->channelRepository->findByName($channelName);
-        $isNewChannel = null === $channel;
-
-        if ($isNewChannel) {
-            $channel = new Channel(
-                name: $channelName,
-                modes: $modeStr,
-                createdAt: new DateTimeImmutable('@' . $timestamp),
-            );
-        } else {
-            if ('' !== $modeStr) {
-                $channel->updateModes($modeStr);
-            }
-        }
-
-        $joinedUids = [];
-
+        $members = [];
         foreach (explode(' ', $buffer) as $entry) {
             $entry = trim($entry);
             if ('' === $entry) {
@@ -268,20 +219,10 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             }
 
             $role = ChannelMemberRole::fromModeLetter($prefixLetter) ?? ChannelMemberRole::None;
-            $channel->syncMember($uid, $role);
-            $joinedUids[] = $uid;
+            $members[] = ['uid' => $uid, 'role' => $role];
         }
 
-        if ($isNewChannel) {
-            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
-        } else {
-            foreach ($joinedUids as $uid) {
-                $member = $channel->getMember($uid);
-                $role = $member?->role ?? ChannelMemberRole::None;
-                $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $channelName, $role));
-            }
-            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
-        }
+        $this->eventDispatcher->dispatch(new FjoinReceivedEvent($channelName, $timestamp, $modeStr, $members));
     }
 
     private function handlePart(IRCMessage $message): void
@@ -294,21 +235,13 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            return;
-        }
-
         try {
             $channelName = new ChannelName($channelStr);
         } catch (InvalidArgumentException) {
             return;
         }
 
-        $this->eventDispatcher->dispatch(
-            new UserLeftChannelEvent($user->uid, $user->getNick(), $channelName, $reason, wasKicked: false)
-        );
+        $this->eventDispatcher->dispatch(new PartReceivedEvent($sourceId, $channelName, $reason, false));
     }
 
     private function handleKick(IRCMessage $message): void
@@ -321,21 +254,13 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $target = $this->resolveUser($targetId);
-
-        if (null === $target) {
-            return;
-        }
-
         try {
             $channelName = new ChannelName($channelStr);
         } catch (InvalidArgumentException) {
             return;
         }
 
-        $this->eventDispatcher->dispatch(
-            new UserLeftChannelEvent($target->uid, $target->getNick(), $channelName, $reason, wasKicked: true)
-        );
+        $this->eventDispatcher->dispatch(new KickReceivedEvent($channelName, $targetId, $reason));
     }
 
     private function handleFmode(IRCMessage $message): void
@@ -353,14 +278,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $current = $channel->getModes();
-        $channel->updateModes($this->mergeModeString($current, $modeStr));
-        $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
+        $this->eventDispatcher->dispatch(new FmodeReceivedEvent($channelName, $modeStr));
     }
 
     private function handleLmode(IRCMessage $message): void
@@ -378,31 +296,12 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
         $params = array_slice($message->params, 3);
         if (null !== $message->trailing && '' !== $message->trailing) {
             $params[] = $message->trailing;
         }
 
-        for ($i = 0; $i < count($params); $i += 3) {
-            $mask = $params[$i] ?? '';
-            if ('' === $mask) {
-                break;
-            }
-            if ('b' === $modeChar) {
-                $channel->addBan($mask);
-            } elseif ('e' === $modeChar) {
-                $channel->addExempt($mask);
-            } elseif ('I' === $modeChar) {
-                $channel->addInviteException($mask);
-            }
-        }
-
-        $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
+        $this->eventDispatcher->dispatch(new LmodeReceivedEvent($channelName, $modeChar, $params));
     }
 
     private function handleFtopic(IRCMessage $message): void
@@ -420,61 +319,6 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $channel->updateTopic($topic);
-        $this->eventDispatcher->dispatch(new ChannelTopicChangedEvent($channel));
-    }
-
-    private function mergeModeString(string $current, string $delta): string
-    {
-        if ('' === $delta) {
-            return $current;
-        }
-        $base = str_replace(['+', '-'], '', $current);
-        $add = '';
-        $remove = '';
-        $adding = true;
-        foreach (str_split($delta) as $c) {
-            if ('+' === $c) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $c) {
-                $adding = false;
-                continue;
-            }
-            if ($adding) {
-                $add .= $c;
-                $remove = str_replace($c, '', $remove);
-            } else {
-                $remove .= $c;
-                $add = str_replace($c, '', $add);
-            }
-        }
-        $base = preg_replace('/[' . preg_quote($remove, '/') . ']/', '', $base) ?? $base;
-        $base .= $add;
-
-        return '' === $base ? '' : '+' . $base;
-    }
-
-    private function resolveUser(string $sourceId): ?NetworkUser
-    {
-        if (preg_match('/^[0-9][0-9A-Z]{8}$/', $sourceId)) {
-            try {
-                return $this->userRepository->findByUid(new Uid($sourceId));
-            } catch (InvalidArgumentException) {
-            }
-        }
-
-        try {
-            return $this->userRepository->findByNick(new Nick($sourceId));
-        } catch (InvalidArgumentException) {
-        }
-
-        return null;
+        $this->eventDispatcher->dispatch(new FtopicReceivedEvent($channelName, $topic));
     }
 }

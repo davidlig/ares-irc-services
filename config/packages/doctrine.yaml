@@ -3,14 +3,15 @@ doctrine:
         url: '%env(resolve:DATABASE_URL)%'
 
     orm:
-        auto_mapping: true
+        auto_mapping: false
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         mappings:
             App:
                 is_bundle: false
-                dir: '%kernel.project_dir%/src/Domain'
+                dir: '%kernel.project_dir%/config/doctrine'
                 prefix: 'App\Domain'
                 alias: App
+                type: xml
 
 doctrine_migrations:
     migrations_paths:

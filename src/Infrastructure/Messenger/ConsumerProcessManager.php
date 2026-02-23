@@ -11,6 +11,7 @@ use function proc_close;
 use function proc_get_status;
 use function proc_open;
 use function proc_terminate;
+use function sprintf;
 
 use const PHP_BINARY;
 use const SIGTERM;

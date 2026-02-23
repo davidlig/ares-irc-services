@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\NickServ\Bot;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
+use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
-use App\Infrastructure\NickServ\PendingNickRestoreRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -32,7 +32,7 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly PendingNickRestoreRegistry $pendingRegistry,
+        private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly string $serverSid,
         private readonly string $servicesHostname,
         private readonly string $nickservUid,

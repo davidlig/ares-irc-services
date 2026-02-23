@@ -11,6 +11,7 @@ use App\Application\NickServ\RegisterThrottleRegistry;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\NickServ\Service\PasswordHasherInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -21,7 +22,6 @@ use Throwable;
 use function sprintf;
 
 use const FILTER_VALIDATE_EMAIL;
-use const PASSWORD_ARGON2ID;
 
 /**
  * REGISTER <password> <email>.
@@ -36,6 +36,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly PasswordHasherInterface $passwordHasher,
         private readonly RegisterThrottleRegistry $throttleRegistry,
         private readonly MessageBusInterface $messageBus,
         private readonly TranslatorInterface $translator,
@@ -147,7 +148,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
             return;
         }
 
-        $hash = password_hash($password, PASSWORD_ARGON2ID);
+        $hash = $this->passwordHasher->hash($password);
         $expiresAt = new DateTimeImmutable(sprintf('+%d seconds', self::TOKEN_TTL_SECONDS));
         $token = bin2hex(random_bytes(16));
 

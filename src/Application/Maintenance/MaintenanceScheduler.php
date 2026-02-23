@@ -7,7 +7,7 @@ namespace App\Application\Maintenance;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
-use function sprintf;
+use function count;
 
 /**
  * Runs registered MaintenanceTaskInterface instances from the IRC event loop.

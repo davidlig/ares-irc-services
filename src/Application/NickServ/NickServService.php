@@ -26,7 +26,7 @@ use const PREG_SPLIT_NO_EMPTY;
  * command handler. Resolves the user's language preference and builds the
  * NickServContext that every command handler receives.
  */
-class NickServService
+final readonly class NickServService
 {
     public function __construct(
         private readonly AuthorizationContextInterface $authorizationContext,
