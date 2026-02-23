@@ -74,8 +74,6 @@ class IRCClient
 
             $message = $this->protocol->parseRawLine($rawLine);
 
-            // Protocol-level responses (PING → PONG, EOS → EOS, etc.) are handled
-            // by the protocol handler before the message is broadcast as a domain event.
             $this->protocol->handleIncoming($message, $this->connection);
 
             $this->eventDispatcher->dispatch(new MessageReceivedEvent($message));

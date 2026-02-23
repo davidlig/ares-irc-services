@@ -68,11 +68,9 @@ class NickServService
             return;
         }
 
-        // Resolve account + language
         $account = $this->nickRepository->findByNick($sender->getNick()->value);
         $language = $account?->getLanguage() ?? $this->defaultLanguage;
 
-        // Build context
         $context = new NickServContext(
             sender: $sender,
             senderAccount: $account,
@@ -85,18 +83,15 @@ class NickServService
             pendingVerificationRegistry: $this->pendingVerificationRegistry,
         );
 
-        // Set Security token for this request (cleared at the end)
         $this->authorizationContext->setCurrentUser($sender);
 
         try {
-            // Oper-only guard (via Security voter)
             if ($handler->isOperOnly() && !$this->authorizationChecker->isGranted(NickServPermission::NETWORK_OPER, $context)) {
                 $context->reply('error.oper_only');
 
                 return;
             }
 
-            // Required permission guard (e.g. identified owner for SET)
             $requiredPermission = $handler->getRequiredPermission();
             if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
                 $context->reply('error.not_identified');
@@ -104,7 +99,6 @@ class NickServService
                 return;
             }
 
-            // Minimum args guard
             if (count($args) < $handler->getMinArgs()) {
                 $context->reply('error.syntax', [
                     'syntax' => $context->trans($handler->getSyntaxKey()),

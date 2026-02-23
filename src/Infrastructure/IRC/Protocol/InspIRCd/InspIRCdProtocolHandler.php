@@ -57,7 +57,6 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
             $link->description,
         ));
 
-        // Password is intentionally omitted from the log to avoid leaking credentials
         $this->logger->debug(sprintf(
             '> SERVER %s *** 0 %s :%s',
             $link->serverName,

@@ -101,10 +101,6 @@ class RegisteredNick
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $vhost = null;
 
-    // -------------------------------------------------------------------------
-    // Named constructors
-    // -------------------------------------------------------------------------
-
     /**
      * Creates a new pending registration awaiting email verification.
      */
@@ -149,10 +145,6 @@ class RegisteredNick
         return $nick;
     }
 
-    // -------------------------------------------------------------------------
-    // Business methods
-    // -------------------------------------------------------------------------
-
     /**
      * Transitions the account from PENDING to REGISTERED after email verification.
      */
@@ -180,10 +172,6 @@ class RegisteredNick
         $this->reason = null;
     }
 
-    // -------------------------------------------------------------------------
-    // State queries
-    // -------------------------------------------------------------------------
-
     public function isPending(): bool
     {
         return NickStatus::Pending === $this->status;
@@ -210,10 +198,6 @@ class RegisteredNick
             && null !== $this->expiresAt
             && $this->expiresAt < new DateTimeImmutable();
     }
-
-    // -------------------------------------------------------------------------
-    // Getters
-    // -------------------------------------------------------------------------
 
     public function getId(): int
     {
@@ -284,10 +268,6 @@ class RegisteredNick
     {
         return $this->vhost;
     }
-
-    // -------------------------------------------------------------------------
-    // Mutation methods (only for REGISTERED/PENDING accounts)
-    // -------------------------------------------------------------------------
 
     public function changePassword(string $newHash): void
     {

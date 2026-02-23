@@ -73,7 +73,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
     public function onUserJoined(UserJoinedNetworkEvent $event): void
     {
         if (!$this->burstComplete) {
-            // Connection not yet available — queue for post-burst processing.
             $this->pendingUsers[] = $event->user;
 
             return;
@@ -107,7 +106,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // User already has +r mode set (e.g. services restart scenario)
         if ($user->isIdentified()) {
             $account->markSeen();
             $this->nickRepository->save($account);
@@ -121,7 +119,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Nick is registered but user is not identified → warn + rename
         $language = $account->getLanguage() ?? $this->defaultLanguage;
 
         $warning = $this->translator->trans(
@@ -183,9 +180,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
         $newNick = $event->newNick->value;
 
-        // Consume mark when we see our "rename to Guest" echo (new nick = Guest-*).
-        // Must run before account check so we consume here; otherwise we return early
-        // (Guest is not registered) and the mark would still be set when user does /nick <registered>.
         if (str_starts_with($newNick, $this->guestPrefix) && $this->pendingRegistry->consume($event->uid->value)) {
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — SVSNICK to Guest echo, skipping protection',
@@ -208,9 +202,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Resolve user by UID. NetworkStateSubscriber (10) has already run and
-        // updated the in-memory user's nick; we run at 10 so the user object is up to date.
-        // Using findByUid avoids depending on byNick index update order.
         $user = $this->userRepository->findByUid($event->uid);
 
         if (null === $user) {
@@ -222,8 +213,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Skip protection when this NICK is the echo of our "restore after IDENTIFY" SVSNICK:
-        // old nick is Guest-*, new nick is registered. UMODE2 +r may arrive after the NICK.
         if (str_starts_with($event->oldNick->value, $this->guestPrefix) && $this->pendingRegistry->consume($event->uid->value)) {
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — SVSNICK restore echo, skipping protection',
@@ -235,8 +224,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Skip protection when this UID was just identified: IdentifyCommand registers before
-        // sending SVSNICK/SVS2MODE, so when the NICK echo arrives +r may not be in state yet.
         $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
         if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $newNick)) {
             $this->logger->info(sprintf(
@@ -279,11 +266,8 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
     public function onUserQuit(UserQuitNetworkEvent $event): void
     {
-        // Primary lookup: current nick at quit time.
         $account = $this->nickRepository->findByNick($event->nick->value);
 
-        // Fallback: the user may have changed nick (e.g. 'david') after identifying
-        // as a registered nick ('davidlig'). Look up via the session registry.
         if (null === $account) {
             $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
             if (null !== $registeredNick) {
@@ -291,7 +275,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
             }
         }
 
-        // Always clean up the session registry entry for this UID.
         $this->identifiedRegistry->remove($event->uid->value);
 
         if (null === $account) {
@@ -300,7 +283,6 @@ class NickProtectionSubscriber implements EventSubscriberInterface
 
         $account->markSeen();
 
-        // Build quit message including the user's IRC origin (ident@host).
         $origin = '' !== $event->ident ? $event->ident . '@' . $event->displayHost : $event->displayHost;
         $stored = '' !== $event->reason
             ? sprintf('%s (%s)', $event->reason, $origin)

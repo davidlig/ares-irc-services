@@ -103,7 +103,6 @@ final readonly class HelpCommand implements NickServCommandInterface
             return;
         }
 
-        // HELP SET PASSWORD — drill into a sub-option
         if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
             $subName = strtoupper($context->args[1]);
             $subCmd = $this->findSubCommand($handler, $subName);
@@ -117,10 +116,6 @@ final readonly class HelpCommand implements NickServCommandInterface
 
         $this->showCommandHelp($context, $handler);
     }
-
-    // -------------------------------------------------------------------------
-    // General help listing
-    // -------------------------------------------------------------------------
 
     private function showGeneralHelp(NickServContext $context): void
     {
@@ -154,10 +149,6 @@ final readonly class HelpCommand implements NickServCommandInterface
         $context->reply('help.footer');
     }
 
-    // -------------------------------------------------------------------------
-    // Full help for a single command
-    // -------------------------------------------------------------------------
-
     private function showCommandHelp(NickServContext $context, NickServCommandInterface $handler): void
     {
         $this->sendHeader($context, $handler->getName());
@@ -185,10 +176,6 @@ final readonly class HelpCommand implements NickServCommandInterface
         $context->reply('help.footer');
     }
 
-    // -------------------------------------------------------------------------
-    // Detailed help for one sub-option (e.g. HELP SET PASSWORD)
-    // -------------------------------------------------------------------------
-
     private function showSubCommandHelp(NickServContext $context, string $parentName, array $sub): void
     {
         $this->sendHeader($context, $parentName . ' ' . $sub['name']);
@@ -197,10 +184,6 @@ final readonly class HelpCommand implements NickServCommandInterface
         $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
         $context->reply('help.footer');
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
 
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
     private function findSubCommand(NickServCommandInterface $handler, string $name): ?array
@@ -223,9 +206,8 @@ final readonly class HelpCommand implements NickServCommandInterface
      */
     private function sendHeader(NickServContext $context, string $title): void
     {
-        $visible = 4 + mb_strlen($title) + 1; // " ℹ " + title + " "
+        $visible = 4 + mb_strlen($title) + 1;
         $dashes = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
-        // \x0307 = orange, \x0F = format reset, \x0314 = dark grey (decimal 14)
         $line = "\x02\x0307 ℹ " . $title . " \x0F\x0314" . $dashes . "\x03";
         $context->replyRaw($line);
     }

@@ -109,7 +109,6 @@ class NetworkUser
      */
     public function applyModeChange(string $modeStr): void
     {
-        // Strip leading '+' from current modes (stored as "+iwx" or "iwx")
         $current = str_split(ltrim($this->modes, '+'));
 
         $adding = true;
