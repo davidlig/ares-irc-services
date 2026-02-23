@@ -6,10 +6,13 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
+use DateTimeInterface;
 use InvalidArgumentException;
 
 /**
@@ -79,9 +82,7 @@ final readonly class InfoCommand implements NickServCommandInterface
 
     public function execute(NickServContext $context): void
     {
-        $sender = $context->sender;
         $targetNick = $context->args[0];
-
         $account = $this->nickRepository->findByNick($targetNick);
 
         if (null === $account || $account->isPending()) {
@@ -91,33 +92,39 @@ final readonly class InfoCommand implements NickServCommandInterface
         }
 
         if ($account->isForbidden()) {
-            $context->reply('info.header', ['nickname' => $account->getNickname()]);
-            $context->reply('info.status', ['status' => $context->trans('info.status_forbidden')]);
-            if (null !== $account->getReason()) {
-                $context->reply('info.reason', ['reason' => $account->getReason()]);
-            }
-            $context->reply('info.footer');
+            $this->replyForbidden($context, $account);
 
             return;
         }
 
-        $isOwner = null !== $sender
-            && 0 === strcasecmp($sender->getNick()->value, $account->getNickname());
-        $isOwnerIdentified = $isOwner && $sender->isIdentified();
-
-        if ($account->isPrivate() && !$isOwner) {
+        $isOwnerIdentified = $this->isSenderOwnerIdentified($context->sender, $account);
+        if ($account->isPrivate() && !$this->isSenderOwner($context->sender, $account)) {
             $context->reply('info.private', ['nickname' => $account->getNickname()]);
 
             return;
         }
 
+        $this->replyAccountInfo($context, $account, $isOwnerIdentified);
+    }
+
+    private function replyForbidden(NickServContext $context, RegisteredNick $account): void
+    {
+        $context->reply('info.header', ['nickname' => $account->getNickname()]);
+        $context->reply('info.status', ['status' => $context->trans('info.status_forbidden')]);
+        if (null !== $account->getReason()) {
+            $context->reply('info.reason', ['reason' => $account->getReason()]);
+        }
+        $context->reply('info.footer');
+    }
+
+    private function replyAccountInfo(
+        NickServContext $context,
+        RegisteredNick $account,
+        bool $isOwnerIdentified,
+    ): void {
         $context->reply('info.header', ['nickname' => $account->getNickname()]);
 
-        $statusKey = match ($account->getStatus()) {
-            NickStatus::Registered => 'info.status_registered',
-            NickStatus::Suspended => 'info.status_suspended',
-            default => 'info.status_registered',
-        };
+        $statusKey = $this->getStatusTranslationKey($account);
         $context->reply('info.status', ['status' => $context->trans($statusKey)]);
 
         if ($account->isSuspended() && null !== $account->getReason()) {
@@ -125,24 +132,10 @@ final readonly class InfoCommand implements NickServCommandInterface
         }
 
         $context->reply('info.registered_at', [
-            'date' => $account->getRegisteredAt()?->format('d/m/Y H:i') ?? '—',
+            'date' => $this->formatInfoDate($account->getRegisteredAt()),
         ]);
 
-        try {
-            $onlineUser = $this->userRepository->findByNick(new Nick($account->getNickname()));
-        } catch (InvalidArgumentException) {
-            $onlineUser = null;
-        }
-
-        if (null !== $onlineUser && $onlineUser->isIdentified()) {
-            $context->reply('info.last_seen_online');
-        } elseif (null !== $account->getLastSeenAt()) {
-            $context->reply('info.last_seen_at', [
-                'date' => $account->getLastSeenAt()->format('d/m/Y H:i'),
-            ]);
-        } else {
-            $context->reply('info.last_seen_never');
-        }
+        $this->replyLastSeen($context, $account);
 
         if (null !== $account->getLastQuitMessage()) {
             $context->reply('info.last_quit', ['message' => $account->getLastQuitMessage()]);
@@ -157,5 +150,54 @@ final readonly class InfoCommand implements NickServCommandInterface
         }
 
         $context->reply('info.footer');
+    }
+
+    private function replyLastSeen(NickServContext $context, RegisteredNick $account): void
+    {
+        $onlineUser = $this->findOnlineUser($account->getNickname());
+
+        if (null !== $onlineUser && $onlineUser->isIdentified()) {
+            $context->reply('info.last_seen_online');
+        } elseif (null !== $account->getLastSeenAt()) {
+            $context->reply('info.last_seen_at', [
+                'date' => $this->formatInfoDate($account->getLastSeenAt()),
+            ]);
+        } else {
+            $context->reply('info.last_seen_never');
+        }
+    }
+
+    private function findOnlineUser(string $nickname): ?NetworkUser
+    {
+        try {
+            return $this->userRepository->findByNick(new Nick($nickname));
+        } catch (InvalidArgumentException) {
+            return null;
+        }
+    }
+
+    private function isSenderOwner(?NetworkUser $sender, RegisteredNick $account): bool
+    {
+        return null !== $sender
+            && 0 === strcasecmp($sender->getNick()->value, $account->getNickname());
+    }
+
+    private function isSenderOwnerIdentified(?NetworkUser $sender, RegisteredNick $account): bool
+    {
+        return $this->isSenderOwner($sender, $account) && null !== $sender && $sender->isIdentified();
+    }
+
+    private function getStatusTranslationKey(RegisteredNick $account): string
+    {
+        return match ($account->getStatus()) {
+            NickStatus::Registered => 'info.status_registered',
+            NickStatus::Suspended => 'info.status_suspended',
+            default => 'info.status_registered',
+        };
+    }
+
+    private function formatInfoDate(?DateTimeInterface $date): string
+    {
+        return null !== $date ? $date->format('d/m/Y H:i') : '—';
     }
 }
