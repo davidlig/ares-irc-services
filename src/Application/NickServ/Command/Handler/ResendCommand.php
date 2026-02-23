@@ -9,6 +9,7 @@ use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -28,6 +29,8 @@ final readonly class ResendCommand implements NickServCommandInterface
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly MailerInterface $mailer,
         private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger,
+        private readonly int $resendMinIntervalSeconds,
     ) {
     }
 
@@ -97,6 +100,20 @@ final readonly class ResendCommand implements NickServCommandInterface
             return;
         }
 
+        $registry = $context->getPendingVerificationRegistry();
+        $lastResendAt = $registry->getLastResendAt($nick);
+        if (null !== $lastResendAt && $this->resendMinIntervalSeconds > 0) {
+            $nextAllowedAt = $lastResendAt->modify(sprintf('+%d seconds', $this->resendMinIntervalSeconds));
+            $now = new DateTimeImmutable();
+            if ($now < $nextAllowedAt) {
+                $remainingSeconds = $nextAllowedAt->getTimestamp() - $now->getTimestamp();
+                $minutes = (int) ceil($remainingSeconds / 60);
+                $context->reply('resend.throttled', ['%minutes%' => (string) $minutes]);
+
+                return;
+            }
+        }
+
         $token = bin2hex(random_bytes(16));
         $expiresAt = new DateTimeImmutable(sprintf('+%d seconds', self::TOKEN_TTL_SECONDS));
 
@@ -109,13 +126,19 @@ final readonly class ResendCommand implements NickServCommandInterface
                 $subject = $this->translator->trans('resend_verification_subject', [], 'mail', $locale);
                 $body = $this->translator->trans('resend_verification_body', ['%nickname%' => $nick, '%token%' => $token], 'mail', $locale);
                 $this->mailer->send($recipientEmail, $subject, $body);
-            } catch (Throwable) {
+            } catch (Throwable $e) {
+                $this->logger->error('NickServ RESEND: failed to send verification email', [
+                    'nick' => $nick,
+                    'recipient' => $recipientEmail,
+                    'exception' => $e,
+                ]);
                 $context->reply('error.mail_failed');
 
                 return;
             }
         }
 
+        $registry->recordResend($nick);
         $context->reply('resend.success', ['email' => $recipientEmail]);
     }
 }
