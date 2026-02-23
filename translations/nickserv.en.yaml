@@ -46,6 +46,7 @@ resend:
   help:             "Resends the verification token to the email address provided during\nregistration. Only works if you have a pending registration."
   success:          "\x0307→\x03 Verification token resent to \x02%email%\x02."
   no_pending:       "\x0304✗\x03 You have no pending registration to resend a token for."
+  throttled:        "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another verification email."
 
 # --- IDENTIFY ---------------------------------------------------------------
 identify:
