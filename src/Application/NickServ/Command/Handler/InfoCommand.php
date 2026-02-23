@@ -128,8 +128,6 @@ final readonly class InfoCommand implements NickServCommandInterface
             'date' => $account->getRegisteredAt()?->format('d/m/Y H:i') ?? '—',
         ]);
 
-        // Last seen — show "now online" only when the user is identified (+r).
-        // Unauthenticated users must not be shown as connected (privacy / IRCd rules).
         try {
             $onlineUser = $this->userRepository->findByNick(new Nick($account->getNickname()));
         } catch (InvalidArgumentException) {
@@ -146,7 +144,6 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.last_seen_never');
         }
 
-        // Last quit message
         if (null !== $account->getLastQuitMessage()) {
             $context->reply('info.last_quit', ['message' => $account->getLastQuitMessage()]);
         }

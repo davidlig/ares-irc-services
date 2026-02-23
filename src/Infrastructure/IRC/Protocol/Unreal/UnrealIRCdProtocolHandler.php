@@ -42,24 +42,24 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
      * Aligned with Anope's capability set for maximum compatibility.
      */
     private const array CAPABILITIES = [
-        'NOQUIT',    // Suppress per-user QUIT flood on netsplit
-        'NICKv2',    // Extended NICK command with extra fields
-        'SJOIN',     // Channel sync via SJOIN
-        'SJOIN2',    // SJOIN v2 extension
-        'SJ3',       // SJOIN v3 extension
-        'CLK',       // Clock / timestamp support (required in 4.x+)
-        'TKLEXT',    // Extended TKL (ban) support
-        'TKLEXT2',   // Extended TKL v2 (required in 4.x+)
-        'NICKIP',    // Include IP (base64) in UID/NICK
-        'ESVID',     // Extended SVS commands (SVSNICK, SVS2MODE, SVSMODE…)
-        'UMODE2',    // S2S user-mode change propagation
-        'MLOCK',     // Channel mode-lock notifications
-        'EXTSWHOIS', // Extended SWHOIS lines
-        'VHP',       // Include real vhost in UID (virtual-host pass-through)
-        'BIGLINES',  // Allow lines up to 16 384 bytes (avoids truncation on large SJOIN)
-        'MTAGS',     // IRCv3 message tags pass-through
-        'NEXTBANS',  // Named extended bans
-        'SJSBY',     // Include setter + set-timestamp for list-mode entries
+        'NOQUIT',
+        'NICKv2',
+        'SJOIN',
+        'SJOIN2',
+        'SJ3',
+        'CLK',
+        'TKLEXT',
+        'TKLEXT2',
+        'NICKIP',
+        'ESVID',
+        'UMODE2',
+        'MLOCK',
+        'EXTSWHOIS',
+        'VHP',
+        'BIGLINES',
+        'MTAGS',
+        'NEXTBANS',
+        'SJSBY',
     ];
 
     public function __construct(
@@ -87,21 +87,16 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
             'sid' => $this->sid,
         ]);
 
-        // Step 1 — link password (not logged to avoid leaking credentials)
         $connection->writeLine(sprintf('PASS :%s', $link->password));
 
-        // Step 2 — EAUTH + SID: this is what tells UnrealIRCd we speak the 4.x+ protocol.
-        //          Sending PROTOCTL without EAUTH causes the LINK_OLD_PROTOCOL rejection.
         $eauth = sprintf('PROTOCTL EAUTH=%s SID=%s', $link->serverName, $this->sid);
         $connection->writeLine($eauth);
         $this->logger->debug('> ' . $eauth);
 
-        // Step 3 — advertise supported capabilities
         $caps = sprintf('PROTOCTL %s', implode(' ', self::CAPABILITIES));
         $connection->writeLine($caps);
         $this->logger->debug('> ' . $caps);
 
-        // Step 4 — introduce our server
         $server = sprintf('SERVER %s 1 :%s', $link->serverName, $link->description);
         $connection->writeLine($server);
         $this->logger->debug('> ' . $server);
@@ -132,7 +127,6 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 
     private function handleEos(ConnectionInterface $connection): void
     {
-        // Allow service bots to introduce their pseudo-clients before our EOS.
         $this->dispatchBurstComplete($connection, $this->sid);
 
         $eos = sprintf(':%s EOS', $this->sid);
@@ -142,8 +136,6 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 
     private function handleNetinfo(IRCMessage $message, ConnectionInterface $connection): void
     {
-        // Mirror back a minimal NETINFO so UnrealIRCd accepts the link state.
-        // Fields: <max_global> <timestamp> <protocol_version> <cloak_hash> 0 0 0 :<network_name>
         $networkName = $message->trailing ?? 'IRC Network';
         $netinfo = sprintf('NETINFO 0 %d 6100 * 0 0 0 :%s', time(), $networkName);
 

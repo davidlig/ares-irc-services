@@ -44,8 +44,6 @@ class Channel
         $this->modes = $modes;
     }
 
-    // --- Members ---
-
     public function syncMember(Uid $uid, ChannelMemberRole $role): void
     {
         $this->members[$uid->value] = new ChannelMember($uid, $role);
@@ -79,8 +77,6 @@ class Channel
         return count($this->members);
     }
 
-    // --- Modes ---
-
     public function getModes(): string
     {
         return $this->modes;
@@ -101,8 +97,6 @@ class Channel
         $this->createdAt = $ts;
     }
 
-    // --- Topic ---
-
     public function getTopic(): ?string
     {
         return $this->topic;
@@ -112,8 +106,6 @@ class Channel
     {
         $this->topic = $topic;
     }
-
-    // --- Ban list (+b) ---
 
     public function addBan(string $mask): void
     {
@@ -133,8 +125,6 @@ class Channel
         return array_values($this->bans);
     }
 
-    // --- Exempt list (+e) ---
-
     public function addExempt(string $mask): void
     {
         if (!in_array($mask, $this->exempts, true)) {
@@ -152,8 +142,6 @@ class Channel
     {
         return array_values($this->exempts);
     }
-
-    // --- Invite exception list (+I) ---
 
     public function addInviteException(string $mask): void
     {

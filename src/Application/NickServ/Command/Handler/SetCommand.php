@@ -139,7 +139,6 @@ final readonly class SetCommand implements NickServCommandInterface
             return;
         }
 
-        // Permission check (identified owner) is enforced by NickServService via Security.
         $account = $context->senderAccount;
         if (null === $account) {
             $context->reply('error.not_identified');
@@ -273,7 +272,6 @@ final readonly class SetCommand implements NickServCommandInterface
 
         $this->nickRepository->save($account);
 
-        // Reply in the NEW language so the user sees confirmation in their chosen language
         $context->reply('set.language.success', ['language' => $account->getLanguage()]);
     }
 

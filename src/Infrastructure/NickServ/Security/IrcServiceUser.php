@@ -41,7 +41,6 @@ final readonly class IrcServiceUser implements UserInterface
 
     public function eraseCredentials(): void
     {
-        // No credentials stored on this user.
     }
 
     public function getUserIdentifier(): string

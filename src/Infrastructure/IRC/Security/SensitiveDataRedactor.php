@@ -26,14 +26,12 @@ final readonly class SensitiveDataRedactor
 
         switch ($cmd) {
             case 'REGISTER':
-                // REGISTER <password> <email> — mask position 1 (password)
                 if (isset($parts[1])) {
                     $parts[1] = self::MASK;
                 }
                 break;
 
             case 'IDENTIFY':
-                // IDENTIFY <nick> <password> — mask last position
                 $last = count($parts) - 1;
                 if ($last >= 1) {
                     $parts[$last] = self::MASK;
@@ -41,7 +39,6 @@ final readonly class SensitiveDataRedactor
                 break;
 
             case 'SET':
-                // SET PASSWORD <new_password> — mask position 2
                 if (isset($parts[1]) && 'PASSWORD' === strtoupper($parts[1]) && isset($parts[2])) {
                     $parts[2] = self::MASK;
                 }

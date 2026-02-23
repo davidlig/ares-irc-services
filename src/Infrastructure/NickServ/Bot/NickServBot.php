@@ -57,8 +57,6 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
-        // Use the event's connection directly — ActiveConnectionHolder (0) stores it
-        // after we run; NickProtectionSubscriber (-256) processes pending users last.
         $this->introduce($event->connection, $event->serverSid);
     }
 
@@ -92,9 +90,6 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
         foreach (explode("\n", $message) as $line) {
-            // Skip truly empty string artifacts produced by a trailing \n in a
-            // multi-line translation value, but keep intentional blank lines
-            // (those that contain at least a space) so sections can be separated.
             if ('' === $line) {
                 continue;
             }
@@ -138,14 +133,12 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
 
     public function forceNick(string $targetUid, string $newNick): void
     {
-        // Mark this UID so NickProtectionSubscriber ignores the resulting NICK echo.
         $this->pendingRegistry->mark($targetUid);
         $this->write(sprintf(':%s SVSNICK %s %s %d', $this->serverSid, $targetUid, $newNick, time()));
     }
 
     public function killUser(string $targetUid, string $reason): void
     {
-        // :<server> KILL <target> :<reason>
         $this->write(sprintf(':%s KILL %s :%s', $this->serverSid, $targetUid, $reason));
     }
 

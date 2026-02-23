@@ -67,7 +67,6 @@ class IRCEventSubscriber implements EventSubscriberInterface
         $trailing = $message->trailing;
         $raw = $message->toRawLine();
 
-        // Redact passwords in PRIVMSG content targeting NickServ.
         if ('PRIVMSG' === $message->command && null !== $trailing) {
             $redacted = SensitiveDataRedactor::redactNickServCommand($trailing);
             if ($trailing !== $redacted) {

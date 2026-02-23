@@ -60,7 +60,6 @@ class NickServMessageSubscriber implements EventSubscriberInterface
         $text = $message->trailing ?? '';
         $sourceId = $message->prefix ?? '';
 
-        // Check if the PRIVMSG is addressed to NickServ
         if (!$this->isAddressedToNickServ($target)) {
             return;
         }
@@ -69,12 +68,10 @@ class NickServMessageSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Resolve sender
         $sender = null;
         try {
             $sender = $this->userRepository->findByUid(new Uid($sourceId));
         } catch (InvalidArgumentException) {
-            // Source may be a nick string (legacy)
         }
 
         if (null === $sender) {
@@ -93,7 +90,6 @@ class NickServMessageSubscriber implements EventSubscriberInterface
         try {
             $this->nickServService->dispatch($text, $sender);
         } catch (NickAlreadyRegisteredException $e) {
-            // Domain exception bubbled up from RegisterCommand
             $this->nickServBot->sendNotice($sender->uid->value, $e->getMessage());
         } catch (InvalidCredentialsException $e) {
             $this->nickServBot->sendNotice($sender->uid->value, $e->getMessage());

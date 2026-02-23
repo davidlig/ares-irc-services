@@ -18,11 +18,11 @@ use function in_array;
 enum ChannelMemberRole: string
 {
     case None = '';
-    case Voice = '+';   // +v
-    case HalfOp = '%';   // +h
-    case Op = '@';   // +o
-    case Admin = '~';   // +a  (SJOIN uses ~, not & like /NAMES)
-    case Owner = '*';   // +q  (SJOIN uses *)
+    case Voice = '+';
+    case HalfOp = '%';
+    case Op = '@';
+    case Admin = '~';
+    case Owner = '*';
 
     public static function fromSjoinPrefix(string $prefix): self
     {
