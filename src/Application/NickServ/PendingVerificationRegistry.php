@@ -14,6 +14,9 @@ use DateTimeImmutable;
  * ResendCommand reads the stored email from RegisteredNick and generates
  * a new token, replacing any existing entry.
  *
+ * Also tracks last RESEND timestamp per nick for throttling (minimum interval
+ * between resend requests).
+ *
  * This registry lives in the same process as the IRC loop, so tokens survive
  * as long as the service is running. Expired entries are either consumed by
  * VERIFY (which rejects them) or cleaned up by PurgeExpiredPendingTask.
@@ -23,9 +26,13 @@ final class PendingVerificationRegistry
     /** @var array<string, array{token: string, expiresAt: DateTimeImmutable}> */
     private array $entries;
 
+    /** @var array<string, DateTimeImmutable> */
+    private array $lastResendAt;
+
     public function __construct()
     {
         $this->entries = [];
+        $this->lastResendAt = [];
     }
 
     public function store(string $nickname, string $token, DateTimeImmutable $expiresAt): void
@@ -73,5 +80,21 @@ final class PendingVerificationRegistry
     public function remove(string $nickname): void
     {
         unset($this->entries[strtolower($nickname)]);
+    }
+
+    /**
+     * Returns the last time a RESEND was successfully sent for this nick, or null.
+     */
+    public function getLastResendAt(string $nickname): ?DateTimeImmutable
+    {
+        return $this->lastResendAt[strtolower($nickname)] ?? null;
+    }
+
+    /**
+     * Records that a RESEND was just sent for this nick (for throttling).
+     */
+    public function recordResend(string $nickname): void
+    {
+        $this->lastResendAt[strtolower($nickname)] = new DateTimeImmutable();
     }
 }
