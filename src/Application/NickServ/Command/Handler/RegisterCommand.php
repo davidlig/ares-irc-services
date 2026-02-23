@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Mail\MailerInterface;
+use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -12,6 +12,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -33,7 +34,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly MailerInterface $mailer,
+        private readonly MessageBusInterface $messageBus,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
     ) {
@@ -138,9 +139,9 @@ final readonly class RegisterCommand implements NickServCommandInterface
             $locale = $context->getLanguage();
             $subject = $this->translator->trans('register_verification_subject', [], 'mail', $locale);
             $body = $this->translator->trans('register_verification_body', ['%nickname%' => $nick, '%token%' => $token], 'mail', $locale);
-            $this->mailer->send($email, $subject, $body);
+            $this->messageBus->dispatch(new SendEmail($email, $subject, $body));
         } catch (Throwable $e) {
-            $this->logger->error('NickServ REGISTER: failed to send verification email', [
+            $this->logger->error('NickServ REGISTER: failed to dispatch verification email', [
                 'nick' => $nick,
                 'recipient' => $email,
                 'exception' => $e,

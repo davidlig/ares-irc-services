@@ -62,12 +62,21 @@ services:
 
     App\Application\IRC\IRCClientFactory:
         arguments:
+            $maintenanceDispatchIntervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
+
+    # --- Messenger consumer process (started/stopped with irc:connect) ---
+
+    App\Infrastructure\Messenger\ConsumerProcessManager:
+        arguments:
+            $consolePath: '%kernel.project_dir%/bin/console'
+            $transportName: 'async'
 
     # --- CLI command — inject .env defaults so the command runs without arguments ---
 
     App\UI\CLI\ConnectCommand:
         arguments:
+            $consumerManager:   '@App\Infrastructure\Messenger\ConsumerProcessManager'
             $defaultServerName:  '%irc.server_name%'
             $defaultHost:        '%irc.ircd_host%'
             $defaultPort:        '%irc.ircd_port%'

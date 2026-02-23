@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Mail\MailerInterface;
+use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -27,7 +28,7 @@ final readonly class ResendCommand implements NickServCommandInterface
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly MailerInterface $mailer,
+        private readonly MessageBusInterface $messageBus,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
         private readonly int $resendMinIntervalSeconds,
@@ -125,9 +126,9 @@ final readonly class ResendCommand implements NickServCommandInterface
                 $locale = $context->getLanguage();
                 $subject = $this->translator->trans('resend_verification_subject', [], 'mail', $locale);
                 $body = $this->translator->trans('resend_verification_body', ['%nickname%' => $nick, '%token%' => $token], 'mail', $locale);
-                $this->mailer->send($recipientEmail, $subject, $body);
+                $this->messageBus->dispatch(new SendEmail($recipientEmail, $subject, $body));
             } catch (Throwable $e) {
-                $this->logger->error('NickServ RESEND: failed to send verification email', [
+                $this->logger->error('NickServ RESEND: failed to dispatch verification email', [
                     'nick' => $nick,
                     'recipient' => $recipientEmail,
                     'exception' => $e,
