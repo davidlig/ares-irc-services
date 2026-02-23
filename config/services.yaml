@@ -26,6 +26,9 @@ parameters:
     nickserv.realname: '%env(NICKSERV_REALNAME)%'
     # UID = SID (3 chars) + AAAAAA — derived at runtime from IRC_UNREAL_SID
     nickserv.uid:      '%env(NICKSERV_UID)%'
+    # Minimum seconds between RESEND requests per nick (default 600 = 10 minutes)
+    nickserv.resend_min_interval_default: 600
+    nickserv.resend_min_interval: '%env(int:default:nickserv.resend_min_interval_default:NICKSERV_RESEND_MIN_INTERVAL)%'
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
@@ -172,6 +175,8 @@ services:
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\ResendCommand:
+        arguments:
+            $resendMinIntervalSeconds: '%nickserv.resend_min_interval%'
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\StatusCommand:
