@@ -33,7 +33,7 @@ use function sprintf;
  */
 class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
 {
-    private const PROTOCOL_NAME = 'unreal';
+    private const string PROTOCOL_NAME = 'unreal';
 
     /**
      * PROTOCTL capability tokens announced to UnrealIRCd.
@@ -41,7 +41,7 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
      *
      * Aligned with Anope's capability set for maximum compatibility.
      */
-    private const CAPABILITIES = [
+    private const array CAPABILITIES = [
         'NOQUIT',    // Suppress per-user QUIT flood on netsplit
         'NICKv2',    // Extended NICK command with extra fields
         'SJOIN',     // Channel sync via SJOIN

@@ -19,7 +19,7 @@ use function strlen;
  */
 readonly class Uid
 {
-    private const MAX_LENGTH = 128;
+    private const int MAX_LENGTH = 128;
 
     public function __construct(public readonly string $value)
     {

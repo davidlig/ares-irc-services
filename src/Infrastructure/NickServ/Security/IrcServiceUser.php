@@ -13,11 +13,11 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 final readonly class IrcServiceUser implements UserInterface
 {
-    public const ROLE_USER = 'ROLE_USER';
+    public const string ROLE_USER = 'ROLE_USER';
 
-    public const ROLE_IDENTIFIED = 'ROLE_IDENTIFIED';
+    public const string ROLE_IDENTIFIED = 'ROLE_IDENTIFIED';
 
-    public const ROLE_OPER = 'ROLE_OPER';
+    public const string ROLE_OPER = 'ROLE_OPER';
 
     public function __construct(
         private NetworkUser $networkUser,

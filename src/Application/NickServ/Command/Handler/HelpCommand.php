@@ -20,12 +20,12 @@ use App\Application\NickServ\Command\NickServContext;
 final readonly class HelpCommand implements NickServCommandInterface
 {
     /** Number of visible chars to reserve for command/option names in listings. */
-    private const CMD_PAD = 12;
+    private const int CMD_PAD = 12;
 
-    private const SUBS_PAD = 10;
+    private const int SUBS_PAD = 10;
 
     /** Total visible width used for the decorative header line. */
-    private const HEADER_WIDTH = 40;
+    private const int HEADER_WIDTH = 40;
 
     public function __construct()
     {

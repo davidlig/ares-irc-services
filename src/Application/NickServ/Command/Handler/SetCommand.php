@@ -36,12 +36,12 @@ use const PASSWORD_ARGON2ID;
  */
 final readonly class SetCommand implements NickServCommandInterface
 {
-    private const SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE', 'VHOST'];
+    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE', 'VHOST'];
 
     /** Max length for vhost (IRCD/DB limit). Allowed: hostname-like (letters, digits, hyphens, dots). */
-    private const VHOST_MAX_LENGTH = 255;
+    private const int VHOST_MAX_LENGTH = 255;
 
-    private const VHOST_PATTERN = '/^[a-zA-Z0-9.\-]+$/';
+    private const string VHOST_PATTERN = '/^[a-zA-Z0-9.\-]+$/';
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,

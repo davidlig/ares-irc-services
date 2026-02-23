@@ -17,7 +17,7 @@ use function count;
  */
 final readonly class SensitiveDataRedactor
 {
-    private const MASK = '******';
+    private const string MASK = '******';
 
     public static function redactNickServCommand(string $text): string
     {

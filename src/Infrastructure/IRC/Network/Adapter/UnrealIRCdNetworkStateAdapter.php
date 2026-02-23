@@ -40,7 +40,7 @@ use function sprintf;
  */
 final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 {
-    private const PROTOCOL = 'unreal';
+    private const string PROTOCOL = 'unreal';
 
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,

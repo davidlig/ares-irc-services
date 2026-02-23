@@ -42,7 +42,7 @@ use function str_split;
  */
 final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 {
-    private const PROTOCOL = 'inspircd';
+    private const string PROTOCOL = 'inspircd';
 
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
