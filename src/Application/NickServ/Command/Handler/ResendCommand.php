@@ -22,7 +22,7 @@ use function sprintf;
  */
 final readonly class ResendCommand implements NickServCommandInterface
 {
-    private const TOKEN_TTL_SECONDS = 3600;
+    private const int TOKEN_TTL_SECONDS = 3600;
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,

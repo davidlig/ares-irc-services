@@ -27,7 +27,7 @@ use function sprintf;
  */
 class InspIRCdProtocolHandler extends AbstractProtocolHandler
 {
-    private const PROTOCOL_NAME = 'inspircd';
+    private const string PROTOCOL_NAME = 'inspircd';
 
     public function __construct(
         private readonly string $sid = 'A0A',

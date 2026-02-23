@@ -19,7 +19,7 @@ use function sprintf;
  */
 final class PendingEmailChangeRegistry
 {
-    private const TTL_SECONDS = 3600;
+    private const int TTL_SECONDS = 3600;
 
     /** @var array<string, array{newEmail: string, token: string, expiresAt: DateTimeImmutable}> */
     private array $entries;
