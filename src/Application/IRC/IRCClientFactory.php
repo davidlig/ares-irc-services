@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Application\IRC;
 
-use App\Application\Maintenance\MaintenanceScheduler;
 use App\Domain\IRC\Connection\ConnectionFactoryInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerRegistryInterface;
 use App\Domain\IRC\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -22,7 +22,8 @@ class IRCClientFactory
         private readonly ProtocolHandlerRegistryInterface $protocolRegistry,
         private readonly ConnectionFactoryInterface $connectionFactory,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly MaintenanceScheduler $maintenanceScheduler,
+        private readonly MessageBusInterface $messageBus,
+        private readonly int $maintenanceDispatchIntervalSeconds,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -36,7 +37,8 @@ class IRCClientFactory
             $connection,
             $protocol,
             $this->eventDispatcher,
-            $this->maintenanceScheduler,
+            $this->messageBus,
+            $this->maintenanceDispatchIntervalSeconds,
             $this->logger,
         );
     }

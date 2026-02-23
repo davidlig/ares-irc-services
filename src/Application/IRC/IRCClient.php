@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\IRC;
 
-use App\Application\Maintenance\MaintenanceScheduler;
+use App\Application\Maintenance\Message\RunMaintenanceCycle;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
@@ -13,6 +13,7 @@ use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Domain\IRC\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -23,11 +24,14 @@ class IRCClient
 {
     private ?ServerLink $activeLink = null;
 
+    private float $lastMaintenanceDispatch = 0.0;
+
     public function __construct(
         private readonly ConnectionInterface $connection,
         private readonly ProtocolHandlerInterface $protocol,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly MaintenanceScheduler $maintenanceScheduler,
+        private readonly MessageBusInterface $messageBus,
+        private readonly int $maintenanceDispatchIntervalSeconds,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -63,7 +67,11 @@ class IRCClient
             $rawLine = $this->connection->readLine();
 
             if (null === $rawLine) {
-                $this->maintenanceScheduler->tick();
+                $now = hrtime(true) / 1_000_000_000.0;
+                if (($now - $this->lastMaintenanceDispatch) >= (float) $this->maintenanceDispatchIntervalSeconds) {
+                    $this->messageBus->dispatch(new RunMaintenanceCycle());
+                    $this->lastMaintenanceDispatch = $now;
+                }
                 usleep(10_000);
                 continue;
             }

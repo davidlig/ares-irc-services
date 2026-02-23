@@ -11,6 +11,7 @@
         "doctrine/doctrine-migrations-bundle": ">=4",
         "doctrine/orm": ">=3.6.2",
         "symfony/console": "7.4.*",
+        "symfony/doctrine-messenger": "*",
         "symfony/dotenv": "7.4.*",
         "symfony/flex": "^2.10",
         "symfony/framework-bundle": "7.4.*",

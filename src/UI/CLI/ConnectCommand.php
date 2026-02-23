@@ -6,6 +6,8 @@ namespace App\UI\CLI;
 
 use App\Application\IRC\Connect\ConnectToServerCommand;
 use App\Application\IRC\Connect\ConnectToServerHandler;
+use App\Application\IRC\IRCClient;
+use App\Infrastructure\Messenger\ConsumerProcessManager;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -15,7 +17,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
+use function function_exists;
 use function sprintf;
+
+use const SIGINT;
+use const SIGTERM;
 
 #[AsCommand(
     name: 'irc:connect',
@@ -25,6 +31,7 @@ class ConnectCommand extends Command
 {
     public function __construct(
         private readonly ConnectToServerHandler $handler,
+        private readonly ConsumerProcessManager $consumerManager,
         private readonly string $defaultServerName,
         private readonly string $defaultHost,
         private readonly int $defaultPort,
@@ -75,6 +82,12 @@ class ConnectCommand extends Command
                 null,
                 InputOption::VALUE_NONE,
                 'Wrap the connection in TLS. Defaults to IRC_USE_TLS.',
+            )
+            ->addOption(
+                'no-consumer',
+                null,
+                InputOption::VALUE_NONE,
+                'Do not start the Messenger async consumer (for debugging).',
             );
     }
 
@@ -111,11 +124,21 @@ class ConnectCommand extends Command
                 useTls: $useTls,
             ));
 
-            $io->success(sprintf('Link established using protocol "%s". Entering read loop.', $protocol));
+            $this->registerSignalHandlers($client);
 
-            $client->run();
+            if (!$input->getOption('no-consumer')) {
+                $this->consumerManager->start();
+            }
 
-            $io->warning('Connection closed by remote host.');
+            try {
+                $io->success(sprintf('Link established using protocol "%s". Entering read loop.', $protocol));
+
+                $client->run();
+
+                $io->warning('Connection closed by remote host.');
+            } finally {
+                $this->consumerManager->stop();
+            }
         } catch (Throwable $e) {
             $io->error($e->getMessage());
 
@@ -123,5 +146,23 @@ class ConnectCommand extends Command
         }
 
         return Command::SUCCESS;
+    }
+
+    private function registerSignalHandlers(IRCClient $client): void
+    {
+        if (!function_exists('pcntl_signal')) {
+            return;
+        }
+
+        if (function_exists('pcntl_async_signals')) {
+            pcntl_async_signals(true);
+        }
+
+        pcntl_signal(SIGINT, static function () use ($client): void {
+            $client->disconnect('CTRL+C');
+        });
+        pcntl_signal(SIGTERM, static function () use ($client): void {
+            $client->disconnect('SIGTERM');
+        });
     }
 }

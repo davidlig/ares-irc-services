@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Mail\MailerInterface;
+use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\PendingEmailChangeRegistry;
@@ -13,6 +13,7 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -47,7 +48,7 @@ final readonly class SetCommand implements NickServCommandInterface
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly PendingEmailChangeRegistry $pendingEmailChangeRegistry,
-        private readonly MailerInterface $mailer,
+        private readonly MessageBusInterface $messageBus,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
     ) {
@@ -222,9 +223,9 @@ final readonly class SetCommand implements NickServCommandInterface
             $locale = $context->getLanguage();
             $subject = $this->translator->trans('email_change_token_subject', [], 'mail', $locale);
             $body = $this->translator->trans('email_change_token_body', ['%new_email%' => $newEmail, '%token%' => $token], 'mail', $locale);
-            $this->mailer->send($currentEmail, $subject, $body);
+            $this->messageBus->dispatch(new SendEmail($currentEmail, $subject, $body));
         } catch (Throwable $e) {
-            $this->logger->error('NickServ SET EMAIL: failed to send token email', [
+            $this->logger->error('NickServ SET EMAIL: failed to dispatch token email', [
                 'nick' => $nick,
                 'recipient' => $currentEmail,
                 'exception' => $e,
