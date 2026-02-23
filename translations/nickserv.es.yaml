@@ -46,6 +46,7 @@ resend:
   help:             "Reenvía el token de verificación a la dirección de correo indicada\ndurante el registro. Solo funciona si tienes un registro pendiente."
   success:          "\x0307→\x03 Token de verificación reenviado a \x02%email%\x02."
   no_pending:       "\x0304✗\x03 No tienes ningún registro pendiente de verificación."
+  throttled:        "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro correo de verificación."
 
 # --- IDENTIFY ---------------------------------------------------------------
 identify:
