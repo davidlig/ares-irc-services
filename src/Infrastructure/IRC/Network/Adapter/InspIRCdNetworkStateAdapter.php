@@ -30,7 +30,9 @@ use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
+use function base64_encode;
 use function count;
+use function inet_pton;
 use function preg_quote;
 use function preg_replace;
 use function str_replace;
@@ -73,9 +75,15 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         };
     }
 
+    /**
+     * InspIRCd UID format: uuid timestamp nickname real_host displayed_host [real_user] displayed_user ip connect_time modes [mode_params] :realname
+     * 1205: 0=uuid, 1=ts, 2=nick, 3=real_host, 4=displayed_host, 5=displayed_user, 6=ip, 7=connect_time, 8=modes, 9+=mode_params
+     * 1206+: 0=uuid, 1=ts, 2=nick, 3=real_host, 4=displayed_host, 5=real_user, 6=displayed_user, 7=ip, 8=connect_time, 9=modes, 10+=mode_params
+     */
     private function handleUid(IRCMessage $message): void
     {
-        if (count($message->params) < 11) {
+        $params = $message->params;
+        if (count($params) < 10) {
             $this->logger->warning('Malformed UID message (not enough params)', [
                 'raw' => $message->toRawLine(),
             ]);
@@ -83,12 +91,19 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        [, , $timestamp, $username, $hostname, $uidStr, $serviceStamp, $umodes, $virthost, $cloakedHost, $ipBase64]
-            = $message->params;
-
-        $nickStr = $message->params[0];
+        $uidStr = $params[0];
+        $timestamp = $params[1];
+        $nickStr = $params[2];
+        $hostname = $params[3];
+        $cloakedHost = $params[4];
+        $is1206 = count($params) >= 11;
+        $username = $is1206 ? $params[6] : $params[5];
+        $ipRaw = $is1206 ? $params[7] : $params[6];
+        $umodes = $is1206 ? $params[9] : $params[8];
         $gecos = $message->trailing ?? '';
         $serverSid = $message->prefix ?? '';
+
+        $ipBase64 = $this->encodeIpToBase64($ipRaw);
 
         try {
             $nick = new Nick($nickStr);
@@ -110,16 +125,41 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             ident: $ident,
             hostname: $hostname,
             cloakedHost: $cloakedHost,
-            virtualHost: $virthost,
+            virtualHost: $cloakedHost,
             modes: $umodes,
             connectedAt: $connectedAt,
             realName: $gecos,
             serverSid: $serverSid,
             ipBase64: $ipBase64,
-            serviceStamp: (int) $serviceStamp,
+            serviceStamp: 0,
         );
 
+        $this->logger->info(sprintf(
+            'User joined network: %s (%s@%s) [%s]',
+            $nick->value,
+            $ident->value,
+            $user->getDisplayHost(),
+            $uid->value,
+        ));
+
         $this->eventDispatcher->dispatch(new UserJoinedNetworkEvent($user));
+    }
+
+    /**
+     * InspIRCd sends IP as plain text (e.g. 127.0.0.1 or ::1). Normalize to base64 for NetworkUser compatibility.
+     */
+    private function encodeIpToBase64(string $ip): string
+    {
+        if ('' === $ip || '*' === $ip) {
+            return $ip;
+        }
+
+        $binary = @inet_pton($ip);
+        if (false !== $binary) {
+            return base64_encode($binary);
+        }
+
+        return base64_encode($ip);
     }
 
     private function handleNick(IRCMessage $message): void

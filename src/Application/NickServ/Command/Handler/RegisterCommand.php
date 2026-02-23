@@ -7,6 +7,8 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\RegisterThrottleRegistry;
+use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
@@ -34,9 +36,11 @@ final readonly class RegisterCommand implements NickServCommandInterface
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly RegisterThrottleRegistry $throttleRegistry,
         private readonly MessageBusInterface $messageBus,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
+        private readonly int $registerMinIntervalSeconds,
     ) {
     }
 
@@ -96,6 +100,23 @@ final readonly class RegisterCommand implements NickServCommandInterface
         if (null === $sender) {
             return;
         }
+
+        $clientKey = $this->getThrottleClientKey($sender);
+        $remaining = $this->throttleRegistry->getRemainingCooldownSeconds($clientKey, $this->registerMinIntervalSeconds);
+
+        $this->logger->debug('REGISTER throttle', [
+            'key_prefix' => str_contains($clientKey, ':') ? substr($clientKey, 0, strpos($clientKey, ':') + 1) : '?',
+            'throttled' => $remaining > 0,
+        ]);
+
+        if ($remaining > 0) {
+            $minutes = (int) ceil($remaining / 60);
+            $context->reply('register.throttled', ['minutes' => (string) $minutes]);
+
+            return;
+        }
+
+        $this->throttleRegistry->recordAttempt($clientKey);
 
         $nick = $sender->getNick()->value;
         $password = $context->args[0];
@@ -159,5 +180,26 @@ final readonly class RegisterCommand implements NickServCommandInterface
         }
 
         $context->reply('register.pending', ['email' => $email]);
+    }
+
+    /**
+     * Client key for throttle: IP (or cloak, hostname) so limit persists across reconnects.
+     * Prefer IP as most stable; fall back to UID if no host info (should not happen).
+     */
+    private function getThrottleClientKey(NetworkUser $sender): string
+    {
+        if ('' !== $sender->ipBase64 && '*' !== $sender->ipBase64) {
+            return 'ip:' . $sender->ipBase64;
+        }
+
+        if ('' !== $sender->cloakedHost) {
+            return 'cloak:' . $sender->cloakedHost;
+        }
+
+        if ('' !== $sender->hostname) {
+            return 'host:' . $sender->hostname;
+        }
+
+        return 'uid:' . $sender->uid->value;
     }
 }

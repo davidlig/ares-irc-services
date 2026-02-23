@@ -30,6 +30,7 @@ register:
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be registered on this network."
   invalid_email:    "\x0304✗\x03 The email address provided is not valid."
   email_already_used: "\x0304✗\x03 The email \x02%email%\x02 is already in use by another account. Use a different address."
+  throttled:          "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before trying to register again."
 
 # --- VERIFY -----------------------------------------------------------------
 verify:
