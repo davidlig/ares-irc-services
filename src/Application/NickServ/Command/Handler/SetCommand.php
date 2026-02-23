@@ -12,6 +12,7 @@ use App\Application\NickServ\Security\NickServPermission;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -48,6 +49,7 @@ final readonly class SetCommand implements NickServCommandInterface
         private readonly PendingEmailChangeRegistry $pendingEmailChangeRegistry,
         private readonly MailerInterface $mailer,
         private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -221,7 +223,12 @@ final readonly class SetCommand implements NickServCommandInterface
             $subject = $this->translator->trans('email_change_token_subject', [], 'mail', $locale);
             $body = $this->translator->trans('email_change_token_body', ['%new_email%' => $newEmail, '%token%' => $token], 'mail', $locale);
             $this->mailer->send($currentEmail, $subject, $body);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->logger->error('NickServ SET EMAIL: failed to send token email', [
+                'nick' => $nick,
+                'recipient' => $currentEmail,
+                'exception' => $e,
+            ]);
             $context->reply('error.mail_failed');
 
             return;

@@ -11,6 +11,7 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -34,6 +35,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly MailerInterface $mailer,
         private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -137,7 +139,12 @@ final readonly class RegisterCommand implements NickServCommandInterface
             $subject = $this->translator->trans('register_verification_subject', [], 'mail', $locale);
             $body = $this->translator->trans('register_verification_body', ['%nickname%' => $nick, '%token%' => $token], 'mail', $locale);
             $this->mailer->send($email, $subject, $body);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            $this->logger->error('NickServ REGISTER: failed to send verification email', [
+                'nick' => $nick,
+                'recipient' => $email,
+                'exception' => $e,
+            ]);
             $context->reply('error.mail_failed');
 
             return;
