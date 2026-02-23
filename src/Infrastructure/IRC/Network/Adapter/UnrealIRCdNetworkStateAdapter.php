@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network\Adapter;
 
-use App\Domain\IRC\Event\ChannelModesChangedEvent;
-use App\Domain\IRC\Event\ChannelSyncedEvent;
-use App\Domain\IRC\Event\ChannelTopicChangedEvent;
-use App\Domain\IRC\Event\UserJoinedChannelEvent;
+use App\Domain\IRC\Event\FjoinReceivedEvent;
+use App\Domain\IRC\Event\FtopicReceivedEvent;
+use App\Domain\IRC\Event\KickReceivedEvent;
+use App\Domain\IRC\Event\ModeReceivedEvent;
+use App\Domain\IRC\Event\NickChangeReceivedEvent;
+use App\Domain\IRC\Event\PartReceivedEvent;
+use App\Domain\IRC\Event\QuitReceivedEvent;
+use App\Domain\IRC\Event\Umode2ReceivedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
-use App\Domain\IRC\Event\UserLeftChannelEvent;
-use App\Domain\IRC\Event\UserModeChangedEvent;
-use App\Domain\IRC\Event\UserNickChangedEvent;
-use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\Network\NetworkStateAdapterInterface;
 use App\Domain\IRC\Network\NetworkUser;
-use App\Domain\IRC\Repository\ChannelRepositoryInterface;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
@@ -32,7 +29,11 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
+use function implode;
 use function sprintf;
+use function str_starts_with;
+use function strpos;
+use function substr;
 
 /**
  * UnrealIRCd protocol adapter: parses UID, NICK, QUIT, SJOIN, PART, KICK,
@@ -44,8 +45,6 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
 
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly ChannelRepositoryInterface $channelRepository,
-        private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -74,7 +73,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
 
     /**
      * UnrealIRCd UID format: nickname hopcount timestamp username hostname uid servicestamp usermodes virtualhost cloakedhost ip :gecos
-     * Params: 0=nick, 1=hop, 2=timestamp, 3=username, 4=hostname, 5=uid, 6=servicestamp, 7=umodes, 8=virthost, 9=cloakedhost, 10=ip (base64)
+     * Params: 0=nick, 1=hop, 2=timestamp, 3=username, 4=hostname, 5=uid, 6=servicestamp, 7=umodes, 8=virthost, 9=cloakedhost, 10=ip (base64).
      */
     private function handleUid(IRCMessage $message): void
     {
@@ -142,27 +141,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            $this->logger->warning('NICK received for unknown source: ' . $sourceId);
-
-            return;
-        }
-
-        try {
-            $newNick = new Nick($newNickStr);
-        } catch (InvalidArgumentException) {
-            return;
-        }
-
-        $oldNick = $user->getNick();
-
-        $this->logger->info(sprintf('Nick change: %s → %s [%s]', $oldNick->value, $newNick->value, $user->uid->value));
-
-        $user->applyModeChange('-r');
-        $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '-r'));
-        $this->eventDispatcher->dispatch(new UserNickChangedEvent($user->uid, $oldNick, $newNick));
+        $this->eventDispatcher->dispatch(new NickChangeReceivedEvent($sourceId, $newNickStr));
     }
 
     private function handleQuit(IRCMessage $message): void
@@ -174,21 +153,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            return;
-        }
-
-        $this->eventDispatcher->dispatch(new UserQuitNetworkEvent(
-            uid: $user->uid,
-            nick: $user->getNick(),
-            reason: $reason,
-            ident: $user->ident->value,
-            displayHost: $user->getDisplayHost(),
-        ));
-
-        $this->logger->info(sprintf('User quit: %s [%s] — %s', $user->getNick()->value, $user->uid->value, $reason));
+        $this->eventDispatcher->dispatch(new QuitReceivedEvent($sourceId, $reason));
     }
 
     private function handleSjoin(IRCMessage $message): void
@@ -214,22 +179,8 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             $modeStr = implode(' ', array_slice($message->params, 2));
         }
 
-        $channel = $this->channelRepository->findByName($channelName);
-        $isNewChannel = null === $channel;
-
-        if ($isNewChannel) {
-            $channel = new Channel(
-                name: $channelName,
-                modes: $modeStr,
-                createdAt: new DateTimeImmutable('@' . $timestamp),
-            );
-        } else {
-            if ('' !== $modeStr) {
-                $channel->updateModes($modeStr);
-            }
-        }
-
-        $joinedUids = [];
+        $listModes = ['b' => [], 'e' => [], 'I' => []];
+        $members = [];
 
         foreach (explode(' ', $buffer) as $entry) {
             $entry = trim($entry);
@@ -248,17 +199,17 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             $firstChar = $entry[0] ?? '';
 
             if ('&' === $firstChar) {
-                $channel->addBan(substr($entry, 1));
+                $listModes['b'][] = substr($entry, 1);
                 continue;
             }
 
             if ('"' === $firstChar) {
-                $channel->addExempt(substr($entry, 1));
+                $listModes['e'][] = substr($entry, 1);
                 continue;
             }
 
             if ("'" === $firstChar) {
-                $channel->addInviteException(substr($entry, 1));
+                $listModes['I'][] = substr($entry, 1);
                 continue;
             }
 
@@ -271,31 +222,10 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
                 continue;
             }
 
-            $channel->syncMember($uid, $role);
-            $joinedUids[] = [$uid, $role];
+            $members[] = ['uid' => $uid, 'role' => $role];
         }
 
-        if ($isNewChannel) {
-            $this->logger->info(sprintf(
-                'Channel synced: %s [%s, %d members]',
-                $channelName->value,
-                $modeStr ?: 'no modes',
-                $channel->getMemberCount(),
-            ));
-        } else {
-            foreach ($joinedUids as [$uid, $role]) {
-                $this->logger->info(sprintf(
-                    'User %s joined %s [role: %s]',
-                    $uid->value,
-                    $channelName->value,
-                    $role->label(),
-                ));
-
-                $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $channelName, $role));
-            }
-        }
-
-        $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
+        $this->eventDispatcher->dispatch(new FjoinReceivedEvent($channelName, $timestamp, $modeStr, $members, $listModes));
     }
 
     private function handlePart(IRCMessage $message): void
@@ -308,28 +238,13 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            return;
-        }
-
         try {
             $channelName = new ChannelName($channelStr);
         } catch (InvalidArgumentException) {
             return;
         }
 
-        $this->logger->info(sprintf(
-            'User %s parted %s [%s]',
-            $user->getNick()->value,
-            $channelName->value,
-            $reason,
-        ));
-
-        $this->eventDispatcher->dispatch(
-            new UserLeftChannelEvent($user->uid, $user->getNick(), $channelName, $reason, wasKicked: false)
-        );
+        $this->eventDispatcher->dispatch(new PartReceivedEvent($sourceId, $channelName, $reason, false));
     }
 
     private function handleKick(IRCMessage $message): void
@@ -342,28 +257,13 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $target = $this->resolveUser($targetId);
-
-        if (null === $target) {
-            return;
-        }
-
         try {
             $channelName = new ChannelName($channelStr);
         } catch (InvalidArgumentException) {
             return;
         }
 
-        $this->logger->info(sprintf(
-            'User %s was kicked from %s [%s]',
-            $target->getNick()->value,
-            $channelName->value,
-            $reason,
-        ));
-
-        $this->eventDispatcher->dispatch(
-            new UserLeftChannelEvent($target->uid, $target->getNick(), $channelName, $reason, wasKicked: true)
-        );
+        $this->eventDispatcher->dispatch(new KickReceivedEvent($channelName, $targetId, $reason));
     }
 
     private function handleUmode2(IRCMessage $message): void
@@ -375,20 +275,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $user = $this->resolveUser($sourceId);
-
-        if (null === $user) {
-            return;
-        }
-
-        $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, $modeStr));
-
-        $this->logger->debug(sprintf(
-            'UMODE2: %s [%s] modes → %s',
-            $user->getNick()->value,
-            $user->uid->value,
-            $user->getModes(),
-        ));
+        $this->eventDispatcher->dispatch(new Umode2ReceivedEvent($sourceId, $modeStr));
     }
 
     private function handleMd(IRCMessage $message): void
@@ -423,14 +310,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $channel->updateTopic($topic);
-        $this->eventDispatcher->dispatch(new ChannelTopicChangedEvent($channel));
-        $this->logger->debug(sprintf('TOPIC %s: %s', $channelStr, $topic ?? '(cleared)'));
+        $this->eventDispatcher->dispatch(new FtopicReceivedEvent($channelName, $topic));
     }
 
     private function handleMode(IRCMessage $message): void
@@ -452,71 +332,6 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $channel = $this->channelRepository->findByName($channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $paramIdx = 0;
-        $adding = true;
-
-        foreach (str_split($modeStr) as $char) {
-            if ('+' === $char) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $char) {
-                $adding = false;
-                continue;
-            }
-
-            $role = ChannelMemberRole::fromModeLetter($char);
-            if (null !== $role) {
-                if ($paramIdx >= count($modeParams)) {
-                    break;
-                }
-                $targetId = $modeParams[$paramIdx];
-                ++$paramIdx;
-                $user = $this->resolveUser($targetId);
-                if (null !== $user) {
-                    $channel->syncMember($user->uid, $adding ? $role : ChannelMemberRole::None);
-                }
-                continue;
-            }
-
-            if ('b' === $char || 'e' === $char || 'I' === $char) {
-                if ($paramIdx >= count($modeParams)) {
-                    break;
-                }
-                $mask = $modeParams[$paramIdx];
-                ++$paramIdx;
-                if ('b' === $char) {
-                    $adding ? $channel->addBan($mask) : $channel->removeBan($mask);
-                } elseif ('e' === $char) {
-                    $adding ? $channel->addExempt($mask) : $channel->removeExempt($mask);
-                } else {
-                    $adding ? $channel->addInviteException($mask) : $channel->removeInviteException($mask);
-                }
-            }
-        }
-
-        $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
-    }
-
-    private function resolveUser(string $sourceId): ?NetworkUser
-    {
-        if (preg_match('/^[0-9][0-9A-Z]{8}$/', $sourceId)) {
-            try {
-                return $this->userRepository->findByUid(new Uid($sourceId));
-            } catch (InvalidArgumentException) {
-            }
-        }
-
-        try {
-            return $this->userRepository->findByNick(new Nick($sourceId));
-        } catch (InvalidArgumentException) {
-        }
-
-        return null;
+        $this->eventDispatcher->dispatch(new ModeReceivedEvent($channelName, $modeStr, $modeParams));
     }
 }

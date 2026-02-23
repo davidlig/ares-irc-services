@@ -4,30 +4,25 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
-use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Application\NickServ\Security\NickServPermission;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use InvalidArgumentException;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
-use Throwable;
+use App\Application\NickServ\Set\SetEmailHandler;
+use App\Application\NickServ\Set\SetLanguageHandler;
+use App\Application\NickServ\Set\SetOptionHandlerInterface;
+use App\Application\NickServ\Set\SetPasswordHandler;
+use App\Application\NickServ\Set\SetPrivateHandler;
+use App\Application\NickServ\Set\SetVhostHandler;
 
 use function array_slice;
-use function in_array;
-use function strlen;
-
-use const FILTER_VALIDATE_EMAIL;
-use const PASSWORD_ARGON2ID;
+use function implode;
+use function strtoupper;
 
 /**
  * SET <option> <value>.
  *
  * Allows a registered and identified user to change their NickServ settings.
+ * Delegates each option to a dedicated Set*Handler.
  *
  * Supported options:
  *   SET PASSWORD <new_password>
@@ -35,23 +30,29 @@ use const PASSWORD_ARGON2ID;
  *   SET EMAIL    <new_email> <token>      — confirm change with token
  *   SET LANGUAGE <code>       (en | es | …)
  *   SET PRIVATE  ON|OFF
+ *   SET VHOST    <vhost>|OFF
  */
 final readonly class SetCommand implements NickServCommandInterface
 {
     private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE', 'VHOST'];
 
-    /** Max length for vhost (IRCD/DB limit). Allowed: hostname-like (letters, digits, hyphens, dots). */
-    private const int VHOST_MAX_LENGTH = 255;
-
-    private const string VHOST_PATTERN = '/^[a-zA-Z0-9.\-]+$/';
+    /** @var array<string, SetOptionHandlerInterface> */
+    private array $handlers;
 
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly PendingEmailChangeRegistry $pendingEmailChangeRegistry,
-        private readonly MessageBusInterface $messageBus,
-        private readonly TranslatorInterface $translator,
-        private readonly LoggerInterface $logger,
+        SetPasswordHandler $setPasswordHandler,
+        SetEmailHandler $setEmailHandler,
+        SetLanguageHandler $setLanguageHandler,
+        SetPrivateHandler $setPrivateHandler,
+        SetVhostHandler $setVhostHandler,
     ) {
+        $this->handlers = [
+            'PASSWORD' => $setPasswordHandler,
+            'EMAIL' => $setEmailHandler,
+            'LANGUAGE' => $setLanguageHandler,
+            'PRIVATE' => $setPrivateHandler,
+            'VHOST' => $setVhostHandler,
+        ];
     }
 
     public function getName(): string
@@ -137,8 +138,7 @@ final readonly class SetCommand implements NickServCommandInterface
 
     public function execute(NickServContext $context): void
     {
-        $sender = $context->sender;
-        if (null === $sender) {
+        if (null === $context->sender) {
             return;
         }
 
@@ -152,205 +152,16 @@ final readonly class SetCommand implements NickServCommandInterface
         $option = strtoupper($context->args[0]);
         $value = implode(' ', array_slice($context->args, 1));
 
-        match ($option) {
-            'PASSWORD' => $this->handlePassword($context, $account->getNickname(), $value),
-            'EMAIL' => $this->handleEmail($context, $account->getNickname(), $value),
-            'LANGUAGE' => $this->handleLanguage($context, $account->getNickname(), $value),
-            'PRIVATE' => $this->handlePrivate($context, $account->getNickname(), $value),
-            'VHOST' => $this->handleVhost($context, $account->getNickname(), $value),
-            default => $context->reply('set.unknown_option', [
-                'option' => $option,
-                'options' => implode(', ', self::SUPPORTED_OPTIONS),
-            ]),
-        };
-    }
-
-    private function handlePassword(NickServContext $context, string $nick, string $value): void
-    {
-        if ('' === $value) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.password.syntax')]);
+        $handler = $this->handlers[$option] ?? null;
+        if (null !== $handler) {
+            $handler->handle($context, $account, $value);
 
             return;
         }
 
-        $account = $this->nickRepository->findByNick($nick);
-        $account?->changePassword(password_hash($value, PASSWORD_ARGON2ID));
-        $this->nickRepository->save($account);
-
-        $context->reply('set.password.success');
-    }
-
-    private function handleEmail(NickServContext $context, string $nick, string $value): void
-    {
-        $parts = explode(' ', $value, 2);
-        $newEmail = trim($parts[0] ?? '');
-        $token = isset($parts[1]) ? trim($parts[1]) : null;
-
-        if ('' === $newEmail) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.email.syntax')]);
-
-            return;
-        }
-
-        if (!filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
-            $context->reply('register.invalid_email');
-
-            return;
-        }
-
-        $account = $this->nickRepository->findByNick($nick);
-        if (null === $account || null === $account->getEmail()) {
-            $context->reply('error.not_identified');
-
-            return;
-        }
-
-        if (null !== $token && '' !== $token) {
-            $this->confirmEmailChange($context, $nick, $newEmail, $token, $account);
-
-            return;
-        }
-
-        $this->requestEmailChange($context, $nick, $newEmail, $account);
-    }
-
-    private function requestEmailChange(NickServContext $context, string $nick, string $newEmail, RegisteredNick $account): void
-    {
-        $existingByEmail = $this->nickRepository->findByEmail($newEmail);
-        if (null !== $existingByEmail && strtolower($existingByEmail->getNickname()) !== strtolower($nick)) {
-            $context->reply('register.email_already_used', ['email' => $newEmail]);
-
-            return;
-        }
-
-        $currentEmail = $account->getEmail();
-        if (null === $currentEmail) {
-            $context->reply('error.not_identified');
-
-            return;
-        }
-
-        $token = bin2hex(random_bytes(16));
-        $this->pendingEmailChangeRegistry->store($nick, $newEmail, $token);
-
-        try {
-            $locale = $context->getLanguage();
-            $subject = $this->translator->trans('email_change_token_subject', [], 'mail', $locale);
-            $body = $this->translator->trans('email_change_token_body', ['%new_email%' => $newEmail, '%token%' => $token], 'mail', $locale);
-            $this->messageBus->dispatch(new SendEmail($currentEmail, $subject, $body));
-        } catch (Throwable $e) {
-            $this->logger->error('NickServ SET EMAIL: failed to dispatch token email', [
-                'nick' => $nick,
-                'recipient' => $currentEmail,
-                'exception' => $e,
-            ]);
-            $context->reply('error.mail_failed');
-
-            return;
-        }
-
-        $context->reply('set.email.pending_sent', [
-            'current_email' => $currentEmail,
-            'new_email' => $newEmail,
+        $context->reply('set.unknown_option', [
+            'option' => $option,
+            'options' => implode(', ', self::SUPPORTED_OPTIONS),
         ]);
-    }
-
-    private function confirmEmailChange(NickServContext $context, string $nick, string $newEmail, string $token, RegisteredNick $account): void
-    {
-        if (!$this->pendingEmailChangeRegistry->consume($nick, $newEmail, $token)) {
-            $context->reply('set.email.invalid_token');
-
-            return;
-        }
-
-        $existingByEmail = $this->nickRepository->findByEmail($newEmail);
-        if (null !== $existingByEmail && $existingByEmail->getId() !== $account->getId()) {
-            $context->reply('register.email_already_used', ['email' => $newEmail]);
-
-            return;
-        }
-
-        $account->changeEmail($newEmail);
-        $this->nickRepository->save($account);
-
-        $context->reply('set.email.success', ['email' => $newEmail]);
-    }
-
-    private function handleLanguage(NickServContext $context, string $nick, string $value): void
-    {
-        if ('' === $value) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.language.syntax')]);
-
-            return;
-        }
-
-        $account = $this->nickRepository->findByNick($nick);
-        if (null === $account) {
-            return;
-        }
-
-        try {
-            $account->changeLanguage($value);
-        } catch (InvalidArgumentException) {
-            $context->reply('set.language.invalid', [
-                'languages' => implode(', ', RegisteredNick::SUPPORTED_LANGUAGES),
-            ]);
-
-            return;
-        }
-
-        $this->nickRepository->save($account);
-
-        $context->reply('set.language.success', ['language' => $account->getLanguage()]);
-    }
-
-    private function handlePrivate(NickServContext $context, string $nick, string $value): void
-    {
-        $flag = strtoupper($value);
-
-        if (!in_array($flag, ['ON', 'OFF'], true)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.private.syntax')]);
-
-            return;
-        }
-
-        $account = $this->nickRepository->findByNick($nick);
-        $account?->switchPrivate('ON' === $flag);
-        $this->nickRepository->save($account);
-
-        $context->reply('ON' === $flag ? 'set.private.on' : 'set.private.off');
-    }
-
-    private function handleVhost(NickServContext $context, string $nick, string $value): void
-    {
-        $normalized = trim($value);
-        $clearKeywords = ['OFF', ''];
-        if ('' === $normalized || in_array(strtoupper($normalized), $clearKeywords, true)) {
-            $account = $this->nickRepository->findByNick($nick);
-            if (null !== $account) {
-                $account->changeVhost(null);
-                $this->nickRepository->save($account);
-                $context->getNotifier()->setUserVhost($context->sender->uid->value, '');
-            }
-            $context->reply('set.vhost.cleared');
-
-            return;
-        }
-
-        if (strlen($normalized) > self::VHOST_MAX_LENGTH || 1 !== preg_match(self::VHOST_PATTERN, $normalized)) {
-            $context->reply('set.vhost.invalid');
-
-            return;
-        }
-
-        $account = $this->nickRepository->findByNick($nick);
-        if (null === $account) {
-            return;
-        }
-
-        $account->changeVhost($normalized);
-        $this->nickRepository->save($account);
-        $context->getNotifier()->setUserVhost($context->sender->uid->value, $normalized);
-        $context->reply('set.vhost.success', ['vhost' => $normalized]);
     }
 }

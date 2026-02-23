@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\NickServ\Entity\RegisteredNick" table="registered_nicks">
+        <indexes>
+            <index name="idx_nickname_lower" columns="nickname_lower"/>
+            <index name="idx_status_expires" columns="status,expires_at"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="nickname" type="string" length="32" column="nickname"/>
+        <field name="nicknameLower" type="string" length="32" unique="true" column="nickname_lower"/>
+        <field name="status" type="string" length="20">
+            <options>
+                <option name="enumType">App\Domain\NickServ\ValueObject\NickStatus</option>
+            </options>
+        </field>
+        <field name="passwordHash" type="string" length="255" nullable="true" column="password_hash"/>
+        <field name="email" type="string" length="255" nullable="true" unique="true" column="email"/>
+        <field name="language" type="string" length="10" column="language"/>
+        <field name="registeredAt" type="datetime_immutable" nullable="true" column="registered_at"/>
+        <field name="expiresAt" type="datetime_immutable" nullable="true" column="expires_at"/>
+        <field name="reason" type="string" length="512" nullable="true" column="reason"/>
+        <field name="lastSeenAt" type="datetime_immutable" nullable="true" column="last_seen_at"/>
+        <field name="lastQuitMessage" type="string" length="512" nullable="true" column="last_quit_message"/>
+        <field name="private" type="boolean" column="private"/>
+        <field name="vhost" type="string" length="255" nullable="true" column="vhost"/>
+    </entity>
+</doctrine-mapping>

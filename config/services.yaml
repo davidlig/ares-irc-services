@@ -65,6 +65,9 @@ services:
             $from: '%mailer.from%'
             $senderName: '%irc.server_name%'
 
+    App\Domain\NickServ\Service\PasswordHasherInterface:
+        class: App\Infrastructure\NickServ\Security\Argon2PasswordHasher
+
     App\Infrastructure\Messenger\Middleware\EmailDelayMiddleware:
         arguments:
             $emailDelaySeconds: '%mailer.send_delay_seconds%'
@@ -137,6 +140,11 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
 
+    App\Infrastructure\IRC\Network\NetworkEventEnricher:
+        arguments:
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
     App\Infrastructure\IRC\Network\ProtocolNetworkStateRouter:
         arguments:
             $protocol: '%irc.protocol%'
@@ -164,6 +172,20 @@ services:
 
     App\Infrastructure\NickServ\PendingNickRestoreRegistry:
         class: App\Infrastructure\NickServ\PendingNickRestoreRegistry
+
+    App\Application\NickServ\PendingNickRestoreRegistryInterface:
+        alias: App\Infrastructure\NickServ\PendingNickRestoreRegistry
+
+    App\Application\NickServ\BurstState:
+        class: App\Application\NickServ\BurstState
+
+    App\Application\NickServ\NickProtectionService:
+        arguments:
+            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $burstState: '@App\Application\NickServ\BurstState'
+            $guestPrefix: '%services.guest_prefix%'
+            $defaultLanguage: '%services.default_language%'
+            $logger: '@monolog.logger.irc'
 
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
@@ -272,12 +294,7 @@ services:
 
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
         arguments:
-            $userRepository:      '@App\Domain\IRC\Repository\NetworkUserRepositoryInterface'
-            $pendingRegistry:     '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
-            $identifiedRegistry:  '@App\Application\NickServ\IdentifiedSessionRegistry'
-            $guestPrefix:         '%services.guest_prefix%'
-            $defaultLanguage:     '%services.default_language%'
-            $logger:              '@monolog.logger.irc'
+            $nickProtectionService: '@App\Application\NickServ\NickProtectionService'
         tags: ['kernel.event_subscriber']
 
     # --- Maintenance system -----------------------------------------------------

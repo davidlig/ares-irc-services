@@ -8,27 +8,24 @@ namespace App\Application\NickServ\Command;
  * Holds all registered NickServ command modules.
  * Commands are injected via tagged services (tag: nickserv.command).
  */
-class NickServCommandRegistry
+final readonly class NickServCommandRegistry
 {
     /** @var array<string, NickServCommandInterface> keyed by uppercase name/alias */
-    private array $map = [];
+    private array $map;
 
     /**
      * @param iterable<NickServCommandInterface> $commands
      */
     public function __construct(iterable $commands)
     {
+        $map = [];
         foreach ($commands as $command) {
-            $this->register($command);
+            $map[strtoupper($command->getName())] = $command;
+            foreach ($command->getAliases() as $alias) {
+                $map[strtoupper($alias)] = $command;
+            }
         }
-    }
-
-    private function register(NickServCommandInterface $command): void
-    {
-        $this->map[strtoupper($command->getName())] = $command;
-        foreach ($command->getAliases() as $alias) {
-            $this->map[strtoupper($alias)] = $command;
-        }
+        $this->map = $map;
     }
 
     public function find(string $name): ?NickServCommandInterface

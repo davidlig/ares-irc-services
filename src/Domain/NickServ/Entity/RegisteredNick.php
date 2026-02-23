@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\NickServ\Entity;
 
+use App\Domain\NickServ\Service\PasswordHasherInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
-use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 
 use function in_array;
@@ -22,38 +22,28 @@ use const FILTER_VALIDATE_EMAIL;
  *
  * passwordHash, email and registeredAt are nullable because FORBIDDEN entries
  * have no owner; all other statuses always carry non-null values for these fields.
+ *
+ * Persistence mapping is defined in config/doctrine (XML); Domain has no Doctrine dependency.
  */
-#[ORM\Entity]
-#[ORM\Table(name: 'registered_nicks')]
-#[ORM\Index(columns: ['nickname_lower'], name: 'idx_nickname_lower')]
-#[ORM\Index(columns: ['status', 'expires_at'], name: 'idx_status_expires')]
 class RegisteredNick
 {
     /** Supported BCP-47 language tags for account preferences. */
     public const array SUPPORTED_LANGUAGES = ['en', 'es'];
 
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
     private int $id;
 
     /** Original casing of the nickname (display only). */
-    #[ORM\Column(type: 'string', length: 32)]
     private string $nickname;
 
     /** Lowercase version used for case-insensitive lookups. */
-    #[ORM\Column(name: 'nickname_lower', type: 'string', length: 32, unique: true)]
     private string $nicknameLower;
 
-    #[ORM\Column(type: 'string', enumType: NickStatus::class, length: 20)]
     private NickStatus $status;
 
     /** Argon2id hash produced by password_hash(). Null for FORBIDDEN entries. */
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $passwordHash;
 
     /** Null for FORBIDDEN entries. One email per account (unique across nicks). */
-    #[ORM\Column(type: 'string', length: 255, nullable: true, unique: true)]
     private ?string $email {
         set(?string $value) {
             if (null !== $value && false === filter_var($value, FILTER_VALIDATE_EMAIL)) {
@@ -64,7 +54,6 @@ class RegisteredNick
     }
 
     /** BCP-47 language tag: 'en', 'es', etc. */
-    #[ORM\Column(type: 'string', length: 10)]
     private string $language {
         set(string $value) {
             $lang = strtolower($value);
@@ -76,29 +65,22 @@ class RegisteredNick
     }
 
     /** Null for FORBIDDEN entries. */
-    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $registeredAt;
 
     /** Only set while status is PENDING; null once the account is activated. */
-    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $expiresAt = null;
 
     /** Human-readable reason for SUSPENDED or FORBIDDEN status. */
-    #[ORM\Column(type: 'string', length: 512, nullable: true)]
     private ?string $reason = null;
 
-    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?DateTimeImmutable $lastSeenAt = null;
 
-    #[ORM\Column(type: 'string', length: 512, nullable: true)]
     private ?string $lastQuitMessage = null;
 
     /** When true, INFO output is hidden from non-oper users. */
-    #[ORM\Column(type: 'boolean')]
     private bool $private = false;
 
     /** Custom virtual host (displayed hostname). Null = use default/cloak. */
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $vhost = null;
 
     /**
@@ -272,6 +254,15 @@ class RegisteredNick
     public function changePassword(string $newHash): void
     {
         $this->passwordHash = $newHash;
+    }
+
+    /**
+     * Changes the password by hashing the plain password via the given hasher.
+     * Use this from Application; the entity does not depend on a specific algorithm.
+     */
+    public function changePasswordWithHasher(string $plainPassword, PasswordHasherInterface $hasher): void
+    {
+        $this->passwordHash = $hasher->hash($plainPassword);
     }
 
     public function changeEmail(string $email): void

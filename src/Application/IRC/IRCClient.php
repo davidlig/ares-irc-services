@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\IRC;
 
-use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\Maintenance\Message\RunMaintenanceCycle;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;

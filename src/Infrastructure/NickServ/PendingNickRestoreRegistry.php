@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ;
 
+use App\Application\NickServ\PendingNickRestoreRegistryInterface;
+
 /**
  * Tracks UIDs for which services sent an SVSNICK to restore a registered nick
- * (e.g. during the IDENTIFY flow). Used by NickProtectionSubscriber to suppress
+ * (e.g. during the IDENTIFY flow). Used by NickProtectionService to suppress
  * false protection triggers when the NICK echo arrives before the UMODE2 +r.
  */
-final class PendingNickRestoreRegistry
+final class PendingNickRestoreRegistry implements PendingNickRestoreRegistryInterface
 {
     /** @var array<string, bool> */
     private array $pending;
