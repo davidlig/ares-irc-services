@@ -32,6 +32,8 @@ parameters:
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
+    # Seconds to wait after each email send (avoids provider rate limits / blocks)
+    mailer.send_delay_seconds: '%env(int:default:5:MAILER_SEND_DELAY_SECONDS)%'
 
 services:
     _defaults:
@@ -58,6 +60,10 @@ services:
         arguments:
             $from: '%mailer.from%'
 
+    App\Infrastructure\Messenger\Middleware\EmailDelayMiddleware:
+        arguments:
+            $emailDelaySeconds: '%mailer.send_delay_seconds%'
+
     # --- Application services — inject the irc Monolog channel ---------------
 
     App\Application\IRC\IRCClientFactory:
@@ -70,7 +76,7 @@ services:
     App\Infrastructure\Messenger\ConsumerProcessManager:
         arguments:
             $consolePath: '%kernel.project_dir%/bin/console'
-            $transportName: 'async'
+            $transportNames: ['async', 'async_emails']
 
     # --- CLI command — inject .env defaults so the command runs without arguments ---
 
