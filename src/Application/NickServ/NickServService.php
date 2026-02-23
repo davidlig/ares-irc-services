@@ -37,6 +37,7 @@ final readonly class NickServService
         private readonly TranslatorInterface $translator,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
         private readonly string $defaultLanguage = 'en',
+        private readonly string $defaultTimezone = 'UTC',
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -70,6 +71,7 @@ final readonly class NickServService
 
         $account = $this->nickRepository->findByNick($sender->getNick()->value);
         $language = $account?->getLanguage() ?? $this->defaultLanguage;
+        $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
 
         $context = new NickServContext(
             sender: $sender,
@@ -79,6 +81,7 @@ final readonly class NickServService
             notifier: $this->notifier,
             translator: $this->translator,
             language: $language,
+            timezone: $timezone,
             registry: $this->commandRegistry,
             pendingVerificationRegistry: $this->pendingVerificationRegistry,
         );

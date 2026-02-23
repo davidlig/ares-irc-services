@@ -13,11 +13,7 @@
         </id>
         <field name="nickname" type="string" length="32" column="nickname"/>
         <field name="nicknameLower" type="string" length="32" unique="true" column="nickname_lower"/>
-        <field name="status" type="string" length="20">
-            <options>
-                <option name="enumType">App\Domain\NickServ\ValueObject\NickStatus</option>
-            </options>
-        </field>
+        <field name="status" type="string" length="20" enum-type="App\Domain\NickServ\ValueObject\NickStatus"/>
         <field name="passwordHash" type="string" length="255" nullable="true" column="password_hash"/>
         <field name="email" type="string" length="255" nullable="true" unique="true" column="email"/>
         <field name="language" type="string" length="10" column="language"/>
@@ -28,5 +24,6 @@
         <field name="lastQuitMessage" type="string" length="512" nullable="true" column="last_quit_message"/>
         <field name="private" type="boolean" column="private"/>
         <field name="vhost" type="string" length="255" nullable="true" column="vhost"/>
+        <field name="timezone" type="string" length="64" nullable="true" column="timezone"/>
     </entity>
 </doctrine-mapping>
