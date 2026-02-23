@@ -29,9 +29,12 @@ final class ConsumerProcessManager
     /** @var array{pipe: array<int, resource>}|null */
     private ?array $pipes = null;
 
+    /**
+     * @param list<string> $transportNames Transports to consume (e.g. ['async', 'async_emails'])
+     */
     public function __construct(
         private readonly string $consolePath,
-        private readonly string $transportName = 'async',
+        private readonly array $transportNames = ['async', 'async_emails'],
     ) {
     }
 
@@ -41,11 +44,12 @@ final class ConsumerProcessManager
             return;
         }
 
+        $transports = implode(' ', $this->transportNames);
         $command = sprintf(
             '%s %s messenger:consume %s --no-reset',
             PHP_BINARY,
             $this->consolePath,
-            $this->transportName,
+            $transports,
         );
 
         $descriptorSpec = [

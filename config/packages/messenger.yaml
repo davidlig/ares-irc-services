@@ -6,10 +6,17 @@ framework:
         transports:
             sync: 'sync://'
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
+            # Dedicated queue for emails (delay is applied via middleware)
+            async_emails: 'doctrine://default?queue_name=emails&auto_setup=0'
 
         routing:
             App\Application\Maintenance\Message\RunMaintenanceCycle: async
-            App\Application\Mail\Message\SendEmail: async
+            App\Application\Mail\Message\SendEmail: async_emails
+
+        buses:
+            default:
+                middleware:
+                    - App\Infrastructure\Messenger\Middleware\EmailDelayMiddleware
 
 # when@test:
 #    framework:
