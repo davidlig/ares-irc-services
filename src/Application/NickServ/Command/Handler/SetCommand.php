@@ -36,7 +36,7 @@ use function strtoupper;
  */
 final readonly class SetCommand implements NickServCommandInterface
 {
-    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'PRIVATE', 'VHOST', 'TIMEZONE'];
+    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'VHOST'];
 
     /** @var array<string, SetOptionHandlerInterface> */
     private array $handlers;
@@ -116,16 +116,16 @@ final readonly class SetCommand implements NickServCommandInterface
                 'syntax_key' => 'set.language.syntax',
             ],
             [
-                'name' => 'PRIVATE',
-                'desc_key' => 'set.private.short',
-                'help_key' => 'set.private.help',
-                'syntax_key' => 'set.private.syntax',
-            ],
-            [
                 'name' => 'TIMEZONE',
                 'desc_key' => 'set.timezone.short',
                 'help_key' => 'set.timezone.help',
                 'syntax_key' => 'set.timezone.syntax',
+            ],
+            [
+                'name' => 'PRIVATE',
+                'desc_key' => 'set.private.short',
+                'help_key' => 'set.private.help',
+                'syntax_key' => 'set.private.syntax',
             ],
             [
                 'name' => 'VHOST',

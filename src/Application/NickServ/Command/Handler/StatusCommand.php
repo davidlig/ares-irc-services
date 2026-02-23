@@ -127,6 +127,7 @@ final readonly class StatusCommand implements NickServCommandInterface
         if (null !== $expiresAt) {
             $minutes = max(0, (int) ceil(($expiresAt->getTimestamp() - time()) / 60));
             $context->replyRaw($context->trans('status.pending_expires', ['minutes' => $minutes]));
+            $context->replyRaw($context->trans('status.pending_expires_at', ['date' => $context->formatDate($expiresAt)]));
         }
     }
 

@@ -75,6 +75,7 @@ status:
   not_registered_offline: "  Status          : \x0315Not registered\x03"
   pending:          "  Status          : \x0307Pending verification\x03"
   pending_expires:  "  Expires in      : %minutes% minute(s)"
+  pending_expires_at: "  Expires at      : %date%"
   not_connected:    "  Status          : \x0315Not connected\x03"
   not_identified:   "  Status          : \x0307Not identified\x03"
   identified:       "  Status          : \x0303Identified\x03"
@@ -136,8 +137,8 @@ set:
 
   timezone:
     syntax:         "SET TIMEZONE <timezone>|OFF"
-    short:          "Set the timezone used when displaying dates (e.g. INFO)."
-    help:           "Sets the timezone used when NickServ shows dates (e.g. in INFO).\nUse a valid PHP timezone (e.g. \x02UTC\x02, \x02Europe/Madrid\x02, \x02America/New_York\x02).\nUse \x02SET TIMEZONE OFF\x02 to clear and use the network default."
+    short:          "Set the timezone used when displaying dates."
+    help:           "Sets the timezone used when NickServ shows dates.\nUse \x02HELP SET TIMEZONE\x02 for the region index; \x02HELP SET TIMEZONE <region>\x02 (e.g. Europe) for that region's timezones. Use \x02OFF\x02 to clear."
     success:        "\x0303✔\x03 Timezone set to \x02%timezone%\x02. Dates will be shown in this timezone."
     cleared:        "\x0303✔\x03 Timezone cleared. Dates will use the network default."
     invalid:        "\x0304✗\x03 Invalid timezone \x02%timezone%\x02. Use a valid identifier (e.g. UTC, Europe/Madrid)."
@@ -174,6 +175,11 @@ help:
   syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 No help available for \x02%command%\x02."
+
+  set_timezone:
+    index_label:    "\x0314Regions\x03 (use \x02HELP SET TIMEZONE <region>\x02 for list):"
+    region_header:  "\x0314Timezones for %region%:\x03"
+    region_unknown: "\x0304✗\x03 Unknown region. Use \x02HELP SET TIMEZONE\x02 for the index."
 
 # --- Nick Protection --------------------------------------------------------
 protection:

@@ -15,7 +15,8 @@ parameters:
     # Services global settings
     services.hostname:         '%env(IRC_SERVICES_HOST)%'
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
-    services.default_timezone: '%env(default:UTC:SERVICES_DEFAULT_TIMEZONE)%'
+    services.default_timezone_fallback: 'UTC'
+    services.default_timezone: '%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
 
     # Maintenance scheduler
@@ -238,7 +239,11 @@ services:
     App\Application\NickServ\Command\Handler\SetCommand:
         tags: ['nickserv.command']
 
+    App\Application\NickServ\TimezoneHelpProvider: ~
+
     App\Application\NickServ\Command\Handler\HelpCommand:
+        arguments:
+            $timezoneHelpProvider: '@App\Application\NickServ\TimezoneHelpProvider'
         tags: ['nickserv.command']
 
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---

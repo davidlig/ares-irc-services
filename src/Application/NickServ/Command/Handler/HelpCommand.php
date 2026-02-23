@@ -6,6 +6,7 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\TimezoneHelpProvider;
 
 /**
  * HELP [command [sub-option]].
@@ -13,6 +14,7 @@ use App\Application\NickServ\Command\NickServContext;
  * Without arguments:   lists all available commands with short descriptions.
  * HELP <command>:      full help for the command, including sub-option table.
  * HELP <cmd> <option>: detailed help for a specific sub-option (e.g. HELP SET PASSWORD).
+ * HELP SET TIMEZONE [region]: index of regions (Africa, America, ...) or list of timezones for that region.
  *
  * The registry is obtained from the context to avoid a circular dependency:
  * NickServCommandRegistry → HelpCommand → NickServCommandRegistry.
@@ -27,8 +29,11 @@ final readonly class HelpCommand implements NickServCommandInterface
     /** Total visible width used for the decorative header line. */
     private const int HEADER_WIDTH = 40;
 
-    public function __construct()
-    {
+    private const int TIMEZONE_LIST_MAX_LINE_LEN = 100;
+
+    public function __construct(
+        private readonly TimezoneHelpProvider $timezoneHelpProvider,
+    ) {
     }
 
     public function getName(): string
@@ -108,6 +113,17 @@ final readonly class HelpCommand implements NickServCommandInterface
             $subCmd = $this->findSubCommand($handler, $subName);
 
             if (null !== $subCmd) {
+                if ('SET' === $handler->getName() && 'TIMEZONE' === $subName) {
+                    $regionArg = trim($context->args[2] ?? '');
+                    if ('' !== $regionArg) {
+                        $this->showTimezoneRegionHelp($context, $regionArg);
+                    } else {
+                        $this->showTimezoneIndexHelp($context, $handler->getName(), $subCmd);
+                    }
+
+                    return;
+                }
+
                 $this->showSubCommandHelp($context, $handler->getName(), $subCmd);
 
                 return;
@@ -180,8 +196,87 @@ final readonly class HelpCommand implements NickServCommandInterface
     {
         $this->sendHeader($context, $parentName . ' ' . $sub['name']);
         $context->reply($sub['help_key']);
+        if (isset($sub['options_key'])) {
+            $context->replyRaw(' ');
+            $context->reply($sub['options_key']);
+        }
         $context->replyRaw(' ');
         $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
+        $context->reply('help.footer');
+    }
+
+    private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
+    {
+        $this->sendHeader($context, $parentName . ' ' . $sub['name']);
+        $context->reply($sub['help_key']);
+        $context->replyRaw(' ');
+        $context->reply('help.set_timezone.index_label', []);
+        $regionsStr = implode(', ', $this->timezoneHelpProvider->getRegions());
+        foreach ($this->chunkLine($regionsStr, self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
+            $context->replyRaw($line);
+        }
+        $context->replyRaw(' ');
+        $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
+        $context->reply('help.footer');
+    }
+
+    /**
+     * Splits a comma-separated string into lines of at most $maxLen chars (break at ", ").
+     *
+     * @return string[]
+     */
+    private function chunkLine(string $text, int $maxLen, string $linePrefix = ''): array
+    {
+        $lines = [];
+        $current = $linePrefix;
+        foreach (explode(', ', $text) as $i => $part) {
+            $addition = ($i > 0 ? ', ' : '') . $part;
+            if (strlen($current . $addition) > $maxLen && $current !== $linePrefix) {
+                $lines[] = $current;
+                $current = $linePrefix . $part;
+            } else {
+                $current .= $addition;
+            }
+        }
+        if ('' !== trim($current)) {
+            $lines[] = $current;
+        }
+
+        return $lines;
+    }
+
+    private function showTimezoneRegionHelp(NickServContext $context, string $regionArg): void
+    {
+        $region = $this->timezoneHelpProvider->resolveRegion($regionArg)
+            ?? $this->timezoneHelpProvider->getRegionForTimezone($regionArg);
+
+        if (null === $region) {
+            $this->sendHeader($context, 'SET TIMEZONE ' . $regionArg);
+            $context->reply('help.set_timezone.region_unknown', []);
+            $context->replyRaw(' ');
+            $context->reply('help.footer');
+
+            return;
+        }
+
+        $this->sendHeader($context, 'SET TIMEZONE ' . $region);
+        $context->reply('help.set_timezone.region_header', ['region' => $region]);
+        $timezones = $this->timezoneHelpProvider->getTimezonesForRegion($region);
+
+        $line = '  ';
+        foreach ($timezones as $tz) {
+            $next = $line . ($line === '  ' ? '' : ', ') . $tz;
+            if (strlen($next) > self::TIMEZONE_LIST_MAX_LINE_LEN && $line !== '  ') {
+                $context->replyRaw($line);
+                $line = '  ' . $tz;
+            } else {
+                $line = $next;
+            }
+        }
+        if ($line !== '  ') {
+            $context->replyRaw($line);
+        }
+
         $context->reply('help.footer');
     }
 

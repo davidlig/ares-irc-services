@@ -7,6 +7,9 @@ namespace App\Application\NickServ\Command;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use DateTimeImmutable;
+use DateTimeInterface;
+use DateTimeZone;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -14,6 +17,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  *
  * Commands send replies via reply() / replyLines() rather than directly
  * touching the connection, which keeps them decoupled from IRC transport.
+ *
+ * The timezone set here (user preference or default) applies to all date/time
+ * display: use formatDate() whenever showing a date or time to the user.
  */
 class NickServContext
 {
@@ -69,6 +75,21 @@ class NickServContext
     public function getTimezone(): string
     {
         return $this->timezone;
+    }
+
+    /**
+     * Formats a date/time in the user's timezone for display.
+     * Use this for any date or time shown to the user so SET TIMEZONE applies everywhere.
+     */
+    public function formatDate(?DateTimeInterface $date): string
+    {
+        if (null === $date) {
+            return '—';
+        }
+
+        $dt = $date instanceof DateTimeImmutable ? $date : DateTimeImmutable::createFromInterface($date);
+
+        return $dt->setTimezone(new DateTimeZone($this->timezone))->format('d/m/Y H:i T');
     }
 
     public function getRegistry(): NickServCommandRegistry
