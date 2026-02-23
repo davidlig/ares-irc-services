@@ -52,8 +52,8 @@ class RegisteredNick
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $passwordHash;
 
-    /** Null for FORBIDDEN entries. */
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    /** Null for FORBIDDEN entries. One email per account (unique across nicks). */
+    #[ORM\Column(type: 'string', length: 255, nullable: true, unique: true)]
     private ?string $email {
         set(?string $value) {
             if (null !== $value && false === filter_var($value, FILTER_VALIDATE_EMAIL)) {

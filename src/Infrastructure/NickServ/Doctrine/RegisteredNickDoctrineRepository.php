@@ -35,6 +35,21 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->findOneBy(['nicknameLower' => strtolower($nickname)]);
     }
 
+    public function findByEmail(string $email): ?RegisteredNick
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('n')
+            ->from(RegisteredNick::class, 'n')
+            ->where('LOWER(n.email) = LOWER(:email)')
+            ->andWhere('n.email IS NOT NULL')
+            ->setParameter('email', $email)
+            ->setMaxResults(1);
+
+        $result = $qb->getQuery()->getOneOrNullResult();
+
+        return $result instanceof RegisteredNick ? $result : null;
+    }
+
     public function existsByNick(string $nickname): bool
     {
         return null !== $this->findByNick($nickname);
