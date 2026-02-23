@@ -75,6 +75,7 @@ status:
   not_registered_offline: "  Estado          : \x0315No registrado\x03"
   pending:          "  Estado          : \x0307Pendiente de validación\x03"
   pending_expires:  "  Expira en       : %minutes% minuto(s)"
+  pending_expires_at: "  Expira a las    : %date%"
   not_connected:    "  Estado          : \x0315No conectado\x03"
   not_identified:   "  Estado          : \x0307No identificado\x03"
   identified:       "  Estado          : \x0303Identificado\x03"
@@ -136,8 +137,8 @@ set:
 
   timezone:
     syntax:         "SET TIMEZONE <zona>|OFF"
-    short:          "Establece la zona horaria para mostrar fechas (ej. INFO)."
-    help:           "Establece la zona horaria con la que NickServ muestra las fechas (ej. en INFO).\nUsa una zona válida de PHP (ej. \x02UTC\x02, \x02Europe/Madrid\x02, \x02America/New_York\x02).\nUsa \x02SET TIMEZONE OFF\x02 para quitarla y usar la predeterminada de la red."
+    short:          "Establece la zona horaria para mostrar fechas."
+    help:           "Establece la zona horaria con la que NickServ muestra las fechas.\nUsa \x02HELP SET TIMEZONE\x02 para el índice de regiones; \x02HELP SET TIMEZONE <región>\x02 (ej. Europe) para las zonas de esa región. Usa \x02OFF\x02 para quitarla."
     success:        "\x0303✔\x03 Zona horaria establecida en \x02%timezone%\x02. Las fechas se mostrarán en esta zona."
     cleared:        "\x0303✔\x03 Zona horaria quitada. Las fechas usarán la predeterminada de la red."
     invalid:        "\x0304✗\x03 Zona horaria no válida \x02%timezone%\x02. Usa un identificador válido (ej. UTC, Europe/Madrid)."
@@ -174,6 +175,11 @@ help:
   syntax_label:     "\x0307Sintaxis:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 No hay ayuda disponible para \x02%command%\x02."
+
+  set_timezone:
+    index_label:    "\x0314Regiones\x03 (usa \x02HELP SET TIMEZONE <región>\x02 para listar):"
+    region_header:  "\x0314Zonas horarias para %region%:\x03"
+    region_unknown: "\x0304✗\x03 Región desconocida. Usa \x02HELP SET TIMEZONE\x02 para ver el índice."
 
 # --- Nick Protection --------------------------------------------------------
 protection:

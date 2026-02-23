@@ -117,8 +117,6 @@ final readonly class RegisterCommand implements NickServCommandInterface
             return;
         }
 
-        $this->throttleRegistry->recordAttempt($clientKey);
-
         $nick = $sender->getNick()->value;
         $password = $context->args[0];
         $email = $context->args[1];
@@ -180,6 +178,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
             return;
         }
 
+        $this->throttleRegistry->recordAttempt($clientKey);
         $context->reply('register.pending', ['email' => $email]);
     }
 

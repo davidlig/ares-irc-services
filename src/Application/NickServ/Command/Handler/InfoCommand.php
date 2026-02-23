@@ -12,9 +12,6 @@ use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
-use DateTimeImmutable;
-use DateTimeInterface;
-use DateTimeZone;
 use InvalidArgumentException;
 
 /**
@@ -134,7 +131,7 @@ final readonly class InfoCommand implements NickServCommandInterface
         }
 
         $context->reply('info.registered_at', [
-            'date' => $this->formatInfoDate($context->getTimezone(), $account->getRegisteredAt()),
+            'date' => $context->formatDate($account->getRegisteredAt()),
         ]);
 
         $this->replyLastSeen($context, $account);
@@ -162,7 +159,7 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.last_seen_online');
         } elseif (null !== $account->getLastSeenAt()) {
             $context->reply('info.last_seen_at', [
-                'date' => $this->formatInfoDate($context->getTimezone(), $account->getLastSeenAt()),
+                'date' => $context->formatDate($account->getLastSeenAt()),
             ]);
         } else {
             $context->reply('info.last_seen_never');
@@ -196,16 +193,5 @@ final readonly class InfoCommand implements NickServCommandInterface
             NickStatus::Suspended => 'info.status_suspended',
             default => 'info.status_registered',
         };
-    }
-
-    private function formatInfoDate(string $timezone, ?DateTimeInterface $date): string
-    {
-        if (null === $date) {
-            return '—';
-        }
-
-        $dt = $date instanceof DateTimeImmutable ? $date : DateTimeImmutable::createFromInterface($date);
-
-        return $dt->setTimezone(new DateTimeZone($timezone))->format('d/m/Y H:i T');
     }
 }
