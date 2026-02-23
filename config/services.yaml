@@ -60,6 +60,7 @@ services:
         class: App\Infrastructure\Mail\SymfonyMailerAdapter
         arguments:
             $from: '%mailer.from%'
+            $senderName: '%irc.server_name%'
 
     App\Infrastructure\Messenger\Middleware\EmailDelayMiddleware:
         arguments:
