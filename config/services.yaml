@@ -32,8 +32,9 @@ parameters:
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
+    mailer.send_delay_seconds_default: 5
     # Seconds to wait after each email send (avoids provider rate limits / blocks)
-    mailer.send_delay_seconds: '%env(int:default:5:MAILER_SEND_DELAY_SECONDS)%'
+    mailer.send_delay_seconds: '%env(int:default:mailer.send_delay_seconds_default:MAILER_SEND_DELAY_SECONDS)%'
 
 services:
     _defaults:
