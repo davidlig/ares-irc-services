@@ -211,11 +211,25 @@ final readonly class SetCommand implements NickServCommandInterface
             return;
         }
 
-        $this->requestEmailChange($context, $nick, $newEmail, $account->getEmail());
+        $this->requestEmailChange($context, $nick, $newEmail, $account);
     }
 
-    private function requestEmailChange(NickServContext $context, string $nick, string $newEmail, string $currentEmail): void
+    private function requestEmailChange(NickServContext $context, string $nick, string $newEmail, RegisteredNick $account): void
     {
+        $existingByEmail = $this->nickRepository->findByEmail($newEmail);
+        if (null !== $existingByEmail && strtolower($existingByEmail->getNickname()) !== strtolower($nick)) {
+            $context->reply('register.email_already_used', ['email' => $newEmail]);
+
+            return;
+        }
+
+        $currentEmail = $account->getEmail();
+        if (null === $currentEmail) {
+            $context->reply('error.not_identified');
+
+            return;
+        }
+
         $token = bin2hex(random_bytes(16));
         $this->pendingEmailChangeRegistry->store($nick, $newEmail, $token);
 
@@ -245,6 +259,13 @@ final readonly class SetCommand implements NickServCommandInterface
     {
         if (!$this->pendingEmailChangeRegistry->consume($nick, $newEmail, $token)) {
             $context->reply('set.email.invalid_token');
+
+            return;
+        }
+
+        $existingByEmail = $this->nickRepository->findByEmail($newEmail);
+        if (null !== $existingByEmail && $existingByEmail->getId() !== $account->getId()) {
+            $context->reply('register.email_already_used', ['email' => $newEmail]);
 
             return;
         }

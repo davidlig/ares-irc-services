@@ -107,6 +107,13 @@ final readonly class RegisterCommand implements NickServCommandInterface
             return;
         }
 
+        $existingByEmail = $this->nickRepository->findByEmail($email);
+        if (null !== $existingByEmail) {
+            $context->reply('register.email_already_used', ['email' => $email]);
+
+            return;
+        }
+
         $existing = $this->nickRepository->findByNick($nick);
 
         if (null !== $existing) {
