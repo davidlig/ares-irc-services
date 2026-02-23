@@ -29,6 +29,9 @@ parameters:
     # Minimum seconds between RESEND requests per nick (default 600 = 10 minutes)
     nickserv.resend_min_interval_default: 600
     nickserv.resend_min_interval: '%env(int:default:nickserv.resend_min_interval_default:NICKSERV_RESEND_MIN_INTERVAL)%'
+    # Minimum seconds between REGISTER attempts per host/IP (default 300 = 5 minutes, anti-bot)
+    nickserv.register_min_interval_default: 300
+    nickserv.register_min_interval: '%env(int:default:nickserv.register_min_interval_default:NICKSERV_REGISTER_MIN_INTERVAL)%'
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
@@ -185,7 +188,11 @@ services:
 
     # --- NickServ Command Handlers (tagged for auto-registration) ---------------
 
+    App\Application\NickServ\RegisterThrottleRegistry: ~
+
     App\Application\NickServ\Command\Handler\RegisterCommand:
+        arguments:
+            $registerMinIntervalSeconds: '%nickserv.register_min_interval%'
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\VerifyCommand:

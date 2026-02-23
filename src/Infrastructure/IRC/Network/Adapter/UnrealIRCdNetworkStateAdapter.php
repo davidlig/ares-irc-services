@@ -72,6 +72,10 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         };
     }
 
+    /**
+     * UnrealIRCd UID format: nickname hopcount timestamp username hostname uid servicestamp usermodes virtualhost cloakedhost ip :gecos
+     * Params: 0=nick, 1=hop, 2=timestamp, 3=username, 4=hostname, 5=uid, 6=servicestamp, 7=umodes, 8=virthost, 9=cloakedhost, 10=ip (base64)
+     */
     private function handleUid(IRCMessage $message): void
     {
         if (count($message->params) < 11) {
