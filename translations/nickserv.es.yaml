@@ -59,6 +59,7 @@ identify:
   already_identified: "\x0307ℹ\x03 Ya estás identificado como \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   invalid_credentials: "\x0304✗\x03 Contraseña incorrecta. Inténtalo de nuevo."
+  locked_out:         "\x0304✗\x03 Demasiados intentos fallidos. Intenta de nuevo en \x02%minutes%\x02 minuto(s)."
   ghost_released:   "\x0307⚡\x03 La sesión fantasma que ocupaba \x02%nickname%\x02 ha sido desconectada."
   kill_reason:      "Nick %nickname% reclamado por %source% (el propietario registrado se ha identificado)"
   pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email.\n  Ejecuta \x0303/msg NickServ VERIFY <token>\x03 o \x0303/msg NickServ RESEND\x03."

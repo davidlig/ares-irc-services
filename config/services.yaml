@@ -34,6 +34,13 @@ parameters:
     # Minimum seconds between REGISTER attempts per host/IP (default 300 = 5 minutes, anti-bot)
     nickserv.register_min_interval_default: 300
     nickserv.register_min_interval: '%env(int:default:nickserv.register_min_interval_default:NICKSERV_REGISTER_MIN_INTERVAL)%'
+    # IDENTIFY lockout after repeated failures (anti brute-force)
+    nickserv.identify_max_failed_attempts_default: 5
+    nickserv.identify_max_failed_attempts: '%env(int:default:nickserv.identify_max_failed_attempts_default:NICKSERV_IDENTIFY_MAX_FAILED_ATTEMPTS)%'
+    nickserv.identify_failed_window_seconds_default: 900
+    nickserv.identify_failed_window_seconds: '%env(int:default:nickserv.identify_failed_window_seconds_default:NICKSERV_IDENTIFY_FAILED_WINDOW_SECONDS)%'
+    nickserv.identify_lockout_seconds_default: 600
+    nickserv.identify_lockout_seconds: '%env(int:default:nickserv.identify_lockout_seconds_default:NICKSERV_IDENTIFY_LOCKOUT_SECONDS)%'
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
@@ -213,6 +220,8 @@ services:
     # --- NickServ Command Handlers (tagged for auto-registration) ---------------
 
     App\Application\NickServ\RegisterThrottleRegistry: ~
+    App\Application\NickServ\IdentifyFailedAttemptRegistry: ~
+    App\Application\NickServ\NickServClientKeyResolver: ~
 
     App\Application\NickServ\Command\Handler\RegisterCommand:
         arguments:
@@ -231,6 +240,10 @@ services:
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\IdentifyCommand:
+        arguments:
+            $identifyMaxFailedAttempts: '%nickserv.identify_max_failed_attempts%'
+            $identifyFailedWindowSeconds: '%nickserv.identify_failed_window_seconds%'
+            $identifyLockoutSeconds: '%nickserv.identify_lockout_seconds%'
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\InfoCommand:
