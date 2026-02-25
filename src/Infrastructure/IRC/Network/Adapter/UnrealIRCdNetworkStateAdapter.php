@@ -11,6 +11,7 @@ use App\Domain\IRC\Event\ModeReceivedEvent;
 use App\Domain\IRC\Event\NickChangeReceivedEvent;
 use App\Domain\IRC\Event\PartReceivedEvent;
 use App\Domain\IRC\Event\QuitReceivedEvent;
+use App\Domain\IRC\Event\ServerDelinkedEvent;
 use App\Domain\IRC\Event\Umode2ReceivedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Message\IRCMessage;
@@ -60,6 +61,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             'UID' => $this->handleUid($message),
             'NICK' => $this->handleNick($message),
             'QUIT' => $this->handleQuit($message),
+            'SQUIT' => $this->handleSquit($message),
             'SJOIN' => $this->handleSjoin($message),
             'PART' => $this->handlePart($message),
             'KICK' => $this->handleKick($message),
@@ -154,6 +156,22 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         }
 
         $this->eventDispatcher->dispatch(new QuitReceivedEvent($sourceId, $reason));
+    }
+
+    /**
+     * SQUIT: server removed from network. Format :<source> SQUIT <server_sid> :<reason>
+     * server_sid is the SID of the server that left (e.g. "002").
+     */
+    private function handleSquit(IRCMessage $message): void
+    {
+        $serverSid = $message->params[0] ?? '';
+        $reason = $message->trailing ?? '';
+
+        if ('' === $serverSid) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(new ServerDelinkedEvent($serverSid, $reason));
     }
 
     private function handleSjoin(IRCMessage $message): void
