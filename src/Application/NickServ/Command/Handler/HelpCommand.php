@@ -8,6 +8,8 @@ use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\TimezoneHelpProvider;
 
+use function strlen;
+
 /**
  * HELP [command [sub-option]].
  *
@@ -265,15 +267,15 @@ final readonly class HelpCommand implements NickServCommandInterface
 
         $line = '  ';
         foreach ($timezones as $tz) {
-            $next = $line . ($line === '  ' ? '' : ', ') . $tz;
-            if (strlen($next) > self::TIMEZONE_LIST_MAX_LINE_LEN && $line !== '  ') {
+            $next = $line . ('  ' === $line ? '' : ', ') . $tz;
+            if (strlen($next) > self::TIMEZONE_LIST_MAX_LINE_LEN && '  ' !== $line) {
                 $context->replyRaw($line);
                 $line = '  ' . $tz;
             } else {
                 $line = $next;
             }
         }
-        if ($line !== '  ') {
+        if ('  ' !== $line) {
             $context->replyRaw($line);
         }
 
