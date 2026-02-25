@@ -97,4 +97,31 @@ final class PendingVerificationRegistry
     {
         $this->lastResendAt[strtolower($nickname)] = new DateTimeImmutable();
     }
+
+    /**
+     * Removes expired verification entries and lastResendAt entries older than maxAgeSecondsForResend.
+     * Returns the total number of entries removed. Used by maintenance to free memory.
+     */
+    public function pruneExpired(int $maxAgeSecondsForResend = 86400): int
+    {
+        $now = new DateTimeImmutable();
+        $resendCutoff = $now->modify(sprintf('-%d seconds', $maxAgeSecondsForResend));
+        $removed = 0;
+
+        foreach ($this->entries as $key => $entry) {
+            if ($entry['expiresAt'] < $now) {
+                unset($this->entries[$key]);
+                ++$removed;
+            }
+        }
+
+        foreach ($this->lastResendAt as $key => $at) {
+            if ($at < $resendCutoff) {
+                unset($this->lastResendAt[$key]);
+                ++$removed;
+            }
+        }
+
+        return $removed;
+    }
 }

@@ -53,4 +53,28 @@ final class RegisterThrottleRegistry
 
         return $nextAllowedAt->getTimestamp() - $now->getTimestamp();
     }
+
+    /**
+     * Removes entries whose cooldown has already expired (no longer affect REGISTER).
+     * Returns the number of keys removed. Used by maintenance to free memory.
+     */
+    public function pruneExpiredCooldowns(int $minIntervalSeconds): int
+    {
+        if ($minIntervalSeconds <= 0) {
+            return 0;
+        }
+
+        $now = new DateTimeImmutable();
+        $removed = 0;
+
+        foreach ($this->lastAttemptAt as $clientKey => $lastAttempt) {
+            $nextAllowedAt = $lastAttempt->modify(sprintf('+%d seconds', $minIntervalSeconds));
+            if ($now >= $nextAllowedAt) {
+                unset($this->lastAttemptAt[$clientKey]);
+                ++$removed;
+            }
+        }
+
+        return $removed;
+    }
 }
