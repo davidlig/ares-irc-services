@@ -7,8 +7,8 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\NickServClientKeyResolver;
 use App\Application\NickServ\RegisterThrottleRegistry;
-use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
@@ -38,6 +38,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly PasswordHasherInterface $passwordHasher,
         private readonly RegisterThrottleRegistry $throttleRegistry,
+        private readonly NickServClientKeyResolver $clientKeyResolver,
         private readonly MessageBusInterface $messageBus,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
@@ -102,7 +103,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
             return;
         }
 
-        $clientKey = $this->getThrottleClientKey($sender);
+        $clientKey = $this->clientKeyResolver->getClientKey($sender);
         $remaining = $this->throttleRegistry->getRemainingCooldownSeconds($clientKey, $this->registerMinIntervalSeconds);
 
         $this->logger->debug('REGISTER throttle', [
@@ -180,26 +181,5 @@ final readonly class RegisterCommand implements NickServCommandInterface
 
         $this->throttleRegistry->recordAttempt($clientKey);
         $context->reply('register.pending', ['email' => $email]);
-    }
-
-    /**
-     * Client key for throttle: IP (or cloak, hostname) so limit persists across reconnects.
-     * Prefer IP as most stable; fall back to UID if no host info (should not happen).
-     */
-    private function getThrottleClientKey(NetworkUser $sender): string
-    {
-        if ('' !== $sender->ipBase64 && '*' !== $sender->ipBase64) {
-            return 'ip:' . $sender->ipBase64;
-        }
-
-        if ('' !== $sender->cloakedHost) {
-            return 'cloak:' . $sender->cloakedHost;
-        }
-
-        if ('' !== $sender->hostname) {
-            return 'host:' . $sender->hostname;
-        }
-
-        return 'uid:' . $sender->uid->value;
     }
 }

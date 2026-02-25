@@ -7,6 +7,8 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\NickServ\IdentifyFailedAttemptRegistry;
+use App\Application\NickServ\NickServClientKeyResolver;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
@@ -26,6 +28,11 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly IdentifiedSessionRegistry $identifiedRegistry,
+        private readonly IdentifyFailedAttemptRegistry $failedAttemptRegistry,
+        private readonly NickServClientKeyResolver $clientKeyResolver,
+        private readonly int $identifyMaxFailedAttempts,
+        private readonly int $identifyFailedWindowSeconds,
+        private readonly int $identifyLockoutSeconds,
     ) {
     }
 
@@ -95,6 +102,20 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
+        $clientKey = $this->clientKeyResolver->getClientKey($sender);
+        $remaining = $this->failedAttemptRegistry->getRemainingLockoutSeconds(
+            $clientKey,
+            $this->identifyMaxFailedAttempts,
+            $this->identifyFailedWindowSeconds,
+            $this->identifyLockoutSeconds,
+        );
+        if ($remaining > 0) {
+            $minutes = (int) ceil($remaining / 60);
+            $context->reply('identify.locked_out', ['minutes' => (string) $minutes]);
+
+            return;
+        }
+
         $account = $this->nickRepository->findByNick($targetNick);
 
         if (null === $account) {
@@ -125,11 +146,13 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         }
 
         if (!$account->verifyPassword($password)) {
+            $this->failedAttemptRegistry->recordFailedAttempt($clientKey, $this->identifyFailedWindowSeconds);
             $context->reply('identify.invalid_credentials');
 
             return;
         }
 
+        $this->failedAttemptRegistry->clearFailedAttempts($clientKey);
         $account->markSeen();
         $this->nickRepository->save($account);
         $this->identifiedRegistry->register($sender->uid->value, $account->getNickname());
