@@ -75,4 +75,23 @@ final class PendingEmailChangeRegistry
     {
         unset($this->entries[strtolower($nickname)]);
     }
+
+    /**
+     * Removes entries whose token has expired. Returns the number of entries removed.
+     * Used by maintenance to free memory.
+     */
+    public function pruneExpired(): int
+    {
+        $now = new DateTimeImmutable();
+        $removed = 0;
+
+        foreach ($this->entries as $key => $entry) {
+            if ($entry['expiresAt'] < $now) {
+                unset($this->entries[$key]);
+                ++$removed;
+            }
+        }
+
+        return $removed;
+    }
 }

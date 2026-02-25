@@ -39,4 +39,25 @@ final class IdentifiedSessionRegistry
     {
         unset($this->sessions[$uid]);
     }
+
+    /**
+     * Removes sessions whose UID is not in the given list (e.g. users no longer connected).
+     * Returns the number of sessions removed. Used by maintenance to free memory.
+     *
+     * @param array<string> $validUids List of UID strings that are still valid (e.g. currently connected).
+     */
+    public function pruneSessionsNotIn(array $validUids): int
+    {
+        $validSet = array_fill_keys($validUids, true);
+        $removed = 0;
+
+        foreach (array_keys($this->sessions) as $uid) {
+            if (!isset($validSet[$uid])) {
+                unset($this->sessions[$uid]);
+                ++$removed;
+            }
+        }
+
+        return $removed;
+    }
 }

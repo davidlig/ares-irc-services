@@ -330,6 +330,33 @@ services:
             $logger:          '@monolog.logger.maintenance'
         tags: ['maintenance.task']
 
+    # --- In-memory pruners (tagged for PruneMemoryRegistriesTask) -----------------
+    App\Application\NickServ\Maintenance\Pruner\IdentifyFailedAttemptPruner:
+        arguments:
+            $windowSeconds: '%nickserv.identify_failed_window_seconds%'
+        tags: ['maintenance.prunable']
+
+    App\Application\NickServ\Maintenance\Pruner\RegisterThrottlePruner:
+        arguments:
+            $minIntervalSeconds: '%nickserv.register_min_interval%'
+        tags: ['maintenance.prunable']
+
+    App\Application\NickServ\Maintenance\Pruner\PendingVerificationPruner:
+        tags: ['maintenance.prunable']
+
+    App\Application\NickServ\Maintenance\Pruner\PendingEmailChangePruner:
+        tags: ['maintenance.prunable']
+
+    App\Application\NickServ\Maintenance\Pruner\IdentifiedSessionPruner:
+        tags: ['maintenance.prunable']
+
+    App\Application\NickServ\Maintenance\PruneMemoryRegistriesTask:
+        arguments:
+            $prunables:        !tagged_iterator maintenance.prunable
+            $logger:           '@monolog.logger.maintenance'
+            $intervalSeconds:  '%maintenance.interval%'
+        tags: ['maintenance.task']
+
     # --- UserLanguageResolver — shared across all services ----------------------
 
     App\Infrastructure\NickServ\UserLanguageResolver:
