@@ -105,7 +105,7 @@ info:
   last_seen_never:  "  \x0314Última conexión\x03 : Nunca"
   last_quit:        "  \x0314Último mensaje\x03  : %message%"
   email:            "  \x0314Correo\x03          : %email%"
-  vhost:            "  \x0314VHost\x03            : %vhost%"
+  vhost:            "  \x0314VHost\x03           : %vhost%"
   footer:           "\x0314─────────────────────────────\x03"
 
 # --- SET --------------------------------------------------------------------

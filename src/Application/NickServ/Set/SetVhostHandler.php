@@ -31,7 +31,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
             $account->changeVhost(null);
             $this->nickRepository->save($account);
             if (null !== $context->sender) {
-                $context->getNotifier()->setUserVhost($context->sender->uid, '');
+                $context->getNotifier()->setUserVhost($context->sender->uid, '', $context->sender->serverSid);
             }
             $context->reply('set.vhost.cleared');
 
@@ -47,7 +47,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         $account->changeVhost($normalized);
         $this->nickRepository->save($account);
         if (null !== $context->sender) {
-            $context->getNotifier()->setUserVhost($context->sender->uid, $normalized);
+            $context->getNotifier()->setUserVhost($context->sender->uid, $normalized, $context->sender->serverSid);
         }
         $context->reply('set.vhost.success', ['vhost' => $normalized]);
     }

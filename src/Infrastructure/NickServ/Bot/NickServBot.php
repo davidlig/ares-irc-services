@@ -19,17 +19,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use function sprintf;
 
 /**
- * Represents NickServ as a pseudo-client (service bot) on the IRC network.
- *
- * On NetworkBurstCompleteEvent (high priority so it runs BEFORE EOS is sent):
- *   - Introduces itself to the network via UID
- *
- * Implements NickServNotifierInterface to send NOTICEs, set user modes
- * and force nick changes on behalf of NickServ.
- *
- * UnrealIRCd requirements:
- *   - The services server must be listed in ulines{} to use SVSMODE/SVSNICK.
- *   - Example:  ulines { "ares-services.davidlig.net"; };
+ * NickServ pseudo-client: introduces on burst, implements NickServNotifierInterface.
  */
 readonly class NickServBot implements NickServNotifierInterface, SendNoticePort, EventSubscriberInterface
 {
@@ -37,7 +27,6 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly LocalUserModeSyncInterface $localUserModeSync,
-        private readonly string $serverSid,
         private readonly string $servicesHostname,
         private readonly string $nickservUid,
         private readonly string $nickservNick = 'NickServ',
@@ -47,11 +36,6 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
     ) {
     }
 
-    /**
-     * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.
-     *
-     * @see https://symfony.com/doc/7.4/event_dispatcher.html
-     */
     public static function getSubscribedEvents(): array
     {
         return [
@@ -64,10 +48,6 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
         $this->introduce($event->connection, $event->serverSid);
     }
 
-    /**
-     * Sends the UID line to introduce NickServ to the network.
-     * Must be called before our EOS so the IRCd registers the pseudo-client.
-     */
     private function introduce(ConnectionInterface $connection, string $serverSid): void
     {
         $ts = time();
@@ -101,67 +81,45 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
         }
     }
 
-    /**
-     * Authenticate a user by setting the +r (registered nick) user mode (UnrealIRCd 6+).
-     *
-     * SVS2MODE format (from src/modules/svsmode.c):
-     *   :<server> SVS2MODE <target_uid_or_nick> <modes>
-     *   parv[1] = target (UID or nick), parv[2] = mode string — NO timestamp.
-     *
-     * SVS2MODE (show_change=1) is used instead of SVSMODE so that the IRCd
-     * sends a ":server MODE nick :+r" notification to the user's IRC client.
-     *
-     * Note: this does NOT set the services account name shown in /WHOIS as
-     * "is logged in as <account>". If that is needed, add a SVSLOGIN call:
-     *   :<server> SVSLOGIN * <target_uid> <account_name>
-     *
-     * Pass '0' as $accountName to log a user out (-r removes +r).
-     *
-     * Source MUST be the services server SID, not a pseudo-client UID.
-     *
-     * Implementation must keep local state in sync via LocalUserModeSyncInterface
-     * (IRCd may not echo the mode change back to the services connection).
-     */
     public function setUserAccount(string $targetUid, string $accountName): void
     {
         $logout = ('0' === $accountName);
         $modeDelta = $logout ? '-r' : '+r';
-
-        $this->write(sprintf(':%s SVS2MODE %s %s', $this->serverSid, $targetUid, $modeDelta));
+        $this->write(sprintf(':%s SVS2MODE %s %s', $this->getServerSid(), $targetUid, $modeDelta));
 
         $this->localUserModeSync->apply(new Uid($targetUid), $modeDelta);
     }
 
-    /**
-     * Set raw user modes via SVSMODE (silent — user's client is NOT notified).
-     * Do NOT include a timestamp; parv format is: <target> <modes>.
-     */
     public function setUserMode(string $targetUid, string $modes): void
     {
-        $this->write(sprintf(':%s SVSMODE %s %s', $this->serverSid, $targetUid, $modes));
+        $this->write(sprintf(':%s SVSMODE %s %s', $this->getServerSid(), $targetUid, $modes));
     }
 
     public function forceNick(string $targetUid, string $newNick): void
     {
         $this->pendingRegistry->mark($targetUid);
-        $this->write(sprintf(':%s SVSNICK %s %s %d', $this->serverSid, $targetUid, $newNick, time()));
+        $this->write(sprintf(':%s SVSNICK %s %s %d', $this->getServerSid(), $targetUid, $newNick, time()));
     }
 
     public function killUser(string $targetUid, string $reason): void
     {
-        $this->write(sprintf(':%s KILL %s :%s', $this->serverSid, $targetUid, $reason));
+        $this->write(sprintf(':%s KILL %s :%s', $this->getServerSid(), $targetUid, $reason));
     }
 
-    /**
-     * Set or clear a user's virtual host via SVSHOST (UnrealIRCd).
-     * Set: :<serverSid> SVSHOST <targetUid> :<vhost>
-     * Clear: :<serverSid> SVSHOST <targetUid> :*
-     * (UnrealIRCd accepts :* to remove vhost; see server protocol / HELPOP SVSCMDS).
-     */
-    public function setUserVhost(string $targetUid, string $vhost): void
+    public function setUserVhost(string $targetUid, string $vhost, string $sourceServerSid): void
     {
-        $hostParam = '' !== $vhost ? $vhost : '*';
-        $this->write(sprintf(':%s SVSHOST %s :%s', $this->serverSid, $targetUid, $hostParam));
+        $sid = $this->getServerSid();
+        if ('' !== $vhost) {
+            $trailing = (false !== strpos($vhost, ' ')) ? ' :' . $vhost : ' ' . $vhost;
+            $this->write(sprintf(':%s CHGHOST %s%s', $sid, $targetUid, $trailing));
+        } else {
+            $this->write(sprintf(':%s SVS2MODE %s -t', $sid, $targetUid));
+        }
+    }
+
+    private function getServerSid(): string
+    {
+        return $this->connectionHolder->getServerSid() ?? '';
     }
 
     private function write(string $line): void

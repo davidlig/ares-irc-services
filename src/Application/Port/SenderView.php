@@ -21,6 +21,7 @@ readonly class SenderView
         public string $ipBase64,
         public bool $isIdentified = false,
         public bool $isOper = false,
+        public string $serverSid = '',
     ) {
     }
 }
