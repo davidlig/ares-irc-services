@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Application\NickServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
+use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
-use App\Domain\IRC\Network\NetworkUser;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -27,7 +27,7 @@ final readonly class NickProtectionService
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NetworkUserRepositoryInterface $userRepository,
+        private readonly NetworkUserLookupPort $userLookup,
         private readonly NickServNotifierInterface $notifier,
         private readonly BurstState $burstState,
         private readonly IdentifiedSessionRegistry $identifiedRegistry,
@@ -39,7 +39,7 @@ final readonly class NickProtectionService
     ) {
     }
 
-    public function onUserJoined(NetworkUser $user): void
+    public function onUserJoined(SenderView $user): void
     {
         if (!$this->burstState->isComplete()) {
             $this->burstState->addPending($user);
@@ -102,7 +102,7 @@ final readonly class NickProtectionService
             return;
         }
 
-        $user = $this->userRepository->findByUid($event->uid);
+        $user = $this->userLookup->findByUid($event->uid->value);
 
         if (null === $user) {
             $this->logger->debug(sprintf(
@@ -136,7 +136,7 @@ final readonly class NickProtectionService
             return;
         }
 
-        if ($user->isIdentified()) {
+        if ($user->isIdentified) {
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — already identified, OK',
                 $event->oldNick->value,
@@ -185,23 +185,23 @@ final readonly class NickProtectionService
         $this->nickRepository->save($account);
     }
 
-    private function enforceProtection(NetworkUser $user): void
+    private function enforceProtection(SenderView $user): void
     {
-        $nick = $user->getNick()->value;
+        $nick = $user->nick;
         $account = $this->nickRepository->findByNick($nick);
 
         if (null === $account || !$account->isRegistered()) {
             return;
         }
 
-        if ($user->isIdentified()) {
+        if ($user->isIdentified) {
             $account->markSeen();
             $this->nickRepository->save($account);
 
             $this->logger->info(sprintf(
                 'Nick protection: %s [%s] auto-identified (has +r)',
                 $nick,
-                $user->uid->value,
+                $user->uid,
             ));
 
             return;
@@ -216,7 +216,7 @@ final readonly class NickProtectionService
             $language,
         );
 
-        $this->notifier->sendNotice($user->uid->value, $warning);
+        $this->notifier->sendNotice($user->uid, $warning);
 
         $guestNick = $this->guestPrefix . strtoupper(substr(uniqid(), -7));
 
@@ -227,13 +227,13 @@ final readonly class NickProtectionService
             $language,
         );
 
-        $this->notifier->sendNotice($user->uid->value, $renameMsg);
-        $this->notifier->forceNick($user->uid->value, $guestNick);
+        $this->notifier->sendNotice($user->uid, $renameMsg);
+        $this->notifier->forceNick($user->uid, $guestNick);
 
         $this->logger->info(sprintf(
             'Nick protection: %s [%s] renamed to %s (nick in use, not identified)',
             $nick,
-            $user->uid->value,
+            $user->uid,
             $guestNick,
         ));
     }

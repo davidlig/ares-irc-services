@@ -6,6 +6,7 @@ namespace App\Infrastructure\NickServ\Bot;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
+use App\Application\Port\SendNoticePort;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;
@@ -30,7 +31,7 @@ use function sprintf;
  *   - The services server must be listed in ulines{} to use SVSMODE/SVSNICK.
  *   - Example:  ulines { "ares-services.davidlig.net"; };
  */
-readonly class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
+readonly class NickServBot implements NickServNotifierInterface, SendNoticePort, EventSubscriberInterface
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,

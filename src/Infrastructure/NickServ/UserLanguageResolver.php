@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ;
 
-use App\Domain\IRC\Network\NetworkUser;
+use App\Application\Port\SenderView;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -25,9 +25,9 @@ readonly class UserLanguageResolver
     ) {
     }
 
-    public function resolve(NetworkUser $user): string
+    public function resolve(SenderView $user): string
     {
-        $account = $this->nickRepository->findByNick($user->getNick()->value);
+        $account = $this->nickRepository->findByNick($user->nick);
 
         return $account?->getLanguage() ?? $this->defaultLanguage;
     }

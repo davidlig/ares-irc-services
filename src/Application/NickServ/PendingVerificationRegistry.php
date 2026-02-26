@@ -6,6 +6,8 @@ namespace App\Application\NickServ;
 
 use DateTimeImmutable;
 
+use function sprintf;
+
 /**
  * In-memory store for email verification tokens issued during REGISTER.
  *

@@ -6,12 +6,10 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
-use App\Domain\IRC\ValueObject\Nick;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
-use InvalidArgumentException;
 
 /**
  * STATUS <nickname>.
@@ -27,7 +25,7 @@ final readonly class StatusCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NetworkUserRepositoryInterface $userRepository,
+        private readonly NetworkUserLookupPort $userLookup,
     ) {
     }
 
@@ -107,11 +105,7 @@ final readonly class StatusCommand implements NickServCommandInterface
 
     private function replyUnregistered(NickServContext $context, string $targetNick): void
     {
-        try {
-            $onlineUser = $this->userRepository->findByNick(new Nick($targetNick));
-        } catch (InvalidArgumentException) {
-            $onlineUser = null;
-        }
+        $onlineUser = $this->userLookup->findByNick($targetNick);
 
         if (null === $onlineUser) {
             $context->replyRaw($context->trans('status.not_registered_offline'));
@@ -133,15 +127,11 @@ final readonly class StatusCommand implements NickServCommandInterface
 
     private function replyRegistered(NickServContext $context, string $targetNick): void
     {
-        try {
-            $onlineUser = $this->userRepository->findByNick(new Nick($targetNick));
-        } catch (InvalidArgumentException) {
-            $onlineUser = null;
-        }
+        $onlineUser = $this->userLookup->findByNick($targetNick);
 
         if (null === $onlineUser) {
             $context->replyRaw($context->trans('status.not_connected'));
-        } elseif (!$onlineUser->isIdentified()) {
+        } elseif (!$onlineUser->isIdentified) {
             $context->replyRaw($context->trans('status.not_identified'));
         } else {
             $context->replyRaw($context->trans('status.identified'));

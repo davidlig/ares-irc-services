@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\NickServ\Security;
 
 use App\Application\NickServ\Security\AuthorizationContextInterface;
-use App\Domain\IRC\Network\NetworkUser;
+use App\Application\Port\SenderView;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 /**
@@ -18,7 +18,7 @@ final readonly class SymfonyAuthorizationContext implements AuthorizationContext
     ) {
     }
 
-    public function setCurrentUser(NetworkUser $user): void
+    public function setCurrentUser(SenderView $user): void
     {
         $this->tokenStorage->setToken(new IrcServiceToken(new IrcServiceUser($user)));
     }

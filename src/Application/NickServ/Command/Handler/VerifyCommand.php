@@ -82,7 +82,7 @@ final readonly class VerifyCommand implements NickServCommandInterface
         }
 
         $token = $context->args[0];
-        $nick = $sender->getNick()->value;
+        $nick = $sender->nick;
 
         $account = $this->nickRepository->findByNick($nick);
 
@@ -101,8 +101,8 @@ final readonly class VerifyCommand implements NickServCommandInterface
         $account->activate();
         $this->nickRepository->save($account);
 
-        $this->identifiedRegistry->register($sender->uid->value, $account->getNickname());
-        $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
+        $this->identifiedRegistry->register($sender->uid, $account->getNickname());
+        $context->getNotifier()->setUserAccount($sender->uid, $account->getNickname());
 
         $context->reply('verify.success', ['nickname' => $account->getNickname()]);
     }

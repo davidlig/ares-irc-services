@@ -9,16 +9,18 @@ use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
+use App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Thin subscriber: forwards IRC domain events to NickProtectionService.
- * All protection logic lives in Application (NickProtectionService).
+ * Converts NetworkUser to SenderView via Core adapter so Application stays decoupled from Core entities.
  */
 final readonly class NickProtectionSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly NickProtectionService $nickProtectionService,
+        private readonly CoreNetworkUserLookupAdapter $senderViewMapper,
     ) {
     }
 
@@ -39,7 +41,8 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     public function onUserJoined(UserJoinedNetworkEvent $event): void
     {
-        $this->nickProtectionService->onUserJoined($event->user);
+        $senderView = $this->senderViewMapper->fromNetworkUser($event->user);
+        $this->nickProtectionService->onUserJoined($senderView);
     }
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void

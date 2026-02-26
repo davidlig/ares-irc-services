@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Application\NickServ\Command;
 
 use App\Application\NickServ\PendingVerificationRegistry;
-use App\Domain\IRC\Network\NetworkUser;
+use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -24,7 +24,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class NickServContext
 {
     public function __construct(
-        public readonly ?NetworkUser $sender,
+        public readonly ?SenderView $sender,
         public readonly ?RegisteredNick $senderAccount,
         public readonly string $command,
         /** @var string[] */
@@ -142,6 +142,6 @@ class NickServContext
             return;
         }
 
-        $this->notifier->sendNotice($this->sender->uid->value, $message);
+        $this->notifier->sendNotice($this->sender->uid, $message);
     }
 }

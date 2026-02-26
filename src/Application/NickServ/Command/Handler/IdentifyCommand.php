@@ -9,12 +9,10 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\IdentifyFailedAttemptRegistry;
 use App\Application\NickServ\NickServClientKeyResolver;
-use App\Domain\IRC\Network\NetworkUser;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
-use App\Domain\IRC\ValueObject\Nick;
+use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use InvalidArgumentException;
 
 /**
  * IDENTIFY <nickname> <password>.
@@ -26,7 +24,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NetworkUserRepositoryInterface $userRepository,
+        private readonly NetworkUserLookupPort $userLookup,
         private readonly IdentifiedSessionRegistry $identifiedRegistry,
         private readonly IdentifyFailedAttemptRegistry $failedAttemptRegistry,
         private readonly NickServClientKeyResolver $clientKeyResolver,
@@ -155,7 +153,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         $this->failedAttemptRegistry->clearFailedAttempts($clientKey);
         $account->markSeen();
         $this->nickRepository->save($account);
-        $this->identifiedRegistry->register($sender->uid->value, $account->getNickname());
+        $this->identifiedRegistry->register($sender->uid, $account->getNickname());
 
         $this->releaseGhostIfPresent($context, $sender, $account, $targetNick);
         $this->applyIrcSession($context, $sender, $account, $targetNick);
@@ -168,15 +166,15 @@ final readonly class IdentifyCommand implements NickServCommandInterface
      * using the in-memory registry as primary source of truth and the IRCd +r
      * mode as fallback after a service restart (when the registry is empty).
      */
-    private function isAlreadyIdentified(NetworkUser $sender, string $targetNick): bool
+    private function isAlreadyIdentified(SenderView $sender, string $targetNick): bool
     {
-        $registeredNick = $this->identifiedRegistry->findNick($sender->uid->value);
+        $registeredNick = $this->identifiedRegistry->findNick($sender->uid);
         if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $targetNick)) {
             return true;
         }
 
-        if ($sender->isIdentified() && 0 === strcasecmp($sender->getNick()->value, $targetNick)) {
-            $this->identifiedRegistry->register($sender->uid->value, $targetNick);
+        if ($sender->isIdentified && 0 === strcasecmp($sender->nick, $targetNick)) {
+            $this->identifiedRegistry->register($sender->uid, $targetNick);
 
             return true;
         }
@@ -189,27 +187,23 @@ final readonly class IdentifyCommand implements NickServCommandInterface
      */
     private function releaseGhostIfPresent(
         NickServContext $context,
-        NetworkUser $sender,
+        SenderView $sender,
         RegisteredNick $account,
         string $targetNick,
     ): void {
-        try {
-            $currentHolder = $this->userRepository->findByNick(new Nick($targetNick));
-        } catch (InvalidArgumentException) {
-            return;
-        }
+        $currentHolder = $this->userLookup->findByNick($targetNick);
 
-        if (null === $currentHolder || $sender->uid->value === $currentHolder->uid->value) {
+        if (null === $currentHolder || $sender->uid === $currentHolder->uid) {
             return;
         }
 
         $killReason = $context->transIn(
             'identify.kill_reason',
-            ['nickname' => $targetNick, 'source' => $sender->getNick()->value],
+            ['nickname' => $targetNick, 'source' => $sender->nick],
             $account->getLanguage(),
         );
 
-        $context->getNotifier()->killUser($currentHolder->uid->value, $killReason);
+        $context->getNotifier()->killUser($currentHolder->uid, $killReason);
         $context->reply('identify.ghost_released', ['nickname' => $targetNick]);
     }
 
@@ -219,19 +213,19 @@ final readonly class IdentifyCommand implements NickServCommandInterface
      */
     private function applyIrcSession(
         NickServContext $context,
-        NetworkUser $sender,
+        SenderView $sender,
         RegisteredNick $account,
         string $targetNick,
     ): void {
-        if (0 !== strcasecmp($sender->getNick()->value, $targetNick)) {
-            $context->getNotifier()->forceNick($sender->uid->value, $account->getNickname());
+        if (0 !== strcasecmp($sender->nick, $targetNick)) {
+            $context->getNotifier()->forceNick($sender->uid, $account->getNickname());
         }
 
-        $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
+        $context->getNotifier()->setUserAccount($sender->uid, $account->getNickname());
 
         $vhost = $account->getVhost();
         if (null !== $vhost && '' !== $vhost) {
-            $context->getNotifier()->setUserVhost($sender->uid->value, $vhost);
+            $context->getNotifier()->setUserVhost($sender->uid, $vhost);
         }
     }
 }

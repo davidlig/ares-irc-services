@@ -33,10 +33,10 @@ final class NickServIdentifiedOwnerVoter extends Voter
             return false;
         }
 
-        if (!$sender->isIdentified()) {
+        if (!$sender->isIdentified) {
             return false;
         }
 
-        return 0 === strcasecmp($sender->getNick()->value, $account->getNickname());
+        return 0 === strcasecmp($sender->nick, $account->getNickname());
     }
 }
