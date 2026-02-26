@@ -118,7 +118,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
             return;
         }
 
-        $nick = $sender->getNick()->value;
+        $nick = $sender->nick;
         $password = $context->args[0];
         $email = $context->args[1];
 

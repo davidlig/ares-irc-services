@@ -92,7 +92,7 @@ final readonly class ResendCommand implements NickServCommandInterface
             return;
         }
 
-        $nick = $sender->getNick()->value;
+        $nick = $sender->nick;
         $account = $this->nickRepository->findByNick($nick);
 
         if (null === $account || !$account->isPending()) {

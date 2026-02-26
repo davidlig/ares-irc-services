@@ -10,7 +10,7 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\Security\NickServPermission;
-use App\Domain\IRC\Network\NetworkUser;
+use App\Application\Port\SenderView;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -45,10 +45,10 @@ final readonly class NickServService
     /**
      * Dispatch a command received from a network user.
      *
-     * @param string      $rawText Full text of the PRIVMSG (e.g. "REGISTER pass email")
-     * @param NetworkUser $sender  The user who sent the message
+     * @param string     $rawText Full text of the PRIVMSG (e.g. "REGISTER pass email")
+     * @param SenderView $sender  The user who sent the message (from NetworkUserLookupPort)
      */
-    public function dispatch(string $rawText, NetworkUser $sender): void
+    public function dispatch(string $rawText, SenderView $sender): void
     {
         $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY);
         $cmdName = strtoupper(array_shift($parts) ?? '');
@@ -62,14 +62,14 @@ final readonly class NickServService
 
         if (null === $handler) {
             $this->notifier->sendNotice(
-                $sender->uid->value,
+                $sender->uid,
                 $this->translator->trans('unknown_command', ['command' => $cmdName], 'nickserv', $this->defaultLanguage)
             );
 
             return;
         }
 
-        $account = $this->nickRepository->findByNick($sender->getNick()->value);
+        $account = $this->nickRepository->findByNick($sender->nick);
         $language = $account?->getLanguage() ?? $this->defaultLanguage;
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
 
@@ -112,7 +112,7 @@ final readonly class NickServService
 
             $this->logger->debug(sprintf(
                 'NickServ: %s executed %s [args: %d]',
-                $sender->getNick()->value,
+                $sender->nick,
                 $cmdName,
                 count($args),
             ));

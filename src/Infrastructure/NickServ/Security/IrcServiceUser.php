@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Security;
 
-use App\Domain\IRC\Network\NetworkUser;
+use App\Application\Port\SenderView;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
- * Adapts NetworkUser to Symfony UserInterface for use in Security tokens.
+ * Adapts SenderView to Symfony UserInterface for use in Security tokens.
  * Roles are derived from IRC modes: ROLE_IDENTIFIED (+r), ROLE_OPER (+o).
  */
 final readonly class IrcServiceUser implements UserInterface
@@ -20,7 +20,7 @@ final readonly class IrcServiceUser implements UserInterface
     public const string ROLE_OPER = 'ROLE_OPER';
 
     public function __construct(
-        private NetworkUser $networkUser,
+        private SenderView $senderView,
     ) {
     }
 
@@ -28,11 +28,11 @@ final readonly class IrcServiceUser implements UserInterface
     {
         $roles = [self::ROLE_USER];
 
-        if ($this->networkUser->isIdentified()) {
+        if ($this->senderView->isIdentified) {
             $roles[] = self::ROLE_IDENTIFIED;
         }
 
-        if ($this->networkUser->isOper()) {
+        if ($this->senderView->isOper) {
             $roles[] = self::ROLE_OPER;
         }
 
@@ -45,11 +45,11 @@ final readonly class IrcServiceUser implements UserInterface
 
     public function getUserIdentifier(): string
     {
-        return $this->networkUser->uid->value;
+        return $this->senderView->uid;
     }
 
-    public function getNetworkUser(): NetworkUser
+    public function getSenderView(): SenderView
     {
-        return $this->networkUser;
+        return $this->senderView;
     }
 }

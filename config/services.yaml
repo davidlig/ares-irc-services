@@ -162,6 +162,19 @@ services:
                 inspircd: '@App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter'
         tags: ['kernel.event_subscriber']
 
+    # --- Service Command Gateway: PRIVMSG → registered service listeners ---
+
+    App\Infrastructure\IRC\ServiceBridge\ServiceCommandGateway:
+        arguments:
+            $listeners: !tagged_iterator service_command_listener
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
+    App\Infrastructure\NickServ\Subscriber\NickServCommandListener:
+        arguments:
+            $logger: '@monolog.logger.irc'
+        tags: ['service_command_listener']
+
     App\Infrastructure\IRC\Network\NetworkStateSubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
@@ -174,6 +187,14 @@ services:
 
     App\Domain\IRC\SkipIdentifiedModeStripRegistryInterface:
         alias: App\Infrastructure\NickServ\PendingNickRestoreRegistry
+
+    # --- Ports (Core ↔ Services): Core implements, Services consume ---
+
+    App\Application\Port\NetworkUserLookupPort:
+        class: App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter
+
+    App\Application\Port\SendNoticePort:
+        alias: App\Infrastructure\NickServ\Bot\NickServBot
 
     # --- ActiveConnectionHolder — stores the live S2S connection for all services ---
 
@@ -314,11 +335,7 @@ services:
             $logger:               '@monolog.logger.irc'
 
     # --- NickServ Subscribers ---------------------------------------------------
-
-    App\Infrastructure\NickServ\Subscriber\NickServMessageSubscriber:
-        arguments:
-            $logger: '@monolog.logger.irc'
-        tags: ['kernel.event_subscriber']
+    # NickServMessageSubscriber removed: commands are routed via ServiceCommandGateway + NickServCommandListener
 
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
         arguments:

@@ -6,13 +6,11 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
-use App\Domain\IRC\Network\NetworkUser;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
-use App\Domain\IRC\ValueObject\Nick;
+use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
-use InvalidArgumentException;
 
 /**
  * INFO <nickname>.
@@ -25,7 +23,7 @@ final readonly class InfoCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NetworkUserRepositoryInterface $userRepository,
+        private readonly NetworkUserLookupPort $userLookup,
     ) {
     }
 
@@ -153,9 +151,9 @@ final readonly class InfoCommand implements NickServCommandInterface
 
     private function replyLastSeen(NickServContext $context, RegisteredNick $account): void
     {
-        $onlineUser = $this->findOnlineUser($account->getNickname());
+        $onlineUser = $this->userLookup->findByNick($account->getNickname());
 
-        if (null !== $onlineUser && $onlineUser->isIdentified()) {
+        if (null !== $onlineUser && $onlineUser->isIdentified) {
             $context->reply('info.last_seen_online');
         } elseif (null !== $account->getLastSeenAt()) {
             $context->reply('info.last_seen_at', [
@@ -166,24 +164,15 @@ final readonly class InfoCommand implements NickServCommandInterface
         }
     }
 
-    private function findOnlineUser(string $nickname): ?NetworkUser
-    {
-        try {
-            return $this->userRepository->findByNick(new Nick($nickname));
-        } catch (InvalidArgumentException) {
-            return null;
-        }
-    }
-
-    private function isSenderOwner(?NetworkUser $sender, RegisteredNick $account): bool
+    private function isSenderOwner(?SenderView $sender, RegisteredNick $account): bool
     {
         return null !== $sender
-            && 0 === strcasecmp($sender->getNick()->value, $account->getNickname());
+            && 0 === strcasecmp($sender->nick, $account->getNickname());
     }
 
-    private function isSenderOwnerIdentified(?NetworkUser $sender, RegisteredNick $account): bool
+    private function isSenderOwnerIdentified(?SenderView $sender, RegisteredNick $account): bool
     {
-        return $this->isSenderOwner($sender, $account) && null !== $sender && $sender->isIdentified();
+        return $this->isSenderOwner($sender, $account) && null !== $sender && $sender->isIdentified;
     }
 
     private function getStatusTranslationKey(RegisteredNick $account): string

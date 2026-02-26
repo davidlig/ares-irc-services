@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ;
 
-use App\Domain\IRC\Network\NetworkUser;
+use App\Application\Port\SenderView;
 
 /**
  * Resolves a stable client key for NickServ throttling/lockout (REGISTER, IDENTIFY).
@@ -12,7 +12,7 @@ use App\Domain\IRC\Network\NetworkUser;
  */
 final readonly class NickServClientKeyResolver
 {
-    public function getClientKey(NetworkUser $user): string
+    public function getClientKey(SenderView $user): string
     {
         if ('' !== $user->ipBase64 && '*' !== $user->ipBase64) {
             return 'ip:' . $user->ipBase64;
@@ -26,6 +26,6 @@ final readonly class NickServClientKeyResolver
             return 'host:' . $user->hostname;
         }
 
-        return 'uid:' . $user->uid->value;
+        return 'uid:' . $user->uid;
     }
 }

@@ -9,7 +9,7 @@ use Symfony\Component\Security\Core\Authentication\Token\AbstractToken;
 use function sprintf;
 
 /**
- * Token representing the current IRC user (NetworkUser) in the Security context.
+ * Token representing the current IRC user (SenderView) in the Security context.
  * Used when dispatching NickServ/ChanServ commands to run authorization checks.
  */
 final class IrcServiceToken extends AbstractToken

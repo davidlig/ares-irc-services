@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Security;
 
-use App\Domain\IRC\Network\NetworkUser;
+use App\Application\Port\SenderView;
 
 /**
  * Port for setting the current IRC user in the authorization layer (e.g. Security token).
@@ -13,7 +13,7 @@ use App\Domain\IRC\Network\NetworkUser;
  */
 interface AuthorizationContextInterface
 {
-    public function setCurrentUser(NetworkUser $user): void;
+    public function setCurrentUser(SenderView $user): void;
 
     public function clear(): void;
 }
