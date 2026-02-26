@@ -50,20 +50,6 @@ final readonly class NickProtectionService
         $this->enforceProtection($user);
     }
 
-    /**
-     * Called after the network burst ends and the connection is ready.
-     * Processes all users that joined during the burst.
-     */
-    public function onBurstComplete(): void
-    {
-        $this->burstState->markComplete();
-        $pending = $this->burstState->takePending();
-
-        foreach ($pending as $user) {
-            $this->enforceProtection($user);
-        }
-    }
-
     public function onNickChanged(UserNickChangedEvent $event): void
     {
         $this->logger->debug(sprintf(
@@ -194,7 +180,7 @@ final readonly class NickProtectionService
         $this->nickRepository->save($account);
     }
 
-    private function enforceProtection(SenderView $user): void
+    public function enforceProtection(SenderView $user): void
     {
         $nick = $user->nick;
         $account = $this->nickRepository->findByNick($nick);

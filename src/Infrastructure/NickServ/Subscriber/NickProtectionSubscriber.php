@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Subscriber;
 
+use App\Application\NickServ\BurstState;
+use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
@@ -13,13 +15,16 @@ use App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Thin subscriber: forwards IRC domain events to NickProtectionService.
- * Converts NetworkUser to SenderView via Core adapter so Application stays decoupled from Core entities.
+ * Subscriber: forwards IRC domain events to NickServ application services.
+ * Orchestrates burst (BurstState) and calls IdentifiedUserVhostSync then NickProtection
+ * so vhost sync and protection stay in separate application services.
  */
 final readonly class NickProtectionSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly NickProtectionService $nickProtectionService,
+        private readonly IdentifiedUserVhostSyncService $identifiedUserVhostSync,
+        private readonly BurstState $burstState,
         private readonly CoreNetworkUserLookupAdapter $senderViewMapper,
     ) {
     }
@@ -42,12 +47,26 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     public function onUserJoined(UserJoinedNetworkEvent $event): void
     {
         $senderView = $this->senderViewMapper->fromNetworkUser($event->user);
+
+        if (!$this->burstState->isComplete()) {
+            $this->burstState->addPending($senderView);
+
+            return;
+        }
+
+        $this->identifiedUserVhostSync->syncVhostForUser($senderView);
         $this->nickProtectionService->onUserJoined($senderView);
     }
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
-        $this->nickProtectionService->onBurstComplete();
+        $this->burstState->markComplete();
+        $pending = $this->burstState->takePending();
+
+        foreach ($pending as $user) {
+            $this->identifiedUserVhostSync->syncVhostForUser($user);
+            $this->nickProtectionService->enforceProtection($user);
+        }
     }
 
     public function onNickChanged(UserNickChangedEvent $event): void
