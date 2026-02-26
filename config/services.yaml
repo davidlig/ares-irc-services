@@ -167,6 +167,14 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
+    App\Infrastructure\IRC\Network\LocalUserModeSync: ~
+
+    App\Domain\IRC\LocalUserModeSyncInterface:
+        alias: App\Infrastructure\IRC\Network\LocalUserModeSync
+
+    App\Domain\IRC\SkipIdentifiedModeStripRegistryInterface:
+        alias: App\Infrastructure\NickServ\PendingNickRestoreRegistry
+
     # --- ActiveConnectionHolder — stores the live S2S connection for all services ---
 
     App\Infrastructure\IRC\Connection\ActiveConnectionHolder:

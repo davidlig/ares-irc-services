@@ -14,37 +14,33 @@ interface NickServNotifierInterface
     public function sendNotice(string $targetUidOrNick, string $message): void;
 
     /**
-     * Authenticate a user against an account via SVSLOGIN (UnrealIRCd 6+).
-     * This is the correct way to set the "registered" (+r) status and associate
-     * the account name shown in /WHOIS. SVSMODE +r alone is ignored in UnrealIRCd 6.
-     *
+     * Set the registered (+r) status for a user (identified to the given account).
      * To log out a user pass '0' (zero string) as $accountName.
      */
     public function setUserAccount(string $targetUid, string $accountName): void;
 
     /**
-     * Set a raw user mode on a user via SVSMODE (requires ulines in UnrealIRCd).
+     * Set raw user modes on a user.
      * Use setUserAccount() for the +r (registered/identified) status.
      */
     public function setUserMode(string $targetUid, string $modes): void;
 
     /**
-     * Force a user to change their nickname (SVSNICK).
+     * Force a user to change their nickname.
      * Used for nick protection: rename to guest nick on timeout.
      */
     public function forceNick(string $targetUid, string $newNick): void;
 
     /**
-     * Disconnect a user from the network (KILL).
+     * Disconnect a user from the network.
      * Used to free a registered nick held by a ghost or usurper session
      * so the rightful owner can reclaim it via IDENTIFY.
      */
     public function killUser(string $targetUid, string $reason): void;
 
     /**
-     * Set or clear a user's virtual host via SVSHOST (UnrealIRCd).
-     * When $vhost is empty string, the implementation must send the IRCD
-     * command that clears the vhost (e.g. SVSHOST with :* or equivalent).
+     * Set or clear a user's virtual host (hostname visible to others).
+     * When $vhost is empty string, the implementation must clear the vhost.
      */
     public function setUserVhost(string $targetUid, string $vhost): void;
 }

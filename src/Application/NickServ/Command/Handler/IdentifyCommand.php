@@ -160,9 +160,6 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         $this->releaseGhostIfPresent($context, $sender, $account, $targetNick);
         $this->applyIrcSession($context, $sender, $account, $targetNick);
 
-        // Keep our NetworkUser in sync: IRCd may not send UMODE2 back when we originate SVS2MODE.
-        $sender->applyModeChange('+r');
-
         $context->reply('identify.success', ['nickname' => $account->getNickname()]);
     }
 

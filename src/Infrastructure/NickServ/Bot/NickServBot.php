@@ -8,6 +8,8 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
+use App\Domain\IRC\LocalUserModeSyncInterface;
+use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -33,6 +35,7 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
+        private readonly LocalUserModeSyncInterface $localUserModeSync,
         private readonly string $serverSid,
         private readonly string $servicesHostname,
         private readonly string $nickservUid,
@@ -114,12 +117,18 @@ readonly class NickServBot implements NickServNotifierInterface, EventSubscriber
      * Pass '0' as $accountName to log a user out (-r removes +r).
      *
      * Source MUST be the services server SID, not a pseudo-client UID.
+     *
+     * Implementation must keep local state in sync via LocalUserModeSyncInterface
+     * (IRCd may not echo the mode change back to the services connection).
      */
     public function setUserAccount(string $targetUid, string $accountName): void
     {
         $logout = ('0' === $accountName);
+        $modeDelta = $logout ? '-r' : '+r';
 
-        $this->write(sprintf(':%s SVS2MODE %s %s', $this->serverSid, $targetUid, $logout ? '-r' : '+r'));
+        $this->write(sprintf(':%s SVS2MODE %s %s', $this->serverSid, $targetUid, $modeDelta));
+
+        $this->localUserModeSync->apply(new Uid($targetUid), $modeDelta);
     }
 
     /**
