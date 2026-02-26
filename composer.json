@@ -1,23 +1,26 @@
 {
+    "name": "davidlig/ares-irc-services",
+    "description": "Modular IRC services daemon. PHP 8.4, Symfony 7.4, Clean Architecture.",
     "type": "project",
-    "license": "proprietary",
+    "license": "CC-BY-NC-4.0",
+    "keywords": ["irc", "services", "php", "development"],
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
-        "doctrine/doctrine-bundle": ">=3.2.2",
-        "doctrine/doctrine-migrations-bundle": ">=4",
-        "doctrine/orm": ">=3.6.2",
+        "doctrine/doctrine-bundle": "3.2.*",
+        "doctrine/doctrine-migrations-bundle": "4.0.*",
+        "doctrine/orm": "3.6.*",
         "symfony/console": "7.4.*",
-        "symfony/doctrine-messenger": "*",
+        "symfony/doctrine-messenger": "7.4.*",
         "symfony/dotenv": "7.4.*",
-        "symfony/flex": "^2.10",
+        "symfony/flex": "2.10.*",
         "symfony/framework-bundle": "7.4.*",
         "symfony/mailer": "7.4.*",
         "symfony/messenger": "7.4.*",
-        "symfony/monolog-bundle": ">=4.0.1",
+        "symfony/monolog-bundle": "4.0.*",
         "symfony/runtime": "7.4.*",
         "symfony/security-core": "7.4.*",
         "symfony/translation": "7.4.*",
@@ -77,6 +80,6 @@
         }
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.94"
+        "friendsofphp/php-cs-fixer": "^3.94.2"
     }
 }
