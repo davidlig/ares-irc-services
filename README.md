@@ -2,6 +2,8 @@
 
 A modular, protocol-agnostic IRC services daemon built with **PHP 8.4** and **Symfony 7.4**, following Clean Architecture and Domain-Driven Design principles.
 
+> **Note:** The services are **not complete** and are **under active development**. Functionality and APIs may change.
+
 Supports multiple IRC daemon backends out of the box:
 
 | IRCD | Protocol driver |
@@ -19,7 +21,14 @@ Supports multiple IRC daemon backends out of the box:
 | Composer | 2.x |
 | Symfony CLI *(optional, recommended)* | 5.x |
 
-PHP extensions required: `ext-ctype`, `ext-iconv`, `ext-sockets`
+**PHP extensions** (required to run the application):
+
+- `ext-ctype`, `ext-iconv`, `ext-sockets`, `ext-pdo`, `ext-mbstring`, `ext-xml`, `ext-json`
+- For the default database (SQLite): `ext-pdo_sqlite` — if you use another driver (MySQL, PostgreSQL), you need the corresponding `ext-pdo_*` instead.
+
+You can check loaded extensions with `php -m`.
+
+**Stack:** Symfony 7.4, Doctrine ORM 3.6, Doctrine Migrations 4.0. Exact dependency versions are in `composer.json` and `composer.lock`.
 
 ---
 
@@ -28,7 +37,7 @@ PHP extensions required: `ext-ctype`, `ext-iconv`, `ext-sockets`
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/ares-irc-services.git
+git clone https://github.com/davidlig/ares-irc-services.git
 cd ares-irc-services
 ```
 
