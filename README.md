@@ -8,8 +8,8 @@ Supports multiple IRC daemon backends out of the box:
 
 | IRCD | Protocol driver |
 |---|---|
-| [UnrealIRCd](https://www.unrealircd.org/) ≥ 4.x | `unreal` |
-| [InspIRCd](https://www.inspircd.org/) ≥ 1.2 | `inspircd` |
+| [UnrealIRCd](https://www.unrealircd.org/) 6.2.2 | `unreal` |
+| [InspIRCd](https://www.inspircd.org/) 4.9.0 | `inspircd` |
 
 ---
 
