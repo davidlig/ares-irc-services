@@ -67,6 +67,7 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
             ipBase64: $user->ipBase64,
             isIdentified: $user->isIdentified(),
             isOper: $user->isOper(),
+            serverSid: $user->serverSid,
         );
     }
 }

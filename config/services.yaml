@@ -9,8 +9,7 @@ parameters:
     irc.description:   '%env(IRC_DESCRIPTION)%'
     irc.protocol:      '%env(IRC_PROTOCOL)%'
     irc.use_tls:       '%env(bool:IRC_USE_TLS)%'
-    irc.unreal_sid:    '%env(IRC_UNREAL_SID)%'
-    irc.inspircd_sid:  '%env(IRC_INSPIRCD_SID)%'
+    irc.server_sid:    '%env(IRC_SERVER_SID)%'
 
     # Services global settings
     services.hostname:         '%env(IRC_SERVICES_HOST)%'
@@ -26,7 +25,7 @@ parameters:
     nickserv.nick:     '%env(NICKSERV_NICK)%'
     nickserv.ident:    '%env(NICKSERV_IDENT)%'
     nickserv.realname: '%env(NICKSERV_REALNAME)%'
-    # UID = SID (3 chars) + AAAAAA — derived at runtime from IRC_UNREAL_SID
+    # UID = SID (3 chars) + suffix — must be unique on the network (see IRC_SERVER_SID)
     nickserv.uid:      '%env(NICKSERV_UID)%'
     # Minimum seconds between RESEND requests per nick (default 600 = 10 minutes)
     nickserv.resend_min_interval_default: 600
@@ -112,14 +111,14 @@ services:
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
         arguments:
-            $sid:             '%irc.unreal_sid%'
+            $sid:             '%irc.server_sid%'
             $logger:          '@monolog.logger.irc'
             $eventDispatcher: '@event_dispatcher'
         tags: ['irc.protocol_handler']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
-            $sid:             '%irc.inspircd_sid%'
+            $sid:             '%irc.server_sid%'
             $logger:          '@monolog.logger.irc'
             $eventDispatcher: '@event_dispatcher'
         tags: ['irc.protocol_handler']
@@ -228,7 +227,6 @@ services:
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
             $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
-            $serverSid:          '%irc.unreal_sid%'
             $servicesHostname:   '%services.hostname%'
             $nickservUid:        '%nickserv.uid%'
             $nickservNick:       '%nickserv.nick%'

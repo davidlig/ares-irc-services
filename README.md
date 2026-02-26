@@ -60,8 +60,7 @@ IRC_LINK_PASSWORD=<your link password>
 IRC_DESCRIPTION="Ares IRC Services"
 IRC_PROTOCOL=unreal                    # or: inspircd
 IRC_USE_TLS=false
-IRC_UNREAL_SID=001                     # UnrealIRCd only — unique 3-digit numeric SID (e.g. 001)
-IRC_INSPIRCD_SID=A0A                   # InspIRCd only   — unique 3-char alphanumeric SID (e.g. A0A)
+IRC_SERVER_SID=001                     # SID for this server (format depends on IRC_PROTOCOL: 001 / A0A)
 ```
 
 > **Never commit `.env.local`** — it is already listed in `.gitignore`.

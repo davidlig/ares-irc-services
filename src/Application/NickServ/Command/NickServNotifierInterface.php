@@ -42,5 +42,5 @@ interface NickServNotifierInterface
      * Set or clear a user's virtual host (hostname visible to others).
      * When $vhost is empty string, the implementation must clear the vhost.
      */
-    public function setUserVhost(string $targetUid, string $vhost): void;
+    public function setUserVhost(string $targetUid, string $vhost, string $sourceServerSid): void;
 }
