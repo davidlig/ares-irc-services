@@ -91,6 +91,15 @@ final readonly class NickProtectionService
             return;
         }
 
+        $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
+        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $event->oldNick->value)) {
+            $this->identifiedRegistry->remove($event->uid->value);
+            $sender = $this->userLookup->findByUid($event->uid->value);
+            if (null !== $sender) {
+                $this->notifier->setUserVhost($event->uid->value, '', $sender->serverSid);
+            }
+        }
+
         $account = $this->nickRepository->findByNick($newNick);
 
         if (null === $account || !$account->isRegistered()) {
