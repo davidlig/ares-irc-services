@@ -123,6 +123,21 @@ services:
             $eventDispatcher: '@event_dispatcher'
         tags: ['irc.protocol_handler']
 
+    # --- Vhost command builders (per-protocol); delegator selects by irc.protocol ---
+
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder: ~
+
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder: ~
+
+    App\Infrastructure\IRC\Protocol\ProtocolVhostCommandBuilder:
+        arguments:
+            $protocol:       '%irc.protocol%'
+            $unrealBuilder:  '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder'
+            $inspircdBuilder: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder'
+
+    App\Application\Port\VhostCommandBuilderInterface:
+        alias: App\Infrastructure\IRC\Protocol\ProtocolVhostCommandBuilder
+
     # --- Event subscriber — logs domain events to the irc channel ------------
 
     App\Infrastructure\IRC\Logging\IRCEventSubscriber:
@@ -226,8 +241,9 @@ services:
 
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
-            $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
-            $servicesHostname:   '%services.hostname%'
+            $pendingRegistry:      '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
+            $vhostCommandBuilder: '@App\Application\Port\VhostCommandBuilderInterface'
+            $servicesHostname:    '%services.hostname%'
             $nickservUid:        '%nickserv.uid%'
             $nickservNick:       '%nickserv.nick%'
             $nickservIdent:      '%nickserv.ident%'

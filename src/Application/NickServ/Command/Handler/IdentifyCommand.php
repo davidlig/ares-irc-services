@@ -162,9 +162,8 @@ final readonly class IdentifyCommand implements NickServCommandInterface
     }
 
     /**
-     * Returns true when the user is already authenticated as the target nick,
-     * using the in-memory registry as primary source of truth and the IRCd +r
-     * mode as fallback after a service restart (when the registry is empty).
+     * Returns true when the user is already authenticated as the target nick.
+     * Registry is cleared on nick change (user loses identification when they change nick).
      */
     private function isAlreadyIdentified(SenderView $sender, string $targetNick): bool
     {

@@ -7,6 +7,7 @@ namespace App\Infrastructure\NickServ\Bot;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;
@@ -27,6 +28,7 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly LocalUserModeSyncInterface $localUserModeSync,
+        private readonly VhostCommandBuilderInterface $vhostCommandBuilder,
         private readonly string $servicesHostname,
         private readonly string $nickservUid,
         private readonly string $nickservNick = 'NickServ',
@@ -109,12 +111,10 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
     public function setUserVhost(string $targetUid, string $vhost, string $sourceServerSid): void
     {
         $sid = $this->getServerSid();
-        if ('' !== $vhost) {
-            $trailing = (false !== strpos($vhost, ' ')) ? ' :' . $vhost : ' ' . $vhost;
-            $this->write(sprintf(':%s CHGHOST %s%s', $sid, $targetUid, $trailing));
-        } else {
-            $this->write(sprintf(':%s SVS2MODE %s -t', $sid, $targetUid));
-        }
+        $line = '' !== $vhost
+            ? $this->vhostCommandBuilder->getSetVhostLine($sid, $targetUid, $vhost)
+            : $this->vhostCommandBuilder->getClearVhostLine($sid, $targetUid);
+        $this->write($line);
     }
 
     private function getServerSid(): string
