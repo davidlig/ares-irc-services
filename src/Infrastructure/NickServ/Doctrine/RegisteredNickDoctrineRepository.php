@@ -35,6 +35,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->findOneBy(['nicknameLower' => strtolower($nickname)]);
     }
 
+    public function findByVhost(string $vhost): ?RegisteredNick
+    {
+        return $this->em
+            ->getRepository(RegisteredNick::class)
+            ->findOneBy(['vhost' => $vhost]);
+    }
+
     public function findByEmail(string $email): ?RegisteredNick
     {
         $qb = $this->em->createQueryBuilder();

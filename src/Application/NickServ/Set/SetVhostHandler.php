@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace App\Application\NickServ\Set;
 
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\VhostDisplayResolver;
+use App\Application\NickServ\VhostValidator;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 use function in_array;
-use function strlen;
+use function strtoupper;
+use function trim;
 
 final readonly class SetVhostHandler implements SetOptionHandlerInterface
 {
-    /** Max length for vhost (IRCD/DB limit). Allowed: hostname-like (letters, digits, hyphens, dots). */
-    private const int VHOST_MAX_LENGTH = 255;
-
-    private const string VHOST_PATTERN = '/^[a-zA-Z0-9.\-]+$/';
-
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly VhostValidator $vhostValidator,
+        private readonly VhostDisplayResolver $displayResolver,
     ) {
     }
 
@@ -38,17 +38,27 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
             return;
         }
 
-        if (strlen($normalized) > self::VHOST_MAX_LENGTH || 1 !== preg_match(self::VHOST_PATTERN, $normalized)) {
+        $normalized = $this->vhostValidator->normalize($normalized);
+        if (null === $normalized) {
             $context->reply('set.vhost.invalid');
+
+            return;
+        }
+
+        $existing = $this->nickRepository->findByVhost($normalized);
+        if (null !== $existing && $existing->getId() !== $account->getId()) {
+            $context->reply('set.vhost.taken');
 
             return;
         }
 
         $account->changeVhost($normalized);
         $this->nickRepository->save($account);
-        if (null !== $context->sender) {
-            $context->getNotifier()->setUserVhost($context->sender->uid, $normalized, $context->sender->serverSid);
+
+        $displayVhost = $this->displayResolver->getDisplayVhost($normalized);
+        if (null !== $context->sender && '' !== $displayVhost) {
+            $context->getNotifier()->setUserVhost($context->sender->uid, $displayVhost, $context->sender->serverSid);
         }
-        $context->reply('set.vhost.success', ['vhost' => $normalized]);
+        $context->reply('set.vhost.success', ['vhost' => $displayVhost]);
     }
 }

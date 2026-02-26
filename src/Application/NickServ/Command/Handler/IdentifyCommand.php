@@ -9,6 +9,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\IdentifyFailedAttemptRegistry;
 use App\Application\NickServ\NickServClientKeyResolver;
+use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -28,6 +29,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly IdentifiedSessionRegistry $identifiedRegistry,
         private readonly IdentifyFailedAttemptRegistry $failedAttemptRegistry,
         private readonly NickServClientKeyResolver $clientKeyResolver,
+        private readonly VhostDisplayResolver $vhostDisplayResolver,
         private readonly int $identifyMaxFailedAttempts,
         private readonly int $identifyFailedWindowSeconds,
         private readonly int $identifyLockoutSeconds,
@@ -222,9 +224,9 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
         $context->getNotifier()->setUserAccount($sender->uid, $account->getNickname());
 
-        $vhost = $account->getVhost();
-        if (null !== $vhost && '' !== $vhost) {
-            $context->getNotifier()->setUserVhost($sender->uid, $vhost, $sender->serverSid);
+        $displayVhost = $this->vhostDisplayResolver->getDisplayVhost($account->getVhost());
+        if ('' !== $displayVhost) {
+            $context->getNotifier()->setUserVhost($sender->uid, $displayVhost, $sender->serverSid);
         }
     }
 }

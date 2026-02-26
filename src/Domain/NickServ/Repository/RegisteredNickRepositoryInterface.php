@@ -15,6 +15,9 @@ interface RegisteredNickRepositoryInterface
 
     public function findByNick(string $nickname): ?RegisteredNick;
 
+    /** Returns the account that has this vhost (user part). Null if not used. Used for uniqueness check. */
+    public function findByVhost(string $vhost): ?RegisteredNick;
+
     /** Returns the account that has this email (case-insensitive). Null if not used or only FORBIDDEN. */
     public function findByEmail(string $email): ?RegisteredNick;
 

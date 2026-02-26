@@ -6,6 +6,7 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -24,6 +25,7 @@ final readonly class InfoCommand implements NickServCommandInterface
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NetworkUserLookupPort $userLookup,
+        private readonly VhostDisplayResolver $vhostDisplayResolver,
     ) {
     }
 
@@ -142,8 +144,9 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.email', ['email' => $account->getEmail()]);
         }
 
-        if ($isOwnerIdentified && null !== $account->getVhost() && '' !== $account->getVhost()) {
-            $context->reply('info.vhost', ['vhost' => $account->getVhost()]);
+        $displayVhost = $this->vhostDisplayResolver->getDisplayVhost($account->getVhost());
+        if ('' !== $displayVhost) {
+            $context->reply('info.vhost', ['vhost' => $displayVhost]);
         }
 
         $context->reply('info.footer');
