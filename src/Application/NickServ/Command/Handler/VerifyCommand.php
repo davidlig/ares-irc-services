@@ -104,9 +104,6 @@ final readonly class VerifyCommand implements NickServCommandInterface
         $this->identifiedRegistry->register($sender->uid->value, $account->getNickname());
         $context->getNotifier()->setUserAccount($sender->uid->value, $account->getNickname());
 
-        // Keep our NetworkUser in sync: IRCd may not send UMODE2 back when we originate SVS2MODE.
-        $sender->applyModeChange('+r');
-
         $context->reply('verify.success', ['nickname' => $account->getNickname()]);
     }
 }

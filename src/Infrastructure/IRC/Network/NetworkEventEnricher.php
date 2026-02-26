@@ -27,6 +27,7 @@ use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\Repository\ChannelRepositoryInterface;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
+use App\Domain\IRC\SkipIdentifiedModeStripRegistryInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
@@ -54,6 +55,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
         private readonly ChannelRepositoryInterface $channelRepository,
         private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly SkipIdentifiedModeStripRegistryInterface $skipIdentifiedModeStripRegistry,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -113,7 +115,12 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
         }
 
         $oldNick = $user->getNick();
-        $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '-r'));
+
+        // Do not strip +r when services originated this nick change (e.g. restore).
+        if (!$this->skipIdentifiedModeStripRegistry->peek($user->uid->value)) {
+            $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '-r'));
+        }
+
         $this->eventDispatcher->dispatch(new UserNickChangedEvent($user->uid, $oldNick, $newNick));
     }
 
