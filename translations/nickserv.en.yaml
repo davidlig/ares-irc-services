@@ -154,10 +154,11 @@ set:
   vhost:
     syntax:         "SET VHOST <vhost>|OFF"
     short:          "Set or clear your custom virtual host (displayed hostname)."
-    help:           "Sets a custom hostname that others see when you are identified.\nUse \x02SET VHOST OFF\x02 to clear it and use your default/cloak. Only letters,\ndigits, hyphens and dots are allowed; max 255 characters."
+    help:           "Sets a custom hostname that others see when you are identified.\nUse \x02SET VHOST OFF\x02 to clear it. Only letters (a-z, A-Z), digits, hyphen and dot;\nno hyphen or dot at start/end of any block; max 48 characters. Unique per account."
     success:        "\x0303✔\x03 Your virtual host has been set to \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Your virtual host has been cleared."
-    invalid:       "\x0304✗\x03 Invalid vhost. Use only letters, digits, hyphens and dots (max 255 characters)."
+    invalid:        "\x0304✗\x03 Invalid vhost. Only letters, digits, hyphen and dot (not at start/end of block); max 48 characters."
+    taken:          "\x0304✗\x03 That vhost is already in use by another account."
 
 # --- HELP -------------------------------------------------------------------
 help:

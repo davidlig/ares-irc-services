@@ -154,10 +154,11 @@ set:
   vhost:
     syntax:         "SET VHOST <vhost>|OFF"
     short:          "Establece o quita tu host virtual (hostname visible)."
-    help:           "Establece un hostname personalizado que otros ven cuando estás identificado.\nUsa \x02SET VHOST OFF\x02 para quitarlo y usar tu host/cloak por defecto. Solo se\npermiten letras, dígitos, guiones y puntos; máximo 255 caracteres."
+    help:           "Establece un hostname personalizado que otros ven cuando estás identificado.\nUsa \x02SET VHOST OFF\x02 para quitarlo. Solo letras (a-z, A-Z), dígitos, guión y punto;\nni guión ni punto al inicio/final de cada bloque; máximo 48 caracteres. Es único por cuenta."
     success:        "\x0303✔\x03 Tu host virtual se ha establecido a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Tu host virtual ha sido eliminado."
-    invalid:        "\x0304✗\x03 Vhost no válido. Usa solo letras, dígitos, guiones y puntos (máx. 255 caracteres)."
+    invalid:        "\x0304✗\x03 Vhost no válido. Solo letras, dígitos, guión y punto (no al inicio/fin de bloque); máx. 48 caracteres."
+    taken:          "\x0304✗\x03 Ese vhost ya está en uso por otra cuenta."
 
 # --- HELP -------------------------------------------------------------------
 help:

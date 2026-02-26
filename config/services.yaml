@@ -17,6 +17,7 @@ parameters:
     services.default_timezone_fallback: 'UTC'
     services.default_timezone: '%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
+    services.vhost_suffix:     '%env(default::NICKSERV_VHOST_SUFFIX)%'
 
     # Maintenance scheduler
     maintenance.interval: '%env(int:MAINTENANCE_INTERVAL)%'
@@ -231,6 +232,17 @@ services:
     App\Application\NickServ\BurstState:
         class: App\Application\NickServ\BurstState
 
+    App\Application\NickServ\VhostValidator: ~
+    App\Application\NickServ\VhostDisplayResolver:
+        arguments:
+            $vhostSuffix: '%services.vhost_suffix%'
+
+    App\Application\NickServ\IdentifiedUserVhostSyncService:
+        arguments:
+            $notifier:        '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $displayResolver: '@App\Application\NickServ\VhostDisplayResolver'
+            $logger:          '@monolog.logger.irc'
+
     App\Application\NickServ\NickProtectionService:
         arguments:
             $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
@@ -354,6 +366,7 @@ services:
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
         arguments:
             $nickProtectionService: '@App\Application\NickServ\NickProtectionService'
+            $senderViewMapper:      '@App\Application\Port\NetworkUserLookupPort'
         tags: ['kernel.event_subscriber']
 
     # --- Maintenance system -----------------------------------------------------
