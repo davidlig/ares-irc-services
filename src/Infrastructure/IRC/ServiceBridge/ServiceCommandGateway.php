@@ -26,17 +26,29 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
         iterable $listeners,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
-        $this->listeners = [];
+        $this->listeners = $this->buildListenerMap($listeners);
+    }
+
+    /**
+     * @param iterable<ServiceCommandListenerInterface> $listeners
+     *
+     * @return array<string, ServiceCommandListenerInterface>
+     */
+    private function buildListenerMap(iterable $listeners): array
+    {
+        $map = [];
         foreach ($listeners as $listener) {
             if (!$listener instanceof ServiceCommandListenerInterface) {
                 continue;
             }
-            $this->listeners[strtolower($listener->getServiceName())] = $listener;
+            $map[strtolower($listener->getServiceName())] = $listener;
             $uid = $listener->getServiceUid();
             if (null !== $uid && '' !== $uid) {
-                $this->listeners[$uid] = $listener;
+                $map[$uid] = $listener;
             }
         }
+
+        return $map;
     }
 
     public static function getSubscribedEvents(): array
