@@ -365,8 +365,10 @@ services:
 
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
         arguments:
-            $nickProtectionService: '@App\Application\NickServ\NickProtectionService'
-            $senderViewMapper:      '@App\Application\Port\NetworkUserLookupPort'
+            $nickProtectionService:      '@App\Application\NickServ\NickProtectionService'
+            $identifiedUserVhostSync:   '@App\Application\NickServ\IdentifiedUserVhostSyncService'
+            $burstState:                '@App\Application\NickServ\BurstState'
+            $senderViewMapper:          '@App\Application\Port\NetworkUserLookupPort'
         tags: ['kernel.event_subscriber']
 
     # --- Maintenance system -----------------------------------------------------
