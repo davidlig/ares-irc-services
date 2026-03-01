@@ -28,12 +28,16 @@ final readonly class IdentifiedUserVhostSyncService
     }
 
     /**
-     * If the user is identified and has an account with a vhost, apply it (display form with suffix).
-     * No-op otherwise.
+     * Sync displayed vhost to the user's current identified state.
+     * If identified (+r) and account has a vhost, apply it. If not identified, clear vhost
+     * (e.g. after services reconnect, users who changed nick while services were down still
+     * have the old vhost on the IRCd until we clear it).
      */
     public function syncVhostForUser(SenderView $user): void
     {
         if (!$user->isIdentified) {
+            $this->notifier->setUserVhost($user->uid, '', $user->serverSid);
+
             return;
         }
 
