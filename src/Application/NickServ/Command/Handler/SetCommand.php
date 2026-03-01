@@ -9,6 +9,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Set\SetEmailHandler;
 use App\Application\NickServ\Set\SetLanguageHandler;
+use App\Application\NickServ\Set\SetMsgHandler;
 use App\Application\NickServ\Set\SetOptionHandlerInterface;
 use App\Application\NickServ\Set\SetPasswordHandler;
 use App\Application\NickServ\Set\SetPrivateHandler;
@@ -31,12 +32,13 @@ use function strtoupper;
  *   SET EMAIL    <new_email> <token>      — confirm change with token
  *   SET LANGUAGE <code>       (en | es | …)
  *   SET PRIVATE  ON|OFF
+ *   SET MSG      ON|OFF   (ON = PRIVMSG, OFF = NOTICE)
  *   SET VHOST    <vhost>|OFF
  *   SET TIMEZONE <timezone>|OFF
  */
 final readonly class SetCommand implements NickServCommandInterface
 {
-    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'VHOST'];
+    private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'];
 
     /** @var array<string, SetOptionHandlerInterface> */
     private array $handlers;
@@ -46,6 +48,7 @@ final readonly class SetCommand implements NickServCommandInterface
         SetEmailHandler $setEmailHandler,
         SetLanguageHandler $setLanguageHandler,
         SetPrivateHandler $setPrivateHandler,
+        SetMsgHandler $setMsgHandler,
         SetTimezoneHandler $setTimezoneHandler,
         SetVhostHandler $setVhostHandler,
     ) {
@@ -54,6 +57,7 @@ final readonly class SetCommand implements NickServCommandInterface
             'EMAIL' => $setEmailHandler,
             'LANGUAGE' => $setLanguageHandler,
             'PRIVATE' => $setPrivateHandler,
+            'MSG' => $setMsgHandler,
             'TIMEZONE' => $setTimezoneHandler,
             'VHOST' => $setVhostHandler,
         ];
@@ -126,6 +130,12 @@ final readonly class SetCommand implements NickServCommandInterface
                 'desc_key' => 'set.private.short',
                 'help_key' => 'set.private.help',
                 'syntax_key' => 'set.private.syntax',
+            ],
+            [
+                'name' => 'MSG',
+                'desc_key' => 'set.msg.short',
+                'help_key' => 'set.msg.help',
+                'syntax_key' => 'set.msg.syntax',
             ],
             [
                 'name' => 'VHOST',

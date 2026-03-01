@@ -446,3 +446,7 @@ services:
     App\Infrastructure\NickServ\UserLanguageResolver:
         arguments:
             $defaultLanguage: '%services.default_language%'
+
+    # --- UserMessageTypeResolver — NOTICE vs PRIVMSG preference -----------------
+
+    App\Infrastructure\NickServ\UserMessageTypeResolver: ~

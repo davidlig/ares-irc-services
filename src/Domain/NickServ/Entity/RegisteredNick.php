@@ -88,6 +88,9 @@ class RegisteredNick
     /** PHP timezone identifier for date display (e.g. Europe/Madrid). Null = use services default. */
     private ?string $timezone = null;
 
+    /** When true, services send messages as PRIVMSG; when false, as NOTICE. */
+    private bool $msgPrivmsg = false;
+
     /**
      * Creates a new pending registration awaiting email verification.
      */
@@ -298,6 +301,19 @@ class RegisteredNick
     public function switchPrivate(bool $private): void
     {
         $this->private = $private;
+    }
+
+    /**
+     * Whether services send messages to this account as PRIVMSG (true) or NOTICE (false).
+     */
+    public function getMessageType(): string
+    {
+        return $this->msgPrivmsg ? 'PRIVMSG' : 'NOTICE';
+    }
+
+    public function switchMsg(bool $usePrivmsg): void
+    {
+        $this->msgPrivmsg = $usePrivmsg;
     }
 
     /**

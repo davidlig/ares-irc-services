@@ -35,6 +35,8 @@ class NickServContext
         private readonly string $language,
         /** PHP timezone identifier (e.g. UTC, Europe/Madrid) used when displaying dates. */
         private readonly string $timezone,
+        /** 'NOTICE'|'PRIVMSG' — how to send replies to the user. */
+        private readonly string $messageType,
         private readonly NickServCommandRegistry $registry,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
         private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
@@ -42,7 +44,7 @@ class NickServContext
     }
 
     /**
-     * Translate a message key and send it as a NOTICE to the command sender.
+     * Translate a message key and send it to the command sender (NOTICE or PRIVMSG per user preference).
      *
      * Parameter keys are automatically wrapped with % so callers can write
      * ['nickname' => 'foo'] instead of ['%nickname%' => 'foo'].
@@ -149,6 +151,6 @@ class NickServContext
             return;
         }
 
-        $this->notifier->sendNotice($this->sender->uid, $message);
+        $this->notifier->sendMessage($this->sender->uid, $message, $this->messageType);
     }
 }

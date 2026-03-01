@@ -75,19 +75,25 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
 
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
+        $this->sendMessage($targetUidOrNick, $message, 'NOTICE');
+    }
+
+    public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
+    {
         if (!$this->connectionHolder->isConnected()) {
-            $this->logger->warning('NickServBot: cannot send NOTICE — no active connection.', [
+            $this->logger->warning('NickServBot: cannot send message — no active connection.', [
                 'target' => $targetUidOrNick,
             ]);
 
             return;
         }
 
+        $command = 'PRIVMSG' === $messageType ? 'PRIVMSG' : 'NOTICE';
         foreach (explode("\n", $message) as $line) {
             if ('' === $line) {
                 continue;
             }
-            $this->writeToConnection(sprintf(':%s NOTICE %s :%s', $this->nickservUid, $targetUidOrNick, $line));
+            $this->writeToConnection(sprintf(':%s %s %s :%s', $this->nickservUid, $command, $targetUidOrNick, $line));
         }
     }
 

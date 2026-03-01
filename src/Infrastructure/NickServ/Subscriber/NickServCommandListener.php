@@ -12,6 +12,7 @@ use App\Domain\NickServ\Exception\InvalidCredentialsException;
 use App\Domain\NickServ\Exception\NickAlreadyRegisteredException;
 use App\Infrastructure\IRC\Security\SensitiveDataRedactor;
 use App\Infrastructure\NickServ\Bot\NickServBot;
+use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -29,6 +30,7 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
         private NickServService $nickServService,
         private NetworkUserLookupPort $userLookup,
         private SendNoticePort $sendNotice,
+        private UserMessageTypeResolver $messageTypeResolver,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -66,9 +68,11 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
         try {
             $this->nickServService->dispatch($text, $sender);
         } catch (NickAlreadyRegisteredException $e) {
-            $this->sendNotice->sendNotice($sender->uid, $e->getMessage());
+            $messageType = $this->messageTypeResolver->resolve($sender);
+            $this->sendNotice->sendMessage($sender->uid, $e->getMessage(), $messageType);
         } catch (InvalidCredentialsException $e) {
-            $this->sendNotice->sendNotice($sender->uid, $e->getMessage());
+            $messageType = $this->messageTypeResolver->resolve($sender);
+            $this->sendNotice->sendMessage($sender->uid, $e->getMessage(), $messageType);
         } catch (Throwable $e) {
             $this->logger->error('NickServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,

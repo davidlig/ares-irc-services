@@ -12,6 +12,7 @@ use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -34,6 +35,7 @@ final readonly class NickServService
         private readonly NickServCommandRegistry $commandRegistry,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickServNotifierInterface $notifier,
+        private readonly UserMessageTypeResolver $messageTypeResolver,
         private readonly TranslatorInterface $translator,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
         private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
@@ -62,9 +64,11 @@ final readonly class NickServService
         $handler = $this->commandRegistry->find($cmdName);
 
         if (null === $handler) {
-            $this->notifier->sendNotice(
+            $messageType = $this->messageTypeResolver->resolve($sender);
+            $this->notifier->sendMessage(
                 $sender->uid,
-                $this->translator->trans('unknown_command', ['command' => $cmdName], 'nickserv', $this->defaultLanguage)
+                $this->translator->trans('unknown_command', ['command' => $cmdName], 'nickserv', $this->defaultLanguage),
+                $messageType
             );
 
             return;
@@ -73,6 +77,7 @@ final readonly class NickServService
         $account = $this->nickRepository->findByNick($sender->nick);
         $language = $account?->getLanguage() ?? $this->defaultLanguage;
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
+        $messageType = $this->messageTypeResolver->resolve($sender);
 
         $context = new NickServContext(
             sender: $sender,
@@ -83,6 +88,7 @@ final readonly class NickServService
             translator: $this->translator,
             language: $language,
             timezone: $timezone,
+            messageType: $messageType,
             registry: $this->commandRegistry,
             pendingVerificationRegistry: $this->pendingVerificationRegistry,
             recoveryTokenRegistry: $this->recoveryTokenRegistry,
