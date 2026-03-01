@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network;
 
+use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\ChannelTopicChangedEvent;
@@ -39,8 +40,8 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function count;
+use function in_array;
 use function preg_match;
-use function preg_quote;
 use function str_replace;
 use function str_split;
 
@@ -56,6 +57,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
         private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly SkipIdentifiedModeStripRegistryInterface $skipIdentifiedModeStripRegistry,
+        private readonly ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -168,10 +170,11 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
                 createdAt: new DateTimeImmutable('@' . $event->timestamp),
             );
         } else {
-            if ('' !== $event->modeStr) {
-                $channel->updateModes($event->modeStr);
-            }
+            $channel->updateCreatedAt(new DateTimeImmutable('@' . $event->timestamp));
+            $channel->updateModes($event->modeStr);
         }
+
+        $this->applyModeParamsFromFjoin($channel, $event->modeStr, $event->modeParams);
 
         foreach ($event->listModes['b'] ?? [] as $mask) {
             $channel->addBan($mask);
@@ -193,13 +196,13 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
             $this->channelRepository->save($channel);
             $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
         } else {
+            $this->channelRepository->save($channel);
+            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
             foreach ($joinedUids as $uid) {
                 $member = $channel->getMember($uid);
                 $role = $member?->role ?? ChannelMemberRole::None;
                 $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $event->channelName, $role));
             }
-            $this->channelRepository->save($channel);
-            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
         }
     }
 
@@ -258,7 +261,17 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
     {
         $channel = $this->channelRepository->findByName($event->channelName);
         if (null === $channel) {
-            return;
+            // Burst can send MODE before SJOIN; create minimal channel so we keep modes for MLOCK on sync.
+            $channelModeDelta = $this->extractChannelModeDelta($event->modeStr);
+            if ('' === $channelModeDelta) {
+                return;
+            }
+            $channel = new Channel(
+                name: $event->channelName,
+                modes: $this->mergeModeString('', $channelModeDelta),
+                createdAt: new DateTimeImmutable('@0'),
+            );
+            $this->channelRepository->save($channel);
         }
 
         $params = $event->modeParams;
@@ -302,11 +315,66 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
                 } else {
                     $adding ? $channel->addInviteException($mask) : $channel->removeInviteException($mask);
                 }
+                continue;
             }
+
+            // Channel setting modes that take a param when set; consume in order.
+            // Store param for all of them when adding (so +l 500 is available for MLOCK); clear only when unset needs param (k, L, etc.).
+            $modesWithParamOnSet = $this->modeSupportProvider->getSupport()->getChannelSettingModesWithParamOnSet();
+            if (in_array($char, $modesWithParamOnSet, true)) {
+                if ($paramIdx >= count($params)) {
+                    break;
+                }
+                $paramValue = $params[$paramIdx];
+                ++$paramIdx;
+                if ($adding) {
+                    $channel->setModeParam($char, $paramValue);
+                } else {
+                    $channel->clearModeParam($char);
+                }
+                continue;
+            }
+        }
+
+        $channelModeDelta = $this->extractChannelModeDelta($event->modeStr);
+        if ('' !== $channelModeDelta) {
+            $current = $channel->getModes();
+            $channel->updateModes($this->mergeModeString($current, $channelModeDelta));
         }
 
         $this->channelRepository->save($channel);
         $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
+    }
+
+    /**
+     * Extracts from a MODE string only channel setting mode letters (not prefix
+     * v,h,o,a,q and not list modes per active IRCd).
+     */
+    private function extractChannelModeDelta(string $modeStr): string
+    {
+        $listLetters = $this->modeSupportProvider->getSupport()->getListModeLetters();
+        $delta = '';
+        $adding = true;
+        foreach (str_split($modeStr) as $char) {
+            if ('+' === $char) {
+                $adding = true;
+                continue;
+            }
+            if ('-' === $char) {
+                $adding = false;
+                continue;
+            }
+            if (null !== ChannelMemberRole::fromModeLetter($char)) {
+                continue;
+            }
+            // List modes: exact case (e.g. I = invite exception, i = invite-only channel setting)
+            if (in_array($char, $listLetters, true)) {
+                continue;
+            }
+            $delta .= ($adding ? '+' : '-') . $char;
+        }
+
+        return $delta;
     }
 
     public function onUmode2Received(Umode2ReceivedEvent $event): void
@@ -317,6 +385,43 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
         }
 
         $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, $event->modeStr));
+    }
+
+    /**
+     * Applies mode params from SJOIN so MLOCK can send -k/-L with value.
+     * Unreal: "modes and parameters, eg: +lk 666 key" — params follow the order of mode letters
+     * that take a param (left to right in the mode string). We consume in that order.
+     *
+     * @see https://www.unrealircd.org/docs/Server_protocol:SJOIN_command
+     */
+    private function applyModeParamsFromFjoin(Channel $channel, string $modeStr, array $modeParams): void
+    {
+        if ([] === $modeParams) {
+            return;
+        }
+        $support = $this->modeSupportProvider->getSupport();
+        $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
+        $paramIdx = 0;
+        $adding = true;
+        foreach (str_split($modeStr) as $char) {
+            if ('+' === $char) {
+                $adding = true;
+                continue;
+            }
+            if ('-' === $char) {
+                $adding = false;
+                continue;
+            }
+            if (!$adding || !in_array($char, $withParamOnSet, true)) {
+                continue;
+            }
+            if ($paramIdx >= count($modeParams)) {
+                break;
+            }
+            $paramValue = $modeParams[$paramIdx];
+            ++$paramIdx;
+            $channel->setModeParam($char, $paramValue);
+        }
     }
 
     private function resolveUser(string $sourceId): ?NetworkUser
@@ -362,7 +467,9 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
                 $add = str_replace($c, '', $add);
             }
         }
-        $base = preg_replace('/[' . preg_quote($remove, '/') . ']/', '', $base) ?? $base;
+        foreach (str_split($remove) as $char) {
+            $base = str_replace($char, '', $base);
+        }
         $base .= $add;
 
         return '' === $base ? '' : '+' . $base;
