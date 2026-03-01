@@ -75,11 +75,19 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
 
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
+        if (!$this->connectionHolder->isConnected()) {
+            $this->logger->warning('NickServBot: cannot send NOTICE — no active connection.', [
+                'target' => $targetUidOrNick,
+            ]);
+
+            return;
+        }
+
         foreach (explode("\n", $message) as $line) {
             if ('' === $line) {
                 continue;
             }
-            $this->write(sprintf(':%s NOTICE %s :%s', $this->nickservUid, $targetUidOrNick, $line));
+            $this->writeToConnection(sprintf(':%s NOTICE %s :%s', $this->nickservUid, $targetUidOrNick, $line));
         }
     }
 
@@ -122,16 +130,32 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
         return $this->connectionHolder->getServerSid() ?? '';
     }
 
+    /**
+     * Sends a line to the connection and logs it. Use for protocol commands (SVSNICK, KILL, etc.).
+     */
     private function write(string $line): void
     {
-        if (!$this->connectionHolder->isConnected()) {
+        if (!$this->writeToConnection($line)) {
             $this->logger->warning('NickServBot: cannot write — no active connection.', ['line' => $line]);
 
             return;
         }
 
-        $this->connectionHolder->writeLine($line);
         $this->logger->debug('> ' . $line);
+    }
+
+    /**
+     * Sends a line to the connection without logging. Use for high-volume or user-facing output (e.g. NOTICEs).
+     */
+    private function writeToConnection(string $line): bool
+    {
+        if (!$this->connectionHolder->isConnected()) {
+            return false;
+        }
+
+        $this->connectionHolder->writeLine($line);
+
+        return true;
     }
 
     public function getNick(): string
