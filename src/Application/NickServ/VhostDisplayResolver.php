@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ;
 
-use function strlen;
-
 /**
  * Builds the display vhost sent to the IRCd (user part + optional suffix).
  * E.g. stored "mi-vhost" with suffix "virtual" → "mi-vhost.virtual".

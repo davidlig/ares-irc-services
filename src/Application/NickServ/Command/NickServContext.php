@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\NickServ\Command;
 
 use App\Application\NickServ\PendingVerificationRegistry;
+use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
@@ -36,6 +37,7 @@ class NickServContext
         private readonly string $timezone,
         private readonly NickServCommandRegistry $registry,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
+        private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
     ) {
     }
 
@@ -100,6 +102,11 @@ class NickServContext
     public function getPendingVerificationRegistry(): PendingVerificationRegistry
     {
         return $this->pendingVerificationRegistry;
+    }
+
+    public function getRecoveryTokenRegistry(): RecoveryTokenRegistry
+    {
+        return $this->recoveryTokenRegistry;
     }
 
     public function trans(string $key, array $params = []): string

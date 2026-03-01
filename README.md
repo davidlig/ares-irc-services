@@ -214,13 +214,6 @@ php bin/console debug:container --tag=irc.protocol_handler
 php bin/console cache:clear
 ```
 
-### Running tests
-
-```bash
-composer test          # once a test suite is configured
-php vendor/bin/phpunit
-```
-
 ---
 
 ## License

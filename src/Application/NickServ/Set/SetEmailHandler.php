@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Set;
 
+use App\Application\Helper\SecureToken;
 use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\PendingEmailChangeRegistry;
@@ -77,7 +78,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             return;
         }
 
-        $token = bin2hex(random_bytes(16));
+        $token = SecureToken::hex(32);
         $this->pendingEmailChangeRegistry->store($nick, $newEmail, $token);
 
         try {

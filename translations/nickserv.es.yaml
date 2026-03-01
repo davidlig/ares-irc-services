@@ -50,6 +50,22 @@ resend:
   no_pending:       "\x0304✗\x03 No tienes ningún registro pendiente de verificación."
   throttled:        "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro correo de verificación."
 
+# --- RECOVER -----------------------------------------------------------------
+recover:
+  syntax:           "RECOVER <nickname> [token]"
+  short:            "Recupera tu cuenta si has perdido la contraseña."
+  help:             "Recupera el acceso a una cuenta registrada cuando has perdido la contraseña.\n1) \x0303RECOVER <nickname>\x03 — se envía un token al correo de la cuenta.\n2) \x0303RECOVER <nickname> <token>\x03 — introduce el token del correo para restablecer la contraseña.\nRecibirás una contraseña temporal y el comando para cambiarla."
+  email_sent:       "\x0307→\x03 Se ha enviado un token de recuperación a \x02%email_hint%\x02. Revisa tu bandeja (y la de spam)."
+  not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
+  pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email."
+  suspended:        "\x0304✗\x03 El nickname \x02%nickname%\x02 está suspendido. Motivo: %reason%"
+  forbidden:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no puede usarse en esta red."
+  no_email:         "\x0304✗\x03 No hay email configurado para el nickname \x02%nickname%\x02. La recuperación no está disponible."
+  throttled:        "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro correo de recuperación."
+  invalid_token:    "\x0304✗\x03 El token no es válido o ha expirado. Solicita uno nuevo con \x0303RECOVER %nickname%\x03."
+  success_identify: "\x0303✔\x03 Contraseña restablecida. Identifícate ahora: \x0303%identify_cmd%\x03"
+  success_then_change: "Luego cambia tu contraseña: \x0303/msg NickServ SET PASSWORD <nueva_contraseña>\x03"
+
 # --- IDENTIFY ---------------------------------------------------------------
 identify:
   syntax:           "IDENTIFY <nickname> <contraseña>"

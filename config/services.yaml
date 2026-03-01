@@ -41,6 +41,11 @@ parameters:
     nickserv.identify_failed_window_seconds: '%env(int:default:nickserv.identify_failed_window_seconds_default:NICKSERV_IDENTIFY_FAILED_WINDOW_SECONDS)%'
     nickserv.identify_lockout_seconds_default: 600
     nickserv.identify_lockout_seconds: '%env(int:default:nickserv.identify_lockout_seconds_default:NICKSERV_IDENTIFY_LOCKOUT_SECONDS)%'
+    # RECOVER: token TTL and throttle
+    nickserv.recover_token_ttl_seconds_default: 3600
+    nickserv.recover_token_ttl_seconds: '%env(int:default:nickserv.recover_token_ttl_seconds_default:NICKSERV_RECOVER_TOKEN_TTL)%'
+    nickserv.recover_min_interval_seconds_default: 600
+    nickserv.recover_min_interval_seconds: '%env(int:default:nickserv.recover_min_interval_seconds_default:NICKSERV_RECOVER_MIN_INTERVAL)%'
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
@@ -291,6 +296,12 @@ services:
             $resendMinIntervalSeconds: '%nickserv.resend_min_interval%'
         tags: ['nickserv.command']
 
+    App\Application\NickServ\Command\Handler\RecoverCommand:
+        arguments:
+            $recoverTokenTtlSeconds: '%nickserv.recover_token_ttl_seconds%'
+            $recoverMinIntervalSeconds: '%nickserv.recover_min_interval_seconds%'
+        tags: ['nickserv.command']
+
     App\Application\NickServ\Command\Handler\StatusCommand:
         tags: ['nickserv.command']
 
@@ -350,6 +361,9 @@ services:
     App\Application\NickServ\PendingEmailChangeRegistry:
         class: App\Application\NickServ\PendingEmailChangeRegistry
 
+    App\Application\NickServ\RecoveryTokenRegistry:
+        class: App\Application\NickServ\RecoveryTokenRegistry
+
     # --- NickServ Service -------------------------------------------------------
 
     App\Application\NickServ\NickServService:
@@ -402,6 +416,9 @@ services:
         tags: ['maintenance.prunable']
 
     App\Application\NickServ\Maintenance\Pruner\IdentifiedSessionPruner:
+        tags: ['maintenance.prunable']
+
+    App\Application\NickServ\Maintenance\Pruner\RecoveryTokenPruner:
         tags: ['maintenance.prunable']
 
     App\Application\NickServ\Maintenance\PruneMemoryRegistriesTask:

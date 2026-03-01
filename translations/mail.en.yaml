@@ -42,3 +42,17 @@ email_change_token_body: |
     /msg NickServ SET EMAIL %new_email% %token%
 
   The token expires in 1 hour. If you did not request this change, please ignore this email.
+
+# RECOVER — password recovery token
+recovery_token_subject: "NickServ: password recovery"
+recovery_token_body: |
+  Hello,
+
+  A password recovery was requested for the nickname "%nickname%".
+
+  Your recovery token is: %token%
+
+  To reset your password, send to NickServ:
+    /msg NickServ RECOVER %nickname% %token%
+
+  The token expires in 1 hour. If you did not request this, please ignore this email.

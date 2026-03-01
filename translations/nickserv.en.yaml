@@ -50,6 +50,22 @@ resend:
   no_pending:       "\x0304✗\x03 You have no pending registration to resend a token for."
   throttled:        "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another verification email."
 
+# --- RECOVER -----------------------------------------------------------------
+recover:
+  syntax:           "RECOVER <nickname> [token]"
+  short:            "Recover your account if you lost your password."
+  help:             "Recovers access to a registered account when you have lost your password.\n1) \x0303RECOVER <nickname>\x03 — a token is sent to the account's email.\n2) \x0303RECOVER <nickname> <token>\x03 — enter the token from the email to reset your password.\nYou will then receive a temporary password and the command to change it."
+  email_sent:       "\x0307→\x03 A recovery token has been sent to \x02%email_hint%\x02. Check your inbox (and spam folder)."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  pending:          "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending email verification."
+  suspended:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Reason: %reason%"
+  forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be used on this network."
+  no_email:         "\x0304✗\x03 No email is set for nickname \x02%nickname%\x02. Recovery is not available."
+  throttled:        "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another recovery email."
+  invalid_token:    "\x0304✗\x03 The token is invalid or has expired. Request a new one with \x0303RECOVER %nickname%\x03."
+  success_identify: "\x0303✔\x03 Password reset. Identify now: \x0303%identify_cmd%\x03"
+  success_then_change: "Then change your password: \x0303/msg NickServ SET PASSWORD <new_password>\x03"
+
 # --- IDENTIFY ---------------------------------------------------------------
 identify:
   syntax:           "IDENTIFY <nickname> <password>"
