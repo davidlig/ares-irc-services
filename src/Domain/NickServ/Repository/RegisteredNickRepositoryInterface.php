@@ -6,6 +6,7 @@ namespace App\Domain\NickServ\Repository;
 
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\ValueObject\NickStatus;
+use DateTimeImmutable;
 
 interface RegisteredNickRepositoryInterface
 {
@@ -22,6 +23,14 @@ interface RegisteredNickRepositoryInterface
     public function findByEmail(string $email): ?RegisteredNick;
 
     public function existsByNick(string $nickname): bool;
+
+    /**
+     * Returns REGISTERED nicks whose last activity (lastSeenAt ?? registeredAt) is before the threshold.
+     * Used for inactivity purge; excludes PENDING, SUSPENDED, FORBIDDEN.
+     *
+     * @return RegisteredNick[]
+     */
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array;
 
     /**
      * Removes all PENDING entries whose expiresAt is in the past.

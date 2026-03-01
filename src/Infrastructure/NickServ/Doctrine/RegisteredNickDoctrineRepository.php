@@ -62,6 +62,21 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return null !== $this->findByNick($nickname);
     }
 
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('n')
+            ->from(RegisteredNick::class, 'n')
+            ->where('n.status = :status')
+            ->andWhere('COALESCE(n.lastSeenAt, n.registeredAt) < :threshold')
+            ->setParameter('status', NickStatus::Registered)
+            ->setParameter('threshold', $threshold);
+
+        $result = $qb->getQuery()->getResult();
+
+        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick);
+    }
+
     public function deleteExpiredPending(): int
     {
         return (int) $this->em
