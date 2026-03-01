@@ -30,14 +30,14 @@ monolog:
         # -----------------------------------------------------------------------
         # Application log — info level, daily rotation, 30-day retention
         # General app events (startup, errors, framework, etc.) excluding IRC
-        # traffic and Symfony deprecations.
+        # traffic, Symfony deprecations and Doctrine SQL (e.g. Messenger polling).
         # -----------------------------------------------------------------------
         app_rotating:
             type:      rotating_file
             path:      '%kernel.logs_dir%/ares.log'
             level:     info
             max_files: 30
-            channels:  ['!irc', '!maintenance', '!deprecation', '!event']
+            channels:  ['!irc', '!maintenance', '!deprecation', '!event', '!doctrine']
 
         # -----------------------------------------------------------------------
         # Error aggregation — error level, daily rotation, 30-day retention
@@ -64,7 +64,7 @@ when@dev:
                 path:      '%kernel.logs_dir%/ares.log'
                 level:     debug
                 max_files: 30
-                channels:  ['!irc', '!deprecation', '!event']
+                channels:  ['!irc', '!deprecation', '!event', '!doctrine']
 
 when@test:
     monolog:
