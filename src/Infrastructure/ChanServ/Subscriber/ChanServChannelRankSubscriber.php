@@ -174,14 +174,28 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
             : '';
 
+        $currentLetter = $this->roleToLetter($event->role);
+
+        if ($channel->isSecure() && '' !== $currentLetter) {
+            $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
+            $desiredRank = self::RANK_ORDER[$desired] ?? 0;
+            if ($currentRank > $desiredRank) {
+                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
+                $this->logger->debug('ChanServ SECURE strip on join (rank above access)', [
+                    'channel' => $channelName,
+                    'uid' => $uid,
+                    'mode' => '-' . $currentLetter,
+                ]);
+            }
+        }
+
         if ($channel->isSecure() && '' === $desired && ChannelMemberRole::None !== $event->role) {
-            $letter = $this->roleToLetter($event->role);
-            if ('' !== $letter) {
-                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $letter, false);
+            if ('' !== $currentLetter) {
+                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
                 $this->logger->debug('ChanServ SECURE strip on join', [
                     'channel' => $channelName,
                     'uid' => $uid,
-                    'mode' => '-' . $letter,
+                    'mode' => '-' . $currentLetter,
                 ]);
             }
 
@@ -238,6 +252,28 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
                 // Unauthenticated users must not keep any ChanServ-managed rank (e.g. guest nick after rename)
                 $effectiveDesired = $sender->isIdentified ? $desired : '';
+
+                if ($channel->isSecure() && '' !== $currentLetter) {
+                    $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
+                    $desiredRank = self::RANK_ORDER[$effectiveDesired] ?? 0;
+                    if ($currentRank > $desiredRank) {
+                        $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
+                        $this->logger->debug('ChanServ SECURE strip on sync (rank above access)', [
+                            'channel' => $channelName,
+                            'uid' => $uid,
+                            'mode' => '-' . $currentLetter,
+                        ]);
+                        if ('' !== $effectiveDesired) {
+                            $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $effectiveDesired, true);
+                            $this->logger->debug('ChanServ auto-rank on sync', [
+                                'channel' => $channelName,
+                                'uid' => $uid,
+                                'mode' => '+' . $effectiveDesired,
+                            ]);
+                        }
+                        continue;
+                    }
+                }
 
                 if ($channel->isSecure() && '' === $effectiveDesired && '' !== $currentLetter) {
                     $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
@@ -315,16 +351,20 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
                 : '';
             $effectiveDesired = $sender->isIdentified ? $desired : '';
 
-            if ('' !== $effectiveDesired) {
-                continue;
-            }
+            $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
+            $desiredRank = self::RANK_ORDER[$effectiveDesired] ?? 0;
 
-            $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
-            $this->logger->debug('ChanServ SECURE strip (SECURE enabled)', [
-                'channel' => $channelName,
-                'uid' => $uid,
-                'mode' => '-' . $currentLetter,
-            ]);
+            if ($currentRank > $desiredRank) {
+                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
+                $this->logger->debug('ChanServ SECURE strip (SECURE enabled)', [
+                    'channel' => $channelName,
+                    'uid' => $uid,
+                    'mode' => '-' . $currentLetter,
+                ]);
+                if ('' !== $effectiveDesired) {
+                    $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $effectiveDesired, true);
+                }
+            }
         }
     }
 }
