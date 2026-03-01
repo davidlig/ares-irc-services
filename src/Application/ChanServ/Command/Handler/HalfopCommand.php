@@ -128,8 +128,13 @@ final readonly class HalfopCommand implements ChanServCommandInterface
 
         if ($channel->isSecure()) {
             $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId());
-            if (0 === $targetLevel) {
-                $context->reply('secure.requires_access', ['%nick%' => $targetNick]);
+            $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOHALFOP);
+            if ($targetLevel < $minLevelForMode) {
+                $context->reply('secure.requires_min_level', [
+                    '%nick%' => $targetNick,
+                    '%level%' => (string) $minLevelForMode,
+                    '%mode%' => '+h',
+                ]);
 
                 return;
             }

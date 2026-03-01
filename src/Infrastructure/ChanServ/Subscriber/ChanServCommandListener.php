@@ -74,7 +74,12 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
             $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (InsufficientAccessException $e) {
             $messageType = $this->messageTypeResolver->resolve($sender);
-            $this->chanServNotifier->sendMessage($sender->uid, $e->getMessage(), $messageType);
+            $language = $this->nickRepository->findByNick($sender->nick)?->getLanguage() ?? $this->defaultLanguage;
+            $message = $this->translator->trans('error.insufficient_access', [
+                '%operation%' => $e->getOperation(),
+                '%channel%' => $e->getChannelName(),
+            ], 'chanserv', $language);
+            $this->chanServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (Throwable $e) {
             $this->logger->error('ChanServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,

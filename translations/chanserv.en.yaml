@@ -11,6 +11,7 @@ error:
   channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   generic:        "\x0304✗\x03 An error occurred. Please try again."
   nick_not_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is not registered."
+  insufficient_access: "\x0304✗\x03 Insufficient access to \x02%operation%\x02 on channel \x02%channel%\x02."
   mail_failed: "\x0304✗\x03 Could not send email. Please try again later."
 
 register:
@@ -62,6 +63,7 @@ deop:
 
 secure:
   requires_access: "\x0304✗\x03 With SECURE on, \x02%nick%\x02 must be in the access list to receive a rank."
+  requires_min_level: "\x0304✗\x03 With SECURE on, \x02%nick%\x02 must have at least level \x02%level%\x02 to receive \x02%mode%\x02."
 
 set:
   syntax:           "SET <#channel> <option> <value>"
