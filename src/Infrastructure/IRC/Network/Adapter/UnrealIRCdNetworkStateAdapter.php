@@ -30,7 +30,6 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
-use function implode;
 use function sprintf;
 use function str_starts_with;
 use function strpos;
@@ -193,8 +192,11 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         }
 
         $modeStr = '';
-        if (isset($message->params[2]) && str_starts_with($message->params[2], '+')) {
-            $modeStr = implode(' ', array_slice($message->params, 2));
+        $modeParams = [];
+        if (isset($message->params[2]) && str_starts_with((string) $message->params[2], '+')) {
+            $modeStr = (string) $message->params[2];
+            // Unreal SJOIN: "modes and parameters, eg: +lk 666 key" — params[3], params[4], ... in order of mode letters
+            $modeParams = array_values(array_slice($message->params, 3));
         }
 
         $listModes = ['b' => [], 'e' => [], 'I' => []];
@@ -243,7 +245,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             $members[] = ['uid' => $uid, 'role' => $role];
         }
 
-        $this->eventDispatcher->dispatch(new FjoinReceivedEvent($channelName, $timestamp, $modeStr, $members, $listModes));
+        $this->eventDispatcher->dispatch(new FjoinReceivedEvent($channelName, $timestamp, $modeStr, $members, $listModes, $modeParams));
     }
 
     private function handlePart(IRCMessage $message): void
@@ -317,6 +319,13 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
     {
         $channelStr = $message->params[0] ?? '';
         $topic = $message->trailing;
+        $setterNick = null;
+        $setterParam = $message->params[1] ?? '';
+        if ('' !== $setterParam && false !== strpos($setterParam, '!')) {
+            $setterNick = explode('!', $setterParam, 2)[0];
+        } elseif ('' !== $setterParam) {
+            $setterNick = $setterParam;
+        }
 
         if ('' === $channelStr) {
             return;
@@ -328,7 +337,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new FtopicReceivedEvent($channelName, $topic));
+        $this->eventDispatcher->dispatch(new FtopicReceivedEvent($channelName, $topic, $setterNick));
     }
 
     private function handleMode(IRCMessage $message): void

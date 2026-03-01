@@ -38,11 +38,12 @@ enum ChannelMemberRole: string
 
     /**
      * Maps MODE command letter (e.g. +o, +v) to role. Used when parsing MODE #channel ±modes.
-     * UnrealIRCd / RFC: v=voice, h=halfop, o=op, a=admin, q=owner.
+     * UnrealIRCd PREFIX=(qaohv): only lowercase v,h,o,a,q are prefix modes. Uppercase letters
+     * (e.g. V=noinvite, D=delayjoin, R=regonly) are channel setting modes and must not match.
      */
     public static function fromModeLetter(string $letter): ?self
     {
-        return match (strtolower($letter)) {
+        return match ($letter) {
             'v' => self::Voice,
             'h' => self::HalfOp,
             'o' => self::Op,

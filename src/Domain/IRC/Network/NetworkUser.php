@@ -106,6 +106,7 @@ class NetworkUser
      * Applies a mode change string (e.g. "+r", "-r", "+ix-w") to the current modes.
      *
      * Called when the IRCd sends UMODE2 to propagate a mode change (e.g. after SVSLOGIN sets +r).
+     * Case must be preserved: +r = identified (NickServ), +R = e.g. regonlymsg (different mode).
      */
     public function applyModeChange(string $modeStr): void
     {

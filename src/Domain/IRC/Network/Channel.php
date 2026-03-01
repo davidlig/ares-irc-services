@@ -36,6 +36,9 @@ class Channel
 
     private string $modes;
 
+    /** @var array<string, string> Mode letter => param value (e.g. k => password, L => #channel) for modes that need param to unset */
+    private array $modeParams = [];
+
     public function __construct(
         public readonly ChannelName $name,
         string $modes = '',
@@ -85,6 +88,29 @@ class Channel
     public function updateModes(string $modes): void
     {
         $this->modes = $modes;
+    }
+
+    public function getModeParam(string $letter): ?string
+    {
+        return $this->modeParams[$letter] ?? null;
+    }
+
+    /**
+     * @return array<string, string> Mode letter => param value (e.g. k => password, L => #channel)
+     */
+    public function getModeParams(): array
+    {
+        return $this->modeParams;
+    }
+
+    public function setModeParam(string $letter, string $value): void
+    {
+        $this->modeParams[$letter] = $value;
+    }
+
+    public function clearModeParam(string $letter): void
+    {
+        unset($this->modeParams[$letter]);
     }
 
     public function getCreatedAt(): DateTimeImmutable
