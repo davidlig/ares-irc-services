@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\ChanServ\Doctrine;
+
+use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use Doctrine\ORM\EntityManagerInterface;
+
+class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface
+{
+    public function __construct(private readonly EntityManagerInterface $em)
+    {
+    }
+
+    public function save(RegisteredChannel $channel): void
+    {
+        $this->em->persist($channel);
+        $this->em->flush();
+    }
+
+    public function delete(RegisteredChannel $channel): void
+    {
+        $this->em->remove($channel);
+        $this->em->flush();
+    }
+
+    public function findByChannelName(string $channelName): ?RegisteredChannel
+    {
+        $nameLower = strtolower($channelName);
+
+        return $this->em
+            ->getRepository(RegisteredChannel::class)
+            ->findOneBy(['nameLower' => $nameLower]);
+    }
+
+    public function existsByChannelName(string $channelName): bool
+    {
+        return null !== $this->findByChannelName($channelName);
+    }
+
+    /**
+     * @return RegisteredChannel[]
+     */
+    public function findByFounderNickId(int $founderNickId): array
+    {
+        $result = $this->em
+            ->getRepository(RegisteredChannel::class)
+            ->findBy(['founderNickId' => $founderNickId], ['name' => 'ASC']);
+
+        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
+    }
+
+    /**
+     * @return RegisteredChannel[]
+     */
+    public function listAll(): array
+    {
+        $result = $this->em
+            ->getRepository(RegisteredChannel::class)
+            ->findBy([], ['name' => 'ASC']);
+
+        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
+    }
+}

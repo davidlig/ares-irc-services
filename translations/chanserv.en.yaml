@@ -1,0 +1,240 @@
+# ChanServ translations — English
+# Domain: chanserv
+
+unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg ChanServ HELP\x03."
+
+error:
+  syntax:         "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
+  oper_only:      "\x0304✗\x03 This command is restricted to IRC Operators."
+  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg NickServ IDENTIFY\x03."
+  invalid_channel: "\x0304✗\x03 Invalid channel name. Use \x02#channel\x02."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  generic:        "\x0304✗\x03 An error occurred. Please try again."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is not registered."
+  mail_failed: "\x0304✗\x03 Could not send email. Please try again later."
+
+register:
+  syntax:           "REGISTER <#channel> <description>"
+  short:            "Register a channel."
+  help:             "Registers the channel. You must be identified. ChanServ will join with maximum level and set +nt if the channel has no MLOCK."
+  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
+  channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
+
+info:
+  syntax:           "INFO <#channel>"
+  short:            "Show channel information."
+  help:             "Shows founder, registered date, successor, URL, email, description, last used, topic, and options (TOPICLOCK, MLOCK, SECURE)."
+  header:          "\x0303Info for \x02%channel%\x02\x03"
+  founder:         "  Founder: \x02%nick%\x02"
+  registered:      "  Registered: %date%"
+  successor:       "  Successor: \x02%nick%\x02"
+  description:     "  Description: %desc%"
+  url:             "  URL: %url%"
+  email:           "  Email: %email%"
+  last_used:       "  Last used: %date%"
+  topic:           "  Last topic: %topic%"
+  topic_set_by:    "  Topic set by: %nick%"
+  options:         "  Options: TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  mlock_modes:     "  Mode lock: %modes%"
+
+help:
+  syntax:           "HELP [command [sub-option]]"
+  short:            "List commands or show help for a command."
+  help:             "Without arguments lists all commands. Use \x0303HELP <command>\x03 for full help."
+  intro:            "\x0303ChanServ\x03 — Channel Registration Services"
+  footer:           "Use \x0303/msg ChanServ HELP <command>\x03 for more information."
+  unknown_command:  "\x0304✗\x03 Unknown command \x02%command%\x02."
+  suboptions:       "Sub-options:"
+
+op:
+  syntax:           "OP <#channel> <nickname>"
+  short:            "Give channel operator (+o) to a user."
+  help:             "ChanServ gives +o to the user. Requires OPDEOP level. With SECURE ON, target must have access."
+  done:             "\x0303✔\x03 \x02%nick%\x02 has been given channel operator status."
+  user_not_on_channel: "\x0304✗\x03 User \x02%nick%\x02 is not on the network."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
+
+deop:
+  syntax:           "DEOP <#channel> <nickname>"
+  short:            "Remove channel operator (+o) from a user."
+  help:             "ChanServ removes +o from the user. Requires OPDEOP level."
+  done:             "\x0303✔\x03 \x02%nick%\x02 has been deopped."
+
+secure:
+  requires_access: "\x0304✗\x03 With SECURE on, \x02%nick%\x02 must be in the access list to receive a rank."
+
+set:
+  syntax:           "SET <#channel> <option> <value>"
+  short:             "Change channel options (founder-only or SET level)."
+  help:              "Options: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE. FOUNDER/SUCCESSOR require founder."
+  unknown_option:    "\x0304✗\x03 Unknown option \x02%option%\x02. Use one of: %options%."
+  founder:
+    syntax:         "SET <#channel> FOUNDER <newnick> [token]"
+    short:          "Transfer founder to another registered nick (token via email)."
+    help:           "Without token: sends a token to the current founder's email. With token: completes the transfer."
+    token_sent:     "\x0303✔\x03 A founder change token has been sent to %email_hint%."
+    invalid_token:  "\x0304✗\x03 Invalid or expired token."
+    updated:        "\x0303✔\x03 Founder has been changed to \x02%nick%\x02."
+    no_email:       "\x0304✗\x03 Current founder has no email set. Cannot send token."
+    throttled:      "\x0304✗\x03 Please wait before requesting another token."
+    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 must be fully registered (not pending)."
+  successor:
+    syntax:         "SET <#channel> SUCCESSOR <nickname|none>"
+    short:          "Set or clear the channel successor (founder only)."
+    help:           "Successor must be registered and not suspended. Use empty/none to clear."
+    cleared:        "\x0303✔\x03 Successor has been cleared."
+    updated:        "\x0303✔\x03 Successor has been set to \x02%nick%\x02."
+    suspended:      "\x0304✗\x03 \x02%nick%\x02 is suspended and cannot be set as successor."
+    cannot_be_founder: "\x0304✗\x03 The founder cannot be set as successor."
+  desc:
+    syntax:         "SET <#channel> DESC <description>"
+    short:          "Set channel description."
+    help:           "Requires SET level."
+    updated:        "\x0303✔\x03 Description updated."
+  url:
+    syntax:         "SET <#channel> URL <url|none>"
+    short:          "Set or clear channel URL."
+    help:           "Requires SET level."
+    updated:        "\x0303✔\x03 URL updated."
+    cleared:        "\x0303✔\x03 URL cleared."
+  email:
+    syntax:         "SET <#channel> EMAIL <email|none>"
+    short:          "Set or clear channel email."
+    help:           "Requires SET level."
+    updated:        "\x0303✔\x03 Email updated."
+    cleared:        "\x0303✔\x03 Email cleared."
+  entrymsg:
+    syntax:         "SET <#channel> ENTRYMSG <message|none>"
+    short:          "Set or clear entry message (NOTICE on join)."
+    help:           "Requires SET level."
+    updated:        "\x0303✔\x03 Entry message updated."
+    cleared:        "\x0303✔\x03 Entry message cleared."
+    too_long:       "\x0304✗\x03 Entry message cannot exceed %max% characters."
+  topiclock:
+    syntax:         "SET <#channel> TOPICLOCK ON|OFF"
+    short:          "Lock topic to stored value."
+    help:           "Requires SET level."
+    on:             "\x0303✔\x03 Topic lock is now ON."
+    off:            "\x0303✔\x03 Topic lock is now OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nick%\x03 enables TOPICLOCK."
+    notice_off:     "\x0304✗\x03 \x0302%nick%\x03 disables TOPICLOCK."
+  mlock:
+    syntax:         "SET <#channel> MLOCK ON|OFF"
+    short:          "Lock channel modes (e.g. +nt)."
+    help:           "Requires SET level."
+    no_modes:       "(no modes)"
+    on:             "\x0303✔\x03 MLOCK is now ON (%modes%)."
+    off:            "\x0303✔\x03 MLOCK is now OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nick%\x03 enables MLOCK (%modes%)."
+    notice_off:     "\x0304✗\x03 \x0302%nick%\x03 disables MLOCK."
+  secure:
+    syntax:         "SET <#channel> SECURE ON|OFF"
+    short:          "Require access list for OP/DEOP/VOICE etc."
+    help:           "Requires SET level."
+    on:             "\x0303✔\x03 SECURE is now ON."
+    off:            "\x0303✔\x03 SECURE is now OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nick%\x03 enables SECURE mode."
+    notice_off:     "\x0304✗\x03 \x0302%nick%\x03 disables SECURE mode."
+
+access:
+  syntax:           "ACCESS <#channel> ADD|DEL|LIST [nickname] [level]"
+  short:            "Manage channel access list (ADD/DEL/LIST)."
+  help:             "LIST: view access list (ACCESSLIST level). ADD/DEL: change list (ACCESSCHANGE level). Level 1-499; max 100 entries."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use LIST, ADD, or DEL."
+  level_range:      "\x0304✗\x03 Access level must be between %min% and %max%."
+  cannot_manage_level: "\x0304✗\x03 You can only manage nicks with level strictly below your own."
+  founder_not_in_list: "\x0304✗\x03 The founder is not in the access list."
+  max_entries:      "\x0304✗\x03 Maximum %max% access entries per channel."
+  list:
+    syntax:         "ACCESS <#channel> LIST"
+    short:          "List access list (requires ACCESSLIST level)."
+    help:           "Shows nickname and level for each entry."
+    header:         "\x0303Access list for \x02%channel%\x02\x03"
+    empty:          "  (empty)"
+  add:
+    syntax:         "ACCESS <#channel> ADD <nickname> <level>"
+    short:          "Add or update access level (requires ACCESSCHANGE level)."
+    help:           "Level 1-499. You can only set levels below your own."
+    done:           "\x0303✔\x03 \x02%nick%\x02 set to level %level%."
+    notice_channel: "\x0303✔\x03 \x0302%from%\x03 sets \x0314%to%\x03 to level \x0304%level%\x03"
+  del:
+    syntax:         "ACCESS <#channel> DEL <nickname>"
+    short:          "Remove from access list (requires ACCESSCHANGE level)."
+    help:           "You can only remove nicks with level below your own."
+    not_in_list:    "\x0304✗\x03 \x02%nick%\x02 is not in the access list."
+    done:           "\x0303✔\x03 \x02%nick%\x02 removed from access list."
+    notice_channel: "\x0304✗\x03 \x0302%from%\x03 removes \x0314%to%\x03 from access list"
+
+levels:
+  syntax:           "LEVELS <#channel> LIST|SET|RESET [level] [value]"
+  short:            "View or set level requirements (founder only)."
+  help:             "LIST: show levels. SET: set a level (-1 to 499). RESET: restore defaults. Some keys hidden if IRCd has no admin/halfop."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use LIST, SET, or RESET."
+  unknown_key:      "\x0304✗\x03 Unknown level key \x02%key%\x02 or not supported by this IRCd."
+  value_range:      "\x0304✗\x03 Level value must be between %min% and %max%."
+  list:
+    syntax:         "LEVELS <#channel> LIST"
+    short:          "List level requirements."
+    help:           "Shows each level key and its value (defaults if not set)."
+    header:         "\x0303Levels\x03"
+  set:
+    syntax:         "LEVELS <#channel> SET <level> <value>"
+    short:          "Set a level requirement."
+    help:           "Value -1 to 499. Founder only."
+    done:           "\x0303✔\x03 \x02%key%\x02 set to %value%."
+  reset:
+    syntax:         "LEVELS <#channel> RESET"
+    short:          "Reset all levels to defaults."
+    help:           "Removes all overrides. Founder only."
+    done:           "\x0303✔\x03 All levels reset to defaults."
+
+voice:
+  syntax:           "VOICE <#channel> <nickname>"
+  short:            "Give voice (+v) to a user."
+  help:             "ChanServ gives +v. Requires VOICEDEVOICE level. With SECURE ON, target must have access."
+  done:             "\x0303✔\x03 \x02%nick%\x02 has been given voice."
+  user_not_on_channel: "\x0304✗\x03 User \x02%nick%\x02 is not on the network."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
+
+devoice:
+  syntax:           "DEVOICE <#channel> <nickname>"
+  short:            "Remove voice (+v) from a user."
+  help:             "ChanServ removes +v. Requires VOICEDEVOICE level."
+  done:             "\x0303✔\x03 \x02%nick%\x02 has been devoiced."
+
+invite:
+  syntax:           "INVITE <#channel>"
+  short:            "Invite yourself to the channel."
+  help:             "ChanServ invites you to the channel. Requires INVITE level."
+  done:             "\x0303✔\x03 You have been invited to \x02%channel%\x02."
+  notice_channel:   "\x0303✔\x03 \x0302%nick%\x03 invites themselves to the channel."
+
+admin:
+  syntax:           "ADMIN <#channel> <nickname>"
+  short:            "Give channel admin (+a) to a user."
+  help:             "ChanServ gives +a. Requires ADMINDEADMIN level. Only if IRCd supports admin mode."
+  done:             "\x0303✔\x03 \x02%nick%\x02 has been given channel admin."
+  user_not_on_channel: "\x0304✗\x03 User \x02%nick%\x02 is not on the network."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
+  not_supported:    "\x0304✗\x03 This network does not support channel admin (+a) mode."
+
+deadmin:
+  syntax:           "DEADMIN <#channel> <nickname>"
+  short:            "Remove channel admin (+a) from a user."
+  help:             "ChanServ removes +a. Requires ADMINDEADMIN level."
+  done:             "\x0303✔\x03 \x02%nick%\x02 has been deadminned."
+
+halfop:
+  syntax:           "HALFOP <#channel> <nickname>"
+  short:            "Give halfop (+h) to a user."
+  help:             "ChanServ gives +h. Requires HALFOPDEHALFOP level. Only if IRCd supports halfop mode."
+  done:             "\x0303✔\x03 \x02%nick%\x02 has been given halfop."
+  user_not_on_channel: "\x0304✗\x03 User \x02%nick%\x02 is not on the network."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 gives \x0304%mode%\x03 to \x0314%to%\x03"
+  not_supported:    "\x0304✗\x03 This network does not support halfop (+h) mode."
+
+dehalfop:
+  syntax:           "DEHALFOP <#channel> <nickname>"
+  short:            "Remove halfop (+h) from a user."
+  help:             "ChanServ removes +h. Requires HALFOPDEHALFOP level."
+  done:             "\x0303✔\x03 \x02%nick%\x02 has been dehalfopped."

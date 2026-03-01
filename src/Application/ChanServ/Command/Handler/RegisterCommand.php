@@ -1,0 +1,125 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Application\ChanServ\Command\Handler;
+
+use App\Application\ChanServ\Command\ChanServCommandInterface;
+use App\Application\ChanServ\Command\ChanServContext;
+use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
+use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
+use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+
+use function array_slice;
+
+/**
+ * REGISTER <#channel> <description>.
+ *
+ * Registers a channel. User must be identified. ChanServ joins with max level
+ * and sets +nt if the channel has no MLOCK.
+ */
+final readonly class RegisterCommand implements ChanServCommandInterface
+{
+    public function __construct(
+        private RegisteredChannelRepositoryInterface $channelRepository,
+        private ChannelLevelRepositoryInterface $levelRepository,
+    ) {
+    }
+
+    public function getName(): string
+    {
+        return 'REGISTER';
+    }
+
+    public function getAliases(): array
+    {
+        return [];
+    }
+
+    public function getMinArgs(): int
+    {
+        return 2;
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return 'register.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return 'register.help';
+    }
+
+    public function getOrder(): int
+    {
+        return 1;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return 'register.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getRequiredPermission(): ?string
+    {
+        return 'IDENTIFIED';
+    }
+
+    public function execute(ChanServContext $context): void
+    {
+        $channelName = $context->getChannelNameArg(0);
+        if (null === $channelName) {
+            $context->reply('error.invalid_channel');
+
+            return;
+        }
+
+        $description = implode(' ', array_slice($context->args, 1));
+        $channelNameLower = strtolower($channelName);
+
+        if ($this->channelRepository->existsByChannelName($channelNameLower)) {
+            throw ChannelAlreadyRegisteredException::forChannel($channelName);
+        }
+
+        $channelView = $context->getChannelView($channelName);
+        if (null === $channelView) {
+            $context->reply('register.channel_not_on_network', ['%channel%' => $channelName]);
+
+            return;
+        }
+
+        $senderAccount = $context->senderAccount;
+        if (null === $senderAccount) {
+            $context->reply('error.not_identified');
+
+            return;
+        }
+
+        $channel = RegisteredChannel::register(
+            $channelName,
+            $senderAccount->getId(),
+            $description,
+        );
+        $this->channelRepository->save($channel);
+
+        foreach (ChannelLevel::DEFAULTS as $key => $value) {
+            $level = new ChannelLevel($channel->getId(), $key, $value);
+            $this->levelRepository->save($level);
+        }
+
+        $context->reply('register.success', ['%channel%' => $channelName]);
+    }
+}
