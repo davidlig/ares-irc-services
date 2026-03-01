@@ -42,10 +42,14 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
     }
 
     /**
-     * Runs first (priority 10): set +r so the channel shows as registered. Only for registered channels.
+     * Runs first (priority 10): set +r so the channel shows as registered.
+     * Only when channel setup is applicable (link or channel was empty and now has users).
      */
     public function onChannelSyncedSetRegistered(ChannelSyncedEvent $event): void
     {
+        if (!$event->channelSetupApplicable) {
+            return;
+        }
         $channelName = $event->channel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $registered) {

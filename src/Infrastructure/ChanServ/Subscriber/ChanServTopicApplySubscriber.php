@@ -36,34 +36,43 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
     }
 
     /**
-     * Runs last (priority -20): apply stored topic for this channel if any.
+     * Runs last (priority -20): apply stored topic only when channel setup is applicable
+     * (link or channel was empty and now has users) and topic is missing or different.
      */
     public function onChannelSynced(ChannelSyncedEvent $event): void
     {
+        if (!$event->channelSetupApplicable) {
+            return;
+        }
         $channelName = $event->channel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $registered) {
             return;
         }
 
-        $topic = $registered->getTopic();
-        if (null === $topic) {
+        $storedTopic = $registered->getTopic();
+        if (null === $storedTopic) {
             return;
         }
 
-        $this->channelServiceActions->setChannelTopic($channelName, $topic);
+        $currentTopic = $event->channel->getTopic();
+        if ($currentTopic === $storedTopic) {
+            return;
+        }
+
+        $this->channelServiceActions->setChannelTopic($channelName, $storedTopic);
         $this->logger->debug('ChanServ applied stored topic on sync', ['channel' => $channelName]);
     }
 
     /**
-     * Runs last (priority -20): apply stored topic for each registered channel that has a view.
+     * Runs last (priority -20): apply stored topic for each registered channel only when missing or different.
      */
     public function onSyncComplete(NetworkSyncCompleteEvent $event): void
     {
         $channels = $this->channelRepository->listAll();
         foreach ($channels as $channel) {
-            $topic = $channel->getTopic();
-            if (null === $topic) {
+            $storedTopic = $channel->getTopic();
+            if (null === $storedTopic) {
                 continue;
             }
 
@@ -72,7 +81,11 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
                 continue;
             }
 
-            $this->channelServiceActions->setChannelTopic($view->name, $topic);
+            if ($view->topic === $storedTopic) {
+                continue;
+            }
+
+            $this->channelServiceActions->setChannelTopic($view->name, $storedTopic);
             $this->logger->debug('ChanServ applied stored topic', ['channel' => $view->name]);
         }
     }

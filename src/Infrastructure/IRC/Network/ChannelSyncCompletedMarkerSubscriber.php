@@ -29,6 +29,9 @@ final readonly class ChannelSyncCompletedMarkerSubscriber implements EventSubscr
 
     public function onChannelSynced(ChannelSyncedEvent $event): void
     {
+        if (!$event->channelSetupApplicable) {
+            return;
+        }
         $this->registry->markSyncCompleted($event->channel->name->value);
     }
 }

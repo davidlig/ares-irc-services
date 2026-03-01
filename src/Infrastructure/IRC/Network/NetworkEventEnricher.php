@@ -186,18 +186,21 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
             $channel->addInviteException($mask);
         }
 
+        $memberCountBefore = $channel->getMemberCount();
         $joinedUids = [];
         foreach ($event->members as $member) {
             $channel->syncMember($member['uid'], $member['role']);
             $joinedUids[] = $member['uid'];
         }
 
+        $channelSetupApplicable = $isNewChannel || (0 === $memberCountBefore);
+
         if ($isNewChannel) {
             $this->channelRepository->save($channel);
-            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
+            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
         } else {
             $this->channelRepository->save($channel);
-            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel));
+            $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
             foreach ($joinedUids as $uid) {
                 $member = $channel->getMember($uid);
                 $role = $member?->role ?? ChannelMemberRole::None;
