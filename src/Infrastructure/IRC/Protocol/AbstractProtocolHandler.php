@@ -6,6 +6,7 @@ namespace App\Infrastructure\IRC\Protocol;
 
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
+use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use Psr\Log\LoggerInterface;
@@ -36,6 +37,16 @@ abstract class AbstractProtocolHandler implements ProtocolHandlerInterface
     protected function dispatchBurstComplete(ConnectionInterface $connection, string $sid): void
     {
         $this->eventDispatcher?->dispatch(new NetworkBurstCompleteEvent($connection, $sid));
+    }
+
+    /**
+     * Dispatches NetworkSyncCompleteEvent AFTER we have sent our EOS/ENDBURST.
+     * Use for actions that must run after the link has declared sync complete
+     * (e.g. ChanServ rejoining registered channels).
+     */
+    protected function dispatchSyncComplete(ConnectionInterface $connection, string $sid): void
+    {
+        $this->eventDispatcher?->dispatch(new NetworkSyncCompleteEvent($connection, $sid));
     }
 
     public function parseRawLine(string $rawLine): IRCMessage

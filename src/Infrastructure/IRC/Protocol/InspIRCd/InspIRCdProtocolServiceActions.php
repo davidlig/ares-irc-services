@@ -9,6 +9,7 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function in_array;
 use function sprintf;
 
 /**
@@ -42,6 +43,44 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     public function killUser(string $serverSid, string $targetUid, string $reason): void
     {
         $this->write(sprintf(':%s KILL %s :%s', $serverSid, $targetUid, $reason));
+    }
+
+    public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = ''): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $paramStr = [] === $params ? '' : ' ' . implode(' ', $params);
+        $this->write(sprintf(':%s MODE %s %s%s', $prefix, $channelName, $modeStr, $paramStr));
+    }
+
+    public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = ''): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $delta = $add ? '+' . $modeLetter : '-' . $modeLetter;
+        $this->write(sprintf(':%s MODE %s %s %s', $prefix, $channelName, $delta, $targetUid));
+    }
+
+    public function inviteUserToChannel(string $serverSid, string $channelName, string $targetUid, string $serviceUid = ''): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $this->write(sprintf(':%s INVITE %s %s', $prefix, $targetUid, $channelName));
+    }
+
+    public function joinChannelAsService(string $serverSid, string $channelName, string $serviceUid, string $maxPrefixLetter, ?int $channelTimestamp = null): void
+    {
+        $timestamp = (string) ($channelTimestamp ?? time());
+        $prefixLetter = strtolower($maxPrefixLetter);
+        if ('' === $prefixLetter || !in_array($prefixLetter, ['v', 'h', 'o', 'a', 'q'], true)) {
+            $prefixLetter = 'o';
+        }
+        $memberEntry = $prefixLetter . ',' . $serviceUid . ':';
+        $this->write(sprintf(':%s FJOIN %s %s 0 :%s', $serverSid, $channelName, $timestamp, $memberEntry));
+    }
+
+    public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = ''): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $trailing = null === $topic ? '' : ' :' . $topic;
+        $this->write(sprintf(':%s TOPIC %s%s', $prefix, $channelName, $trailing));
     }
 
     private function write(string $line): void
