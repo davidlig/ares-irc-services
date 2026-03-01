@@ -183,6 +183,7 @@ help:
   help:             "Muestra la ayuda general de NickServ o la información detallada\nde un comando concreto."
   header_title:     "NickServ"
   intro:            "Gestión y protección de nicknames en la red IRC."
+  intro_expiration: "NOTA: Los nicknames \x0304\x1Fsin uso\x0F durante más de %days% días se eliminan automáticamente."
   general_header:   "\x02\x0314Comandos disponibles:\x03\x0F"
   command_line:     "  \x0307%command%\x03%description%"
   subcommand_line:  "  \x0307%command%\x03%description%"

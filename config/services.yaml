@@ -46,6 +46,9 @@ parameters:
     nickserv.recover_token_ttl_seconds: '%env(int:default:nickserv.recover_token_ttl_seconds_default:NICKSERV_RECOVER_TOKEN_TTL)%'
     nickserv.recover_min_interval_seconds_default: 600
     nickserv.recover_min_interval_seconds: '%env(int:default:nickserv.recover_min_interval_seconds_default:NICKSERV_RECOVER_MIN_INTERVAL)%'
+    # Inactivity expiry: days without use after which a registered nick is dropped (0 = disabled)
+    nickserv.inactivity_expiry_days_default: 0
+    nickserv.inactivity_expiry_days: '%env(int:default:nickserv.inactivity_expiry_days_default:NICKSERV_INACTIVITY_EXPIRY_DAYS)%'
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
@@ -322,7 +325,8 @@ services:
 
     App\Application\NickServ\Command\Handler\HelpCommand:
         arguments:
-            $timezoneHelpProvider: '@App\Application\NickServ\TimezoneHelpProvider'
+            $timezoneHelpProvider:   '@App\Application\NickServ\TimezoneHelpProvider'
+            $inactivityExpiryDays:  '%nickserv.inactivity_expiry_days%'
         tags: ['nickserv.command']
 
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---
@@ -396,6 +400,15 @@ services:
         arguments:
             $intervalSeconds: '%maintenance.interval%'
             $logger:          '@monolog.logger.maintenance'
+        tags: ['maintenance.task']
+
+    App\Application\NickServ\Maintenance\PurgeInactiveNicknamesTask:
+        arguments:
+            $nickRepository:         '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $eventDispatcher:       '@event_dispatcher'
+            $logger:                '@monolog.logger.maintenance'
+            $intervalSeconds:       '%maintenance.interval%'
+            $inactivityExpiryDays:  '%nickserv.inactivity_expiry_days%'
         tags: ['maintenance.task']
 
     # --- In-memory pruners (tagged for PruneMemoryRegistriesTask) -----------------

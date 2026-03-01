@@ -35,6 +35,7 @@ final readonly class HelpCommand implements NickServCommandInterface
 
     public function __construct(
         private readonly TimezoneHelpProvider $timezoneHelpProvider,
+        private readonly int $inactivityExpiryDays = 0,
     ) {
     }
 
@@ -104,7 +105,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         $targetCmd = strtoupper($context->args[0]);
         $handler = $context->getRegistry()->find($targetCmd);
 
-        if (null === $handler || ($handler->isOperOnly() && !$sender->isOper())) {
+        if (null === $handler || ($handler->isOperOnly() && !$sender->isOper)) {
             $context->reply('help.unknown_command', ['command' => $targetCmd]);
 
             return;
@@ -137,7 +138,7 @@ final readonly class HelpCommand implements NickServCommandInterface
 
     private function showGeneralHelp(NickServContext $context): void
     {
-        $isOper = $context->sender?->isOper() ?? false;
+        $isOper = $context->sender?->isOper ?? false;
         $commands = $context->getRegistry()->all();
 
         usort($commands, static fn ($a, $b) => $a->getOrder() <=> $b->getOrder());
@@ -164,6 +165,10 @@ final readonly class HelpCommand implements NickServCommandInterface
 
         $context->replyRaw(' ');
         $context->reply('help.general_footer');
+        if ($this->inactivityExpiryDays > 0) {
+            $context->replyRaw(' ');
+            $context->reply('help.intro_expiration', ['%days%' => $this->inactivityExpiryDays]);
+        }
         $context->reply('help.footer');
     }
 
