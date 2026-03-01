@@ -16,6 +16,7 @@ use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\ModeReceivedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
+use App\Domain\IRC\Event\UserLeftChannelEvent;
 use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -55,6 +56,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         return [
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
+            UserLeftChannelEvent::class => ['onUserLeftChannel', 0],
             NetworkSyncCompleteEvent::class => ['onSyncComplete', 0],
             ChannelSyncedEvent::class => ['onChannelSyncedSecureStrip', 0],
             ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
@@ -211,12 +213,53 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
+        // Update channel last used when an identified user with ACCESS joins
+        $channel->touchLastUsed();
+        $this->channelRepository->save($channel);
+
         $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $desired, true);
         $this->logger->debug('ChanServ auto-rank on join', [
             'channel' => $channelName,
             'uid' => $uid,
             'nick' => $sender->nick,
             'mode' => '+' . $desired,
+        ]);
+    }
+
+    /**
+     * Updates channel last used when an identified user with ACCESS leaves (PART, KICK or QUIT).
+     */
+    public function onUserLeftChannel(UserLeftChannelEvent $event): void
+    {
+        $channelName = $event->channel->value;
+        $uid = $event->uid->value;
+
+        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+        if (null === $channel) {
+            return;
+        }
+
+        $sender = $this->userLookup->findByUid($uid);
+        if (null === $sender) {
+            return;
+        }
+
+        $account = $this->nickRepository->findByNick($sender->nick);
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        $desired = null !== $account
+            ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
+            : '';
+
+        if ('' === $desired || !$sender->isIdentified) {
+            return;
+        }
+
+        $channel->touchLastUsed();
+        $this->channelRepository->save($channel);
+        $this->logger->debug('ChanServ last used on leave', [
+            'channel' => $channelName,
+            'uid' => $uid,
+            'nick' => $sender->nick,
         ]);
     }
 
