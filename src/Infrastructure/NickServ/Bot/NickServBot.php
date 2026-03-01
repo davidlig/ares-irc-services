@@ -7,17 +7,16 @@ namespace App\Infrastructure\NickServ\Bot;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\Port\SendNoticePort;
-use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;
+use App\Domain\IRC\Message\IRCMessage;
+use App\Domain\IRC\Message\MessageDirection;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
-use function sprintf;
 
 /**
  * NickServ pseudo-client: introduces on burst, implements NickServNotifierInterface.
@@ -28,7 +27,6 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly LocalUserModeSyncInterface $localUserModeSync,
-        private readonly VhostCommandBuilderInterface $vhostCommandBuilder,
         private readonly string $servicesHostname,
         private readonly string $nickservUid,
         private readonly string $nickservNick = 'NickServ',
@@ -52,19 +50,21 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
 
     private function introduce(ConnectionInterface $connection, string $serverSid): void
     {
-        $ts = time();
-        $uid = sprintf(
-            ':%s UID %s 1 %d %s %s %s 0 +Sio * * * :%s',
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+
+        $line = $module->getIntroductionFormatter()->formatIntroduction(
             $serverSid,
             $this->nickservNick,
-            $ts,
             $this->nickservIdent,
             $this->servicesHostname,
             $this->nickservUid,
             $this->nickservRealname,
         );
 
-        $connection->writeLine($uid);
+        $connection->writeLine($line);
 
         $this->logger->info('NickServ introduced to network.', [
             'uid' => $this->nickservUid,
@@ -88,46 +88,80 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
             return;
         }
 
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            $this->logger->warning('NickServBot: cannot send message — no active protocol module.');
+
+            return;
+        }
+
         $command = 'PRIVMSG' === $messageType ? 'PRIVMSG' : 'NOTICE';
         foreach (explode("\n", $message) as $line) {
             if ('' === $line) {
                 continue;
             }
-            $this->writeToConnection(sprintf(':%s %s %s :%s', $this->nickservUid, $command, $targetUidOrNick, $line));
+            $ircMessage = new IRCMessage(
+                command: $command,
+                prefix: $this->nickservUid,
+                params: [$targetUidOrNick],
+                trailing: $line,
+                direction: MessageDirection::Outgoing,
+            );
+            $rawLine = $module->getHandler()->formatMessage($ircMessage);
+            $this->writeToConnection($rawLine);
         }
     }
 
     public function setUserAccount(string $targetUid, string $accountName): void
     {
-        $logout = ('0' === $accountName);
-        $modeDelta = $logout ? '-r' : '+r';
-        $this->write(sprintf(':%s SVS2MODE %s %s', $this->getServerSid(), $targetUid, $modeDelta));
-
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+        $modeDelta = ('0' === $accountName) ? '-r' : '+r';
+        $module->getServiceActions()->setUserAccount($this->getServerSid(), $targetUid, $accountName);
         $this->localUserModeSync->apply(new Uid($targetUid), $modeDelta);
     }
 
     public function setUserMode(string $targetUid, string $modes): void
     {
-        $this->write(sprintf(':%s SVSMODE %s %s', $this->getServerSid(), $targetUid, $modes));
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+        $module->getServiceActions()->setUserMode($this->getServerSid(), $targetUid, $modes);
     }
 
     public function forceNick(string $targetUid, string $newNick): void
     {
         $this->pendingRegistry->mark($targetUid);
-        $this->write(sprintf(':%s SVSNICK %s %s %d', $this->getServerSid(), $targetUid, $newNick, time()));
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+        $module->getServiceActions()->forceNick($this->getServerSid(), $targetUid, $newNick);
     }
 
     public function killUser(string $targetUid, string $reason): void
     {
-        $this->write(sprintf(':%s KILL %s :%s', $this->getServerSid(), $targetUid, $reason));
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
+        $module->getServiceActions()->killUser($this->getServerSid(), $targetUid, $reason);
     }
 
     public function setUserVhost(string $targetUid, string $vhost, string $sourceServerSid): void
     {
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            return;
+        }
         $sid = $this->getServerSid();
+        $vhostBuilder = $module->getVhostCommandBuilder();
         $line = '' !== $vhost
-            ? $this->vhostCommandBuilder->getSetVhostLine($sid, $targetUid, $vhost)
-            : $this->vhostCommandBuilder->getClearVhostLine($sid, $targetUid);
+            ? $vhostBuilder->getSetVhostLine($sid, $targetUid, $vhost)
+            : $vhostBuilder->getClearVhostLine($sid, $targetUid);
         $this->write($line);
     }
 
