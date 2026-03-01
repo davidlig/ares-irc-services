@@ -86,6 +86,7 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
             $endburst = sprintf(':%s ENDBURST', $this->sid);
             $connection->writeLine($endburst);
             $this->logger->info('Sent ENDBURST — initial burst and sync complete.', ['sid' => $this->sid]);
+            // NetworkSyncCompleteEvent is dispatched by SyncCompleteDispatcherSubscriber after MessageReceivedEvent(ENDBURST)
         }
     }
 }

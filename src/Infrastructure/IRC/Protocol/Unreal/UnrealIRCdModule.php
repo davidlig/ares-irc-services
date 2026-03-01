@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\Unreal;
 
+use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
@@ -11,7 +12,7 @@ use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 
 /**
- * UnrealIRCd protocol module: handler, service actions, introduction formatter, vhost builder.
+ * UnrealIRCd protocol module: handler, service actions, introduction formatter, vhost builder, channel mode support.
  */
 final readonly class UnrealIRCdModule implements ProtocolModuleInterface
 {
@@ -22,6 +23,7 @@ final readonly class UnrealIRCdModule implements ProtocolModuleInterface
         private readonly UnrealIRCdProtocolServiceActions $serviceActions,
         private readonly UnrealIRCdServiceIntroductionFormatter $introductionFormatter,
         private readonly UnrealIRCdVhostCommandBuilder $vhostCommandBuilder,
+        private readonly UnrealIRCdChannelModeSupport $channelModeSupport,
     ) {
     }
 
@@ -48,5 +50,10 @@ final readonly class UnrealIRCdModule implements ProtocolModuleInterface
     public function getVhostCommandBuilder(): VhostCommandBuilderInterface
     {
         return $this->vhostCommandBuilder;
+    }
+
+    public function getChannelModeSupport(): ChannelModeSupportInterface
+    {
+        return $this->channelModeSupport;
     }
 }

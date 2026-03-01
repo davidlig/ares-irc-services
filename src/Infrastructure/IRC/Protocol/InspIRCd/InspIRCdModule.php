@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 
+use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
@@ -11,7 +12,7 @@ use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 
 /**
- * InspIRCd protocol module: handler, service actions, introduction formatter, vhost builder.
+ * InspIRCd protocol module: handler, service actions, introduction formatter, vhost builder, channel mode support.
  */
 final readonly class InspIRCdModule implements ProtocolModuleInterface
 {
@@ -22,6 +23,7 @@ final readonly class InspIRCdModule implements ProtocolModuleInterface
         private readonly InspIRCdProtocolServiceActions $serviceActions,
         private readonly InspIRCdServiceIntroductionFormatter $introductionFormatter,
         private readonly InspIRCdVhostCommandBuilder $vhostCommandBuilder,
+        private readonly InspIRCdChannelModeSupport $channelModeSupport,
     ) {
     }
 
@@ -48,5 +50,10 @@ final readonly class InspIRCdModule implements ProtocolModuleInterface
     public function getVhostCommandBuilder(): VhostCommandBuilderInterface
     {
         return $this->vhostCommandBuilder;
+    }
+
+    public function getChannelModeSupport(): ChannelModeSupportInterface
+    {
+        return $this->channelModeSupport;
     }
 }

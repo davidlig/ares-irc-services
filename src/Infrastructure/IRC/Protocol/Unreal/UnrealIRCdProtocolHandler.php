@@ -132,6 +132,7 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
         $eos = sprintf(':%s EOS', $this->sid);
         $connection->writeLine($eos);
         $this->logger->info('Sent EOS — initial burst and sync complete.', ['sid' => $this->sid]);
+        // NetworkSyncCompleteEvent is dispatched by SyncCompleteDispatcherSubscriber after MessageReceivedEvent(EOS)
     }
 
     private function handleNetinfo(IRCMessage $message, ConnectionInterface $connection): void

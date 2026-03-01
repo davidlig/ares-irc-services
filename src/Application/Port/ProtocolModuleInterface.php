@@ -22,4 +22,7 @@ interface ProtocolModuleInterface
     public function getIntroductionFormatter(): ServiceIntroductionFormatterInterface;
 
     public function getVhostCommandBuilder(): VhostCommandBuilderInterface;
+
+    /** Which channel prefix modes (v, h, o, a, q) this IRCd supports. Used by ChanServ. */
+    public function getChannelModeSupport(): ChannelModeSupportInterface;
 }
