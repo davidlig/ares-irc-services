@@ -89,11 +89,13 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
         }
 
         foreach ($user->getChannelNames() as $channelNameStr) {
-            $channel = $this->channelRepository->findByName(new ChannelName($channelNameStr));
-            if (null !== $channel) {
-                $channel->removeMember($user->uid);
-                $this->channelRepository->save($channel);
-            }
+            $this->eventDispatcher->dispatch(new UserLeftChannelEvent(
+                $user->uid,
+                $user->getNick(),
+                new ChannelName($channelNameStr),
+                $event->reason,
+                false,
+            ));
         }
 
         $this->userRepository->removeByUid($user->uid);
