@@ -14,6 +14,13 @@ interface NickServNotifierInterface
     public function sendNotice(string $targetUidOrNick, string $message): void;
 
     /**
+     * Send a NOTICE or PRIVMSG from NickServ to a target user (by UID or nick).
+     *
+     * @param 'NOTICE'|'PRIVMSG' $messageType
+     */
+    public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void;
+
+    /**
      * Set the registered (+r) status for a user (identified to the given account).
      * To log out a user pass '0' (zero string) as $accountName.
      */

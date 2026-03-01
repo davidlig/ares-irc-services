@@ -25,5 +25,6 @@
         <field name="private" type="boolean" column="private"/>
         <field name="vhost" type="string" length="48" nullable="true" column="vhost" unique="true"/>
         <field name="timezone" type="string" length="64" nullable="true" column="timezone"/>
+        <field name="msgPrivmsg" type="boolean" column="msg_privmsg"/>
     </entity>
 </doctrine-mapping>

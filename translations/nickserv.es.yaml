@@ -167,6 +167,13 @@ set:
     on:             "\x0303✔\x03 La información de tu cuenta es ahora \x02privada\x02."
     off:            "\x0303✔\x03 La información de tu cuenta es ahora \x02pública\x02."
 
+  msg:
+    syntax:         "SET MSG ON|OFF"
+    short:          "Usar PRIVMSG (ON) o NOTICE (OFF) para las respuestas de los servicios."
+    help:           "Controla cómo NickServ y el resto de servicios te envían mensajes.\nCon \x02MSG ON\x02 las respuestas se envían como \x02PRIVMSG\x02 (algunos clientes pueden mostrar notificaciones o respuestas automáticas).\nCon \x02MSG OFF\x02 las respuestas se envían como \x02NOTICE\x02 (por defecto; normalmente sin auto-respuesta)."
+    on:             "\x0303✔\x03 Los mensajes de los servicios se enviarán ahora como \x02PRIVMSG\x02."
+    off:             "\x0303✔\x03 Los mensajes de los servicios se enviarán ahora como \x02NOTICE\x02."
+
   vhost:
     syntax:         "SET VHOST <vhost>|OFF"
     short:          "Establece o quita tu host virtual (hostname visible)."

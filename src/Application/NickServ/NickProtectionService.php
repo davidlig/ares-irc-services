@@ -211,7 +211,8 @@ final readonly class NickProtectionService
             $language,
         );
 
-        $this->notifier->sendNotice($user->uid, $warning);
+        $messageType = $account->getMessageType();
+        $this->notifier->sendMessage($user->uid, $warning, $messageType);
 
         $guestNick = $this->guestPrefix . strtoupper(substr(uniqid(), -7));
 
@@ -222,7 +223,7 @@ final readonly class NickProtectionService
             $language,
         );
 
-        $this->notifier->sendNotice($user->uid, $renameMsg);
+        $this->notifier->sendMessage($user->uid, $renameMsg, $messageType);
         $this->notifier->forceNick($user->uid, $guestNick);
 
         $this->logger->info(sprintf(
