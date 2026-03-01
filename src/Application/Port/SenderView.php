@@ -22,6 +22,8 @@ readonly class SenderView
         public bool $isIdentified = false,
         public bool $isOper = false,
         public string $serverSid = '',
+        /** Host currently displayed by the IRCd (vhost if set, else cloakedHost). */
+        public string $displayHost = '',
     ) {
     }
 }

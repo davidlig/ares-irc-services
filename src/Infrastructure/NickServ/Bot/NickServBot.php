@@ -6,6 +6,7 @@ namespace App\Infrastructure\NickServ\Bot;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
@@ -25,6 +26,7 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly NetworkUserLookupPort $userLookup,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly LocalUserModeSyncInterface $localUserModeSync,
         private readonly string $servicesHostname,
@@ -153,6 +155,19 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
 
     public function setUserVhost(string $targetUid, string $vhost, string $sourceServerSid): void
     {
+        $sender = $this->userLookup->findByUid($targetUid);
+        if (null !== $sender) {
+            if ('' !== $vhost) {
+                if ($sender->displayHost === $vhost) {
+                    return;
+                }
+            } else {
+                if ($sender->displayHost === $sender->cloakedHost) {
+                    return;
+                }
+            }
+        }
+
         $module = $this->connectionHolder->getProtocolModule();
         if (null === $module) {
             return;
