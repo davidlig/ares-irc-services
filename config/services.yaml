@@ -116,7 +116,7 @@ services:
             $defaultProtocol:    '%irc.protocol%'
             $defaultUseTls:      '%irc.use_tls%'
 
-    # --- Protocol handlers (tagged for auto-registration into the registry) ---
+    # --- Protocol modules (one per IRCd type: Unreal, InspIRCd, etc.) ---
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
         arguments:
@@ -132,20 +132,44 @@ services:
             $eventDispatcher: '@event_dispatcher'
         tags: ['irc.protocol_handler']
 
-    # --- Vhost command builders (per-protocol); delegator selects by irc.protocol ---
-
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder: ~
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder: ~
 
-    App\Infrastructure\IRC\Protocol\ProtocolVhostCommandBuilder:
-        arguments:
-            $protocol:       '%irc.protocol%'
-            $unrealBuilder:  '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder'
-            $inspircdBuilder: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder'
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter: ~
 
-    App\Application\Port\VhostCommandBuilderInterface:
-        alias: App\Infrastructure\IRC\Protocol\ProtocolVhostCommandBuilder
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter: ~
+
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdModule:
+        arguments:
+            $handler:                '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler'
+            $serviceActions:         '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions'
+            $introductionFormatter:  '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
+            $vhostCommandBuilder:   '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder'
+        tags: ['irc.protocol_module']
+
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule:
+        arguments:
+            $handler:                '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler'
+            $serviceActions:         '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions'
+            $introductionFormatter:  '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
+            $vhostCommandBuilder:   '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder'
+        tags: ['irc.protocol_module']
+
+    App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry:
+        arguments:
+            $modules: !tagged_iterator irc.protocol_module
+
+    App\Application\Port\ProtocolModuleRegistryInterface:
+        alias: App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry
 
     # --- Event subscriber — logs domain events to the irc channel ------------
 
@@ -261,9 +285,8 @@ services:
 
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
-            $pendingRegistry:      '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
-            $vhostCommandBuilder: '@App\Application\Port\VhostCommandBuilderInterface'
-            $servicesHostname:    '%services.hostname%'
+            $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
+            $servicesHostname:   '%services.hostname%'
             $nickservUid:        '%nickserv.uid%'
             $nickservNick:       '%nickserv.nick%'
             $nickservIdent:      '%nickserv.ident%'
