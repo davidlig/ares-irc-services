@@ -52,6 +52,9 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
 
     public function onChannelSynced(ChannelSyncedEvent $event): void
     {
+        if (!$event->channelSetupApplicable) {
+            return;
+        }
         $channelName = $event->channel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $registered || !$registered->isMlockActive()) {
