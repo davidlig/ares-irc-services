@@ -9,6 +9,7 @@ use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\ChannelTopicChangedEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
+use App\Domain\IRC\Event\UserHostChangedEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
 use App\Domain\IRC\Event\UserModeChangedEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
@@ -49,6 +50,7 @@ class NetworkStateSubscriber implements EventSubscriberInterface
             UserQuitNetworkEvent::class => ['onUserQuitNetwork', 0],
             UserNickChangedEvent::class => ['onUserNickChanged', 10],
             UserModeChangedEvent::class => ['onUserModeChanged', 0],
+            UserHostChangedEvent::class => ['onUserHostChanged', 0],
             ChannelSyncedEvent::class => ['onChannelSynced', 0],
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
             UserLeftChannelEvent::class => ['onUserLeftChannel', 0],
@@ -91,6 +93,14 @@ class NetworkStateSubscriber implements EventSubscriberInterface
         $user = $this->userRepository->findByUid($event->uid);
         if (null !== $user) {
             $user->applyModeChange($event->modeDelta);
+        }
+    }
+
+    public function onUserHostChanged(UserHostChangedEvent $event): void
+    {
+        $user = $this->userRepository->findByUid($event->uid);
+        if (null !== $user) {
+            $user->updateVirtualHost($event->newHost);
         }
     }
 
