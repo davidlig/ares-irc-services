@@ -281,6 +281,14 @@ services:
     App\Application\Port\ChannelLookupPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter
 
+    App\Application\Port\ChannelSyncCompletedRegistryInterface:
+        class: App\Infrastructure\IRC\Network\ChannelSyncCompletedRegistry
+
+    App\Infrastructure\IRC\Network\ChannelSyncCompletedMarkerSubscriber:
+        arguments:
+            $registry: '@App\Application\Port\ChannelSyncCompletedRegistryInterface'
+        tags: ['kernel.event_subscriber']
+
     App\Application\Port\SendNoticePort:
         alias: App\Infrastructure\NickServ\Bot\NickServBot
 
