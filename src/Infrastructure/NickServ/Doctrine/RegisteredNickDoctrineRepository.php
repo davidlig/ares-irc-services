@@ -35,6 +35,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->findOneBy(['nicknameLower' => strtolower($nickname)]);
     }
 
+    public function findById(int $id): ?RegisteredNick
+    {
+        $nick = $this->em->find(RegisteredNick::class, $id);
+
+        return $nick instanceof RegisteredNick ? $nick : null;
+    }
+
     public function findByVhost(string $vhost): ?RegisteredNick
     {
         return $this->em
