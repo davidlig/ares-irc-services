@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\ChanServ\Bot;
 
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
@@ -28,6 +29,7 @@ readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceA
 
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly ChannelLookupPort $channelLookup,
         private readonly string $servicesHostname,
         private readonly string $chanservUid,
         private readonly string $chanservNick = 'ChanServ',
@@ -109,6 +111,11 @@ readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceA
     public function sendNoticeToChannel(string $channelName, string $message): void
     {
         if (!$this->connectionHolder->isConnected()) {
+            return;
+        }
+
+        $channelView = $this->channelLookup->findByChannelName($channelName);
+        if (null === $channelView || $channelView->memberCount < 1) {
             return;
         }
 
