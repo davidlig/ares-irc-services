@@ -50,6 +50,17 @@ parameters:
     nickserv.inactivity_expiry_days_default: 0
     nickserv.inactivity_expiry_days: '%env(int:default:nickserv.inactivity_expiry_days_default:NICKSERV_INACTIVITY_EXPIRY_DAYS)%'
 
+    # ChanServ pseudo-client
+    chanserv.nick:     '%env(CHANSERV_NICK)%'
+    chanserv.ident:    '%env(CHANSERV_IDENT)%'
+    chanserv.realname: '%env(CHANSERV_REALNAME)%'
+    chanserv.uid:      '%env(CHANSERV_UID)%'
+    # SET FOUNDER: token TTL and throttle (same defaults as NickServ RECOVER)
+    chanserv.founder_token_ttl_seconds_default: 3600
+    chanserv.founder_token_ttl_seconds: '%env(int:default:chanserv.founder_token_ttl_seconds_default:CHANSERV_FOUNDER_TOKEN_TTL)%'
+    chanserv.founder_min_interval_seconds_default: 600
+    chanserv.founder_min_interval_seconds: '%env(int:default:chanserv.founder_min_interval_seconds_default:CHANSERV_FOUNDER_MIN_INTERVAL)%'
+
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
     mailer.send_delay_seconds_default: 5
@@ -154,6 +165,7 @@ services:
             $serviceActions:         '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions'
             $introductionFormatter:  '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
             $vhostCommandBuilder:   '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder'
+            $channelModeSupport:    '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport'
         tags: ['irc.protocol_module']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule:
@@ -162,6 +174,7 @@ services:
             $serviceActions:         '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions'
             $introductionFormatter:  '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
             $vhostCommandBuilder:   '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder'
+            $channelModeSupport:    '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport'
         tags: ['irc.protocol_module']
 
     App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry:
@@ -222,6 +235,31 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 
+    App\Infrastructure\ChanServ\Subscriber\ChanServCommandListener:
+        arguments:
+            $defaultLanguage: '%services.default_language%'
+            $logger: '@monolog.logger.irc'
+        tags: ['service_command_listener']
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServRejoinSubscriber:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
+        arguments:
+            $chanservUid: '%chanserv.uid%'
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber:
+        arguments:
+            $chanservNick: '%chanserv.nick%'
+            $nickservNick: '%nickserv.nick%'
+            $logger: '@monolog.logger.irc'
+
     App\Infrastructure\IRC\Network\NetworkStateSubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
@@ -240,8 +278,20 @@ services:
     App\Application\Port\NetworkUserLookupPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter
 
+    App\Application\Port\ChannelLookupPort:
+        class: App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter
+
     App\Application\Port\SendNoticePort:
         alias: App\Infrastructure\NickServ\Bot\NickServBot
+
+    App\Application\Port\ActiveChannelModeSupportProviderInterface:
+        class: App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider
+
+    App\Infrastructure\IRC\Protocol\NullChannelModeSupport: ~
+
+    App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider:
+        arguments:
+            $nullSupport: '@App\Infrastructure\IRC\Protocol\NullChannelModeSupport'
 
     # --- ActiveConnectionHolder — stores the live S2S connection for all services ---
 
@@ -252,6 +302,17 @@ services:
 
     App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface:
         class: App\Infrastructure\NickServ\Doctrine\RegisteredNickDoctrineRepository
+
+    # --- ChanServ Domain --------------------------------------------------------
+
+    App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface:
+        class: App\Infrastructure\ChanServ\Doctrine\RegisteredChannelDoctrineRepository
+
+    App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface:
+        class: App\Infrastructure\ChanServ\Doctrine\ChannelAccessDoctrineRepository
+
+    App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface:
+        class: App\Infrastructure\ChanServ\Doctrine\ChannelLevelDoctrineRepository
 
     # --- NickServ Bot pseudo-client ---------------------------------------------
 
@@ -296,6 +357,89 @@ services:
 
     App\Application\NickServ\Command\NickServNotifierInterface:
         alias: App\Infrastructure\NickServ\Bot\NickServBot
+
+    # --- ChanServ Bot pseudo-client ---------------------------------------------
+
+    App\Infrastructure\ChanServ\Bot\ChanServBot:
+        arguments:
+            $servicesHostname:   '%services.hostname%'
+            $chanservUid:        '%chanserv.uid%'
+            $chanservNick:      '%chanserv.nick%'
+            $chanservIdent:     '%chanserv.ident%'
+            $chanservRealname:  '%chanserv.realname%'
+            $logger:            '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
+    App\Application\ChanServ\Command\ChanServNotifierInterface:
+        alias: App\Infrastructure\ChanServ\Bot\ChanServBot
+
+    App\Application\Port\ChannelServiceActionsPort:
+        alias: App\Infrastructure\ChanServ\Bot\ChanServBot
+
+    # --- ChanServ Service -------------------------------------------------------
+
+    App\Application\ChanServ\ChanServService:
+        arguments:
+            $defaultLanguage: '%services.default_language%'
+            $defaultTimezone: '%services.default_timezone%'
+            $logger:          '@monolog.logger.irc'
+
+    App\Application\ChanServ\Command\ChanServCommandRegistry:
+        arguments:
+            $commands: !tagged_iterator chanserv.command
+
+    App\Application\ChanServ\Command\Handler\RegisterCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\InfoCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\HelpCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\OpCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\DeopCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\FounderChangeTokenRegistry: ~
+
+    App\Application\ChanServ\Set\SetFounderHandler:
+        arguments:
+            $founderTokenTtlSeconds: '%chanserv.founder_token_ttl_seconds%'
+            $founderMinIntervalSeconds: '%chanserv.founder_min_interval_seconds%'
+            $logger: '@monolog.logger.irc'
+
+    App\Application\ChanServ\Command\Handler\SetCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\AccessCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\LevelsCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\VoiceCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\DevoiceCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\InviteCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\AdminCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\DeadminCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\HalfopCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\DehalfopCommand:
+        tags: ['chanserv.command']
 
     # --- NickServ Command Registry — auto-collects all tagged commands ----------
 

@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Application\ChanServ\Set;
+
+use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\NickServ\ValueObject\NickStatus;
+
+final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
+{
+    public function __construct(
+        private RegisteredChannelRepositoryInterface $channelRepository,
+        private RegisteredNickRepositoryInterface $nickRepository,
+    ) {
+    }
+
+    public function handle(\App\Application\ChanServ\Command\ChanServContext $context, RegisteredChannel $channel, string $value): void
+    {
+        $nickname = trim($value);
+        if ('' === $nickname) {
+            $channel->setSuccessor(null);
+            $this->channelRepository->save($channel);
+            $context->reply('set.successor.cleared');
+
+            return;
+        }
+
+        $account = $this->nickRepository->findByNick($nickname);
+        if (null === $account) {
+            $context->reply('error.nick_not_registered', ['%nick%' => $nickname]);
+
+            return;
+        }
+        if (NickStatus::Suspended === $account->getStatus()) {
+            $context->reply('set.successor.suspended', ['%nick%' => $nickname]);
+
+            return;
+        }
+        if ($channel->isFounder($account->getId())) {
+            $context->reply('set.successor.cannot_be_founder', ['%nick%' => $nickname]);
+
+            return;
+        }
+
+        $channel->setSuccessor($account->getId());
+        $this->channelRepository->save($channel);
+        $context->reply('set.successor.updated', ['%nick%' => $nickname]);
+    }
+}
