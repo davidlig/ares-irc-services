@@ -7,13 +7,12 @@ namespace App\Infrastructure\IRC\Protocol\Unreal;
 use App\Application\Port\VhostCommandBuilderInterface;
 
 use function sprintf;
-use function strpos;
 
 final readonly class UnrealIRCdVhostCommandBuilder implements VhostCommandBuilderInterface
 {
     public function getSetVhostLine(string $serverSid, string $targetUid, string $vhost): string
     {
-        $trailing = (false !== strpos($vhost, ' ')) ? ' :' . $vhost : ' ' . $vhost;
+        $trailing = (str_contains($vhost, ' ')) ? ' :' . $vhost : ' ' . $vhost;
 
         return sprintf(':%s CHGHOST %s%s', $serverSid, $targetUid, $trailing);
     }

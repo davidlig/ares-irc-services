@@ -36,6 +36,7 @@ final readonly class NickServService
         private readonly NickServNotifierInterface $notifier,
         private readonly TranslatorInterface $translator,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
+        private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
         private readonly string $defaultLanguage = 'en',
         private readonly string $defaultTimezone = 'UTC',
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -84,6 +85,7 @@ final readonly class NickServService
             timezone: $timezone,
             registry: $this->commandRegistry,
             pendingVerificationRegistry: $this->pendingVerificationRegistry,
+            recoveryTokenRegistry: $this->recoveryTokenRegistry,
         );
 
         $this->authorizationContext->setCurrentUser($sender);

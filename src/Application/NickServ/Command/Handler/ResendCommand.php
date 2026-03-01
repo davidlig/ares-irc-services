@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
+use App\Application\Helper\SecureToken;
 use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -115,7 +116,7 @@ final readonly class ResendCommand implements NickServCommandInterface
             }
         }
 
-        $token = bin2hex(random_bytes(16));
+        $token = SecureToken::hex(32);
         $expiresAt = new DateTimeImmutable(sprintf('+%d seconds', self::TOKEN_TTL_SECONDS));
 
         $context->getPendingVerificationRegistry()->store($nick, $token, $expiresAt);
