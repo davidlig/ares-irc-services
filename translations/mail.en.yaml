@@ -56,3 +56,17 @@ recovery_token_body: |
     /msg NickServ RECOVER %nickname% %token%
 
   The token expires in 1 hour. If you did not request this, please ignore this email.
+
+# ChanServ SET FOUNDER — founder change token
+founder_change_token_subject: "ChanServ: founder change token for %channel%"
+founder_change_token_body: |
+  Hello,
+
+  A founder change was requested for the channel "%channel%" to the nickname "%new_nick%".
+
+  Your confirmation token is: %token%
+
+  To complete the change, send to ChanServ (replace <token> with the token above):
+    /msg ChanServ SET #channel FOUNDER %new_nick% <token>
+
+  The token expires in 1 hour. If you did not request this, please ignore this email.

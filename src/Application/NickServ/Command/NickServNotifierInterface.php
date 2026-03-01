@@ -27,8 +27,9 @@ interface NickServNotifierInterface
     public function setUserAccount(string $targetUid, string $accountName): void;
 
     /**
-     * Set raw user modes on a user.
+     * Set raw user modes on a user (wire format; do not lowercase).
      * Use setUserAccount() for the +r (registered/identified) status.
+     * +r = identified, +R = e.g. regonlymsg; case must be preserved.
      */
     public function setUserMode(string $targetUid, string $modes): void;
 
