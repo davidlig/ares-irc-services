@@ -11,6 +11,7 @@ error:
   channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   generic:        "\x0304✗\x03 Ocurrió un error. Inténtalo de nuevo."
   nick_not_registered: "\x0304✗\x03 El nick \x02%nick%\x02 no está registrado."
+  insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 en el canal \x02%channel%\x02."
   mail_failed: "\x0304✗\x03 No se pudo enviar el correo. Inténtalo más tarde."
 
 register:
@@ -62,6 +63,7 @@ deop:
 
 secure:
   requires_access: "\x0304✗\x03 Con SECURE activado, \x02%nick%\x02 debe estar en la lista de acceso para recibir rango."
+  requires_min_level: "\x0304✗\x03 Con SECURE activado, \x02%nick%\x02 debe tener al menos nivel \x02%level%\x02 para recibir \x02%mode%\x02."
 
 set:
   syntax:           "SET <#canal> <opción> <valor>"

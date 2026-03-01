@@ -118,6 +118,14 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
 
             return;
         }
+        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->getId());
+        $targetAccount = $this->nickRepository->findByNick($targetNick);
+        $targetLevel = null === $targetAccount ? 0 : $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId());
+        if ($senderLevel <= $targetLevel) {
+            $context->reply('error.insufficient_access', ['%operation%' => 'DEHALFOP', '%channel%' => $channelName]);
+
+            return;
+        }
 
         $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', false);
         $context->getNotifier()->sendNoticeToChannel(

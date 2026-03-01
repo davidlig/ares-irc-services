@@ -11,6 +11,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
  * DEVOICE <#channel> <nickname>. ChanServ removes +v.
@@ -21,6 +22,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private NetworkUserLookupPort $userLookup,
         private ChanServAccessHelper $accessHelper,
+        private RegisteredNickRepositoryInterface $nickRepository,
     ) {
     }
 
@@ -107,6 +109,14 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
             $context->reply('voice.user_not_on_channel', ['%nick%' => $targetNick]);
+
+            return;
+        }
+        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->getId());
+        $targetAccount = $this->nickRepository->findByNick($targetNick);
+        $targetLevel = null === $targetAccount ? 0 : $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId());
+        if ($senderLevel <= $targetLevel) {
+            $context->reply('error.insufficient_access', ['%operation%' => 'DEVOICE', '%channel%' => $channelName]);
 
             return;
         }

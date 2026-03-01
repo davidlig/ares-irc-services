@@ -134,8 +134,13 @@ final readonly class OpCommand implements ChanServCommandInterface
 
         if ($channel->isSecure()) {
             $targetLevel = $this->effectiveAccessLevel($channel, $targetAccount->getId());
-            if (0 === $targetLevel) {
-                $context->reply('secure.requires_access', ['%nick%' => $targetNick]);
+            $minLevelForMode = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOOP);
+            if ($targetLevel < $minLevelForMode) {
+                $context->reply('secure.requires_min_level', [
+                    '%nick%' => $targetNick,
+                    '%level%' => (string) $minLevelForMode,
+                    '%mode%' => '+o',
+                ]);
 
                 return;
             }
