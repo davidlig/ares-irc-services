@@ -12,6 +12,7 @@ use App\Domain\IRC\Event\NickChangeReceivedEvent;
 use App\Domain\IRC\Event\PartReceivedEvent;
 use App\Domain\IRC\Event\QuitReceivedEvent;
 use App\Domain\IRC\Event\ServerDelinkedEvent;
+use App\Domain\IRC\Event\SethostReceivedEvent;
 use App\Domain\IRC\Event\Umode2ReceivedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Message\IRCMessage;
@@ -65,6 +66,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             'PART' => $this->handlePart($message),
             'KICK' => $this->handleKick($message),
             'UMODE2' => $this->handleUmode2($message),
+            'SETHOST' => $this->handleSethost($message),
             'MD' => $this->handleMd($message),
             'TOPIC' => $this->handleTopic($message),
             'MODE' => $this->handleMode($message),
@@ -296,6 +298,21 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         }
 
         $this->eventDispatcher->dispatch(new Umode2ReceivedEvent($sourceId, $modeStr));
+    }
+
+    /**
+     * SETHOST: user's displayed host changed (e.g. after CHGHOST or clear). Format :uid SETHOST :newhost
+     */
+    private function handleSethost(IRCMessage $message): void
+    {
+        $sourceId = $message->prefix ?? '';
+        $newHost = $message->trailing ?? '';
+
+        if ('' === $sourceId) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(new SethostReceivedEvent($sourceId, $newHost));
     }
 
     private function handleMd(IRCMessage $message): void

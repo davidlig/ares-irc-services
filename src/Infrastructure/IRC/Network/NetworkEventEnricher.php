@@ -17,7 +17,9 @@ use App\Domain\IRC\Event\ModeReceivedEvent;
 use App\Domain\IRC\Event\NickChangeReceivedEvent;
 use App\Domain\IRC\Event\PartReceivedEvent;
 use App\Domain\IRC\Event\QuitReceivedEvent;
+use App\Domain\IRC\Event\SethostReceivedEvent;
 use App\Domain\IRC\Event\Umode2ReceivedEvent;
+use App\Domain\IRC\Event\UserHostChangedEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
 use App\Domain\IRC\Event\UserModeChangedEvent;
@@ -75,6 +77,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
             FtopicReceivedEvent::class => ['onFtopicReceived', 256],
             ModeReceivedEvent::class => ['onModeReceived', 256],
             Umode2ReceivedEvent::class => ['onUmode2Received', 256],
+            SethostReceivedEvent::class => ['onSethostReceived', 256],
         ];
     }
 
@@ -388,6 +391,16 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
         }
 
         $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, $event->modeStr));
+    }
+
+    public function onSethostReceived(SethostReceivedEvent $event): void
+    {
+        $user = $this->resolveUser($event->sourceId);
+        if (null === $user) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch(new UserHostChangedEvent($user->uid, $event->newHost));
     }
 
     /**

@@ -161,11 +161,11 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
                 if ($sender->displayHost === $vhost) {
                     return;
                 }
-            } else {
-                if ($sender->displayHost === $sender->cloakedHost) {
-                    return;
-                }
             }
+            // When clearing (vhost === ''), do NOT skip based on displayHost === cloakedHost.
+            // Our displayHost comes from NetworkUser state, updated only on SETHOST; if the
+            // IRCd never echoed SETHOST after we set vhost, we would wrongly skip and the
+            // vhost would not be removed on de-identify (e.g. nick change stripping +r).
         }
 
         $module = $this->connectionHolder->getProtocolModule();
