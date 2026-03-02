@@ -118,7 +118,8 @@ final readonly class DeopCommand implements ChanServCommandInterface
         }
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         $targetLevel = null === $targetAccount ? 0 : $this->effectiveAccessLevel($channel, $targetAccount->getId());
-        if ($senderLevel <= $targetLevel) {
+        $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
+        if (!$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEOP', '%channel%' => $channelName]);
 
             return;
