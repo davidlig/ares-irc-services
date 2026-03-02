@@ -1,6 +1,6 @@
 # Ares IRC Services
 
-A modular, protocol-agnostic IRC services daemon built with **PHP 8.4** and **Symfony 7.4**, following Clean Architecture and Domain-Driven Design principles.
+A modular, protocol-agnostic IRC services daemon (Core + NickServ + ChanServ) built with **PHP 8.4** and **Symfony 7.4**, following Clean Architecture and Domain-Driven Design principles.
 
 > **Note:** The services are **not complete** and are **under active development**. Functionality and APIs may change.
 
@@ -139,6 +139,8 @@ php bin/console irc:connect services.example.com irc.example.com 6697 secret \
     "Ares IRC Services" --protocol=unreal --tls
 ```
 
+When the connection is established and the initial network burst completes, the Core IRC layer syncs users and channels and then introduces the service bots (NickServ, ChanServ, etc.) automatically. From that point, users on the network can interact with the services using normal IRC commands (e.g. `/msg NickServ ...`, `/msg ChanServ ...`), without any extra manual setup.
+
 ### Argument / option reference
 
 | Argument / Option | Env var fallback | Description |
@@ -164,38 +166,88 @@ The project follows **Clean Architecture** with strict layer separation:
 
 ```
 src/
-├── Domain/IRC/           Pure PHP — interfaces, value objects, domain events
-│   ├── Connection/       ConnectionInterface, ConnectionFactoryInterface
-│   ├── Protocol/         ProtocolHandlerInterface, ProtocolHandlerRegistryInterface
-│   ├── Message/          IRCMessage (RFC 1459 parser/formatter)
-│   ├── Server/           ServerLink value object
-│   ├── ValueObject/      Hostname, Port, ServerName, LinkPassword
-│   └── Event/            ConnectionEstablishedEvent, ConnectionLostEvent, MessageReceivedEvent
+├── Domain/IRC/                     Pure PHP — entities, value objects, domain events, no framework
+│   ├── Connection/                 ConnectionInterface, ConnectionFactoryInterface
+│   ├── Protocol/                   ProtocolHandlerInterface, IRCMessage, protocol domain contracts
+│   ├── Network/                    In-memory network state (servers, users, channels)
+│   ├── ValueObject/                Hostname, Port, ServerName, LinkPassword, etc.
+│   └── Event/                      ConnectionEstablishedEvent, ConnectionLostEvent, MessageReceivedEvent, NetworkSyncCompleteEvent, ...
 │
-├── Application/IRC/      Use cases — depends only on Domain
-│   ├── IRCClient         Connect → read loop → disconnect orchestrator
-│   ├── IRCClientFactory  Wires connection + protocol into an IRCClient
-│   └── Connect/          ConnectToServerCommand + ConnectToServerHandler
+├── Domain/NickServ/                Nick registration and authentication domain
+│   ├── Entity/                     RegisteredNick
+│   ├── ValueObject/                NickStatus
+│   ├── Repository/                 RegisteredNickRepositoryInterface
+│   ├── Service/                    PasswordHasherInterface
+│   └── Exception/                  NickAlreadyRegisteredException, NickNotRegisteredException, InvalidCredentialsException, ...
 │
-├── Infrastructure/IRC/   Adapters — implements Domain interfaces
-│   ├── Connection/       SocketConnection (TCP/TLS), SocketConnectionFactory
-│   └── Protocol/
-│       ├── AbstractProtocolHandler   RFC 1459 parse/format baseline
-│       ├── ProtocolHandlerRegistry   Tagged-iterator registry
-│       ├── Unreal/       UnrealIRCdProtocolHandler
-│       └── InspIRCd/     InspIRCdProtocolHandler
+├── Domain/ChanServ/                Channel registration and access control domain
+│   ├── Entity/                     RegisteredChannel, ChannelAccess, ChannelLevel
+│   ├── Repository/                 RegisteredChannelRepositoryInterface, ChannelAccessRepositoryInterface, ChannelLevelRepositoryInterface
+│   └── Exception/                  ChannelAlreadyRegisteredException, ChannelNotRegisteredException, InsufficientAccessException, ...
 │
-└── UI/CLI/               Symfony console commands
-    └── ConnectCommand    bin/console irc:connect
+├── Application/IRC/                Use cases — depends only on Domain
+│   ├── IRCClient                   Connect → read loop → disconnect orchestrator
+│   ├── IRCClientFactory            Wires connection + protocol module into an IRCClient
+│   └── Connect/                    ConnectToServerCommand + ConnectToServerHandler
+│
+├── Application/Port/               Ports and DTOs between Core IRC and services
+│   ├── SenderView                  Readonly view of the user who sent a command
+│   ├── ChannelView                 Readonly view of a channel (name, modes, topic, ...)
+│   ├── NetworkUserLookupPort       Find a connected user by UID, return SenderView
+│   ├── ChannelLookupPort           Find a channel by name, return ChannelView
+│   ├── SendNoticePort              Send NOTICEs to users via the active connection
+│   ├── ProtocolModuleInterface     Bundle of protocol-specific handler/actions/formatters
+│   ├── ProtocolServiceActionsInterface, ServiceIntroductionFormatterInterface,
+│   │   VhostCommandBuilderInterface, ChannelModeSupportInterface
+│   ├── ProtocolModuleRegistryInterface
+│   ├── ChannelServiceActionsPort, ChannelSyncCompletedRegistryInterface
+│   └── ServiceCommandListenerInterface, ActiveChannelModeSupportProviderInterface
+│
+├── Application/NickServ/           NickServ application layer (commands, flows, registries)
+│   ├── Command/                    Command parsing, routing and handlers for /msg NickServ
+│   ├── Set/                        Handlers for SET subcommands (email, password, vhost, ...)
+│   ├── Maintenance/                Periodic maintenance tasks and pruners
+│   └── Security/                   Permission model and authorization contracts
+│
+├── Application/ChanServ/           ChanServ application layer (commands, mlock, access lists)
+│   ├── Command/                    Command parsing, routing and handlers for /msg ChanServ
+│   ├── Set/                        Handlers for SET subcommands (mlock, url, email, ...)
+│   └── Event/                      Application events (secure enabled, mlock updated, ...)
+│
+├── Infrastructure/IRC/             Adapters — implements Domain and Port interfaces
+│   ├── Connection/                 SocketConnection (TCP/TLS), SocketConnectionFactory, ActiveConnectionHolder
+│   ├── Network/                    Network state adapter, subscribers and sync helpers
+│   └── Protocol/                   Protocol modules and helpers
+│       ├── ProtocolModuleRegistry  Discovers protocol modules by tag
+│       ├── Unreal/                 UnrealIRCdModule + UnrealIRCdProtocolHandler + service actions, introduction formatter, vhost builder, channel mode support
+│       └── InspIRCd/               InspIRCdModule + InspIRCdProtocolHandler + service actions, introduction formatter, vhost builder, channel mode support
+│
+├── Infrastructure/NickServ/        Infrastructure for NickServ (bot, persistence, security)
+│   ├── Bot/                        NickServBot (bridge between Service Command Gateway and NickServ)
+│   ├── Doctrine/                   RegisteredNickDoctrineRepository
+│   ├── Security/                   Symfony security adapters, voters, password hasher
+│   └── Subscriber/                 Event subscribers (protection, vhost sync, etc.)
+│
+├── Infrastructure/ChanServ/        Infrastructure for ChanServ (bot, persistence, subscribers)
+│   ├── Bot/                        ChanServBot
+│   ├── Doctrine/                   Channel, level and access repositories
+│   └── Subscriber/                 Enforcement of mlock, topics, rejoin logic, etc.
+│
+└── UI/CLI/                         Symfony console commands
+    └── ConnectCommand              bin/console irc:connect
 ```
 
 ### Adding a new protocol
 
-1. Create `src/Infrastructure/IRC/Protocol/<Name>/<Name>ProtocolHandler.php` extending `AbstractProtocolHandler`.
-2. Implement `getProtocolName()` and `performHandshake()`.
-3. Register it in `config/services.yaml` with the `irc.protocol_handler` tag.
+1. Create a module in `src/Infrastructure/IRC/Protocol/<Name>/<Name>Module.php` that implements `ProtocolModuleInterface` and wires together:
+   - the protocol handler (parsing/formatting, handshake, burst),
+   - the service actions (KILL, SVSJOIN, SVSMODE, etc.),
+   - the service introduction formatter (pseudo-client introduction lines),
+   - the vhost command builder and channel mode support (which prefix modes v/h/o/a/q exist).
+2. Register the module as a Symfony service with the `irc.protocol_module` tag so that `ProtocolModuleRegistry` can discover it by `getProtocolName()`.
+3. Wire a network state adapter for the new protocol (if needed) in the IRC network configuration so incoming messages are mapped to common domain events.
 
-No other code changes are required — the registry picks it up automatically.
+No other core code changes are required — adding a module and its adapter is enough for the new IRCd to be supported.
 
 ---
 
