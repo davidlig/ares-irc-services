@@ -121,7 +121,8 @@ final readonly class DeadminCommand implements ChanServCommandInterface
         $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->getId());
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         $targetLevel = null === $targetAccount ? 0 : $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId());
-        if ($senderLevel <= $targetLevel) {
+        $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
+        if (!$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEADMIN', '%channel%' => $channelName]);
 
             return;
