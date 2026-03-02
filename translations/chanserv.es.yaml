@@ -124,7 +124,7 @@ set:
     syntax:         "SET <#canal> MLOCK ON|OFF"
     short:          "Bloquear modos del canal (ej. +nt)."
     help:           "Requiere nivel SET."
-    no_modes:       "(sin modos)"
+    no_modes:       "sin modos"
     on:             "\x0303✔\x03 MLOCK activado (%modes%)."
     off:            "\x0303✔\x03 MLOCK desactivado."
     notice_on:      "\x0303✔\x03 \x0302%nick%\x03 activa MLOCK (%modes%)."
