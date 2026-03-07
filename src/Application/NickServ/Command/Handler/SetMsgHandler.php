@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\NickServ\Set;
+namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -10,7 +10,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 use function in_array;
 
-final readonly class SetPrivateHandler implements SetOptionHandlerInterface
+final readonly class SetMsgHandler implements SetOptionHandlerInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -22,13 +22,13 @@ final readonly class SetPrivateHandler implements SetOptionHandlerInterface
         $flag = strtoupper($value);
 
         if (!in_array($flag, ['ON', 'OFF'], true)) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.private.syntax')]);
+            $context->reply('error.syntax', ['syntax' => $context->trans('set.msg.syntax')]);
 
             return;
         }
 
-        $account->switchPrivate('ON' === $flag);
+        $account->switchMsg('ON' === $flag);
         $this->nickRepository->save($account);
-        $context->reply('ON' === $flag ? 'set.private.on' : 'set.private.off');
+        $context->reply('ON' === $flag ? 'set.msg.on' : 'set.msg.off');
     }
 }

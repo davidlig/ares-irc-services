@@ -7,14 +7,6 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
-use App\Application\NickServ\Set\SetEmailHandler;
-use App\Application\NickServ\Set\SetLanguageHandler;
-use App\Application\NickServ\Set\SetMsgHandler;
-use App\Application\NickServ\Set\SetOptionHandlerInterface;
-use App\Application\NickServ\Set\SetPasswordHandler;
-use App\Application\NickServ\Set\SetPrivateHandler;
-use App\Application\NickServ\Set\SetTimezoneHandler;
-use App\Application\NickServ\Set\SetVhostHandler;
 
 use function array_slice;
 use function implode;

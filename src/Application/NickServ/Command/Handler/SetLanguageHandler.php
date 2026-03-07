@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\NickServ\Set;
+namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Entity\RegisteredNick;
