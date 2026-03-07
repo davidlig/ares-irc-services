@@ -8,6 +8,7 @@ use App\Application\Maintenance\Message\RunMaintenanceCycle;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
+use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Domain\IRC\Server\ServerLink;
@@ -89,6 +90,7 @@ class IRCClient
             $this->protocol->handleIncoming($message, $this->connection);
 
             $this->eventDispatcher->dispatch(new MessageReceivedEvent($message));
+            $this->eventDispatcher->dispatch(new IrcMessageProcessedEvent());
         }
 
         $this->logger->warning('Read loop terminated: connection closed by remote host.');
