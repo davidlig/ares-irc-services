@@ -50,8 +50,23 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
             return;
         }
+        if (NickStatus::Suspended === $newAccount->getStatus()) {
+            $context->reply('set.founder.suspended', ['%nick%' => $newNickname]);
+
+            return;
+        }
         if (NickStatus::Registered !== $newAccount->getStatus()) {
             $context->reply('set.founder.must_be_registered', ['%nick%' => $newNickname]);
+
+            return;
+        }
+        if ($newAccount->getId() === $channel->getFounderNickId()) {
+            $context->reply('set.founder.cannot_be_self');
+
+            return;
+        }
+        if (null !== $channel->getSuccessorNickId() && $newAccount->getId() === $channel->getSuccessorNickId()) {
+            $context->reply('set.founder.cannot_be_successor');
 
             return;
         }
@@ -99,11 +114,14 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         $this->founderTokenRegistry->recordRequest($channel->getId());
 
         $locale = $context->getLanguage();
-        $subject = $this->translator->trans('founder_change_token_subject', [], 'mail', $locale);
+        $channelName = $channel->getName();
+        $command = sprintf('SET %s FOUNDER %s %s', $channelName, $newNickname, $token);
+        $subject = $this->translator->trans('founder_change_token_subject', ['%channel%' => $channelName], 'mail', $locale);
         $body = $this->translator->trans('founder_change_token_body', [
-            '%channel%' => $channel->getName(),
+            '%channel%' => $channelName,
             '%new_nick%' => $newNickname,
             '%token%' => $token,
+            '%command%' => $command,
         ], 'mail', $locale);
 
         try {
@@ -123,6 +141,16 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         $newFounderNickId = $this->founderTokenRegistry->consume($channel->getId(), $token);
         if (null === $newFounderNickId) {
             $context->reply('set.founder.invalid_token');
+
+            return;
+        }
+        if ($newFounderNickId === $channel->getFounderNickId()) {
+            $context->reply('set.founder.cannot_be_self');
+
+            return;
+        }
+        if (null !== $channel->getSuccessorNickId() && $newFounderNickId === $channel->getSuccessorNickId()) {
+            $context->reply('set.founder.cannot_be_successor');
 
             return;
         }
