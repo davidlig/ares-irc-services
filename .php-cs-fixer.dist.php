@@ -4,10 +4,9 @@ $finder = (new PhpCsFixer\Finder())
     ->in(__DIR__)
     ->exclude('var')
     ->exclude('vendor')
-    ->exclude('config/reference.php')
-    // Adjust these folders if your DDD structure is different (e.g., src/Domain, src/Infrastructure)
     ->notPath('bin/console')
     ->notPath('public/index.php')
+    ->notPath('config/reference.php')
 ;
 
 return (new PhpCsFixer\Config())
