@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\ChanServAccessHelper;
+use App\Application\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Application\ChanServ\Event\ChannelSecureEnabledEvent;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
@@ -12,7 +13,6 @@ use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\ModeReceivedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
@@ -28,13 +28,18 @@ use function in_array;
 
 /**
  * Applies ChanServ ranks on registered channels: founder gets +q (or highest supported),
- * others get +a/+o/+h/+v based on AUTO* levels. When SECURE is on, strips modes from
- * users without access. Runs on user join, after sync, and when SECURE is enabled.
+ * others get +a/+o/+h/+v based on AUTO* levels. We run syncRanksForChannel only after EOS
+ * (NetworkSyncCompleteEvent) for all registered channels — during BURST the bots are not
+ * introduced yet so MODE cannot be sent. After EOS we sync all channels (SECURE on or off);
+ * SECURE-only stripping still applies inside syncRanksForChannel. On founder change we sync that channel.
  */
 final readonly class ChanServChannelRankSubscriber implements EventSubscriberInterface
 {
     /** Rank order for comparison (higher = more privilege). */
     private const array RANK_ORDER = ['q' => 5, 'a' => 4, 'o' => 3, 'h' => 2, 'v' => 1];
+
+    /** Prefix letters from highest to lowest; used to strip all ranks above desired in one go. */
+    private const array PREFIX_LETTERS_DESC = ['q', 'a', 'o', 'h', 'v'];
 
     /** Prefix mode letters (v, h, o, a, q) that SECURE can strip. */
     private const array PREFIX_LETTERS = ['v', 'h', 'o', 'a', 'q'];
@@ -58,8 +63,8 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
             UserLeftChannelEvent::class => ['onUserLeftChannel', 0],
             NetworkSyncCompleteEvent::class => ['onSyncComplete', 0],
-            ChannelSyncedEvent::class => ['onChannelSyncedSecureStrip', 0],
             ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
+            ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
             ModeReceivedEvent::class => ['onModeReceived', 255],
         ];
     }
@@ -134,20 +139,6 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     public function onChannelSecureEnabled(ChannelSecureEnabledEvent $event): void
     {
         $channel = $this->channelRepository->findByChannelName(strtolower($event->channelName));
-        if (null === $channel || !$channel->isSecure()) {
-            return;
-        }
-
-        $this->stripUsersWithoutAccessInChannel($channel);
-    }
-
-    /**
-     * Runs after +r (priority 0): if SECURE is on, strip ranks that do not correspond for this channel.
-     */
-    public function onChannelSyncedSecureStrip(ChannelSyncedEvent $event): void
-    {
-        $channelName = $event->channel->name->value;
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $channel || !$channel->isSecure()) {
             return;
         }
@@ -263,82 +254,122 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         ]);
     }
 
+    public function onChannelFounderChanged(ChannelFounderChangedEvent $event): void
+    {
+        $channel = $this->channelRepository->findByChannelName(strtolower($event->channelName));
+        if (null === $channel) {
+            return;
+        }
+
+        $this->syncRanksForChannel($channel);
+    }
+
+    /**
+     * After EOS: sync ranks for all registered channels (bots are introduced by then).
+     * SECURE-only stripping still applies inside syncRanksForChannel when channel has SECURE.
+     */
     public function onSyncComplete(NetworkSyncCompleteEvent $event): void
     {
-        $modeSupport = $this->modeSupportProvider->getSupport();
         $channels = $this->channelRepository->listAll();
-
         foreach ($channels as $channel) {
-            $channelName = $channel->getName();
-            $view = $this->channelLookup->findByChannelName($channelName);
-            if (null === $view) {
+            $this->syncRanksForChannel($channel);
+        }
+    }
+
+    /**
+     * Re-syncs user modes (q, a, o, h, v) for one channel based on current founder and access list.
+     * Used after network sync and after founder change.
+     */
+    private function syncRanksForChannel(RegisteredChannel $channel): void
+    {
+        $channelName = $channel->getName();
+        $view = $this->channelLookup->findByChannelName($channelName);
+        if (null === $view) {
+            return;
+        }
+
+        $modeSupport = $this->modeSupportProvider->getSupport();
+
+        foreach ($view->members as $member) {
+            $uid = $member['uid'] ?? '';
+            if ('' === $uid || $uid === $this->chanservUid) {
                 continue;
             }
 
-            foreach ($view->members as $member) {
-                $uid = $member['uid'] ?? '';
-                if ('' === $uid || $uid === $this->chanservUid) {
-                    continue;
-                }
+            $sender = $this->userLookup->findByUid($uid);
+            if (null === $sender) {
+                continue;
+            }
 
-                $sender = $this->userLookup->findByUid($uid);
-                if (null === $sender) {
-                    continue;
-                }
+            $account = $this->nickRepository->findByNick($sender->nick);
+            $desired = null !== $account
+                ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
+                : '';
 
-                $account = $this->nickRepository->findByNick($sender->nick);
-                $desired = null !== $account
-                    ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
-                    : '';
+            $currentLetter = $member['roleLetter'] ?? '';
 
-                $currentLetter = $member['roleLetter'] ?? '';
+            // Unauthenticated users must not keep any ChanServ-managed rank (e.g. guest nick after rename)
+            $effectiveDesired = $sender->isIdentified ? $desired : '';
 
-                // Unauthenticated users must not keep any ChanServ-managed rank (e.g. guest nick after rename)
-                $effectiveDesired = $sender->isIdentified ? $desired : '';
+            $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
+            $desiredRank = self::RANK_ORDER[$effectiveDesired] ?? 0;
 
-                if ($channel->isSecure() && '' !== $currentLetter) {
-                    $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
-                    $desiredRank = self::RANK_ORDER[$effectiveDesired] ?? 0;
-                    if ($currentRank > $desiredRank) {
-                        $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
-                        $this->logger->debug('ChanServ SECURE strip on sync (rank above access)', [
-                            'channel' => $channelName,
-                            'uid' => $uid,
-                            'mode' => '-' . $currentLetter,
-                        ]);
-                        if ('' !== $effectiveDesired) {
-                            $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $effectiveDesired, true);
-                            $this->logger->debug('ChanServ auto-rank on sync', [
-                                'channel' => $channelName,
-                                'uid' => $uid,
-                                'mode' => '+' . $effectiveDesired,
-                            ]);
-                        }
+            // Sync always normalises: strip every prefix above desired (user may have +qoa etc.), then set desired
+            if ($currentRank > $desiredRank) {
+                $supported = $modeSupport->getSupportedPrefixModes();
+                foreach (self::PREFIX_LETTERS_DESC as $letter) {
+                    if (!in_array($letter, $supported, true)) {
                         continue;
                     }
+                    $letterRank = self::RANK_ORDER[$letter] ?? 0;
+                    if ($letterRank <= $desiredRank) {
+                        continue;
+                    }
+                    $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $letter, false);
+                    $this->logger->debug('ChanServ sync strip (rank above desired)', [
+                        'channel' => $channelName,
+                        'uid' => $uid,
+                        'mode' => '-' . $letter,
+                    ]);
                 }
+                if ('' !== $effectiveDesired) {
+                    $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $effectiveDesired, true);
+                    $this->logger->debug('ChanServ auto-rank on sync', [
+                        'channel' => $channelName,
+                        'uid' => $uid,
+                        'mode' => '+' . $effectiveDesired,
+                    ]);
+                }
+                continue;
+            }
 
-                if ($channel->isSecure() && '' === $effectiveDesired && '' !== $currentLetter) {
-                    $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
+            // Strip all ranks when user has no access (SECURE-only for ongoing enforcement)
+            if ($channel->isSecure() && '' === $effectiveDesired && '' !== $currentLetter) {
+                $supported = $modeSupport->getSupportedPrefixModes();
+                foreach (self::PREFIX_LETTERS_DESC as $letter) {
+                    if (!in_array($letter, $supported, true)) {
+                        continue;
+                    }
+                    $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $letter, false);
                     $this->logger->debug('ChanServ SECURE strip on sync', [
                         'channel' => $channelName,
                         'uid' => $uid,
-                        'mode' => '-' . $currentLetter,
+                        'mode' => '-' . $letter,
                     ]);
-                    continue;
                 }
-
-                if ('' === $effectiveDesired || !$this->shouldSetMode($currentLetter, $effectiveDesired)) {
-                    continue;
-                }
-
-                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $effectiveDesired, true);
-                $this->logger->debug('ChanServ auto-rank on sync', [
-                    'channel' => $channelName,
-                    'uid' => $uid,
-                    'mode' => '+' . $effectiveDesired,
-                ]);
+                continue;
             }
+
+            if ('' === $effectiveDesired || !$this->shouldSetMode($currentLetter, $effectiveDesired)) {
+                continue;
+            }
+
+            $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $effectiveDesired, true);
+            $this->logger->debug('ChanServ auto-rank on sync', [
+                'channel' => $channelName,
+                'uid' => $uid,
+                'mode' => '+' . $effectiveDesired,
+            ]);
         }
     }
 

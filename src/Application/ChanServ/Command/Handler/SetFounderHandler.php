@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServContext;
+use App\Application\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
 use App\Application\Helper\SecureToken;
 use App\Application\Mail\Message\SendEmail;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
@@ -25,8 +28,10 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
+        private ChannelAccessRepositoryInterface $accessRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
         private FounderChangeTokenRegistry $founderTokenRegistry,
+        private EventDispatcherInterface $eventDispatcher,
         private MessageBusInterface $messageBus,
         private TranslatorInterface $translator,
         private int $founderTokenTtlSeconds = 3600,
@@ -157,8 +162,23 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
         $channel->changeFounder($newFounderNickId);
         $this->channelRepository->save($channel);
+
+        $existingAccess = $this->accessRepository->findByChannelAndNick($channel->getId(), $newFounderNickId);
+        if (null !== $existingAccess) {
+            $this->accessRepository->remove($existingAccess);
+        }
+
+        $this->eventDispatcher->dispatch(new ChannelFounderChangedEvent($channel->getName()));
+
         $newAccount = $this->nickRepository->findById($newFounderNickId);
-        $context->reply('set.founder.updated', ['%nick%' => $newAccount?->getNickname() ?? (string) $newFounderNickId]);
+        $newFounderNick = $newAccount?->getNickname() ?? (string) $newFounderNickId;
+        $context->reply('set.founder.updated', ['%nick%' => $newFounderNick]);
+
+        $notice = $context->trans('set.founder.notice_channel', [
+            '%from%' => $context->sender->nick,
+            '%nick%' => $newFounderNick,
+        ]);
+        $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
     }
 
     private function maskEmail(string $email): string
