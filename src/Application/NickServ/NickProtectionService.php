@@ -7,8 +7,6 @@ namespace App\Application\NickServ;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
-use App\Domain\IRC\Event\UserNickChangedEvent;
-use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -50,13 +48,16 @@ final readonly class NickProtectionService
         $this->enforceProtection($user);
     }
 
-    public function onNickChanged(UserNickChangedEvent $event): void
+    /**
+     * Called when a user changes nickname. Receives only primitives; no Core event types.
+     */
+    public function onNickChanged(string $uid, string $oldNick, string $newNick): void
     {
         $this->logger->debug(sprintf(
             'NickProtection onNickChanged: old=%s new=%s uid=%s burstComplete=%s',
-            $event->oldNick->value,
-            $event->newNick->value,
-            $event->uid->value,
+            $oldNick,
+            $newNick,
+            $uid,
             $this->burstState->isComplete() ? 'yes' : 'no',
         ));
 
@@ -64,25 +65,23 @@ final readonly class NickProtectionService
             return;
         }
 
-        $newNick = $event->newNick->value;
-
-        if (str_starts_with($newNick, $this->guestPrefix) && $this->pendingRegistry->consume($event->uid->value)) {
+        if (str_starts_with($newNick, $this->guestPrefix) && $this->pendingRegistry->consume($uid)) {
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — SVSNICK to Guest echo, skipping protection',
-                $event->oldNick->value,
-                $event->uid->value,
+                $oldNick,
+                $uid,
                 $newNick,
             ));
 
             return;
         }
 
-        $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
-        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $event->oldNick->value)) {
-            $this->identifiedRegistry->remove($event->uid->value);
-            $sender = $this->userLookup->findByUid($event->uid->value);
+        $registeredNick = $this->identifiedRegistry->findNick($uid);
+        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $oldNick)) {
+            $this->identifiedRegistry->remove($uid);
+            $sender = $this->userLookup->findByUid($uid);
             if (null !== $sender) {
-                $this->notifier->setUserVhost($event->uid->value, '', $sender->serverSid);
+                $this->notifier->setUserVhost($uid, '', $sender->serverSid);
             }
         }
 
@@ -97,34 +96,34 @@ final readonly class NickProtectionService
             return;
         }
 
-        $user = $this->userLookup->findByUid($event->uid->value);
+        $user = $this->userLookup->findByUid($uid);
 
         if (null === $user) {
             $this->logger->debug(sprintf(
                 'NickProtection onNickChanged: skip (user null for uid %s)',
-                $event->uid->value,
+                $uid,
             ));
 
             return;
         }
 
-        if (str_starts_with($event->oldNick->value, $this->guestPrefix) && $this->pendingRegistry->consume($event->uid->value)) {
+        if (str_starts_with($oldNick, $this->guestPrefix) && $this->pendingRegistry->consume($uid)) {
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — SVSNICK restore echo, skipping protection',
-                $event->oldNick->value,
-                $event->uid->value,
+                $oldNick,
+                $uid,
                 $newNick,
             ));
 
             return;
         }
 
-        $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
+        $registeredNick = $this->identifiedRegistry->findNick($uid);
         if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $newNick)) {
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — identified in registry, skipping protection',
-                $event->oldNick->value,
-                $event->uid->value,
+                $oldNick,
+                $uid,
                 $newNick,
             ));
 
@@ -134,8 +133,8 @@ final readonly class NickProtectionService
         if ($user->isIdentified) {
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — already identified, OK',
-                $event->oldNick->value,
-                $event->uid->value,
+                $oldNick,
+                $uid,
                 $newNick,
             ));
 
@@ -144,26 +143,29 @@ final readonly class NickProtectionService
 
         $this->logger->info(sprintf(
             'Nick change: %s [%s] → %s — not identified, enforcing protection',
-            $event->oldNick->value,
-            $event->uid->value,
+            $oldNick,
+            $uid,
             $newNick,
         ));
 
         $this->enforceProtection($user);
     }
 
-    public function onUserQuit(UserQuitNetworkEvent $event): void
+    /**
+     * Called when a user quits the network. Receives only primitives; no Core event types.
+     */
+    public function onUserQuit(string $uid, string $nick, string $reason, string $ident, string $displayHost): void
     {
-        $account = $this->nickRepository->findByNick($event->nick->value);
+        $account = $this->nickRepository->findByNick($nick);
 
         if (null === $account) {
-            $registeredNick = $this->identifiedRegistry->findNick($event->uid->value);
+            $registeredNick = $this->identifiedRegistry->findNick($uid);
             if (null !== $registeredNick) {
                 $account = $this->nickRepository->findByNick($registeredNick);
             }
         }
 
-        $this->identifiedRegistry->remove($event->uid->value);
+        $this->identifiedRegistry->remove($uid);
 
         if (null === $account) {
             return;
@@ -171,9 +173,9 @@ final readonly class NickProtectionService
 
         $account->markSeen();
 
-        $origin = '' !== $event->ident ? $event->ident . '@' . $event->displayHost : $event->displayHost;
-        $stored = '' !== $event->reason
-            ? sprintf('%s (%s)', $event->reason, $origin)
+        $origin = '' !== $ident ? $ident . '@' . $displayHost : $displayHost;
+        $stored = '' !== $reason
+            ? sprintf('%s (%s)', $reason, $origin)
             : ('' !== $origin ? $origin : null);
 
         $account->updateQuitMessage($stored);

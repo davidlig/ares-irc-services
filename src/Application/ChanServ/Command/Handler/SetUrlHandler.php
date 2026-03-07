@@ -18,7 +18,7 @@ final readonly class SetUrlHandler implements SetOptionHandlerInterface
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
         $url = '' === trim($value) ? null : trim($value);
-        $channel->setUrl($url);
+        $channel->updateUrl($url);
         $this->channelRepository->save($channel);
         $context->reply(null !== $url ? 'set.url.updated' : 'set.url.cleared');
     }

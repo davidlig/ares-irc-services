@@ -19,7 +19,7 @@ final readonly class SetEntrymsgHandler implements SetOptionHandlerInterface
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
         try {
-            $channel->setEntrymsg($value);
+            $channel->updateEntrymsg($value);
         } catch (InvalidArgumentException $e) {
             $context->reply('set.entrymsg.too_long', ['%max%' => (string) RegisteredChannel::ENTRYMSG_MAX_LENGTH]);
 

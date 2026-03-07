@@ -282,6 +282,9 @@ services:
     App\Application\Port\NetworkUserLookupPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter
 
+    App\Application\Port\BurstCompletePort:
+        class: App\Infrastructure\IRC\ServiceBridge\CoreBurstCompleteAdapter
+
     App\Application\Port\ChannelLookupPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter
 
@@ -297,7 +300,9 @@ services:
         tags: ['kernel.event_subscriber']
 
     App\Application\Port\SendNoticePort:
-        alias: App\Infrastructure\NickServ\Bot\NickServBot
+        class: App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter
+        arguments:
+            $senderUid: '%nickserv.uid%'
 
     App\Application\Port\ActiveChannelModeSupportProviderInterface:
         class: App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider
@@ -568,7 +573,7 @@ services:
             $nickProtectionService:      '@App\Application\NickServ\NickProtectionService'
             $identifiedUserVhostSync:   '@App\Application\NickServ\IdentifiedUserVhostSyncService'
             $burstState:                '@App\Application\NickServ\BurstState'
-            $senderViewMapper:          '@App\Application\Port\NetworkUserLookupPort'
+            $networkUserLookup:        '@App\Application\Port\NetworkUserLookupPort'
         tags: ['kernel.event_subscriber']
 
     # --- Maintenance system -----------------------------------------------------

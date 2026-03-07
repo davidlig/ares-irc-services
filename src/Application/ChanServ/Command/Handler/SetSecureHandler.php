@@ -27,7 +27,7 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
             return;
         }
         $on = 'ON' === $normalized;
-        $channel->setSecure($on);
+        $channel->configureSecure($on);
         $this->channelRepository->save($channel);
         if ($on) {
             $this->eventDispatcher->dispatch(new ChannelSecureEnabledEvent($channel->getName()));

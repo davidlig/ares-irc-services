@@ -198,7 +198,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
 
                 return;
             }
-            $existing->setLevel($level);
+            $existing->updateLevel($level);
             $this->accessRepository->save($existing);
         } else {
             $access = new ChannelAccess($channel->getId(), $targetAccount->getId(), $level);

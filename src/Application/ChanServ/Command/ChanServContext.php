@@ -18,7 +18,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * Context for ChanServ command execution. Commands reply via reply() / replyRaw();
  * channel data and actions go through the injected ports and notifier.
  */
-class ChanServContext
+readonly class ChanServContext
 {
     public function __construct(
         public readonly ?SenderView $sender,

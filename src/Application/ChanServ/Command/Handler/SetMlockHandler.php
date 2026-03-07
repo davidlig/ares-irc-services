@@ -32,7 +32,7 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
         if ($on) {
             $this->setMlockFromCurrentChannelState($context, $channel);
         } else {
-            $channel->setMlock(false, '', []);
+            $channel->configureMlock(false, '', []);
         }
         $this->channelRepository->save($channel);
         if ($on) {
@@ -69,13 +69,13 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
     {
         $view = $context->getChannelLookup()->findByChannelName($channel->getName());
         if (null === $view || '' === $view->modes) {
-            $channel->setMlock(true, '', []);
+            $channel->configureMlock(true, '', []);
 
             return;
         }
 
         $support = $context->getChannelModeSupport();
         [$modeString, $params] = $this->mlockStateResolver->resolve($view, $support);
-        $channel->setMlock(true, $modeString, $params);
+        $channel->configureMlock(true, $modeString, $params);
     }
 }

@@ -22,7 +22,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
     {
         $nickname = trim($value);
         if ('' === $nickname) {
-            $channel->setSuccessor(null);
+            $channel->assignSuccessor(null);
             $this->channelRepository->save($channel);
             $context->reply('set.successor.cleared');
 
@@ -46,7 +46,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
             return;
         }
 
-        $channel->setSuccessor($account->getId());
+        $channel->assignSuccessor($account->getId());
         $this->channelRepository->save($channel);
         $context->reply('set.successor.updated', ['%nick%' => $nickname]);
     }

@@ -190,27 +190,27 @@ class RegisteredChannel
         $this->successorNickId = null;
     }
 
-    public function setSuccessor(?int $nickId): void
+    public function assignSuccessor(?int $nickId): void
     {
         $this->successorNickId = $nickId;
     }
 
-    public function setDescription(string $description): void
+    public function updateDescription(string $description): void
     {
         $this->description = $description;
     }
 
-    public function setUrl(?string $url): void
+    public function updateUrl(?string $url): void
     {
         $this->url = $url;
     }
 
-    public function setEmail(?string $email): void
+    public function updateEmail(?string $email): void
     {
         $this->email = $email;
     }
 
-    public function setEntrymsg(string $entrymsg): void
+    public function updateEntrymsg(string $entrymsg): void
     {
         if (strlen($entrymsg) > self::ENTRYMSG_MAX_LENGTH) {
             throw new InvalidArgumentException(sprintf('Entry message cannot exceed %d characters.', self::ENTRYMSG_MAX_LENGTH));
@@ -218,24 +218,24 @@ class RegisteredChannel
         $this->entrymsg = $entrymsg;
     }
 
-    public function setTopicLock(bool $on): void
+    public function configureTopicLock(bool $on): void
     {
         $this->topicLock = $on;
     }
 
-    public function setMlock(bool $active, string $modeString = '', array $params = []): void
+    public function configureMlock(bool $active, string $modeString = '', array $params = []): void
     {
         $this->mlockActive = $active;
         $this->mlock = $modeString;
         $this->mlockParams = $params;
     }
 
-    public function setSecure(bool $on): void
+    public function configureSecure(bool $on): void
     {
         $this->secure = $on;
     }
 
-    public function setTopic(?string $topic, ?string $setByNick = null): void
+    public function updateTopic(?string $topic, ?string $setByNick = null): void
     {
         $this->topic = $topic;
         $this->lastTopicSetAt = null !== $topic ? new DateTimeImmutable() : null;
