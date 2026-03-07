@@ -413,7 +413,7 @@ services:
 
     App\Application\ChanServ\FounderChangeTokenRegistry: ~
 
-    App\Application\ChanServ\Set\SetFounderHandler:
+    App\Application\ChanServ\Command\Handler\SetFounderHandler:
         arguments:
             $founderTokenTtlSeconds: '%chanserv.founder_token_ttl_seconds%'
             $founderMinIntervalSeconds: '%chanserv.founder_min_interval_seconds%'

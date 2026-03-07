@@ -7,7 +7,6 @@ namespace App\Application\ChanServ\Command\Handler;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
-use App\Application\ChanServ\Set\SetOptionHandlerInterface;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
@@ -36,15 +35,15 @@ final readonly class SetCommand implements ChanServCommandInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChanServAccessHelper $accessHelper,
-        \App\Application\ChanServ\Set\SetFounderHandler $setFounderHandler,
-        \App\Application\ChanServ\Set\SetSuccessorHandler $setSuccessorHandler,
-        \App\Application\ChanServ\Set\SetDescHandler $setDescHandler,
-        \App\Application\ChanServ\Set\SetUrlHandler $setUrlHandler,
-        \App\Application\ChanServ\Set\SetEmailHandler $setEmailHandler,
-        \App\Application\ChanServ\Set\SetEntrymsgHandler $setEntrymsgHandler,
-        \App\Application\ChanServ\Set\SetTopiclockHandler $setTopiclockHandler,
-        \App\Application\ChanServ\Set\SetMlockHandler $setMlockHandler,
-        \App\Application\ChanServ\Set\SetSecureHandler $setSecureHandler,
+        SetFounderHandler $setFounderHandler,
+        SetSuccessorHandler $setSuccessorHandler,
+        SetDescHandler $setDescHandler,
+        SetUrlHandler $setUrlHandler,
+        SetEmailHandler $setEmailHandler,
+        SetEntrymsgHandler $setEntrymsgHandler,
+        SetTopiclockHandler $setTopiclockHandler,
+        SetMlockHandler $setMlockHandler,
+        SetSecureHandler $setSecureHandler,
     ) {
         $this->handlers = [
             'FOUNDER' => $setFounderHandler,

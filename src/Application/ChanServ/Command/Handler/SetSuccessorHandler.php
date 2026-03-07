@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Application\ChanServ\Set;
+namespace App\Application\ChanServ\Command\Handler;
 
+use App\Application\ChanServ\Command\ChanServContext;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -17,7 +18,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
     ) {
     }
 
-    public function handle(\App\Application\ChanServ\Command\ChanServContext $context, RegisteredChannel $channel, string $value): void
+    public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
         $nickname = trim($value);
         if ('' === $nickname) {

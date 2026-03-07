@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Application\ChanServ\Set;
+namespace App\Application\ChanServ\Command\Handler;
 
+use App\Application\ChanServ\Command\ChanServContext;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use InvalidArgumentException;
@@ -15,7 +16,7 @@ final readonly class SetEntrymsgHandler implements SetOptionHandlerInterface
     ) {
     }
 
-    public function handle(\App\Application\ChanServ\Command\ChanServContext $context, RegisteredChannel $channel, string $value): void
+    public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
         try {
             $channel->setEntrymsg($value);

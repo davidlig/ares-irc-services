@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Application\ChanServ\Set;
+namespace App\Application\ChanServ\Command\Handler;
 
+use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
 use App\Application\Helper\SecureToken;
 use App\Application\Mail\Message\SendEmail;
@@ -34,7 +35,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
     ) {
     }
 
-    public function handle(\App\Application\ChanServ\Command\ChanServContext $context, RegisteredChannel $channel, string $value): void
+    public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
         $newNickname = trim($value);
         if ('' === $newNickname) {
@@ -76,7 +77,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
     }
 
     private function requestToken(
-        \App\Application\ChanServ\Command\ChanServContext $context,
+        ChanServContext $context,
         RegisteredChannel $channel,
         int $newFounderNickId,
         string $newNickname,
@@ -117,7 +118,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         $context->reply('set.founder.token_sent', ['%email_hint%' => $this->maskEmail($founderEmail)]);
     }
 
-    private function consumeToken(\App\Application\ChanServ\Command\ChanServContext $context, RegisteredChannel $channel, string $token): void
+    private function consumeToken(ChanServContext $context, RegisteredChannel $channel, string $token): void
     {
         $newFounderNickId = $this->founderTokenRegistry->consume($channel->getId(), $token);
         if (null === $newFounderNickId) {
