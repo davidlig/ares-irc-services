@@ -69,7 +69,7 @@ class IRCEventSubscriber implements EventSubscriberInterface
 
         if ('PRIVMSG' === $message->command && null !== $trailing) {
             $redacted = SensitiveDataRedactor::redactNickServCommand($trailing);
-            if ($trailing !== $redacted) {
+            if ($redacted !== $trailing) {
                 $trailing = $redacted;
                 $raw = preg_replace('/(\s:).*$/', '$1' . $redacted, $raw) ?? $raw;
             }

@@ -56,7 +56,7 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
         }
 
         $currentTopic = $event->channel->getTopic();
-        if ($currentTopic === $storedTopic) {
+        if ($storedTopic === $currentTopic) {
             return;
         }
 

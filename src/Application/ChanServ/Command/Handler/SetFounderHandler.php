@@ -149,12 +149,12 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
             return;
         }
-        if ($newFounderNickId === $channel->getFounderNickId()) {
+        if ($channel->getFounderNickId() === $newFounderNickId) {
             $context->reply('set.founder.cannot_be_self');
 
             return;
         }
-        if (null !== $channel->getSuccessorNickId() && $newFounderNickId === $channel->getSuccessorNickId()) {
+        if (null !== $channel->getSuccessorNickId() && $channel->getSuccessorNickId() === $newFounderNickId) {
             $context->reply('set.founder.cannot_be_successor');
 
             return;

@@ -23,7 +23,7 @@ use function in_array;
  * ChanServ pseudo-client: introduces on burst, implements ChanServNotifierInterface
  * and ChannelServiceActionsPort. Delegates channel actions to the active protocol module.
  */
-readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceActionsPort, EventSubscriberInterface
+final readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceActionsPort, EventSubscriberInterface
 {
     /** Preferred order of prefix modes (highest first). */
     private const array PREFIX_ORDER = ['q', 'a', 'o', 'h', 'v'];

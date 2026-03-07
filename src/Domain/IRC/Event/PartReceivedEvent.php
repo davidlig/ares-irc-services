@@ -10,7 +10,7 @@ use App\Domain\IRC\ValueObject\ChannelName;
  * Raw protocol event: PART received. Carries source, channel, reason, wasKicked.
  * Enricher resolves source and dispatches UserLeftChannelEvent.
  */
-readonly class PartReceivedEvent
+final readonly class PartReceivedEvent
 {
     public function __construct(
         /** Source identifier from message prefix (UID or nick string). */

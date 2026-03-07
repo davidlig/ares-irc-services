@@ -299,6 +299,9 @@ services:
             $registry: '@App\Application\Port\ChannelSyncCompletedRegistryInterface'
         tags: ['kernel.event_subscriber']
 
+    App\Infrastructure\Shared\Subscriber\DoctrineIdentityMapClearSubscriber:
+        tags: ['kernel.event_subscriber']
+
     App\Application\Port\SendNoticePort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter
         arguments:

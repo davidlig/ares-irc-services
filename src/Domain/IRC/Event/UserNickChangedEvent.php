@@ -10,7 +10,7 @@ use App\Domain\IRC\ValueObject\Uid;
 /**
  * Dispatched when a NICK command is received: a user has changed their nickname.
  */
-readonly class UserNickChangedEvent
+final readonly class UserNickChangedEvent
 {
     public function __construct(
         public readonly Uid $uid,

@@ -13,7 +13,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
  * Resolution: if the user has a registered account, use the account's preference (SET MSG ON|OFF);
  * otherwise default to NOTICE.
  */
-readonly class UserMessageTypeResolver
+final readonly class UserMessageTypeResolver
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,

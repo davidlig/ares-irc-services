@@ -70,6 +70,7 @@ class IRCClient
             if ($this->burstCompleteRegistry->isBurstComplete()
                 && ($now - $this->lastMaintenanceDispatch) >= (float) $this->maintenanceDispatchIntervalSeconds
             ) {
+                gc_collect_cycles();
                 $this->messageBus->dispatch(new RunMaintenanceCycle());
                 $this->lastMaintenanceDispatch = $now;
             }
@@ -91,6 +92,8 @@ class IRCClient
 
             $this->eventDispatcher->dispatch(new MessageReceivedEvent($message));
             $this->eventDispatcher->dispatch(new IrcMessageProcessedEvent());
+
+            unset($rawLine, $message);
         }
 
         $this->logger->warning('Read loop terminated: connection closed by remote host.');

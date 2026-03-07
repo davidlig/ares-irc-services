@@ -29,7 +29,7 @@ use function sprintf;
  * dispatch these events; this subscriber is the single place that writes to
  * ChannelRepository and NetworkUserRepository.
  */
-class NetworkStateSubscriber implements EventSubscriberInterface
+final readonly class NetworkStateSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly NetworkUserRepositoryInterface $userRepository,

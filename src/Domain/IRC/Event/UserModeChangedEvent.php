@@ -10,7 +10,7 @@ use App\Domain\IRC\ValueObject\Uid;
  * Dispatched when a user's modes change (e.g. UMODE2 from S2S, or protocol-specific
  * behaviour such as stripping +r on NICK). Subscriber applies the delta to the user.
  */
-readonly class UserModeChangedEvent
+final readonly class UserModeChangedEvent
 {
     public function __construct(
         public readonly Uid $uid,

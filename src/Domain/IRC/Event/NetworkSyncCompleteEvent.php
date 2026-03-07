@@ -11,7 +11,7 @@ use App\Domain\IRC\Connection\ConnectionInterface;
  * to the remote server. The link is fully synced; use this for actions that
  * must run after sync (e.g. ChanServ rejoining registered channels).
  */
-readonly class NetworkSyncCompleteEvent
+final readonly class NetworkSyncCompleteEvent
 {
     public function __construct(
         public readonly ConnectionInterface $connection,

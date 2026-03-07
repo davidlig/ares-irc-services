@@ -12,7 +12,7 @@ use App\Domain\IRC\ValueObject\ChannelName;
  *
  * @param string[] $modeParams
  */
-readonly class ModeReceivedEvent
+final readonly class ModeReceivedEvent
 {
     /**
      * @param string[] $modeParams

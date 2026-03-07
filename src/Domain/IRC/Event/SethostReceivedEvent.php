@@ -9,7 +9,7 @@ namespace App\Domain\IRC\Event;
  * When a user's vhost is set or cleared, the server sends :uid SETHOST :newhost.
  * Enricher resolves UID and dispatches UserHostChangedEvent; subscriber updates NetworkUser.virtualHost.
  */
-readonly class SethostReceivedEvent
+final readonly class SethostReceivedEvent
 {
     public function __construct(
         /** Source UID from message prefix. */

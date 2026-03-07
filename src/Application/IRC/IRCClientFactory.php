@@ -18,7 +18,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
  * Sets the active module on ActiveConnectionHolder so services obtain handler,
  * formatters and actions from the module for the connected IRCd type.
  */
-class IRCClientFactory
+final readonly class IRCClientFactory
 {
     public function __construct(
         private readonly ProtocolModuleRegistryInterface $moduleRegistry,

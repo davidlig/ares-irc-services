@@ -11,7 +11,7 @@ use DateTimeImmutable;
  * Other services (ChanServ, MemoServ) may subscribe to clean up channels, memos, etc.
  * Dispatched before the nick is removed from persistence; subscribers must use event payload only.
  */
-readonly class NickDropEvent
+final readonly class NickDropEvent
 {
     public function __construct(
         public int $nickId,

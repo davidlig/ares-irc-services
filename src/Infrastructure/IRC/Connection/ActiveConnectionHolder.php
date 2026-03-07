@@ -15,7 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Services obtain the module (handler, formatters, actions) from here; each IRCd
  * type is encapsulated in its own module (Unreal, InspIRCd, etc.).
  */
-class ActiveConnectionHolder implements EventSubscriberInterface
+final class ActiveConnectionHolder implements EventSubscriberInterface
 {
     private ?ConnectionInterface $connection = null;
 

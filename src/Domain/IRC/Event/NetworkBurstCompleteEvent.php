@@ -13,7 +13,7 @@ use App\Domain\IRC\Connection\ConnectionInterface;
  * Listeners with high priority (> 0) can use this event to introduce
  * service pseudo-clients (UID lines) before our EOS is sent to the IRCd.
  */
-readonly class NetworkBurstCompleteEvent
+final readonly class NetworkBurstCompleteEvent
 {
     public function __construct(
         public readonly ConnectionInterface $connection,

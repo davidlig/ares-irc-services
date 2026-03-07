@@ -14,7 +14,7 @@ use App\Domain\IRC\ValueObject\Uid;
  * NetworkUserRepository so subscribers can still access the full user object
  * if needed. ident and displayHost are provided directly to avoid re-lookups.
  */
-readonly class UserQuitNetworkEvent
+final readonly class UserQuitNetworkEvent
 {
     public function __construct(
         public readonly Uid $uid,

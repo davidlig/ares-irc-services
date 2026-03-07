@@ -16,7 +16,7 @@ use App\Domain\IRC\ValueObject\Uid;
  * @param array{b?: string[], e?: string[], I?: string[]}                                    $listModes  Optional ban/exempt/invite from SJOIN buffer
  * @param list<string>                                                                       $modeParams Params for modes that take one (e.g. k, L) in wire order
  */
-readonly class FjoinReceivedEvent
+final readonly class FjoinReceivedEvent
 {
     /**
      * @param array<int, array{uid: Uid, role: ChannelMemberRole, prefixLetters?: list<string>}> $members

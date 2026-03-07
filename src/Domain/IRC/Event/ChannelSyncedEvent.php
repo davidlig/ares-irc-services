@@ -15,7 +15,7 @@ use App\Domain\IRC\Network\Channel;
  * - channel was new or empty and now has users (first join / channel created).
  * When false (existing channel, more users joined), only SECURE/rank logic runs; no +r, modes or topic re-apply.
  */
-readonly class ChannelSyncedEvent
+final readonly class ChannelSyncedEvent
 {
     public function __construct(
         public readonly Channel $channel,

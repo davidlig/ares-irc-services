@@ -11,7 +11,7 @@ use App\Domain\IRC\ValueObject\Uid;
 /**
  * Dispatched when a user joins a channel (post-burst SJOIN with a single user entry).
  */
-readonly class UserJoinedChannelEvent
+final readonly class UserJoinedChannelEvent
 {
     public function __construct(
         public readonly Uid $uid,
