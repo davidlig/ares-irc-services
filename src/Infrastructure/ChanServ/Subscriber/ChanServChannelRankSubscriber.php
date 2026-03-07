@@ -12,6 +12,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
@@ -103,7 +104,6 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         $params = $event->modeParams;
         $paramIdx = 0;
         $adding = true;
-        $modeSupport = $this->modeSupportProvider->getSupport();
 
         foreach (str_split($event->modeStr) as $char) {
             if ('+' === $char) {
@@ -134,17 +134,14 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
                 continue;
             }
 
-            $sender = $this->userLookup->findByUid($targetId) ?? $this->userLookup->findByNick($targetId);
-            if (null === $sender) {
+            $memberCtx = $this->resolveMemberContext($channel, $targetId);
+            if (null === $memberCtx) {
                 continue;
             }
 
-            $account = $this->nickRepository->findByNick($sender->nick);
-            $desired = null !== $account
-                ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
-                : '';
-
             $letterRank = self::RANK_ORDER[$letter] ?? 0;
+            $desired = $memberCtx['desired'];
+            $sender = $memberCtx['sender'];
             $desiredRank = self::RANK_ORDER[$desired] ?? 0;
             if ($letterRank <= $desiredRank) {
                 continue;
@@ -179,42 +176,17 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        $sender = $this->userLookup->findByUid($uid);
-        if (null === $sender) {
+        $memberCtx = $this->resolveMemberContext($channel, $uid);
+        if (null === $memberCtx) {
             return;
         }
 
-        $account = $this->nickRepository->findByNick($sender->nick);
-        $modeSupport = $this->modeSupportProvider->getSupport();
-        $desired = null !== $account
-            ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
-            : '';
-
+        $sender = $memberCtx['sender'];
+        $desired = $memberCtx['desired'];
         $currentLetter = $this->roleToLetter($event->role);
+        $hasRole = ChannelMemberRole::None !== $event->role;
 
-        if ($channel->isSecure() && '' !== $currentLetter) {
-            $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
-            $desiredRank = self::RANK_ORDER[$desired] ?? 0;
-            if ($currentRank > $desiredRank) {
-                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
-                $this->logger->debug('ChanServ SECURE strip on join (rank above access)', [
-                    'channel' => $channelName,
-                    'uid' => $uid,
-                    'mode' => '-' . $currentLetter,
-                ]);
-            }
-        }
-
-        if ($channel->isSecure() && '' === $desired && ChannelMemberRole::None !== $event->role) {
-            if ('' !== $currentLetter) {
-                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
-                $this->logger->debug('ChanServ SECURE strip on join', [
-                    'channel' => $channelName,
-                    'uid' => $uid,
-                    'mode' => '-' . $currentLetter,
-                ]);
-            }
-
+        if ($this->applySecureStripOnJoin($channel, $channelName, $uid, $currentLetter, $desired, $sender, $hasRole)) {
             return;
         }
 
@@ -222,12 +194,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        // Do not grant any rank to unauthenticated users (e.g. guest nicks after nick protection rename)
         if (!$sender->isIdentified) {
             return;
         }
 
-        // Update channel last used when an identified user with ACCESS joins
         $channel->touchLastUsed();
         $this->channelRepository->save($channel);
 
@@ -253,16 +223,13 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        $sender = $this->userLookup->findByUid($uid);
-        if (null === $sender) {
+        $memberCtx = $this->resolveMemberContext($channel, $uid);
+        if (null === $memberCtx) {
             return;
         }
 
-        $account = $this->nickRepository->findByNick($sender->nick);
-        $modeSupport = $this->modeSupportProvider->getSupport();
-        $desired = null !== $account
-            ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
-            : '';
+        $sender = $memberCtx['sender'];
+        $desired = $memberCtx['desired'];
 
         if ('' === $desired || !$sender->isIdentified) {
             return;
@@ -300,6 +267,69 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     }
 
     /**
+     * Resolves sender (SenderView) and desired prefix letter for a UID in a channel.
+     *
+     * @return array{sender: SenderView, desired: string}|null
+     */
+    private function resolveMemberContext(RegisteredChannel $channel, string $uid): ?array
+    {
+        $sender = $this->userLookup->findByUid($uid) ?? $this->userLookup->findByNick($uid);
+        if (null === $sender) {
+            return null;
+        }
+
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        $account = $this->nickRepository->findByNick($sender->nick);
+        $desired = null !== $account
+            ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
+            : '';
+
+        return ['sender' => $sender, 'desired' => $desired];
+    }
+
+    /**
+     * Applies SECURE strip on join: strip rank above desired, or strip all if no access and has role.
+     * Returns true if caller should return (no access and had role stripped).
+     */
+    private function applySecureStripOnJoin(
+        RegisteredChannel $channel,
+        string $channelName,
+        string $uid,
+        string $currentLetter,
+        string $desired,
+        SenderView $sender,
+        bool $hasRole,
+    ): bool {
+        if ($channel->isSecure() && '' !== $currentLetter) {
+            $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
+            $desiredRank = self::RANK_ORDER[$desired] ?? 0;
+            if ($currentRank > $desiredRank) {
+                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
+                $this->logger->debug('ChanServ SECURE strip on join (rank above access)', [
+                    'channel' => $channelName,
+                    'uid' => $uid,
+                    'mode' => '-' . $currentLetter,
+                ]);
+            }
+        }
+
+        if ($channel->isSecure() && '' === $desired && $hasRole) {
+            if ('' !== $currentLetter) {
+                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
+                $this->logger->debug('ChanServ SECURE strip on join', [
+                    'channel' => $channelName,
+                    'uid' => $uid,
+                    'mode' => '-' . $currentLetter,
+                ]);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Re-syncs user modes (q, a, o, h, v) for one channel based on current founder and access list.
      * Used after network sync and after founder change.
      * Batches all mode changes into a single MODE line (commit-style) per channel.
@@ -321,16 +351,13 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
                 continue;
             }
 
-            $sender = $this->userLookup->findByUid($uid);
-            if (null === $sender) {
+            $memberCtx = $this->resolveMemberContext($channel, $uid);
+            if (null === $memberCtx) {
                 continue;
             }
 
-            $account = $this->nickRepository->findByNick($sender->nick);
-            $desired = null !== $account
-                ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
-                : '';
-
+            $sender = $memberCtx['sender'];
+            $desired = $memberCtx['desired'];
             $currentLetter = $member['roleLetter'] ?? '';
 
             // Unauthenticated users must not keep any ChanServ-managed rank (e.g. guest nick after rename)
