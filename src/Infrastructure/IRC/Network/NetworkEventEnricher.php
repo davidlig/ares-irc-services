@@ -194,7 +194,8 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
         $memberCountBefore = $channel->getMemberCount();
         $joinedUids = [];
         foreach ($event->members as $member) {
-            $channel->syncMember($member['uid'], $member['role']);
+            $prefixLetters = $member['prefixLetters'] ?? null;
+            $channel->syncMember($member['uid'], $member['role'], $prefixLetters);
             $joinedUids[] = $member['uid'];
         }
 
@@ -305,7 +306,10 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
                 ++$paramIdx;
                 $user = $this->resolveUser($targetId);
                 if (null !== $user) {
-                    $channel->syncMember($user->uid, $adding ? $role : ChannelMemberRole::None);
+                    $letter = $role->toModeLetter();
+                    if ('' !== $letter) {
+                        $channel->applyMemberPrefixChange($user->uid, $letter, $adding);
+                    }
                 }
                 continue;
             }

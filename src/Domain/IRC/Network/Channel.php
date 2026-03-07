@@ -47,9 +47,34 @@ class Channel
         $this->modes = $modes;
     }
 
-    public function syncMember(Uid $uid, ChannelMemberRole $role): void
+    /**
+     * @param list<string>|null $prefixLetters Actual prefix mode letters (q,a,o,h,v) from SJOIN; null = derive from role
+     */
+    public function syncMember(Uid $uid, ChannelMemberRole $role, ?array $prefixLetters = null): void
     {
-        $this->members[$uid->value] = new ChannelMember($uid, $role);
+        $this->members[$uid->value] = new ChannelMember($uid, $role, $prefixLetters);
+    }
+
+    /**
+     * Add or remove one prefix letter for a member (from MODE +x / -x). Updates prefixLetters and role.
+     */
+    public function applyMemberPrefixChange(Uid $uid, string $letter, bool $add): void
+    {
+        $member = $this->members[$uid->value] ?? null;
+        if (null === $member) {
+            return;
+        }
+
+        $letters = $member->prefixLetters;
+        if ($add) {
+            if (!in_array($letter, $letters, true)) {
+                $letters[] = $letter;
+            }
+        } else {
+            $letters = array_values(array_filter($letters, static fn (string $l): bool => $l !== $letter));
+        }
+
+        $this->members[$uid->value] = $member->withPrefixLetters($letters);
     }
 
     public function removeMember(Uid $uid): void

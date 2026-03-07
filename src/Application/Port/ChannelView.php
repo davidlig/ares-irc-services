@@ -10,12 +10,12 @@ namespace App\Application\Port;
  * Services MUST NOT depend on Domain\IRC\Network\Channel.
  * Core implements ChannelLookupPort and returns this DTO.
  *
- * @phpstan-type MemberEntry array{uid: string, roleLetter: string}
+ * @phpstan-type MemberEntry array{uid: string, roleLetter: string, prefixLetters?: list<string>}
  */
 readonly class ChannelView
 {
     /**
-     * @param MemberEntry[]        $members    UID => role letter (v, h, o, a, q) for SECURE/ACCESS checks
+     * @param MemberEntry[]        $members    uid, roleLetter (highest), and optional prefixLetters (actual set from SJOIN)
      * @param int                  $timestamp  Unix timestamp of channel creation (for SJOIN when adding service to existing channel)
      * @param array<string,string> $modeParams Mode letter => param value (e.g. k => password, L => #channel) for MLOCK -k/-L
      */

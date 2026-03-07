@@ -235,7 +235,8 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
                 continue;
             }
 
-            $role = ChannelMemberRole::fromSjoinEntry($entry);
+            $prefixLetters = ChannelMemberRole::fromSjoinEntryToLetters($entry);
+            $role = ChannelMemberRole::highestRoleFromLetters($prefixLetters);
 
             try {
                 $uid = new Uid($entry);
@@ -244,7 +245,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
                 continue;
             }
 
-            $members[] = ['uid' => $uid, 'role' => $role];
+            $members[] = ['uid' => $uid, 'role' => $role, 'prefixLetters' => $prefixLetters];
         }
 
         $this->eventDispatcher->dispatch(new FjoinReceivedEvent($channelName, $timestamp, $modeStr, $members, $listModes, $modeParams));

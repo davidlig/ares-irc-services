@@ -38,7 +38,11 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
         $members = [];
         foreach ($channel->getMembers() as $member) {
             $letter = $this->roleToModeLetter($member->role);
-            $members[] = ['uid' => $member->uid->value, 'roleLetter' => $letter];
+            $members[] = [
+                'uid' => $member->uid->value,
+                'roleLetter' => $letter,
+                'prefixLetters' => $member->prefixLetters,
+            ];
         }
 
         return new ChannelView(

@@ -237,7 +237,8 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             }
 
             $role = ChannelMemberRole::fromModeLetter($prefixLetter) ?? ChannelMemberRole::None;
-            $members[] = ['uid' => $uid, 'role' => $role];
+            $prefixLetters = ChannelMemberRole::None !== $role ? [$role->toModeLetter()] : [];
+            $members[] = ['uid' => $uid, 'role' => $role, 'prefixLetters' => $prefixLetters];
         }
 
         $this->eventDispatcher->dispatch(new FjoinReceivedEvent($channelName, $timestamp, $modeStr, $members));

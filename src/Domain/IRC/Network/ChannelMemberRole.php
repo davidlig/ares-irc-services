@@ -54,22 +54,76 @@ enum ChannelMemberRole: string
     }
 
     /**
+     * MODE letter (q, a, o, h, v) for this role. Used when building MODE strings.
+     */
+    public function toModeLetter(): string
+    {
+        return match ($this) {
+            self::Voice => 'v',
+            self::HalfOp => 'h',
+            self::Op => 'o',
+            self::Admin => 'a',
+            self::Owner => 'q',
+            self::None => '',
+        };
+    }
+
+    /**
      * Extracts all prefix characters from the start of an SJOIN member entry
      * and returns the highest privilege role.
      * e.g. "+@James" → Op  (@ > +).
      */
     public static function fromSjoinEntry(string &$entry): self
     {
+        $letters = self::fromSjoinEntryToLetters($entry);
+
+        return self::highestRoleFromLetters($letters);
+    }
+
+    /**
+     * Extracts all prefix characters from the start of an SJOIN member entry
+     * and returns the list of mode letters (q, a, o, h, v) the user has.
+     * Consumes the prefix chars from $entry (same as fromSjoinEntry).
+     *
+     * @return list<string>
+     */
+    public static function fromSjoinEntryToLetters(string &$entry): array
+    {
         $prefixChars = ['+', '%', '@', '~', '*'];
-        $found = self::None;
-        $priority = [self::None, self::Voice, self::HalfOp, self::Op, self::Admin, self::Owner];
+        $letters = [];
 
         while ('' !== $entry && in_array($entry[0], $prefixChars, true)) {
             $role = self::fromSjoinPrefix($entry[0]);
-            if (array_search($role, $priority, true) > array_search($found, $priority, true)) {
-                $found = $role;
-            }
             $entry = substr($entry, 1);
+            if (self::None !== $role) {
+                $letter = $role->toModeLetter();
+                if ('' !== $letter && !in_array($letter, $letters, true)) {
+                    $letters[] = $letter;
+                }
+            }
+        }
+
+        return $letters;
+    }
+
+    /**
+     * Highest role from a list of mode letters (q > a > o > h > v).
+     *
+     * @param list<string> $letters
+     */
+    public static function highestRoleFromLetters(array $letters): self
+    {
+        $order = ['q' => self::Owner, 'a' => self::Admin, 'o' => self::Op, 'h' => self::HalfOp, 'v' => self::Voice];
+        $found = self::None;
+
+        foreach ($letters as $letter) {
+            $role = $order[$letter] ?? null;
+            if (null !== $role) {
+                $priority = [self::None, self::Voice, self::HalfOp, self::Op, self::Admin, self::Owner];
+                if (array_search($role, $priority, true) > array_search($found, $priority, true)) {
+                    $found = $role;
+                }
+            }
         }
 
         return $found;
