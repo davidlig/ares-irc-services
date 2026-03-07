@@ -250,6 +250,10 @@ services:
             $chanservUid: '%chanserv.uid%'
             $logger: '@monolog.logger.irc'
 
+    App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
+        arguments:
+            $chanservUid: '%chanserv.uid%'
+
     App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
