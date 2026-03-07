@@ -301,7 +301,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
     }
 
     /**
-     * SETHOST: user's displayed host changed (e.g. after CHGHOST or clear). Format :uid SETHOST :newhost
+     * SETHOST: user's displayed host changed (e.g. after CHGHOST or clear). Format :uid SETHOST :newhost.
      */
     private function handleSethost(IRCMessage $message): void
     {
@@ -338,7 +338,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         $topic = $message->trailing;
         $setterNick = null;
         $setterParam = $message->params[1] ?? '';
-        if ('' !== $setterParam && false !== strpos($setterParam, '!')) {
+        if ('' !== $setterParam && str_contains($setterParam, '!')) {
             $setterNick = explode('!', $setterParam, 2)[0];
         } elseif ('' !== $setterParam) {
             $setterNick = $setterParam;
