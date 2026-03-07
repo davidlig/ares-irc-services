@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\IRC\Connect;
 
-readonly class ConnectToServerCommand
+final readonly class ConnectToServerCommand
 {
     public function __construct(
         public readonly string $serverName,

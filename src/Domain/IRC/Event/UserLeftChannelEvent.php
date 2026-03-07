@@ -11,7 +11,7 @@ use App\Domain\IRC\ValueObject\Uid;
 /**
  * Dispatched when a user leaves a channel via PART or is removed via KICK.
  */
-readonly class UserLeftChannelEvent
+final readonly class UserLeftChannelEvent
 {
     public function __construct(
         public readonly Uid $uid,

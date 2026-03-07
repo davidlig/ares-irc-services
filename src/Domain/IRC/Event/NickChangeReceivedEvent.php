@@ -8,7 +8,7 @@ namespace App\Domain\IRC\Event;
  * Raw protocol event: NICK change received. Carries source and new nick string.
  * Enricher resolves source, updates repos, and dispatches UserNickChangedEvent.
  */
-readonly class NickChangeReceivedEvent
+final readonly class NickChangeReceivedEvent
 {
     public function __construct(
         /** Source identifier from message prefix (UID or nick string). */

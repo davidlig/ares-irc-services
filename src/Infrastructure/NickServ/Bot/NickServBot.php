@@ -21,7 +21,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * NickServ pseudo-client: introduces on burst, implements NickServNotifierInterface.
  * Sending NOTICE/PRIVMSG is delegated to SendNoticePort (implemented by Core).
  */
-readonly class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
+final readonly class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,

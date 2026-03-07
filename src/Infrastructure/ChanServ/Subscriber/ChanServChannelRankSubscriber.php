@@ -9,6 +9,7 @@ use App\Application\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Application\ChanServ\Event\ChannelSecureEnabledEvent;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -65,7 +66,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         return [
             MessageReceivedEvent::class => ['onMessageReceived', 256],
-            IrcMessageProcessedEvent::class => ['onIrcMessageProcessed', -256],
+            IrcMessageProcessedEvent::class => ['onIrcMessageProcessed', -255],
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
             UserLeftChannelEvent::class => ['onUserLeftChannel', 0],
             NetworkSyncCompleteEvent::class => ['onSyncComplete', 0],
@@ -316,7 +317,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
         foreach ($view->members as $member) {
             $uid = $member['uid'] ?? '';
-            if ('' === $uid || $uid === $this->chanservUid) {
+            if ('' === $uid || $this->chanservUid === $uid) {
                 continue;
             }
 
@@ -340,51 +341,16 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
             // Sync: strip only the prefix letters the user actually has (from SJOIN) that are above desired
             if ($currentRank > $desiredRank) {
-                $supported = $modeSupport->getSupportedPrefixModes();
-                $hasLetters = $member['prefixLetters'] ?? [$currentLetter];
-                if ('' === $currentLetter) {
-                    $hasLetters = [];
-                }
-                foreach (self::PREFIX_LETTERS_DESC as $letter) {
-                    if (!in_array($letter, $supported, true) || !in_array($letter, $hasLetters, true)) {
-                        continue;
-                    }
-                    $letterRank = self::RANK_ORDER[$letter] ?? 0;
-                    if ($letterRank <= $desiredRank) {
-                        continue;
-                    }
-                    $ops[] = ['uid' => $uid, 'letter' => $letter, 'add' => false];
-                    $this->logger->debug('ChanServ sync strip (rank above desired)', [
-                        'channel' => $channelName,
-                        'uid' => $uid,
-                        'mode' => '-' . $letter,
-                    ]);
-                }
-                if ('' !== $effectiveDesired) {
-                    $ops[] = ['uid' => $uid, 'letter' => $effectiveDesired, 'add' => true];
-                    $this->logger->debug('ChanServ auto-rank on sync', [
-                        'channel' => $channelName,
-                        'uid' => $uid,
-                        'mode' => '+' . $effectiveDesired,
-                    ]);
+                foreach ($this->collectOpsWhenRankAboveDesired($channelName, $uid, $member, $currentLetter, $effectiveDesired, $desiredRank, $modeSupport) as $op) {
+                    $ops[] = $op;
                 }
                 continue;
             }
 
             // Strip only the prefix letters the user actually has when no access (SECURE)
             if ($channel->isSecure() && '' === $effectiveDesired && '' !== $currentLetter) {
-                $supported = $modeSupport->getSupportedPrefixModes();
-                $hasLetters = $member['prefixLetters'] ?? [$currentLetter];
-                foreach (self::PREFIX_LETTERS_DESC as $letter) {
-                    if (!in_array($letter, $supported, true) || !in_array($letter, $hasLetters, true)) {
-                        continue;
-                    }
-                    $ops[] = ['uid' => $uid, 'letter' => $letter, 'add' => false];
-                    $this->logger->debug('ChanServ SECURE strip on sync', [
-                        'channel' => $channelName,
-                        'uid' => $uid,
-                        'mode' => '-' . $letter,
-                    ]);
+                foreach ($this->collectOpsForSecureStrip($channelName, $uid, $member, $currentLetter, $modeSupport) as $op) {
+                    $ops[] = $op;
                 }
                 continue;
             }
@@ -402,6 +368,79 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         }
 
         $this->flushMemberModeBatch($channelName, $ops);
+    }
+
+    /**
+     * @return list<array{uid: string, letter: string, add: bool}>
+     */
+    private function collectOpsWhenRankAboveDesired(
+        string $channelName,
+        string $uid,
+        array $member,
+        string $currentLetter,
+        string $effectiveDesired,
+        int $desiredRank,
+        ChannelModeSupportInterface $modeSupport,
+    ): array {
+        $ops = [];
+        $supported = $modeSupport->getSupportedPrefixModes();
+        $hasLetters = $member['prefixLetters'] ?? [$currentLetter];
+        if ('' === $currentLetter) {
+            $hasLetters = [];
+        }
+        foreach (self::PREFIX_LETTERS_DESC as $letter) {
+            if (!in_array($letter, $supported, true) || !in_array($letter, $hasLetters, true)) {
+                continue;
+            }
+            $letterRank = self::RANK_ORDER[$letter] ?? 0;
+            if ($letterRank <= $desiredRank) {
+                continue;
+            }
+            $ops[] = ['uid' => $uid, 'letter' => $letter, 'add' => false];
+            $this->logger->debug('ChanServ sync strip (rank above desired)', [
+                'channel' => $channelName,
+                'uid' => $uid,
+                'mode' => '-' . $letter,
+            ]);
+        }
+        if ('' !== $effectiveDesired) {
+            $ops[] = ['uid' => $uid, 'letter' => $effectiveDesired, 'add' => true];
+            $this->logger->debug('ChanServ auto-rank on sync', [
+                'channel' => $channelName,
+                'uid' => $uid,
+                'mode' => '+' . $effectiveDesired,
+            ]);
+        }
+
+        return $ops;
+    }
+
+    /**
+     * @return list<array{uid: string, letter: string, add: bool}>
+     */
+    private function collectOpsForSecureStrip(
+        string $channelName,
+        string $uid,
+        array $member,
+        string $currentLetter,
+        ChannelModeSupportInterface $modeSupport,
+    ): array {
+        $ops = [];
+        $supported = $modeSupport->getSupportedPrefixModes();
+        $hasLetters = $member['prefixLetters'] ?? [$currentLetter];
+        foreach (self::PREFIX_LETTERS_DESC as $letter) {
+            if (!in_array($letter, $supported, true) || !in_array($letter, $hasLetters, true)) {
+                continue;
+            }
+            $ops[] = ['uid' => $uid, 'letter' => $letter, 'add' => false];
+            $this->logger->debug('ChanServ SECURE strip on sync', [
+                'channel' => $channelName,
+                'uid' => $uid,
+                'mode' => '-' . $letter,
+            ]);
+        }
+
+        return $ops;
     }
 
     private function shouldSetMode(string $currentLetter, string $desiredLetter): bool
@@ -446,7 +485,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
             foreach ($chunk as $op) {
                 $sign = $op['add'] ? '+' : '-';
-                if ($sign !== $currentSign) {
+                if ($currentSign !== $sign) {
                     $modeStr .= $sign;
                     $currentSign = $sign;
                 }

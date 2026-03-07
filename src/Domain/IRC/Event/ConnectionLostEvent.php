@@ -7,7 +7,7 @@ namespace App\Domain\IRC\Event;
 use App\Domain\IRC\Server\ServerLink;
 use DateTimeImmutable;
 
-readonly class ConnectionLostEvent
+final readonly class ConnectionLostEvent
 {
     public function __construct(
         public readonly ServerLink $serverLink,

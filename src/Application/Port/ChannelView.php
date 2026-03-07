@@ -12,7 +12,7 @@ namespace App\Application\Port;
  *
  * @phpstan-type MemberEntry array{uid: string, roleLetter: string, prefixLetters?: list<string>}
  */
-readonly class ChannelView
+final readonly class ChannelView
 {
     /**
      * @param MemberEntry[]        $members    uid, roleLetter (highest), and optional prefixLetters (actual set from SJOIN)

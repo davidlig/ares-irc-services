@@ -35,7 +35,7 @@ final readonly class ChanServEntryMsgSubscriber implements EventSubscriberInterf
     public function onUserJoinedChannel(UserJoinedChannelEvent $event): void
     {
         $uid = $event->uid->value;
-        if ($uid === $this->chanservUid) {
+        if ($this->chanservUid === $uid) {
             return;
         }
 

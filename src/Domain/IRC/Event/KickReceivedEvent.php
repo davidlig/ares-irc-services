@@ -10,7 +10,7 @@ use App\Domain\IRC\ValueObject\ChannelName;
  * Raw protocol event: KICK received. Carries channel, target (UID or nick), reason.
  * Enricher resolves target and dispatches UserLeftChannelEvent.
  */
-readonly class KickReceivedEvent
+final readonly class KickReceivedEvent
 {
     public function __construct(
         public readonly ChannelName $channelName,

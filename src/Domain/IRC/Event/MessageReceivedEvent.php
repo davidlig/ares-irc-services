@@ -7,7 +7,7 @@ namespace App\Domain\IRC\Event;
 use App\Domain\IRC\Message\IRCMessage;
 use DateTimeImmutable;
 
-readonly class MessageReceivedEvent
+final readonly class MessageReceivedEvent
 {
     public function __construct(
         public readonly IRCMessage $message,

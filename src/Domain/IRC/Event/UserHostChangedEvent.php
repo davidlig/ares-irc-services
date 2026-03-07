@@ -11,7 +11,7 @@ use App\Domain\IRC\ValueObject\Uid;
  * Subscriber updates NetworkUser.virtualHost so displayHost stays in sync (avoids skipping
  * CHGHOST on identify when we think they already have the vhost).
  */
-readonly class UserHostChangedEvent
+final readonly class UserHostChangedEvent
 {
     public function __construct(
         public readonly Uid $uid,

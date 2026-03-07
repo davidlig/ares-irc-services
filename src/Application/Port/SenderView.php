@@ -10,7 +10,7 @@ namespace App\Application\Port;
  * Services MUST NOT depend on Domain\IRC\Network\NetworkUser.
  * Core implements NetworkUserLookupPort and returns this DTO.
  */
-readonly class SenderView
+final readonly class SenderView
 {
     public function __construct(
         public string $uid,

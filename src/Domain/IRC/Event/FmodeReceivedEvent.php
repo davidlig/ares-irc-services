@@ -10,7 +10,7 @@ use App\Domain\IRC\ValueObject\ChannelName;
  * Raw protocol event: FMODE received. Carries channel and mode string.
  * Enricher finds channel, updates modes, saves, and dispatches ChannelModesChangedEvent.
  */
-readonly class FmodeReceivedEvent
+final readonly class FmodeReceivedEvent
 {
     public function __construct(
         public readonly ChannelName $channelName,

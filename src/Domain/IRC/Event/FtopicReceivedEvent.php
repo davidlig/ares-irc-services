@@ -10,7 +10,7 @@ use App\Domain\IRC\ValueObject\ChannelName;
  * Raw protocol event: FTOPIC/TOPIC received. Carries channel, topic and optional setter nick.
  * Enricher finds channel, updates topic, saves, and dispatches ChannelTopicChangedEvent.
  */
-readonly class FtopicReceivedEvent
+final readonly class FtopicReceivedEvent
 {
     public function __construct(
         public readonly ChannelName $channelName,
