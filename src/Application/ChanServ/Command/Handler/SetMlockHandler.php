@@ -6,17 +6,17 @@ namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Event\ChannelMlockUpdatedEvent;
+use App\Application\ChanServ\Service\MlockStateFromChannelResolver;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-
-use function in_array;
 
 final readonly class SetMlockHandler implements SetOptionHandlerInterface
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private EventDispatcherInterface $eventDispatcher,
+        private MlockStateFromChannelResolver $mlockStateResolver,
     ) {
     }
 
@@ -62,44 +62,20 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
 
     /**
      * When turning MLOCK on, lock the current channel state (modes + params) so e.g. +l 100 is preserved.
+     * If the channel is not on the network or has no modes, MLOCK is stored as active with no modes:
+     * on burst or first join the subscriber will strip all channel modes (except +r set by services).
      */
     private function setMlockFromCurrentChannelState(ChanServContext $context, RegisteredChannel $channel): void
     {
         $view = $context->getChannelLookup()->findByChannelName($channel->getName());
-        $support = $context->getChannelModeSupport();
-        $unsetWithout = $support->getChannelSettingModesUnsetWithoutParam();
-        $unsetWith = $support->getChannelSettingModesUnsetWithParam();
-        $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
-        $allowedLetters = array_flip(array_merge($unsetWithout, $unsetWith, $withParamOnSet));
-
         if (null === $view || '' === $view->modes) {
             $channel->setMlock(true, '', []);
 
             return;
         }
 
-        $letters = [];
-        $params = [];
-        foreach (str_split($view->modes) as $c) {
-            if ('+' === $c || '-' === $c) {
-                continue;
-            }
-            if ('r' === $c) {
-                continue;
-            }
-            if (!isset($allowedLetters[$c])) {
-                continue;
-            }
-            $letters[] = $c;
-            if (in_array($c, $withParamOnSet, true)) {
-                $param = $view->getModeParam($c);
-                if (null !== $param && '' !== $param) {
-                    $params[$c] = $param;
-                }
-            }
-        }
-
-        $modeString = [] === $letters ? '' : '+' . implode('', array_unique($letters));
+        $support = $context->getChannelModeSupport();
+        [$modeString, $params] = $this->mlockStateResolver->resolve($view, $support);
         $channel->setMlock(true, $modeString, $params);
     }
 }

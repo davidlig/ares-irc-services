@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\Event\ChannelMlockUpdatedEvent;
+use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
@@ -14,8 +15,6 @@ use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function in_array;
@@ -24,10 +23,12 @@ use function in_array;
  * Enforces MLOCK on registered channels: locked modes are fixed; any other
  * channel mode is stripped so the channel has exactly the MLOCK modes (plus +r
  * if set by us). E.g. MLOCK +nt → channel stays +nt (or +ntr); +m, +R, +S etc. are removed.
+ * MLOCK with no modes (empty string): strip all channel modes on burst/first join except +r (set by services).
  *
- * Burst: we enforce on NetworkSyncCompleteEvent (after rejoin).
- * When a channel is created or synced (e.g. after our JOIN created it), we enforce on ChannelSyncedEvent
- * so channels that did not exist at sync time get MLOCK applied.
+ * Burst: we enforce only on NetworkSyncCompleteEvent (after EOS), so MLOCK runs with the final
+ * protocol sync state. We do not enforce on ChannelSyncedEvent during the initial burst.
+ * When a channel is synced after the burst (e.g. first join to an empty channel), we enforce
+ * on ChannelSyncedEvent so MLOCK is applied.
  */
 final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberInterface
 {
@@ -36,7 +37,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ChannelServiceActionsPort $channelServiceActions,
-        private LoggerInterface $logger = new NullLogger(),
+        private BurstCompleteRegistry $burstCompleteRegistry,
     ) {
     }
 
@@ -55,12 +56,14 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         if (!$event->channelSetupApplicable) {
             return;
         }
+        // During the initial burst, do not enforce here; wait for NetworkSyncCompleteEvent
+        // so MLOCK runs with the final protocol sync state (all SJOINs/MODEs processed).
+        if (!$this->burstCompleteRegistry->isBurstComplete()) {
+            return;
+        }
         $channelName = $event->channel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $registered || !$registered->isMlockActive()) {
-            return;
-        }
-        if ('' === $registered->getMlock()) {
             return;
         }
         $view = $this->channelLookup->findByChannelName($channelName);
@@ -90,16 +93,8 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
             if (!$registered->isMlockActive()) {
                 continue;
             }
-            $mlockStr = $registered->getMlock();
-            if ('' === $mlockStr) {
-                $this->logger->debug('ChanServ MLOCK skip: empty mlock', ['channel' => $registered->getName()]);
-                continue;
-            }
             $view = $this->channelLookup->findByChannelName($registered->getName());
             if (null === $view) {
-                $this->logger->debug('ChanServ MLOCK skip: channel not on network (no view)', [
-                    'channel' => $registered->getName(),
-                ]);
                 continue;
             }
             $this->enforceMlockForChannel($view->name, $view, $registered);
@@ -124,27 +119,20 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
     private function enforceMlockForChannel(string $channelName, ChannelView $view, RegisteredChannel $registered): void
     {
         $mlockStr = $registered->getMlock();
-        if ('' === $mlockStr) {
-            return;
-        }
-
         $mlockLetters = $this->parseMlockLetters($mlockStr);
-        if ([] === $mlockLetters) {
-            return;
-        }
+        // Empty mlock = lock to no modes: strip all channel modes except +r (set by services).
 
         $support = $this->modeSupportProvider->getSupport();
         $unsetWithoutParam = $support->getChannelSettingModesUnsetWithoutParam();
         $unsetWithParam = $support->getChannelSettingModesUnsetWithParam();
         $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
         $currentLettersRaw = $this->parseChannelModeLettersPreservingCase($view->modes);
-        $currentLettersLower = array_map('strtolower', $currentLettersRaw);
 
-        // Remove modes not in MLOCK (except +r channel-registered). Mode letters are case-sensitive.
+        // Remove modes not in MLOCK (except +r channel-registered). Mode letters are case-sensitive (+M ≠ +m).
         // For modes that need param to unset (k, L), only add to toRemove if we have the stored param.
         $toRemove = [];
         foreach ($currentLettersRaw as $letter) {
-            if (in_array(strtolower($letter), $mlockLetters, true)) {
+            if (in_array($letter, $mlockLetters, true)) {
                 continue;
             }
             if ('r' === $letter) {
@@ -161,18 +149,12 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
 
         $toAdd = [];
         foreach ($mlockLetters as $letter) {
-            if (!in_array($letter, $currentLettersLower, true) && !in_array($letter, $toAdd, true)) {
+            if (!in_array($letter, $currentLettersRaw, true) && !in_array($letter, $toAdd, true)) {
                 $toAdd[] = $letter;
             }
         }
 
         if ([] === $toRemove && [] === $toAdd) {
-            $this->logger->debug('ChanServ MLOCK: no change needed', [
-                'channel' => $channelName,
-                'viewModes' => $view->modes,
-                'mlockLetters' => $mlockLetters,
-            ]);
-
             return;
         }
 
@@ -203,16 +185,11 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         $modeStr = implode('', $parts);
 
         $this->channelServiceActions->setChannelModes($channelName, $modeStr, $params);
-        $this->logger->info('ChanServ MLOCK enforced', [
-            'channel' => $channelName,
-            'viewModes' => $view->modes,
-            'toRemove' => $toRemove,
-            'toAdd' => $toAdd,
-            'sent' => $modeStr,
-        ]);
     }
 
     /**
+     * Parses MLOCK mode string preserving case (+M and +m are different modes).
+     *
      * @return list<string>
      */
     private function parseMlockLetters(string $mlockStr): array
@@ -222,7 +199,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
             if ('+' === $c || '-' === $c) {
                 continue;
             }
-            $letters[] = strtolower($c);
+            $letters[] = $c;
         }
 
         return $letters;

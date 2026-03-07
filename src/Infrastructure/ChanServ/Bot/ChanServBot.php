@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\ChanServ\Bot;
 
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Domain\IRC\Connection\ConnectionInterface;
@@ -30,6 +31,7 @@ readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceA
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly ChannelLookupPort $channelLookup,
+        private readonly ApplyOutgoingChannelModesPort $applyOutgoingChannelModes,
         private readonly string $servicesHostname,
         private readonly string $chanservUid,
         private readonly string $chanservNick = 'ChanServ',
@@ -141,6 +143,7 @@ readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceA
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
             $module->getServiceActions()->setChannelModes($sid, $channelName, $modeStr, $params, $this->chanservUid);
+            $this->applyOutgoingChannelModes->applyOutgoingChannelModes($channelName, $modeStr, $params);
         }
     }
 
