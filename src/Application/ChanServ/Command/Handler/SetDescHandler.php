@@ -17,7 +17,13 @@ final readonly class SetDescHandler implements SetOptionHandlerInterface
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {
-        $channel->updateDescription($value);
+        $trimmed = trim($value);
+        if ('' === $trimmed) {
+            $context->reply('error.syntax', ['syntax' => $context->trans('set.desc.syntax')]);
+
+            return;
+        }
+        $channel->updateDescription($trimmed);
         $this->channelRepository->save($channel);
         $context->reply('set.desc.updated');
     }

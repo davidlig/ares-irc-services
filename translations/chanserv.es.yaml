@@ -74,12 +74,12 @@ secure:
   requires_min_level: "\x0304✗\x03 Con SECURE activado, \x02%nick%\x02 debe tener al menos nivel \x02%level%\x02 para recibir \x02%mode%\x02."
 
 set:
-  syntax:           "SET <#canal> <opción> <valor>"
+  syntax:           "SET <#canal> <opción> [valor]"
   short:            "Cambiar opciones del canal."
   help:             "Cambiar opciones del canal. Usa \x0303HELP SET <opción>\x03 para cada una: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
   unknown_option:   "\x0304✗\x03 Opción desconocida \x02%option%\x02. Usa una de: %options%."
   founder:
-    syntax:         "SET <#canal> FOUNDER <nuevonick> [token]"
+    syntax:         "SET <#canal> FOUNDER <nickname> [token]"
     short:          "Transferir canal a otro nickname registrado."
     help:           "Sin token: envía un token al email del fundador actual. Con token: completa la transferencia."
     token_sent:     "\x0303✔\x03 Se ha enviado un token de cambio de fundador a %email_hint%."
@@ -87,19 +87,23 @@ set:
     updated:        "\x0303✔\x03 El fundador ha sido cambiado a \x02%nick%\x02."
     no_email:       "\x0304✗\x03 El fundador actual no tiene email. No se puede enviar el token."
     throttled:      "\x0304✗\x03 Espera antes de solicitar otro token."
-    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 debe estar totalmente registrado (no pendiente)."
+    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 debe estar registrado y activado."
+    suspended:         "\x0304✗\x03 \x02%nick%\x02 está suspendido y no puede ser fundador."
+    cannot_be_self:   "\x0304✗\x03 El nuevo fundador no puede ser el actual."
+    cannot_be_successor: "\x0304✗\x03 El nuevo fundador no puede ser el sucesor del canal."
   successor:
     syntax:         "SET <#canal> SUCCESSOR [nickname]"
     short:          "Establecer el sucesor del canal."
-    help:           "Asigna un nickname como sucesor de un canal. Si no se establece un nickname borra el actual. El sucesor debe estar registrado y no suspendido."
+    help:           "Asigna un nickname como sucesor de un canal. Si no se establece un nickname borra el actual. El nick debe estar registrado y activado."
     cleared:        "\x0303✔\x03 Sucesor borrado."
     updated:        "\x0303✔\x03 Sucesor establecido en \x02%nick%\x02."
+    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 debe estar registrado y activado."
     suspended:      "\x0304✗\x03 \x02%nick%\x02 está suspendido y no puede ser sucesor."
     cannot_be_founder: "\x0304✗\x03 El fundador no puede ser sucesor."
   desc:
     syntax:         "SET <#canal> DESC <descripción>"
     short:          "Cambiar descripción del canal."
-    help:           "Cambia la descripción del canal."
+    help:           "Cambia la descripción del canal (obligatoria)."
     updated:        "\x0303✔\x03 Descripción actualizada."
   url:
     syntax:         "SET <#canal> URL [url]"

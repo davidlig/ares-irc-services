@@ -74,12 +74,12 @@ secure:
   requires_min_level: "\x0304✗\x03 With SECURE on, \x02%nick%\x02 must have at least level \x02%level%\x02 to receive \x02%mode%\x02."
 
 set:
-  syntax:           "SET <#channel> <option> <value>"
+  syntax:           "SET <#channel> <option> [value]"
   short:            "Change channel options."
   help:             "Change channel options. Use \x0303HELP SET <option>\x03 for each: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
   unknown_option:    "\x0304✗\x03 Unknown option \x02%option%\x02. Use one of: %options%."
   founder:
-    syntax:         "SET <#channel> FOUNDER <newnick> [token]"
+    syntax:         "SET <#channel> FOUNDER <nickname> [token]"
     short:          "Transfer channel to another registered nickname."
     help:           "Without token: sends a token to the current founder's email. With token: completes the transfer."
     token_sent:     "\x0303✔\x03 A founder change token has been sent to %email_hint%."
@@ -87,19 +87,23 @@ set:
     updated:        "\x0303✔\x03 Founder has been changed to \x02%nick%\x02."
     no_email:       "\x0304✗\x03 Current founder has no email set. Cannot send token."
     throttled:      "\x0304✗\x03 Please wait before requesting another token."
-    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 must be fully registered (not pending)."
+    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 must be registered and activated."
+    suspended:         "\x0304✗\x03 \x02%nick%\x02 is suspended and cannot be set as founder."
+    cannot_be_self:   "\x0304✗\x03 The new founder cannot be the current founder."
+    cannot_be_successor: "\x0304✗\x03 The new founder cannot be the channel successor."
   successor:
     syntax:         "SET <#channel> SUCCESSOR [nickname]"
     short:          "Set the channel successor."
-    help:           "Sets a nickname as channel successor. Omit nickname to clear. Successor must be registered and not suspended."
+    help:           "Sets a nickname as channel successor. Omit nickname to clear. Nick must be registered and activated."
     cleared:        "\x0303✔\x03 Successor has been cleared."
     updated:        "\x0303✔\x03 Successor has been set to \x02%nick%\x02."
+    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 must be registered and activated."
     suspended:      "\x0304✗\x03 \x02%nick%\x02 is suspended and cannot be set as successor."
     cannot_be_founder: "\x0304✗\x03 The founder cannot be set as successor."
   desc:
     syntax:         "SET <#channel> DESC <description>"
     short:          "Change channel description."
-    help:           "Change the channel description."
+    help:           "Change the channel description (required)."
     updated:        "\x0303✔\x03 Description updated."
   url:
     syntax:         "SET <#channel> URL [url]"

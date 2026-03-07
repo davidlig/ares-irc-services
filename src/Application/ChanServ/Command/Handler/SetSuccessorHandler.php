@@ -40,6 +40,11 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
 
             return;
         }
+        if (NickStatus::Registered !== $account->getStatus()) {
+            $context->reply('set.successor.must_be_registered', ['%nick%' => $nickname]);
+
+            return;
+        }
         if ($channel->isFounder($account->getId())) {
             $context->reply('set.successor.cannot_be_founder', ['%nick%' => $nickname]);
 

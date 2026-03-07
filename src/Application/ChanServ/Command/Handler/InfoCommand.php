@@ -101,13 +101,13 @@ final readonly class InfoCommand implements ChanServCommandInterface
         if (null !== $successorName) {
             $context->replyRaw($context->trans('info.successor', ['%nick%' => $successorName]));
         }
+        if ('' !== $channel->getDescription()) {
+            $context->replyRaw($context->trans('info.description', ['%desc%' => $channel->getDescription()]));
+        }
         $context->replyRaw($context->trans('info.registered', ['%date%' => $context->formatDate($channel->getCreatedAt())]));
         $context->replyRaw($context->trans('info.last_used', [
             '%date%' => $context->formatDate($channel->getLastUsedAt()),
         ]));
-        if ('' !== $channel->getDescription()) {
-            $context->replyRaw($context->trans('info.description', ['%desc%' => $channel->getDescription()]));
-        }
         if (null !== $channel->getUrl()) {
             $context->replyRaw($context->trans('info.url', ['%url%' => $channel->getUrl()]));
         }

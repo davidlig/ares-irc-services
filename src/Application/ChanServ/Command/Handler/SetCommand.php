@@ -17,8 +17,9 @@ use function implode;
 use function strtoupper;
 
 /**
- * SET <#channel> <option> <value>.
+ * SET <#channel> <option> [value].
  *
+ * Value is optional for some options (e.g. SUCCESSOR with no value clears the successor).
  * Option handlers: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG,
  * TOPICLOCK, MLOCK, SECURE. FOUNDER and SUCCESSOR require founder; others require SET level.
  */
@@ -70,7 +71,7 @@ final readonly class SetCommand implements ChanServCommandInterface
 
     public function getMinArgs(): int
     {
-        return 3;
+        return 2;
     }
 
     public function getSyntaxKey(): string

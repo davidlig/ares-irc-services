@@ -66,7 +66,8 @@ founder_change_token_body: |
 
   Tu token de confirmación es: %token%
 
-  Para completar el cambio, envía a ChanServ (sustituye <token> por el token anterior):
-    /msg ChanServ SET #canal FOUNDER %new_nick% <token>
+  Para completar el cambio, envía a ChanServ este comando (puedes copiarlo y pegarlo):
+
+    /msg ChanServ %command%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
