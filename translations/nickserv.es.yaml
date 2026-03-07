@@ -153,7 +153,7 @@ set:
     invalid:        "\x0304✗\x03 Idioma no soportado. Idiomas disponibles: %languages%."
 
   timezone:
-    syntax:         "SET TIMEZONE <zona>|OFF"
+    syntax:         "SET TIMEZONE <zona>"
     short:          "Establece la zona horaria para mostrar fechas."
     help:           "Establece la zona horaria con la que NickServ muestra las fechas.\nUsa \x02HELP SET TIMEZONE\x02 para el índice de regiones; \x02HELP SET TIMEZONE <región>\x02 (ej. Europe) para las zonas de esa región. Usa \x02OFF\x02 para quitarla."
     success:        "\x0303✔\x03 Zona horaria establecida en \x02%timezone%\x02. Las fechas se mostrarán en esta zona."
@@ -161,21 +161,21 @@ set:
     invalid:        "\x0304✗\x03 Zona horaria no válida \x02%timezone%\x02. Usa un identificador válido (ej. UTC, Europe/Madrid)."
 
   private:
-    syntax:         "SET PRIVATE ON|OFF"
+    syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Activa o desactiva la privacidad de tu información."
     help:           "Controla la visibilidad de tu información en el comando INFO.\nCon \x02PRIVATE ON\x02 solo tú y los Operadores IRC podrán ver tus datos.\nCon \x02PRIVATE OFF\x02 la información es pública para todos."
     on:             "\x0303✔\x03 La información de tu cuenta es ahora \x02privada\x02."
     off:            "\x0303✔\x03 La información de tu cuenta es ahora \x02pública\x02."
 
   msg:
-    syntax:         "SET MSG ON|OFF"
+    syntax:         "SET MSG {ON|OFF}"
     short:          "Usar PRIVMSG (ON) o NOTICE (OFF) para las respuestas de los servicios."
     help:           "Controla cómo NickServ y el resto de servicios te envían mensajes.\nCon \x02MSG ON\x02 las respuestas se envían como \x02PRIVMSG\x02 (algunos clientes pueden mostrar notificaciones o respuestas automáticas).\nCon \x02MSG OFF\x02 las respuestas se envían como \x02NOTICE\x02 (por defecto; normalmente sin auto-respuesta)."
     on:             "\x0303✔\x03 Los mensajes de los servicios se enviarán ahora como \x02PRIVMSG\x02."
     off:             "\x0303✔\x03 Los mensajes de los servicios se enviarán ahora como \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>|OFF"
+    syntax:         "SET VHOST <vhost>"
     short:          "Establece o quita tu host virtual (hostname visible)."
     help:           "Establece un hostname personalizado que otros ven cuando estás identificado.\nUsa \x02SET VHOST OFF\x02 para quitarlo. Solo letras (a-z, A-Z), dígitos, guión y punto;\nni guión ni punto al inicio/final de cada bloque; máximo 48 caracteres. Es único por cuenta."
     success:        "\x0303✔\x03 Tu host virtual se ha establecido a \x02%vhost%\x02."

@@ -11,10 +11,13 @@ use App\Application\ChanServ\Command\ChanServContext;
  * HELP [command [sub-option]].
  *
  * Lists commands (filtered by IRCd mode support) or shows help for a command.
+ * Design aligned with NickServ: header with icon, coloured sections, syntax label, footer.
  */
 final readonly class HelpCommand implements ChanServCommandInterface
 {
     private const int CMD_PAD = 12;
+
+    private const int SUBS_PAD = 10;
 
     private const int HEADER_WIDTH = 40;
 
@@ -88,46 +91,45 @@ final readonly class HelpCommand implements ChanServCommandInterface
         $handler = $context->getRegistry()->find($targetCmd);
 
         if (null === $handler) {
-            $context->reply('help.unknown_command', ['%command%' => $targetCmd]);
+            $context->reply('help.unknown_command', ['command' => $targetCmd]);
 
             return;
         }
 
         if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
             $subName = strtoupper($context->args[1]);
-            foreach ($handler->getSubCommandHelp() as $sub) {
-                if ($sub['name'] === $subName) {
-                    $context->replyRaw($context->trans($sub['syntax_key']));
-                    $context->replyRaw($context->trans($sub['help_key']));
+            $subCmd = $this->findSubCommand($handler, $subName);
 
-                    return;
-                }
+            if (null !== $subCmd) {
+                $this->showSubCommandHelp($context, $handler->getName(), $subCmd);
+
+                return;
             }
         }
 
-        $context->replyRaw($context->trans($handler->getSyntaxKey()));
-        $context->replyRaw($context->trans($handler->getHelpKey()));
-        if ([] !== $handler->getSubCommandHelp()) {
-            $context->replyRaw($context->trans('help.suboptions'));
-            foreach ($handler->getSubCommandHelp() as $sub) {
-                $context->replyRaw('  ' . str_pad($sub['name'], self::CMD_PAD) . ' ' . $context->trans($sub['desc_key']));
-            }
-        }
+        $this->showCommandHelp($context, $handler);
     }
 
     private function showGeneralHelp(ChanServContext $context): void
     {
-        $context->replyRaw($context->trans('help.intro'));
-        $context->replyRaw(str_repeat('–', self::HEADER_WIDTH));
-
         $commands = $context->getRegistry()->all();
         usort($commands, static fn (ChanServCommandInterface $a, ChanServCommandInterface $b): int => $a->getOrder() <=> $b->getOrder());
 
-        foreach ($commands as $handler) {
-            if ($handler->isOperOnly()) {
+        $this->sendHeader($context, $context->trans('help.header_title'));
+        $context->reply('help.intro');
+        $context->replyRaw(' ');
+        $context->reply('help.general_header');
+
+        foreach ($commands as $command) {
+            if ('HELP' === $command->getName()) {
                 continue;
             }
-            $name = $handler->getName();
+
+            if ($command->isOperOnly()) {
+                continue;
+            }
+
+            $name = $command->getName();
             if (isset(self::MODE_DEPENDENT_COMMANDS[$name])) {
                 $mode = self::MODE_DEPENDENT_COMMANDS[$name];
                 $supported = ['a' => $context->getChannelModeSupport()->hasAdmin(), 'h' => $context->getChannelModeSupport()->hasHalfOp()][$mode] ?? false;
@@ -135,10 +137,78 @@ final readonly class HelpCommand implements ChanServCommandInterface
                     continue;
                 }
             }
-            $context->replyRaw('  ' . str_pad($name, self::CMD_PAD) . ' ' . $context->trans($handler->getShortDescKey()));
+
+            $context->reply('help.command_line', [
+                'command' => str_pad($name, self::CMD_PAD),
+                'description' => $context->trans($command->getShortDescKey()),
+            ]);
         }
 
-        $context->replyRaw(str_repeat('–', self::HEADER_WIDTH));
-        $context->replyRaw($context->trans('help.footer'));
+        $context->replyRaw(' ');
+        $context->reply('help.general_footer');
+        $context->reply('help.footer');
+    }
+
+    private function showCommandHelp(ChanServContext $context, ChanServCommandInterface $handler): void
+    {
+        $this->sendHeader($context, $handler->getName());
+        $context->reply($handler->getHelpKey());
+
+        $subCmds = $handler->getSubCommandHelp();
+
+        if ([] !== $subCmds) {
+            $context->replyRaw(' ');
+            $context->reply('help.options_header');
+
+            foreach ($subCmds as $sub) {
+                $context->reply('help.subcommand_line', [
+                    'command' => str_pad($sub['name'], self::SUBS_PAD),
+                    'description' => $context->trans($sub['desc_key']),
+                ]);
+            }
+
+            $context->replyRaw(' ');
+            $context->reply('help.set_sub_footer', ['command' => $handler->getName()]);
+        }
+
+        $context->replyRaw(' ');
+        $context->reply('help.syntax_label', ['syntax' => $context->trans($handler->getSyntaxKey())]);
+        $context->reply('help.footer');
+    }
+
+    private function showSubCommandHelp(ChanServContext $context, string $parentName, array $sub): void
+    {
+        $this->sendHeader($context, $parentName . ' ' . $sub['name']);
+        $context->reply($sub['help_key']);
+        if (isset($sub['options_key'])) {
+            $context->replyRaw(' ');
+            $context->reply($sub['options_key']);
+        }
+        $context->replyRaw(' ');
+        $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
+        $context->reply('help.footer');
+    }
+
+    /**
+     * Sends a coloured section header (same style as NickServ).
+     */
+    private function sendHeader(ChanServContext $context, string $title): void
+    {
+        $visible = 4 + mb_strlen($title) + 1;
+        $dashes = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
+        $line = "\x02\x0307 ℹ " . $title . " \x0F\x0314" . $dashes . "\x03";
+        $context->replyRaw($line);
+    }
+
+    /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
+    private function findSubCommand(ChanServCommandInterface $handler, string $name): ?array
+    {
+        foreach ($handler->getSubCommandHelp() as $sub) {
+            if (strtoupper($sub['name']) === $name) {
+                return $sub;
+            }
+        }
+
+        return null;
     }
 }

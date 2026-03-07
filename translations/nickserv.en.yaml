@@ -153,7 +153,7 @@ set:
     invalid:        "\x0304✗\x03 Unsupported language. Available languages: %languages%."
 
   timezone:
-    syntax:         "SET TIMEZONE <timezone>|OFF"
+    syntax:         "SET TIMEZONE <timezone>"
     short:          "Set the timezone used when displaying dates."
     help:           "Sets the timezone used when NickServ shows dates.\nUse \x02HELP SET TIMEZONE\x02 for the region index; \x02HELP SET TIMEZONE <region>\x02 (e.g. Europe) for that region's timezones. Use \x02OFF\x02 to clear."
     success:        "\x0303✔\x03 Timezone set to \x02%timezone%\x02. Dates will be shown in this timezone."
@@ -161,21 +161,21 @@ set:
     invalid:        "\x0304✗\x03 Invalid timezone \x02%timezone%\x02. Use a valid identifier (e.g. UTC, Europe/Madrid)."
 
   private:
-    syntax:         "SET PRIVATE ON|OFF"
+    syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Enable or disable privacy for your account information."
     help:           "Controls the visibility of your account information in the INFO command.\nWith \x02PRIVATE ON\x02 only you and IRC Operators can view your details.\nWith \x02PRIVATE OFF\x02 your information is public to everyone."
     on:             "\x0303✔\x03 Your account information is now \x02private\x02."
     off:            "\x0303✔\x03 Your account information is now \x02public\x02."
 
   msg:
-    syntax:         "SET MSG ON|OFF"
+    syntax:         "SET MSG {ON|OFF}"
     short:          "Use PRIVMSG (ON) or NOTICE (OFF) for service replies."
     help:           "Controls how NickServ and other services send messages to you.\nWith \x02MSG ON\x02 replies are sent as \x02PRIVMSG\x02 (some clients may trigger replies or notifications).\nWith \x02MSG OFF\x02 replies are sent as \x02NOTICE\x02 (default; typically no auto-reply)."
     on:             "\x0303✔\x03 Service messages will now be sent as \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 Service messages will now be sent as \x02NOTICE\x02."
 
   vhost:
-    syntax:         "SET VHOST <vhost>|OFF"
+    syntax:         "SET VHOST <vhost>"
     short:          "Set or clear your custom virtual host (displayed hostname)."
     help:           "Sets a custom hostname that others see when you are identified.\nUse \x02SET VHOST OFF\x02 to clear it. Only letters (a-z, A-Z), digits, hyphen and dot;\nno hyphen or dot at start/end of any block; max 48 characters. Unique per account."
     success:        "\x0303✔\x03 Your virtual host has been set to \x02%vhost%\x02."
