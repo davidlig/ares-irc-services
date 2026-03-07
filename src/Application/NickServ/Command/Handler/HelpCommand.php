@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
+use App\Application\NickServ\Command\HelpFormatterContextAdapter;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\TimezoneHelpProvider;
+use App\Application\Shared\Help\UnifiedHelpFormatter;
 
 use function strlen;
 
@@ -23,17 +25,10 @@ use function strlen;
  */
 final readonly class HelpCommand implements NickServCommandInterface
 {
-    /** Number of visible chars to reserve for command/option names in listings. */
-    private const int CMD_PAD = 12;
-
-    private const int SUBS_PAD = 10;
-
-    /** Total visible width used for the decorative header line. */
-    private const int HEADER_WIDTH = 40;
-
     private const int TIMEZONE_LIST_MAX_LINE_LEN = 100;
 
     public function __construct(
+        private readonly UnifiedHelpFormatter $formatter,
         private readonly TimezoneHelpProvider $timezoneHelpProvider,
         private readonly int $inactivityExpiryDays = 0,
     ) {
@@ -127,44 +122,21 @@ final readonly class HelpCommand implements NickServCommandInterface
                     return;
                 }
 
-                $this->showSubCommandHelp($context, $handler->getName(), $subCmd);
+                $adapter = new HelpFormatterContextAdapter($context);
+                $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return;
             }
         }
 
-        $this->showCommandHelp($context, $handler);
+        $adapter = new HelpFormatterContextAdapter($context);
+        $this->formatter->showCommandHelp($adapter, $handler);
     }
 
     private function showGeneralHelp(NickServContext $context): void
     {
-        $isOper = $context->sender?->isOper ?? false;
-        $commands = $context->getRegistry()->all();
-
-        usort($commands, static fn ($a, $b) => $a->getOrder() <=> $b->getOrder());
-
-        $this->sendHeader($context, $context->trans('help.header_title'));
-        $context->reply('help.intro');
-        $context->replyRaw(' ');
-        $context->reply('help.general_header');
-
-        foreach ($commands as $command) {
-            if ('HELP' === $command->getName()) {
-                continue;
-            }
-
-            if ($command->isOperOnly() && !$isOper) {
-                continue;
-            }
-
-            $context->reply('help.command_line', [
-                'command' => str_pad($command->getName(), self::CMD_PAD),
-                'description' => $context->trans($command->getShortDescKey()),
-            ]);
-        }
-
-        $context->replyRaw(' ');
-        $context->reply('help.general_footer');
+        $adapter = new HelpFormatterContextAdapter($context);
+        $this->formatter->showGeneralHelp($adapter);
         if ($this->inactivityExpiryDays > 0) {
             $context->replyRaw(' ');
             $context->reply('help.intro_expiration', ['%days%' => $this->inactivityExpiryDays]);
@@ -172,49 +144,10 @@ final readonly class HelpCommand implements NickServCommandInterface
         $context->reply('help.footer');
     }
 
-    private function showCommandHelp(NickServContext $context, NickServCommandInterface $handler): void
-    {
-        $this->sendHeader($context, $handler->getName());
-        $context->reply($handler->getHelpKey());
-
-        $subCmds = $handler->getSubCommandHelp();
-
-        if ([] !== $subCmds) {
-            $context->replyRaw(' ');
-            $context->reply('help.options_header');
-
-            foreach ($subCmds as $sub) {
-                $context->reply('help.subcommand_line', [
-                    'command' => str_pad($sub['name'], self::SUBS_PAD),
-                    'description' => $context->trans($sub['desc_key']),
-                ]);
-            }
-
-            $context->replyRaw(' ');
-            $context->reply('help.set_sub_footer', ['command' => $handler->getName()]);
-        }
-
-        $context->replyRaw(' ');
-        $context->reply('help.syntax_label', ['syntax' => $context->trans($handler->getSyntaxKey())]);
-        $context->reply('help.footer');
-    }
-
-    private function showSubCommandHelp(NickServContext $context, string $parentName, array $sub): void
-    {
-        $this->sendHeader($context, $parentName . ' ' . $sub['name']);
-        $context->reply($sub['help_key']);
-        if (isset($sub['options_key'])) {
-            $context->replyRaw(' ');
-            $context->reply($sub['options_key']);
-        }
-        $context->replyRaw(' ');
-        $context->reply('help.syntax_label', ['syntax' => $context->trans($sub['syntax_key'])]);
-        $context->reply('help.footer');
-    }
-
     private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
     {
-        $this->sendHeader($context, $parentName . ' ' . $sub['name']);
+        $adapter = new HelpFormatterContextAdapter($context);
+        $this->formatter->sendHeader($adapter, $parentName . ' ' . $sub['name']);
         $context->reply($sub['help_key']);
         $context->replyRaw(' ');
         $context->reply('help.set_timezone.index_label', []);
@@ -257,8 +190,10 @@ final readonly class HelpCommand implements NickServCommandInterface
         $region = $this->timezoneHelpProvider->resolveRegion($regionArg)
             ?? $this->timezoneHelpProvider->getRegionForTimezone($regionArg);
 
+        $adapter = new HelpFormatterContextAdapter($context);
+
         if (null === $region) {
-            $this->sendHeader($context, 'SET TIMEZONE ' . $regionArg);
+            $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $regionArg);
             $context->reply('help.set_timezone.region_unknown', []);
             $context->replyRaw(' ');
             $context->reply('help.footer');
@@ -266,24 +201,13 @@ final readonly class HelpCommand implements NickServCommandInterface
             return;
         }
 
-        $this->sendHeader($context, 'SET TIMEZONE ' . $region);
+        $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $region);
         $context->reply('help.set_timezone.region_header', ['region' => $region]);
         $timezones = $this->timezoneHelpProvider->getTimezonesForRegion($region);
-
-        $line = '  ';
-        foreach ($timezones as $tz) {
-            $next = $line . ('  ' === $line ? '' : ', ') . $tz;
-            if (strlen($next) > self::TIMEZONE_LIST_MAX_LINE_LEN && '  ' !== $line) {
-                $context->replyRaw($line);
-                $line = '  ' . $tz;
-            } else {
-                $line = $next;
-            }
-        }
-        if ('  ' !== $line) {
+        foreach ($this->chunkLine(implode(', ', $timezones), self::TIMEZONE_LIST_MAX_LINE_LEN, '  ') as $line) {
             $context->replyRaw($line);
         }
-
+        $context->replyRaw(' ');
         $context->reply('help.footer');
     }
 
@@ -291,26 +215,11 @@ final readonly class HelpCommand implements NickServCommandInterface
     private function findSubCommand(NickServCommandInterface $handler, string $name): ?array
     {
         foreach ($handler->getSubCommandHelp() as $sub) {
-            if (strtoupper($sub['name']) === $name) {
+            if ($name === strtoupper($sub['name'])) {
                 return $sub;
             }
         }
 
         return null;
-    }
-
-    /**
-     * Sends a coloured section header:
-     *   \x02\x0307 ℹ TITLE \x0F\x0314─────────────────\x03
-     *
-     * ℹ (U+2139 INFORMATION SOURCE) replaces the old ■ block.
-     * Visible width = 1 (ℹ) + 1 (space) + 1 (space before dashes) + title length + 1 space.
-     */
-    private function sendHeader(NickServContext $context, string $title): void
-    {
-        $visible = 4 + mb_strlen($title) + 1;
-        $dashes = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
-        $line = "\x02\x0307 ℹ " . $title . " \x0F\x0314" . $dashes . "\x03";
-        $context->replyRaw($line);
     }
 }
