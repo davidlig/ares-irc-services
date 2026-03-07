@@ -75,7 +75,7 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
             $setterNick = null;
         }
 
-        $registered->setTopic($topic, $setterNick);
+        $registered->updateTopic($topic, $setterNick);
         $this->channelRepository->save($registered);
         $this->logger->debug('ChanServ synced topic to DB', ['channel' => $channelName]);
     }

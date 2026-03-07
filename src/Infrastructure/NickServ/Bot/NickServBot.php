@@ -11,8 +11,6 @@ use App\Application\Port\SendNoticePort;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;
-use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Message\MessageDirection;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
@@ -21,12 +19,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * NickServ pseudo-client: introduces on burst, implements NickServNotifierInterface.
+ * Sending NOTICE/PRIVMSG is delegated to SendNoticePort (implemented by Core).
  */
-readonly class NickServBot implements NickServNotifierInterface, SendNoticePort, EventSubscriberInterface
+readonly class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly NetworkUserLookupPort $userLookup,
+        private readonly SendNoticePort $sendNoticePort,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly LocalUserModeSyncInterface $localUserModeSync,
         private readonly string $servicesHostname,
@@ -77,41 +77,12 @@ readonly class NickServBot implements NickServNotifierInterface, SendNoticePort,
 
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
-        $this->sendMessage($targetUidOrNick, $message, 'NOTICE');
+        $this->sendNoticePort->sendNotice($targetUidOrNick, $message);
     }
 
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
     {
-        if (!$this->connectionHolder->isConnected()) {
-            $this->logger->warning('NickServBot: cannot send message — no active connection.', [
-                'target' => $targetUidOrNick,
-            ]);
-
-            return;
-        }
-
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->warning('NickServBot: cannot send message — no active protocol module.');
-
-            return;
-        }
-
-        $command = 'PRIVMSG' === $messageType ? 'PRIVMSG' : 'NOTICE';
-        foreach (explode("\n", $message) as $line) {
-            if ('' === $line) {
-                continue;
-            }
-            $ircMessage = new IRCMessage(
-                command: $command,
-                prefix: $this->nickservUid,
-                params: [$targetUidOrNick],
-                trailing: $line,
-                direction: MessageDirection::Outgoing,
-            );
-            $rawLine = $module->getHandler()->formatMessage($ircMessage);
-            $this->writeToConnection($rawLine);
-        }
+        $this->sendNoticePort->sendMessage($targetUidOrNick, $message, $messageType);
     }
 
     public function setUserAccount(string $targetUid, string $accountName): void

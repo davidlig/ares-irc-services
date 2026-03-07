@@ -63,7 +63,7 @@ class ChannelAccess
         return $this->level;
     }
 
-    public function setLevel(int $level): void
+    public function updateLevel(int $level): void
     {
         if ($level < self::LEVEL_MIN || $level > self::LEVEL_MAX) {
             throw new InvalidArgumentException(sprintf('Access level must be between %d and %d.', self::LEVEL_MIN, self::LEVEL_MAX));

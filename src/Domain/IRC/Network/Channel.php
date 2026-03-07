@@ -103,7 +103,7 @@ class Channel
         return $this->modeParams;
     }
 
-    public function setModeParam(string $letter, string $value): void
+    public function applyModeParam(string $letter, string $value): void
     {
         $this->modeParams[$letter] = $value;
     }

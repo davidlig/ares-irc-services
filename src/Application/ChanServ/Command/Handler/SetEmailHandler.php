@@ -26,7 +26,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             return;
         }
         $email = '' === $value ? null : $value;
-        $channel->setEmail($email);
+        $channel->updateEmail($email);
         $this->channelRepository->save($channel);
         $context->reply(null !== $email ? 'set.email.updated' : 'set.email.cleared');
     }

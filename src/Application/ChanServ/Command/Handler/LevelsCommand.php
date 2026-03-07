@@ -216,7 +216,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
 
         $existing = $this->levelRepository->findByChannelAndKey($channel->getId(), $levelKey);
         if (null !== $existing) {
-            $existing->setValue($value);
+            $existing->updateLevelValue($value);
             $this->levelRepository->save($existing);
         } else {
             $level = new ChannelLevel($channel->getId(), $levelKey, $value);

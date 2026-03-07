@@ -24,7 +24,7 @@ final readonly class SetTopiclockHandler implements SetOptionHandlerInterface
             return;
         }
         $on = 'ON' === $normalized;
-        $channel->setTopicLock($on);
+        $channel->configureTopicLock($on);
         $this->channelRepository->save($channel);
         $context->reply($on ? 'set.topiclock.on' : 'set.topiclock.off');
 

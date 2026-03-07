@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\Event\ChannelMlockUpdatedEvent;
-use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Application\Port\BurstCompletePort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelView;
@@ -37,7 +37,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ChannelServiceActionsPort $channelServiceActions,
-        private BurstCompleteRegistry $burstCompleteRegistry,
+        private BurstCompletePort $burstCompletePort,
     ) {
     }
 
@@ -58,7 +58,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         }
         // During the initial burst, do not enforce here; wait for NetworkSyncCompleteEvent
         // so MLOCK runs with the final protocol sync state (all SJOINs/MODEs processed).
-        if (!$this->burstCompleteRegistry->isBurstComplete()) {
+        if (!$this->burstCompletePort->isComplete()) {
             return;
         }
         $channelName = $event->channel->name->value;

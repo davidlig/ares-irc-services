@@ -22,7 +22,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The timezone set here (user preference or default) applies to all date/time
  * display: use formatDate() whenever showing a date or time to the user.
  */
-class NickServContext
+readonly class NickServContext
 {
     public function __construct(
         public readonly ?SenderView $sender,

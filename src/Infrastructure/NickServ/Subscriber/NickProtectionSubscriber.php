@@ -7,11 +7,11 @@ namespace App\Infrastructure\NickServ\Subscriber;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
-use App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -25,7 +25,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private readonly NickProtectionService $nickProtectionService,
         private readonly IdentifiedUserVhostSyncService $identifiedUserVhostSync,
         private readonly BurstState $burstState,
-        private readonly CoreNetworkUserLookupAdapter $senderViewMapper,
+        private readonly NetworkUserLookupPort $networkUserLookup,
     ) {
     }
 
@@ -46,7 +46,10 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     public function onUserJoined(UserJoinedNetworkEvent $event): void
     {
-        $senderView = $this->senderViewMapper->fromNetworkUser($event->user);
+        $senderView = $this->networkUserLookup->findByUid($event->user->uid->value);
+        if (null === $senderView) {
+            return;
+        }
 
         if (!$this->burstState->isComplete()) {
             $this->burstState->addPending($senderView);
@@ -71,11 +74,21 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     public function onNickChanged(UserNickChangedEvent $event): void
     {
-        $this->nickProtectionService->onNickChanged($event);
+        $this->nickProtectionService->onNickChanged(
+            $event->uid->value,
+            $event->oldNick->value,
+            $event->newNick->value,
+        );
     }
 
     public function onUserQuit(UserQuitNetworkEvent $event): void
     {
-        $this->nickProtectionService->onUserQuit($event);
+        $this->nickProtectionService->onUserQuit(
+            $event->uid->value,
+            $event->nick->value,
+            $event->reason,
+            $event->ident,
+            $event->displayHost,
+        );
     }
 }

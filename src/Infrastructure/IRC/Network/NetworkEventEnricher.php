@@ -336,7 +336,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
                 $paramValue = $params[$paramIdx];
                 ++$paramIdx;
                 if ($adding) {
-                    $channel->setModeParam($char, $paramValue);
+                    $channel->applyModeParam($char, $paramValue);
                 } else {
                     $channel->clearModeParam($char);
                 }
@@ -404,7 +404,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
             }
             if ($adding) {
                 if ($paramIdx < count($params)) {
-                    $channel->setModeParam($char, $params[$paramIdx]);
+                    $channel->applyModeParam($char, $params[$paramIdx]);
                     ++$paramIdx;
                 }
             } else {
@@ -500,7 +500,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
             }
             $paramValue = $modeParams[$paramIdx];
             ++$paramIdx;
-            $channel->setModeParam($char, $paramValue);
+            $channel->applyModeParam($char, $paramValue);
         }
     }
 
