@@ -9,6 +9,8 @@ use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function sprintf;
+
 /**
  * Sends the channel ENTRYMSG (welcome message) as a NOTICE to each user when they join
  * a registered channel that has an entry message configured.

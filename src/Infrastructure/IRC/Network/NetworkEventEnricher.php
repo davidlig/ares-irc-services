@@ -355,6 +355,68 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface
     }
 
     /**
+     * Applies outgoing channel MODE (sent by us) to Core state so ChannelLookup
+     * returns up-to-date modes. Call after sending MODE so SET MLOCK ON etc. see the correct state.
+     *
+     * @param array<int, string> $params Params in wire order for modes that take a param
+     */
+    public function applyOutgoingChannelModes(string $channelName, string $modeStr, array $params = []): void
+    {
+        try {
+            $name = new ChannelName($channelName);
+        } catch (InvalidArgumentException) {
+            return;
+        }
+
+        $channel = $this->channelRepository->findByName($name);
+        if (null === $channel) {
+            return;
+        }
+
+        $delta = $this->extractChannelModeDelta($modeStr);
+        if ('' !== $delta) {
+            $merged = $this->mergeModeString($channel->getModes(), $delta);
+            $channel->updateModes($merged);
+        }
+
+        $support = $this->modeSupportProvider->getSupport();
+        $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
+        $paramIdx = 0;
+        $adding = true;
+        foreach (str_split($modeStr) as $char) {
+            if ('+' === $char) {
+                $adding = true;
+                continue;
+            }
+            if ('-' === $char) {
+                $adding = false;
+                continue;
+            }
+            if (null !== ChannelMemberRole::fromModeLetter($char)) {
+                continue;
+            }
+            $listLetters = $support->getListModeLetters();
+            if (in_array($char, $listLetters, true)) {
+                continue;
+            }
+            if (!in_array($char, $withParamOnSet, true)) {
+                continue;
+            }
+            if ($adding) {
+                if ($paramIdx < count($params)) {
+                    $channel->setModeParam($char, $params[$paramIdx]);
+                    ++$paramIdx;
+                }
+            } else {
+                $channel->clearModeParam($char);
+            }
+        }
+
+        $this->channelRepository->save($channel);
+        $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
+    }
+
+    /**
      * Extracts from a MODE string only channel setting mode letters (not prefix
      * v,h,o,a,q and not list modes per active IRCd).
      */

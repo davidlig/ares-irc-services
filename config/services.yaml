@@ -285,6 +285,9 @@ services:
     App\Application\Port\ChannelLookupPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter
 
+    App\Application\Port\ApplyOutgoingChannelModesPort:
+        class: App\Infrastructure\IRC\ServiceBridge\CoreApplyOutgoingChannelModesAdapter
+
     App\Application\Port\ChannelSyncCompletedRegistryInterface:
         class: App\Infrastructure\IRC\Network\ChannelSyncCompletedRegistry
 
