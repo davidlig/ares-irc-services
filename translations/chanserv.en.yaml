@@ -91,6 +91,7 @@ set:
     suspended:         "\x0304✗\x03 \x02%nick%\x02 is suspended and cannot be set as founder."
     cannot_be_self:   "\x0304✗\x03 The new founder cannot be the current founder."
     cannot_be_successor: "\x0304✗\x03 The new founder cannot be the channel successor."
+    notice_channel:   "\x02%from%\x02 assigns \x02%nick%\x02 as channel founder."
   successor:
     syntax:         "SET <#channel> SUCCESSOR [nickname]"
     short:          "Set the channel successor."
@@ -100,6 +101,8 @@ set:
     must_be_registered: "\x0304✗\x03 \x02%nick%\x02 must be registered and activated."
     suspended:      "\x0304✗\x03 \x02%nick%\x02 is suspended and cannot be set as successor."
     cannot_be_founder: "\x0304✗\x03 The founder cannot be set as successor."
+    notice_channel:   "\x02%from%\x02 assigns \x02%nick%\x02 as channel successor."
+    notice_channel_cleared: "\x02%from%\x02 has cleared the channel successor."
   desc:
     syntax:         "SET <#channel> DESC <description>"
     short:          "Change channel description."

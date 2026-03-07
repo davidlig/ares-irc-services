@@ -25,6 +25,8 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
             $channel->assignSuccessor(null);
             $this->channelRepository->save($channel);
             $context->reply('set.successor.cleared');
+            $notice = $context->trans('set.successor.notice_channel_cleared', ['%from%' => $context->sender->nick]);
+            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
 
             return;
         }
@@ -54,5 +56,10 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
         $channel->assignSuccessor($account->getId());
         $this->channelRepository->save($channel);
         $context->reply('set.successor.updated', ['%nick%' => $nickname]);
+        $notice = $context->trans('set.successor.notice_channel', [
+            '%from%' => $context->sender->nick,
+            '%nick%' => $nickname,
+        ]);
+        $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
     }
 }
