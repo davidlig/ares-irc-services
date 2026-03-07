@@ -20,7 +20,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *   WARNING — unexpected link loss
  *   DEBUG   — every incoming IRC message
  */
-class IRCEventSubscriber implements EventSubscriberInterface
+final readonly class IRCEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly LoggerInterface $logger,
