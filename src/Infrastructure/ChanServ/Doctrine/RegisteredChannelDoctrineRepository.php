@@ -55,6 +55,18 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
     /**
      * @return RegisteredChannel[]
      */
+    public function findBySuccessorNickId(int $successorNickId): array
+    {
+        $result = $this->em
+            ->getRepository(RegisteredChannel::class)
+            ->findBy(['successorNickId' => $successorNickId], ['name' => 'ASC']);
+
+        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
+    }
+
+    /**
+     * @return RegisteredChannel[]
+     */
     public function listAll(): array
     {
         $result = $this->em
@@ -62,5 +74,16 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             ->findBy([], ['name' => 'ASC']);
 
         return array_filter($result, static fn ($row): bool => $row instanceof RegisteredChannel);
+    }
+
+    public function findByIds(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+
+        return $this->em
+            ->getRepository(RegisteredChannel::class)
+            ->findBy(['id' => $ids]);
     }
 }

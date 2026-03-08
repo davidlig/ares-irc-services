@@ -9,6 +9,10 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Entity\ChannelAccess;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
+use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
@@ -26,6 +30,8 @@ final readonly class InfoCommand implements NickServCommandInterface
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly VhostDisplayResolver $vhostDisplayResolver,
+        private readonly ChannelAccessRepositoryInterface $accessRepository,
+        private readonly RegisteredChannelRepositoryInterface $channelRepository,
     ) {
     }
 
@@ -104,6 +110,81 @@ final readonly class InfoCommand implements NickServCommandInterface
         }
 
         $this->replyAccountInfo($context, $account, $isOwnerIdentified);
+
+        if ($isOwnerIdentified) {
+            $this->replyUserChannels($context, $account->getId());
+        }
+
+        $context->reply('info.footer');
+    }
+
+    private function replyUserChannels(NickServContext $context, int $nickId): void
+    {
+        $accessEntries = $this->accessRepository->findByNick($nickId);
+        $founderChannels = $this->channelRepository->findByFounderNickId($nickId);
+        $successorChannels = $this->channelRepository->findBySuccessorNickId($nickId);
+
+        if (empty($accessEntries) && empty($founderChannels) && empty($successorChannels)) {
+            return;
+        }
+
+        $channels = [];
+
+        foreach ($founderChannels as $channel) {
+            $channels[$channel->getId()] = [
+                'name' => $channel->getName(),
+                'type' => 'founder',
+            ];
+        }
+
+        foreach ($successorChannels as $channel) {
+            if (!isset($channels[$channel->getId()])) {
+                $channels[$channel->getId()] = [
+                    'name' => $channel->getName(),
+                    'type' => 'successor',
+                ];
+            }
+        }
+
+        $accessChannelIds = [];
+        foreach ($accessEntries as $access) {
+            if (!isset($channels[$access->getChannelId()])) {
+                $accessChannelIds[] = $access->getChannelId();
+                $channels[$access->getChannelId()] = [
+                    'name' => '',
+                    'type' => 'access',
+                    'level' => $access->getLevel(),
+                ];
+            }
+        }
+
+        if (!empty($accessChannelIds)) {
+            $channelEntities = $this->channelRepository->findByIds($accessChannelIds);
+            foreach ($channelEntities as $channel) {
+                if (isset($channels[$channel->getId()])) {
+                    $channels[$channel->getId()]['name'] = $channel->getName();
+                }
+            }
+        }
+
+        $context->reply('info.channels_header');
+
+        foreach ($channels as $channelData) {
+            if ('access' === $channelData['type']) {
+                $context->reply('info.channels_entry_access', [
+                    'channel' => $channelData['name'],
+                    'level' => $channelData['level'],
+                ]);
+            } elseif ('founder' === $channelData['type']) {
+                $context->reply('info.channels_entry_founder', [
+                    'channel' => $channelData['name'],
+                ]);
+            } elseif ('successor' === $channelData['type']) {
+                $context->reply('info.channels_entry_successor', [
+                    'channel' => $channelData['name'],
+                ]);
+            }
+        }
     }
 
     private function replyForbidden(NickServContext $context, RegisteredNick $account): void
@@ -148,8 +229,6 @@ final readonly class InfoCommand implements NickServCommandInterface
         if ('' !== $displayVhost) {
             $context->reply('info.vhost', ['vhost' => $displayVhost]);
         }
-
-        $context->reply('info.footer');
     }
 
     private function replyLastSeen(NickServContext $context, RegisteredNick $account): void
