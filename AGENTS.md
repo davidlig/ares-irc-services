@@ -40,6 +40,18 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 - USE **Yoda Conditions** (`if (null === $variable)`).
 - **Forbidden**: NEVER put business logic in Controllers. NEVER write "God Methods".
 
+### 2.3.1 Constructor Promotion Exceptions
+The following files use explicit property declaration + assignment in constructor (not promotion) due to technical limitations:
+
+- **Tagged Service Iterables**: `*CommandRegistry.php` classes (e.g., `NickServCommandRegistry`, `ChanServCommandRegistry`) receive `iterable $commands` from Symfony DI and transform it to an associative array before storing.
+- **Post-processing in Constructor**: `MaintenanceScheduler.php` receives `iterable $tasks`, transforms via `iterator_to_array()` and `usort()`, then stores the result.
+- **Array-building from Multiple Dependencies**: `SetCommand.php` handlers receive individual handler dependencies and build an associative array (`$this->handlers = ['FOUNDER' => $setFounderHandler, ...]`).
+
+These are acceptable exceptions because:
+1. Symfony tagged services pass iterables, not arrays
+2. The code performs transformations before assignment
+3. Converting to promotion would either be impossible (iterables) or reduce readability
+
 ### 2.4 Memory Management & Long-Running Daemons (CRITICAL)
 - **Stateless Services**: All services in the socket loop MUST be stateless or implement `Symfony\Contracts\Service\ResetInterface`.
 - **Bounded Registries**: In-memory registries (e.g., `IdentifiedSessionRegistry`) are intentionally NOT reset per message. They are bounded by UIDs/TTL. Do not call `reset()` on them each cycle.
