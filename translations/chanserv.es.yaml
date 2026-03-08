@@ -182,6 +182,15 @@ access:
     done:           "\x0303✔\x03 \x02%nick%\x02 eliminado de la lista de acceso."
     notice_channel: "\x0304✗\x03 \x0302%from%\x03 quita a \x0314%to%\x03 de la lista de acceso"
 
+delaccess:
+  syntax:           "DELACCESS <#canal>"
+  short:            "Eliminar tu propio acceso del canal."
+  help:             "Elimina tu entrada de acceso de la lista del canal. Debes estar identificado. El fundador no puede usar este comando."
+  done:             "\x0303✔\x03 Tu acceso ha sido eliminado de \x02%channel%\x02."
+  not_in_list:      "\x0304✗\x03 No tienes acceso en \x02%channel%\x02."
+  founder_not_in_access: "\x0304✗\x03 Eres el fundador de \x02%channel%\x02 y no estás en la lista de acceso."
+  notice_channel: "\x0304✗\x03 \x0302%nick%\x03 elimina su acceso del canal"
+
 levels:
   syntax:           "LEVELS <#canal> {LIST|SET|RESET} [nivel] [valor]"
   short:            "Configurar los niveles del canal."

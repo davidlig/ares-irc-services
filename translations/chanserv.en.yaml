@@ -182,6 +182,15 @@ access:
     done:           "\x0303✔\x03 \x02%nick%\x02 removed from access list."
     notice_channel: "\x0304✗\x03 \x0302%from%\x03 removes \x0314%to%\x03 from access list"
 
+delaccess:
+  syntax:           "DELACCESS <#channel>"
+  short:            "Remove your own access from a channel."
+  help:             "Removes your access entry from the channel's access list. You must be identified. Founder cannot use this command."
+  done:             "\x0303✔\x03 Your access has been removed from \x02%channel%\x02."
+  not_in_list:      "\x0304✗\x03 You don't have access in \x02%channel%\x02."
+  founder_not_in_access: "\x0304✗\x03 You are the founder of \x02%channel%\x02 and are not on the access list."
+  notice_channel: "\x0304✗\x03 \x0302%nick%\x03 removes their access from the channel"
+
 levels:
   syntax:           "LEVELS <#channel> {LIST|SET|RESET} [level] [value]"
   short:            "Configure channel levels."
