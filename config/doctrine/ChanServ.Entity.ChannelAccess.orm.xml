@@ -4,6 +4,9 @@
                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
     <entity name="App\Domain\ChanServ\Entity\ChannelAccess" table="channel_access">
+        <indexes>
+            <index name="idx_channel_access_nick_id" columns="nick_id"/>
+        </indexes>
         <unique-constraints>
             <unique-constraint name="uniq_channel_nick" columns="channel_id,nick_id"/>
         </unique-constraints>

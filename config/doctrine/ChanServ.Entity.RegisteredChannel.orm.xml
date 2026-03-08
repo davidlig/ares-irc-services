@@ -6,6 +6,7 @@
     <entity name="App\Domain\ChanServ\Entity\RegisteredChannel" table="registered_channels">
         <indexes>
             <index name="idx_name_lower" columns="name_lower"/>
+            <index name="idx_registered_channels_successor_nick_id" columns="successor_nick_id"/>
         </indexes>
         <id name="id" type="integer" column="id">
             <generator strategy="IDENTITY"/>

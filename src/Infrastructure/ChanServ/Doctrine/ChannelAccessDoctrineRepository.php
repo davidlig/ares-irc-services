@@ -54,4 +54,11 @@ class ChannelAccessDoctrineRepository implements ChannelAccessRepositoryInterfac
             ->setParameter('cid', $channelId)
             ->getSingleScalarResult();
     }
+
+    public function findByNick(int $nickId): array
+    {
+        return $this->em
+            ->getRepository(ChannelAccess::class)
+            ->findBy(['nickId' => $nickId], ['level' => 'DESC']);
+    }
 }

@@ -19,6 +19,17 @@ interface RegisteredChannelRepositoryInterface
     /** @return RegisteredChannel[] */
     public function findByFounderNickId(int $founderNickId): array;
 
+    /**
+     * @return RegisteredChannel[] Channels where user is successor
+     */
+    public function findBySuccessorNickId(int $successorNickId): array;
+
     /** @return RegisteredChannel[] All registered channels (e.g. for ChanServ rejoin on burst). */
     public function listAll(): array;
+
+    /**
+     * @param int[] $ids
+     * @return RegisteredChannel[]
+     */
+    public function findByIds(array $ids): array;
 }

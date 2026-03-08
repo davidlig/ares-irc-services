@@ -110,12 +110,12 @@ info:
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   private:          "\x0304✗\x03 La información del nickname \x02%nickname%\x02 es privada."
   header:           "\x02Información del usuario \x0307%nickname%\x03:\x02"
-  status:           "  Estado          : %status%"
+  status:           "  \x0314Estado\x03          : %status%"
   status_registered:  "\x0303Registrado\x03"
   status_suspended:   "\x0304Suspendido\x03"
   status_forbidden:   "\x0304Prohibido\x03"
-  reason:            "  Motivo          : %reason%"
-  registered_at:    "  Fecha registro  : %date%"
+  reason:            "  \x0314Motivo\x03          : %reason%"
+  registered_at:    "  \x0314Fecha registro\x03  : %date%"
   last_seen_online: "  \x0314Última conexión\x03 : \x0303● CONECTADO AHORA\x03"
   last_seen_at:     "  \x0314Última conexión\x03 : %date%"
   last_seen_never:  "  \x0314Última conexión\x03 : Nunca"
@@ -123,6 +123,10 @@ info:
   email:            "  \x0314Correo\x03          : %email%"
   vhost:            "  \x0314VHost\x03           : %vhost%"
   footer:           "\x0314─────────────────────────────\x03"
+  channels_header:  "\x0314\x0ACanales con acceso:\x03"
+  channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
+  channels_entry_successor: "  %channel% (\x0303Sucesor\x03)"
+  channels_entry_access:    "  %channel% (%level%)"
 
 # --- SET --------------------------------------------------------------------
 set:

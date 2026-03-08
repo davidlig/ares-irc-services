@@ -134,5 +134,6 @@ final readonly class InfoCommand implements ChanServCommandInterface
             '%mlock%' => $channel->isMlockActive() ? 'ON' : 'OFF',
             '%secure%' => $channel->isSecure() ? 'ON' : 'OFF',
         ]));
+        $context->replyRaw($context->trans('info.footer'));
     }
 }

@@ -20,4 +20,9 @@ interface ChannelAccessRepositoryInterface
     public function listByChannel(int $channelId): array;
 
     public function countByChannel(int $channelId): int;
+
+    /**
+     * @return ChannelAccess[] All access entries for a nick
+     */
+    public function findByNick(int $nickId): array;
 }
