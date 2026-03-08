@@ -12,6 +12,7 @@
 /.cursorrules
 /.php-cs-fixer.cache
 /.roo/
+/.vscode/
 /docs
 
 ###> friendsofphp/php-cs-fixer ###
