@@ -440,6 +440,9 @@ services:
     App\Application\ChanServ\Command\Handler\AccessCommand:
         tags: ['chanserv.command']
 
+    App\Application\ChanServ\Command\Handler\DelaccessCommand:
+        tags: ['chanserv.command']
+
     App\Application\ChanServ\Command\Handler\LevelsCommand:
         tags: ['chanserv.command']
 
