@@ -29,6 +29,7 @@ interface RegisteredChannelRepositoryInterface
 
     /**
      * @param int[] $ids
+     *
      * @return RegisteredChannel[]
      */
     public function findByIds(array $ids): array;
