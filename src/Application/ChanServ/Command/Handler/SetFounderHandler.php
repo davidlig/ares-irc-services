@@ -22,6 +22,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
+use function count;
 use function sprintf;
 
 final readonly class SetFounderHandler implements SetOptionHandlerInterface
@@ -36,6 +37,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         private TranslatorInterface $translator,
         private int $founderTokenTtlSeconds = 3600,
         private int $founderMinIntervalSeconds = 600,
+        private int $maxChannelsPerNick = 3,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -72,6 +74,13 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         }
         if (null !== $channel->getSuccessorNickId() && $newAccount->getId() === $channel->getSuccessorNickId()) {
             $context->reply('set.founder.cannot_be_successor');
+
+            return;
+        }
+
+        $existingChannelsByNewFounder = $this->channelRepository->findByFounderNickId($newAccount->getId());
+        if (count($existingChannelsByNewFounder) >= $this->maxChannelsPerNick) {
+            $context->reply('set.founder.limit_exceeded', ['%nick%' => $newNickname, '%max%' => (string) $this->maxChannelsPerNick]);
 
             return;
         }

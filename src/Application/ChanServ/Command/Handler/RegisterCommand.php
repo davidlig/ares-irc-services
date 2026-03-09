@@ -13,6 +13,7 @@ use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
 use function array_slice;
+use function count;
 
 /**
  * REGISTER <#channel> <description>.
@@ -25,6 +26,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelLevelRepositoryInterface $levelRepository,
+        private int $maxChannelsPerNick = 3,
     ) {
     }
 
@@ -104,6 +106,13 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount) {
             $context->reply('error.not_identified');
+
+            return;
+        }
+
+        $existingChannels = $this->channelRepository->findByFounderNickId($senderAccount->getId());
+        if (count($existingChannels) >= $this->maxChannelsPerNick) {
+            $context->reply('register.limit_exceeded', ['%max%' => (string) $this->maxChannelsPerNick]);
 
             return;
         }

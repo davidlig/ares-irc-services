@@ -20,6 +20,7 @@ register:
   help:             "Register and associate a channel to your nickname. You must be identified with NickServ."
   success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
+  limit_exceeded: "\x0304✗\x03 You have reached the maximum of %max% registered channels."
 
 info:
   syntax:           "INFO <#channel>"
@@ -92,6 +93,7 @@ set:
     suspended:         "\x0304✗\x03 \x02%nick%\x02 is suspended and cannot be set as founder."
     cannot_be_self:   "\x0304✗\x03 The new founder cannot be the current founder."
     cannot_be_successor: "\x0304✗\x03 The new founder cannot be the channel successor."
+    limit_exceeded: "\x0304✗\x03 \x02%nick%\x02 has reached the maximum of %max% registered channels."
     notice_channel:   "\x02%from%\x02 assigns \x02%nick%\x02 as channel founder."
   successor:
     syntax:         "SET <#channel> SUCCESSOR [nickname]"
