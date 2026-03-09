@@ -55,6 +55,7 @@ help:
   set_sub_footer:   "Use \x0303/msg ChanServ HELP %command% <option>\x03 for more information."
   syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "NOTE: Channels \x0304\x1Funused\x0F for more than %days% days are automatically removed."
   unknown_command:  "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg ChanServ HELP\x03."
   suboptions:       "Sub-options:"
 
