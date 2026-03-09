@@ -66,6 +66,9 @@ parameters:
     chanserv.founder_token_ttl_seconds: '%env(int:default:chanserv.founder_token_ttl_seconds_default:CHANSERV_FOUNDER_TOKEN_TTL)%'
     chanserv.founder_min_interval_seconds_default: 600
     chanserv.founder_min_interval_seconds: '%env(int:default:chanserv.founder_min_interval_seconds_default:CHANSERV_FOUNDER_MIN_INTERVAL)%'
+    # Inactivity expiry: days without use after which a registered channel is dropped (0 = disabled)
+    chanserv.inactivity_expiry_days_default: 0
+    chanserv.inactivity_expiry_days: '%env(int:default:chanserv.inactivity_expiry_days_default:CHANSERV_INACTIVITY_EXPIRY_DAYS)%'
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
@@ -429,6 +432,8 @@ services:
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\HelpCommand:
+        arguments:
+            $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\OpCommand:
@@ -614,6 +619,15 @@ services:
             $logger:                '@monolog.logger.maintenance'
             $intervalSeconds:       '%maintenance.interval%'
             $inactivityExpiryDays:  '%nickserv.inactivity_expiry_days%'
+        tags: ['maintenance.task']
+
+    App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask:
+        arguments:
+            $channelRepository:    '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $eventDispatcher:     '@event_dispatcher'
+            $logger:               '@monolog.logger.maintenance'
+            $intervalSeconds:      '%maintenance.interval%'
+            $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
         tags: ['maintenance.task']
 
     # --- In-memory pruners (tagged for PruneMemoryRegistriesTask) -----------------

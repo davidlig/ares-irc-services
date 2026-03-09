@@ -6,6 +6,7 @@ namespace App\Infrastructure\ChanServ\Doctrine;
 
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
 class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface
@@ -85,5 +86,16 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
         return $this->em
             ->getRepository(RegisteredChannel::class)
             ->findBy(['id' => $ids]);
+    }
+
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('c')
+            ->from(RegisteredChannel::class, 'c')
+            ->where('COALESCE(c.lastUsedAt, c.createdAt) < :threshold')
+            ->setParameter('threshold', $threshold);
+
+        return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
     }
 }

@@ -19,6 +19,7 @@ final readonly class HelpCommand implements ChanServCommandInterface
 {
     public function __construct(
         private UnifiedHelpFormatter $formatter,
+        private readonly int $inactivityExpiryDays = 0,
     ) {
     }
 
@@ -109,6 +110,10 @@ final readonly class HelpCommand implements ChanServCommandInterface
     {
         $adapter = new HelpFormatterContextAdapter($context);
         $this->formatter->showGeneralHelp($adapter);
+        if ($this->inactivityExpiryDays > 0) {
+            $context->replyRaw(' ');
+            $context->reply('help.intro_expiration', ['%days%' => $this->inactivityExpiryDays]);
+        }
         $context->reply('help.footer');
     }
 

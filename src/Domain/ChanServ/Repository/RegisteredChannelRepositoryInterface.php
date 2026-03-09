@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\ChanServ\Repository;
 
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use DateTimeImmutable;
 
 interface RegisteredChannelRepositoryInterface
 {
@@ -33,4 +34,9 @@ interface RegisteredChannelRepositoryInterface
      * @return RegisteredChannel[]
      */
     public function findByIds(array $ids): array;
+
+    /**
+     * @return RegisteredChannel[] Channels inactive since the given threshold (lastUsedAt or createdAt < threshold)
+     */
+    public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array;
 }
