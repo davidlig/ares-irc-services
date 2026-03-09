@@ -21,6 +21,7 @@ register:
   success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha sido registrado."
   channel_not_on_network: "\x0304✗\x03 El canal \x02%channel%\x02 no existe en la red."
   limit_exceeded: "\x0304✗\x03 Has alcanzado el máximo de %max% canales registrados."
+  throttled: "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de registrar otro canal."
 
 info:
   syntax:           "INFO <#canal>"

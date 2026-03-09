@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Command\Handler;
 
+use App\Application\ChanServ\ChannelRegisterThrottleRegistry;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Domain\ChanServ\Entity\ChannelLevel;
@@ -26,7 +27,9 @@ final readonly class RegisterCommand implements ChanServCommandInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelLevelRepositoryInterface $levelRepository,
+        private ChannelRegisterThrottleRegistry $throttleRegistry,
         private int $maxChannelsPerNick = 3,
+        private int $registerMinIntervalSeconds = 21600,
     ) {
     }
 
@@ -110,6 +113,17 @@ final readonly class RegisterCommand implements ChanServCommandInterface
             return;
         }
 
+        $remainingCooldown = $this->throttleRegistry->getRemainingCooldownSeconds(
+            $senderAccount->getId(),
+            $this->registerMinIntervalSeconds
+        );
+        if ($remainingCooldown > 0) {
+            $minutes = (int) ceil($remainingCooldown / 60);
+            $context->reply('register.throttled', ['minutes' => (string) $minutes]);
+
+            return;
+        }
+
         $existingChannels = $this->channelRepository->findByFounderNickId($senderAccount->getId());
         if (count($existingChannels) >= $this->maxChannelsPerNick) {
             $context->reply('register.limit_exceeded', ['%max%' => (string) $this->maxChannelsPerNick]);
@@ -123,6 +137,8 @@ final readonly class RegisterCommand implements ChanServCommandInterface
             $description,
         );
         $this->channelRepository->save($channel);
+
+        $this->throttleRegistry->recordRegistration($senderAccount->getId());
 
         foreach (ChannelLevel::DEFAULTS as $key => $value) {
             $level = new ChannelLevel($channel->getId(), $key, $value);
