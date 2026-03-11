@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\MemoServ\Entity\MemoIgnore" table="memo_ignores">
+        <unique-constraints>
+            <unique-constraint name="uniq_memo_ignore_target_ignored" columns="target_nick_id,target_channel_id,ignored_nick_id"/>
+        </unique-constraints>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="targetNickId" type="integer" column="target_nick_id" nullable="true"/>
+        <field name="targetChannelId" type="integer" column="target_channel_id" nullable="true"/>
+        <field name="ignoredNickId" type="integer" column="ignored_nick_id"/>
+    </entity>
+</doctrine-mapping>

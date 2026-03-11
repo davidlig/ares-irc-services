@@ -1,0 +1,116 @@
+# MemoServ translations — English
+# Domain: memoserv
+
+unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg MemoServ HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 This command is restricted to IRC Operators."
+  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg NickServ IDENTIFY\x03."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  insufficient_access: "\x0304✗\x03 Insufficient access to \x02%operation%\x02 on channel \x02%channel%\x02."
+
+send:
+  syntax: "SEND {nickname|#channel} <message>"
+  short: "Send a memo to a nickname or channel."
+  help: "Sends a memo to a registered nickname or channel. The recipient must have memo service enabled (ENABLE)."
+  sent_nick: "\x0303✔\x03 Memo sent to \x02%nick%\x02."
+  sent_channel: "\x0303✔\x03 Memo sent to channel \x02%channel%\x02."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is not registered."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  throttled: "\x0304✗\x03 You must wait \x02%seconds%\x02 second(s) before sending another memo."
+  limit_reached: "\x0304✗\x03 Memo limit reached for \x02%target%\x02."
+  ignored: "\x0304✗\x03 You cannot send memos to this target (you are on the ignore list)."
+
+read:
+  syntax: "READ [#channel] <number>"
+  short: "Read a memo by number."
+  help: "Reads the memo with the given number. Without #channel, reads from your nickname inbox. With #channel, requires MEMOREAD level."
+  header: "\x02\x0307Memo #%index%\x03 from \x02%from%\x02:\x0F"
+  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  not_found: "\x0304✗\x03 Memo #%index% not found."
+
+list:
+  syntax: "LIST [#channel]"
+  short: "List memos (unread marked with red *)."
+  help: "Lists your memos or channel memos. Unread memos are shown with a red asterisk and a preview (max 50 characters). Without #channel = your nickname inbox; with #channel requires MEMOREAD."
+  header: "\x02\x0307Memos for %target%\x03:\x0F"
+  footer: "\x0314─────────────────────────────\x03"
+  empty: "\x0307ℹ\x03 No memos for \x02%target%\x02."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+
+del:
+  syntax: "DEL [#channel] <number>"
+  short: "Delete a memo by number."
+  help: "Deletes the memo with the given number. For channels requires MEMOCHANGE level."
+  deleted: "\x0303✔\x03 Memo #%index% deleted."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  not_found: "\x0304✗\x03 Memo #%index% not found."
+
+ignore:
+  syntax: "IGNORE {ADD|DEL|LIST} [#channel] [nickname]"
+  short: "Manage ignore list for memos."
+  help: "ADD adds a nickname to your (or the channel's) ignore list; DEL removes; LIST shows the list. For channels, ADD/DEL require MEMOCHANGE."
+  add:
+    syntax: "IGNORE ADD [#channel] <nickname>"
+    short: "Add nickname to ignore list."
+    help: "Memos from this nickname will not be accepted for your inbox (or the channel's)."
+  del:
+    syntax: "IGNORE DEL [#channel] <nickname>"
+    short: "Remove nickname from ignore list."
+    help: "Removes the nickname from the ignore list."
+  list:
+    syntax: "IGNORE LIST [#channel]"
+    short: "List ignored nicknames."
+    help: "Shows the list of nicknames you (or the channel) ignore for memos."
+  added: "\x0303✔\x03 \x02%nick%\x02 added to ignore list."
+  removed: "\x0303✔\x03 \x02%nick%\x02 removed from ignore list."
+  already_ignored: "\x0304✗\x03 \x02%nick%\x02 is already on the ignore list."
+  not_ignored: "\x0304✗\x03 \x02%nick%\x02 is not on the ignore list."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is not registered."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  list_empty: "\x0307ℹ\x03 Ignore list is empty."
+  list_header: "\x02\x0307Ignore list:\x03\x0F"
+  list_footer: "\x0314─────────────────────────────\x03"
+
+enable:
+  syntax: "ENABLE [#channel]"
+  short: "Enable memo reception."
+  help: "Enables receiving memos for your nickname or, for channels, only the founder can enable."
+  enabled_nick: "\x0303✔\x03 Memo service enabled for your nickname."
+  enabled_channel: "\x0303✔\x03 Memo service enabled for channel \x02%channel%\x02."
+  already_enabled_nick: "\x0307ℹ\x03 Memo service is already enabled for your nickname."
+  already_enabled_channel: "\x0307ℹ\x03 Memo service is already enabled for \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  founder_only: "\x0304✗\x03 Only the channel founder can enable memos for \x02%channel%\x02."
+
+disable:
+  syntax: "DISABLE [#channel]"
+  short: "Disable memo reception."
+  help: "Disables receiving memos for your nickname or channel. For channels, only the founder can disable."
+  disabled_nick: "\x0303✔\x03 Memo service disabled for your nickname."
+  disabled_channel: "\x0303✔\x03 Memo service disabled for channel \x02%channel%\x02."
+  already_disabled_nick: "\x0307ℹ\x03 Memo service is already disabled for your nickname."
+  already_disabled_channel: "\x0307ℹ\x03 Memo service is already disabled for \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  founder_only: "\x0304✗\x03 Only the channel founder can disable memos for \x02%channel%\x02."
+
+help:
+  syntax: "HELP [command [sub-option]]"
+  short: "List commands or show help for a command."
+  help: "Without arguments lists all commands. Use \x0303HELP <command>\x03 for full help."
+  header_title: "MemoServ"
+  intro: "Memo (messaging) service for nicknames and channels."
+  general_header: "\x02\x0314Available commands:\x03\x0F"
+  command_line: "  \x0307%command%\x03%description%"
+  subcommand_line: "  \x0307%command%\x03%description%"
+  options_header: "\x02\x0314Options:\x03\x0F"
+  general_footer: "Use \x0303/msg MemoServ HELP <command>\x03 for more information."
+  set_sub_footer: "Use \x0303/msg MemoServ HELP %command% <option>\x03 for more information."
+  syntax_label: "\x0307Syntax:\x03 \x02%syntax%\x02"
+  footer: "\x0314─────────────────────────────\x03"
+  unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg MemoServ HELP\x03."
+
+notify:
+  channel_pending: "The channel \x02%channel%\x02 has \x02%count%\x02 unread memo(s). Use \x0309/msg MemoServ LIST %channel%\x03 to list them."
