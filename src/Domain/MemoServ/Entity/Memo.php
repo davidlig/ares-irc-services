@@ -13,6 +13,8 @@ use InvalidArgumentException;
  */
 class Memo
 {
+    public const int MESSAGE_MAX_LENGTH = 255;
+
     private int $id;
 
     private ?int $targetNickId = null;

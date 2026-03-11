@@ -8,6 +8,7 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\MemoServSendThrottleRegistry;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\MemoServ\Entity\Memo;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
@@ -16,9 +17,11 @@ use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_slice;
 use function implode;
+use function mb_strlen;
 use function str_starts_with;
 use function strtolower;
 
@@ -35,6 +38,9 @@ final readonly class SendCommand implements MemoServCommandInterface
         private MemoSettingsRepositoryInterface $memoSettingsRepository,
         private MemoServSendThrottleRegistry $throttleRegistry,
         private ChanServAccessHelper $accessHelper,
+        private NetworkUserLookupPort $userLookup,
+        private TranslatorInterface $translator,
+        private string $defaultLanguage,
         private int $maxMemosPerNick,
         private int $maxMemosPerChannel,
         private int $sendMinIntervalSeconds,
@@ -108,6 +114,12 @@ final readonly class SendCommand implements MemoServCommandInterface
             return;
         }
 
+        if (mb_strlen($message) > Memo::MESSAGE_MAX_LENGTH) {
+            $context->reply('send.message_too_long', ['max' => Memo::MESSAGE_MAX_LENGTH]);
+
+            return;
+        }
+
         $remaining = $this->throttleRegistry->getRemainingCooldownSeconds($context->sender->uid, $this->sendMinIntervalSeconds);
         if ($remaining > 0) {
             $context->reply('send.throttled', ['seconds' => $remaining]);
@@ -129,6 +141,12 @@ final readonly class SendCommand implements MemoServCommandInterface
         $recipient = $this->nickRepository->findByNick($nickName);
         if (null === $recipient) {
             $context->reply('send.nick_not_registered', ['nick' => $nickName]);
+
+            return;
+        }
+
+        if ($recipient->getId() === $senderAccount->getId()) {
+            $context->reply('send.cannot_send_to_self');
 
             return;
         }
@@ -156,6 +174,25 @@ final readonly class SendCommand implements MemoServCommandInterface
         $this->throttleRegistry->recordSend($context->sender->uid);
 
         $context->reply('send.sent_nick', ['nick' => $recipient->getNickname()]);
+
+        $this->notifyRecipientIfOnline($context, $recipient);
+    }
+
+    private function notifyRecipientIfOnline(MemoServContext $context, RegisteredNick $recipient): void
+    {
+        $recipientView = $this->userLookup->findByNick($recipient->getNickname());
+        if (null === $recipientView) {
+            return;
+        }
+
+        $unread = $this->memoRepository->countUnreadByTargetNick($recipient->getId());
+        if (0 === $unread) {
+            return;
+        }
+
+        $language = $recipient->getLanguage();
+        $message = $this->translator->trans('notify.nick_pending', ['%count%' => $unread], 'memoserv', $language);
+        $context->getNotifier()->sendNotice($recipientView->uid, $message);
     }
 
     private function sendToChannel(MemoServContext $context, string $channelName, string $message, RegisteredNick $senderAccount): void
