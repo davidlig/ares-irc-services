@@ -183,32 +183,38 @@ The project follows **Clean Architecture** with strict layer separation:
 src/
 ├── Domain/IRC/                     Pure PHP — entities, value objects, domain events, no framework
 │   ├── Connection/                 ConnectionInterface, ConnectionFactoryInterface
-│   ├── Protocol/                   ProtocolHandlerInterface, IRCMessage, protocol domain contracts
+│   ├── Event/                      ConnectionEstablishedEvent, ConnectionLostEvent, MessageReceivedEvent, NetworkBurstCompleteEvent, NetworkSyncCompleteEvent, ...
+│   ├── Message/                    IRCMessage, MessageDirection (canonical wire-agnostic form)
 │   ├── Network/                    In-memory network state (servers, users, channels)
+│   ├── Protocol/                   ProtocolHandlerInterface, ProtocolHandlerRegistryInterface
+│   ├── Repository/                 ChannelRepositoryInterface, NetworkUserRepositoryInterface
+│   ├── Server/                     ServerLink
 │   ├── ValueObject/                Hostname, Port, ServerName, LinkPassword, etc.
-│   └── Event/                      ConnectionEstablishedEvent, ConnectionLostEvent, MessageReceivedEvent, NetworkSyncCompleteEvent, ...
+│   └── (root)                      LocalUserModeSyncInterface, SkipIdentifiedModeStripRegistryInterface
 │
 ├── Domain/NickServ/                Nick registration and authentication domain
 │   ├── Entity/                     RegisteredNick
-│   ├── ValueObject/                NickStatus
+│   ├── Event/                      NickIdentifiedEvent, NickDropEvent
+│   ├── Exception/                  NickAlreadyRegisteredException, NickNotRegisteredException, InvalidCredentialsException, ...
 │   ├── Repository/                 RegisteredNickRepositoryInterface
 │   ├── Service/                    PasswordHasherInterface
-│   └── Exception/                  NickAlreadyRegisteredException, NickNotRegisteredException, InvalidCredentialsException, ...
+│   └── ValueObject/                NickStatus
 │
 ├── Domain/ChanServ/                Channel registration and access control domain
 │   ├── Entity/                     RegisteredChannel, ChannelAccess, ChannelLevel
-│   ├── Repository/                 RegisteredChannelRepositoryInterface, ChannelAccessRepositoryInterface, ChannelLevelRepositoryInterface
-│   └── Exception/                  ChannelAlreadyRegisteredException, ChannelNotRegisteredException, InsufficientAccessException, ...
+│   ├── Event/                      ChannelDropEvent
+│   ├── Exception/                  ChannelAlreadyRegisteredException, ChannelNotRegisteredException, InsufficientAccessException, ...
+│   └── Repository/                 RegisteredChannelRepositoryInterface, ChannelAccessRepositoryInterface, ChannelLevelRepositoryInterface
 │
-├── Domain/MemoServ/                 Memo (messaging) domain for nicknames and channels
+├── Domain/MemoServ/                Memo (messaging) domain for nicknames and channels
 │   ├── Entity/                     Memo, MemoIgnore, MemoSettings
-│   ├── Repository/                 MemoRepositoryInterface, MemoIgnoreRepositoryInterface, MemoSettingsRepositoryInterface
-│   └── Exception/                  MemoNotFoundException, MemoDisabledException
+│   ├── Exception/                  MemoNotFoundException, MemoDisabledException
+│   └── Repository/                 MemoRepositoryInterface, MemoIgnoreRepositoryInterface, MemoSettingsRepositoryInterface
 │
 ├── Application/IRC/                Use cases — depends only on Domain
 │   ├── IRCClient                   Connect → read loop → disconnect orchestrator
 │   ├── IRCClientFactory            Wires connection + protocol module into an IRCClient
-│   └── Connect/                    ConnectToServerCommand + ConnectToServerHandler
+│   └── Connect/                    ConnectToServerCommand, ConnectToServerHandler
 │
 ├── Application/Port/               Ports and DTOs between Core IRC and services
 │   ├── SenderView                  Readonly view of the user who sent a command
@@ -217,35 +223,52 @@ src/
 │   ├── ChannelLookupPort           Find a channel by name, return ChannelView
 │   ├── SendNoticePort              Send NOTICEs to users via the active connection
 │   ├── ProtocolModuleInterface     Bundle of protocol-specific handler/actions/formatters
-│   ├── ProtocolServiceActionsInterface, ServiceIntroductionFormatterInterface,
-│   │   VhostCommandBuilderInterface, ChannelModeSupportInterface
 │   ├── ProtocolModuleRegistryInterface
-│   ├── ChannelServiceActionsPort, ChannelSyncCompletedRegistryInterface
-│   └── ServiceCommandListenerInterface, ActiveChannelModeSupportProviderInterface
+│   ├── ProtocolServiceActionsInterface, ServiceIntroductionFormatterInterface, VhostCommandBuilderInterface
+│   ├── ChannelModeSupportInterface, ActiveChannelModeSupportProviderInterface
+│   ├── ChannelServiceActionsPort, ChannelSyncCompletedRegistryInterface, ApplyOutgoingChannelModesPort
+│   ├── BurstCompletePort
+│   └── ServiceCommandListenerInterface
+│
+├── Application/Shared/             Cross-cutting application helpers
+│   └── Help/                       UnifiedHelpFormatter, HelpFormatterContextInterface
 │
 ├── Application/NickServ/           NickServ application layer (commands, flows, registries)
-│   ├── Command/                    Command parsing, routing and handlers for /msg NickServ
-│   ├── Set/                        Handlers for SET subcommands (email, password, vhost, ...)
-│   ├── Maintenance/                Periodic maintenance tasks and pruners
+│   ├── Command/                    Command parsing, routing and handlers for /msg NickServ (incl. SET subcommands in Handler/)
+│   ├── Maintenance/                Periodic maintenance tasks, pruners (Maintenance/Pruner)
 │   └── Security/                   Permission model and authorization contracts
 │
 ├── Application/ChanServ/           ChanServ application layer (commands, mlock, access lists)
-│   ├── Command/                    Command parsing, routing and handlers for /msg ChanServ
-│   ├── Set/                        Handlers for SET subcommands (mlock, url, email, ...)
-│   └── Event/                      Application events (secure enabled, mlock updated, ...)
+│   ├── Command/                    Command parsing, routing and handlers for /msg ChanServ (incl. SET subcommands in Handler/)
+│   ├── Event/                      Application events (ChannelSecureEnabledEvent, mlock updated, ...)
+│   ├── Maintenance/                PurgeInactiveChannelsTask, etc.
+│   └── Service/                    ChanServAccessHelper, founder/successor logic
 │
-├── Application/MemoServ/          MemoServ application layer (SEND, READ, LIST, DEL, IGNORE, ENABLE, DISABLE)
-│   └── Command/                    Command parsing, routing and handlers for /msg MemoServ
+├── Application/MemoServ/          MemoServ application layer (SEND, READ, LIST, DEL, IGNORE, ENABLE, DISABLE, HELP)
+│   ├── Command/                    Command parsing, routing and handlers for /msg MemoServ
+│   └── Event/                      Application events for MemoServ
+│
+├── Application/Mail/              Mail use cases (e.g. SendEmailHandler)
+├── Application/Maintenance/        MaintenanceScheduler, MaintenanceTaskInterface, shared maintenance contracts
 │
 ├── Infrastructure/IRC/             Adapters — implements Domain and Port interfaces
 │   ├── Connection/                 SocketConnection (TCP/TLS), SocketConnectionFactory, ActiveConnectionHolder
-│   ├── Network/                    Network state adapter, subscribers and sync helpers
-│   └── Protocol/                   Protocol modules and helpers
-│       ├── ProtocolModuleRegistry  Discovers protocol modules by tag
-│       ├── Unreal/                 UnrealIRCdModule + UnrealIRCdProtocolHandler + service actions, introduction formatter, vhost builder, channel mode support
-│       └── InspIRCd/               InspIRCdModule + InspIRCdProtocolHandler + service actions, introduction formatter, vhost builder, channel mode support
+│   ├── Network/                    Network state adapters (Adapter/), subscribers and sync helpers
+│   ├── Protocol/                   Protocol modules and helpers
+│   │   ├── ProtocolModuleRegistry, ProtocolHandlerRegistry  Tag-based discovery of protocol modules
+│   │   ├── Unreal/                 UnrealIRCdModule + UnrealIRCdProtocolHandler + service actions, introduction formatter, vhost builder, channel mode support
+│   │   └── InspIRCd/               InspIRCdModule + InspIRCdProtocolHandler + service actions, introduction formatter, vhost builder, channel mode support
+│   ├── Logging/                    IRCEventSubscriber and log wiring
+│   ├── Security/                   IRC-layer security adapters
+│   └── ServiceBridge/              Bridge between Core and service command gateway
 │
-├── Infrastructure/NickServ/        Infrastructure for NickServ (bot, persistence, security)
+├── Infrastructure/Common/          Shared infrastructure (Doctrine types, etc.)
+│   └── Doctrine/Type/
+│
+├── Infrastructure/Shared/          Cross-cutting infrastructure (e.g. DoctrineIdentityMapClearSubscriber)
+│   └── Subscriber/
+│
+├── Infrastructure/NickServ/       Infrastructure for NickServ (bot, persistence, security)
 │   ├── Bot/                        NickServBot (bridge between Service Command Gateway and NickServ)
 │   ├── Doctrine/                   RegisteredNickDoctrineRepository
 │   ├── Security/                   Symfony security adapters, voters, password hasher
@@ -253,13 +276,16 @@ src/
 │
 ├── Infrastructure/ChanServ/        Infrastructure for ChanServ (bot, persistence, subscribers)
 │   ├── Bot/                        ChanServBot
-│   ├── Doctrine/                   Channel, level and access repositories
-│   └── Subscriber/                 Enforcement of mlock, topics, rejoin logic, etc.
+│   ├── Doctrine/                   RegisteredChannel, ChannelAccess, ChannelLevel repositories
+│   └── Subscriber/                 ChanServChannelRankSubscriber, ChanServTopicApplySubscriber, ChanServEntryMsgSubscriber, etc.
 │
 ├── Infrastructure/MemoServ/        Infrastructure for MemoServ (bot, persistence, cleanup on nick/channel drop)
 │   ├── Bot/                        MemoServBot
-│   ├── Doctrine/                   Memo, MemoIgnore, MemoSettings repositories
-│   └── Subscriber/                 Command listener, channel join notice, NickDropEvent/ChannelDropEvent cleanup
+│   ├── Doctrine/                   MemoDoctrineRepository, MemoIgnoreDoctrineRepository, MemoSettingsDoctrineRepository
+│   └── Subscriber/                 MemoServCommandListener, MemoServNickIdentifiedNoticeSubscriber, MemoServChannelDropCleanupSubscriber, MemoServNickDropCleanupSubscriber, etc.
+│
+├── Infrastructure/Mail/            Mail delivery adapters
+├── Infrastructure/Messenger/       Symfony Messenger middleware (e.g. for async/identity map)
 │
 └── UI/CLI/                         Symfony console commands
     └── ConnectCommand              bin/console irc:connect
