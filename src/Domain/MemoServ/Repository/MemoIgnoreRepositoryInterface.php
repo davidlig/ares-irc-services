@@ -26,6 +26,10 @@ interface MemoIgnoreRepositoryInterface
      */
     public function listByTargetChannel(int $targetChannelId): array;
 
+    public function countByTargetNick(int $targetNickId): int;
+
+    public function countByTargetChannel(int $targetChannelId): int;
+
     /**
      * Remove all entries where target_nick_id = nickId or ignored_nick_id = nickId.
      */
