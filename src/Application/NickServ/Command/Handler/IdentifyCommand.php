@@ -13,7 +13,9 @@ use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * IDENTIFY <nickname> <password>.
@@ -30,6 +32,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly IdentifyFailedAttemptRegistry $failedAttemptRegistry,
         private readonly NickServClientKeyResolver $clientKeyResolver,
         private readonly VhostDisplayResolver $vhostDisplayResolver,
+        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly int $identifyMaxFailedAttempts,
         private readonly int $identifyFailedWindowSeconds,
         private readonly int $identifyLockoutSeconds,
@@ -161,6 +164,12 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         $this->applyIrcSession($context, $sender, $account, $targetNick);
 
         $context->reply('identify.success', ['nickname' => $account->getNickname()]);
+
+        $this->eventDispatcher->dispatch(new NickIdentifiedEvent(
+            $account->getId(),
+            $account->getNickname(),
+            $sender->uid,
+        ));
     }
 
     /**
