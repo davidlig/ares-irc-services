@@ -31,6 +31,9 @@ final readonly class ListCommand implements MemoServCommandInterface
     /** IRC red */
     private const string RED = "\x0304";
 
+    /** IRC blue (sender nick) */
+    private const string BLUE = "\x0302";
+
     private const string RESET = "\x03";
 
     public function __construct(
@@ -131,12 +134,21 @@ final readonly class ListCommand implements MemoServCommandInterface
             if (!$memo instanceof Memo) {
                 continue;
             }
+            $senderNick = $this->getSenderNickDisplay($memo);
+            $dateStr = $context->formatDate($memo->getCreatedAt());
             $preview = $this->preview($memo->getMessage());
             $unreadMark = $memo->isRead() ? '' : self::RED . '*' . self::RESET . ' ';
-            $context->replyRaw(sprintf('  %s#%d %s', $unreadMark, $index, $preview));
+            $context->replyRaw(sprintf('  %s#%d ' . self::BLUE . '%s' . self::RESET . ' (%s): %s', $unreadMark, $index, $senderNick, $dateStr, $preview));
             ++$index;
         }
         $context->reply('list.footer');
+    }
+
+    private function getSenderNickDisplay(Memo $memo): string
+    {
+        $sender = $this->nickRepository->findById($memo->getSenderNickId());
+
+        return null !== $sender ? $sender->getNickname() : (string) $memo->getSenderNickId();
     }
 
     private function preview(string $message): string
