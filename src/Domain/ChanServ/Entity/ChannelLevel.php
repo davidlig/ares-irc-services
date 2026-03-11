@@ -46,6 +46,12 @@ class ChannelLevel
 
     public const string KEY_ACCESSCHANGE = 'ACCESSCHANGE';
 
+    /** MemoServ: read memos in channel (default 200). */
+    public const string KEY_MEMOREAD = 'MEMOREAD';
+
+    /** MemoServ: delete/change memos in channel (default 300). */
+    public const string KEY_MEMOCHANGE = 'MEMOCHANGE';
+
     /** Default values per key (used on LEVELS RESET and new channel). */
     public const array DEFAULTS = [
         self::KEY_AUTOADMIN => 400,
@@ -60,6 +66,8 @@ class ChannelLevel
         self::KEY_INVITE => 200,
         self::KEY_ACCESSLIST => 400,
         self::KEY_ACCESSCHANGE => 499,
+        self::KEY_MEMOREAD => 200,
+        self::KEY_MEMOCHANGE => 300,
     ];
 
     private int $channelId;
