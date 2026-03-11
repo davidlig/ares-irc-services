@@ -70,6 +70,15 @@ parameters:
     chanserv.inactivity_expiry_days_default: 0
     chanserv.inactivity_expiry_days: '%env(int:default:chanserv.inactivity_expiry_days_default:CHANSERV_INACTIVITY_EXPIRY_DAYS)%'
 
+    # MemoServ pseudo-client
+    memoserv.uid: '%env(MEMOSERV_UID)%'
+    memoserv.send_min_interval_seconds_default: 30
+    memoserv.send_min_interval_seconds: '%env(int:default:memoserv.send_min_interval_seconds_default:MEMOSERV_SEND_MIN_INTERVAL)%'
+    memoserv.max_memos_per_nick_default: 50
+    memoserv.max_memos_per_nick: '%env(int:default:memoserv.max_memos_per_nick_default:MEMOSERV_MAX_MEMOS_PER_NICK)%'
+    memoserv.max_memos_per_channel_default: 50
+    memoserv.max_memos_per_channel: '%env(int:default:memoserv.max_memos_per_channel_default:MEMOSERV_MAX_MEMOS_PER_CHANNEL)%'
+
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
     mailer.send_delay_seconds_default: 5
@@ -250,6 +259,12 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
 
+    App\Infrastructure\MemoServ\Subscriber\MemoServCommandListener:
+        arguments:
+            $defaultLanguage: '%services.default_language%'
+            $logger: '@monolog.logger.irc'
+        tags: ['service_command_listener']
+
     App\Infrastructure\ChanServ\Subscriber\ChanServRejoinSubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
@@ -346,6 +361,17 @@ services:
     App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface:
         class: App\Infrastructure\ChanServ\Doctrine\ChannelLevelDoctrineRepository
 
+    # --- MemoServ Domain --------------------------------------------------------
+
+    App\Domain\MemoServ\Repository\MemoRepositoryInterface:
+        class: App\Infrastructure\MemoServ\Doctrine\MemoDoctrineRepository
+
+    App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface:
+        class: App\Infrastructure\MemoServ\Doctrine\MemoIgnoreDoctrineRepository
+
+    App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface:
+        class: App\Infrastructure\MemoServ\Doctrine\MemoSettingsDoctrineRepository
+
     # --- NickServ Bot pseudo-client ---------------------------------------------
 
     App\Infrastructure\NickServ\PendingNickRestoreRegistry:
@@ -407,6 +433,21 @@ services:
 
     App\Application\Port\ChannelServiceActionsPort:
         alias: App\Infrastructure\ChanServ\Bot\ChanServBot
+
+    # --- MemoServ Bot pseudo-client ---------------------------------------------
+
+    App\Infrastructure\MemoServ\Bot\MemoServBot:
+        arguments:
+            $servicesHostname: '%services.hostname%'
+            $memoservUid: '%memoserv.uid%'
+            $memoservNick: MemoServ
+            $memoservIdent: MemoServ
+            $memoservRealname: Memo Service
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
+    App\Application\MemoServ\Command\MemoServNotifierInterface:
+        alias: App\Infrastructure\MemoServ\Bot\MemoServBot
 
     # --- ChanServ Service -------------------------------------------------------
 
@@ -483,6 +524,59 @@ services:
 
     App\Application\ChanServ\Command\Handler\DehalfopCommand:
         tags: ['chanserv.command']
+
+    # --- MemoServ Service -------------------------------------------------------
+
+    App\Application\MemoServ\MemoServService:
+        arguments:
+            $defaultLanguage: '%services.default_language%'
+            $defaultTimezone: '%services.default_timezone%'
+            $logger: '@monolog.logger.irc'
+
+    App\Application\MemoServ\Command\MemoServCommandRegistry:
+        arguments:
+            $commands: !tagged_iterator memoserv.command
+
+    App\Application\MemoServ\MemoServSendThrottleRegistry: ~
+
+    App\Application\MemoServ\Command\Handler\SendCommand:
+        arguments:
+            $maxMemosPerNick: '%memoserv.max_memos_per_nick%'
+            $maxMemosPerChannel: '%memoserv.max_memos_per_channel%'
+            $sendMinIntervalSeconds: '%memoserv.send_min_interval_seconds%'
+        tags: ['memoserv.command']
+
+    App\Application\MemoServ\Command\Handler\ReadCommand:
+        tags: ['memoserv.command']
+
+    App\Application\MemoServ\Command\Handler\ListCommand:
+        tags: ['memoserv.command']
+
+    App\Application\MemoServ\Command\Handler\DelCommand:
+        tags: ['memoserv.command']
+
+    App\Application\MemoServ\Command\Handler\IgnoreCommand:
+        tags: ['memoserv.command']
+
+    App\Application\MemoServ\Command\Handler\EnableCommand:
+        tags: ['memoserv.command']
+
+    App\Application\MemoServ\Command\Handler\DisableCommand:
+        tags: ['memoserv.command']
+
+    App\Application\MemoServ\Command\Handler\HelpCommand:
+        tags: ['memoserv.command']
+
+    App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber:
+        arguments:
+            $memoservUid: '%memoserv.uid%'
+            $defaultLanguage: '%services.default_language%'
+
+    App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber:
+        tags: ['kernel.event_subscriber']
+
+    App\Infrastructure\MemoServ\Subscriber\MemoServChannelDropCleanupSubscriber:
+        tags: ['kernel.event_subscriber']
 
     # --- NickServ Command Registry — auto-collects all tagged commands ----------
 

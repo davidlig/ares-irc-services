@@ -1,6 +1,6 @@
 # Ares IRC Services
 
-A modular, protocol-agnostic IRC services daemon (Core + NickServ + ChanServ) built with **PHP 8.4** and **Symfony 7.4**, following Clean Architecture and Domain-Driven Design principles.
+A modular, protocol-agnostic IRC services daemon (Core + NickServ + ChanServ + MemoServ) built with **PHP 8.4** and **Symfony 7.4**, following Clean Architecture and Domain-Driven Design principles.
 
 > **Note:** The services are **not complete** and are **under active development**. Functionality and APIs may change.
 
@@ -139,7 +139,7 @@ php bin/console irc:connect services.example.com irc.example.com 6697 secret \
     "Ares IRC Services" --protocol=unreal --tls
 ```
 
-When the connection is established and the initial network burst completes, the Core IRC layer syncs users and channels and then introduces the service bots (NickServ, ChanServ, etc.) automatically. From that point, users on the network can interact with the services using normal IRC commands (e.g. `/msg NickServ ...`, `/msg ChanServ ...`), without any extra manual setup.
+When the connection is established and the initial network burst completes, the Core IRC layer syncs users and channels and then introduces the service bots (NickServ, ChanServ, MemoServ, etc.) automatically. From that point, users on the network can interact with the services using normal IRC commands (e.g. `/msg NickServ ...`, `/msg ChanServ ...`, `/msg MemoServ ...`), without any extra manual setup.
 
 ### Argument / option reference
 
@@ -157,6 +157,19 @@ When the connection is established and the initial network burst completes, the 
 > `PROTOCTL EAUTH=<name> SID=<sid>` before the capability list, which is required for
 > UnrealIRCd to accept the link. Omitting `EAUTH`/`SID` causes the
 > `LINK_OLD_PROTOCOL` rejection.
+
+### MemoServ
+
+MemoServ is the memo (messaging) service for nicknames and channels. Configure in `.env`:
+
+| Env var | Description |
+|---|---|
+| `MEMOSERV_UID` | Pseudo-client UID (e.g. `002CCCCCC`; must be unique on the network). |
+| `MEMOSERV_SEND_MIN_INTERVAL` | Minimum seconds between SEND commands per user (default: 30). |
+| `MEMOSERV_MAX_MEMOS_PER_NICK` | Maximum memos per nickname (default: 50). |
+| `MEMOSERV_MAX_MEMOS_PER_CHANNEL` | Maximum memos per channel (default: 50). |
+
+Commands: **SEND**, **READ**, **LIST**, **DEL**, **IGNORE**, **ENABLE**, **DISABLE**, **HELP**. For channel memos, ChanServ **LEVELS** defines **MEMOREAD** (default 200) for reading and **MEMOCHANGE** (default 300) for deleting; **ENABLE**/**DISABLE** on channels are founder-only.
 
 ---
 
@@ -184,6 +197,11 @@ src/
 │   ├── Entity/                     RegisteredChannel, ChannelAccess, ChannelLevel
 │   ├── Repository/                 RegisteredChannelRepositoryInterface, ChannelAccessRepositoryInterface, ChannelLevelRepositoryInterface
 │   └── Exception/                  ChannelAlreadyRegisteredException, ChannelNotRegisteredException, InsufficientAccessException, ...
+│
+├── Domain/MemoServ/                 Memo (messaging) domain for nicknames and channels
+│   ├── Entity/                     Memo, MemoIgnore, MemoSettings
+│   ├── Repository/                 MemoRepositoryInterface, MemoIgnoreRepositoryInterface, MemoSettingsRepositoryInterface
+│   └── Exception/                  MemoNotFoundException, MemoDisabledException
 │
 ├── Application/IRC/                Use cases — depends only on Domain
 │   ├── IRCClient                   Connect → read loop → disconnect orchestrator
@@ -214,6 +232,9 @@ src/
 │   ├── Set/                        Handlers for SET subcommands (mlock, url, email, ...)
 │   └── Event/                      Application events (secure enabled, mlock updated, ...)
 │
+├── Application/MemoServ/          MemoServ application layer (SEND, READ, LIST, DEL, IGNORE, ENABLE, DISABLE)
+│   └── Command/                    Command parsing, routing and handlers for /msg MemoServ
+│
 ├── Infrastructure/IRC/             Adapters — implements Domain and Port interfaces
 │   ├── Connection/                 SocketConnection (TCP/TLS), SocketConnectionFactory, ActiveConnectionHolder
 │   ├── Network/                    Network state adapter, subscribers and sync helpers
@@ -232,6 +253,11 @@ src/
 │   ├── Bot/                        ChanServBot
 │   ├── Doctrine/                   Channel, level and access repositories
 │   └── Subscriber/                 Enforcement of mlock, topics, rejoin logic, etc.
+│
+├── Infrastructure/MemoServ/        Infrastructure for MemoServ (bot, persistence, cleanup on nick/channel drop)
+│   ├── Bot/                        MemoServBot
+│   ├── Doctrine/                   Memo, MemoIgnore, MemoSettings repositories
+│   └── Subscriber/                 Command listener, channel join notice, NickDropEvent/ChannelDropEvent cleanup
 │
 └── UI/CLI/                         Symfony console commands
     └── ConnectCommand              bin/console irc:connect

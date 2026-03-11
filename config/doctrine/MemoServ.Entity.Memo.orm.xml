@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\MemoServ\Entity\Memo" table="memos">
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="targetNickId" type="integer" column="target_nick_id" nullable="true"/>
+        <field name="targetChannelId" type="integer" column="target_channel_id" nullable="true"/>
+        <field name="senderNickId" type="integer" column="sender_nick_id"/>
+        <field name="message" type="text" column="message"/>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+        <field name="readAt" type="datetime_immutable" column="read_at" nullable="true"/>
+    </entity>
+</doctrine-mapping>
