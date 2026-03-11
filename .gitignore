@@ -8,8 +8,6 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
-
-/.cursorrules
 /.php-cs-fixer.cache
 /.roo/
 /.vscode/
