@@ -114,7 +114,7 @@ final readonly class MemoServService
 
             $handler->execute($context);
         } catch (MemoDisabledException $e) {
-            $context->replyRaw($e->getMessage());
+            $context->reply('send.service_disabled_for_target', ['target' => $e->target]);
         } catch (Throwable $e) {
             $this->logger->error('MemoServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,
