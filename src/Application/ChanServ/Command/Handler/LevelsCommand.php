@@ -50,6 +50,8 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         ChannelLevel::KEY_INVITE,
         ChannelLevel::KEY_ACCESSLIST,
         ChannelLevel::KEY_ACCESSCHANGE,
+        ChannelLevel::KEY_MEMOREAD,
+        ChannelLevel::KEY_MEMOCHANGE,
     ];
 
     public function __construct(
