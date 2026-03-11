@@ -168,6 +168,8 @@ MemoServ is the memo (messaging) service for nicknames and channels. Configure i
 | `MEMOSERV_SEND_MIN_INTERVAL` | Minimum seconds between SEND commands per user (default: 30). |
 | `MEMOSERV_MAX_MEMOS_PER_NICK` | Maximum memos per nickname (default: 50). |
 | `MEMOSERV_MAX_MEMOS_PER_CHANNEL` | Maximum memos per channel (default: 50). |
+| `MEMOSERV_IGNORE_LIST_LIMIT_NICK` | Maximum entries in ignore list per nickname (default: 50). |
+| `MEMOSERV_IGNORE_LIST_LIMIT_CHANNEL` | Maximum entries in ignore list per channel (default: 100). |
 
 Commands: **SEND**, **READ**, **LIST**, **DEL**, **IGNORE**, **ENABLE**, **DISABLE**, **HELP**. For channel memos, ChanServ **LEVELS** defines **MEMOREAD** (default 200) for reading and **MEMOCHANGE** (default 300) for deleting; **ENABLE**/**DISABLE** on channels are founder-only.
 

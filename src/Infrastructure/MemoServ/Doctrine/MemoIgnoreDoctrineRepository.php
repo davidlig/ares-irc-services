@@ -80,6 +80,29 @@ final class MemoIgnoreDoctrineRepository implements MemoIgnoreRepositoryInterfac
         return array_filter($result, static fn ($row): bool => $row instanceof MemoIgnore);
     }
 
+    public function countByTargetNick(int $targetNickId): int
+    {
+        return (int) $this->em->createQueryBuilder()
+            ->select('COUNT(i.id)')
+            ->from(MemoIgnore::class, 'i')
+            ->where('i.targetNickId = :nickId')
+            ->andWhere('i.targetChannelId IS NULL')
+            ->setParameter('nickId', $targetNickId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countByTargetChannel(int $targetChannelId): int
+    {
+        return (int) $this->em->createQueryBuilder()
+            ->select('COUNT(i.id)')
+            ->from(MemoIgnore::class, 'i')
+            ->where('i.targetChannelId = :channelId')
+            ->setParameter('channelId', $targetChannelId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function deleteAllForNick(int $nickId): void
     {
         $this->em->createQuery(

@@ -78,6 +78,10 @@ parameters:
     memoserv.max_memos_per_nick: '%env(int:default:memoserv.max_memos_per_nick_default:MEMOSERV_MAX_MEMOS_PER_NICK)%'
     memoserv.max_memos_per_channel_default: 50
     memoserv.max_memos_per_channel: '%env(int:default:memoserv.max_memos_per_channel_default:MEMOSERV_MAX_MEMOS_PER_CHANNEL)%'
+    memoserv.ignore_list_limit_nick_default: 50
+    memoserv.ignore_list_limit_nick: '%env(int:default:memoserv.ignore_list_limit_nick_default:MEMOSERV_IGNORE_LIST_LIMIT_NICK)%'
+    memoserv.ignore_list_limit_channel_default: 100
+    memoserv.ignore_list_limit_channel: '%env(int:default:memoserv.ignore_list_limit_channel_default:MEMOSERV_IGNORE_LIST_LIMIT_CHANNEL)%'
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
@@ -541,6 +545,7 @@ services:
 
     App\Application\MemoServ\Command\Handler\SendCommand:
         arguments:
+            $defaultLanguage: '%services.default_language%'
             $maxMemosPerNick: '%memoserv.max_memos_per_nick%'
             $maxMemosPerChannel: '%memoserv.max_memos_per_channel%'
             $sendMinIntervalSeconds: '%memoserv.send_min_interval_seconds%'
@@ -556,6 +561,9 @@ services:
         tags: ['memoserv.command']
 
     App\Application\MemoServ\Command\Handler\IgnoreCommand:
+        arguments:
+            $ignoreListLimitNick: '%memoserv.ignore_list_limit_nick%'
+            $ignoreListLimitChannel: '%memoserv.ignore_list_limit_channel%'
         tags: ['memoserv.command']
 
     App\Application\MemoServ\Command\Handler\EnableCommand:
@@ -570,6 +578,10 @@ services:
     App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber:
         arguments:
             $memoservUid: '%memoserv.uid%'
+            $defaultLanguage: '%services.default_language%'
+
+    App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber:
+        arguments:
             $defaultLanguage: '%services.default_language%'
 
     App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber:

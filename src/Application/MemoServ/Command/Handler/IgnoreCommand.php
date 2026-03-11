@@ -32,6 +32,8 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private MemoIgnoreRepositoryInterface $memoIgnoreRepository,
         private ChanServAccessHelper $accessHelper,
+        private int $ignoreListLimitNick,
+        private int $ignoreListLimitChannel,
     ) {
     }
 
@@ -148,13 +150,14 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         }
 
         if ('ADD' === $sub) {
-            $this->doAdd($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore);
+            $channelNameForLimit = $isChannel ? $arg1 : null;
+            $this->doAdd($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore, $channelNameForLimit);
         } else {
             $this->doDel($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore);
         }
     }
 
-    private function doAdd(MemoServContext $context, ?int $targetNickId, ?int $targetChannelId, int $ignoredNickId, string $nickDisplay): void
+    private function doAdd(MemoServContext $context, ?int $targetNickId, ?int $targetChannelId, int $ignoredNickId, string $nickDisplay, ?string $channelNameForLimit): void
     {
         $existing = null !== $targetChannelId
             ? $this->memoIgnoreRepository->findByTargetChannelAndIgnored($targetChannelId, $ignoredNickId)
@@ -163,6 +166,24 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
             $context->reply('ignore.already_ignored', ['nick' => $nickDisplay]);
 
             return;
+        }
+        if (null !== $targetChannelId) {
+            $count = $this->memoIgnoreRepository->countByTargetChannel($targetChannelId);
+            if ($count >= $this->ignoreListLimitChannel) {
+                $context->reply('ignore.limit_reached_channel', [
+                    'limit' => $this->ignoreListLimitChannel,
+                    'channel' => $channelNameForLimit ?? '',
+                ]);
+
+                return;
+            }
+        } else {
+            $count = $this->memoIgnoreRepository->countByTargetNick($targetNickId);
+            if ($count >= $this->ignoreListLimitNick) {
+                $context->reply('ignore.limit_reached_nick', ['limit' => $this->ignoreListLimitNick]);
+
+                return;
+            }
         }
         $ignore = new MemoIgnore($targetNickId, $targetChannelId, $ignoredNickId);
         $this->memoIgnoreRepository->save($ignore);
