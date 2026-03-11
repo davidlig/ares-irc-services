@@ -20,7 +20,7 @@ final class MemoDoctrineRepository implements MemoRepositoryInterface
     public function save(Memo $memo): void
     {
         $this->em->persist($memo);
-        $this->em->flush();
+        $this->em->flush($memo);
     }
 
     public function delete(Memo $memo): void
