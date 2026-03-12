@@ -28,11 +28,11 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ---
 
-## Summary (without driver)
+## Summary
 
-- **src:** ~302 PHP files.
-- **tests:** 107 `*Test.php` files.
-- **Classes covered explicitly** (via `#[CoversClass(...)]`): ~100.
+- **Suite:** 423 tests, 974 assertions.
+- **Coverage:** Classes 18.40% (46/250), Methods 26.18% (366/1398), Lines 34.79% (2230/6409).
+- Covered classes are those listed in section 1 and in the coverage report (`--coverage-text`).
 
 The prioritisation below is based on code structure and which parts already have associated tests.
 
@@ -44,7 +44,8 @@ The prioritisation below is based on code structure and which parts already have
 |-------|--------|
 | **Domain** | Entities (RegisteredNick, RegisteredChannel, ChannelAccess, ChannelLevel, Memo, MemoSettings, MemoIgnore), VOs (NickStatus, Uid, Nick, ChannelName, etc.), IRC events/value (Channel, NetworkUser, IRCMessage, …), exceptions (NickServ, ChanServ, MemoServ). |
 | **Application** | Ports (SenderView, ChannelView), Commands and handlers (NickServ, ChanServ, MemoServ), services (NickServService, ChanServService, MemoServService), registries (PendingVerification, RecoveryToken, RegisterThrottle, MemoSendThrottle, FounderChangeToken, ChannelRegisterThrottle), helpers (ChanServAccessHelper, EmailMasker, SecureToken, VhostValidator, TimezoneHelpProvider), Mail (SendEmail, SendEmailHandler), Maintenance (RunMaintenanceCycle, Scheduler), ConnectToServerCommand, UnifiedHelpFormatter, command registries. |
-| **Infrastructure** | UserMessageTypeResolver, NullChannelModeSupport, UnrealIRCdChannelModeSupport, InspIRCdChannelModeSupport. |
+| **Infrastructure** | UserMessageTypeResolver, NullChannelModeSupport, UnrealIRCdChannelModeSupport, InspIRCdChannelModeSupport, AbstractProtocolHandler, UnrealIRCdProtocolHandler, InspIRCdProtocolHandler. |
+| **UI** | ConnectCommand. |
 
 ---
 
@@ -116,8 +117,9 @@ The prioritisation below is based on code structure and which parts already have
 
 ## 5. Maintaining this document
 
-When PCOV/Xdebug is installed and the real report is generated:
+When you run coverage and want to keep this document in sync:
 
-- Replace the “Uncovered” table with the classes/files that show 0% or uncovered in `--coverage-text` or the HTML report.
+- Update the **Summary** with the current suite size (tests, assertions) and coverage percentages (Classes, Methods, Lines) from `--coverage-text`.
+- Replace or adjust the “Uncovered” tables with the classes/files that show 0% or uncovered in the HTML report.
 - Adjust priorities by uncovered lines and risk (e.g. more weight on security and persistence).
 - Update the “Covered” section when adding `#[CoversClass]` to existing tests or creating tests for new classes.
