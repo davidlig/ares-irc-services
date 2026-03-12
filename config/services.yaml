@@ -124,6 +124,8 @@ services:
 
     # --- Application services — inject the irc Monolog channel ---------------
 
+    App\Application\IRC\IRCClientFactoryInterface: '@App\Application\IRC\IRCClientFactory'
+
     App\Application\IRC\IRCClientFactory:
         arguments:
             $maintenanceDispatchIntervalSeconds: '%maintenance.interval%'
@@ -131,12 +133,16 @@ services:
 
     # --- Messenger consumer process (started/stopped with irc:connect) ---
 
+    App\Infrastructure\Messenger\ConsumerProcessManagerInterface: '@App\Infrastructure\Messenger\ConsumerProcessManager'
+
     App\Infrastructure\Messenger\ConsumerProcessManager:
         arguments:
             $consolePath: '%kernel.project_dir%/bin/console'
             $transportNames: ['async', 'async_emails']
 
     # --- CLI command — inject .env defaults so the command runs without arguments ---
+
+    App\Application\IRC\Connect\ConnectToServerHandlerInterface: '@App\Application\IRC\Connect\ConnectToServerHandler'
 
     App\UI\CLI\ConnectCommand:
         arguments:

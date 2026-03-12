@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\UI\CLI;
 
 use App\Application\IRC\Connect\ConnectToServerCommand;
-use App\Application\IRC\Connect\ConnectToServerHandler;
+use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
 use App\Application\IRC\IRCClient;
-use App\Infrastructure\Messenger\ConsumerProcessManager;
+use App\Infrastructure\Messenger\ConsumerProcessManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -31,8 +31,8 @@ use const SIGTERM;
 class ConnectCommand extends Command
 {
     public function __construct(
-        private readonly ConnectToServerHandler $handler,
-        private readonly ConsumerProcessManager $consumerManager,
+        private readonly ConnectToServerHandlerInterface $handler,
+        private readonly ConsumerProcessManagerInterface $consumerManager,
         private readonly string $defaultServerName,
         private readonly string $defaultHost,
         private readonly int $defaultPort,
