@@ -18,8 +18,8 @@ Use this skill when working on tests, coverage, or test prioritisation. Full det
 
 ## Priorities for new tests
 
-1. **Done:** ConnectCommand (UI/CLI), ConnectToServerHandler.
-2. **Next:** Protocol (parseRawLine, formatMessage), service actions, introduction, vhost.
+1. **Done:** ConnectCommand (UI/CLI), ConnectToServerHandler, Protocol handlers (Unreal, InspIRCd).
+2. **Next:** Protocol service actions / introduction / vhost.
 3. **Then:** In-memory registries (Infrastructure), Doctrine repos (integration), subscribers/bots.
 
 ## Useful commands
