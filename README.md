@@ -305,7 +305,7 @@ php bin/console cache:clear
 
 ### Testing
 
-The test suite uses **PHPUnit 13** with attributes (`#[Test]`, `#[CoversClass]`). Tests live under `tests/` and mirror the structure of `src/` (Domain, Application, Infrastructure).
+The test suite uses **PHPUnit 13** with attributes (`#[Test]`, `#[CoversClass]`). Tests live under `tests/` and mirror the structure of `src/` (Domain, Application, Infrastructure). Current suite: **406 tests, 942 assertions**. For coverage setup (PCOV/Xdebug) and prioritization of untested code, see [docs/testing-coverage-priorities.md](docs/testing-coverage-priorities.md).
 
 ```bash
 # Run all tests (no coverage)

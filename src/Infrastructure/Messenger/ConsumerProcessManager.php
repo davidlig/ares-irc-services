@@ -20,7 +20,7 @@ use const SIGTERM;
  * Starts and stops the Messenger async consumer as a subprocess.
  * Used so the consumer runs only while the IRC link process is alive.
  */
-final class ConsumerProcessManager
+final class ConsumerProcessManager implements ConsumerProcessManagerInterface
 {
     private const int STOP_TIMEOUT_SECONDS = 10;
 

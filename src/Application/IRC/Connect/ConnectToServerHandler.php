@@ -5,17 +5,17 @@ declare(strict_types=1);
 namespace App\Application\IRC\Connect;
 
 use App\Application\IRC\IRCClient;
-use App\Application\IRC\IRCClientFactory;
+use App\Application\IRC\IRCClientFactoryInterface;
 use App\Domain\IRC\Server\ServerLink;
 use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 
-final readonly class ConnectToServerHandler
+final readonly class ConnectToServerHandler implements ConnectToServerHandlerInterface
 {
     public function __construct(
-        private readonly IRCClientFactory $clientFactory,
+        private readonly IRCClientFactoryInterface $clientFactory,
     ) {
     }
 
