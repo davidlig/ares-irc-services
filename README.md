@@ -303,6 +303,23 @@ php bin/console debug:container --tag=irc.protocol_handler
 php bin/console cache:clear
 ```
 
+### Testing
+
+The test suite uses **PHPUnit 13** with attributes (`#[Test]`, `#[CoversClass]`). Tests live under `tests/` and mirror the structure of `src/` (Domain, Application, Infrastructure).
+
+```bash
+# Run all tests (no coverage)
+./vendor/bin/phpunit --no-coverage
+
+# Run with deprecation/notice display
+./vendor/bin/phpunit --no-coverage --display-deprecations --display-phpunit-deprecations --display-phpunit-notices
+
+# Run with code coverage (requires a coverage driver such as PCOV or Xdebug)
+./vendor/bin/phpunit --coverage-text --coverage-filter=src
+```
+
+Configuration: `phpunit.dist.xml`. Bootstrap: `tests/bootstrap.php` (loads autoload and Dotenv for `.env.test`).
+
 ---
 
 ## License
