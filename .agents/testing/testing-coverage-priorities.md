@@ -62,7 +62,7 @@ The prioritisation below is based on code structure and which parts already have
 
 | Area | Examples | Reason |
 |------|----------|--------|
-| **Protocol: formatting and parsing** | `UnrealIRCdProtocolHandler`, `InspIRCdProtocolHandler` (`parseRawLine`, `formatMessage`) | Pure logic or injectable dependencies; testable with line input/output. |
+| **Protocol: formatting and parsing** | `UnrealIRCdProtocolHandler`, `InspIRCdProtocolHandler` | ✅ Covered: `UnrealIRCdProtocolHandlerTest`, `InspIRCdProtocolHandlerTest`. |
 | **Protocol: service** | `UnrealIRCdProtocolServiceActions`, `InspIRCdProtocolServiceActions` (MODE/KILL/… construction) | String construction per interface; testable with parameter stubs. |
 | **Protocol: introduction and vhost** | `*ServiceIntroductionFormatter`, `*VhostCommandBuilder` | Text input/output; easy to test. |
 | **Helpers / resolvers** | `UserLanguageResolver`, `SensitiveDataRedactor`, `EmailDelayMiddleware` | Little or no IO dependency; good candidates for unit tests. |
@@ -84,7 +84,7 @@ The prioritisation below is based on code structure and which parts already have
 
 1. ~~**ConnectCommand (UI/CLI)**~~ — Done.
 2. ~~**ConnectToServerHandler**~~ — Done.
-3. **Protocol: parsing and formatting** — Unreal and/or InspIRCd (e.g. `parseRawLine` and `formatMessage` with sample lines).
+3. ~~**Protocol: parsing and formatting**~~ — Done: `UnrealIRCdProtocolHandlerTest`, `InspIRCdProtocolHandlerTest` (parseRawLine, formatMessage, handshake, handleIncoming).
 4. **Protocol: service actions / introduction / vhost** — one module (Unreal or InspIRCd) end-to-end for that module.
 5. **In-memory registries** (Infrastructure) — one or two (e.g. `ChannelSyncCompletedRegistry`, `PendingNickRestoreRegistry`).
 6. **Doctrine repositories** — set up SQLite in memory and one integration test per critical repository.
