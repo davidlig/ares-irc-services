@@ -9,9 +9,8 @@
 /vendor/
 ###< symfony/framework-bundle ###
 /.php-cs-fixer.cache
-/.roo/
 /.vscode/
-/docs
+/docs/
 
 ###> friendsofphp/php-cs-fixer ###
 /.php-cs-fixer.php
