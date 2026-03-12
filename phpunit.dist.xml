@@ -23,6 +23,14 @@
         </testsuite>
     </testsuites>
 
+    <coverage>
+        <report>
+            <html outputDirectory="var/coverage/html"/>
+            <clover outputFile="var/coverage/clover.xml"/>
+            <text outputFile="php://stdout" showUncoveredFiles="false"/>
+        </report>
+    </coverage>
+
     <source ignoreSuppressionOfDeprecations="true"
             ignoreIndirectDeprecations="true"
             restrictNotices="true"
