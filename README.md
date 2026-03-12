@@ -158,23 +158,6 @@ When the connection is established and the initial network burst completes, the 
 > UnrealIRCd to accept the link. Omitting `EAUTH`/`SID` causes the
 > `LINK_OLD_PROTOCOL` rejection.
 
-### MemoServ
-
-MemoServ is the memo (messaging) service for nicknames and channels. Configure in `.env`:
-
-| Env var | Description |
-|---|---|
-| `MEMOSERV_UID` | Pseudo-client UID (e.g. `002CCCCCC`; must be unique on the network). |
-| `MEMOSERV_SEND_MIN_INTERVAL` | Minimum seconds between SEND commands per user (default: 30). |
-| `MEMOSERV_MAX_MEMOS_PER_NICK` | Maximum memos per nickname (default: 50). |
-| `MEMOSERV_MAX_MEMOS_PER_CHANNEL` | Maximum memos per channel (default: 50). |
-| `MEMOSERV_IGNORE_LIST_LIMIT_NICK` | Maximum entries in ignore list per nickname (default: 50). |
-| `MEMOSERV_IGNORE_LIST_LIMIT_CHANNEL` | Maximum entries in ignore list per channel (default: 100). |
-
-Commands: **SEND**, **READ**, **LIST**, **DEL**, **IGNORE**, **ENABLE**, **DISABLE**, **HELP**. For channel memos, ChanServ **LEVELS** defines **MEMOREAD** (default 200) for reading and **MEMOCHANGE** (default 300) for deleting; **ENABLE**/**DISABLE** on channels are founder-only.
-
----
-
 ## Architecture
 
 The project follows **Clean Architecture** with strict layer separation:
