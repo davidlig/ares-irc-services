@@ -1,0 +1,375 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Application\MemoServ\Command\Handler;
+
+use App\Application\ChanServ\ChanServAccessHelper;
+use App\Application\MemoServ\Command\MemoServCommandRegistry;
+use App\Application\MemoServ\Command\MemoServContext;
+use App\Application\MemoServ\Command\Handler\SendCommand;
+use App\Application\MemoServ\Command\MemoServNotifierInterface;
+use App\Application\MemoServ\MemoServSendThrottleRegistry;
+use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
+use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
+use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\MemoServ\Entity\Memo;
+use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
+use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
+use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+#[CoversClass(SendCommand::class)]
+final class SendCommandTest extends TestCase
+{
+    private function createContext(
+        ?SenderView $sender,
+        ?RegisteredNick $senderAccount,
+        array $args,
+        MemoServNotifierInterface $notifier,
+        TranslatorInterface $translator,
+    ): MemoServContext {
+        return new MemoServContext(
+            $sender,
+            $senderAccount,
+            'SEND',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+        );
+    }
+
+    #[Test]
+    public function replyNotIdentifiedWhenSenderAccountNull(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['Other', 'Hi'], $notifier, $translator));
+
+        self::assertSame(['error.not_identified'], $messages);
+    }
+
+    #[Test]
+    public function replySyntaxErrorWhenMessageEmpty(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['Other', ''], $notifier, $translator));
+
+        self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function replyMessageTooLongWhenExceedsMaxLength(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $longMessage = str_repeat('x', Memo::MESSAGE_MAX_LENGTH + 1);
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['Other', $longMessage], $notifier, $translator));
+
+        self::assertSame(['send.message_too_long'], $messages);
+    }
+
+    #[Test]
+    public function replyThrottledWhenCooldownActive(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $throttle = new MemoServSendThrottleRegistry();
+        $throttle->recordSend('UID1');
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 60);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['Other', 'Hi'], $notifier, $translator));
+
+        self::assertSame(['send.throttled'], $messages);
+    }
+
+    #[Test]
+    public function replyNickNotRegisteredWhenTargetNotRegistered(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn(null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['UnknownNick', 'Hi'], $notifier, $translator));
+
+        self::assertSame(['send.nick_not_registered'], $messages);
+    }
+
+    #[Test]
+    public function replyCannotSendToSelfWhenTargetIsSender(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->method('getNickname')->willReturn('User');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['User', 'Hi'], $notifier, $translator));
+
+        self::assertSame(['send.cannot_send_to_self'], $messages);
+    }
+
+    #[Test]
+    public function replyIgnoredWhenRecipientIgnoresSender(): void
+    {
+        $senderAccount = $this->createStub(RegisteredNick::class);
+        $senderAccount->method('getId')->willReturn(1);
+        $recipient = $this->createStub(RegisteredNick::class);
+        $recipient->method('getId')->willReturn(2);
+        $recipient->method('getNickname')->willReturn('Other');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($recipient);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $memoRepo->method('countByTargetNick')->willReturn(0);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $ignoreRepo->method('findByTargetNickAndIgnored')->willReturn($this->createStub(\App\Domain\MemoServ\Entity\MemoIgnore::class));
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $settingsRepo->method('isEnabledForNick')->willReturn(true);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $senderAccount, ['Other', 'Hi'], $notifier, $translator));
+
+        self::assertSame(['send.ignored'], $messages);
+    }
+
+    #[Test]
+    public function successSendsToNickAndReplies(): void
+    {
+        $senderAccount = $this->createStub(RegisteredNick::class);
+        $senderAccount->method('getId')->willReturn(1);
+        $recipient = $this->createStub(RegisteredNick::class);
+        $recipient->method('getId')->willReturn(2);
+        $recipient->method('getNickname')->willReturn('Other');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($recipient);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createMock(MemoRepositoryInterface::class);
+        $memoRepo->method('countByTargetNick')->willReturn(0);
+        $memoRepo->expects(self::once())->method('save')->with(self::isInstanceOf(Memo::class));
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $ignoreRepo->method('findByTargetNickAndIgnored')->willReturn(null);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $settingsRepo->method('isEnabledForNick')->willReturn(true);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $senderAccount, ['Other', 'Hello'], $notifier, $translator));
+
+        self::assertSame(['send.sent_nick'], $messages);
+    }
+
+    #[Test]
+    public function replyChannelNotRegisteredWhenSendingToChannel(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn(null);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'Hi'], $notifier, $translator));
+
+        self::assertSame(['send.channel_not_registered'], $messages);
+    }
+
+    #[Test]
+    public function successSendsToChannelAndReplies(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(10);
+        $channel->method('getName')->willReturn('#test');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $memoRepo = $this->createMock(MemoRepositoryInterface::class);
+        $memoRepo->method('countByTargetChannel')->willReturn(0);
+        $memoRepo->expects(self::once())->method('save')->with(self::isInstanceOf(Memo::class));
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $ignoreRepo->method('findByTargetChannelAndIgnored')->willReturn(null);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $settingsRepo->method('isEnabledForChannel')->willReturn(true);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'Hello channel'], $notifier, $translator));
+
+        self::assertSame(['send.sent_channel'], $messages);
+    }
+}
