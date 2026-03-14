@@ -62,11 +62,23 @@ final class ChannelMemberRoleTest extends TestCase
     }
 
     #[Test]
+    public function fromSjoinEntryWithNoPrefixReturnsNoneAndLeavesEntryUnchanged(): void
+    {
+        $entry = 'plainuser';
+        $role = ChannelMemberRole::fromSjoinEntry($entry);
+
+        self::assertSame(ChannelMemberRole::None, $role);
+        self::assertSame('plainuser', $entry);
+    }
+
+    #[Test]
     public function highestRoleFromLetters(): void
     {
         self::assertSame(ChannelMemberRole::Owner, ChannelMemberRole::highestRoleFromLetters(['v', 'q']));
         self::assertSame(ChannelMemberRole::Op, ChannelMemberRole::highestRoleFromLetters(['v', 'o']));
         self::assertSame(ChannelMemberRole::None, ChannelMemberRole::highestRoleFromLetters([]));
+        self::assertSame(ChannelMemberRole::Voice, ChannelMemberRole::highestRoleFromLetters(['v']));
+        self::assertSame(ChannelMemberRole::None, ChannelMemberRole::highestRoleFromLetters(['x']));
     }
 
     #[Test]
