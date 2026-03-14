@@ -61,4 +61,52 @@ final class MlockStateFromChannelResolverTest extends TestCase
         self::assertSame('+k', $modeString);
         self::assertSame(['k' => 'secret'], $params);
     }
+
+    #[Test]
+    public function resolveSkipsLettersNotInAllowedSupport(): void
+    {
+        $view = new ChannelView('#test', '+nxt', null, 0);
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n', 't']);
+        $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+
+        $resolver = new MlockStateFromChannelResolver();
+        [$modeString, $params] = $resolver->resolve($view, $support);
+
+        self::assertSame('+nt', $modeString);
+        self::assertSame([], $params);
+    }
+
+    #[Test]
+    public function resolveOmitsParamWhenNullOrEmpty(): void
+    {
+        $view = new ChannelView('#test', '+k', null, 0, [], 0, ['k' => '']);
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn([]);
+        $support->method('getChannelSettingModesUnsetWithParam')->willReturn(['k']);
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['k']);
+
+        $resolver = new MlockStateFromChannelResolver();
+        [$modeString, $params] = $resolver->resolve($view, $support);
+
+        self::assertSame('+k', $modeString);
+        self::assertSame([], $params);
+    }
+
+    #[Test]
+    public function resolveDeduplicatesLetters(): void
+    {
+        $view = new ChannelView('#test', '+nnn', null, 0);
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n']);
+        $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+
+        $resolver = new MlockStateFromChannelResolver();
+        [$modeString, $params] = $resolver->resolve($view, $support);
+
+        self::assertSame('+n', $modeString);
+        self::assertSame([], $params);
+    }
 }
