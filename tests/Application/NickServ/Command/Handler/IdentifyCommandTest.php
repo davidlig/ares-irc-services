@@ -48,6 +48,36 @@ final class IdentifyCommandTest extends TestCase
     }
 
     #[Test]
+    public function doesNothingWhenSenderNull(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $identified = new IdentifiedSessionRegistry();
+        $failedAttempt = new IdentifyFailedAttemptRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $vhostResolver = new VhostDisplayResolver('');
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $translator = $this->createStub(TranslatorInterface::class);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $userLookup,
+            $identified,
+            $failedAttempt,
+            $clientKeyResolver,
+            $vhostResolver,
+            $eventDispatcher,
+            5,
+            300,
+            900,
+        );
+        $cmd->execute($this->createContext(null, ['User', 'pass'], $notifier, $translator));
+    }
+
+    #[Test]
     public function replyAlreadyIdentifiedWhenRegistryHasNick(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -82,6 +112,44 @@ final class IdentifyCommandTest extends TestCase
         $cmd->execute($this->createContext(new SenderView('UID1', 'Other', 'i', 'h', 'c', 'ip'), ['User', 'pass'], $notifier, $translator));
 
         self::assertSame(['identify.already_identified'], $messages);
+    }
+
+    #[Test]
+    public function replyAlreadyIdentifiedWhenSenderIsIdentifiedMatchesTarget(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $identified = new IdentifiedSessionRegistry();
+        $failedAttempt = new IdentifyFailedAttemptRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $vhostResolver = new VhostDisplayResolver('');
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $userLookup,
+            $identified,
+            $failedAttempt,
+            $clientKeyResolver,
+            $vhostResolver,
+            $eventDispatcher,
+            5,
+            300,
+            900,
+        );
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true);
+        $cmd->execute($this->createContext($sender, ['User', 'pass'], $notifier, $translator));
+
+        self::assertSame(['identify.already_identified'], $messages);
+        self::assertSame('User', $identified->findNick('UID1'));
     }
 
     #[Test]
@@ -202,6 +270,89 @@ final class IdentifyCommandTest extends TestCase
     }
 
     #[Test]
+    public function replySuspendedWhenAccountSuspended(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(true);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('getReason')->willReturn('Policy violation');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $identified = new IdentifiedSessionRegistry();
+        $failedAttempt = new IdentifyFailedAttemptRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $vhostResolver = new VhostDisplayResolver('');
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $userLookup,
+            $identified,
+            $failedAttempt,
+            $clientKeyResolver,
+            $vhostResolver,
+            $eventDispatcher,
+            5,
+            300,
+            900,
+        );
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['User', 'pass'], $notifier, $translator));
+
+        self::assertSame(['identify.suspended'], $messages);
+    }
+
+    #[Test]
+    public function replyForbiddenWhenAccountForbidden(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(true);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $identified = new IdentifiedSessionRegistry();
+        $failedAttempt = new IdentifyFailedAttemptRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $vhostResolver = new VhostDisplayResolver('');
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $userLookup,
+            $identified,
+            $failedAttempt,
+            $clientKeyResolver,
+            $vhostResolver,
+            $eventDispatcher,
+            5,
+            300,
+            900,
+        );
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['User', 'pass'], $notifier, $translator));
+
+        self::assertSame(['identify.forbidden'], $messages);
+    }
+
+    #[Test]
     public function replyInvalidCredentialsWhenPasswordWrong(): void
     {
         $account = $this->createStub(RegisteredNick::class);
@@ -295,5 +446,207 @@ final class IdentifyCommandTest extends TestCase
 
         self::assertSame(['identify.success'], $messages);
         self::assertSame('User', $identified->findNick('UID1'));
+    }
+
+    #[Test]
+    public function successReleasesGhostAndForcesNick(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('verifyPassword')->willReturn(true);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getId')->willReturn(1);
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getLanguage')->willReturn('en');
+        $account->expects(self::once())->method('markSeen');
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $ghostUser = new SenderView('UID2', 'User', 'i', 'h', 'c', 'ip');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn($ghostUser);
+
+        $identified = new IdentifiedSessionRegistry();
+        $failedAttempt = new IdentifyFailedAttemptRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $vhostResolver = new VhostDisplayResolver('');
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::anything());
+
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('killUser')->with('UID2', self::callback(static fn (string $v): bool => true));
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('setUserAccount')->willReturnCallback(static function (): void {});
+        $notifier->method('setUserVhost')->willReturnCallback(static function (): void {});
+        $notifier->method('forceNick')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $userLookup,
+            $identified,
+            $failedAttempt,
+            $clientKeyResolver,
+            $vhostResolver,
+            $eventDispatcher,
+            5,
+            300,
+            900,
+        );
+        $cmd->execute($this->createContext(new SenderView('UID1', 'Guest', 'i', 'h', 'c', 'ip'), ['User', 'correct'], $notifier, $translator));
+
+        self::assertSame(['identify.ghost_released', 'identify.success'], $messages);
+    }
+
+    #[Test]
+    public function successForcesNickWhenDifferent(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('verifyPassword')->willReturn(true);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getId')->willReturn(1);
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getLanguage')->willReturn('en');
+        $account->expects(self::once())->method('markSeen');
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+
+        $identified = new IdentifiedSessionRegistry();
+        $failedAttempt = new IdentifyFailedAttemptRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $vhostResolver = new VhostDisplayResolver('');
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::anything());
+
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('forceNick')->with('UID1', 'User');
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('setUserAccount')->willReturnCallback(static function (): void {});
+        $notifier->method('setUserVhost')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $userLookup,
+            $identified,
+            $failedAttempt,
+            $clientKeyResolver,
+            $vhostResolver,
+            $eventDispatcher,
+            5,
+            300,
+            900,
+        );
+        $cmd->execute($this->createContext(new SenderView('UID1', 'Guest', 'i', 'h', 'c', 'ip'), ['User', 'correct'], $notifier, $translator));
+
+        self::assertSame(['identify.success'], $messages);
+    }
+
+    #[Test]
+    public function getNameReturnsIdentify(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertSame('IDENTIFY', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsId(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertSame(['ID'], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsNull(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertNull($cmd->getRequiredPermission());
     }
 }

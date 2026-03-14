@@ -16,10 +16,12 @@ use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
+use App\Domain\NickServ\ValueObject\NickStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -127,11 +129,49 @@ final class RegisterCommandTest extends TestCase
     }
 
     #[Test]
+    public function replyEmailAlreadyUsedWhenEmailTaken(): void
+    {
+        $sender = new SenderView('UID1', 'NewUser', 'i', 'h', 'c', 'ip');
+        $existing = $this->createStub(RegisteredNick::class);
+        $throttle = new RegisterThrottleRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn($existing);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $passwordHasher,
+            $throttle,
+            $clientKeyResolver,
+            $messageBus,
+            $translator,
+            $logger,
+            0,
+        );
+
+        $context = $this->createContext($sender, ['password', 'taken@example.com'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertSame(['register.email_already_used'], $messages);
+    }
+
+    #[Test]
     public function replyAlreadyRegisteredWhenNickExists(): void
     {
         $sender = new SenderView('UID1', 'Taken', 'i', 'h', 'c', 'ip');
         $existing = $this->createStub(RegisteredNick::class);
-        $existing->method('getStatus')->willReturn(\App\Domain\NickServ\ValueObject\NickStatus::Registered);
+        $existing->method('getStatus')->willReturn(NickStatus::Registered);
 
         $throttle = new RegisterThrottleRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
@@ -165,6 +205,88 @@ final class RegisterCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertSame(['register.already_registered'], $messages);
+    }
+
+    #[Test]
+    public function replyAlreadyPendingWhenNickPending(): void
+    {
+        $sender = new SenderView('UID1', 'Pending', 'i', 'h', 'c', 'ip');
+        $existing = $this->createStub(RegisteredNick::class);
+        $existing->method('getStatus')->willReturn(NickStatus::Pending);
+
+        $throttle = new RegisterThrottleRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $nickRepo->method('findByNick')->willReturn($existing);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $passwordHasher,
+            $throttle,
+            $clientKeyResolver,
+            $messageBus,
+            $translator,
+            $logger,
+            0,
+        );
+
+        $context = $this->createContext($sender, ['password', 'user@example.com'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertSame(['register.already_pending'], $messages);
+    }
+
+    #[Test]
+    public function replyForbiddenWhenNickForbidden(): void
+    {
+        $sender = new SenderView('UID1', 'Forbidden', 'i', 'h', 'c', 'ip');
+        $existing = $this->createStub(RegisteredNick::class);
+        $existing->method('getStatus')->willReturn(NickStatus::Forbidden);
+
+        $throttle = new RegisterThrottleRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $nickRepo->method('findByNick')->willReturn($existing);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $passwordHasher,
+            $throttle,
+            $clientKeyResolver,
+            $messageBus,
+            $translator,
+            $logger,
+            0,
+        );
+
+        $context = $this->createContext($sender, ['password', 'user@example.com'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertSame(['register.forbidden'], $messages);
     }
 
     #[Test]
@@ -216,5 +338,171 @@ final class RegisterCommandTest extends TestCase
         self::assertSame(['register.pending'], $messages);
         self::assertCount(1, $dispatched);
         self::assertInstanceOf(\App\Application\Mail\Message\SendEmail::class, $dispatched[0]);
+    }
+
+    #[Test]
+    public function replyMailFailedOnException(): void
+    {
+        $sender = new SenderView('UID1', 'NewNick', 'i', 'h', 'c', 'ip');
+        $throttle = new RegisterThrottleRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $nickRepo->method('findByNick')->willReturn(null);
+        $nickRepo->expects(self::once())->method('save');
+
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $passwordHasher->method('hash')->willReturn('hashed');
+
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('Mail failure'));
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $passwordHasher,
+            $throttle,
+            $clientKeyResolver,
+            $messageBus,
+            $translator,
+            $logger,
+            0,
+        );
+
+        $context = $this->createContext($sender, ['secret', 'user@example.com'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertSame(['error.mail_failed'], $messages);
+    }
+
+    #[Test]
+    public function doesNothingWhenSenderNull(): void
+    {
+        $throttle = new RegisterThrottleRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $passwordHasher,
+            $throttle,
+            $clientKeyResolver,
+            $messageBus,
+            $translator,
+            $logger,
+            0,
+        );
+
+        $context = new NickServContext(
+            null,
+            null,
+            'REGISTER',
+            ['pass', 'email'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+        );
+        $cmd->execute($context);
+    }
+
+    #[Test]
+    public function getNameReturnsRegister(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame('REGISTER', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsNull(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertNull($cmd->getRequiredPermission());
     }
 }

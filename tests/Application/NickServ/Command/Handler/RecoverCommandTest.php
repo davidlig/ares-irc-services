@@ -18,6 +18,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -96,6 +98,61 @@ final class RecoverCommandTest extends TestCase
     }
 
     #[Test]
+    public function requestTokenReplySuspendedWhenAccountSuspended(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(true);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('getReason')->willReturn('Violation of rules');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
+
+        self::assertSame(['recover.suspended'], $messages);
+    }
+
+    #[Test]
+    public function requestTokenReplyForbiddenWhenAccountForbidden(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(true);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
+
+        self::assertSame(['recover.forbidden'], $messages);
+    }
+
+    #[Test]
     public function requestTokenReplyNoEmailWhenEmailNull(): void
     {
         $account = $this->createStub(RegisteredNick::class);
@@ -121,6 +178,243 @@ final class RecoverCommandTest extends TestCase
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
 
         self::assertSame(['recover.no_email'], $messages);
+    }
+
+    #[Test]
+    public function requestTokenReplyNoEmailWhenEmailEmptyString(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('getEmail')->willReturn('');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
+
+        self::assertSame(['recover.no_email'], $messages);
+    }
+
+    #[Test]
+    public function requestTokenReplyThrottledWhenRecentlyRequested(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('getEmail')->willReturn('user@example.com');
+        $account->method('getLanguage')->willReturn('en');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+        $recovery = new RecoveryTokenRegistry();
+        $recovery->recordRecover('Nick');
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 300);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, $recovery));
+
+        self::assertSame(['recover.throttled'], $messages);
+    }
+
+    #[Test]
+    public function requestTokenSuccessSendsEmail(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('getEmail')->willReturn('user@example.com');
+        $account->method('getLanguage')->willReturn('en');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+        $recovery = new RecoveryTokenRegistry();
+
+        $dispatched = [];
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
+            $dispatched[] = $m;
+
+            return new Envelope($m);
+        });
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, $recovery));
+
+        self::assertSame(['recover.email_sent'], $messages);
+        self::assertCount(1, $dispatched);
+        self::assertInstanceOf(\App\Application\Mail\Message\SendEmail::class, $dispatched[0]);
+    }
+
+    #[Test]
+    public function requestTokenReplyMailFailedOnException(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('getEmail')->willReturn('user@example.com');
+        $account->method('getLanguage')->willReturn('en');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+        $recovery = new RecoveryTokenRegistry();
+
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('Mail failure'));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, $recovery));
+
+        self::assertSame(['error.mail_failed'], $messages);
+    }
+
+    #[Test]
+    public function consumeTokenReplyNotRegisteredWhenAccountNull(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn(null);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+        $recovery = new RecoveryTokenRegistry();
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'some-token'], $notifier, $translator, $recovery));
+
+        self::assertSame(['recover.not_registered'], $messages);
+    }
+
+    #[Test]
+    public function consumeTokenReplyPendingWhenAccountPending(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+        $recovery = new RecoveryTokenRegistry();
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'token'], $notifier, $translator, $recovery));
+
+        self::assertSame(['recover.pending'], $messages);
+    }
+
+    #[Test]
+    public function consumeTokenReplySuspendedWhenAccountSuspended(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(true);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('getReason')->willReturn('Abuse');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+        $recovery = new RecoveryTokenRegistry();
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'token'], $notifier, $translator, $recovery));
+
+        self::assertSame(['recover.suspended'], $messages);
+    }
+
+    #[Test]
+    public function consumeTokenReplyForbiddenWhenAccountForbidden(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(true);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+        $recovery = new RecoveryTokenRegistry();
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'token'], $notifier, $translator, $recovery));
+
+        self::assertSame(['recover.forbidden'], $messages);
     }
 
     #[Test]
@@ -182,5 +476,97 @@ final class RecoverCommandTest extends TestCase
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['User', 'valid-token'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.success_identify', 'recover.success_then_change'], $messages);
+    }
+
+    #[Test]
+    public function doesNothingWhenSenderNull(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn(null);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd->execute($this->createContext(null, ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
+    }
+
+    #[Test]
+    public function getNameReturnsRecover(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertSame('RECOVER', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsOne(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertSame(1, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsNull(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertNull($cmd->getRequiredPermission());
     }
 }

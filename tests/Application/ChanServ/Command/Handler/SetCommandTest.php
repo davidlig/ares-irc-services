@@ -193,4 +193,137 @@ final class SetCommandTest extends TestCase
 
         self::assertSame(['set.unknown_option'], $messages);
     }
+
+    #[Test]
+    public function getNameReturnsSet(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame('SET', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsSetSyntax(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame('set.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsSetHelp(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame('set.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsFour(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame(4, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsSetShort(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame('set.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsExpectedOptions(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        $help = $cmd->getSubCommandHelp();
+        self::assertCount(9, $help);
+        self::assertSame('FOUNDER', $help[0]['name']);
+        self::assertSame('SUCCESSOR', $help[1]['name']);
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = $this->createSetCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

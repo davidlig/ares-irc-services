@@ -30,11 +30,16 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 1315 tests, 3732 assertions.
+- **Suite:** 1494 tests, 4004 assertions.
 - **Coverage (with PCOV):** Generate with `./vendor/bin/phpunit --coverage-text --coverage-filter=src`. Run with `--display-deprecations --display-phpunit-deprecations` to ensure 0 deprecations/notices.
 - **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
-- Newly covered: NickServContext, NickServ HelpFormatterContextAdapter, NickProtectionService (including onUserQuit, onNickChanged, enforceProtection branches), IdentifiedUserVhostSyncService, PruneMemoryRegistriesTask, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, all six NickServ Maintenance pruners, NetworkEventEnricher (onQuitReceived, onNickChangeReceived, onPartReceived, onKickReceived, onFjoinReceived, onFmodeReceived, onLmodeReceived, onFtopicReceived, onModeReceived, applyOutgoingChannelModes, onUmode2Received, onSethostReceived, nick user-not-found and skip-registry branches), LocalUserModeSync, UnrealIRCdNetworkStateAdapter (UID, NICK, QUIT, SQUIT, SJOIN, PART, KICK, UMODE2, SETHOST, TOPIC, MODE, malformed/empty branches), InspIRCdNetworkStateAdapter (UID, NICK, QUIT, SQUIT, FJOIN, PART, KICK, FMODE, LMODE, FTOPIC, empty branches), ChanServ AccessCommand (LIST/ADD/DEL subcommands, getters, cannot_manage_level, max_entries, update existing), ChanServ AdminCommand (full coverage), ChanServService (catch Throwable), ChannelRegisterThrottleRegistry (getRemainingCooldownSeconds expired, pruneExpiredCooldowns), MemoServService (catch MemoDisabledException, catch Throwable), NickServBot (sendMessage, setUserAccount with module and without).
-- Remaining gaps: see coverage HTML report for per-file details. Many Application command handlers may still have partial coverage.
+- **PHPUnit Notices:** FIXED (2026-03-14). All tests pass with 0 notices, 0 deprecations.
+- **Coverage by Layer (2026-03-14):** Domain 99.4%, Application 80.1% (was 68.4%), Infrastructure 84.5% (was 83.1%), UI 94.9%.
+- Newly covered (2026-03-14): 
+  - **ChanServ:** SetCommand 86% (was 30%), InfoCommand 98% (was 31%), HalfopCommand 100% (was 41%), VoiceCommand 100% (was 42%), OpCommand 100% (was 54%), SetFounderHandler 90% (was 58%).
+  - **NickServ:** HelpCommand 99% (was 17%), RecoverCommand 95% (was 33%), VerifyCommand 100% (was 50%), IdentifyCommand 94% (was 58%), RegisterCommand 93% (was 68%).
+  - **MemoServ:** IgnoreCommand 85% (was 52%), ReadCommand 81% (was 48%), SendCommand 87% (was 63%).
+  - **Infrastructure:** NickServBot 96% (was 46%).
 
 The prioritisation below is based on code structure and which parts already have associated tests.
 
@@ -148,7 +153,11 @@ Each agent must use `--display-deprecations --display-phpunit-deprecations`. For
 
 - **Current coverage (ChanServ suite):** Many classes already at 100% (ChanServAccessHelper, ChannelRegisterThrottleRegistry, SetEmailHandler, SetEntrymsgHandler, SetMlockHandler, SetSecureHandler, SetSuccessorHandler, SetTopiclockHandler, PurgeInactiveChannelsTask, HelpFormatterContextAdapter, ChanServCommandListener, etc.). Gaps: ChanServService 50% methods (1/2), ChanServContext 93% methods (14/15), OP/DEOP/VOICE/etc. commands with ~8–25% methods (subcommands uncovered), SetFounderHandler 20% methods, ChanServBot 33% methods, ChanServChannelRankSubscriber and ChanServMlockEnforceSubscriber with uncovered methods.
 
-- **PHPUnit Notices:** The ChanServ suite (269 tests) reports 17 PHPUnit Notices. Fix per .agents/testing/README.md: add assertions where missing or explicit expectations in mocks; do not use `#[DoesNotPerformAssertions]` or `#[AllowMockObjectsWithoutExpectations]`.
+- **PHPUnit Notices:** RESOLVED. All tests now pass with 0 notices and 0 deprecations. Key fixes applied:
+  - `AccessCommandTest.php`: Changed `createMock` to `createStub` in `createChannelMock()` (17 notices fixed).
+  - `MemoServBotTest.php`: Changed `createMock` to `createStub` for `ConnectionInterface` (2 notices fixed).
+  - `NetworkEventEnricherTest.php`: Changed `createMock` to `createStub` for repository mocks without verification, removed deprecated `expects(self::any())` patterns (5 notices/deprecations fixed).
+  - See `.agents/testing/README.md` for detailed guidance on PHPUnit 13 mock/stub patterns.
 
 ### Agent 2 (NickServ) — Current status
 
@@ -160,9 +169,7 @@ Each agent must use `--display-deprecations --display-phpunit-deprecations`. For
 
 - **Key code:** `src/Application/NickServ/`, `src/Infrastructure/NickServ/`.
 
-- **Current coverage (NickServ suite, 266 tests):** Context, HelpFormatterContextAdapter, pruners, IdentifiedUserVhostSyncService, NickProtectionService, NickServPermission, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, PruneMemoryRegistriesTask, NickServCommandListener, NickProtectionSubscriber and most registries/helpers at 100%. Gaps: HelpCommand ~19% lines, other command handlers with uncovered branches, NickServBot ~46% lines, Argon2PasswordHasher 50% methods (only hash/verify on interface; verify covered). RegisteredNickDoctrineRepository is covered by `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php` (not included in the path above).
-
-- **PHPUnit Notices:** Fixed (0). NickServBotTest used `createMock(SendNoticePort::class)` without expectations in two tests; replaced with `createStub` in setUp and local mocks only where calls are verified.
+- **Current coverage (NickServ suite):** Context, HelpFormatterContextAdapter, pruners, IdentifiedUserVhostSyncService, NickProtectionService, NickServPermission, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, PruneMemoryRegistriesTask, NickServCommandListener, NickProtectionSubscriber and most registries/helpers at 100%. Gaps: HelpCommand ~19% lines, other command handlers with uncovered branches, NickServBot ~46% lines, Argon2PasswordHasher 50% methods (only hash/verify on interface; verify covered). RegisteredNickDoctrineRepository is covered by `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php` (not included in the path above).
 
 ---
 

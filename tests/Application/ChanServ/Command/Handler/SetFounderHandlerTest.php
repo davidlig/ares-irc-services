@@ -24,6 +24,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -452,5 +453,298 @@ final class SetFounderHandlerTest extends TestCase
         self::assertInstanceOf(ChannelFounderChangedEvent::class, $dispatched);
         self::assertSame(['set.founder.updated'], $messages);
         self::assertCount(1, $channelNotices);
+    }
+
+    #[Test]
+    public function requestTokenSendsEmailAndRepliesTokenSent(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($newAccount);
+        $nickRepo->method('findById')->willReturn($currentFounder);
+        $registry = new FounderChangeTokenRegistry();
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $this->createStub(EventDispatcherInterface::class),
+            $messageBus,
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder']),
+            $channel,
+            'NewFounder',
+        );
+
+        self::assertSame(['set.founder.token_sent'], $messages);
+    }
+
+    #[Test]
+    public function requestTokenThrottledWhenMinIntervalNotElapsed(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($newAccount);
+        $nickRepo->method('findById')->willReturn($currentFounder);
+        $registry = new FounderChangeTokenRegistry();
+        $registry->recordRequest(1);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+            3600,
+            600,
+            3,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder']),
+            $channel,
+            'NewFounder',
+        );
+
+        self::assertSame(['set.founder.throttled'], $messages);
+    }
+
+    #[Test]
+    public function consumeTokenCannotBeSameAsSelf(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(10);
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($newAccount);
+        $nickRepo->method('findById')->willReturn($currentFounder);
+        $registry = new FounderChangeTokenRegistry();
+        $registry->store(1, 10, 'my-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'Someone', 'my-token']),
+            $channel,
+            'Someone',
+        );
+
+        self::assertSame(['set.founder.cannot_be_self'], $messages);
+    }
+
+    #[Test]
+    public function consumeTokenCannotBeSuccessor(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(20);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($newAccount);
+        $nickRepo->method('findById')->willReturn($currentFounder);
+        $registry = new FounderChangeTokenRegistry();
+        $registry->store(1, 20, 'my-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'Successor', 'my-token']),
+            $channel,
+            'Successor',
+        );
+
+        self::assertSame(['set.founder.cannot_be_successor'], $messages);
+    }
+
+    #[Test]
+    public function validTokenWithoutExistingAccessDoesNotRemove(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $newAccount->method('getNickname')->willReturn('NewFounder');
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::atLeastOnce())->method('getId')->willReturn(1);
+        $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
+        $channel->expects(self::atLeastOnce())->method('getFounderNickId')->willReturn(10);
+        $channel->expects(self::once())->method('changeFounder')->with(20);
+        $channel->expects(self::atLeastOnce())->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+        $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepo->expects(self::once())->method('findByChannelAndNick')->with(1, 20)->willReturn(null);
+        $accessRepo->expects(self::never())->method('remove');
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
+        $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
+        $registry = new FounderChangeTokenRegistry();
+        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder', 'valid-token']),
+            $channel,
+            'NewFounder',
+        );
+
+        self::assertSame(['set.founder.updated'], $messages);
+    }
+
+    #[Test]
+    public function founderNotFoundErrorFallbackToId(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $newAccount->method('getNickname')->willReturn('NewFounder');
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::atLeastOnce())->method('getId')->willReturn(1);
+        $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
+        $channel->expects(self::atLeastOnce())->method('getFounderNickId')->willReturn(10);
+        $channel->expects(self::once())->method('changeFounder')->with(20);
+        $channel->expects(self::atLeastOnce())->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+        $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepo->expects(self::once())->method('findByChannelAndNick')->with(1, 20)->willReturn(null);
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
+        $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, null]]);
+        $registry = new FounderChangeTokenRegistry();
+        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder', 'valid-token']),
+            $channel,
+            'NewFounder',
+        );
+
+        self::assertSame(['set.founder.updated'], $messages);
     }
 }
