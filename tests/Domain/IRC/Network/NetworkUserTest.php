@@ -131,4 +131,3 @@ final class NetworkUserTest extends TestCase
         self::assertNotEmpty($data['connectedAt']);
     }
 }
-

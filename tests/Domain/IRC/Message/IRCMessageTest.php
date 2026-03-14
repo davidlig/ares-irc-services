@@ -57,4 +57,3 @@ final class IRCMessageTest extends TestCase
         self::assertNull($msg->trailing);
     }
 }
-

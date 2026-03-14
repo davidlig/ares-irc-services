@@ -146,4 +146,3 @@ final class ChannelTest extends TestCase
         self::assertSame([], $channel->getInviteExceptions());
     }
 }
-

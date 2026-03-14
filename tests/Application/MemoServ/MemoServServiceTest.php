@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(MemoServService::class)]
@@ -31,22 +32,67 @@ final class MemoServServiceTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $logger = $this->createStub(LoggerInterface::class);
 
-        $contextHolder = new \stdClass();
+        $contextHolder = new stdClass();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly \stdClass $holder) {}
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
 
-            public function getName(): string { return 'FOO'; }
-            public function getAliases(): array { return []; }
-            public function getMinArgs(): int { return 1; }
-            public function getSyntaxKey(): string { return 'dummy.syntax'; }
-            public function getHelpKey(): string { return 'dummy.help'; }
-            public function getOrder(): int { return 0; }
-            public function getShortDescKey(): string { return 'dummy.short'; }
-            public function getSubCommandHelp(): array { return []; }
-            public function isOperOnly(): bool { return false; }
-            public function getRequiredPermission(): ?string { return null; }
-            public function execute(MemoServContext $context): void { $this->holder->context = $context; }
+            public function getName(): string
+            {
+                return 'FOO';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'dummy.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'dummy.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'dummy.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
         };
 
         $registry = new MemoServCommandRegistry([$handler]);

@@ -6,12 +6,13 @@ namespace App\Tests\Domain\NickServ\Entity;
 
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
-use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+
+use const PASSWORD_DEFAULT;
 
 #[CoversClass(RegisteredNick::class)]
 final class RegisteredNickTest extends TestCase
@@ -264,10 +265,10 @@ final class RegisteredNickTest extends TestCase
             new DateTimeImmutable('+1 hour'),
         );
 
-        $hasher = new class() implements PasswordHasherInterface {
+        $hasher = new class implements PasswordHasherInterface {
             public function hash(string $plainPassword): string
             {
-                return 'hashed-'.$plainPassword;
+                return 'hashed-' . $plainPassword;
             }
 
             public function verify(string $plainPassword, string $hash): bool
@@ -281,4 +282,3 @@ final class RegisteredNickTest extends TestCase
         self::assertSame('hashed-secret', $nick->getPasswordHash());
     }
 }
-

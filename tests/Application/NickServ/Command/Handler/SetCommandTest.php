@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
-use App\Application\NickServ\Command\NickServCommandRegistry;
-use App\Application\NickServ\Command\NickServContext;
-use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Command\Handler\SetCommand;
+use App\Application\NickServ\Command\Handler\SetEmailHandler;
 use App\Application\NickServ\Command\Handler\SetLanguageHandler;
 use App\Application\NickServ\Command\Handler\SetMsgHandler;
 use App\Application\NickServ\Command\Handler\SetPasswordHandler;
 use App\Application\NickServ\Command\Handler\SetPrivateHandler;
-use App\Application\NickServ\Command\Handler\SetEmailHandler;
 use App\Application\NickServ\Command\Handler\SetTimezoneHandler;
 use App\Application\NickServ\Command\Handler\SetVhostHandler;
+use App\Application\NickServ\Command\NickServCommandRegistry;
+use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
@@ -94,7 +94,7 @@ final class SetCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -121,7 +121,7 @@ final class SetCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -151,7 +151,7 @@ final class SetCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);

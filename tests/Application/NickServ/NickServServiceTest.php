@@ -12,13 +12,14 @@ use App\Application\NickServ\NickServService;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\SenderView;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NickServService::class)]
@@ -39,11 +40,11 @@ final class NickServServiceTest extends TestCase
         $logger = $this->createStub(LoggerInterface::class);
         $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
 
-        $contextHolder = new \stdClass();
+        $contextHolder = new stdClass();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements NickServCommandInterface {
             public function __construct(
-                private readonly \stdClass $contextHolder,
+                private readonly stdClass $contextHolder,
             ) {
             }
 
@@ -182,4 +183,3 @@ final class NickServServiceTest extends TestCase
         $service->dispatch('UNKNOWN arg', $sender);
     }
 }
-

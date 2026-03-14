@@ -48,24 +48,66 @@ final class HelpCommandTest extends TestCase
     {
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new class() implements ChanServCommandInterface {
-            public function getName(): string { return 'HELP'; }
-            public function getAliases(): array { return ['?']; }
-            public function getMinArgs(): int { return 0; }
-            public function getSyntaxKey(): string { return 'help.syntax'; }
-            public function getHelpKey(): string { return 'help.help'; }
-            public function getOrder(): int { return 99; }
-            public function getShortDescKey(): string { return 'help.short'; }
-            public function getSubCommandHelp(): array { return []; }
-            public function isOperOnly(): bool { return false; }
-            public function getRequiredPermission(): ?string { return null; }
-            public function execute(\App\Application\ChanServ\Command\ChanServContext $c): void {}
+        $handler = new class implements ChanServCommandInterface {
+            public function getName(): string
+            {
+                return 'HELP';
+            }
+
+            public function getAliases(): array
+            {
+                return ['?'];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'help.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 99;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'help.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(ChanServContext $c): void
+            {
+            }
         };
         $registry = new ChanServCommandRegistry([$handler]);
 
@@ -80,24 +122,66 @@ final class HelpCommandTest extends TestCase
     {
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new class() implements ChanServCommandInterface {
-            public function getName(): string { return 'REGISTER'; }
-            public function getAliases(): array { return []; }
-            public function getMinArgs(): int { return 0; }
-            public function getSyntaxKey(): string { return ''; }
-            public function getHelpKey(): string { return 'register.help'; }
-            public function getOrder(): int { return 0; }
-            public function getShortDescKey(): string { return ''; }
-            public function getSubCommandHelp(): array { return []; }
-            public function isOperOnly(): bool { return false; }
-            public function getRequiredPermission(): ?string { return null; }
-            public function execute(\App\Application\ChanServ\Command\ChanServContext $c): void {}
+        $handler = new class implements ChanServCommandInterface {
+            public function getName(): string
+            {
+                return 'REGISTER';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return '';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'register.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return '';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(ChanServContext $c): void
+            {
+            }
         };
         $registry = new ChanServCommandRegistry([$handler]);
 

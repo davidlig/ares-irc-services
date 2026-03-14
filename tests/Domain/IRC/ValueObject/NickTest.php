@@ -50,4 +50,3 @@ final class NickTest extends TestCase
         self::assertTrue($b->equals($a));
     }
 }
-

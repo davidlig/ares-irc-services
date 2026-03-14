@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\ChanServ;
 
 use App\Application\ChanServ\ChannelRegisterThrottleRegistry;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,7 +27,7 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
         $registry = new ChannelRegisterThrottleRegistry();
         $registry->recordRegistration(10);
 
-        self::assertInstanceOf(\DateTimeImmutable::class, $registry->getLastRegistrationAt(10));
+        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastRegistrationAt(10));
     }
 
     #[Test]
