@@ -13,7 +13,6 @@ use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\ServerDelinkedSubscriber;
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -21,7 +20,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ServerDelinkedSubscriber::class)]
 final class ServerDelinkedSubscriberTest extends TestCase
 {
@@ -48,6 +46,10 @@ final class ServerDelinkedSubscriberTest extends TestCase
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvent(): void
     {
+        $this->userRepository->expects(self::never())->method('all');
+        $this->eventDispatcher->expects(self::never())->method('dispatch');
+        $this->logger->expects(self::never())->method('info');
+
         $events = ServerDelinkedSubscriber::getSubscribedEvents();
 
         self::assertArrayHasKey(ServerDelinkedEvent::class, $events);
@@ -117,6 +119,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
         $this->eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static fn (UserQuitNetworkEvent $quitEvent): bool => '*.net *.split' === $quitEvent->reason));
+        $this->logger->expects(self::once())->method('info');
 
         $this->subscriber->onServerDelinked($event);
     }

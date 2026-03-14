@@ -15,7 +15,6 @@ use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +22,6 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServService::class)]
 final class ChanServServiceTest extends TestCase
 {
@@ -250,7 +248,7 @@ final class ChanServServiceTest extends TestCase
         };
 
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(
+        $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id, array $params = [], string $domain = '', ?string $locale = null): string => 'error.oper_only' === $id ? 'Oper only' : $id
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);
@@ -341,11 +339,11 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
 
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(
+        $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);
@@ -440,7 +438,7 @@ final class ChanServServiceTest extends TestCase
         };
 
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(
+        $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . ($params['syntax'] ?? '') : $id
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);

@@ -14,14 +14,12 @@ use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServTopicApplySubscriber::class)]
 final class ChanServTopicApplySubscriberTest extends TestCase
 {
@@ -53,6 +51,11 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     #[Test]
     public function subscribesToCorrectEvents(): void
     {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
+
         self::assertSame(
             [
                 ChannelSyncedEvent::class => ['onChannelSynced', -20],
@@ -68,7 +71,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $channel = new Channel(new ChannelName('#test'));
         $channel->updateTopic('Current topic from network');
 
-        $registered = $this->createMock(RegisteredChannel::class);
+        $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('getTopic')->willReturn('Stored topic from DB');
 
         $this->channelRepository
@@ -81,6 +84,8 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::once())
             ->method('setChannelTopic')
             ->with('#test', 'Stored topic from DB');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -100,6 +105,8 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -110,7 +117,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     {
         $channel = new Channel(new ChannelName('#test'));
 
-        $registered = $this->createMock(RegisteredChannel::class);
+        $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('getTopic')->willReturn(null);
 
         $this->channelRepository
@@ -122,6 +129,8 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -133,7 +142,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $channel = new Channel(new ChannelName('#test'));
         $channel->updateTopic('Same topic');
 
-        $registered = $this->createMock(RegisteredChannel::class);
+        $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('getTopic')->willReturn('Same topic');
 
         $this->channelRepository
@@ -145,6 +154,8 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -158,6 +169,9 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelRepository
             ->expects(self::never())
             ->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: false);
         $this->subscriber->onChannelSynced($event);
@@ -166,11 +180,11 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     #[Test]
     public function appliesTopicOnSyncCompleteForAllRegisteredChannels(): void
     {
-        $registered1 = $this->createMock(RegisteredChannel::class);
+        $registered1 = $this->createStub(RegisteredChannel::class);
         $registered1->method('getName')->willReturn('#channel1');
         $registered1->method('getTopic')->willReturn('Topic 1');
 
-        $registered2 = $this->createMock(RegisteredChannel::class);
+        $registered2 = $this->createStub(RegisteredChannel::class);
         $registered2->method('getName')->willReturn('#channel2');
         $registered2->method('getTopic')->willReturn('Topic 2');
 
@@ -193,8 +207,9 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::exactly(2))
             ->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
 
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncComplete($event);
     }

@@ -12,13 +12,11 @@ use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServEntryMsgSubscriber::class)]
 final class ChanServEntryMsgSubscriberTest extends TestCase
 {
@@ -44,6 +42,9 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
     #[Test]
     public function subscribesToUserJoinedChannelEvent(): void
     {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->notifier->expects(self::never())->method('sendNotice');
+
         self::assertSame(
             [UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0]],
             ChanServEntryMsgSubscriber::getSubscribedEvents(),
@@ -59,7 +60,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
             role: ChannelMemberRole::None,
         );
 
-        $channel = $this->createMock(RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getEntrymsg')->willReturn('Welcome to #test!');
 
         $this->channelRepository
@@ -107,7 +108,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
             role: ChannelMemberRole::None,
         );
 
-        $channel = $this->createMock(RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getEntrymsg')->willReturn('');
 
         $this->channelRepository
@@ -152,7 +153,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
             role: ChannelMemberRole::None,
         );
 
-        $channel = $this->createMock(RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getEntrymsg')->willReturn('Welcome!');
 
         $this->channelRepository

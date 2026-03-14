@@ -9,7 +9,6 @@ use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +16,6 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(PurgeInactiveChannelsTask::class)]
 final class PurgeInactiveChannelsTaskTest extends TestCase
 {
@@ -85,7 +83,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     #[Test]
     public function runDispatchesChannelDropEventAndDeletesAndLogsForEachInactiveChannel(): void
     {
-        $channel = $this->createMock(RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(1);
         $channel->method('getName')->willReturn('#test');
         $channel->method('getNameLower')->willReturn('#test');

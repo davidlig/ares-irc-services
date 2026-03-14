@@ -10,14 +10,12 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServNickIdentifiedNoticeSubscriber::class)]
 final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
 {
@@ -50,6 +48,10 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
     #[Test]
     public function subscribesToNickIdentifiedEvent(): void
     {
+        $this->memoRepository->expects(self::never())->method('countUnreadByTargetNick');
+        $this->nickRepository->expects(self::never())->method('findById');
+        $this->translator->expects(self::never())->method('trans');
+        $this->notifier->expects(self::never())->method('sendNotice');
         self::assertSame(
             [NickIdentifiedEvent::class => ['onNickIdentified', 0]],
             MemoServNickIdentifiedNoticeSubscriber::getSubscribedEvents(),
@@ -71,7 +73,7 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
             ->with(12345)
             ->willReturn(3);
 
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('es');
 
         $this->nickRepository
@@ -116,6 +118,7 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
         $this->notifier
             ->expects(self::never())
             ->method('sendNotice');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->subscriber->onNickIdentified($event);
     }
@@ -170,7 +173,7 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
             ->with(12345)
             ->willReturn(5);
 
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('fr');
 
         $this->nickRepository
@@ -182,7 +185,13 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('notify.nick_pending', ['%count%' => 5], 'memoserv', 'fr');
+            ->with('notify.nick_pending', ['%count%' => 5], 'memoserv', 'fr')
+            ->willReturn('You have 5 new memos.');
+
+        $this->notifier
+            ->expects(self::once())
+            ->method('sendNotice')
+            ->with('001ABCD', 'You have 5 new memos.');
 
         $this->subscriber->onNickIdentified($event);
     }

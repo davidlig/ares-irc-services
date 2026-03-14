@@ -19,7 +19,6 @@ use App\Infrastructure\ChanServ\Bot\ChanServBot;
 use App\Infrastructure\ChanServ\Subscriber\ChanServCommandListener;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -28,7 +27,6 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServCommandListener::class)]
 final class ChanServCommandListenerTest extends TestCase
 {
@@ -113,12 +111,26 @@ final class ChanServCommandListenerTest extends TestCase
     #[Test]
     public function getServiceNameReturnsChanServBotNick(): void
     {
+        $this->chanServService->expects(self::never())->method('dispatch');
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('warning');
+
         self::assertSame(self::CHANSERV_NICK, $this->listener->getServiceName());
     }
 
     #[Test]
     public function getServiceUidReturnsChanServBotUid(): void
     {
+        $this->chanServService->expects(self::never())->method('dispatch');
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('warning');
+
         self::assertSame(self::CHANSERV_UID, $this->listener->getServiceUid());
     }
 
@@ -127,6 +139,10 @@ final class ChanServCommandListenerTest extends TestCase
     {
         $this->userLookup->expects(self::never())->method('findByUid');
         $this->chanServService->expects(self::never())->method('dispatch');
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->listener->onCommand('001ABC', '');
     }
@@ -146,6 +162,9 @@ final class ChanServCommandListenerTest extends TestCase
             ->with('ChanServ: could not resolve sender UID: 999XXX');
 
         $this->chanServService->expects(self::never())->method('dispatch');
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->listener->onCommand('999XXX', 'INFO');
     }
@@ -164,6 +183,10 @@ final class ChanServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('dispatch')
             ->with('INFO', $sender);
+        $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->listener->onCommand('001ABC', 'INFO');
     }
@@ -186,6 +209,8 @@ final class ChanServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with('001ABC', 'Channel "#test" is already registered.', 'NOTICE');
+        $this->translator->expects(self::never())->method('trans');
+        $this->logger->expects(self::never())->method('error');
 
         $this->listener->onCommand('001ABC', 'REGISTER #test');
     }
@@ -204,12 +229,13 @@ final class ChanServCommandListenerTest extends TestCase
             ->willReturn('Channel #mychan is not registered.');
 
         $exception = ChannelNotRegisteredException::forChannel('#mychan');
-        $this->chanServService->method('dispatch')->willThrowException($exception);
+        $this->chanServService->expects(self::atLeastOnce())->method('dispatch')->willThrowException($exception);
 
         $this->chanServNotifier
             ->expects(self::once())
             ->method('sendMessage')
             ->with('001ABC', 'Channel #mychan is not registered.', 'NOTICE');
+        $this->logger->expects(self::never())->method('error');
 
         $this->listener->onCommand('001ABC', 'ACCESS #mychan LIST');
     }
@@ -232,12 +258,13 @@ final class ChanServCommandListenerTest extends TestCase
             ->willReturn('El canal #mychan no está registrado.');
 
         $exception = ChannelNotRegisteredException::forChannel('#mychan');
-        $this->chanServService->method('dispatch')->willThrowException($exception);
+        $this->chanServService->expects(self::atLeastOnce())->method('dispatch')->willThrowException($exception);
 
         $this->chanServNotifier
             ->expects(self::once())
             ->method('sendMessage')
             ->with('001ABC', 'El canal #mychan no está registrado.', 'NOTICE');
+        $this->logger->expects(self::never())->method('error');
 
         $this->listener->onCommand('001ABC', 'ACCESS #mychan LIST');
     }
@@ -261,12 +288,13 @@ final class ChanServCommandListenerTest extends TestCase
             ->willReturn('Insufficient access to OP on channel "#mychan".');
 
         $exception = InsufficientAccessException::forOperation('#mychan', 'OP');
-        $this->chanServService->method('dispatch')->willThrowException($exception);
+        $this->chanServService->expects(self::atLeastOnce())->method('dispatch')->willThrowException($exception);
 
         $this->chanServNotifier
             ->expects(self::once())
             ->method('sendMessage')
             ->with('001ABC', 'Insufficient access to OP on channel "#mychan".', 'NOTICE');
+        $this->logger->expects(self::never())->method('error');
 
         $this->listener->onCommand('001ABC', 'OP #mychan user');
     }
@@ -290,6 +318,8 @@ final class ChanServCommandListenerTest extends TestCase
             );
 
         $this->chanServNotifier->expects(self::never())->method('sendMessage');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->listener->onCommand('001ABC', 'SOME CMD');
     }

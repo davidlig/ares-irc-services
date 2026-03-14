@@ -19,7 +19,6 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\MemoServ\Bot\MemoServBot;
 use App\Infrastructure\MemoServ\Subscriber\MemoServCommandListener;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -30,7 +29,6 @@ use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServCommandListener::class)]
 final class MemoServCommandListenerTest extends TestCase
 {
@@ -110,12 +108,24 @@ final class MemoServCommandListenerTest extends TestCase
     #[Test]
     public function getServiceNameReturnsMemoServBotNick(): void
     {
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->memoServNotifier->expects(self::never())->method('sendMessage');
+        $this->translator->expects(self::never())->method('trans');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->nickRepository->expects(self::never())->method('findById');
+        $this->logger->expects(self::never())->method('warning');
         self::assertSame('MemoServ', $this->listener->getServiceName());
     }
 
     #[Test]
     public function getServiceUidReturnsMemoServBotUid(): void
     {
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->memoServNotifier->expects(self::never())->method('sendMessage');
+        $this->translator->expects(self::never())->method('trans');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->nickRepository->expects(self::never())->method('findById');
+        $this->logger->expects(self::never())->method('warning');
         self::assertSame(self::MEMOSERV_UID, $this->listener->getServiceUid());
     }
 
@@ -123,6 +133,10 @@ final class MemoServCommandListenerTest extends TestCase
     public function onCommandWithEmptyTextDoesNotDispatch(): void
     {
         $this->userLookup->expects(self::never())->method('findByUid');
+        $this->memoServNotifier->expects(self::never())->method('sendMessage');
+        $this->translator->expects(self::never())->method('trans');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->listener->onCommand(self::SENDER_UID, '');
     }
@@ -130,6 +144,9 @@ final class MemoServCommandListenerTest extends TestCase
     #[Test]
     public function onCommandWhenSenderNotFoundLogsWarningAndDoesNotDispatch(): void
     {
+        $this->memoServNotifier->expects(self::never())->method('sendMessage');
+        $this->translator->expects(self::never())->method('trans');
+        $this->nickRepository->expects(self::never())->method('findByNick');
         $this->userLookup
             ->expects(self::once())
             ->method('findByUid')
@@ -179,6 +196,10 @@ final class MemoServCommandListenerTest extends TestCase
             ->method('findByUid')
             ->with(self::SENDER_UID)
             ->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->translator->expects(self::never())->method('trans');
+        $this->memoServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $this->listener->onCommand(self::SENDER_UID, 'SEND someone hello');
 
@@ -194,7 +215,7 @@ final class MemoServCommandListenerTest extends TestCase
         $sender = self::senderView();
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('es');
         $account->method('getMessageType')->willReturn('NOTICE');
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
@@ -209,6 +230,7 @@ final class MemoServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with(self::SENDER_UID, 'El canal #test no está registrado.', 'NOTICE');
+        $this->logger->expects(self::never())->method('warning');
 
         $throwHandler = $this->createThrowHandlerForCommand('SEND', ChannelNotRegisteredException::forChannel('#test'));
         $this->memoServService = new MemoServService(
@@ -253,6 +275,7 @@ final class MemoServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with(self::SENDER_UID, 'Channel #other is not registered.', 'NOTICE');
+        $this->logger->expects(self::never())->method('warning');
 
         $throwHandler = $this->createThrowHandlerForCommand('SEND', ChannelNotRegisteredException::forChannel('#other'));
         $this->memoServService = new MemoServService(
@@ -286,7 +309,7 @@ final class MemoServCommandListenerTest extends TestCase
         $sender = self::senderView();
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('fr');
         $account->method('getMessageType')->willReturn('PRIVMSG');
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
@@ -306,6 +329,7 @@ final class MemoServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with(self::SENDER_UID, 'Accès insuffisant pour #chan.', 'PRIVMSG');
+        $this->logger->expects(self::never())->method('warning');
 
         $throwHandler = $this->createThrowHandlerForCommand('SEND', InsufficientAccessException::forOperation('#chan', 'SEND'));
         $this->memoServService = new MemoServService(
@@ -373,6 +397,8 @@ final class MemoServCommandListenerTest extends TestCase
             );
 
         $this->memoServNotifier->expects(self::never())->method('sendMessage');
+        $this->translator->expects(self::never())->method('trans');
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn(null);
 
         $this->listener->onCommand(self::SENDER_UID, 'LIST');
     }

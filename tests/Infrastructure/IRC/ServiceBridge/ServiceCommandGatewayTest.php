@@ -8,7 +8,6 @@ use App\Application\Port\ServiceCommandListenerInterface;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Infrastructure\IRC\ServiceBridge\ServiceCommandGateway;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -16,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use stdClass;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ServiceCommandGateway::class)]
 final class ServiceCommandGatewayTest extends TestCase
 {
@@ -49,6 +47,13 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function subscribesToMessageReceivedEvent(): void
     {
+        $this->nickservListener->expects(self::never())->method('onCommand');
+        $this->nickservListener->expects(self::never())->method('getServiceName');
+        $this->nickservListener->expects(self::never())->method('getServiceUid');
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->chanservListener->expects(self::never())->method('getServiceName');
+        $this->chanservListener->expects(self::never())->method('getServiceUid');
+        $this->logger->expects(self::never())->method('debug');
         self::assertSame(
             [MessageReceivedEvent::class => ['onMessage', 0]],
             ServiceCommandGateway::getSubscribedEvents(),
@@ -58,6 +63,7 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function dispatchesCommandToCorrectListenerByNick(): void
     {
+        $this->logger->expects(self::atLeastOnce())->method('debug');
         $message = new IRCMessage(
             command: 'PRIVMSG',
             prefix: '001ABCD',
@@ -81,6 +87,7 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function dispatchesCommandToCorrectListenerByUid(): void
     {
+        $this->logger->expects(self::atLeastOnce())->method('debug');
         $message = new IRCMessage(
             command: 'PRIVMSG',
             prefix: '001ABCD',
@@ -104,6 +111,8 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function ignoresNonPrivmsgCommands(): void
     {
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::never())->method('debug');
         $message = new IRCMessage(
             command: 'NOTICE',
             prefix: '001ABCD',
@@ -122,6 +131,7 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function ignoresUnknownTarget(): void
     {
+        $this->logger->expects(self::never())->method('debug');
         $message = new IRCMessage(
             command: 'PRIVMSG',
             prefix: '001ABCD',
@@ -144,6 +154,8 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function handlesCaseInsensitiveTarget(): void
     {
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
         $message = new IRCMessage(
             command: 'PRIVMSG',
             prefix: '001ABCD',
@@ -163,6 +175,8 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function ignoresMessageWithoutTarget(): void
     {
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::never())->method('debug');
         $message = new IRCMessage(
             command: 'PRIVMSG',
             prefix: '001ABCD',
@@ -181,6 +195,8 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function ignoresMessageWithoutPrefix(): void
     {
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::never())->method('debug');
         $message = new IRCMessage(
             command: 'PRIVMSG',
             prefix: null,
@@ -199,6 +215,8 @@ final class ServiceCommandGatewayTest extends TestCase
     #[Test]
     public function handlesEmptyTrailing(): void
     {
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
         $message = new IRCMessage(
             command: 'PRIVMSG',
             prefix: '001ABCD',
@@ -229,6 +247,8 @@ final class ServiceCommandGatewayTest extends TestCase
             trailing: 'HELP',
         );
         $this->nickservListener->expects(self::once())->method('onCommand')->with('001ABCD', 'HELP');
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
         $gateway->onMessage(new MessageReceivedEvent($message));
     }
 }

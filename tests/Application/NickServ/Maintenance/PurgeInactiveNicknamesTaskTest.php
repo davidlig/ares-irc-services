@@ -9,7 +9,6 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +16,6 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(PurgeInactiveNicknamesTask::class)]
 final class PurgeInactiveNicknamesTaskTest extends TestCase
 {
@@ -73,7 +71,7 @@ final class PurgeInactiveNicknamesTaskTest extends TestCase
     public function runDispatchesNickDropEventAndDeletesAndLogsForEachInactiveNick(): void
     {
         $lastSeen = new DateTimeImmutable('2024-01-01 12:00:00');
-        $nick = $this->createMock(RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(42);
         $nick->method('getNickname')->willReturn('OldNick');
         $nick->method('getNicknameLower')->willReturn('oldnick');

@@ -20,14 +20,12 @@ use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServPendingChannelNoticeSubscriber::class)]
 final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 {
@@ -89,6 +87,15 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
     #[Test]
     public function getSubscribedEventsReturnsUserJoinedChannelWithPriority(): void
     {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->memoRepository->expects(self::never())->method('countUnreadByTargetChannel');
+        $this->memoSettingsRepository->expects(self::never())->method('isEnabledForChannel');
+        $this->accessRepository->expects(self::never())->method('findByChannelAndNick');
+        $this->levelRepository->expects(self::never())->method('findByChannelAndKey');
+        $this->notifier->expects(self::never())->method('sendNotice');
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->translator->expects(self::never())->method('trans');
         self::assertSame(
             [UserJoinedChannelEvent::class => ['onUserJoinedChannel', -10]],
             MemoServPendingChannelNoticeSubscriber::getSubscribedEvents(),
@@ -105,7 +112,14 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         );
 
         $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->memoRepository->expects(self::never())->method('countUnreadByTargetChannel');
+        $this->memoSettingsRepository->expects(self::never())->method('isEnabledForChannel');
+        $this->accessRepository->expects(self::never())->method('findByChannelAndNick');
+        $this->levelRepository->expects(self::never())->method('findByChannelAndKey');
         $this->notifier->expects(self::never())->method('sendNotice');
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -120,7 +134,14 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         );
 
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->memoRepository->expects(self::never())->method('countUnreadByTargetChannel');
+        $this->memoSettingsRepository->expects(self::never())->method('isEnabledForChannel');
+        $this->accessRepository->expects(self::never())->method('findByChannelAndNick');
+        $this->levelRepository->expects(self::never())->method('findByChannelAndKey');
         $this->notifier->expects(self::never())->method('sendNotice');
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -138,7 +159,13 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
         $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(false);
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->memoRepository->expects(self::never())->method('countUnreadByTargetChannel');
+        $this->accessRepository->expects(self::never())->method('findByChannelAndNick');
+        $this->levelRepository->expects(self::never())->method('findByChannelAndKey');
         $this->notifier->expects(self::never())->method('sendNotice');
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -157,7 +184,12 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
         $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
         $this->memoRepository->expects(self::atLeastOnce())->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(0);
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->accessRepository->expects(self::never())->method('findByChannelAndNick');
+        $this->levelRepository->expects(self::never())->method('findByChannelAndKey');
         $this->notifier->expects(self::never())->method('sendNotice');
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -177,7 +209,11 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
         $this->memoRepository->expects(self::atLeastOnce())->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn(null);
+        $this->nickRepository->expects(self::never())->method('findByNick');
+        $this->accessRepository->expects(self::never())->method('findByChannelAndNick');
+        $this->levelRepository->expects(self::never())->method('findByChannelAndKey');
         $this->notifier->expects(self::never())->method('sendNotice');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -206,7 +242,10 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $this->memoRepository->expects(self::atLeastOnce())->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn($sender);
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->accessRepository->expects(self::never())->method('findByChannelAndNick');
+        $this->levelRepository->expects(self::never())->method('findByChannelAndKey');
         $this->notifier->expects(self::never())->method('sendNotice');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -241,6 +280,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $this->accessRepository->expects(self::atLeastOnce())->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn(null);
         $this->levelRepository->expects(self::atLeastOnce())->method('findByChannelAndKey')->with(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD)->willReturn(new ChannelLevel(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD, 200));
         $this->notifier->expects(self::never())->method('sendNotice');
+        $this->translator->expects(self::never())->method('trans');
 
         $this->subscriber->onUserJoinedChannel($event);
     }

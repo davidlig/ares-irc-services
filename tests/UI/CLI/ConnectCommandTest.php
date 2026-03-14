@@ -12,7 +12,6 @@ use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\Messenger\ConsumerProcessManagerInterface;
 use App\UI\CLI\ConnectCommand;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +22,6 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ConnectCommand::class)]
 final class ConnectCommandTest extends TestCase
 {
@@ -47,7 +45,7 @@ final class ConnectCommandTest extends TestCase
 
         return new ConnectCommand(
             handler: $handler ?? $defaultHandler,
-            consumerManager: $consumerManager ?? $this->createMock(ConsumerProcessManagerInterface::class),
+            consumerManager: $consumerManager ?? $this->createStub(ConsumerProcessManagerInterface::class),
             defaultServerName: $defaults['serverName'],
             defaultHost: $defaults['host'],
             defaultPort: $defaults['port'],
@@ -60,7 +58,7 @@ final class ConnectCommandTest extends TestCase
 
     private function createClientThatReturnsFromRun(): IRCClient
     {
-        return new class($this->createMock(ConnectionInterface::class), $this->createMock(ProtocolHandlerInterface::class), $this->createMock(EventDispatcherInterface::class), $this->createMock(MessageBusInterface::class), new BurstCompleteRegistry(), 1) extends IRCClient {
+        return new class($this->createStub(ConnectionInterface::class), $this->createStub(ProtocolHandlerInterface::class), $this->createStub(EventDispatcherInterface::class), $this->createStub(MessageBusInterface::class), new BurstCompleteRegistry(), 1) extends IRCClient {
             public function run(): void
             {
                 // no-op so the command exits the loop and reaches finally

@@ -9,7 +9,6 @@ use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Infrastructure\NickServ\Security\Voter\NickServIdentifiedOwnerVoter;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,7 +16,6 @@ use ReflectionClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NickServIdentifiedOwnerVoter::class)]
 final class NickServIdentifiedOwnerVoterTest extends TestCase
 {
@@ -41,11 +39,11 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
             isIdentified: true,
         );
 
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getNickname')->willReturn('TestUser');
 
         $context = $this->createNickServContext($sender, $account);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, $context, [NickServPermission::IDENTIFIED_OWNER]);
 
@@ -65,11 +63,11 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
             isIdentified: false,
         );
 
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getNickname')->willReturn('TestUser');
 
         $context = $this->createNickServContext($sender, $account);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, $context, [NickServPermission::IDENTIFIED_OWNER]);
 
@@ -90,7 +88,7 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
         );
 
         $context = $this->createNickServContext($sender, null);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, $context, [NickServPermission::IDENTIFIED_OWNER]);
 
@@ -101,7 +99,7 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
     public function voteDeniesAccessWhenSenderIsNull(): void
     {
         $context = $this->createNickServContext(null, null);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, $context, [NickServPermission::IDENTIFIED_OWNER]);
 
@@ -121,11 +119,11 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
             isIdentified: true,
         );
 
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getNickname')->willReturn('OtherUser');
 
         $context = $this->createNickServContext($sender, $account);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, $context, [NickServPermission::IDENTIFIED_OWNER]);
 
@@ -145,11 +143,11 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
             isIdentified: true,
         );
 
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getNickname')->willReturn('TESTUSER');
 
         $context = $this->createNickServContext($sender, $account);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, $context, [NickServPermission::IDENTIFIED_OWNER]);
 
@@ -160,7 +158,7 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
     public function voteAbstainsForUnsupportedAttribute(): void
     {
         $context = $this->createNickServContext(null, null);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, $context, ['OTHER_ATTRIBUTE']);
 

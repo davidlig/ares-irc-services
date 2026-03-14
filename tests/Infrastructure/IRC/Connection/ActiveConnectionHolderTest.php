@@ -9,12 +9,10 @@ use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ActiveConnectionHolder::class)]
 final class ActiveConnectionHolderTest extends TestCase
 {
@@ -45,7 +43,7 @@ final class ActiveConnectionHolderTest extends TestCase
     #[Test]
     public function onBurstCompleteSetsConnectionAndServerSid(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
         $this->holder->onBurstComplete($event);
@@ -64,7 +62,7 @@ final class ActiveConnectionHolderTest extends TestCase
     #[Test]
     public function setProtocolModuleAndGetProtocolModule(): void
     {
-        $module = $this->createMock(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolModuleInterface::class);
         $this->holder->setProtocolModule($module);
         self::assertSame($module, $this->holder->getProtocolModule());
     }
@@ -78,8 +76,8 @@ final class ActiveConnectionHolderTest extends TestCase
     #[Test]
     public function getProtocolHandlerDelegatesToModuleWhenSet(): void
     {
-        $handler = $this->createMock(ProtocolHandlerInterface::class);
-        $module = $this->createMock(ProtocolModuleInterface::class);
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
+        $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->holder->setProtocolModule($module);
         self::assertSame($handler, $this->holder->getProtocolHandler());

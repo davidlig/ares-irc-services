@@ -6,13 +6,11 @@ namespace App\Tests\Application\NickServ\Maintenance;
 
 use App\Application\NickServ\Maintenance\PurgeExpiredPendingTask;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(PurgeExpiredPendingTask::class)]
 final class PurgeExpiredPendingTaskTest extends TestCase
 {
@@ -64,7 +62,7 @@ final class PurgeExpiredPendingTaskTest extends TestCase
     public function runDoesNotLogWhenDeletedIsZero(): void
     {
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('deleteExpiredPending')->willReturn(0);
+        $repo->expects(self::atLeastOnce())->method('deleteExpiredPending')->willReturn(0);
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('info');

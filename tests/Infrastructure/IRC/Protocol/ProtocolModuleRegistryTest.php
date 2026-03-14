@@ -12,18 +12,16 @@ use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry;
 use InvalidArgumentException;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ProtocolModuleRegistry::class)]
 final class ProtocolModuleRegistryTest extends TestCase
 {
     private function createModule(string $name): ProtocolModuleInterface
     {
-        $m = $this->createMock(ProtocolModuleInterface::class);
+        $m = $this->createStub(ProtocolModuleInterface::class);
         $m->method('getProtocolName')->willReturn($name);
         $m->method('getHandler')->willReturn($this->createStub(ProtocolHandlerInterface::class));
         $m->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));

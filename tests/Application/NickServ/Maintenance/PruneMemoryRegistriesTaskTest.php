@@ -6,13 +6,11 @@ namespace App\Tests\Application\NickServ\Maintenance;
 
 use App\Application\Maintenance\InMemoryPrunableInterface;
 use App\Application\NickServ\Maintenance\PruneMemoryRegistriesTask;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(PruneMemoryRegistriesTask::class)]
 final class PruneMemoryRegistriesTaskTest extends TestCase
 {
@@ -69,7 +67,7 @@ final class PruneMemoryRegistriesTaskTest extends TestCase
     #[Test]
     public function runDoesNotLogWhenTotalIsZero(): void
     {
-        $prunable = $this->createMock(InMemoryPrunableInterface::class);
+        $prunable = $this->createStub(InMemoryPrunableInterface::class);
         $prunable->method('prune')->willReturn(0);
 
         $logger = $this->createMock(LoggerInterface::class);

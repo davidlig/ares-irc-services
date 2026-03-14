@@ -14,13 +14,11 @@ use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\Bot\NickServBot;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NickServBot::class)]
 final class NickServBotTest extends TestCase
 {
@@ -56,6 +54,7 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function getSubscribedEventsReturnsBurstCompleteWithPriority(): void
     {
+        $this->sendNoticePort->expects(self::never())->method('sendNotice');
         self::assertSame(
             [NetworkBurstCompleteEvent::class => ['onBurstComplete', 100]],
             NickServBot::getSubscribedEvents(),
@@ -65,6 +64,7 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function onBurstCompleteWritesIntroductionLineWhenModulePresent(): void
     {
+        $this->sendNoticePort->expects(self::never())->method('sendNotice');
         $introLine = ':001 UID NickServ NickServ 0 0 services.example.com 001NS 0 * Nickname Registration Services';
         $connection = $this->createMock(ConnectionInterface::class);
         $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
@@ -76,7 +76,7 @@ final class NickServBotTest extends TestCase
             self::NICKSERV_UID,
             'Nickname Registration Services',
         )->willReturn($introLine);
-        $module = $this->createMock(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getIntroductionFormatter')->willReturn($formatter);
 
         $this->connectionHolder->setProtocolModule($module);
@@ -89,6 +89,7 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function onBurstCompleteDoesNotWriteWhenModuleNull(): void
     {
+        $this->sendNoticePort->expects(self::never())->method('sendNotice');
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
 

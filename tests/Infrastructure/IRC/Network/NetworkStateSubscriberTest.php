@@ -25,14 +25,12 @@ use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\NetworkStateSubscriber;
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NetworkStateSubscriber::class)]
 final class NetworkStateSubscriberTest extends TestCase
 {
@@ -59,6 +57,10 @@ final class NetworkStateSubscriberTest extends TestCase
     #[Test]
     public function getSubscribedEventsReturnsAllEvents(): void
     {
+        $this->userRepository->expects(self::never())->method('add');
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('warning');
+
         $events = NetworkStateSubscriber::getSubscribedEvents();
 
         self::assertArrayHasKey(UserJoinedNetworkEvent::class, $events);
@@ -82,6 +84,8 @@ final class NetworkStateSubscriberTest extends TestCase
         $this->userRepository->expects(self::once())
             ->method('add')
             ->with($user);
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('info');
 
         $this->subscriber->onUserJoinedNetwork($event);
     }
@@ -92,7 +96,7 @@ final class NetworkStateSubscriberTest extends TestCase
         $uid = new Uid('001ABC123');
         $nick = new Nick('TestUser');
         $user = $this->createMock(NetworkUser::class);
-        $user->method('getChannelNames')->willReturn(['#test', '#other']);
+        $user->expects(self::atLeastOnce())->method('getChannelNames')->willReturn(['#test', '#other']);
         $channel = new Channel(new ChannelName('#test'));
 
         $this->userRepository->expects(self::once())
@@ -138,6 +142,8 @@ final class NetworkStateSubscriberTest extends TestCase
 
         $this->userRepository->expects(self::never())
             ->method('removeByUid');
+        $this->channelRepository->expects(self::never())->method('findByName');
+        $this->logger->expects(self::never())->method('info');
 
         $event = new UserQuitNetworkEvent($uid, $nick, 'Quit message');
         $this->subscriber->onUserQuitNetwork($event);
@@ -154,6 +160,8 @@ final class NetworkStateSubscriberTest extends TestCase
         $this->userRepository->expects(self::once())
             ->method('updateNick')
             ->with($uid, $oldNick, $newNick);
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->subscriber->onUserNickChanged($event);
     }
@@ -173,6 +181,8 @@ final class NetworkStateSubscriberTest extends TestCase
         $user->expects(self::once())
             ->method('applyModeChange')
             ->with('+r');
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->subscriber->onUserModeChanged($event);
     }
@@ -187,6 +197,8 @@ final class NetworkStateSubscriberTest extends TestCase
             ->method('findByUid')
             ->with($uid)
             ->willReturn(null);
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->subscriber->onUserModeChanged($event);
     }
@@ -206,6 +218,8 @@ final class NetworkStateSubscriberTest extends TestCase
         $user->expects(self::once())
             ->method('updateVirtualHost')
             ->with('new.host.example.com');
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->subscriber->onUserHostChanged($event);
     }
@@ -220,6 +234,8 @@ final class NetworkStateSubscriberTest extends TestCase
             ->method('findByUid')
             ->with($uid)
             ->willReturn(null);
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->subscriber->onUserHostChanged($event);
     }
@@ -247,6 +263,7 @@ final class NetworkStateSubscriberTest extends TestCase
         $user->expects(self::once())
             ->method('addChannel')
             ->with($channelName);
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSyncedEvent($channel, true);
         $this->subscriber->onChannelSynced($event);
@@ -268,6 +285,8 @@ final class NetworkStateSubscriberTest extends TestCase
         $user->expects(self::once())
             ->method('addChannel')
             ->with($channelName);
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -283,6 +302,8 @@ final class NetworkStateSubscriberTest extends TestCase
             ->method('findByUid')
             ->with($uid)
             ->willReturn(null);
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->logger->expects(self::never())->method('warning');
 
         $this->subscriber->onUserJoinedChannel($event);
     }
@@ -318,6 +339,7 @@ final class NetworkStateSubscriberTest extends TestCase
         $this->channelRepository->expects(self::once())
             ->method('save')
             ->with($channel);
+        $this->logger->expects(self::never())->method('warning');
 
         $this->subscriber->onUserLeftChannel($event);
     }
@@ -325,12 +347,14 @@ final class NetworkStateSubscriberTest extends TestCase
     #[Test]
     public function onChannelModesChangedSavesChannel(): void
     {
-        $channel = $this->createMock(Channel::class);
+        $channel = $this->createStub(Channel::class);
         $event = new ChannelModesChangedEvent($channel);
 
         $this->channelRepository->expects(self::once())
             ->method('save')
             ->with($channel);
+        $this->userRepository->expects(self::never())->method('findByUid');
+        $this->logger->expects(self::never())->method('info');
 
         $this->subscriber->onChannelModesChanged($event);
     }
@@ -338,12 +362,14 @@ final class NetworkStateSubscriberTest extends TestCase
     #[Test]
     public function onChannelTopicChangedSavesChannel(): void
     {
-        $channel = $this->createMock(Channel::class);
+        $channel = $this->createStub(Channel::class);
         $event = new ChannelTopicChangedEvent($channel);
 
         $this->channelRepository->expects(self::once())
             ->method('save')
             ->with($channel);
+        $this->userRepository->expects(self::never())->method('findByUid');
+        $this->logger->expects(self::never())->method('info');
 
         $this->subscriber->onChannelTopicChanged($event);
     }

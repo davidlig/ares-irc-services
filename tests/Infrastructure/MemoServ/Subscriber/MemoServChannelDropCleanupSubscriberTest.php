@@ -9,13 +9,11 @@ use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Infrastructure\MemoServ\Subscriber\MemoServChannelDropCleanupSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServChannelDropCleanupSubscriber::class)]
 final class MemoServChannelDropCleanupSubscriberTest extends TestCase
 {
@@ -43,6 +41,9 @@ final class MemoServChannelDropCleanupSubscriberTest extends TestCase
     #[Test]
     public function subscribesToChannelDropEvent(): void
     {
+        $this->memoRepository->expects(self::never())->method('deleteAllForChannel');
+        $this->memoIgnoreRepository->expects(self::never())->method('deleteAllForChannel');
+        $this->memoSettingsRepository->expects(self::never())->method('deleteAllForChannel');
         self::assertSame(
             [ChannelDropEvent::class => ['onChannelDrop', 0]],
             MemoServChannelDropCleanupSubscriber::getSubscribedEvents(),

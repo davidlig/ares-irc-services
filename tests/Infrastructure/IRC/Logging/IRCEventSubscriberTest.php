@@ -14,24 +14,21 @@ use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Logging\IRCEventSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(IRCEventSubscriber::class)]
 final class IRCEventSubscriberTest extends TestCase
 {
-    private LoggerInterface&MockObject $logger;
+    private LoggerInterface $logger;
 
     private IRCEventSubscriber $subscriber;
 
     protected function setUp(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->logger = $this->createStub(LoggerInterface::class);
         $this->subscriber = new IRCEventSubscriber($this->logger);
     }
 
@@ -48,6 +45,8 @@ final class IRCEventSubscriberTest extends TestCase
     #[Test]
     public function onConnectionEstablishedLogsInfo(): void
     {
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = new IRCEventSubscriber($this->logger);
         $serverLink = $this->createServerLink();
         $event = new ConnectionEstablishedEvent($serverLink);
 
@@ -68,6 +67,8 @@ final class IRCEventSubscriberTest extends TestCase
     #[Test]
     public function onConnectionLostLogsWarning(): void
     {
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = new IRCEventSubscriber($this->logger);
         $serverLink = $this->createServerLink();
         $event = new ConnectionLostEvent($serverLink, 'Connection reset');
 
@@ -86,6 +87,8 @@ final class IRCEventSubscriberTest extends TestCase
     #[Test]
     public function onConnectionLostWithNullReason(): void
     {
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = new IRCEventSubscriber($this->logger);
         $serverLink = $this->createServerLink();
         $event = new ConnectionLostEvent($serverLink, null);
 
@@ -102,6 +105,8 @@ final class IRCEventSubscriberTest extends TestCase
     #[Test]
     public function onMessageReceivedLogsDebug(): void
     {
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = new IRCEventSubscriber($this->logger);
         $message = new IRCMessage(
             prefix: 'irc.example.com',
             command: 'PING',
@@ -125,6 +130,8 @@ final class IRCEventSubscriberTest extends TestCase
     #[Test]
     public function onMessageReceivedRedactsSensitiveNickServCommands(): void
     {
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = new IRCEventSubscriber($this->logger);
         $message = new IRCMessage(
             prefix: 'nick!user@host',
             command: 'PRIVMSG',

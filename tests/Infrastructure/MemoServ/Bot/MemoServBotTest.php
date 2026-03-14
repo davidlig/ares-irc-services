@@ -11,12 +11,10 @@ use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\MemoServ\Bot\MemoServBot;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServBot::class)]
 final class MemoServBotTest extends TestCase
 {
@@ -62,7 +60,7 @@ final class MemoServBotTest extends TestCase
             self::MEMOSERV_UID,
             'Memo Service',
         )->willReturn($introLine);
-        $module = $this->createMock(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getIntroductionFormatter')->willReturn($formatter);
 
         $this->connectionHolder->setProtocolModule($module);
@@ -96,9 +94,9 @@ final class MemoServBotTest extends TestCase
 
     private function createModuleWithHandlerThatReturnsLine(string $line): ProtocolModuleInterface
     {
-        $handler = $this->createMock(ProtocolHandlerInterface::class);
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturn($line);
-        $module = $this->createMock(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
 
         return $module;
