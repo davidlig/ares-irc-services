@@ -41,6 +41,15 @@ final class UidTest extends TestCase
     }
 
     #[Test]
+    public function uidAtMaxLengthBoundaryIsAccepted(): void
+    {
+        $value = str_repeat('A', 128);
+        $uid = new Uid($value);
+
+        self::assertSame($value, $uid->value);
+    }
+
+    #[Test]
     public function controlCharsAreRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);

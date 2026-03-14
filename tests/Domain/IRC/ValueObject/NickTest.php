@@ -49,4 +49,13 @@ final class NickTest extends TestCase
         self::assertTrue($a->equals($b));
         self::assertTrue($b->equals($a));
     }
+
+    #[Test]
+    public function equalsReturnsFalseWhenDifferent(): void
+    {
+        $a = new Nick('Alice');
+        $b = new Nick('Bob');
+
+        self::assertFalse($a->equals($b));
+    }
 }
