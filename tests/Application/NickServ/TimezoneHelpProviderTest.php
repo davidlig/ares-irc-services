@@ -68,4 +68,20 @@ final class TimezoneHelpProviderTest extends TestCase
 
         self::assertNull($provider->getRegionForTimezone('UTC'));
     }
+
+    #[Test]
+    public function getRegionForTimezoneReturnsNullForEmptyOrEtc(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        self::assertNull($provider->getRegionForTimezone(''));
+        self::assertNull($provider->getRegionForTimezone('Etc/GMT'));
+    }
+
+    #[Test]
+    public function getTimezonesForRegionReturnsEmptyForUnknownRegion(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        self::assertSame([], $provider->getTimezonesForRegion('UnknownRegion'));
+        self::assertSame([], $provider->getTimezonesForRegion(''));
+    }
 }
