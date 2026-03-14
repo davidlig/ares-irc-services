@@ -152,4 +152,35 @@ final class InviteCommandTest extends TestCase
         self::assertSame('UID1', $invites[0][1]);
         self::assertCount(1, $noticesToChannel);
     }
+
+    #[Test]
+    public function whenSenderNullCompletesWithoutSendingInvite(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(2);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn(null);
+        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access->method('getLevel')->willReturn(200);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $invites = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (): void {});
+        $notifier->method('inviteToChannel')->willReturnCallback(static function (string $ch, string $uid) use (&$invites): void {
+            $invites[] = [$ch, $uid];
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InviteCommand($channelRepo, $accessHelper);
+        $cmd->execute($this->createContext(null, $account, ['#test'], $notifier, $translator));
+
+        self::assertCount(0, $invites);
+    }
 }
