@@ -32,6 +32,7 @@ final class RegisteredChannelTest extends TestCase
         self::assertNull($channel->getTopic());
         self::assertTrue($channel->isFounder(1));
         self::assertFalse($channel->isFounder(2));
+        self::assertInstanceOf(DateTimeImmutable::class, $channel->getCreatedAt());
     }
 
     #[Test]
@@ -88,7 +89,13 @@ final class RegisteredChannelTest extends TestCase
         $channel->configureMlock(true, '+nt', ['l' => '100']);
         self::assertTrue($channel->isMlockActive());
         self::assertSame('+nt', $channel->getMlock());
+        self::assertSame(['l' => '100'], $channel->getMlockParams());
         self::assertSame('100', $channel->getMlockParam('l'));
+        self::assertNull($channel->getMlockParam('k'));
+
+        $channel->configureMlock(true, '', []);
+        self::assertSame('', $channel->getMlock());
+        self::assertSame([], $channel->getMlockParams());
 
         $channel->configureSecure(true);
         self::assertTrue($channel->isSecure());

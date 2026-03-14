@@ -33,6 +33,16 @@ final class ChannelAccessTest extends TestCase
     }
 
     #[Test]
+    public function constructorAcceptsMinAndMaxLevel(): void
+    {
+        $min = new ChannelAccess(1, 10, ChannelAccess::LEVEL_MIN);
+        self::assertSame(ChannelAccess::LEVEL_MIN, $min->getLevel());
+
+        $max = new ChannelAccess(1, 10, ChannelAccess::LEVEL_MAX);
+        self::assertSame(ChannelAccess::LEVEL_MAX, $max->getLevel());
+    }
+
+    #[Test]
     public function constructorRejectsLevelAboveMax(): void
     {
         $this->expectException(InvalidArgumentException::class);

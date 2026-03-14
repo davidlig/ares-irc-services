@@ -61,11 +61,34 @@ final class ChannelLevelTest extends TestCase
     }
 
     #[Test]
-    public function updateLevelValueRejectsInvalid(): void
+    public function updateLevelValueAcceptsMinAndMax(): void
+    {
+        $level = new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 100);
+        $level->updateLevelValue(ChannelLevel::LEVEL_MIN);
+        self::assertSame(ChannelLevel::LEVEL_MIN, $level->getValue());
+
+        $level->updateLevelValue(ChannelLevel::LEVEL_MAX);
+        self::assertSame(ChannelLevel::LEVEL_MAX, $level->getValue());
+    }
+
+    #[Test]
+    public function updateLevelValueRejectsBelowMin(): void
     {
         $level = new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 100);
 
         $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Level value must be between');
+
+        $level->updateLevelValue(-2);
+    }
+
+    #[Test]
+    public function updateLevelValueRejectsAboveMax(): void
+    {
+        $level = new ChannelLevel(1, ChannelLevel::KEY_AUTOOP, 100);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Level value must be between');
 
         $level->updateLevelValue(500);
     }
