@@ -59,4 +59,12 @@ final class ChannelAccessTest extends TestCase
 
         $access->updateLevel(0);
     }
+
+    #[Test]
+    public function updateLevelRejectsLevelAboveMax(): void
+    {
+        $access = new ChannelAccess(1, 10, 50);
+        $this->expectException(InvalidArgumentException::class);
+        $access->updateLevel(500);
+    }
 }
