@@ -23,6 +23,13 @@ final class SecureTokenTest extends TestCase
     }
 
     #[Test]
+    public function hexZeroLengthReturnsEmptyString(): void
+    {
+        self::assertSame('', SecureToken::hex(0));
+        self::assertSame(0, strlen(SecureToken::hex(0)));
+    }
+
+    #[Test]
     public function hexReturnsHexCharactersOnly(): void
     {
         $token = SecureToken::hex(32);
