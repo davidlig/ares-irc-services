@@ -30,8 +30,8 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 1197 tests, 2992 assertions.
-- **Coverage (with PCOV):** Classes 56.00%, Methods 51.86%, Lines 57.90% (target: 100%). Generate with `./vendor/bin/phpunit --coverage-text --coverage-filter=src`.
+- **Suite:** 1209 tests, 3119 assertions.
+- **Coverage (with PCOV):** Generate with `./vendor/bin/phpunit --coverage-text --coverage-filter=src`. Run with `--display-deprecations --display-phpunit-deprecations` to ensure 0 deprecations/notices.
 - **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
 - Newly covered: NickServContext, NickServ HelpFormatterContextAdapter, NickProtectionService, IdentifiedUserVhostSyncService, PruneMemoryRegistriesTask, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, all six NickServ Maintenance pruners, NetworkEventEnricher, LocalUserModeSync, UnrealIRCdNetworkStateAdapter, InspIRCdNetworkStateAdapter.
 - Remaining gaps: see coverage HTML report for per-file details. Many Application command handlers may still have partial coverage.
