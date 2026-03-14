@@ -6,14 +6,12 @@ namespace App\Tests\Application\Shared\Help;
 
 use App\Application\Shared\Help\HelpFormatterContextInterface;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function strlen;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
@@ -109,11 +107,11 @@ final class UnifiedHelpFormatterTest extends TestCase
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
-        $context->method('getCommandsForGeneralHelp')->willReturn([$cmd]);
-        $context->method('shouldShowCommandInGeneralHelp')->willReturn(true);
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([$cmd]);
+        $context->expects(self::never())->method('shouldShowCommandInGeneralHelp');
         $context->expects(self::atLeastOnce())->method('reply');
         $context->expects(self::atLeastOnce())->method('replyRaw');
-        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
 
         $formatter = new UnifiedHelpFormatter();
         $formatter->showGeneralHelp($context);
@@ -155,12 +153,12 @@ final class UnifiedHelpFormatterTest extends TestCase
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
-        $context->method('getCommandsForGeneralHelp')->willReturn([$helpCmd, $fooCmd]);
-        $context->method('shouldShowCommandInGeneralHelp')->willReturn(true);
-        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([$helpCmd, $fooCmd]);
+        $context->expects(self::atLeastOnce())->method('shouldShowCommandInGeneralHelp')->willReturn(true);
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
         $context->expects(self::atLeastOnce())->method('replyRaw');
         $commandLineCalls = 0;
-        $context->method('reply')->willReturnCallback(
+        $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key) use (&$commandLineCalls): void {
                 if ('help.command_line' === $key) {
                     ++$commandLineCalls;
@@ -178,16 +176,16 @@ final class UnifiedHelpFormatterTest extends TestCase
     public function showGeneralHelpWithEmptyCommandListStillSendsHeaderAndFooter(): void
     {
         $context = $this->createMock(HelpFormatterContextInterface::class);
-        $context->method('getCommandsForGeneralHelp')->willReturn([]);
-        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([]);
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
         $replyRawCalls = [];
-        $context->method('replyRaw')->willReturnCallback(
+        $context->expects(self::atLeastOnce())->method('replyRaw')->willReturnCallback(
             static function (string $s) use (&$replyRawCalls): void {
                 $replyRawCalls[] = $s;
             }
         );
         $replyKeys = [];
-        $context->method('reply')->willReturnCallback(
+        $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key) use (&$replyKeys): void {
                 $replyKeys[] = $key;
             }
@@ -239,12 +237,12 @@ final class UnifiedHelpFormatterTest extends TestCase
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
-        $context->method('getCommandsForGeneralHelp')->willReturn([$second, $first]);
-        $context->method('shouldShowCommandInGeneralHelp')->willReturn(true);
-        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([$second, $first]);
+        $context->expects(self::atLeastOnce())->method('shouldShowCommandInGeneralHelp')->willReturn(true);
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
         $context->expects(self::atLeastOnce())->method('replyRaw');
         $commandLineParams = [];
-        $context->method('reply')->willReturnCallback(
+        $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key, array $params = []) use (&$commandLineParams): void {
                 if ('help.command_line' === $key) {
                     $commandLineParams[] = $params['command'] ?? null;
@@ -280,12 +278,12 @@ final class UnifiedHelpFormatterTest extends TestCase
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
-        $context->method('getCommandsForGeneralHelp')->willReturn([$cmd]);
-        $context->method('shouldShowCommandInGeneralHelp')->willReturn(true);
-        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([$cmd]);
+        $context->expects(self::atLeastOnce())->method('shouldShowCommandInGeneralHelp')->willReturn(true);
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
         $context->expects(self::atLeastOnce())->method('replyRaw');
         $capturedCommand = null;
-        $context->method('reply')->willReturnCallback(
+        $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key, array $params = []) use (&$capturedCommand): void {
                 if ('help.command_line' === $key) {
                     $capturedCommand = $params['command'] ?? null;
@@ -336,14 +334,14 @@ final class UnifiedHelpFormatterTest extends TestCase
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
-        $context->method('getCommandsForGeneralHelp')->willReturn([$hiddenCmd, $visibleCmd]);
-        $context->method('shouldShowCommandInGeneralHelp')->willReturnCallback(
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([$hiddenCmd, $visibleCmd]);
+        $context->expects(self::atLeastOnce())->method('shouldShowCommandInGeneralHelp')->willReturnCallback(
             static fn (object $cmd): bool => 'VISIBLE' === $cmd->getName()
         );
-        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
         $context->expects(self::atLeastOnce())->method('replyRaw');
         $commandLineCalls = 0;
-        $context->method('reply')->willReturnCallback(
+        $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key) use (&$commandLineCalls): void {
                 if ('help.command_line' === $key) {
                     ++$commandLineCalls;
@@ -384,7 +382,7 @@ final class UnifiedHelpFormatterTest extends TestCase
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::exactly(3))->method('reply'); // help.register, help.syntax_label, help.footer
         $context->expects(self::atLeastOnce())->method('replyRaw');
-        $context->method('trans')->willReturn('Syntax here');
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('Syntax here');
 
         $formatter = new UnifiedHelpFormatter();
         $formatter->showCommandHelp($context, $handler);
@@ -419,7 +417,7 @@ final class UnifiedHelpFormatterTest extends TestCase
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::atLeastOnce())->method('reply');
         $context->expects(self::atLeastOnce())->method('replyRaw');
-        $context->method('trans')->willReturn('x');
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('x');
 
         $formatter = new UnifiedHelpFormatter();
         $formatter->showCommandHelp($context, $handler);
@@ -452,9 +450,9 @@ final class UnifiedHelpFormatterTest extends TestCase
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
-        $context->method('trans')->willReturn('x');
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('x');
         $subCommandLineParams = [];
-        $context->method('reply')->willReturnCallback(
+        $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key, array $params = []) use (&$subCommandLineParams): void {
                 if ('help.subcommand_line' === $key) {
                     $subCommandLineParams[] = $params['command'] ?? null;
@@ -477,7 +475,7 @@ final class UnifiedHelpFormatterTest extends TestCase
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::exactly(3))->method('reply'); // help_key, help.syntax_label, help.footer
         $context->expects(self::atLeastOnce())->method('replyRaw');
-        $context->method('trans')->willReturn('syntax');
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('syntax');
 
         $formatter = new UnifiedHelpFormatter();
         $formatter->showSubCommandHelp($context, 'ACCESS', [
@@ -493,7 +491,7 @@ final class UnifiedHelpFormatterTest extends TestCase
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::exactly(4))->method('reply'); // help_key, options_key, help.syntax_label, help.footer
         $context->expects(self::atLeastOnce())->method('replyRaw');
-        $context->method('trans')->willReturn('x');
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('x');
 
         $formatter = new UnifiedHelpFormatter();
         $formatter->showSubCommandHelp($context, 'ACCESS', [

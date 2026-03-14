@@ -21,7 +21,6 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,7 +28,6 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(SetFounderHandler::class)]
 final class SetFounderHandlerTest extends TestCase
 {
@@ -347,7 +345,7 @@ final class SetFounderHandlerTest extends TestCase
         $newAccount->method('getId')->willReturn(20);
         $currentFounder = $this->createStub(RegisteredNick::class);
         $currentFounder->method('getEmail')->willReturn('founder@example.com');
-        $channel = $this->createMock(RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(1);
         $channel->method('getFounderNickId')->willReturn(10);
         $channel->method('getSuccessorNickId')->willReturn(null);
@@ -394,11 +392,11 @@ final class SetFounderHandlerTest extends TestCase
         $currentFounder = $this->createStub(RegisteredNick::class);
         $currentFounder->method('getEmail')->willReturn('founder@example.com');
         $channel = $this->createMock(RegisteredChannel::class);
-        $channel->method('getId')->willReturn(1);
-        $channel->method('getName')->willReturn('#test');
-        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->expects(self::atLeastOnce())->method('getId')->willReturn(1);
+        $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
+        $channel->expects(self::atLeastOnce())->method('getFounderNickId')->willReturn(10);
         $channel->expects(self::once())->method('changeFounder')->with(20);
-        $channel->method('getSuccessorNickId')->willReturn(null);
+        $channel->expects(self::atLeastOnce())->method('getSuccessorNickId')->willReturn(null);
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('save')->with($channel);
         $existingAccess = $this->createStub(ChannelAccess::class);
