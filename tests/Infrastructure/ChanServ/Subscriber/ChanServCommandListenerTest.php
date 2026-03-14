@@ -170,11 +170,12 @@ final class ChanServCommandListenerTest extends TestCase
     public function onCommandChannelAlreadyRegisteredSendsExceptionMessageViaNotifier(): void
     {
         $sender = self::createSenderView();
-        $this->userLookup->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn(null);
 
         $exception = ChannelAlreadyRegisteredException::forChannel('#test');
         $this->chanServService
+            ->expects(self::atLeastOnce())
             ->method('dispatch')
             ->with('REGISTER #test', $sender)
             ->willThrowException($exception);
@@ -191,8 +192,8 @@ final class ChanServCommandListenerTest extends TestCase
     public function onCommandChannelNotRegisteredTranslatesAndSendsViaNotifier(): void
     {
         $sender = self::createSenderView();
-        $this->userLookup->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn(null);
 
         $this->translator
             ->expects(self::once())
@@ -219,8 +220,8 @@ final class ChanServCommandListenerTest extends TestCase
         $registeredNick->method('getLanguage')->willReturn('es');
         $registeredNick->method('getMessageType')->willReturn('NOTICE');
 
-        $this->userLookup->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($registeredNick);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($registeredNick);
 
         $this->translator
             ->expects(self::once())
@@ -243,8 +244,8 @@ final class ChanServCommandListenerTest extends TestCase
     public function onCommandInsufficientAccessTranslatesAndSendsViaNotifier(): void
     {
         $sender = self::createSenderView();
-        $this->userLookup->method('findByUid')->with('001ABC')->willReturn($sender);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn(null);
 
         $this->translator
             ->expects(self::once())
@@ -272,10 +273,10 @@ final class ChanServCommandListenerTest extends TestCase
     public function onCommandGenericThrowableLogsErrorAndDoesNotRethrow(): void
     {
         $sender = self::createSenderView();
-        $this->userLookup->method('findByUid')->with('001ABC')->willReturn($sender);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001ABC')->willReturn($sender);
 
         $exception = new RuntimeException('Unexpected error');
-        $this->chanServService->method('dispatch')->willThrowException($exception);
+        $this->chanServService->expects(self::atLeastOnce())->method('dispatch')->willThrowException($exception);
 
         $this->logger
             ->expects(self::once())

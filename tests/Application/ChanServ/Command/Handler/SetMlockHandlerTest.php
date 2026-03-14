@@ -79,7 +79,7 @@ final class SetMlockHandlerTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('save')->with($channel);
         $lookup = $this->createMock(ChannelLookupPort::class);
-        $lookup->method('findByChannelName')->with('#test')->willReturn(null);
+        $lookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
         $dispatched = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())
@@ -126,7 +126,7 @@ final class SetMlockHandlerTest extends TestCase
         $channelRepo->expects(self::once())->method('save')->with($channel);
         $view = new ChannelView('#test', '+nt', null, 0);
         $lookup = $this->createMock(ChannelLookupPort::class);
-        $lookup->method('findByChannelName')->with('#test')->willReturn($view);
+        $lookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($view);
         $support = $this->createStub(ChannelModeSupportInterface::class);
         $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n', 't']);
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);

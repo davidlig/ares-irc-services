@@ -130,7 +130,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $connection = $this->createStub(ConnectionInterface::class);
         $this->channelRepository->method('listAll')->willReturn([$channel]);
-        $this->channelLookup->method('findByChannelName')->with('#test')->willReturn(null);
+        $this->channelLookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
 
         $this->subscriber->onSyncComplete(new NetworkSyncCompleteEvent($connection, '001'));
@@ -143,7 +143,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $channel->method('getName')->willReturn('#test');
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
-        $channel->method('isFounder')->with(self::NICK_ID)->willReturn(false);
+        $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
 
         $view = new ChannelView(
             name: '#test',
@@ -171,12 +171,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $accessStub->method('getLevel')->willReturn(100);
 
         $this->channelRepository->method('listAll')->willReturn([$channel]);
-        $this->channelLookup->method('findByChannelName')->with('#test')->willReturn($view);
+        $this->channelLookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($view);
         $this->modeSupportProvider->method('getSupport')->willReturn($modeSupport);
-        $this->userLookup->method('findByUid')->with('001USER')->willReturn($sender);
-        $this->userLookup->method('findByNick')->with('001USER')->willReturn(null);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
-        $this->accessRepository->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($accessStub);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->userLookup->expects(self::never())->method('findByNick');
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->accessRepository->expects(self::atLeastOnce())->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($accessStub);
         $this->levelRepository->method('findByChannelAndKey')->willReturnCallback(
             static fn (int $channelId, string $key): ?ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel($channelId, $key, 200),
@@ -199,7 +199,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             channel: new ChannelName('#test'),
             role: ChannelMemberRole::None,
         );
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn(null);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
 
         $this->subscriber->onUserJoinedChannel($event);
@@ -212,7 +212,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $channel->method('getName')->willReturn('#test');
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
-        $channel->method('isFounder')->with(self::NICK_ID)->willReturn(false);
+        $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
         $sender = new SenderView(
             uid: '001USER',
             nick: 'TestUser',
@@ -229,12 +229,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
         $this->channelRepository->expects(self::once())->method('save')->with($channel);
-        $this->userLookup->method('findByUid')->with('001USER')->willReturn($sender);
-        $this->userLookup->method('findByNick')->with('001USER')->willReturn(null);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
-        $this->accessRepository->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($accessStub);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->userLookup->expects(self::never())->method('findByNick');
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->accessRepository->expects(self::atLeastOnce())->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($accessStub);
         $this->levelRepository->method('findByChannelAndKey')->willReturnCallback(
             static fn (int $channelId, string $key): ?ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel($channelId, $key, 200),
@@ -273,8 +273,8 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $channel->method('isSecure')->willReturn(false);
         $view = new ChannelView('#test', '+nt', null, 0, []);
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
-        $this->channelLookup->method('findByChannelName')->with('#test')->willReturn($view);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelLookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($view);
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
 
         $this->subscriber->onIrcMessageProcessed(new IrcMessageProcessedEvent());

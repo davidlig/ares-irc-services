@@ -31,7 +31,7 @@ final class UserLanguageResolverTest extends TestCase
         $nick = $this->createMock(RegisteredNick::class);
         $nick->method('getLanguage')->willReturn('es');
 
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($nick);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($nick);
 
         $sender = new SenderView(
             uid: '001ABCD',
@@ -49,7 +49,7 @@ final class UserLanguageResolverTest extends TestCase
     #[Test]
     public function resolveReturnsDefaultLanguageWhenNoAccount(): void
     {
-        $this->nickRepository->method('findByNick')->with('Unregistered')->willReturn(null);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('Unregistered')->willReturn(null);
 
         $sender = new SenderView(
             uid: '001ABCD',
@@ -69,7 +69,7 @@ final class UserLanguageResolverTest extends TestCase
         $nick = $this->createMock(RegisteredNick::class);
         $nick->method('getLanguage')->willReturn('es');
 
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($nick);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($nick);
 
         self::assertSame('es', $this->resolver->resolveByNick('TestUser'));
     }
@@ -77,7 +77,7 @@ final class UserLanguageResolverTest extends TestCase
     #[Test]
     public function resolveByNickReturnsDefaultWhenNotFound(): void
     {
-        $this->nickRepository->method('findByNick')->with('NonExistent')->willReturn(null);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('NonExistent')->willReturn(null);
 
         self::assertSame('en', $this->resolver->resolveByNick('NonExistent'));
     }
@@ -88,7 +88,7 @@ final class UserLanguageResolverTest extends TestCase
         $nick = $this->createMock(RegisteredNick::class);
         $nick->method('getLanguage')->willReturn('es');
 
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($nick);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($nick);
 
         self::assertSame('es', $this->resolver->resolveByNick('TestUser'));
     }

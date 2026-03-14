@@ -62,7 +62,7 @@ final class NickProtectionServiceTest extends TestCase
         $account->activate();
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNick')->with('ProtectedNick')->willReturn($account);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('ProtectedNick')->willReturn($account);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::exactly(2))->method('sendMessage');
@@ -120,7 +120,7 @@ final class NickProtectionServiceTest extends TestCase
         $account->activate();
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNick')->with('MyNick')->willReturn($account);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('MyNick')->willReturn($account);
         $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('forceNick');
@@ -145,7 +145,7 @@ final class NickProtectionServiceTest extends TestCase
         $account->activate();
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNick')->with('QuitNick')->willReturn($account);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('QuitNick')->willReturn($account);
         $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
 
         $service = new NickProtectionService(

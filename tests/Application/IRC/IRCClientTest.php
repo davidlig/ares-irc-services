@@ -168,7 +168,7 @@ final class IRCClientTest extends TestCase
         $this->connection->method('isConnected')->willReturn(true, true, false);
         $this->connection->method('readLine')->willReturn($rawLine, $rawLine);
         $this->protocol->method('getProtocolName')->willReturn('unreal');
-        $this->protocol->method('parseRawLine')->with($rawLine)->willReturn($message);
+        $this->protocol->expects(self::atLeastOnce())->method('parseRawLine')->with($rawLine)->willReturn($message);
         $this->protocol->method('handleIncoming');
 
         $this->messageBus->expects(self::once())->method('dispatch')
@@ -188,7 +188,7 @@ final class IRCClientTest extends TestCase
         $this->connection->method('isConnected')->willReturn(true, false);
         $this->connection->method('readLine')->willReturn($rawLine);
         $this->protocol->method('getProtocolName')->willReturn('unreal');
-        $this->protocol->method('parseRawLine')->with($rawLine)->willReturn($message);
+        $this->protocol->expects(self::atLeastOnce())->method('parseRawLine')->with($rawLine)->willReturn($message);
         $this->protocol->method('handleIncoming');
 
         $this->messageBus->expects(self::never())->method('dispatch');

@@ -117,7 +117,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
             role: \App\Domain\IRC\Network\ChannelMemberRole::None,
         );
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn(null);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
         $this->notifier->expects(self::never())->method('sendNotice');
 
         $this->subscriber->onUserJoinedChannel($event);
@@ -134,8 +134,8 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
-        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(false);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(false);
         $this->notifier->expects(self::never())->method('sendNotice');
 
         $this->subscriber->onUserJoinedChannel($event);
@@ -152,9 +152,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
-        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
-        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(0);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->expects(self::atLeastOnce())->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(0);
         $this->notifier->expects(self::never())->method('sendNotice');
 
         $this->subscriber->onUserJoinedChannel($event);
@@ -171,10 +171,10 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
-        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
-        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
-        $this->userLookup->method('findByUid')->with('001USER')->willReturn(null);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->expects(self::atLeastOnce())->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn(null);
         $this->notifier->expects(self::never())->method('sendNotice');
 
         $this->subscriber->onUserJoinedChannel($event);
@@ -199,11 +199,11 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
             ipBase64: '',
         );
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
-        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
-        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
-        $this->userLookup->method('findByUid')->with('001USER')->willReturn($sender);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->expects(self::atLeastOnce())->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn(null);
         $this->notifier->expects(self::never())->method('sendNotice');
 
         $this->subscriber->onUserJoinedChannel($event);
@@ -231,13 +231,13 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('getLanguage')->willReturn('en');
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
-        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
-        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
-        $this->userLookup->method('findByUid')->with('001USER')->willReturn($sender);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
-        $this->accessRepository->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn(null);
-        $this->levelRepository->method('findByChannelAndKey')->with(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD)->willReturn(new ChannelLevel(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD, 200));
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->expects(self::atLeastOnce())->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->accessRepository->expects(self::atLeastOnce())->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn(null);
+        $this->levelRepository->expects(self::atLeastOnce())->method('findByChannelAndKey')->with(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD)->willReturn(new ChannelLevel(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD, 200));
         $this->notifier->expects(self::never())->method('sendNotice');
 
         $this->subscriber->onUserJoinedChannel($event);
@@ -253,7 +253,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         );
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
-        $channel->method('isFounder')->with(self::NICK_ID)->willReturn(false);
+        $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
 
         $sender = new SenderView(
             uid: '001USER',
@@ -269,14 +269,14 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 
         $access = new \App\Domain\ChanServ\Entity\ChannelAccess(self::CHANNEL_ID, self::NICK_ID, 250);
 
-        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
-        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
-        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(2);
-        $this->userLookup->method('findByUid')->with('001USER')->willReturn($sender);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
-        $this->accessRepository->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($access);
-        $this->levelRepository->method('findByChannelAndKey')->with(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD)->willReturn(new ChannelLevel(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD, 200));
-        $this->translator->method('trans')->with(
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->expects(self::atLeastOnce())->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(2);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->accessRepository->expects(self::atLeastOnce())->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($access);
+        $this->levelRepository->expects(self::atLeastOnce())->method('findByChannelAndKey')->with(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD)->willReturn(new ChannelLevel(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD, 200));
+        $this->translator->expects(self::atLeastOnce())->method('trans')->with(
             'notify.channel_pending',
             ['%channel%' => '#test', '%count%' => 2],
             'memoserv',

@@ -58,7 +58,7 @@ final class ChanServBotTest extends TestCase
         $introLine = ':001 UID ChanServ ChanServ 0 0 services.example.com 001CS 0 * Channel Registration Services';
         $connection = $this->createMock(ConnectionInterface::class);
         $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
-        $formatter->method('formatIntroduction')->with(
+        $formatter->expects(self::atLeastOnce())->method('formatIntroduction')->with(
             '001',
             'ChanServ',
             'ChanServ',

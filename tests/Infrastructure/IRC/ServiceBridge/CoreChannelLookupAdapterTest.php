@@ -49,7 +49,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
         $channel->syncMember(new Uid('001ABC'), ChannelMemberRole::Op);
         $channel->updateTopic('Hello world');
         $repo = $this->createMock(ChannelRepositoryInterface::class);
-        $repo->method('findByName')->with(self::callback(static fn (ChannelName $n) => '#test' === $n->value))->willReturn($channel);
+        $repo->expects(self::atLeastOnce())->method('findByName')->with(self::callback(static fn (ChannelName $n) => '#test' === $n->value))->willReturn($channel);
         $adapter = new CoreChannelLookupAdapter($repo);
 
         $view = $adapter->findByChannelName('#test');

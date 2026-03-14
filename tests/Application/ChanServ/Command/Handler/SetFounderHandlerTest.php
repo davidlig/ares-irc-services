@@ -353,8 +353,8 @@ final class SetFounderHandlerTest extends TestCase
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->with('NewFounder')->willReturn($newAccount);
-        $nickRepo->method('findById')->with(10)->willReturn($currentFounder);
+        $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
+        $nickRepo->expects(self::atLeastOnce())->method('findById')->with(10)->willReturn($currentFounder);
         $registry = new FounderChangeTokenRegistry();
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -404,8 +404,8 @@ final class SetFounderHandlerTest extends TestCase
         $accessRepo->expects(self::once())->method('findByChannelAndNick')->with(1, 20)->willReturn($existingAccess);
         $accessRepo->expects(self::once())->method('remove')->with($existingAccess);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->with('NewFounder')->willReturn($newAccount);
-        $nickRepo->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
+        $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
+        $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
         $registry = new FounderChangeTokenRegistry();
         $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
         $dispatched = null;

@@ -175,7 +175,7 @@ final class NickServCommandListenerTest extends TestCase
     public function onCommandSendsNoticeOnNickAlreadyRegisteredException(): void
     {
         $sender = self::senderView();
-        $this->userLookup->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $throwCommand = $this->createThrowCommand('REGISTER', new NickAlreadyRegisteredException('TestNick'));
         $this->nickServService = $this->createNickServServiceWithCommands([$throwCommand]);
@@ -200,7 +200,7 @@ final class NickServCommandListenerTest extends TestCase
     public function onCommandSendsNoticeOnInvalidCredentialsException(): void
     {
         $sender = self::senderView();
-        $this->userLookup->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $throwCommand = $this->createThrowCommand('IDENTIFY', new InvalidCredentialsException());
         $this->nickServService = $this->createNickServServiceWithCommands([$throwCommand]);
@@ -225,7 +225,7 @@ final class NickServCommandListenerTest extends TestCase
     public function onCommandLogsErrorOnGenericThrowable(): void
     {
         $sender = self::senderView();
-        $this->userLookup->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $throwCommand = $this->createThrowCommand('LIST', new RuntimeException('Unexpected error.'));
         $this->nickServService = $this->createNickServServiceWithCommands([$throwCommand]);

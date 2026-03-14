@@ -178,11 +178,13 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(true);
 
         $this->channelRepository
+            ->expects(self::atLeastOnce())
             ->method('findByChannelName')
             ->with('#test')
             ->willReturn($registered);
 
         $this->channelLookup
+            ->expects(self::atLeastOnce())
             ->method('findByChannelName')
             ->willReturn($view);
 
