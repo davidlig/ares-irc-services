@@ -24,6 +24,7 @@ use Psr\Log\LoggerInterface;
 final class IRCEventSubscriberTest extends TestCase
 {
     private LoggerInterface&MockObject $logger;
+
     private IRCEventSubscriber $subscriber;
 
     protected function setUp(): void
@@ -52,13 +53,11 @@ final class IRCEventSubscriberTest extends TestCase
             ->method('info')
             ->with(
                 'Server link established.',
-                self::callback(function (array $context) use ($serverLink): bool {
-                    return $context['server'] === (string) $serverLink->serverName
+                self::callback(static fn (array $context): bool => $context['server'] === (string) $serverLink->serverName
                         && $context['host'] === (string) $serverLink->host
                         && $context['port'] === $serverLink->port->value
                         && $context['tls'] === $serverLink->useTls
-                        && isset($context['occurred']);
-                }),
+                        && isset($context['occurred'])),
             );
 
         $this->subscriber->onConnectionEstablished($event);
@@ -74,11 +73,9 @@ final class IRCEventSubscriberTest extends TestCase
             ->method('warning')
             ->with(
                 'Server link lost.',
-                self::callback(function (array $context) use ($serverLink): bool {
-                    return $context['server'] === (string) $serverLink->serverName
-                        && $context['reason'] === 'Connection reset'
-                        && isset($context['occurred']);
-                }),
+                self::callback(static fn (array $context): bool => $context['server'] === (string) $serverLink->serverName
+                        && 'Connection reset' === $context['reason']
+                        && isset($context['occurred'])),
             );
 
         $this->subscriber->onConnectionLost($event);
@@ -94,9 +91,7 @@ final class IRCEventSubscriberTest extends TestCase
             ->method('warning')
             ->with(
                 'Server link lost.',
-                self::callback(function (array $context): bool {
-                    return $context['reason'] === 'unknown';
-                }),
+                self::callback(static fn (array $context): bool => 'unknown' === $context['reason']),
             );
 
         $this->subscriber->onConnectionLost($event);
@@ -117,11 +112,9 @@ final class IRCEventSubscriberTest extends TestCase
             ->method('debug')
             ->with(
                 '< PING',
-                self::callback(function (array $context): bool {
-                    return $context['prefix'] === 'irc.example.com'
+                self::callback(static fn (array $context): bool => 'irc.example.com' === $context['prefix']
                         && $context['params'] === ['irc.example.com']
-                        && $context['trailing'] === null;
-                }),
+                        && null === $context['trailing']),
             );
 
         $this->subscriber->onMessageReceived($event);
@@ -142,11 +135,9 @@ final class IRCEventSubscriberTest extends TestCase
             ->method('debug')
             ->with(
                 '< PRIVMSG',
-                self::callback(function (array $context): bool {
-                    return 'IDENTIFY ******' === $context['trailing']
+                self::callback(static fn (array $context): bool => 'IDENTIFY ******' === $context['trailing']
                         && str_contains($context['raw'], 'IDENTIFY ******')
-                        && !str_contains($context['raw'], 'mysecretpassword');
-                }),
+                        && !str_contains($context['raw'], 'mysecretpassword')),
             );
 
         $this->subscriber->onMessageReceived($event);

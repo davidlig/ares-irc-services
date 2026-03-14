@@ -11,7 +11,6 @@ use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ActiveConnectionHolder::class)]
@@ -25,7 +24,7 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function getSubscribedEvents_returns_burst_complete(): void
+    public function getSubscribedEventsReturnsBurstComplete(): void
     {
         self::assertSame(
             [NetworkBurstCompleteEvent::class => ['onBurstComplete', 0]],
@@ -34,7 +33,7 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function beforeBurst_connectionAndServerSidAreNull(): void
+    public function beforeBurstConnectionAndServerSidAreNull(): void
     {
         self::assertNull($this->holder->getConnection());
         self::assertNull($this->holder->getServerSid());
@@ -42,7 +41,7 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function onBurstComplete_setsConnectionAndServerSid(): void
+    public function onBurstCompleteSetsConnectionAndServerSid(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
@@ -55,13 +54,13 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function getProtocolModule_returnsNullByDefault(): void
+    public function getProtocolModuleReturnsNullByDefault(): void
     {
         self::assertNull($this->holder->getProtocolModule());
     }
 
     #[Test]
-    public function setProtocolModule_andGetProtocolModule(): void
+    public function setProtocolModuleAndGetProtocolModule(): void
     {
         $module = $this->createMock(ProtocolModuleInterface::class);
         $this->holder->setProtocolModule($module);
@@ -69,13 +68,13 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function getProtocolHandler_returnsNullWhenNoModule(): void
+    public function getProtocolHandlerReturnsNullWhenNoModule(): void
     {
         self::assertNull($this->holder->getProtocolHandler());
     }
 
     #[Test]
-    public function getProtocolHandler_delegatesToModuleWhenSet(): void
+    public function getProtocolHandlerDelegatesToModuleWhenSet(): void
     {
         $handler = $this->createMock(ProtocolHandlerInterface::class);
         $module = $this->createMock(ProtocolModuleInterface::class);
@@ -85,14 +84,14 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function writeLine_doesNothingWhenNotConnected(): void
+    public function writeLineDoesNothingWhenNotConnected(): void
     {
         $this->holder->writeLine('PING');
         $this->addToAssertionCount(1);
     }
 
     #[Test]
-    public function writeLine_delegatesToConnectionWhenConnected(): void
+    public function writeLineDelegatesToConnectionWhenConnected(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::once())->method('writeLine')->with('PING 123');

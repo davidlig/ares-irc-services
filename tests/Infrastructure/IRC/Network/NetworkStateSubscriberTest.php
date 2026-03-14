@@ -24,6 +24,7 @@ use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\NetworkStateSubscriber;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -34,8 +35,11 @@ use Psr\Log\LoggerInterface;
 final class NetworkStateSubscriberTest extends TestCase
 {
     private NetworkUserRepositoryInterface&MockObject $userRepository;
+
     private ChannelRepositoryInterface&MockObject $channelRepository;
+
     private LoggerInterface&MockObject $logger;
+
     private NetworkStateSubscriber $subscriber;
 
     protected function setUp(): void
@@ -96,10 +100,11 @@ final class NetworkStateSubscriberTest extends TestCase
 
         $this->channelRepository->expects(self::exactly(2))
             ->method('findByName')
-            ->willReturnCallback(function (ChannelName $name) use ($channel): ?Channel {
+            ->willReturnCallback(static function (ChannelName $name) use ($channel): ?Channel {
                 if ('#test' === $name->value || '#other' === $name->value) {
                     return $channel;
                 }
+
                 return null;
             });
 
@@ -351,7 +356,7 @@ final class NetworkStateSubscriberTest extends TestCase
             'cloaked.example.com',
             'vhost.example.com',
             '+i',
-            new \DateTimeImmutable(),
+            new DateTimeImmutable(),
             'Real Name',
             '001',
             'base64ip',

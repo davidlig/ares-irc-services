@@ -22,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 final class BurstCompleteRegistrySubscriberTest extends TestCase
 {
     private BurstCompleteRegistry $registry;
+
     private BurstCompleteRegistrySubscriber $subscriber;
 
     protected function setUp(): void

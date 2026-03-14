@@ -64,7 +64,7 @@ final class IRCClientFactoryTest extends TestCase
     }
 
     #[Test]
-    public function create_returnsIRCClientAndSetsModuleOnHolder(): void
+    public function createReturnsIRCClientAndSetsModuleOnHolder(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $handler = $this->createMock(ProtocolHandlerInterface::class);

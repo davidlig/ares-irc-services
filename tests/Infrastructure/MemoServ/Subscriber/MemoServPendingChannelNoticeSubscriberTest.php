@@ -30,7 +30,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 {
     private const CHANNEL_ID = 1;
+
     private const NICK_ID = 10;
+
     private const MEMOSERV_UID = '001MEMO';
 
     private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
@@ -83,7 +85,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function getSubscribedEvents_returns_user_joined_channel_with_priority(): void
+    public function getSubscribedEventsReturnsUserJoinedChannelWithPriority(): void
     {
         self::assertSame(
             [UserJoinedChannelEvent::class => ['onUserJoinedChannel', -10]],

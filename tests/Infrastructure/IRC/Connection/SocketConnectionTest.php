@@ -16,28 +16,28 @@ use RuntimeException;
 final class SocketConnectionTest extends TestCase
 {
     #[Test]
-    public function getStatus_returnsDisconnectedBeforeConnect(): void
+    public function getStatusReturnsDisconnectedBeforeConnect(): void
     {
         $conn = new SocketConnection('127.0.0.1', 7000, false, 5);
         self::assertSame(ConnectionStatus::Disconnected, $conn->getStatus());
     }
 
     #[Test]
-    public function isConnected_returnsFalseBeforeConnect(): void
+    public function isConnectedReturnsFalseBeforeConnect(): void
     {
         $conn = new SocketConnection('127.0.0.1', 7000);
         self::assertFalse($conn->isConnected());
     }
 
     #[Test]
-    public function readLine_returnsNullWhenNotConnected(): void
+    public function readLineReturnsNullWhenNotConnected(): void
     {
         $conn = new SocketConnection('127.0.0.1', 7000);
         self::assertNull($conn->readLine());
     }
 
     #[Test]
-    public function writeLine_throwsWhenNotConnected(): void
+    public function writeLineThrowsWhenNotConnected(): void
     {
         $conn = new SocketConnection('127.0.0.1', 7000);
         $this->expectException(RuntimeException::class);
@@ -46,7 +46,7 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
-    public function disconnect_whenNotConnected_doesNotThrow(): void
+    public function disconnectWhenNotConnectedDoesNotThrow(): void
     {
         $conn = new SocketConnection('127.0.0.1', 7000);
         $conn->disconnect();
@@ -59,7 +59,7 @@ final class SocketConnectionTest extends TestCase
      */
     #[Test]
     #[Group('integration')]
-    public function connect_writeLine_readLine_disconnect_withLocalServer(): void
+    public function connectWriteLineReadLineDisconnectWithLocalServer(): void
     {
         $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
         self::assertNotFalse($server, "Failed to create server: $errstr ($errno)");

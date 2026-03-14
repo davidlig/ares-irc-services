@@ -12,6 +12,7 @@ use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\ServerDelinkedSubscriber;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -23,8 +24,11 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 final class ServerDelinkedSubscriberTest extends TestCase
 {
     private NetworkUserRepositoryInterface&MockObject $userRepository;
+
     private EventDispatcherInterface&MockObject $eventDispatcher;
+
     private LoggerInterface&MockObject $logger;
+
     private ServerDelinkedSubscriber $subscriber;
 
     protected function setUp(): void
@@ -62,11 +66,12 @@ final class ServerDelinkedSubscriberTest extends TestCase
 
         $this->eventDispatcher->expects(self::exactly(2))
             ->method('dispatch')
-            ->with(self::callback(function (UserQuitNetworkEvent $quitEvent) use ($user1, $user2): bool {
+            ->with(self::callback(static function (UserQuitNetworkEvent $quitEvent) use ($user1, $user2): bool {
                 static $index = 0;
                 $expectedUids = [$user1->uid->value, $user2->uid->value];
                 $result = $quitEvent->uid->value === $expectedUids[$index];
                 ++$index;
+
                 return $result;
             }));
 
@@ -109,9 +114,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
 
         $this->eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(function (UserQuitNetworkEvent $quitEvent): bool {
-                return $quitEvent->reason === '*.net *.split';
-            }));
+            ->with(self::callback(static fn (UserQuitNetworkEvent $quitEvent): bool => '*.net *.split' === $quitEvent->reason));
 
         $this->subscriber->onServerDelinked($event);
     }
@@ -144,7 +147,7 @@ final class ServerDelinkedSubscriberTest extends TestCase
             'cloaked.example.com',
             'vhost.example.com',
             '+i',
-            new \DateTimeImmutable(),
+            new DateTimeImmutable(),
             'Real Name',
             $serverSid,
             'base64ip',
