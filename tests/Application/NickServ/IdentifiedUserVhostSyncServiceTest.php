@@ -39,7 +39,7 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         $notifier->expects(self::never())->method('setUserVhost');
         $user = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip', true, false, 'SID');
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNick')->with('Nick')->willReturn(null);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn(null);
 
         $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver());
         $service->syncVhostForUser($user);
@@ -54,7 +54,7 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         $account = RegisteredNick::createPending('Nick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
         $account->activate();
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNick')->with('Nick')->willReturn($account);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn($account);
 
         $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver());
         $service->syncVhostForUser($user);
@@ -72,7 +72,7 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         $account->activate();
         $account->changeVhost('my-vhost');
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNick')->with('Nick')->willReturn($account);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn($account);
 
         $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver());
         $service->syncVhostForUser($user);
@@ -90,7 +90,7 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         $account->activate();
         $account->changeVhost('my-vhost');
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNick')->with('Nick')->willReturn($account);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn($account);
 
         $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver('virtual'));
         $service->syncVhostForUser($user);

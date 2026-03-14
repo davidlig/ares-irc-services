@@ -163,6 +163,7 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
         );
 
         $this->memoRepository
+            ->expects(self::atLeastOnce())
             ->method('countUnreadByTargetNick')
             ->with(12345)
             ->willReturn(5);
@@ -171,6 +172,7 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
         $account->method('getLanguage')->willReturn('fr');
 
         $this->nickRepository
+            ->expects(self::atLeastOnce())
             ->method('findById')
             ->with(12345)
             ->willReturn($account);

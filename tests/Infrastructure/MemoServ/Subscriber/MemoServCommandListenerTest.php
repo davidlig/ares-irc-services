@@ -173,6 +173,7 @@ final class MemoServCommandListenerTest extends TestCase
         );
 
         $this->userLookup
+            ->expects(self::atLeastOnce())
             ->method('findByUid')
             ->with(self::SENDER_UID)
             ->willReturn($sender);
@@ -189,12 +190,12 @@ final class MemoServCommandListenerTest extends TestCase
     public function onCommandWhenChannelNotRegisteredSendsTranslatedError(): void
     {
         $sender = self::senderView();
-        $this->userLookup->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $account = $this->createMock(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('es');
         $account->method('getMessageType')->willReturn('NOTICE');
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
 
         $this->translator
             ->expects(self::once())
@@ -237,8 +238,8 @@ final class MemoServCommandListenerTest extends TestCase
     public function onCommandWhenChannelNotRegisteredUsesDefaultLanguageWhenAccountNotFound(): void
     {
         $sender = self::senderView();
-        $this->userLookup->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn(null);
 
         $this->translator
             ->expects(self::once())
@@ -281,12 +282,12 @@ final class MemoServCommandListenerTest extends TestCase
     public function onCommandWhenInsufficientAccessSendsTranslatedError(): void
     {
         $sender = self::senderView();
-        $this->userLookup->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $account = $this->createMock(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('fr');
         $account->method('getMessageType')->willReturn('PRIVMSG');
-        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
 
         $this->translator
             ->expects(self::once())
@@ -334,7 +335,7 @@ final class MemoServCommandListenerTest extends TestCase
     public function onCommandWhenOtherThrowableLogsErrorAndDoesNotRethrow(): void
     {
         $sender = self::senderView();
-        $this->userLookup->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
 
         $exception = new RuntimeException('Something broke');
         $throwHandler = $this->createThrowHandlerForCommand('LIST', $exception);

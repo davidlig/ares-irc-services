@@ -66,7 +66,7 @@ final class NickServBotTest extends TestCase
         $introLine = ':001 UID NickServ NickServ 0 0 services.example.com 001NS 0 * Nickname Registration Services';
         $connection = $this->createMock(ConnectionInterface::class);
         $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
-        $formatter->method('formatIntroduction')->with(
+        $formatter->expects(self::atLeastOnce())->method('formatIntroduction')->with(
             '001',
             'NickServ',
             'NickServ',

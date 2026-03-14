@@ -97,7 +97,7 @@ final class ChanServContextTest extends TestCase
     {
         $view = new ChannelView('#test', '+nt', null, 0);
         $lookup = $this->createMock(ChannelLookupPort::class);
-        $lookup->method('findByChannelName')->with('#test')->willReturn($view);
+        $lookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($view);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $translator = $this->createStub(TranslatorInterface::class);
         $context = $this->createContext(

@@ -83,7 +83,7 @@ final class NetworkEventEnricherTest extends TestCase
         $user->addChannel(new ChannelName('#test'));
 
         $userRepo = $this->createMock(NetworkUserRepositoryInterface::class);
-        $userRepo->method('findByUid')->with(self::callback(static fn (Uid $u) => '001ABC123' === $u->value))->willReturn($user);
+        $userRepo->expects(self::atLeastOnce())->method('findByUid')->with(self::callback(static fn (Uid $u) => '001ABC123' === $u->value))->willReturn($user);
         $userRepo->expects(self::once())->method('removeByUid')->with(self::callback(static fn ($u) => $u instanceof Uid && '001ABC123' === $u->value));
 
         $dispatched = [];

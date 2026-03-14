@@ -52,7 +52,7 @@ final class MemoServBotTest extends TestCase
         $introLine = ':001 UID MemoServ MemoServ 0 0 services.example.com 001MS 0 * Memo Service';
         $connection = $this->createMock(ConnectionInterface::class);
         $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
-        $formatter->method('formatIntroduction')->with(
+        $formatter->expects(self::atLeastOnce())->method('formatIntroduction')->with(
             '001',
             'MemoServ',
             'MemoServ',
