@@ -9,6 +9,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChanServDispatchPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
@@ -30,7 +31,7 @@ use const PREG_SPLIT_NO_EMPTY;
  * Routes a raw command string (from a PRIVMSG to ChanServ) to the correct
  * command handler. Builds ChanServContext with ports and mode support.
  */
-final readonly class ChanServService
+final readonly class ChanServService implements ChanServDispatchPort
 {
     public function __construct(
         private ChanServCommandRegistry $commandRegistry,
