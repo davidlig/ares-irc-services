@@ -55,4 +55,29 @@ final class ChannelViewTest extends TestCase
 
         self::assertNull($view->getModeParam('k'));
     }
+
+    #[Test]
+    public function holdsMembersTimestampAndModeParamsWhenProvided(): void
+    {
+        $members = [
+            ['uid' => '001ABC', 'roleLetter' => 'o', 'prefixLetters' => ['@']],
+            ['uid' => '002DEF', 'roleLetter' => 'v'],
+        ];
+        $view = new ChannelView(
+            name: '#chan',
+            modes: '+ntk',
+            topic: null,
+            memberCount: 2,
+            members: $members,
+            timestamp: 1234567890,
+            modeParams: ['k' => 'key', 'L' => '#other'],
+        );
+
+        self::assertSame('#chan', $view->name);
+        self::assertSame(2, $view->memberCount);
+        self::assertSame($members, $view->members);
+        self::assertSame(1234567890, $view->timestamp);
+        self::assertSame('key', $view->getModeParam('k'));
+        self::assertSame('#other', $view->getModeParam('L'));
+    }
 }
