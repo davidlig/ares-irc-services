@@ -8,6 +8,12 @@ Use this skill when working on tests, coverage, or test prioritisation. Full det
 
 **CRITICAL RULE (Coverage Analysis):** When checking for test coverage gaps, you MUST always generate the coverage report and analyze the `var/coverage/clover.xml` file. Use the `<metrics>` and `<line>` tags inside this XML to identify exactly which classes, methods, and lines lack coverage before writing any new tests.
 
+**CRITICAL RULE (Test Doubles & Mocks):** NEVER use the `#[AllowMockObjectsWithoutExpectations]` or `#[DoesNotPerformAssertions]` attributes to silence PHPUnit warnings.
+
+If a test double is only needed to fulfill a dependency or provide a canned response without verifying behavior, you MUST use `$this->createStub(ClassName::class)` instead of `createMock()`.
+
+If a test double's behavior must be verified (e.g., ensuring a specific method is called), you MUST use `$this->createMock(ClassName::class)` AND write explicit expectations (e.g., `->expects($this->once())->method(...)`).
+
 ## Coverage
 
 - Requires **PCOV** or **Xdebug**. Check: `php -m | grep -E 'pcov|xdebug'`.
@@ -20,7 +26,6 @@ Use this skill when working on tests, coverage, or test prioritisation. Full det
 - Layout: `tests/` mirrors `src/` (Domain, Application, Infrastructure, UI).
 - **final** classes cannot be mocked: use **interfaces** in production and stubs/mocks of the interface in tests, or **test subclasses** that override only the needed method (e.g. void `run()`).
 - **void** methods: do not use `willReturn(null)` in mocks; use `willReturnCallback(static function (): void {})` or a subclass that overrides the method.
-- If there are mocks with no expectations (only construction dependencies): add `#[AllowMockObjectsWithoutExpectations]` on the test class.
 
 ## Priorities for new tests
 
