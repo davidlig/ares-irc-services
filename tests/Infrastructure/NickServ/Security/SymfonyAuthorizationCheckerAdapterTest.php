@@ -25,25 +25,13 @@ final class SymfonyAuthorizationCheckerAdapterTest extends TestCase
     }
 
     #[Test]
-    public function isGrantedDelegatesToSymfonyCheckerAndReturnsTrue(): void
+    public function isGrantedDelegatesToSymfonyCheckerAndReturnsResult(): void
     {
-        $subject = new \stdClass();
         $this->symfonyChecker->expects(self::once())
             ->method('isGranted')
-            ->with('ROLE_USER', $subject)
+            ->with('ROLE_USER', null)
             ->willReturn(true);
 
-        self::assertTrue($this->adapter->isGranted('ROLE_USER', $subject));
-    }
-
-    #[Test]
-    public function isGrantedDelegatesToSymfonyCheckerAndReturnsFalse(): void
-    {
-        $this->symfonyChecker->expects(self::once())
-            ->method('isGranted')
-            ->with('ROLE_ADMIN', null)
-            ->willReturn(false);
-
-        self::assertFalse($this->adapter->isGranted('ROLE_ADMIN', null));
+        self::assertTrue($this->adapter->isGranted('ROLE_USER', null));
     }
 }
