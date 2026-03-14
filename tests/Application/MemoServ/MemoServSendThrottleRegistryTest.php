@@ -22,12 +22,13 @@ final class MemoServSendThrottleRegistryTest extends TestCase
     }
 
     #[Test]
-    public function getRemainingCooldownSecondsReturnsZeroWhenMinIntervalZero(): void
+    public function getRemainingCooldownSecondsReturnsZeroWhenMinIntervalZeroOrNegative(): void
     {
         $registry = new MemoServSendThrottleRegistry();
         $registry->recordSend('UID1');
 
         self::assertSame(0, $registry->getRemainingCooldownSeconds('UID1', 0));
+        self::assertSame(0, $registry->getRemainingCooldownSeconds('UID1', -1));
     }
 
     #[Test]
