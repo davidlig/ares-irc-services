@@ -290,6 +290,22 @@ No other core code changes are required — adding a module and its adapter is e
 
 ## Development
 
+### Testing
+
+The project uses PHPUnit 13. Run the full suite (no coverage):
+
+```bash
+./vendor/bin/phpunit --no-coverage
+```
+
+To generate a code coverage report (requires PCOV or Xdebug):
+
+```bash
+./vendor/bin/phpunit --coverage-text --coverage-filter=src
+```
+
+HTML and Clover reports are written to `var/coverage/`. To enforce a minimum line coverage (e.g. in CI), run `./scripts/check-coverage.sh [MIN_PERCENT]` (e.g. `./scripts/check-coverage.sh 100` when targeting 100%). See [.agents/testing/README.md](.agents/testing/README.md) and [.agents/testing/testing-coverage-priorities.md](.agents/testing/testing-coverage-priorities.md) for conventions and coverage priorities.
+
 ### Useful commands
 
 ```bash

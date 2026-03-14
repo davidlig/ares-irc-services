@@ -15,8 +15,8 @@ final class RunMaintenanceCycleTest extends TestCase
     #[Test]
     public function canBeInstantiated(): void
     {
-        $msg = new RunMaintenanceCycle();
+        $message = new RunMaintenanceCycle();
 
-        self::assertInstanceOf(RunMaintenanceCycle::class, $msg);
+        self::assertInstanceOf(RunMaintenanceCycle::class, $message);
     }
 }

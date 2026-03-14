@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 final class NickStatusTest extends TestCase
 {
     #[Test]
-    public function allCasesExistWithExpectedValues(): void
+    public function allCasesExistAndHaveExpectedValues(): void
     {
         self::assertSame('pending', NickStatus::Pending->value);
         self::assertSame('registered', NickStatus::Registered->value);
