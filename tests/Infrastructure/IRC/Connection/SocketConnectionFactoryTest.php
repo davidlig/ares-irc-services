@@ -26,7 +26,7 @@ final class SocketConnectionFactoryTest extends TestCase
     }
 
     #[Test]
-    public function create_returnsSocketConnection(): void
+    public function createReturnsSocketConnection(): void
     {
         $link = new ServerLink(
             new ServerName('irc.test.local'),

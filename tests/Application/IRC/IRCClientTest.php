@@ -162,10 +162,8 @@ final class IRCClientTest extends TestCase
         $this->client->connect($this->link);
 
         $this->eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static function ($event): bool {
-                return $event instanceof ConnectionLostEvent
-                    && 'test reason' === $event->reason;
-            }));
+            ->with(self::callback(static fn ($event): bool => $event instanceof ConnectionLostEvent
+                    && 'test reason' === $event->reason));
         $this->connection->expects(self::once())->method('disconnect');
 
         $this->client->disconnect('test reason');

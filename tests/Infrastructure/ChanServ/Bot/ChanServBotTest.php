@@ -11,17 +11,17 @@ use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\ChanServ\Bot\ChanServBot;
+use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ChanServBot::class)]
 final class ChanServBotTest extends TestCase
 {
     private const CHANSERV_UID = '001CS';
+
     private const HOSTNAME = 'services.example.com';
 
     private ActiveConnectionHolder $connectionHolder;
@@ -44,7 +44,7 @@ final class ChanServBotTest extends TestCase
     }
 
     #[Test]
-    public function getSubscribedEvents_returns_burst_complete_with_priority(): void
+    public function getSubscribedEventsReturnsBurstCompleteWithPriority(): void
     {
         self::assertSame(
             [NetworkBurstCompleteEvent::class => ['onBurstComplete', 95]],
@@ -53,7 +53,7 @@ final class ChanServBotTest extends TestCase
     }
 
     #[Test]
-    public function onBurstComplete_writes_introduction_line_when_module_present(): void
+    public function onBurstCompleteWritesIntroductionLineWhenModulePresent(): void
     {
         $introLine = ':001 UID ChanServ ChanServ 0 0 services.example.com 001CS 0 * Channel Registration Services';
         $connection = $this->createMock(ConnectionInterface::class);
@@ -77,7 +77,7 @@ final class ChanServBotTest extends TestCase
     }
 
     #[Test]
-    public function onBurstComplete_does_not_write_when_module_null(): void
+    public function onBurstCompleteDoesNotWriteWhenModuleNull(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
@@ -87,7 +87,7 @@ final class ChanServBotTest extends TestCase
     }
 
     #[Test]
-    public function sendNotice_delegates_to_connection_when_connected_with_module(): void
+    public function sendNoticeDelegatesToConnectionWhenConnectedWithModule(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::atLeastOnce())->method('writeLine')->with(self::anything());

@@ -18,6 +18,7 @@ use PHPUnit\Framework\TestCase;
 final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
 {
     private ChannelSyncCompletedRegistryInterface&MockObject $registry;
+
     private ChannelSyncCompletedMarkerSubscriber $subscriber;
 
     protected function setUp(): void

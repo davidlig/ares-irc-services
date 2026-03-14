@@ -18,13 +18,13 @@ use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
-use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
+use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Network\ChannelMemberRole;
-use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -39,7 +39,9 @@ use PHPUnit\Framework\TestCase;
 final class ChanServChannelRankSubscriberTest extends TestCase
 {
     private const CHANSERV_UID = '001CHAN';
+
     private const CHANNEL_ID = 1;
+
     private const NICK_ID = 10;
 
     private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
@@ -91,7 +93,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function getSubscribedEvents_returns_expected_array(): void
+    public function getSubscribedEventsReturnsExpectedArray(): void
     {
         self::assertSame(
             [
@@ -109,7 +111,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onSyncComplete_with_no_registered_channels_does_not_call_setChannelModes(): void
+    public function onSyncCompleteWithNoRegisteredChannelsDoesNotCallSetChannelModes(): void
     {
         $connection = $this->createStub(ConnectionInterface::class);
         $this->channelRepository->method('listAll')->willReturn([]);
@@ -119,7 +121,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onSyncComplete_when_channel_lookup_returns_null_does_not_call_setChannelModes(): void
+    public function onSyncCompleteWhenChannelLookupReturnsNullDoesNotCallSetChannelModes(): void
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
@@ -135,7 +137,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onSyncComplete_with_registered_channel_and_member_calls_setChannelModes(): void
+    public function onSyncCompleteWithRegisteredChannelAndMemberCallsSetChannelModes(): void
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
@@ -176,7 +178,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
         $this->accessRepository->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($accessStub);
         $this->levelRepository->method('findByChannelAndKey')->willReturnCallback(
-            fn (int $channelId, string $key): ?ChannelLevel => match ($key) {
+            static fn (int $channelId, string $key): ?ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel($channelId, $key, 200),
                 ChannelLevel::KEY_AUTOOP => new ChannelLevel($channelId, $key, 100),
                 default => null,
@@ -190,7 +192,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onUserJoinedChannel_when_channel_not_registered_does_not_call_setChannelMemberMode(): void
+    public function onUserJoinedChannelWhenChannelNotRegisteredDoesNotCallSetChannelMemberMode(): void
     {
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
@@ -204,7 +206,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onUserJoinedChannel_when_registered_and_identified_grants_desired_prefix(): void
+    public function onUserJoinedChannelWhenRegisteredAndIdentifiedGrantsDesiredPrefix(): void
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
@@ -234,7 +236,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
         $this->accessRepository->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($accessStub);
         $this->levelRepository->method('findByChannelAndKey')->willReturnCallback(
-            fn (int $channelId, string $key): ?ChannelLevel => match ($key) {
+            static fn (int $channelId, string $key): ?ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel($channelId, $key, 200),
                 ChannelLevel::KEY_AUTOOP => new ChannelLevel($channelId, $key, 100),
                 default => null,
@@ -252,7 +254,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onMessageReceived_snapshots_pending_registry(): void
+    public function onMessageReceivedSnapshotsPendingRegistry(): void
     {
         $this->syncPendingRegistry->add('#test');
         $this->subscriber->onMessageReceived(new MessageReceivedEvent(new IRCMessage('PING')));
@@ -260,7 +262,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onIrcMessageProcessed_syncs_pending_channels_and_removes_them(): void
+    public function onIrcMessageProcessedSyncsPendingChannelsAndRemovesThem(): void
     {
         $this->syncPendingRegistry->add('#test');
         $this->syncPendingRegistry->snapshotPendingAtStart();
