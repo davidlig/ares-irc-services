@@ -163,4 +163,82 @@ final class NickProtectionServiceTest extends TestCase
         self::assertNotNull($account->getLastSeenAt());
         self::assertStringContainsString('Leaving', $account->getLastQuitMessage() ?? '');
     }
+
+    #[Test]
+    public function onUserQuitWhenNoAccountDoesNothing(): void
+    {
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn(null);
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new BurstState(),
+            $identifiedRegistry,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+        );
+
+        $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host');
+
+        self::assertNull($identifiedRegistry->findNick('UID1'));
+    }
+
+    #[Test]
+    public function onUserQuitWhenAccountFoundViaIdentifiedRegistryMarksSeenAndSaves(): void
+    {
+        $account = RegisteredNick::createPending('StoredNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'StoredNick');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturnMap([['SomeNick', null], ['StoredNick', $account]]);
+        $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new BurstState(),
+            $identifiedRegistry,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+        );
+
+        $service->onUserQuit('UID1', 'SomeNick', 'Quit', 'id', 'host');
+
+        self::assertNotNull($account->getLastSeenAt());
+        self::assertNull($identifiedRegistry->findNick('UID1'));
+    }
+
+    #[Test]
+    public function enforceProtectionWhenAccountNotRegisteredDoesNothing(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $user = new SenderView('UID1', 'PendingNick', 'i', 'h', 'c', 'ip');
+        $account = RegisteredNick::createPending('PendingNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        self::assertFalse($account->isRegistered());
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+        $notifier->expects(self::never())->method('forceNick');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $notifier,
+            $burstState,
+            new IdentifiedSessionRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+        );
+
+        $service->enforceProtection($user);
+    }
 }

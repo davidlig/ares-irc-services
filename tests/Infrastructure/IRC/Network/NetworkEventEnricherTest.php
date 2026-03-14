@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Network;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Domain\IRC\Event\NickChangeReceivedEvent;
+use App\Domain\IRC\Event\PartReceivedEvent;
 use App\Domain\IRC\Event\QuitReceivedEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
+use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\Repository\ChannelRepositoryInterface;
@@ -113,5 +116,99 @@ final class NetworkEventEnricherTest extends TestCase
         self::assertInstanceOf(UserQuitNetworkEvent::class, $dispatched[1]);
         self::assertSame('001ABC123', $dispatched[1]->uid->value);
         self::assertSame('Bye', $dispatched[1]->reason);
+    }
+
+    #[Test]
+    public function onNickChangeReceivedDispatchesUserNickChangedWhenUserFound(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABC123'),
+            new Nick('OldNick'),
+            new Ident('ident'),
+            'host.example',
+            'cloak.example',
+            'vhost.example',
+            '+i',
+            new DateTimeImmutable('2024-01-01'),
+            'Real',
+            '001',
+            '*',
+        );
+
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+        $skipRegistry = $this->createStub(SkipIdentifiedModeStripRegistryInterface::class);
+        $skipRegistry->method('peek')->willReturn(true);
+
+        $dispatched = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function (object $event) use (&$dispatched): bool {
+                $dispatched[] = $event;
+
+                return true;
+            }))->willReturnCallback(static fn (object $event): object => $event);
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $skipRegistry,
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onNickChangeReceived(new NickChangeReceivedEvent('001ABC123', 'NewNick'));
+
+        self::assertCount(1, $dispatched);
+        self::assertInstanceOf(UserNickChangedEvent::class, $dispatched[0]);
+        self::assertSame('001ABC123', $dispatched[0]->uid->value);
+        self::assertSame('NewNick', $dispatched[0]->newNick->value);
+    }
+
+    #[Test]
+    public function onPartReceivedDispatchesUserLeftChannelWhenUserFound(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABC123'),
+            new Nick('Nick'),
+            new Ident('ident'),
+            'host.example',
+            'cloak.example',
+            'vhost.example',
+            '+i',
+            new DateTimeImmutable('2024-01-01'),
+            'Real',
+            '001',
+            '*',
+        );
+
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $dispatched = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static function (object $event) use (&$dispatched): bool {
+                $dispatched[] = $event;
+
+                return true;
+            }))->willReturnCallback(static fn (object $event): object => $event);
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $channelName = new ChannelName('#test');
+        $enricher->onPartReceived(new PartReceivedEvent('001ABC123', $channelName, 'Bye', false));
+
+        self::assertCount(1, $dispatched);
+        self::assertInstanceOf(UserLeftChannelEvent::class, $dispatched[0]);
+        self::assertSame('001ABC123', $dispatched[0]->uid->value);
+        self::assertSame('#test', $dispatched[0]->channel->value);
+        self::assertSame('Bye', $dispatched[0]->reason);
     }
 }

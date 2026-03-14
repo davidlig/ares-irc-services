@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\ChanServ\Command\Handler;
 
+use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\AccessCommand;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -48,6 +50,19 @@ final class AccessCommandTest extends TestCase
         );
     }
 
+    private function createStubReposAndHelper(): array
+    {
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+
+        return [
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $accessRepo,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            new ChanServAccessHelper($accessRepo, $levelRepo),
+        ];
+    }
+
     #[Test]
     public function replyInvalidChannelWhenFirstArgNotChannel(): void
     {
@@ -57,7 +72,7 @@ final class AccessCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $accessHelper = new \App\Application\ChanServ\ChanServAccessHelper($accessRepo, $levelRepo);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -83,7 +98,7 @@ final class AccessCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $accessHelper = new \App\Application\ChanServ\ChanServAccessHelper($accessRepo, $levelRepo);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -109,7 +124,7 @@ final class AccessCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $accessHelper = new \App\Application\ChanServ\ChanServAccessHelper($accessRepo, $levelRepo);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $translator = $this->createStub(TranslatorInterface::class);
@@ -120,5 +135,362 @@ final class AccessCommandTest extends TestCase
         $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
 
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
+    }
+
+    private function createChannelMock(int $channelId = 1, int $founderNickId = 1): RegisteredChannel
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->method('getId')->willReturn($channelId);
+        $channel->method('getFounderNickId')->willReturn($founderNickId);
+        $channel->method('isFounder')->willReturnCallback(static fn (int $id): bool => $id === $founderNickId);
+        $channel->method('getName')->willReturn('#test');
+
+        return $channel;
+    }
+
+    #[Test]
+    public function listWithEmptyEntriesRepliesHeaderAndEmpty(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo->method('listByChannel')->willReturn([]);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
+
+        self::assertSame(['access.list.header', 'access.list.empty'], $messages);
+    }
+
+    #[Test]
+    public function listWithEntriesRepliesHeaderAndRawLines(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        $access1 = new ChannelAccess(1, 10, 100);
+        $access2 = new ChannelAccess(1, 20, 50);
+        $nick10 = $this->createStub(RegisteredNick::class);
+        $nick10->method('getNickname')->willReturn('NickTen');
+        $nick20 = $this->createStub(RegisteredNick::class);
+        $nick20->method('getNickname')->willReturn('NickTwenty');
+
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo->method('listByChannel')->willReturn([$access1, $access2]);
+        $nickRepo->method('findById')->willReturnMap([[10, $nick10], [20, $nick20]]);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
+
+        self::assertSame(['access.list.header', '  NickTen 100', '  NickTwenty 50'], $messages);
+    }
+
+    #[Test]
+    public function listInsufficientAccessThrows(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(99);
+        $channel = $this->createChannelMock(1, 1);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn(null);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $accessRepo->method('listByChannel')->willReturn([]);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+
+        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function unknownSubcommandRepliesAccessUnknownSub(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'INVALID'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('access.unknown_sub', $messages[0]);
+    }
+
+    #[Test]
+    public function addSuccessNewEntrySavesAndReplies(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        $targetNick = $this->createStub(RegisteredNick::class);
+        $targetNick->method('getId')->willReturn(2);
+
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo->method('countByChannel')->willReturn(0);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $nickRepo->method('findByNick')->willReturn($targetNick);
+
+        $saved = null;
+        $accessRepo->method('save')->willReturnCallback(static function ($entity) use (&$saved): void {
+            $saved = $entity;
+        });
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '100'], $notifier, $translator));
+
+        self::assertSame(['access.add.done'], $messages);
+        self::assertInstanceOf(ChannelAccess::class, $saved);
+        self::assertSame(1, $saved->getChannelId());
+        self::assertSame(2, $saved->getNickId());
+        self::assertSame(100, $saved->getLevel());
+    }
+
+    #[Test]
+    public function addSyntaxErrorRepliesErrorSyntax(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '', '100'], $notifier, $translator));
+
+        self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function addLevelOutOfRangeRepliesAccessLevelRange(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'SomeNick', '0'], $notifier, $translator));
+
+        self::assertSame(['access.level_range'], $messages);
+    }
+
+    #[Test]
+    public function addNickNotRegisteredRepliesError(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo->method('findByNick')->willReturn(null);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Unregistered', '100'], $notifier, $translator));
+
+        self::assertSame(['error.nick_not_registered'], $messages);
+    }
+
+    #[Test]
+    public function addFounderNotInListRepliesError(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        $targetNick = $this->createStub(RegisteredNick::class);
+        $targetNick->method('getId')->willReturn(1);
+
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo->method('countByChannel')->willReturn(0);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $nickRepo->method('findByNick')->willReturn($targetNick);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Founder', '100'], $notifier, $translator));
+
+        self::assertSame(['access.founder_not_in_list'], $messages);
+    }
+
+    #[Test]
+    public function delSuccessRemovesAndReplies(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        $targetNick = $this->createStub(RegisteredNick::class);
+        $targetNick->method('getId')->willReturn(2);
+        $existing = new ChannelAccess(1, 2, 50);
+
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo->method('findByChannelAndNick')->willReturn($existing);
+        $nickRepo->method('findByNick')->willReturn($targetNick);
+
+        $removed = null;
+        $accessRepo->method('remove')->willReturnCallback(static function ($entity) use (&$removed): void {
+            $removed = $entity;
+        });
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator));
+
+        self::assertSame(['access.del.done'], $messages);
+        self::assertSame($existing, $removed);
+    }
+
+    #[Test]
+    public function delSyntaxErrorRepliesErrorSyntax(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '   '], $notifier, $translator));
+
+        self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function delNotInListRepliesAccessDelNotInList(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createChannelMock(1, 1);
+        $targetNick = $this->createStub(RegisteredNick::class);
+        $targetNick->method('getId')->willReturn(2);
+
+        [$channelRepo, $accessRepo, $nickRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $nickRepo->method('findByNick')->willReturn($targetNick);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator));
+
+        self::assertSame(['access.del.not_in_list'], $messages);
     }
 }

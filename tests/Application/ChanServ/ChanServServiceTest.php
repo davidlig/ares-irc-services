@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -462,5 +463,100 @@ final class ChanServServiceTest extends TestCase
         $service->dispatch('TWOARGS onlyone', $sender);
 
         self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
+    public function whenHandlerThrowsGenericThrowableLogsAndRethrows(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+
+        $throwingHandler = new class implements ChanServCommandInterface {
+            public function getName(): string
+            {
+                return 'THROW';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                throw new RuntimeException('Handler failed for test');
+            }
+        };
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')
+            ->with(
+                'ChanServ dispatch error: Handler failed for test',
+                self::callback(static fn (array $context): bool => isset($context['exception']) && $context['exception'] instanceof RuntimeException
+                        && isset($context['sender']) && 'UID1' === $context['sender'])
+            );
+
+        $registry = new ChanServCommandRegistry([$throwingHandler]);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = new ChanServService(
+            $registry,
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $nickRepository,
+            $this->createStub(ChanServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            'en',
+            'UTC',
+            $logger,
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Handler failed for test');
+
+        $service->dispatch('THROW', $sender);
     }
 }
