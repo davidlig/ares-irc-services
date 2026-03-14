@@ -24,4 +24,27 @@ final class SendEmailHandlerTest extends TestCase
         $handler = new SendEmailHandler($mailer);
         $handler(new SendEmail('to@example.com', 'Subject', 'Body content'));
     }
+
+    #[Test]
+    public function invokeForwardsEmptyBodyAndSubjectToMailer(): void
+    {
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects(self::once())->method('send')
+            ->with('a@b.co', '', '');
+
+        $handler = new SendEmailHandler($mailer);
+        $handler(new SendEmail('a@b.co', '', ''));
+    }
+
+    #[Test]
+    public function eachInvocationCallsMailerOnce(): void
+    {
+        $mailer = $this->createMock(MailerInterface::class);
+        $mailer->expects(self::exactly(2))->method('send')
+            ->willReturnCallback(static function (): void {});
+
+        $handler = new SendEmailHandler($mailer);
+        $handler(new SendEmail('one@example.com', 'First', 'Body one'));
+        $handler(new SendEmail('two@example.com', 'Second', 'Body two'));
+    }
 }
