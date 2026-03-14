@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\NickServ\Bot;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
+use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
@@ -103,5 +104,51 @@ final class NickServBotTest extends TestCase
         $this->sendNoticePort->expects(self::once())->method('sendNotice')->with('001USER', 'Hello');
 
         $this->bot->sendNotice('001USER', 'Hello');
+    }
+
+    #[Test]
+    public function sendMessageDelegatesToPort(): void
+    {
+        $this->sendNoticePort->expects(self::once())->method('sendMessage')
+            ->with('001USER', 'Message', 'NOTICE');
+
+        $this->bot->sendMessage('001USER', 'Message', 'NOTICE');
+    }
+
+    #[Test]
+    public function setUserAccountDelegatesToModuleWhenPresent(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('setUserAccount')
+            ->with(self::anything(), '001USER', 'AccountName');
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $this->connectionHolder->setProtocolModule($module);
+
+        $localUserModeSync = $this->createMock(LocalUserModeSyncInterface::class);
+        $localUserModeSync->expects(self::once())->method('apply')
+            ->with(self::callback(static fn ($u): bool => '001USER' === $u->value), '+r');
+
+        $bot = new NickServBot(
+            $this->connectionHolder,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->sendNoticePort,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $localUserModeSync,
+            self::HOSTNAME,
+            self::NICKSERV_UID,
+        );
+
+        $bot->setUserAccount('001USER', 'AccountName');
+    }
+
+    #[Test]
+    public function setUserAccountDoesNothingWhenModuleNull(): void
+    {
+        self::assertNull($this->connectionHolder->getProtocolModule());
+        $this->bot->setUserAccount('001USER', 'AccountName');
+        self::assertNull($this->connectionHolder->getProtocolModule());
     }
 }
