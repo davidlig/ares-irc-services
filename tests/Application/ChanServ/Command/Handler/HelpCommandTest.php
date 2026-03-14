@@ -341,4 +341,86 @@ final class HelpCommandTest extends TestCase
         self::assertStringContainsString('help.intro_expiration', $all);
         self::assertContains('help.footer', $messages);
     }
+
+    #[Test]
+    public function twoArgsWithValidSubCommandShowsSubCommandHelp(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $setHandler = new class implements ChanServCommandInterface {
+            public function getName(): string
+            {
+                return 'SET';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'set.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'set.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'set.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [
+                    [
+                        'name' => 'FOUNDER',
+                        'desc_key' => 'set.founder.desc',
+                        'help_key' => 'set.founder.help',
+                        'syntax_key' => 'set.founder.syntax',
+                    ],
+                ];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(ChanServContext $c): void
+            {
+            }
+        };
+        $registry = new ChanServCommandRegistry([$setHandler]);
+
+        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd->execute($this->createContext(['SET', 'FOUNDER'], $notifier, $translator, $registry));
+
+        self::assertContains('set.founder.help', $messages);
+        self::assertContains('help.footer', $messages);
+    }
 }
