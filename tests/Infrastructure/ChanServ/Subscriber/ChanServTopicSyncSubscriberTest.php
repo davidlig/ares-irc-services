@@ -11,14 +11,12 @@ use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\FtopicReceivedEvent;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServTopicSyncSubscriber::class)]
 final class ChanServTopicSyncSubscriberTest extends TestCase
 {
@@ -52,6 +50,11 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     #[Test]
     public function subscribesToFtopicReceivedEvent(): void
     {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
+        $this->logger->expects(self::never())->method('warning');
+
         self::assertSame(
             [FtopicReceivedEvent::class => ['onTopicReceived', 0]],
             ChanServTopicSyncSubscriber::getSubscribedEvents(),
@@ -62,8 +65,8 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     public function reAppliesStoredTopicWhenTopicLockEnabled(): void
     {
         $registered = $this->createMock(RegisteredChannel::class);
-        $registered->method('isTopicLock')->willReturn(true);
-        $registered->method('getTopic')->willReturn('Locked topic from DB');
+        $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(true);
+        $registered->expects(self::atLeastOnce())->method('getTopic')->willReturn('Locked topic from DB');
 
         $this->channelRepository
             ->expects(self::once())
@@ -79,6 +82,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->syncCompletedRegistry
             ->expects(self::never())
             ->method('isSyncCompleted');
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new FtopicReceivedEvent(
             channelName: new ChannelName('#test'),
@@ -101,6 +105,8 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
+        $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new FtopicReceivedEvent(
             channelName: new ChannelName('#test'),
@@ -114,8 +120,8 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     public function doesNothingWhenTopicLockEnabledButNoStoredTopic(): void
     {
         $registered = $this->createMock(RegisteredChannel::class);
-        $registered->method('isTopicLock')->willReturn(true);
-        $registered->method('getTopic')->willReturn(null);
+        $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(true);
+        $registered->expects(self::atLeastOnce())->method('getTopic')->willReturn(null);
 
         $this->channelRepository
             ->expects(self::once())
@@ -126,6 +132,8 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelTopic');
+        $this->syncCompletedRegistry->expects(self::atLeastOnce())->method('isSyncCompleted')->with('#test')->willReturn(false);
+        $this->logger->expects(self::never())->method('warning');
 
         $event = new FtopicReceivedEvent(
             channelName: new ChannelName('#test'),
@@ -139,7 +147,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     public function doesNotPersistWhenChannelSyncNotCompleted(): void
     {
         $registered = $this->createMock(RegisteredChannel::class);
-        $registered->method('isTopicLock')->willReturn(false);
+        $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
 
         $this->channelRepository
             ->expects(self::once())
@@ -156,6 +164,9 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelRepository
             ->expects(self::never())
             ->method('save');
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new FtopicReceivedEvent(
             channelName: new ChannelName('#test'),
@@ -169,7 +180,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     public function persistsTopicWhenSyncCompleted(): void
     {
         $registered = $this->createMock(RegisteredChannel::class);
-        $registered->method('isTopicLock')->willReturn(false);
+        $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
         $registered->expects(self::once())->method('updateTopic')->with('New topic', 'User');
 
         $this->channelRepository
@@ -194,6 +205,9 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('save')
             ->with($registered);
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new FtopicReceivedEvent(
             channelName: new ChannelName('#test'),
@@ -208,7 +222,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     public function doesNotPersistWithinGracePeriod(): void
     {
         $registered = $this->createMock(RegisteredChannel::class);
-        $registered->method('isTopicLock')->willReturn(false);
+        $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
 
         $this->channelRepository
             ->expects(self::once())
@@ -231,6 +245,9 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelRepository
             ->expects(self::never())
             ->method('save');
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new FtopicReceivedEvent(
             channelName: new ChannelName('#test'),
@@ -244,7 +261,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     public function ignoresSetterNickWhenServicesUser(): void
     {
         $registered = $this->createMock(RegisteredChannel::class);
-        $registered->method('isTopicLock')->willReturn(false);
+        $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(false);
         $registered->expects(self::once())->method('updateTopic')->with('New topic', null);
 
         $this->channelRepository
@@ -254,13 +271,18 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->willReturn($registered);
 
         $this->syncCompletedRegistry
+            ->expects(self::atLeastOnce())
             ->method('isSyncCompleted')->willReturn(true);
         $this->syncCompletedRegistry
+            ->expects(self::atLeastOnce())
             ->method('getSyncCompletedAt')->willReturn(microtime(true) - 5);
 
         $this->channelRepository
             ->expects(self::once())
             ->method('save');
+        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $event = new FtopicReceivedEvent(
             channelName: new ChannelName('#test'),
