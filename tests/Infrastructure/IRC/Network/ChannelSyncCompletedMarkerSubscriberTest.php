@@ -9,11 +9,13 @@ use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\IRC\Network\ChannelSyncCompletedMarkerSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChannelSyncCompletedMarkerSubscriber::class)]
 final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
 {

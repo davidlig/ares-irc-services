@@ -10,11 +10,13 @@ use App\Application\Port\SenderView;
 use App\Domain\IRC\Event\UserModeChangedEvent;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\NickServ\Subscriber\VhostClearOnDeidentifySubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(VhostClearOnDeidentifySubscriber::class)]
 final class VhostClearOnDeidentifySubscriberTest extends TestCase
 {

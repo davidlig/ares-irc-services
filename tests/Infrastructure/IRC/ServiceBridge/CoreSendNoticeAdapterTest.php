@@ -10,10 +10,12 @@ use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(CoreSendNoticeAdapter::class)]
 final class CoreSendNoticeAdapterTest extends TestCase
 {

@@ -25,12 +25,14 @@ use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\NetworkStateSubscriber;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NetworkStateSubscriber::class)]
 final class NetworkStateSubscriberTest extends TestCase
 {

@@ -2,6 +2,12 @@
 
 Use this skill when working on tests, coverage, or test prioritisation. Full detail: [testing-coverage-priorities.md](testing-coverage-priorities.md).
 
+## CRITICAL RULES
+
+**CRITICAL RULE (Deprecations):** Tests must NEVER contain deprecations. Always execute tests using the flags `--display-deprecations --display-phpunit-deprecations`. If PHPUnit-specific deprecations appear, read `composer.json` to identify the exact PHPUnit version installed, search the official PHPUnit documentation for that specific version using your web search capabilities, and apply the correct modern syntax to fix them.
+
+**CRITICAL RULE (Coverage Analysis):** When checking for test coverage gaps, you MUST always generate the coverage report and analyze the `var/coverage/clover.xml` file. Use the `<metrics>` and `<line>` tags inside this XML to identify exactly which classes, methods, and lines lack coverage before writing any new tests.
+
 ## Coverage
 
 - Requires **PCOV** or **Xdebug**. Check: `php -m | grep -E 'pcov|xdebug'`.
@@ -26,6 +32,7 @@ Use this skill when working on tests, coverage, or test prioritisation. Full det
 
 ```bash
 ./vendor/bin/phpunit --no-coverage
+./vendor/bin/phpunit --display-deprecations --display-phpunit-deprecations
 ./vendor/bin/phpunit tests/Domain --no-coverage
 ./vendor/bin/phpunit tests/Application --no-coverage
 ./vendor/bin/phpunit --coverage-text --coverage-filter=src

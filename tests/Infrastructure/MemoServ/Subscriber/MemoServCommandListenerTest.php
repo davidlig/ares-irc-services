@@ -19,6 +19,7 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\MemoServ\Bot\MemoServBot;
 use App\Infrastructure\MemoServ\Subscriber\MemoServCommandListener;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -29,6 +30,7 @@ use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServCommandListener::class)]
 final class MemoServCommandListenerTest extends TestCase
 {

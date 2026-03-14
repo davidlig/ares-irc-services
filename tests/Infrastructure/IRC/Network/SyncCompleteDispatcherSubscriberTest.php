@@ -12,11 +12,13 @@ use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Message\MessageDirection;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Network\SyncCompleteDispatcherSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(SyncCompleteDispatcherSubscriber::class)]
 final class SyncCompleteDispatcherSubscriberTest extends TestCase
 {

@@ -9,10 +9,12 @@ use App\Application\IRC\Connect\ConnectToServerHandler;
 use App\Application\IRC\IRCClient;
 use App\Application\IRC\IRCClientFactoryInterface;
 use App\Domain\IRC\Server\ServerLink;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ConnectToServerHandler::class)]
 final class ConnectToServerHandlerTest extends TestCase
 {

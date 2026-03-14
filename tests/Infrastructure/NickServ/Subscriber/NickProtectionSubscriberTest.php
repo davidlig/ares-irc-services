@@ -25,12 +25,14 @@ use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NickProtectionSubscriber::class)]
 final class NickProtectionSubscriberTest extends TestCase
 {

@@ -6,11 +6,13 @@ namespace App\Tests\Application\NickServ\Maintenance;
 
 use App\Application\Maintenance\InMemoryPrunableInterface;
 use App\Application\NickServ\Maintenance\PruneMemoryRegistriesTask;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(PruneMemoryRegistriesTask::class)]
 final class PruneMemoryRegistriesTaskTest extends TestCase
 {

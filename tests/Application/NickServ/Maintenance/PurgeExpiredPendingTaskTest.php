@@ -6,11 +6,13 @@ namespace App\Tests\Application\NickServ\Maintenance;
 
 use App\Application\NickServ\Maintenance\PurgeExpiredPendingTask;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(PurgeExpiredPendingTask::class)]
 final class PurgeExpiredPendingTaskTest extends TestCase
 {

@@ -8,12 +8,14 @@ use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
 use App\Infrastructure\NickServ\Security\IrcServiceUser;
 use App\Infrastructure\NickServ\Security\Voter\OperVoter;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(OperVoter::class)]
 final class OperVoterTest extends TestCase
 {

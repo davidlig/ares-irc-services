@@ -11,12 +11,14 @@ use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\FtopicReceivedEvent;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServTopicSyncSubscriber::class)]
 final class ChanServTopicSyncSubscriberTest extends TestCase
 {

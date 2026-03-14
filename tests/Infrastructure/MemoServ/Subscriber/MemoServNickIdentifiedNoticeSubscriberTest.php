@@ -10,12 +10,14 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServNickIdentifiedNoticeSubscriber::class)]
 final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
 {

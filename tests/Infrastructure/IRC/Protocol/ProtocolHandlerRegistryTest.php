@@ -7,10 +7,12 @@ namespace App\Tests\Infrastructure\IRC\Protocol;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Protocol\ProtocolHandlerRegistry;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ProtocolHandlerRegistry::class)]
 final class ProtocolHandlerRegistryTest extends TestCase
 {

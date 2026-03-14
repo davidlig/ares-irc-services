@@ -52,7 +52,8 @@ final class SocketConnectionTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Failed to connect to');
 
-        $conn->connect();
+        // Intentional connection to closed port; suppress expected PHP warning (Connection refused)
+        @$conn->connect();
     }
 
     #[Test]

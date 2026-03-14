@@ -23,6 +23,7 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\Bot\NickServBot;
 use App\Infrastructure\NickServ\Subscriber\NickServCommandListener;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -32,6 +33,7 @@ use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NickServCommandListener::class)]
 final class NickServCommandListenerTest extends TestCase
 {
