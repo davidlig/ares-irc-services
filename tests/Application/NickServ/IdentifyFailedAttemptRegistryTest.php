@@ -58,4 +58,12 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $removed = $registry->pruneStale(0);
         self::assertGreaterThanOrEqual(0, $removed);
     }
+
+    #[Test]
+    public function recordFailedAttemptUnsetsKeyWhenAllTimestampsOutsideWindow(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        $registry->recordFailedAttempt('key', 0);
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 60, 30));
+    }
 }

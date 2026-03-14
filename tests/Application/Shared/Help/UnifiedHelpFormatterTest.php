@@ -108,6 +108,41 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function showCommandHelpWithSubCommandsShowsOptionsBlock(): void
+    {
+        $handler = new class {
+            public function getName(): string
+            {
+                return 'SET';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.set';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [
+                    ['name' => 'FOUNDER', 'desc_key' => 'help.set.founder'],
+                ];
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.set';
+            }
+        };
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->expects(self::atLeastOnce())->method('reply');
+        $context->expects(self::atLeastOnce())->method('replyRaw');
+        $context->method('trans')->willReturn('x');
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showCommandHelp($context, $handler);
+    }
+
+    #[Test]
     public function showSubCommandHelpCallsReplyWithSubData(): void
     {
         $context = $this->createMock(HelpFormatterContextInterface::class);
