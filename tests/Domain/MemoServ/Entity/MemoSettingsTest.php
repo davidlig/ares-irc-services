@@ -43,6 +43,24 @@ final class MemoSettingsTest extends TestCase
     }
 
     #[Test]
+    public function constructorThrowsWhenNeitherSet(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Exactly one of targetNickId or targetChannelId must be set');
+
+        new MemoSettings(null, null, true);
+    }
+
+    #[Test]
+    public function setIdAndGetIdUsedByDoctrine(): void
+    {
+        $settings = new MemoSettings(10, null, true);
+        $settings->setId(7);
+
+        self::assertSame(7, $settings->getId());
+    }
+
+    #[Test]
     public function setEnabledUpdatesValue(): void
     {
         $settings = new MemoSettings(10, null, false);

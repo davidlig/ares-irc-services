@@ -50,4 +50,13 @@ final class MemoIgnoreTest extends TestCase
 
         new MemoIgnore(null, null, 5);
     }
+
+    #[Test]
+    public function setIdAndGetIdUsedByDoctrine(): void
+    {
+        $ignore = new MemoIgnore(10, null, 5);
+        $ignore->setId(99);
+
+        self::assertSame(99, $ignore->getId());
+    }
 }

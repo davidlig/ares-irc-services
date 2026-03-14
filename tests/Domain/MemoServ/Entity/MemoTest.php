@@ -75,4 +75,36 @@ final class MemoTest extends TestCase
 
         self::assertSame($at->getTimestamp(), $memo->getReadAt()?->getTimestamp());
     }
+
+    #[Test]
+    public function getCreatedAtReturnsDefaultWhenNotProvided(): void
+    {
+        $memo = new Memo(10, null, 5, 'Hello');
+
+        self::assertInstanceOf(DateTimeImmutable::class, $memo->getCreatedAt());
+    }
+
+    #[Test]
+    public function getCreatedAtReturnsExplicitDateWhenProvided(): void
+    {
+        $createdAt = new DateTimeImmutable('2024-01-15 10:30:00');
+        $memo = new Memo(10, null, 5, 'Hello', $createdAt);
+
+        self::assertSame($createdAt, $memo->getCreatedAt());
+    }
+
+    #[Test]
+    public function setIdAndGetIdUsedByDoctrine(): void
+    {
+        $memo = new Memo(10, null, 5, 'Hello');
+        $memo->setId(42);
+
+        self::assertSame(42, $memo->getId());
+    }
+
+    #[Test]
+    public function messageMaxLengthConstant(): void
+    {
+        self::assertSame(255, Memo::MESSAGE_MAX_LENGTH);
+    }
 }
