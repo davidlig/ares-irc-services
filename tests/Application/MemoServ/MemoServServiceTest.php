@@ -10,12 +10,14 @@ use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\MemoServ\MemoServService;
 use App\Application\Port\SenderView;
+use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -425,5 +427,172 @@ final class MemoServServiceTest extends TestCase
         $service->dispatch('TWOARGS onlyone', $sender);
 
         self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
+    public function whenHandlerThrowsMemoDisabledExceptionRepliesServiceDisabled(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+
+        $throwMemoDisabled = new class implements MemoServCommandInterface {
+            public function getName(): string
+            {
+                return 'DISABLED';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $context): void
+            {
+                throw MemoDisabledException::forTarget('TargetNick');
+            }
+        };
+
+        $notifier = $this->createMock(MemoServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')
+            ->with($sender->uid, self::stringContains('service_disabled'), 'NOTICE');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+
+        $service = new MemoServService(
+            new MemoServCommandRegistry([$throwMemoDisabled]),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $notifier,
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $translator,
+        );
+
+        $service->dispatch('DISABLED', $sender);
+    }
+
+    #[Test]
+    public function whenHandlerThrowsGenericThrowableLogsAndRethrows(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+
+        $throwingHandler = new class implements MemoServCommandInterface {
+            public function getName(): string
+            {
+                return 'THROW';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $context): void
+            {
+                throw new RuntimeException('Handler failed for test');
+            }
+        };
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')
+            ->with(
+                'MemoServ dispatch error: Handler failed for test',
+                self::callback(static fn (array $context): bool => isset($context['exception']) && $context['exception'] instanceof RuntimeException
+                    && isset($context['sender']) && 'UID1' === $context['sender'])
+            );
+
+        $service = new MemoServService(
+            new MemoServCommandRegistry([$throwingHandler]),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MemoServNotifierInterface::class),
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            defaultLanguage: 'en',
+            defaultTimezone: 'UTC',
+            logger: $logger,
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Handler failed for test');
+
+        $service->dispatch('THROW', $sender);
     }
 }

@@ -241,4 +241,38 @@ final class NickProtectionServiceTest extends TestCase
 
         $service->enforceProtection($user);
     }
+
+    #[Test]
+    public function onNickChangedWhenNotIdentifiedEnforcesProtection(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $account = RegisteredNick::createPending('RegNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+        $user = new SenderView('UID1', 'RegNick', 'i', 'h', 'c', 'ip', false);
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::exactly(2))->method('sendMessage');
+        $notifier->expects(self::once())->method('forceNick')->with('UID1', self::stringStartsWith('Guest-'));
+        $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
+        $pendingRegistry->method('consume')->willReturn(false);
+        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $service = new NickProtectionService(
+            $repo,
+            $userLookup,
+            $notifier,
+            $burstState,
+            new IdentifiedSessionRegistry(),
+            $pendingRegistry,
+            $translator,
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', 'RegNick');
+    }
 }
