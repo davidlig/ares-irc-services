@@ -217,4 +217,108 @@ final class ChanServAccessHelperTest extends TestCase
 
         self::assertSame('o', $helper->getDesiredPrefixLetter($channel, 10, $modeSupport));
     }
+
+    #[Test]
+    public function getDesiredPrefixLetterReturnsAdminForNonFounderWhenLevelMeetsAutoAdmin(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(500);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturnCallback(
+            static fn (int $c, string $key): ?ChannelLevel => match ($key) {
+                ChannelLevel::KEY_AUTOADMIN => new ChannelLevel(1, $key, 400),
+                ChannelLevel::KEY_AUTOOP => new ChannelLevel(1, $key, 300),
+                default => new ChannelLevel(1, $key, 0),
+            }
+        );
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getSupportedPrefixModes')->willReturn(['v', 'h', 'o', 'a', 'q']);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame('a', $helper->getDesiredPrefixLetter($channel, 10, $modeSupport));
+    }
+
+    #[Test]
+    public function getDesiredPrefixLetterReturnsHalfopForNonFounderWhenLevelMeetsAutoHalfopOnly(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(350);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturnCallback(
+            static fn (int $c, string $key): ?ChannelLevel => match ($key) {
+                ChannelLevel::KEY_AUTOADMIN => new ChannelLevel(1, $key, 499),
+                ChannelLevel::KEY_AUTOOP => new ChannelLevel(1, $key, 400),
+                ChannelLevel::KEY_AUTOHALFOP => new ChannelLevel(1, $key, 300),
+                ChannelLevel::KEY_AUTOVOICE => new ChannelLevel(1, $key, 100),
+                default => new ChannelLevel(1, $key, 0),
+            }
+        );
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getSupportedPrefixModes')->willReturn(['v', 'h', 'o', 'a']);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame('h', $helper->getDesiredPrefixLetter($channel, 10, $modeSupport));
+    }
+
+    #[Test]
+    public function getDesiredPrefixLetterReturnsVoiceForNonFounderWhenLevelMeetsAutoVoiceOnly(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(150);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturnCallback(
+            static fn (int $c, string $key): ?ChannelLevel => match ($key) {
+                ChannelLevel::KEY_AUTOADMIN => new ChannelLevel(1, $key, 499),
+                ChannelLevel::KEY_AUTOOP => new ChannelLevel(1, $key, 400),
+                ChannelLevel::KEY_AUTOHALFOP => new ChannelLevel(1, $key, 300),
+                ChannelLevel::KEY_AUTOVOICE => new ChannelLevel(1, $key, 100),
+                default => new ChannelLevel(1, $key, 0),
+            }
+        );
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getSupportedPrefixModes')->willReturn(['v', 'h', 'o', 'a']);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame('v', $helper->getDesiredPrefixLetter($channel, 10, $modeSupport));
+    }
+
+    #[Test]
+    public function getDesiredPrefixLetterReturnsEmptyWhenNonFounderLevelBelowAllAutoLevels(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(1);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturnCallback(
+            static fn (int $c, string $key): ?ChannelLevel => new ChannelLevel(1, $key, 100)
+        );
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getSupportedPrefixModes')->willReturn(['v', 'h', 'o', 'a']);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame('', $helper->getDesiredPrefixLetter($channel, 10, $modeSupport));
+    }
 }
