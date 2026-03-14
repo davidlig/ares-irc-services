@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
+use App\Application\NickServ\Command\Handler\StatusCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\Command\Handler\StatusCommand;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -53,7 +53,7 @@ final class StatusCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -77,7 +77,7 @@ final class StatusCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -103,7 +103,7 @@ final class StatusCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -127,7 +127,7 @@ final class StatusCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -151,7 +151,7 @@ final class StatusCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);

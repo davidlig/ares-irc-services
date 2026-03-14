@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\ChanServ;
 
-use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\ChanServService;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
+use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
@@ -19,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ChanServService::class)]
@@ -39,22 +40,67 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
         $logger = $this->createStub(LoggerInterface::class);
 
-        $contextHolder = new \stdClass();
+        $contextHolder = new stdClass();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements ChanServCommandInterface {
-            public function __construct(private readonly \stdClass $holder) {}
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
 
-            public function getName(): string { return 'FOO'; }
-            public function getAliases(): array { return []; }
-            public function getMinArgs(): int { return 1; }
-            public function getSyntaxKey(): string { return 'dummy.syntax'; }
-            public function getHelpKey(): string { return 'dummy.help'; }
-            public function getOrder(): int { return 0; }
-            public function getShortDescKey(): string { return 'dummy.short'; }
-            public function getSubCommandHelp(): array { return []; }
-            public function isOperOnly(): bool { return false; }
-            public function getRequiredPermission(): ?string { return null; }
-            public function execute(ChanServContext $context): void { $this->holder->context = $context; }
+            public function getName(): string
+            {
+                return 'FOO';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'dummy.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'dummy.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'dummy.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
         };
 
         $registry = new ChanServCommandRegistry([$handler]);

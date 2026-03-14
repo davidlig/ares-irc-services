@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Application\MemoServ\Command\Handler;
 
 use App\Application\ChanServ\ChanServAccessHelper;
+use App\Application\MemoServ\Command\Handler\DelCommand;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
-use App\Application\MemoServ\Command\Handler\DelCommand;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
@@ -56,7 +56,7 @@ final class DelCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -81,7 +81,7 @@ final class DelCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -107,7 +107,7 @@ final class DelCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -135,7 +135,7 @@ final class DelCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);

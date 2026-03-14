@@ -12,7 +12,6 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -50,7 +49,7 @@ final class SetDescHandlerTest extends TestCase
         $channel = $this->createStub(RegisteredChannel::class);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -71,7 +70,7 @@ final class SetDescHandlerTest extends TestCase
         $channelRepo->expects(self::once())->method('save')->with($channel);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);

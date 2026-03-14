@@ -111,7 +111,7 @@ final class SetCommandTest extends TestCase
         );
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -136,7 +136,7 @@ final class SetCommandTest extends TestCase
         );
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -180,7 +180,7 @@ final class SetCommandTest extends TestCase
         );
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);

@@ -11,7 +11,6 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\InviteCommand;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\SenderView;
-use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -58,7 +57,7 @@ final class InviteCommandTest extends TestCase
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -82,7 +81,7 @@ final class InviteCommandTest extends TestCase
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -132,13 +131,13 @@ final class InviteCommandTest extends TestCase
         $noticesToChannel = [];
         $invites = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(function (string $ch, string $m) use (&$noticesToChannel): void {
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$noticesToChannel): void {
             $noticesToChannel[] = [$ch, $m];
         });
-        $notifier->method('inviteToChannel')->willReturnCallback(function (string $ch, string $uid) use (&$invites): void {
+        $notifier->method('inviteToChannel')->willReturnCallback(static function (string $ch, string $uid) use (&$invites): void {
             $invites[] = [$ch, $uid];
         });
         $translator = $this->createStub(TranslatorInterface::class);

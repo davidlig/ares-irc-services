@@ -10,6 +10,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
+use stdClass;
 
 #[CoversClass(MaintenanceScheduler::class)]
 final class MaintenanceSchedulerTest extends TestCase
@@ -17,10 +19,10 @@ final class MaintenanceSchedulerTest extends TestCase
     #[Test]
     public function tickRunsTasksInOrderWhenIntervalElapsed(): void
     {
-        $holder = new \stdClass();
+        $holder = new stdClass();
         $holder->runOrder = [];
         $taskA = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly \stdClass $holder)
+            public function __construct(private readonly stdClass $holder)
             {
             }
 
@@ -45,7 +47,7 @@ final class MaintenanceSchedulerTest extends TestCase
             }
         };
         $taskB = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly \stdClass $holder)
+            public function __construct(private readonly stdClass $holder)
             {
             }
 
@@ -81,10 +83,10 @@ final class MaintenanceSchedulerTest extends TestCase
     #[Test]
     public function tickStopsCycleWhenTaskThrows(): void
     {
-        $holder = new \stdClass();
+        $holder = new stdClass();
         $holder->runOrder = [];
         $taskOk = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly \stdClass $holder)
+            public function __construct(private readonly stdClass $holder)
             {
             }
 
@@ -109,7 +111,7 @@ final class MaintenanceSchedulerTest extends TestCase
             }
         };
         $taskFails = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly \stdClass $holder)
+            public function __construct(private readonly stdClass $holder)
             {
             }
 
@@ -131,11 +133,11 @@ final class MaintenanceSchedulerTest extends TestCase
             public function run(): void
             {
                 $this->holder->runOrder[] = 'fail';
-                throw new \RuntimeException('Task failed');
+                throw new RuntimeException('Task failed');
             }
         };
         $taskNever = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly \stdClass $holder)
+            public function __construct(private readonly stdClass $holder)
             {
             }
 
@@ -171,10 +173,10 @@ final class MaintenanceSchedulerTest extends TestCase
     #[Test]
     public function tickRunsTaskWithZeroIntervalEveryTime(): void
     {
-        $holder = new \stdClass();
+        $holder = new stdClass();
         $holder->runCount = 0;
         $task = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly \stdClass $holder)
+            public function __construct(private readonly stdClass $holder)
             {
             }
 

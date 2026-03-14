@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
+use App\Application\NickServ\Command\Handler\SetTimezoneHandler;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\Command\Handler\SetTimezoneHandler;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -48,7 +49,7 @@ final class SetTimezoneHandlerTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -70,7 +71,7 @@ final class SetTimezoneHandlerTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -86,12 +87,12 @@ final class SetTimezoneHandlerTest extends TestCase
     public function invalidTimezoneRepliesInvalid(): void
     {
         $account = $this->createStub(RegisteredNick::class);
-        $account->method('changeTimezone')->willThrowException(new \InvalidArgumentException('Invalid'));
+        $account->method('changeTimezone')->willThrowException(new InvalidArgumentException('Invalid'));
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -114,7 +115,7 @@ final class SetTimezoneHandlerTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);

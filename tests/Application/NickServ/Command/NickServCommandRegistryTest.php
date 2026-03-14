@@ -60,19 +60,62 @@ final class NickServCommandRegistryTest extends TestCase
             public function __construct(
                 private readonly string $name,
                 private readonly array $aliases,
-            ) {}
+            ) {
+            }
 
-            public function getName(): string { return $this->name; }
-            public function getAliases(): array { return $this->aliases; }
-            public function getMinArgs(): int { return 0; }
-            public function getSyntaxKey(): string { return ''; }
-            public function getHelpKey(): string { return ''; }
-            public function getOrder(): int { return 0; }
-            public function getShortDescKey(): string { return ''; }
-            public function getSubCommandHelp(): array { return []; }
-            public function isOperOnly(): bool { return false; }
-            public function getRequiredPermission(): ?string { return null; }
-            public function execute(NickServContext $context): void {}
+            public function getName(): string
+            {
+                return $this->name;
+            }
+
+            public function getAliases(): array
+            {
+                return $this->aliases;
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return '';
+            }
+
+            public function getHelpKey(): string
+            {
+                return '';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return '';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(NickServContext $context): void
+            {
+            }
         };
     }
 }

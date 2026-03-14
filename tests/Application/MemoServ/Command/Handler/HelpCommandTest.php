@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\MemoServ\Command\Handler;
 
+use App\Application\MemoServ\Command\Handler\HelpCommand;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
-use App\Application\MemoServ\Command\Handler\HelpCommand;
 use App\Application\Port\SenderView;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -44,24 +44,66 @@ final class HelpCommandTest extends TestCase
     {
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new class() implements MemoServCommandInterface {
-            public function getName(): string { return 'HELP'; }
-            public function getAliases(): array { return ['?']; }
-            public function getMinArgs(): int { return 0; }
-            public function getSyntaxKey(): string { return 'help.syntax'; }
-            public function getHelpKey(): string { return 'help.help'; }
-            public function getOrder(): int { return 99; }
-            public function getShortDescKey(): string { return 'help.short'; }
-            public function getSubCommandHelp(): array { return []; }
-            public function isOperOnly(): bool { return false; }
-            public function getRequiredPermission(): ?string { return null; }
-            public function execute(\App\Application\MemoServ\Command\MemoServContext $c): void {}
+        $handler = new class implements MemoServCommandInterface {
+            public function getName(): string
+            {
+                return 'HELP';
+            }
+
+            public function getAliases(): array
+            {
+                return ['?'];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'help.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 99;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'help.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $c): void
+            {
+            }
         };
         $registry = new MemoServCommandRegistry([$handler]);
 
@@ -76,24 +118,66 @@ final class HelpCommandTest extends TestCase
     {
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new class() implements MemoServCommandInterface {
-            public function getName(): string { return 'SEND'; }
-            public function getAliases(): array { return []; }
-            public function getMinArgs(): int { return 0; }
-            public function getSyntaxKey(): string { return ''; }
-            public function getHelpKey(): string { return 'send.help'; }
-            public function getOrder(): int { return 0; }
-            public function getShortDescKey(): string { return ''; }
-            public function getSubCommandHelp(): array { return []; }
-            public function isOperOnly(): bool { return false; }
-            public function getRequiredPermission(): ?string { return null; }
-            public function execute(\App\Application\MemoServ\Command\MemoServContext $c): void {}
+        $handler = new class implements MemoServCommandInterface {
+            public function getName(): string
+            {
+                return 'SEND';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return '';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'send.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return '';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $c): void
+            {
+            }
         };
         $registry = new MemoServCommandRegistry([$handler]);
 

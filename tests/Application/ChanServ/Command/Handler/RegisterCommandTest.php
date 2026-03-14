@@ -10,7 +10,6 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\RegisterCommand;
 use App\Application\Port\ChannelLookupPort;
-use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -20,6 +19,7 @@ use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RegisterCommand::class)]
@@ -60,7 +60,7 @@ final class RegisterCommandTest extends TestCase
         $throttle = new ChannelRegisterThrottleRegistry();
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -86,7 +86,7 @@ final class RegisterCommandTest extends TestCase
         $throttle = new ChannelRegisterThrottleRegistry();
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -113,7 +113,7 @@ final class RegisterCommandTest extends TestCase
         $channelLookup->method('findByChannelName')->willReturn($channelView);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -142,7 +142,7 @@ final class RegisterCommandTest extends TestCase
         $channelLookup->method('findByChannelName')->willReturn($channelView);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -171,7 +171,7 @@ final class RegisterCommandTest extends TestCase
         $channelLookup->method('findByChannelName')->willReturn($channelView);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -192,13 +192,13 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
-        $channelRepo->expects(self::once())->method('save')->with(self::callback(function ($ch): bool {
+        $channelRepo->expects(self::once())->method('save')->with(self::callback(static function ($ch): bool {
             if (!$ch instanceof \App\Domain\ChanServ\Entity\RegisteredChannel
-                || strtolower($ch->getName()) !== '#test'
-                || $ch->getFounderNickId() !== 10) {
+                || '#test' !== strtolower($ch->getName())
+                || 10 !== $ch->getFounderNickId()) {
                 return false;
             }
-            $ref = new \ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($ch, 1);
 
@@ -212,7 +212,7 @@ final class RegisterCommandTest extends TestCase
         $channelLookup->method('findByChannelName')->willReturn($channelView);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);

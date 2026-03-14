@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
+use App\Application\NickServ\Command\Handler\ResendCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\Command\Handler\ResendCommand;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -72,7 +72,7 @@ final class ResendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -96,7 +96,7 @@ final class ResendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -123,7 +123,7 @@ final class ResendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -143,7 +143,7 @@ final class ResendCommandTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($account);
         $dispatched = [];
         $messageBus = $this->createStub(MessageBusInterface::class);
-        $messageBus->method('dispatch')->willReturnCallback(function (object $m) use (&$dispatched): Envelope {
+        $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
             $dispatched[] = $m;
 
             return new Envelope($m);
@@ -155,7 +155,7 @@ final class ResendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 

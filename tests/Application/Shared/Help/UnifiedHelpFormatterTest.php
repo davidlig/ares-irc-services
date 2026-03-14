@@ -27,14 +27,41 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showGeneralHelpCallsReplyAndReplyRaw(): void
     {
-        $cmd = new class() {
-            public function getName(): string { return 'HELP'; }
-            public function getOrder(): int { return 0; }
-            public function getShortDescKey(): string { return 'short'; }
-            public function getSyntaxKey(): string { return 'syntax'; }
-            public function getHelpKey(): string { return 'help'; }
-            public function getSubCommandHelp(): array { return []; }
-            public function isOperOnly(): bool { return false; }
+        $cmd = new class {
+            public function getName(): string
+            {
+                return 'HELP';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->method('getCommandsForGeneralHelp')->willReturn([$cmd]);
@@ -50,11 +77,26 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showCommandHelpCallsReplyWithHandlerData(): void
     {
-        $handler = new class() {
-            public function getName(): string { return 'REGISTER'; }
-            public function getHelpKey(): string { return 'help.register'; }
-            public function getSubCommandHelp(): array { return []; }
-            public function getSyntaxKey(): string { return 'syntax.register'; }
+        $handler = new class {
+            public function getName(): string
+            {
+                return 'REGISTER';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.register';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.register';
+            }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::exactly(3))->method('reply'); // help.register, help.syntax_label, help.footer

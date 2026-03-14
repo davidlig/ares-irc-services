@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
+use App\Application\NickServ\Command\Handler\SetEmailHandler;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\Command\Handler\SetEmailHandler;
 use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -56,7 +56,7 @@ final class SetEmailHandlerTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -80,7 +80,7 @@ final class SetEmailHandlerTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -105,7 +105,7 @@ final class SetEmailHandlerTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -126,7 +126,7 @@ final class SetEmailHandlerTest extends TestCase
         $pending = new PendingEmailChangeRegistry();
         $dispatched = [];
         $messageBus = $this->createStub(MessageBusInterface::class);
-        $messageBus->method('dispatch')->willReturnCallback(function (object $m) use (&$dispatched): Envelope {
+        $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
             $dispatched[] = $m;
 
             return new Envelope($m);
@@ -137,7 +137,7 @@ final class SetEmailHandlerTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 

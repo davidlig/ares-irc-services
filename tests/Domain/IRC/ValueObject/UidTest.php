@@ -60,4 +60,3 @@ final class UidTest extends TestCase
         self::assertFalse($a->equals($c));
     }
 }
-

@@ -30,8 +30,8 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 423 tests, 974 assertions.
-- **Coverage:** Classes 18.40% (46/250), Methods 26.18% (366/1398), Lines 34.79% (2230/6409).
+- **Suite:** 680 tests, 1477 assertions.
+- **Coverage:** Classes 29.20% (73/250), Methods 36.55% (511/1398), Lines 42.07% (2696/6408).
 - Covered classes are those listed in section 1 and in the coverage report (`--coverage-text`).
 
 The prioritisation below is based on code structure and which parts already have associated tests.
@@ -44,8 +44,11 @@ The prioritisation below is based on code structure and which parts already have
 |-------|--------|
 | **Domain** | Entities (RegisteredNick, RegisteredChannel, ChannelAccess, ChannelLevel, Memo, MemoSettings, MemoIgnore), VOs (NickStatus, Uid, Nick, ChannelName, etc.), IRC events/value (Channel, NetworkUser, IRCMessage, …), exceptions (NickServ, ChanServ, MemoServ). |
 | **Application** | Ports (SenderView, ChannelView), Commands and handlers (NickServ, ChanServ, MemoServ), services (NickServService, ChanServService, MemoServService), registries (PendingVerification, RecoveryToken, RegisterThrottle, MemoSendThrottle, FounderChangeToken, ChannelRegisterThrottle), helpers (ChanServAccessHelper, EmailMasker, SecureToken, VhostValidator, TimezoneHelpProvider), Mail (SendEmail, SendEmailHandler), Maintenance (RunMaintenanceCycle, Scheduler), ConnectToServerCommand, UnifiedHelpFormatter, command registries. |
-| **Infrastructure** | UserMessageTypeResolver, NullChannelModeSupport, UnrealIRCdChannelModeSupport, InspIRCdChannelModeSupport, AbstractProtocolHandler, UnrealIRCdProtocolHandler, InspIRCdProtocolHandler. |
+| **Infrastructure** | UserMessageTypeResolver, NullChannelModeSupport, UnrealIRCdChannelModeSupport, InspIRCdChannelModeSupport, AbstractProtocolHandler, UnrealIRCdProtocolHandler, InspIRCdProtocolHandler, UnrealIRCdProtocolServiceActions, InspIRCdProtocolServiceActions, UnrealIRCdServiceIntroductionFormatter, InspIRCdServiceIntroductionFormatter, UnrealIRCdVhostCommandBuilder, InspIRCdVhostCommandBuilder, ChannelRankSyncPendingRegistry, ChannelSyncCompletedRegistry, PendingNickRestoreRegistry, SensitiveDataRedactor, Argon2PasswordHasher, InMemoryNetworkUserRepository, InMemoryChannelRepository, RegisteredNickDoctrineRepository (integration), RegisteredChannelDoctrineRepository (integration), ChannelAccessDoctrineRepository (integration), MemoDoctrineRepository (integration), MemoSettingsDoctrineRepository (integration), MemoIgnoreDoctrineRepository (integration), ChannelLevelDoctrineRepository (integration), NickServIdentifiedOwnerVoter, OperVoter, DoctrineIdentityMapClearSubscriber, ChanServEntryMsgSubscriber, MemoServNickIdentifiedNoticeSubscriber, MemoServNickDropCleanupSubscriber, VhostClearOnDeidentifySubscriber. |
+| **Application** | BurstCompleteRegistry. |
 | **UI** | ConnectCommand. |
+| **Domain** | (unchanged) |
+| **Domain** | (unchanged) |
 
 ---
 
@@ -64,20 +67,25 @@ The prioritisation below is based on code structure and which parts already have
 | Area | Examples | Reason |
 |------|----------|--------|
 | **Protocol: formatting and parsing** | `UnrealIRCdProtocolHandler`, `InspIRCdProtocolHandler` | ✅ Covered: `UnrealIRCdProtocolHandlerTest`, `InspIRCdProtocolHandlerTest`. |
-| **Protocol: service** | `UnrealIRCdProtocolServiceActions`, `InspIRCdProtocolServiceActions` (MODE/KILL/… construction) | String construction per interface; testable with parameter stubs. |
-| **Protocol: introduction and vhost** | `*ServiceIntroductionFormatter`, `*VhostCommandBuilder` | Text input/output; easy to test. |
-| **Helpers / resolvers** | `UserLanguageResolver`, `SensitiveDataRedactor`, `EmailDelayMiddleware` | Little or no IO dependency; good candidates for unit tests. |
-| **In-memory registries** | `ChannelSyncCompletedRegistry`, `ChannelRankSyncPendingRegistry`, `PendingNickRestoreRegistry`, `BurstCompleteRegistry` | Bounded behaviour; similar to Application registries already tested. |
+| **Protocol: service actions** | `UnrealIRCdProtocolServiceActions`, `InspIRCdProtocolServiceActions` (MODE/KILL/…) | ✅ Covered: `UnrealIRCdProtocolServiceActionsTest`, `InspIRCdProtocolServiceActionsTest`. |
+| **Protocol: introduction and vhost** | `*ServiceIntroductionFormatter`, `*VhostCommandBuilder` | ✅ Covered: `*ServiceIntroductionFormatterTest`, `*VhostCommandBuilderTest`. |
+| **Helpers / resolvers** | `UserLanguageResolver`, `SensitiveDataRedactor`, `EmailDelayMiddleware` | ✅ Covered: `SensitiveDataRedactorTest`, `UserLanguageResolverTest`, `EmailDelayMiddlewareTest`. |
+| **In-memory registries** | `ChannelSyncCompletedRegistry`, `ChannelRankSyncPendingRegistry`, `PendingNickRestoreRegistry`, `BurstCompleteRegistry` | ✅ Covered: all have dedicated tests. |
+| **In-memory repositories** | `InMemoryNetworkUserRepository`, `InMemoryChannelRepository` | ✅ Covered: both have dedicated tests. |
+| **Security** | `Argon2PasswordHasher` | ✅ Covered: `Argon2PasswordHasherTest`. |
+| **Doctrine repositories** | `RegisteredNickDoctrineRepository`, `RegisteredChannelDoctrineRepository`, `ChannelAccessDoctrineRepository`, `MemoDoctrineRepository`, `MemoSettingsDoctrineRepository`, `MemoIgnoreDoctrineRepository`, `ChannelLevelDoctrineRepository` | ✅ Covered: `*DoctrineRepositoryTest` (integration with SQLite). |
 
 ### Lower priority (integration or more coupled)
 
 | Area | Examples | Reason |
 |------|----------|--------|
-| **Doctrine repositories** | `*DoctrineRepository` in NickServ, ChanServ, MemoServ | Require DB (e.g. SQLite in memory) and possibly fixtures; integration tests. |
+| **Subscriber tests** | `ChanServEntryMsgSubscriber`, `MemoServNickIdentifiedNoticeSubscriber`, `MemoServNickDropCleanupSubscriber`, `VhostClearOnDeidentifySubscriber` | ✅ Covered: subscriber tests with mocked dependencies. |
+| **Security voters** | `NickServIdentifiedOwnerVoter`, `OperVoter` | ✅ Covered: `NickServIdentifiedOwnerVoterTest`, `OperVoterTest`. |
+| **Remaining repositories** | `ChannelLevelDoctrineRepository` (if needed for edge cases) | Similar pattern to existing integration tests. |
 | **Bots** | `NickServBot`, `ChanServBot`, `MemoServBot` | Depend on gateway, events and ports; integration or heavily mocked unit tests. |
-| **Subscribers** | ChanServ, NickServ, MemoServ, IRC (Network, Logging, etc.) | React to events; unit tests with EventDispatcher and sample events, or integration. |
+| **Remaining Subscribers** | `NickProtectionSubscriber`, `MemoServPendingChannelNoticeSubscriber` (depends on final `ChanServAccessHelper`), etc. | Some depend on final classes; integration tests or refactor to interfaces needed. |
 | **Connection and network** | `SocketConnection`, `SocketConnectionFactory`, `ActiveConnectionHolder`, network adapters | Depend on socket or network state; integration tests or deep mocks. |
-| **Security** | `Argon2PasswordHasher`, `NickServIdentifiedOwnerVoter`, `OperVoter`, `SymfonyAuthorizationCheckerAdapter` | Some testable with mocks (voters), others with Symfony/security dependencies. |
+| **SymfonyAuthorizationCheckerAdapter** | Depends on Symfony security component. |
 
 ---
 
@@ -85,11 +93,17 @@ The prioritisation below is based on code structure and which parts already have
 
 1. ~~**ConnectCommand (UI/CLI)**~~ — Done.
 2. ~~**ConnectToServerHandler**~~ — Done.
-3. ~~**Protocol: parsing and formatting**~~ — Done: `UnrealIRCdProtocolHandlerTest`, `InspIRCdProtocolHandlerTest` (parseRawLine, formatMessage, handshake, handleIncoming).
-4. **Protocol: service actions / introduction / vhost** — one module (Unreal or InspIRCd) end-to-end for that module.
-5. **In-memory registries** (Infrastructure) — one or two (e.g. `ChannelSyncCompletedRegistry`, `PendingNickRestoreRegistry`).
-6. **Doctrine repositories** — set up SQLite in memory and one integration test per critical repository.
-7. **Subscribers and bots** — as needed, starting with those with more business logic.
+3. ~~**Protocol: parsing and formatting**~~ — Done: `UnrealIRCdProtocolHandlerTest`, `InspIRCdProtocolHandlerTest`.
+4. ~~**Protocol: service actions / introduction / vhost**~~ — Done.
+5. ~~**In-memory registries** (Infrastructure)~~ — Done.
+6. ~~**Helpers / resolvers / security**~~ — Done: `SensitiveDataRedactorTest`, `UserLanguageResolverTest`, `EmailDelayMiddlewareTest`, `Argon2PasswordHasherTest`.
+7. ~~**In-memory repositories**~~ — Done: `InMemoryNetworkUserRepositoryTest`, `InMemoryChannelRepositoryTest`.
+8. ~~**Doctrine repositories**~~ — Done: `RegisteredNickDoctrineRepositoryTest`, `RegisteredChannelDoctrineRepositoryTest`, `ChannelAccessDoctrineRepositoryTest`, `MemoDoctrineRepositoryTest`, `MemoSettingsDoctrineRepositoryTest`, `MemoIgnoreDoctrineRepositoryTest`, `ChannelLevelDoctrineRepositoryTest` (integration with SQLite).
+9. ~~**Security voters**~~ — Done: `NickServIdentifiedOwnerVoterTest`, `OperVoterTest`.
+10. ~~**Basic subscribers**~~ — Done: `ChanServEntryMsgSubscriberTest`, `MemoServNickIdentifiedNoticeSubscriberTest`, `MemoServNickDropCleanupSubscriberTest`, `VhostClearOnDeidentifySubscriberTest`.
+11. **Additional Doctrine repositories** — set up SQLite in memory for each repository as needed.
+12. **Complex subscribers** — Some depend on final classes (e.g., `ChanServAccessHelper`); need integration tests or refactor to interfaces.
+13. **Bots** — as needed.
 
 ---
 

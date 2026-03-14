@@ -9,10 +9,6 @@ use App\Application\IRC\Connect\ConnectToServerHandler;
 use App\Application\IRC\IRCClient;
 use App\Application\IRC\IRCClientFactoryInterface;
 use App\Domain\IRC\Server\ServerLink;
-use App\Domain\IRC\ValueObject\Hostname;
-use App\Domain\IRC\ValueObject\LinkPassword;
-use App\Domain\IRC\ValueObject\Port;
-use App\Domain\IRC\ValueObject\ServerName;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 final class ConnectToServerHandlerTest extends TestCase
 {
     #[Test]
-    public function handle_builds_server_link_calls_factory_and_connect_then_returns_client(): void
+    public function handleBuildsServerLinkCallsFactoryAndConnectThenReturnsClient(): void
     {
         $command = new ConnectToServerCommand(
             serverName: 'services.test.local',
@@ -35,12 +31,12 @@ final class ConnectToServerHandlerTest extends TestCase
 
         $capturedLink = null;
         $client = $this->createMock(IRCClient::class);
-        $client->expects(self::once())->method('connect')->willReturnCallback(function (ServerLink $link) use (&$capturedLink): void {
+        $client->expects(self::once())->method('connect')->willReturnCallback(static function (ServerLink $link) use (&$capturedLink): void {
             $capturedLink = $link;
         });
 
         $factory = $this->createMock(IRCClientFactoryInterface::class);
-        $factory->expects(self::once())->method('create')->with('unreal', self::callback(function (ServerLink $link) use (&$capturedLink): bool {
+        $factory->expects(self::once())->method('create')->with('unreal', self::callback(static function (ServerLink $link) use (&$capturedLink): bool {
             $capturedLink = $link;
 
             return true;
@@ -52,16 +48,19 @@ final class ConnectToServerHandlerTest extends TestCase
 
         self::assertSame($client, $result);
         self::assertInstanceOf(ServerLink::class, $capturedLink);
-        self::assertEquals(new ServerName('services.test.local'), $capturedLink->serverName);
-        self::assertEquals(new Hostname('127.0.0.1'), $capturedLink->host);
-        self::assertEquals(new Port(7029), $capturedLink->port);
-        self::assertEquals(new LinkPassword('link-secret'), $capturedLink->password);
-        self::assertSame('Ares Test', $capturedLink->description);
-        self::assertTrue($capturedLink->useTls);
+        self::assertNotNull($capturedLink);
+
+        $link = $capturedLink;
+        self::assertSame('services.test.local', $link->serverName->value);
+        self::assertSame('127.0.0.1', $link->host->value);
+        self::assertSame(7029, $link->port->value);
+        self::assertSame('link-secret', $link->password->value);
+        self::assertSame('Ares Test', $link->description);
+        self::assertTrue($link->useTls);
     }
 
     #[Test]
-    public function handle_uses_protocol_from_command_for_factory_create(): void
+    public function handleUsesProtocolFromCommandForFactoryCreate(): void
     {
         $command = new ConnectToServerCommand(
             serverName: 's.local',

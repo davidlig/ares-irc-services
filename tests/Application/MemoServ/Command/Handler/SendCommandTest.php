@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Application\MemoServ\Command\Handler;
 
 use App\Application\ChanServ\ChanServAccessHelper;
+use App\Application\MemoServ\Command\Handler\SendCommand;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
-use App\Application\MemoServ\Command\Handler\SendCommand;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\MemoServ\MemoServSendThrottleRegistry;
 use App\Application\Port\NetworkUserLookupPort;
@@ -68,7 +68,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -97,7 +97,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -126,7 +126,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -157,7 +157,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -188,7 +188,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -220,7 +220,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -257,7 +257,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -295,7 +295,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -325,7 +325,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -363,7 +363,7 @@ final class SendCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 

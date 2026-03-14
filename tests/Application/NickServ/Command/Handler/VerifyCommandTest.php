@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
+use App\Application\NickServ\Command\Handler\VerifyCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\Command\Handler\VerifyCommand;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -66,7 +67,7 @@ final class VerifyCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -92,7 +93,7 @@ final class VerifyCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
@@ -108,7 +109,7 @@ final class VerifyCommandTest extends TestCase
     public function successActivatesAccountAndReplies(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip');
-        $expires = (new \DateTimeImmutable())->modify('+1 hour');
+        $expires = (new DateTimeImmutable())->modify('+1 hour');
         $pending = new PendingVerificationRegistry();
         $pending->store('Nick', 'valid-token', $expires);
 
@@ -123,7 +124,7 @@ final class VerifyCommandTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())->method('setUserAccount')->with('UID1', 'Nick');
         $messages = [];
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);

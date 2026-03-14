@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
+use App\Application\NickServ\Command\Handler\RegisterCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
@@ -11,7 +12,6 @@ use App\Application\NickServ\NickServClientKeyResolver;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\RegisterThrottleRegistry;
-use App\Application\NickServ\Command\Handler\RegisterCommand;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -66,7 +66,7 @@ final class RegisterCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $target, string $msg) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $msg) use (&$messages): void {
             $messages[] = $msg;
         });
 
@@ -105,7 +105,7 @@ final class RegisterCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -146,7 +146,7 @@ final class RegisterCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
@@ -176,16 +176,14 @@ final class RegisterCommandTest extends TestCase
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByEmail')->willReturn(null);
         $nickRepo->method('findByNick')->willReturn(null);
-        $nickRepo->expects(self::once())->method('save')->with(self::callback(static function (RegisteredNick $n): bool {
-            return $n->getNickname() === 'NewNick' && $n->isPending();
-        }));
+        $nickRepo->expects(self::once())->method('save')->with(self::callback(static fn (RegisteredNick $n): bool => 'NewNick' === $n->getNickname() && $n->isPending()));
 
         $passwordHasher = $this->createStub(PasswordHasherInterface::class);
         $passwordHasher->method('hash')->willReturn('hashed');
 
         $dispatched = [];
         $messageBus = $this->createStub(MessageBusInterface::class);
-        $messageBus->method('dispatch')->willReturnCallback(function (object $m) use (&$dispatched): Envelope {
+        $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
             $dispatched[] = $m;
 
             return new Envelope($m);
@@ -197,7 +195,7 @@ final class RegisterCommandTest extends TestCase
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(function (string $t, string $m) use (&$messages): void {
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
 
