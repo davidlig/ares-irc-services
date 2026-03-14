@@ -20,4 +20,13 @@ final class MemoDisabledExceptionTest extends TestCase
         self::assertStringContainsString('SomeNick', $e->getMessage());
         self::assertSame('SomeNick', $e->target);
     }
+
+    #[Test]
+    public function constructorAcceptsMessageAndTarget(): void
+    {
+        $e = new MemoDisabledException('Custom message.', 'TargetNick');
+
+        self::assertSame('Custom message.', $e->getMessage());
+        self::assertSame('TargetNick', $e->target);
+    }
 }
