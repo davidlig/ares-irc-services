@@ -325,6 +325,8 @@ services:
     App\Application\Port\ApplyOutgoingChannelModesPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreApplyOutgoingChannelModesAdapter
 
+    App\Infrastructure\IRC\Network\ApplyOutgoingChannelModesApplicatorInterface: '@App\Infrastructure\IRC\Network\NetworkEventEnricher'
+
     App\Application\Port\ChannelSyncCompletedRegistryInterface:
         class: App\Infrastructure\IRC\Network\ChannelSyncCompletedRegistry
 
