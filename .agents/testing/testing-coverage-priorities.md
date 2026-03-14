@@ -103,7 +103,7 @@ The prioritisation below is based on code structure and which parts already have
 9. ~~**Security voters**~~ — Done: `NickServIdentifiedOwnerVoterTest`, `OperVoterTest`.
 10. ~~**Basic subscribers**~~ — Done: `ChanServEntryMsgSubscriberTest`, `MemoServNickIdentifiedNoticeSubscriberTest`, `MemoServNickDropCleanupSubscriberTest`, `VhostClearOnDeidentifySubscriberTest`, `ChanServTopicApplySubscriberTest`, `ChanServTopicSyncSubscriberTest`, `ChanServRejoinSubscriberTest`, `MemoServChannelDropCleanupSubscriberTest`, `BurstCompleteRegistrySubscriberTest`, `ChannelSyncCompletedMarkerSubscriberTest`, `IRCEventSubscriberTest`, `ServerDelinkedSubscriberTest`, `NetworkStateSubscriberTest`.
 11. ~~**ServiceBridge / Adapters**~~ — Done: `ServiceCommandGatewayTest`, `CoreNetworkUserLookupAdapterTest`.
-12. **Additional Doctrine repositories** — set up SQLite in memory for each repository as needed.
+12. ~~**Additional Doctrine repositories**~~ — All seven Doctrine repositories have integration tests. Coverage gaps in `RegisteredNickDoctrineRepository` were closed by adding tests for `findRegisteredInactiveSince` and `deleteExpiredPending`.
 13. ~~**Complex subscribers**~~ — Done: `ChanServMlockEnforceSubscriberTest`, `ChanServChannelRankSubscriberTest`, `MemoServPendingChannelNoticeSubscriberTest`.
 14. ~~**Bots**~~ — Done: `NickServBotTest`, `ChanServBotTest`, `MemoServBotTest`.
 
