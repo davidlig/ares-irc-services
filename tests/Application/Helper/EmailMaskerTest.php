@@ -47,4 +47,16 @@ final class EmailMaskerTest extends TestCase
     {
         self::assertSame('da****@example.com', EmailMasker::mask('  david@example.com  '));
     }
+
+    #[Test]
+    public function maskLocalPartExactlyTwoChars(): void
+    {
+        self::assertSame('ab****@x.com', EmailMasker::mask('ab@x.com'));
+    }
+
+    #[Test]
+    public function maskMultibyteLocalPartUsesFirstTwoCharacters(): void
+    {
+        self::assertSame('ña****@test.com', EmailMasker::mask('ñaño@test.com'));
+    }
 }

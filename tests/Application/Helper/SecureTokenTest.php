@@ -51,4 +51,22 @@ final class SecureTokenTest extends TestCase
 
         self::assertNotSame($a, $b);
     }
+
+    #[Test]
+    public function hexOddLengthReturnsExactLength(): void
+    {
+        $token = SecureToken::hex(3);
+
+        self::assertSame(3, strlen($token));
+        self::assertMatchesRegularExpression('/^[0-9a-f]{3}$/', $token);
+    }
+
+    #[Test]
+    public function hexNegativeLengthReturnsShortenedString(): void
+    {
+        $token = SecureToken::hex(-1);
+
+        self::assertMatchesRegularExpression('/^[0-9a-f]+$/', $token);
+        self::assertLessThanOrEqual(2, strlen($token));
+    }
 }
