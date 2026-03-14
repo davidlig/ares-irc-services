@@ -17,7 +17,6 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\Bot\NickServBot;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(NickServBot::class)]
@@ -29,7 +28,7 @@ final class NickServBotTest extends TestCase
 
     private ActiveConnectionHolder $connectionHolder;
 
-    private SendNoticePort&MockObject $sendNoticePort;
+    private SendNoticePort $sendNoticePort;
 
     private NickServBot $bot;
 
@@ -37,7 +36,7 @@ final class NickServBotTest extends TestCase
     {
         $this->connectionHolder = new ActiveConnectionHolder();
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $this->sendNoticePort = $this->createMock(SendNoticePort::class);
+        $this->sendNoticePort = $this->createStub(SendNoticePort::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
         $localUserModeSync = $this->createStub(LocalUserModeSyncInterface::class);
 
@@ -55,7 +54,6 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function getSubscribedEventsReturnsBurstCompleteWithPriority(): void
     {
-        $this->sendNoticePort->expects(self::never())->method('sendNotice');
         self::assertSame(
             [NetworkBurstCompleteEvent::class => ['onBurstComplete', 100]],
             NickServBot::getSubscribedEvents(),
@@ -65,7 +63,8 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function onBurstCompleteWritesIntroductionLineWhenModulePresent(): void
     {
-        $this->sendNoticePort->expects(self::never())->method('sendNotice');
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::never())->method('sendNotice');
         $introLine = ':001 UID NickServ NickServ 0 0 services.example.com 001NS 0 * Nickname Registration Services';
         $connection = $this->createMock(ConnectionInterface::class);
         $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
@@ -83,36 +82,75 @@ final class NickServBotTest extends TestCase
         $this->connectionHolder->setProtocolModule($module);
         $connection->expects(self::once())->method('writeLine')->with($introLine);
 
+        $bot = new NickServBot(
+            $this->connectionHolder,
+            $this->createStub(NetworkUserLookupPort::class),
+            $sendNoticePort,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncInterface::class),
+            self::HOSTNAME,
+            self::NICKSERV_UID,
+        );
         $event = new NetworkBurstCompleteEvent($connection, '001');
-        $this->bot->onBurstComplete($event);
+        $bot->onBurstComplete($event);
     }
 
     #[Test]
     public function onBurstCompleteDoesNotWriteWhenModuleNull(): void
     {
-        $this->sendNoticePort->expects(self::never())->method('sendNotice');
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::never())->method('sendNotice');
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
 
+        $bot = new NickServBot(
+            $this->connectionHolder,
+            $this->createStub(NetworkUserLookupPort::class),
+            $sendNoticePort,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncInterface::class),
+            self::HOSTNAME,
+            self::NICKSERV_UID,
+        );
         $event = new NetworkBurstCompleteEvent($connection, '001');
-        $this->bot->onBurstComplete($event);
+        $bot->onBurstComplete($event);
     }
 
     #[Test]
     public function sendNoticeDelegatesToPort(): void
     {
-        $this->sendNoticePort->expects(self::once())->method('sendNotice')->with('001USER', 'Hello');
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::once())->method('sendNotice')->with('001USER', 'Hello');
 
-        $this->bot->sendNotice('001USER', 'Hello');
+        $bot = new NickServBot(
+            $this->connectionHolder,
+            $this->createStub(NetworkUserLookupPort::class),
+            $sendNoticePort,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncInterface::class),
+            self::HOSTNAME,
+            self::NICKSERV_UID,
+        );
+        $bot->sendNotice('001USER', 'Hello');
     }
 
     #[Test]
     public function sendMessageDelegatesToPort(): void
     {
-        $this->sendNoticePort->expects(self::once())->method('sendMessage')
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::once())->method('sendMessage')
             ->with('001USER', 'Message', 'NOTICE');
 
-        $this->bot->sendMessage('001USER', 'Message', 'NOTICE');
+        $bot = new NickServBot(
+            $this->connectionHolder,
+            $this->createStub(NetworkUserLookupPort::class),
+            $sendNoticePort,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncInterface::class),
+            self::HOSTNAME,
+            self::NICKSERV_UID,
+        );
+        $bot->sendMessage('001USER', 'Message', 'NOTICE');
     }
 
     #[Test]
@@ -134,7 +172,7 @@ final class NickServBotTest extends TestCase
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
-            $this->sendNoticePort,
+            $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $localUserModeSync,
             self::HOSTNAME,

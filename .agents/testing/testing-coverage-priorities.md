@@ -148,6 +148,22 @@ Cada agente debe usar `--display-deprecations --display-phpunit-deprecations`. P
 
 - **Cobertura actual (suite ChanServ):** Muchas clases ya al 100% (ChanServAccessHelper, ChannelRegisterThrottleRegistry, SetEmailHandler, SetEntrymsgHandler, SetMlockHandler, SetSecureHandler, SetSuccessorHandler, SetTopiclockHandler, PurgeInactiveChannelsTask, HelpFormatterContextAdapter, ChanServCommandListener, etc.). Gaps: ChanServService 50% métodos (1/2), ChanServContext 93% métodos (14/15), comandos OP/DEOP/VOICE/etc. con ~8–25% métodos (subcomandos sin cubrir), SetFounderHandler 20% métodos, ChanServBot 33% métodos, ChanServChannelRankSubscriber y ChanServMlockEnforceSubscriber con métodos sin cubrir.
 
+- **PHPUnit Notices:** La suite ChanServ (269 tests) reporta 17 PHPUnit Notices. Corregir según .agents/testing/README.md: añadir aserciones donde falten o expectativas explícitas en mocks; no usar `#[DoesNotPerformAssertions]` ni `#[AllowMockObjectsWithoutExpectations]`.
+
+### Agent 2 (NickServ) — Estado actual
+
+- **Comandos (ejecutar ambos para cobertura de NickServ):**
+  ```bash
+  ./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-text --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ --display-deprecations --display-phpunit-deprecations
+  ```
+  Si el driver solo aplica un filtro, ejecutar por separado con cada `--coverage-filter`.
+
+- **Código clave:** `src/Application/NickServ/`, `src/Infrastructure/NickServ/`.
+
+- **Cobertura actual (suite NickServ, 266 tests):** Context, HelpFormatterContextAdapter, pruners, IdentifiedUserVhostSyncService, NickProtectionService, NickServPermission, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, PruneMemoryRegistriesTask, NickServCommandListener, NickProtectionSubscriber y la mayoría de registries/helpers al 100%. Gaps: HelpCommand ~19% líneas, otros command handlers con ramas sin cubrir, NickServBot ~46% líneas, Argon2PasswordHasher 50% métodos (solo hash/verify en interfaz; verify cubierto). RegisteredNickDoctrineRepository se cubre con `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php` (no incluido en la ruta anterior).
+
+- **PHPUnit Notices:** Corregidos (0). NickServBotTest usaba `createMock(SendNoticePort::class)` sin expectativas en dos tests; reemplazado por `createStub` en setUp y mocks locales solo donde se verifican llamadas.
+
 ---
 
 ## 5. Coverage threshold (optional)
