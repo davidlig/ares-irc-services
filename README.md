@@ -304,7 +304,7 @@ To generate a code coverage report (requires PCOV or Xdebug):
 ./vendor/bin/phpunit --coverage-text --coverage-filter=src
 ```
 
-HTML and Clover reports are written to `var/coverage/`. To enforce a minimum line coverage (e.g. in CI), run `./scripts/check-coverage.sh [MIN_PERCENT]` (e.g. `./scripts/check-coverage.sh 100` when targeting 100%). See [.agents/testing/README.md](.agents/testing/README.md) and [.agents/testing/testing-coverage-priorities.md](.agents/testing/testing-coverage-priorities.md) for conventions and coverage priorities.
+HTML and Clover reports are written to `var/coverage/`. To enforce a minimum line coverage (e.g. in CI), run `./scripts/check-coverage.sh [MIN_PERCENT]` (e.g. `./scripts/check-coverage.sh 100` when targeting 100%). See [.agents/testing/README.md](.agents/testing/README.md) and [.agents/testing/testing-coverage-priorities.md](.agents/testing/testing-coverage-priorities.md) for conventions, coverage priorities, and **division by Agents** (per-service test commands and coverage filters for parallel work).
 
 ### Useful commands
 

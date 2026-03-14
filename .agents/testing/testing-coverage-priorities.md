@@ -111,19 +111,19 @@ The prioritisation below is based on code structure and which parts already have
 
 ---
 
-## 4. División por Agents
+## 4. Division by Agents
 
-Para ejecutar cobertura por áreas en paralelo (cada Agent solo sus tests y su `src/`):
+To run coverage by area in parallel (each Agent runs only its tests and its `src/`):
 
-| Agent | Alcance | Comandos PHPUnit (con cobertura) |
+| Agent | Scope | PHPUnit commands (with coverage) |
 |-------|--------|----------------------------------|
-| **1 ChanServ** | Application + Infrastructure ChanServ | `tests/Application/ChanServ` + `tests/Infrastructure/ChanServ` con `--coverage-filter=src/Application/ChanServ` y `src/Infrastructure/ChanServ` |
-| **2 NickServ** | Application + Infrastructure NickServ | `tests/Application/NickServ` + `tests/Infrastructure/NickServ` con filtros a su `src/` |
-| **3 MemoServ** | Application + Infrastructure MemoServ | `tests/Application/MemoServ` + `tests/Infrastructure/MemoServ` con filtros a su `src/` |
-| **4 IRC Core** | Infrastructure IRC (adapters, enricher, sync) | `tests/Infrastructure/IRC` con `--coverage-filter=src/Infrastructure/IRC` |
-| **5 Shared/CLI/Mail/Messenger** | UI/CLI, Mail, Messenger, opcional Maintenance | `tests/UI/CLI` + `tests/Infrastructure/Mail` + `tests/Infrastructure/Messenger` (+ opcional `tests/Application/Maintenance`) con filtros a `src/UI`, `src/Infrastructure/Mail`, `src/Infrastructure/Messenger`, `src/Application/Maintenance` |
+| **1 ChanServ** | Application + Infrastructure ChanServ | `tests/Application/ChanServ` + `tests/Infrastructure/ChanServ` with `--coverage-filter=src/Application/ChanServ` and `src/Infrastructure/ChanServ` |
+| **2 NickServ** | Application + Infrastructure NickServ | `tests/Application/NickServ` + `tests/Infrastructure/NickServ` with filters to their `src/` |
+| **3 MemoServ** | Application + Infrastructure MemoServ | `tests/Application/MemoServ` + `tests/Infrastructure/MemoServ` with filters to their `src/` |
+| **4 IRC Core** | Infrastructure IRC (adapters, enricher, sync) | `tests/Infrastructure/IRC` with `--coverage-filter=src/Infrastructure/IRC` |
+| **5 Shared/CLI/Mail/Messenger** | UI/CLI, Mail, Messenger, optional Maintenance | `tests/UI/CLI` + `tests/Infrastructure/Mail` + `tests/Infrastructure/Messenger` (+ optional `tests/Application/Maintenance`) with filters to `src/UI`, `src/Infrastructure/Mail`, `src/Infrastructure/Messenger`, `src/Application/Maintenance` |
 
-**Agent 5 — Comandos concretos:**
+**Agent 5 — Concrete commands:**
 
 ```bash
 ./vendor/bin/phpunit tests/UI/CLI --coverage-text --coverage-filter=src/UI
@@ -132,37 +132,37 @@ Para ejecutar cobertura por áreas en paralelo (cada Agent solo sus tests y su `
 ./vendor/bin/phpunit tests/Application/Maintenance --coverage-text --coverage-filter=src/Application/Maintenance
 ```
 
-Cada agente debe usar `--display-deprecations --display-phpunit-deprecations`. Para huecos concretos, revisar `<line count="0">` en `var/coverage/clover.xml` para sus archivos.
+Each agent must use `--display-deprecations --display-phpunit-deprecations`. For specific gaps, check `<line count="0">` in `var/coverage/clover.xml` for their files.
 
-### Agent 1 (ChanServ) — Estado actual
+### Agent 1 (ChanServ) — Current status
 
-- **Comandos (ejecutar ambos para cobertura completa de ChanServ):**
+- **Commands (run both for full ChanServ coverage):**
   ```bash
   ./vendor/bin/phpunit tests/Application/ChanServ tests/Infrastructure/ChanServ --coverage-text --coverage-filter=src/Application/ChanServ --coverage-filter=src/Infrastructure/ChanServ --display-deprecations --display-phpunit-deprecations
   ```
-  Nota: si el driver de cobertura solo aplica un filtro, ejecutar por separado:
-  `tests/Application/ChanServ` con `--coverage-filter=src/Application/ChanServ` y
-  `tests/Infrastructure/ChanServ` con `--coverage-filter=src/Infrastructure/ChanServ`.
+  Note: if the coverage driver only applies one filter, run separately:
+  `tests/Application/ChanServ` with `--coverage-filter=src/Application/ChanServ` and
+  `tests/Infrastructure/ChanServ` with `--coverage-filter=src/Infrastructure/ChanServ`.
 
-- **Código clave:** `src/Application/ChanServ/`, `src/Infrastructure/ChanServ/`.
+- **Key code:** `src/Application/ChanServ/`, `src/Infrastructure/ChanServ/`.
 
-- **Cobertura actual (suite ChanServ):** Muchas clases ya al 100% (ChanServAccessHelper, ChannelRegisterThrottleRegistry, SetEmailHandler, SetEntrymsgHandler, SetMlockHandler, SetSecureHandler, SetSuccessorHandler, SetTopiclockHandler, PurgeInactiveChannelsTask, HelpFormatterContextAdapter, ChanServCommandListener, etc.). Gaps: ChanServService 50% métodos (1/2), ChanServContext 93% métodos (14/15), comandos OP/DEOP/VOICE/etc. con ~8–25% métodos (subcomandos sin cubrir), SetFounderHandler 20% métodos, ChanServBot 33% métodos, ChanServChannelRankSubscriber y ChanServMlockEnforceSubscriber con métodos sin cubrir.
+- **Current coverage (ChanServ suite):** Many classes already at 100% (ChanServAccessHelper, ChannelRegisterThrottleRegistry, SetEmailHandler, SetEntrymsgHandler, SetMlockHandler, SetSecureHandler, SetSuccessorHandler, SetTopiclockHandler, PurgeInactiveChannelsTask, HelpFormatterContextAdapter, ChanServCommandListener, etc.). Gaps: ChanServService 50% methods (1/2), ChanServContext 93% methods (14/15), OP/DEOP/VOICE/etc. commands with ~8–25% methods (subcommands uncovered), SetFounderHandler 20% methods, ChanServBot 33% methods, ChanServChannelRankSubscriber and ChanServMlockEnforceSubscriber with uncovered methods.
 
-- **PHPUnit Notices:** La suite ChanServ (269 tests) reporta 17 PHPUnit Notices. Corregir según .agents/testing/README.md: añadir aserciones donde falten o expectativas explícitas en mocks; no usar `#[DoesNotPerformAssertions]` ni `#[AllowMockObjectsWithoutExpectations]`.
+- **PHPUnit Notices:** The ChanServ suite (269 tests) reports 17 PHPUnit Notices. Fix per .agents/testing/README.md: add assertions where missing or explicit expectations in mocks; do not use `#[DoesNotPerformAssertions]` or `#[AllowMockObjectsWithoutExpectations]`.
 
-### Agent 2 (NickServ) — Estado actual
+### Agent 2 (NickServ) — Current status
 
-- **Comandos (ejecutar ambos para cobertura de NickServ):**
+- **Commands (run both for NickServ coverage):**
   ```bash
   ./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-text --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ --display-deprecations --display-phpunit-deprecations
   ```
-  Si el driver solo aplica un filtro, ejecutar por separado con cada `--coverage-filter`.
+  If the driver only applies one filter, run separately with each `--coverage-filter`.
 
-- **Código clave:** `src/Application/NickServ/`, `src/Infrastructure/NickServ/`.
+- **Key code:** `src/Application/NickServ/`, `src/Infrastructure/NickServ/`.
 
-- **Cobertura actual (suite NickServ, 266 tests):** Context, HelpFormatterContextAdapter, pruners, IdentifiedUserVhostSyncService, NickProtectionService, NickServPermission, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, PruneMemoryRegistriesTask, NickServCommandListener, NickProtectionSubscriber y la mayoría de registries/helpers al 100%. Gaps: HelpCommand ~19% líneas, otros command handlers con ramas sin cubrir, NickServBot ~46% líneas, Argon2PasswordHasher 50% métodos (solo hash/verify en interfaz; verify cubierto). RegisteredNickDoctrineRepository se cubre con `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php` (no incluido en la ruta anterior).
+- **Current coverage (NickServ suite, 266 tests):** Context, HelpFormatterContextAdapter, pruners, IdentifiedUserVhostSyncService, NickProtectionService, NickServPermission, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, PruneMemoryRegistriesTask, NickServCommandListener, NickProtectionSubscriber and most registries/helpers at 100%. Gaps: HelpCommand ~19% lines, other command handlers with uncovered branches, NickServBot ~46% lines, Argon2PasswordHasher 50% methods (only hash/verify on interface; verify covered). RegisteredNickDoctrineRepository is covered by `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php` (not included in the path above).
 
-- **PHPUnit Notices:** Corregidos (0). NickServBotTest usaba `createMock(SendNoticePort::class)` sin expectativas en dos tests; reemplazado por `createStub` en setUp y mocks locales solo donde se verifican llamadas.
+- **PHPUnit Notices:** Fixed (0). NickServBotTest used `createMock(SendNoticePort::class)` without expectations in two tests; replaced with `createStub` in setUp and local mocks only where calls are verified.
 
 ---
 
