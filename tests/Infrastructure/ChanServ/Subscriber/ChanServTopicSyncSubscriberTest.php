@@ -1,0 +1,271 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Infrastructure\ChanServ\Subscriber;
+
+use App\Application\Port\ChannelServiceActionsPort;
+use App\Application\Port\ChannelSyncCompletedRegistryInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\IRC\Event\FtopicReceivedEvent;
+use App\Domain\IRC\ValueObject\ChannelName;
+use App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+
+#[CoversClass(ChanServTopicSyncSubscriber::class)]
+final class ChanServTopicSyncSubscriberTest extends TestCase
+{
+    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+
+    private ChannelServiceActionsPort&MockObject $channelServiceActions;
+
+    private ChannelSyncCompletedRegistryInterface&MockObject $syncCompletedRegistry;
+
+    private LoggerInterface&MockObject $logger;
+
+    private ChanServTopicSyncSubscriber $subscriber;
+
+    protected function setUp(): void
+    {
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->syncCompletedRegistry = $this->createMock(ChannelSyncCompletedRegistryInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+
+        $this->subscriber = new ChanServTopicSyncSubscriber(
+            $this->channelRepository,
+            $this->channelServiceActions,
+            $this->syncCompletedRegistry,
+            'ChanServ',
+            'NickServ',
+            $this->logger,
+        );
+    }
+
+    #[Test]
+    public function subscribesToFtopicReceivedEvent(): void
+    {
+        self::assertSame(
+            [FtopicReceivedEvent::class => ['onTopicReceived', 0]],
+            ChanServTopicSyncSubscriber::getSubscribedEvents(),
+        );
+    }
+
+    #[Test]
+    public function reAppliesStoredTopicWhenTopicLockEnabled(): void
+    {
+        $registered = $this->createMock(RegisteredChannel::class);
+        $registered->method('isTopicLock')->willReturn(true);
+        $registered->method('getTopic')->willReturn('Locked topic from DB');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelTopic')
+            ->with('#test', 'Locked topic from DB');
+
+        $this->syncCompletedRegistry
+            ->expects(self::never())
+            ->method('isSyncCompleted');
+
+        $event = new FtopicReceivedEvent(
+            channelName: new ChannelName('#test'),
+            topic: 'New topic from user',
+            setterNick: 'SomeUser',
+        );
+
+        $this->subscriber->onTopicReceived($event);
+    }
+
+    #[Test]
+    public function doesNothingWhenChannelNotRegistered(): void
+    {
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn(null);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+
+        $event = new FtopicReceivedEvent(
+            channelName: new ChannelName('#test'),
+            topic: 'New topic',
+        );
+
+        $this->subscriber->onTopicReceived($event);
+    }
+
+    #[Test]
+    public function doesNothingWhenTopicLockEnabledButNoStoredTopic(): void
+    {
+        $registered = $this->createMock(RegisteredChannel::class);
+        $registered->method('isTopicLock')->willReturn(true);
+        $registered->method('getTopic')->willReturn(null);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+
+        $event = new FtopicReceivedEvent(
+            channelName: new ChannelName('#test'),
+            topic: 'New topic',
+        );
+
+        $this->subscriber->onTopicReceived($event);
+    }
+
+    #[Test]
+    public function doesNotPersistWhenChannelSyncNotCompleted(): void
+    {
+        $registered = $this->createMock(RegisteredChannel::class);
+        $registered->method('isTopicLock')->willReturn(false);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->syncCompletedRegistry
+            ->expects(self::once())
+            ->method('isSyncCompleted')
+            ->with('#test')
+            ->willReturn(false);
+
+        $this->channelRepository
+            ->expects(self::never())
+            ->method('save');
+
+        $event = new FtopicReceivedEvent(
+            channelName: new ChannelName('#test'),
+            topic: 'New topic',
+        );
+
+        $this->subscriber->onTopicReceived($event);
+    }
+
+    #[Test]
+    public function persistsTopicWhenSyncCompleted(): void
+    {
+        $registered = $this->createMock(RegisteredChannel::class);
+        $registered->method('isTopicLock')->willReturn(false);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', 'User');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->syncCompletedRegistry
+            ->expects(self::once())
+            ->method('isSyncCompleted')
+            ->with('#test')
+            ->willReturn(true);
+
+        $this->syncCompletedRegistry
+            ->expects(self::once())
+            ->method('getSyncCompletedAt')
+            ->with('#test')
+            ->willReturn(microtime(true) - 5);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('save')
+            ->with($registered);
+
+        $event = new FtopicReceivedEvent(
+            channelName: new ChannelName('#test'),
+            topic: 'New topic',
+            setterNick: 'User',
+        );
+
+        $this->subscriber->onTopicReceived($event);
+    }
+
+    #[Test]
+    public function doesNotPersistWithinGracePeriod(): void
+    {
+        $registered = $this->createMock(RegisteredChannel::class);
+        $registered->method('isTopicLock')->willReturn(false);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->syncCompletedRegistry
+            ->expects(self::once())
+            ->method('isSyncCompleted')
+            ->with('#test')
+            ->willReturn(true);
+
+        $this->syncCompletedRegistry
+            ->expects(self::once())
+            ->method('getSyncCompletedAt')
+            ->with('#test')
+            ->willReturn(microtime(true) - 0.5);
+
+        $this->channelRepository
+            ->expects(self::never())
+            ->method('save');
+
+        $event = new FtopicReceivedEvent(
+            channelName: new ChannelName('#test'),
+            topic: 'New topic',
+        );
+
+        $this->subscriber->onTopicReceived($event);
+    }
+
+    #[Test]
+    public function ignoresSetterNickWhenServicesUser(): void
+    {
+        $registered = $this->createMock(RegisteredChannel::class);
+        $registered->method('isTopicLock')->willReturn(false);
+        $registered->expects(self::once())->method('updateTopic')->with('New topic', null);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->syncCompletedRegistry
+            ->method('isSyncCompleted')->willReturn(true);
+        $this->syncCompletedRegistry
+            ->method('getSyncCompletedAt')->willReturn(microtime(true) - 5);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('save');
+
+        $event = new FtopicReceivedEvent(
+            channelName: new ChannelName('#test'),
+            topic: 'New topic',
+            setterNick: 'ChanServ',
+        );
+
+        $this->subscriber->onTopicReceived($event);
+    }
+}
