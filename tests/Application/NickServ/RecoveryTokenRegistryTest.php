@@ -23,6 +23,14 @@ final class RecoveryTokenRegistryTest extends TestCase
     }
 
     #[Test]
+    public function consumeWhenNicknameNotStoredReturnsFalse(): void
+    {
+        $registry = new RecoveryTokenRegistry();
+
+        self::assertFalse($registry->consume('Unknown', 'any'));
+    }
+
+    #[Test]
     public function consumeWrongTokenReturnsFalse(): void
     {
         $registry = new RecoveryTokenRegistry();
