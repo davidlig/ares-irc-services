@@ -30,7 +30,7 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 848 tests, 2014 assertions.
+- **Suite:** 852 tests, 2018 assertions.
 - **Coverage:** See `--coverage-text` (ProtocolHandlerRegistry, ProtocolNetworkStateRouter, CoreNetworkUserLookupAdapter, ServiceCommandGateway at 100% methods/lines).
 - Covered classes are those listed in section 1 and in the coverage report (`--coverage-text`).
 
