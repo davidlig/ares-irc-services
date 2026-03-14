@@ -7,12 +7,10 @@ namespace App\Tests\Infrastructure\IRC\Protocol;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Protocol\ProtocolHandlerRegistry;
 use InvalidArgumentException;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ProtocolHandlerRegistry::class)]
 final class ProtocolHandlerRegistryTest extends TestCase
 {
@@ -26,7 +24,7 @@ final class ProtocolHandlerRegistryTest extends TestCase
     #[Test]
     public function registerAndGetReturnsHandler(): void
     {
-        $handler = $this->createMock(ProtocolHandlerInterface::class);
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('getProtocolName')->willReturn('unreal');
         $registry = new ProtocolHandlerRegistry([]);
         $registry->register($handler);
@@ -37,9 +35,9 @@ final class ProtocolHandlerRegistryTest extends TestCase
     #[Test]
     public function getRegisteredProtocolsReturnsRegisteredNames(): void
     {
-        $h1 = $this->createMock(ProtocolHandlerInterface::class);
+        $h1 = $this->createStub(ProtocolHandlerInterface::class);
         $h1->method('getProtocolName')->willReturn('unreal');
-        $h2 = $this->createMock(ProtocolHandlerInterface::class);
+        $h2 = $this->createStub(ProtocolHandlerInterface::class);
         $h2->method('getProtocolName')->willReturn('inspircd');
         $registry = new ProtocolHandlerRegistry([$h1, $h2]);
         self::assertSame(['unreal', 'inspircd'], $registry->getRegisteredProtocols());
@@ -57,7 +55,7 @@ final class ProtocolHandlerRegistryTest extends TestCase
     #[Test]
     public function constructorAcceptsIterableAndRegistersHandlers(): void
     {
-        $handler = $this->createMock(ProtocolHandlerInterface::class);
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('getProtocolName')->willReturn('unreal');
         $registry = new ProtocolHandlerRegistry([$handler]);
         self::assertTrue($registry->supports('unreal'));

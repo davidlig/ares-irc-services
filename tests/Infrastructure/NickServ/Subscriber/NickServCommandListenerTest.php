@@ -23,7 +23,6 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\Bot\NickServBot;
 use App\Infrastructure\NickServ\Subscriber\NickServCommandListener;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -33,7 +32,6 @@ use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NickServCommandListener::class)]
 final class NickServCommandListenerTest extends TestCase
 {
@@ -119,12 +117,26 @@ final class NickServCommandListenerTest extends TestCase
     #[Test]
     public function getServiceNameReturnsBotNick(): void
     {
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+        $this->logger->expects(self::never())->method('error');
+
         self::assertSame('NickServ', $this->listener->getServiceName());
     }
 
     #[Test]
     public function getServiceUidReturnsBotUid(): void
     {
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+        $this->logger->expects(self::never())->method('error');
+
         self::assertSame('001NS', $this->listener->getServiceUid());
     }
 
@@ -132,6 +144,11 @@ final class NickServCommandListenerTest extends TestCase
     public function onCommandDoesNothingWhenTextIsEmpty(): void
     {
         $this->userLookup->expects(self::never())->method('findByUid');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+        $this->logger->expects(self::never())->method('error');
 
         $this->listener->onCommand(self::SENDER_UID, '');
     }
@@ -151,6 +168,7 @@ final class NickServCommandListenerTest extends TestCase
             ->with('NickServ: could not resolve sender UID: ' . self::SENDER_UID);
 
         $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
 
         $this->listener->onCommand(self::SENDER_UID, 'IDENTIFY secret');
     }
@@ -169,6 +187,8 @@ final class NickServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with(self::SENDER_UID, self::anything(), 'NOTICE');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
 
         $this->listener->onCommand(self::SENDER_UID, 'IDENTIFY secret');
     }
@@ -194,6 +214,9 @@ final class NickServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with(self::SENDER_UID, 'Nickname "TestNick" is already registered.', 'NOTICE');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('error');
 
         $this->listener->onCommand(self::SENDER_UID, 'REGISTER pass');
     }
@@ -219,6 +242,9 @@ final class NickServCommandListenerTest extends TestCase
             ->expects(self::once())
             ->method('sendMessage')
             ->with(self::SENDER_UID, 'Invalid nickname or password.', 'NOTICE');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('error');
 
         $this->listener->onCommand(self::SENDER_UID, 'IDENTIFY wrong');
     }
@@ -241,6 +267,7 @@ final class NickServCommandListenerTest extends TestCase
         );
 
         $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
 
         $this->logger
             ->expects(self::once())
@@ -322,7 +349,7 @@ final class NickServCommandListenerTest extends TestCase
     private function createNickServServiceWithCommands(array $commands): NickServService
     {
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier = $this->createStub(NickServNotifierInterface::class);
         $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);

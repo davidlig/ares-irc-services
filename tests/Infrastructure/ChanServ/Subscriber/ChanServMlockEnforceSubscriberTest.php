@@ -19,13 +19,11 @@ use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\ChanServ\Subscriber\ChanServMlockEnforceSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServMlockEnforceSubscriber::class)]
 final class ChanServMlockEnforceSubscriberTest extends TestCase
 {
@@ -64,6 +62,13 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     #[Test]
     public function subscribesToCorrectEvents(): void
     {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
+
         self::assertSame(
             [
                 NetworkSyncCompleteEvent::class => ['onSyncComplete', -10],
@@ -81,6 +86,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $channel = new Channel(new ChannelName('#test'));
 
         $this->burstCompletePort
+            ->expects(self::atLeastOnce())
             ->method('isComplete')
             ->willReturn(true);
 
@@ -93,6 +99,9 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelModes');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -103,10 +112,11 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     {
         $channel = new Channel(new ChannelName('#test'));
 
-        $registered = $this->createMock(RegisteredChannel::class);
+        $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isMlockActive')->willReturn(false);
 
         $this->burstCompletePort
+            ->expects(self::atLeastOnce())
             ->method('isComplete')
             ->willReturn(true);
 
@@ -119,6 +129,9 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelModes');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -141,6 +154,9 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelModes');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -158,6 +174,11 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->channelRepository
             ->expects(self::never())
             ->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: false);
         $this->subscriber->onChannelSynced($event);
@@ -169,13 +190,14 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $channel = new Channel(new ChannelName('#test'));
         $channel->updateModes('+ntms');
 
-        $registered = $this->createMock(RegisteredChannel::class);
+        $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isMlockActive')->willReturn(true);
         $registered->method('getMlock')->willReturn('nt');
 
         $view = new ChannelView(name: '#test', modes: '+ntms', topic: null, memberCount: 5);
 
         $this->burstCompletePort
+            ->expects(self::atLeastOnce())
             ->method('isComplete')
             ->willReturn(true);
 
@@ -191,16 +213,20 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn($view);
 
         $this->modeSupportProvider
+            ->expects(self::atLeastOnce())
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesUnsetWithoutParam')
             ->willReturn(['s', 'm', 'i', 'n', 't']);
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesUnsetWithParam')
             ->willReturn(['k']);
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesWithParamOnSet')
             ->willReturn(['k', 'l']);
 
@@ -216,12 +242,12 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteProcessesAllRegisteredChannels(): void
     {
-        $registered1 = $this->createMock(RegisteredChannel::class);
+        $registered1 = $this->createStub(RegisteredChannel::class);
         $registered1->method('isMlockActive')->willReturn(true);
         $registered1->method('getMlock')->willReturn('nt');
         $registered1->method('getName')->willReturn('#channel1');
 
-        $registered2 = $this->createMock(RegisteredChannel::class);
+        $registered2 = $this->createStub(RegisteredChannel::class);
         $registered2->method('isMlockActive')->willReturn(false);
 
         $view1 = new ChannelView(name: '#channel1', modes: '+nt', topic: null, memberCount: 5);
@@ -238,24 +264,29 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn($view1);
 
         $this->modeSupportProvider
+            ->expects(self::atLeastOnce())
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesUnsetWithoutParam')
             ->willReturn(['s', 'm', 'i', 'n', 't']);
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesUnsetWithParam')
             ->willReturn(['k']);
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesWithParamOnSet')
             ->willReturn(['k', 'l']);
 
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelModes');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
 
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncComplete($event);
     }
@@ -263,31 +294,37 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     #[Test]
     public function onMlockUpdatedEnforcesImmediately(): void
     {
-        $registered = $this->createMock(RegisteredChannel::class);
+        $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isMlockActive')->willReturn(true);
         $registered->method('getMlock')->willReturn('nt');
 
         $view = new ChannelView(name: '#test', modes: '+ntms', topic: null, memberCount: 5);
 
         $this->channelRepository
+            ->expects(self::atLeastOnce())
             ->method('findByChannelName')
             ->willReturn($registered);
 
         $this->channelLookup
+            ->expects(self::atLeastOnce())
             ->method('findByChannelName')
             ->willReturn($view);
 
         $this->modeSupportProvider
+            ->expects(self::atLeastOnce())
             ->method('getSupport')
             ->willReturn($this->modeSupport);
 
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesUnsetWithoutParam')
             ->willReturn(['s', 'm', 'i', 'n', 't']);
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesUnsetWithParam')
             ->willReturn(['k']);
         $this->modeSupport
+            ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesWithParamOnSet')
             ->willReturn(['k', 'l']);
 
@@ -295,6 +332,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('setChannelModes')
             ->with('#test', '-ms', []);
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
 
         $event = new ChannelMlockUpdatedEvent(channelName: '#test');
         $this->subscriber->onMlockUpdated($event);

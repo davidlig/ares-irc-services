@@ -17,7 +17,6 @@ use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -25,7 +24,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(IRCClientFactory::class)]
 final class IRCClientFactoryTest extends TestCase
 {
@@ -68,10 +66,10 @@ final class IRCClientFactoryTest extends TestCase
     #[Test]
     public function createReturnsIRCClientAndSetsModuleOnHolder(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
-        $handler = $this->createMock(ProtocolHandlerInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('getProtocolName')->willReturn('unreal');
-        $module = $this->createMock(\App\Application\Port\ProtocolModuleInterface::class);
+        $module = $this->createStub(\App\Application\Port\ProtocolModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
 
         $this->moduleRegistry->expects(self::once())->method('get')->with('unreal')->willReturn($module);

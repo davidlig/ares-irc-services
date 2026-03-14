@@ -9,13 +9,11 @@ use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServNickDropCleanupSubscriber::class)]
 final class MemoServNickDropCleanupSubscriberTest extends TestCase
 {
@@ -43,6 +41,9 @@ final class MemoServNickDropCleanupSubscriberTest extends TestCase
     #[Test]
     public function subscribesToNickDropEvent(): void
     {
+        $this->memoRepository->expects(self::never())->method('deleteAllForNick');
+        $this->memoIgnoreRepository->expects(self::never())->method('deleteAllForNick');
+        $this->memoSettingsRepository->expects(self::never())->method('deleteAllForNick');
         self::assertSame(
             [NickDropEvent::class => ['onNickDrop', 0]],
             MemoServNickDropCleanupSubscriber::getSubscribedEvents(),

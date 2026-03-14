@@ -9,12 +9,10 @@ use App\Application\IRC\Connect\ConnectToServerHandler;
 use App\Application\IRC\IRCClient;
 use App\Application\IRC\IRCClientFactoryInterface;
 use App\Domain\IRC\Server\ServerLink;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ConnectToServerHandler::class)]
 final class ConnectToServerHandlerTest extends TestCase
 {
@@ -75,7 +73,7 @@ final class ConnectToServerHandlerTest extends TestCase
         );
 
         $client = $this->createMock(IRCClient::class);
-        $client->method('connect')->willReturnCallback(static function (): void {});
+        $client->expects(self::atLeastOnce())->method('connect')->willReturnCallback(static function (): void {});
 
         $factory = $this->createMock(IRCClientFactoryInterface::class);
         $factory->expects(self::once())->method('create')->with('inspircd', self::anything())->willReturn($client);

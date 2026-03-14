@@ -12,12 +12,10 @@ use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter;
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(CoreChannelLookupAdapter::class)]
 final class CoreChannelLookupAdapterTest extends TestCase
 {
@@ -36,7 +34,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
     public function findByChannelNameReturnsNullWhenChannelNotFound(): void
     {
         $repo = $this->createMock(ChannelRepositoryInterface::class);
-        $repo->method('findByName')->willReturn(null);
+        $repo->expects(self::atLeastOnce())->method('findByName')->willReturn(null);
         $adapter = new CoreChannelLookupAdapter($repo);
 
         self::assertNull($adapter->findByChannelName('#nonexistent'));
@@ -80,7 +78,7 @@ final class CoreChannelLookupAdapterTest extends TestCase
         $channel->syncMember(new Uid('005Q'), ChannelMemberRole::Owner);
         $channel->syncMember(new Uid('006N'), ChannelMemberRole::None);
         $repo = $this->createMock(ChannelRepositoryInterface::class);
-        $repo->method('findByName')->willReturn($channel);
+        $repo->expects(self::atLeastOnce())->method('findByName')->willReturn($channel);
         $adapter = new CoreChannelLookupAdapter($repo);
 
         $view = $adapter->findByChannelName('#multi');

@@ -25,14 +25,12 @@ use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber;
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NickProtectionSubscriber::class)]
 final class NickProtectionSubscriberTest extends TestCase
 {
@@ -83,6 +81,8 @@ final class NickProtectionSubscriberTest extends TestCase
     #[Test]
     public function getSubscribedEventsReturnsAllHandlersWithPriorities(): void
     {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
         $events = NickProtectionSubscriber::getSubscribedEvents();
 
         self::assertSame(
@@ -194,6 +194,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier
             ->expects(self::atLeastOnce())
             ->method('setUserVhost');
@@ -210,6 +211,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
         $this->notifier->expects(self::never())->method('setUserVhost');
 
         $this->subscriber->onBurstComplete($event);
@@ -220,6 +222,8 @@ final class NickProtectionSubscriberTest extends TestCase
     #[Test]
     public function onNickChangedDelegatesToNickProtectionService(): void
     {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
         $event = new UserNickChangedEvent(
             new Uid('001ABC'),
             new Nick('OldNick'),
@@ -233,6 +237,8 @@ final class NickProtectionSubscriberTest extends TestCase
     #[Test]
     public function onUserQuitDelegatesToNickProtectionService(): void
     {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
         $event = new UserQuitNetworkEvent(
             new Uid('001ABC'),
             new Nick('User'),

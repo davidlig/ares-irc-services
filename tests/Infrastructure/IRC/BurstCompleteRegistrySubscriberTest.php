@@ -14,12 +14,10 @@ use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\BurstCompleteRegistrySubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(BurstCompleteRegistrySubscriber::class)]
 final class BurstCompleteRegistrySubscriberTest extends TestCase
 {
@@ -60,7 +58,7 @@ final class BurstCompleteRegistrySubscriberTest extends TestCase
     #[Test]
     public function onBurstCompleteSetsBurstCompleteTrue(): void
     {
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
         self::assertFalse($this->registry->isBurstComplete());

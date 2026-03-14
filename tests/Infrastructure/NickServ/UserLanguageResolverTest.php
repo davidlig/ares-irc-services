@@ -8,12 +8,10 @@ use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(UserLanguageResolver::class)]
 final class UserLanguageResolverTest extends TestCase
 {
@@ -30,7 +28,7 @@ final class UserLanguageResolverTest extends TestCase
     #[Test]
     public function resolveReturnsAccountLanguage(): void
     {
-        $nick = $this->createMock(RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getLanguage')->willReturn('es');
 
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($nick);
@@ -68,7 +66,7 @@ final class UserLanguageResolverTest extends TestCase
     #[Test]
     public function resolveByNickReturnsAccountLanguage(): void
     {
-        $nick = $this->createMock(RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getLanguage')->willReturn('es');
 
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($nick);
@@ -87,7 +85,7 @@ final class UserLanguageResolverTest extends TestCase
     #[Test]
     public function resolveByNickPreservesOriginalCase(): void
     {
-        $nick = $this->createMock(RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getLanguage')->willReturn('es');
 
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($nick);
@@ -98,6 +96,8 @@ final class UserLanguageResolverTest extends TestCase
     #[Test]
     public function getDefaultReturnsConfiguredDefault(): void
     {
+        $this->nickRepository->expects(self::never())->method('findByNick');
+
         $resolver = new UserLanguageResolver($this->nickRepository, 'fr');
 
         self::assertSame('fr', $resolver->getDefault());
@@ -108,7 +108,7 @@ final class UserLanguageResolverTest extends TestCase
     {
         $resolver = new UserLanguageResolver($this->nickRepository, 'es');
 
-        $this->nickRepository->method('findByNick')->willReturn(null);
+        $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->willReturn(null);
 
         $sender = new SenderView(
             uid: '001ABCD',

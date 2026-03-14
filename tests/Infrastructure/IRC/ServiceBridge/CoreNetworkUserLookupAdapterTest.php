@@ -11,13 +11,11 @@ use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter;
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(CoreNetworkUserLookupAdapter::class)]
 final class CoreNetworkUserLookupAdapterTest extends TestCase
 {
@@ -146,6 +144,9 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
     #[Test]
     public function fromNetworkUserMapsAllFields(): void
     {
+        $this->repository->expects(self::never())->method('findByUid');
+        $this->repository->expects(self::never())->method('findByNick');
+        $this->repository->expects(self::never())->method('all');
         $user = $this->createNetworkUser(
             uid: '001ABCD',
             nick: 'TestUser',
@@ -172,6 +173,9 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
     #[Test]
     public function fromNetworkUserHandlesOperMode(): void
     {
+        $this->repository->expects(self::never())->method('findByUid');
+        $this->repository->expects(self::never())->method('findByNick');
+        $this->repository->expects(self::never())->method('all');
         $user = $this->createNetworkUser('001OPR', 'Oper', 'oper', 'oper.host', 'cloak', '+o');
 
         $result = $this->adapter->fromNetworkUser($user);
@@ -183,6 +187,9 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
     #[Test]
     public function fromNetworkUserHandlesUnidentifiedUser(): void
     {
+        $this->repository->expects(self::never())->method('findByUid');
+        $this->repository->expects(self::never())->method('findByNick');
+        $this->repository->expects(self::never())->method('all');
         $user = $this->createNetworkUser('001GUEST', 'Guest', 'guest', 'guest.host', 'guest.local', '+i');
 
         $result = $this->adapter->fromNetworkUser($user);

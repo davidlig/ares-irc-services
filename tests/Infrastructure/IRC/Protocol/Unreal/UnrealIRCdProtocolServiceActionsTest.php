@@ -7,13 +7,11 @@ namespace App\Tests\Infrastructure\IRC\Protocol\Unreal;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(UnrealIRCdProtocolServiceActions::class)]
 final class UnrealIRCdProtocolServiceActionsTest extends TestCase
 {
@@ -24,7 +22,7 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
     protected function setUp(): void
     {
         $this->written = [];
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('writeLine')->willReturnCallback(function (string $line): void {
             $this->written[] = $line;
         });

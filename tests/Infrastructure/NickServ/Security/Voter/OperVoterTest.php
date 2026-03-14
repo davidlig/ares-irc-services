@@ -8,14 +8,12 @@ use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
 use App\Infrastructure\NickServ\Security\IrcServiceUser;
 use App\Infrastructure\NickServ\Security\Voter\OperVoter;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(OperVoter::class)]
 final class OperVoterTest extends TestCase
 {
@@ -41,7 +39,7 @@ final class OperVoterTest extends TestCase
         );
 
         $user = new IrcServiceUser($sender);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
         $token->method('getUser')->willReturn($user);
 
         $result = $this->voter->vote($token, null, [NickServPermission::NETWORK_OPER]);
@@ -64,7 +62,7 @@ final class OperVoterTest extends TestCase
         );
 
         $user = new IrcServiceUser($sender);
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
         $token->method('getUser')->willReturn($user);
 
         $result = $this->voter->vote($token, null, [NickServPermission::NETWORK_OPER]);
@@ -75,7 +73,7 @@ final class OperVoterTest extends TestCase
     #[Test]
     public function voteDeniesAccessWhenUserNotIrcServiceUser(): void
     {
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
         $token->method('getUser')->willReturn(null);
 
         $result = $this->voter->vote($token, null, [NickServPermission::NETWORK_OPER]);
@@ -86,7 +84,7 @@ final class OperVoterTest extends TestCase
     #[Test]
     public function voteAbstainsForUnsupportedAttribute(): void
     {
-        $token = $this->createMock(TokenInterface::class);
+        $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, null, ['OTHER_ATTRIBUTE']);
 

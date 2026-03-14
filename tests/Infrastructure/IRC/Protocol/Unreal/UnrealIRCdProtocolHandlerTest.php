@@ -12,12 +12,10 @@ use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(UnrealIRCdProtocolHandler::class)]
 final class UnrealIRCdProtocolHandlerTest extends TestCase
 {
@@ -87,7 +85,7 @@ final class UnrealIRCdProtocolHandlerTest extends TestCase
     {
         $lines = [];
         $connection = $this->createMock(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
+        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
             $lines[] = $line;
         });
 
@@ -108,7 +106,7 @@ final class UnrealIRCdProtocolHandlerTest extends TestCase
     {
         $written = [];
         $connection = $this->createMock(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
+        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
             $written[] = $line;
         });
 
@@ -125,7 +123,7 @@ final class UnrealIRCdProtocolHandlerTest extends TestCase
     {
         $written = [];
         $connection = $this->createMock(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
+        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
             $written[] = $line;
         });
 
@@ -143,7 +141,7 @@ final class UnrealIRCdProtocolHandlerTest extends TestCase
     {
         $written = [];
         $connection = $this->createMock(ConnectionInterface::class);
-        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
+        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
             $written[] = $line;
         });
 
