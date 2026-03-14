@@ -25,4 +25,12 @@ final class ChannelDropEventTest extends TestCase
         self::assertSame('inactivity', $event->reason);
         self::assertSame($at, $event->occurredAt);
     }
+
+    #[Test]
+    public function defaultOccurredAtWhenNotProvided(): void
+    {
+        $event = new ChannelDropEvent(1, '#test', '#test', 'manual');
+
+        self::assertInstanceOf(DateTimeImmutable::class, $event->occurredAt);
+    }
 }
