@@ -6,6 +6,7 @@ namespace App\Tests\Application\IRC;
 
 use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\IRC\IRCClient;
+use App\Application\Maintenance\Message\RunMaintenanceCycle;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -152,6 +154,44 @@ final class IRCClientTest extends TestCase
         $this->protocol->expects(self::once())->method('handleIncoming');
 
         $this->eventDispatcher->expects(self::exactly(2))->method('dispatch');
+
+        $this->client->run();
+    }
+
+    #[Test]
+    public function runDispatchesMaintenanceCycleWhenBurstCompleteAndIntervalElapsed(): void
+    {
+        $this->burstCompleteRegistry->setBurstComplete(true);
+        $rawLine = ':s PING x';
+        $message = new IRCMessage('PING', 's', ['x']);
+
+        $this->connection->method('isConnected')->willReturn(true, true, false);
+        $this->connection->method('readLine')->willReturn($rawLine, $rawLine);
+        $this->protocol->method('getProtocolName')->willReturn('unreal');
+        $this->protocol->method('parseRawLine')->with($rawLine)->willReturn($message);
+        $this->protocol->method('handleIncoming');
+
+        $this->messageBus->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($m): bool => $m instanceof RunMaintenanceCycle))
+            ->willReturnCallback(static fn (object $m): Envelope => new Envelope($m));
+
+        $this->client->run();
+    }
+
+    #[Test]
+    public function runDoesNotDispatchMaintenanceWhenBurstNotComplete(): void
+    {
+        $this->burstCompleteRegistry->setBurstComplete(false);
+        $rawLine = ':s PING x';
+        $message = new IRCMessage('PING', 's', ['x']);
+
+        $this->connection->method('isConnected')->willReturn(true, false);
+        $this->connection->method('readLine')->willReturn($rawLine);
+        $this->protocol->method('getProtocolName')->willReturn('unreal');
+        $this->protocol->method('parseRawLine')->with($rawLine)->willReturn($message);
+        $this->protocol->method('handleIncoming');
+
+        $this->messageBus->expects(self::never())->method('dispatch');
 
         $this->client->run();
     }
