@@ -49,6 +49,18 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
     }
 
     #[Test]
+    public function getRemainingCooldownSecondsReturnsPositiveWithinWindow(): void
+    {
+        $registry = new ChannelRegisterThrottleRegistry();
+        $registry->recordRegistration(1);
+
+        $remaining = $registry->getRemainingCooldownSeconds(1, 3600);
+
+        self::assertGreaterThan(0, $remaining);
+        self::assertLessThanOrEqual(3600, $remaining);
+    }
+
+    #[Test]
     public function pruneExpiredCooldownsRemovesExpiredEntries(): void
     {
         $registry = new ChannelRegisterThrottleRegistry();
