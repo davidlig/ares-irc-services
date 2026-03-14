@@ -15,7 +15,7 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 - **README Sync**: If you add/change/remove features, commands, or config vars, you MUST update `README.md`. A task is not complete if the docs are outdated.
 
 ### 1.2 Error / Bug Reports: Log & Commit Review (CRITICAL)
-- When the user reports an **error**, **bug** or **unexpected behaviour** (e.g. "hay un error con…", "revisa los logs", "soluciona este problema"), you MUST **review the application logs** **before** proposing or writing code.
+- When the user reports an **error**, **bug** or **unexpected behaviour** (e.g. "there is an error with…", "check the logs", "fix this issue"), you MUST **review the application logs** **before** proposing or writing code.
 - **Where**: Read the relevant log files under `var/log/*.log` (e.g. `irc-*.log`, `ares-*.log`, `maintenance-*.log`). Prefer the most recent or the file the user has open or mentions.
 - **Why**: The logs show the real flow of IRCd ↔ services (messages received/sent, events, subscriber actions). This context is essential to understand the order of events, race conditions, and the actual failure point instead of guessing.
 - **Recent commits**: You MUST also **review recent commits** (`git log` or the commit history) to check whether the bug was **introduced in a specific commit**. If the user indicates a commit (e.g. "el bug se introdujo en el commit X"), inspect that commit with `git show <hash>` and base the fix or re-implementation on it. Even when no commit is mentioned, scanning the last few commits touching the affected area can pinpoint regressions.
