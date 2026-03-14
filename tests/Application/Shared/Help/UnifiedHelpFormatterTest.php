@@ -10,6 +10,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function strlen;
+
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {
@@ -22,6 +24,47 @@ final class UnifiedHelpFormatterTest extends TestCase
             ->with(self::callback(static fn (string $s): bool => str_contains($s, 'ℹ') && str_contains($s, 'My Title')));
 
         $formatter->sendHeader($context, 'My Title');
+    }
+
+    #[Test]
+    public function sendHeaderUsesCorrectDashCountForHeaderWidth(): void
+    {
+        $formatter = new UnifiedHelpFormatter();
+        $captured = null;
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->expects(self::once())->method('replyRaw')
+            ->with(self::callback(static function (string $s) use (&$captured): bool {
+                $captured = $s;
+
+                return true;
+            }));
+
+        $formatter->sendHeader($context, 'AB');
+        self::assertNotNull($captured);
+        // visible = 4 + mb_strlen('AB') + 1 = 7, HEADER_WIDTH = 40 → 33 dashes
+        $dashCount = substr_count($captured, '─');
+        self::assertSame(33, $dashCount, 'Header should have 33 dashes for title "AB"');
+    }
+
+    #[Test]
+    public function sendHeaderUsesMbStrlenForMultibyteTitle(): void
+    {
+        $formatter = new UnifiedHelpFormatter();
+        $captured = null;
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->expects(self::once())->method('replyRaw')
+            ->with(self::callback(static function (string $s) use (&$captured): bool {
+                $captured = $s;
+
+                return true;
+            }));
+
+        $formatter->sendHeader($context, 'Título');
+        self::assertNotNull($captured);
+        self::assertStringContainsString('Título', $captured);
+        // visible = 4 + 6 + 1 = 11 (Título = 6 mb chars), 40 - 11 = 29 dashes
+        $dashCount = substr_count($captured, '─');
+        self::assertSame(29, $dashCount);
     }
 
     #[Test]
@@ -127,6 +170,132 @@ final class UnifiedHelpFormatterTest extends TestCase
         $formatter->showGeneralHelp($context);
 
         self::assertSame(1, $commandLineCalls, 'HELP command should be omitted; only FOO should produce one command_line');
+    }
+
+    #[Test]
+    public function showGeneralHelpWithEmptyCommandListStillSendsHeaderAndFooter(): void
+    {
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->method('getCommandsForGeneralHelp')->willReturn([]);
+        $context->method('trans')->willReturn('');
+        $replyRawCalls = [];
+        $context->method('replyRaw')->willReturnCallback(
+            static function (string $s) use (&$replyRawCalls): void {
+                $replyRawCalls[] = $s;
+            }
+        );
+        $replyKeys = [];
+        $context->method('reply')->willReturnCallback(
+            static function (string $key) use (&$replyKeys): void {
+                $replyKeys[] = $key;
+            }
+        );
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showGeneralHelp($context);
+
+        self::assertNotEmpty(array_filter($replyRawCalls, static fn (string $s): bool => str_contains($s, 'ℹ')));
+        self::assertContains('help.intro', $replyKeys);
+        self::assertContains('help.general_header', $replyKeys);
+        self::assertContains('help.general_footer', $replyKeys);
+        self::assertCount(0, array_filter($replyKeys, static fn (string $k): bool => 'help.command_line' === $k));
+    }
+
+    #[Test]
+    public function showGeneralHelpSortsCommandsByOrder(): void
+    {
+        $second = new class {
+            public function getName(): string
+            {
+                return 'SECOND';
+            }
+
+            public function getOrder(): int
+            {
+                return 10;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.second';
+            }
+        };
+        $first = new class {
+            public function getName(): string
+            {
+                return 'FIRST';
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.first';
+            }
+        };
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->method('getCommandsForGeneralHelp')->willReturn([$second, $first]);
+        $context->method('shouldShowCommandInGeneralHelp')->willReturn(true);
+        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('replyRaw');
+        $commandLineParams = [];
+        $context->method('reply')->willReturnCallback(
+            static function (string $key, array $params = []) use (&$commandLineParams): void {
+                if ('help.command_line' === $key) {
+                    $commandLineParams[] = $params['command'] ?? null;
+                }
+            }
+        );
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showGeneralHelp($context);
+
+        self::assertCount(2, $commandLineParams);
+        self::assertStringContainsString('FIRST', $commandLineParams[0]);
+        self::assertStringContainsString('SECOND', $commandLineParams[1]);
+    }
+
+    #[Test]
+    public function showGeneralHelpPadsCommandNameToCmdPad(): void
+    {
+        $cmd = new class {
+            public function getName(): string
+            {
+                return 'X';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.x';
+            }
+        };
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->method('getCommandsForGeneralHelp')->willReturn([$cmd]);
+        $context->method('shouldShowCommandInGeneralHelp')->willReturn(true);
+        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('replyRaw');
+        $capturedCommand = null;
+        $context->method('reply')->willReturnCallback(
+            static function (string $key, array $params = []) use (&$capturedCommand): void {
+                if ('help.command_line' === $key) {
+                    $capturedCommand = $params['command'] ?? null;
+                }
+            }
+        );
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showGeneralHelp($context);
+
+        self::assertSame(12, strlen($capturedCommand ?? ''));
+        self::assertStringStartsWith('X', $capturedCommand ?? '');
     }
 
     #[Test]
@@ -252,6 +421,52 @@ final class UnifiedHelpFormatterTest extends TestCase
 
         $formatter = new UnifiedHelpFormatter();
         $formatter->showCommandHelp($context, $handler);
+    }
+
+    #[Test]
+    public function showCommandHelpPadsSubCommandNameToSubsPad(): void
+    {
+        $handler = new class {
+            public function getName(): string
+            {
+                return 'ACCESS';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.access';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [
+                    ['name' => 'ADD', 'desc_key' => 'help.access.add'],
+                ];
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.access';
+            }
+        };
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->method('trans')->willReturn('x');
+        $subCommandLineParams = [];
+        $context->method('reply')->willReturnCallback(
+            static function (string $key, array $params = []) use (&$subCommandLineParams): void {
+                if ('help.subcommand_line' === $key) {
+                    $subCommandLineParams[] = $params['command'] ?? null;
+                }
+            }
+        );
+        $context->expects(self::atLeastOnce())->method('replyRaw');
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showCommandHelp($context, $handler);
+
+        self::assertCount(1, $subCommandLineParams);
+        self::assertSame(10, strlen($subCommandLineParams[0] ?? ''));
+        self::assertStringStartsWith('ADD', $subCommandLineParams[0] ?? '');
     }
 
     #[Test]
