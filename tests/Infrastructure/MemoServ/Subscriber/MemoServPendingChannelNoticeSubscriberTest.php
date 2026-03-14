@@ -1,0 +1,287 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Infrastructure\MemoServ\Subscriber;
+
+use App\Application\ChanServ\ChanServAccessHelper;
+use App\Application\MemoServ\Command\MemoServNotifierInterface;
+use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
+use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
+use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\IRC\Event\UserJoinedChannelEvent;
+use App\Domain\IRC\ValueObject\ChannelName;
+use App\Domain\IRC\ValueObject\Uid;
+use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
+use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+#[CoversClass(MemoServPendingChannelNoticeSubscriber::class)]
+final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
+{
+    private const CHANNEL_ID = 1;
+    private const NICK_ID = 10;
+    private const MEMOSERV_UID = '001MEMO';
+
+    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+
+    private RegisteredNickRepositoryInterface&MockObject $nickRepository;
+
+    private MemoRepositoryInterface&MockObject $memoRepository;
+
+    private MemoSettingsRepositoryInterface&MockObject $memoSettingsRepository;
+
+    private ChannelAccessRepositoryInterface&MockObject $accessRepository;
+
+    private ChannelLevelRepositoryInterface&MockObject $levelRepository;
+
+    private ChanServAccessHelper $accessHelper;
+
+    private MemoServNotifierInterface&MockObject $notifier;
+
+    private NetworkUserLookupPort&MockObject $userLookup;
+
+    private TranslatorInterface&MockObject $translator;
+
+    private MemoServPendingChannelNoticeSubscriber $subscriber;
+
+    protected function setUp(): void
+    {
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $this->memoRepository = $this->createMock(MemoRepositoryInterface::class);
+        $this->memoSettingsRepository = $this->createMock(MemoSettingsRepositoryInterface::class);
+        $this->accessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $this->levelRepository = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $this->accessHelper = new ChanServAccessHelper($this->accessRepository, $this->levelRepository);
+        $this->notifier = $this->createMock(MemoServNotifierInterface::class);
+        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $this->translator = $this->createMock(TranslatorInterface::class);
+
+        $this->subscriber = new MemoServPendingChannelNoticeSubscriber(
+            $this->channelRepository,
+            $this->nickRepository,
+            $this->memoRepository,
+            $this->memoSettingsRepository,
+            $this->accessHelper,
+            $this->notifier,
+            $this->userLookup,
+            $this->translator,
+            self::MEMOSERV_UID,
+            'en',
+        );
+    }
+
+    #[Test]
+    public function getSubscribedEvents_returns_user_joined_channel_with_priority(): void
+    {
+        self::assertSame(
+            [UserJoinedChannelEvent::class => ['onUserJoinedChannel', -10]],
+            MemoServPendingChannelNoticeSubscriber::getSubscribedEvents(),
+        );
+    }
+
+    #[Test]
+    public function doesNothingWhenUidIsMemoServ(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid(self::MEMOSERV_UID),
+            channel: new ChannelName('#test'),
+            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+        );
+
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->notifier->expects(self::never())->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function doesNothingWhenChannelNotRegistered(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001USER'),
+            channel: new ChannelName('#test'),
+            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+        );
+
+        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn(null);
+        $this->notifier->expects(self::never())->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function doesNothingWhenMemoNotEnabledForChannel(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001USER'),
+            channel: new ChannelName('#test'),
+            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+        );
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(self::CHANNEL_ID);
+
+        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(false);
+        $this->notifier->expects(self::never())->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function doesNothingWhenNoUnreadMemos(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001USER'),
+            channel: new ChannelName('#test'),
+            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+        );
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(self::CHANNEL_ID);
+
+        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(0);
+        $this->notifier->expects(self::never())->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function doesNothingWhenUserLookupReturnsNull(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001USER'),
+            channel: new ChannelName('#test'),
+            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+        );
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(self::CHANNEL_ID);
+
+        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
+        $this->userLookup->method('findByUid')->with('001USER')->willReturn(null);
+        $this->notifier->expects(self::never())->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function doesNothingWhenNickNotRegistered(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001USER'),
+            channel: new ChannelName('#test'),
+            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+        );
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(self::CHANNEL_ID);
+        $sender = new SenderView(
+            uid: '001USER',
+            nick: 'TestUser',
+            ident: '~u',
+            hostname: 'user.example.com',
+            cloakedHost: 'user.example.com',
+            ipBase64: '',
+        );
+
+        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
+        $this->userLookup->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->notifier->expects(self::never())->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function doesNothingWhenUserLevelBelowMemoread(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001USER'),
+            channel: new ChannelName('#test'),
+            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+        );
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(self::CHANNEL_ID);
+        $sender = new SenderView(
+            uid: '001USER',
+            nick: 'TestUser',
+            ident: '~u',
+            hostname: 'user.example.com',
+            cloakedHost: 'user.example.com',
+            ipBase64: '',
+        );
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('getLanguage')->willReturn('en');
+
+        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(3);
+        $this->userLookup->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->accessRepository->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn(null);
+        $this->levelRepository->method('findByChannelAndKey')->with(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD)->willReturn(new ChannelLevel(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD, 200));
+        $this->notifier->expects(self::never())->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function sendsNoticeWhenUserHasMemoreadAndUnreadMemos(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001USER'),
+            channel: new ChannelName('#test'),
+            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+        );
+        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(self::CHANNEL_ID);
+        $channel->method('isFounder')->with(self::NICK_ID)->willReturn(false);
+
+        $sender = new SenderView(
+            uid: '001USER',
+            nick: 'TestUser',
+            ident: '~u',
+            hostname: 'user.example.com',
+            cloakedHost: 'user.example.com',
+            ipBase64: '',
+        );
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('getLanguage')->willReturn('en');
+
+        $access = new \App\Domain\ChanServ\Entity\ChannelAccess(self::CHANNEL_ID, self::NICK_ID, 250);
+
+        $this->channelRepository->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->memoSettingsRepository->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);
+        $this->memoRepository->method('countUnreadByTargetChannel')->with(self::CHANNEL_ID)->willReturn(2);
+        $this->userLookup->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->nickRepository->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->accessRepository->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($access);
+        $this->levelRepository->method('findByChannelAndKey')->with(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD)->willReturn(new ChannelLevel(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD, 200));
+        $this->translator->method('trans')->with(
+            'notify.channel_pending',
+            ['%channel%' => '#test', '%count%' => 2],
+            'memoserv',
+            'en',
+        )->willReturn('You have 2 pending memo(s) for #test.');
+        $this->notifier->expects(self::once())->method('sendNotice')->with('001USER', 'You have 2 pending memo(s) for #test.');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+}
