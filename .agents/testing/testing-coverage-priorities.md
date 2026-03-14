@@ -43,7 +43,7 @@ The prioritisation below is based on code structure and which parts already have
 | Layer | Areas |
 |-------|--------|
 | **Domain** | Entities (RegisteredNick, RegisteredChannel, ChannelAccess, ChannelLevel, Memo, MemoSettings, MemoIgnore), VOs (NickStatus, Uid, Nick, ChannelName, etc.), IRC events/value (Channel, NetworkUser, IRCMessage, …), exceptions (NickServ, ChanServ, MemoServ). |
-| **Application** | Ports (SenderView, ChannelView), Commands and handlers (NickServ, ChanServ, MemoServ), services (NickServService, ChanServService, MemoServService), registries (PendingVerification, RecoveryToken, RegisterThrottle, MemoSendThrottle, FounderChangeToken, ChannelRegisterThrottle), helpers (ChanServAccessHelper, EmailMasker, SecureToken, VhostValidator, TimezoneHelpProvider), Mail (SendEmail, SendEmailHandler), Maintenance (RunMaintenanceCycle, Scheduler), ConnectToServerCommand, UnifiedHelpFormatter, command registries. |
+| **Application** | Ports (SenderView, ChannelView), Commands and handlers (NickServ, ChanServ, MemoServ), services (NickServService, ChanServService, MemoServService), registries (PendingVerification, RecoveryToken, RegisterThrottle, MemoSendThrottle, FounderChangeToken, ChannelRegisterThrottle), helpers (ChanServAccessHelper, EmailMasker, SecureToken, VhostValidator, TimezoneHelpProvider), Mail (SendEmail, SendEmailHandler), Maintenance (RunMaintenanceCycle, Scheduler), ConnectToServerCommand, IRCClient, UnifiedHelpFormatter, command registries. |
 | **Infrastructure** | UserMessageTypeResolver, NullChannelModeSupport, UnrealIRCdChannelModeSupport, InspIRCdChannelModeSupport, AbstractProtocolHandler, UnrealIRCdProtocolHandler, InspIRCdProtocolHandler, UnrealIRCdProtocolServiceActions, InspIRCdProtocolServiceActions, UnrealIRCdServiceIntroductionFormatter, InspIRCdServiceIntroductionFormatter, UnrealIRCdVhostCommandBuilder, InspIRCdVhostCommandBuilder, ChannelRankSyncPendingRegistry, ChannelSyncCompletedRegistry, PendingNickRestoreRegistry, SensitiveDataRedactor, Argon2PasswordHasher, InMemoryNetworkUserRepository, InMemoryChannelRepository, RegisteredNickDoctrineRepository (integration), RegisteredChannelDoctrineRepository (integration), ChannelAccessDoctrineRepository (integration), MemoDoctrineRepository (integration), MemoSettingsDoctrineRepository (integration), MemoIgnoreDoctrineRepository (integration), ChannelLevelDoctrineRepository (integration), NickServIdentifiedOwnerVoter, OperVoter, DoctrineIdentityMapClearSubscriber, ChanServEntryMsgSubscriber, MemoServNickIdentifiedNoticeSubscriber, MemoServNickDropCleanupSubscriber, VhostClearOnDeidentifySubscriber, ServiceCommandGateway, CoreNetworkUserLookupAdapter, ChanServTopicApplySubscriber, ChanServTopicSyncSubscriber, ChanServRejoinSubscriber, MemoServChannelDropCleanupSubscriber, ChanServMlockEnforceSubscriber, ChanServChannelRankSubscriber, MemoServPendingChannelNoticeSubscriber, NickServBot, ChanServBot, MemoServBot, BurstCompleteRegistrySubscriber, ChannelSyncCompletedMarkerSubscriber, IRCEventSubscriber, ServerDelinkedSubscriber, NetworkStateSubscriber. |
 | **Application** | BurstCompleteRegistry. |
 | **UI** | ConnectCommand. |
@@ -60,7 +60,7 @@ The prioritisation below is based on code structure and which parts already have
 |------|----------|--------|
 | **UI/CLI** | `UI/CLI/ConnectCommand.php` | ✅ Covered: `tests/UI/CLI/ConnectCommandTest.php`. |
 | **Application** | `Application/IRC/Connect/ConnectToServerHandler.php` | ✅ Covered: `tests/Application/IRC/Connect/ConnectToServerHandlerTest.php`. |
-| **Application** | `Application/IRC/IRCClient.php` | Pending: connection loop; tests with connection mocks. |
+| **Application** | `Application/IRC/IRCClient.php` | ✅ Covered: `tests/Application/IRC/IRCClientTest.php` (connect, run loop with mocks, disconnect, getProtocolName). |
 
 ### Medium priority (Infrastructure unit-testable without DB/socket)
 
@@ -85,7 +85,7 @@ The prioritisation below is based on code structure and which parts already have
 | **Security voters** | `NickServIdentifiedOwnerVoter`, `OperVoter` | ✅ Covered: `NickServIdentifiedOwnerVoterTest`, `OperVoterTest`. |
 | **Remaining repositories** | `ChannelLevelDoctrineRepository` (if needed for edge cases) | Similar pattern to existing integration tests. |
 | **Bots** | `NickServBot`, `ChanServBot`, `MemoServBot` | ✅ Covered: `NickServBotTest`, `ChanServBotTest`, `MemoServBotTest` (real ActiveConnectionHolder + protocol module mocks). |
-| **Connection and network** | `SocketConnection`, `SocketConnectionFactory`, `ActiveConnectionHolder`, network adapters | Depend on socket or network state; integration tests or deep mocks. |
+| **Connection and network** | `SocketConnection`, `SocketConnectionFactory`, `ActiveConnectionHolder`, network adapters | Depend on socket or network state; integration tests or deep mocks. IRCClient (orchestrator) covered via IRCClientTest. |
 | **SymfonyAuthorizationCheckerAdapter** | Depends on Symfony security component. |
 
 ---
