@@ -130,6 +130,63 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function showGeneralHelpSkipsCommandWhenShouldShowCommandInGeneralHelpReturnsFalse(): void
+    {
+        $hiddenCmd = new class {
+            public function getName(): string
+            {
+                return 'HIDDEN';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.hidden';
+            }
+        };
+        $visibleCmd = new class {
+            public function getName(): string
+            {
+                return 'VISIBLE';
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.visible';
+            }
+        };
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->method('getCommandsForGeneralHelp')->willReturn([$hiddenCmd, $visibleCmd]);
+        $context->method('shouldShowCommandInGeneralHelp')->willReturnCallback(
+            static fn (object $cmd): bool => 'VISIBLE' === $cmd->getName()
+        );
+        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('replyRaw');
+        $commandLineCalls = 0;
+        $context->method('reply')->willReturnCallback(
+            static function (string $key) use (&$commandLineCalls): void {
+                if ('help.command_line' === $key) {
+                    ++$commandLineCalls;
+                }
+            }
+        );
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showGeneralHelp($context);
+
+        self::assertSame(1, $commandLineCalls, 'Only VISIBLE should be shown when shouldShowCommandInGeneralHelp is false for HIDDEN');
+    }
+
+    #[Test]
     public function showCommandHelpCallsReplyWithHandlerData(): void
     {
         $handler = new class {
