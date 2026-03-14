@@ -85,7 +85,27 @@ final class ChannelMemberRoleTest extends TestCase
     public function labelReturnsReadableName(): void
     {
         self::assertSame('owner', ChannelMemberRole::Owner->label());
+        self::assertSame('admin', ChannelMemberRole::Admin->label());
         self::assertSame('op', ChannelMemberRole::Op->label());
+        self::assertSame('halfop', ChannelMemberRole::HalfOp->label());
+        self::assertSame('voice', ChannelMemberRole::Voice->label());
         self::assertSame('none', ChannelMemberRole::None->label());
+    }
+
+    #[Test]
+    public function fromModeLetterMapsHalfOpAndAdmin(): void
+    {
+        self::assertSame(ChannelMemberRole::HalfOp, ChannelMemberRole::fromModeLetter('h'));
+        self::assertSame(ChannelMemberRole::Admin, ChannelMemberRole::fromModeLetter('a'));
+    }
+
+    #[Test]
+    public function fromSjoinEntryToLettersSkipsDuplicatePrefixLetters(): void
+    {
+        $entry = '++user';
+        $letters = ChannelMemberRole::fromSjoinEntryToLetters($entry);
+
+        self::assertSame(['v'], $letters);
+        self::assertSame('user', $entry);
     }
 }
