@@ -35,6 +35,16 @@ final class ChannelMemberTest extends TestCase
     }
 
     #[Test]
+    public function constructorWithRoleNoneAndNullPrefixLettersYieldsEmptyPrefixLetters(): void
+    {
+        $uid = new Uid('AAA111');
+        $member = new ChannelMember($uid, ChannelMemberRole::None, null);
+
+        self::assertSame(ChannelMemberRole::None, $member->role);
+        self::assertSame([], $member->prefixLetters);
+    }
+
+    #[Test]
     public function withRoleReturnsNewInstance(): void
     {
         $uid = new Uid('AAA111');

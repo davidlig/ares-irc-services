@@ -92,11 +92,28 @@ final class NetworkUserTest extends TestCase
     }
 
     #[Test]
+    public function ipAddressReturnsAsteriskWhenMasked(): void
+    {
+        $user = $this->createUser('+i', '*');
+
+        self::assertSame('*', $user->getIpAddress());
+    }
+
+    #[Test]
     public function ipAddressFallsBackOnDecodeFailure(): void
     {
         $user = $this->createUser('+i', 'not-base64');
 
         self::assertSame('not-base64', $user->getIpAddress());
+    }
+
+    #[Test]
+    public function ipAddressFallsBackWhenInetNtopFails(): void
+    {
+        $invalidLengthBinary = base64_encode("\x00\x00\x00");
+        $user = $this->createUser('+i', $invalidLengthBinary);
+
+        self::assertSame($invalidLengthBinary, $user->getIpAddress());
     }
 
     #[Test]

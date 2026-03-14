@@ -75,6 +75,24 @@ final class ChannelTest extends TestCase
     }
 
     #[Test]
+    public function applyMemberPrefixChangeForUnknownUidDoesNothing(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'));
+        $uidIn = new Uid('AAA111');
+        $uidUnknown = new Uid('BBB222');
+        $channel->syncMember($uidIn, ChannelMemberRole::Op);
+
+        $channel->applyMemberPrefixChange($uidUnknown, 'v', true);
+        $channel->applyMemberPrefixChange($uidUnknown, 'o', false);
+
+        self::assertTrue($channel->isMember($uidIn));
+        self::assertFalse($channel->isMember($uidUnknown));
+        $member = $channel->getMember($uidIn);
+        self::assertNotNull($member);
+        self::assertSame(ChannelMemberRole::Op, $member->role);
+    }
+
+    #[Test]
     public function removeMember(): void
     {
         $channel = new Channel(new ChannelName('#chan'));
