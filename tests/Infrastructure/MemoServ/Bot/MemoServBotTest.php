@@ -118,7 +118,7 @@ final class MemoServBotTest extends TestCase
     #[Test]
     public function sendMessageWithPrivmsgFormatsAsPrivmsg(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $lines = [];
         $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
             $lines[] = $line;
@@ -137,7 +137,7 @@ final class MemoServBotTest extends TestCase
     #[Test]
     public function sendMessageSplitsLinesAndSkipsEmpty(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $lines = [];
         $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
             $lines[] = $line;

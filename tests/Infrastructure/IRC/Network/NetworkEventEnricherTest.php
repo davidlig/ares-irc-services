@@ -231,7 +231,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onNickChangeReceivedDoesNothingWhenUserNotFound(): void
     {
-        $userRepo = $this->createMock(NetworkUserRepositoryInterface::class);
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
@@ -295,7 +295,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onPartReceivedDoesNothingWhenUserNotFound(): void
     {
-        $userRepo = $this->createMock(NetworkUserRepositoryInterface::class);
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
@@ -314,7 +314,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onKickReceivedDoesNothingWhenTargetNotFound(): void
     {
-        $userRepo = $this->createMock(NetworkUserRepositoryInterface::class);
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
@@ -625,7 +625,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onUmode2ReceivedDoesNothingWhenUserNotFound(): void
     {
-        $userRepo = $this->createMock(NetworkUserRepositoryInterface::class);
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
@@ -687,7 +687,7 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function onSethostReceivedDoesNothingWhenUserNotFound(): void
     {
-        $userRepo = $this->createMock(NetworkUserRepositoryInterface::class);
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');

@@ -106,4 +106,262 @@ final class InfoCommandTest extends TestCase
         self::assertContains('info.founder', $rawMessages);
         self::assertContains('info.footer', $rawMessages);
     }
+
+    #[Test]
+    public function showsSuccessorWhenSet(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->assignSuccessor(2);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $successor = $this->createStub(RegisteredNick::class);
+        $successor->method('getNickname')->willReturn('SuccessorNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturnMap([[1, $founder], [2, $successor]]);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.successor', $rawMessages);
+    }
+
+    #[Test]
+    public function showsDescriptionWhenSet(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'My Channel Description');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.description', $rawMessages);
+    }
+
+    #[Test]
+    public function showsUrlWhenSet(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateUrl('https://example.com');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.url', $rawMessages);
+    }
+
+    #[Test]
+    public function showsEmailWhenSet(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateEmail('test@example.com');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.email', $rawMessages);
+    }
+
+    #[Test]
+    public function showsTopicWhenSet(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Welcome to the channel', 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.topic', $rawMessages);
+        self::assertContains('info.topic_set_by', $rawMessages);
+    }
+
+    #[Test]
+    public function showsMlockWhenActive(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->configureMlock(true, '+nt');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.mlock_modes', $rawMessages);
+    }
+
+    #[Test]
+    public function getNameReturnsInfo(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertSame('INFO', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsOne(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertSame(1, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsInfoSyntax(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertSame('info.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsInfoHelp(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertSame('info.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsFive(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertSame(5, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsInfoShort(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertSame('info.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsNull(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertNull($cmd->getRequiredPermission());
+    }
 }

@@ -140,7 +140,7 @@ final class AccessCommandTest extends TestCase
 
     private function createChannelMock(int $channelId = 1, int $founderNickId = 1): RegisteredChannel
     {
-        $channel = $this->createMock(RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn($channelId);
         $channel->method('getFounderNickId')->willReturn($founderNickId);
         $channel->method('isFounder')->willReturnCallback(static fn (int $id): bool => $id === $founderNickId);

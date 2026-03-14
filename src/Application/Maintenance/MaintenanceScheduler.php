@@ -51,7 +51,7 @@ final class MaintenanceScheduler
         foreach ($this->sortedTasks as $task) {
             $last = $this->lastRun[$task->getName()] ?? 0.0;
 
-            if (($now - $last) < $task->getIntervalSeconds()) {
+            if (0.0 !== $last && ($now - $last) < $task->getIntervalSeconds()) {
                 continue;
             }
 
