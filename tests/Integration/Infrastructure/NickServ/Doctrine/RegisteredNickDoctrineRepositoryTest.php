@@ -200,6 +200,95 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         self::assertCount(2, $all);
     }
 
+    #[Test]
+    public function findRegisteredInactiveSinceReturnsOldNicks(): void
+    {
+        $nick = $this->createRegisteredNick('Inactive', 'inactive@example.com');
+        $this->repository->save($nick);
+        $this->entityManager->flush();
+        $this->entityManager->createQueryBuilder()
+            ->update(RegisteredNick::class, 'n')
+            ->set('n.registeredAt', ':date')
+            ->where('n.nicknameLower = :name')
+            ->setParameter('date', new DateTimeImmutable('-60 days'))
+            ->setParameter('name', 'inactive')
+            ->getQuery()
+            ->execute();
+        $this->entityManager->clear();
+
+        $active = $this->createRegisteredNick('Active', 'active@example.com');
+        $active->markSeen();
+        $this->repository->save($active);
+        $this->flushAndClear();
+
+        $inactive = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'));
+
+        self::assertCount(1, $inactive);
+        self::assertSame('Inactive', $inactive[0]->getNickname());
+    }
+
+    #[Test]
+    public function findRegisteredInactiveSinceReturnsEmptyWhenNoneInactive(): void
+    {
+        $nick = $this->createRegisteredNick('Active', 'active@example.com');
+        $nick->markSeen();
+        $this->repository->save($nick);
+        $this->flushAndClear();
+
+        $inactive = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'));
+
+        self::assertSame([], $inactive);
+    }
+
+    #[Test]
+    public function deleteExpiredPendingRemovesExpiredAndReturnsCount(): void
+    {
+        $expired1 = RegisteredNick::createPending(
+            'Expired1',
+            '$argon2id$v=19$m=65536,t=4,p=1$test$test',
+            'e1@example.com',
+            'en',
+            new DateTimeImmutable('-1 hour')
+        );
+        $expired2 = RegisteredNick::createPending(
+            'Expired2',
+            '$argon2id$v=19$m=65536,t=4,p=1$test$test',
+            'e2@example.com',
+            'en',
+            new DateTimeImmutable('-2 hours')
+        );
+        $this->repository->save($expired1);
+        $this->repository->save($expired2);
+        $this->flushAndClear();
+
+        $deleted = $this->repository->deleteExpiredPending();
+
+        $this->flushAndClear();
+        self::assertSame(2, $deleted);
+        self::assertNull($this->repository->findByNick('Expired1'));
+        self::assertNull($this->repository->findByNick('Expired2'));
+    }
+
+    #[Test]
+    public function deleteExpiredPendingRemovesNothingWhenNoneExpired(): void
+    {
+        $pending = RegisteredNick::createPending(
+            'Pending',
+            '$argon2id$v=19$m=65536,t=4,p=1$test$test',
+            'pending@example.com',
+            'en',
+            new DateTimeImmutable('+24 hours')
+        );
+        $this->repository->save($pending);
+        $this->flushAndClear();
+
+        $deleted = $this->repository->deleteExpiredPending();
+
+        $this->flushAndClear();
+        self::assertSame(0, $deleted);
+        self::assertNotNull($this->repository->findByNick('Pending'));
+    }
+
     private function createRegisteredNick(string $nickname, string $email): RegisteredNick
     {
         $nick = RegisteredNick::createPending(
