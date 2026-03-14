@@ -30,7 +30,7 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 906 tests, 2146 assertions.
+- **Suite:** 908 tests, 2148 assertions.
 - **Coverage:** See `--coverage-text`. Newly covered: IdentifiedSessionRegistry, IdentifyFailedAttemptRegistry, PendingEmailChangeRegistry, BurstState, MemoServSendThrottleRegistry (extended).
 - Covered classes are those listed in section 1 and in the coverage report (`--coverage-text`).
 
