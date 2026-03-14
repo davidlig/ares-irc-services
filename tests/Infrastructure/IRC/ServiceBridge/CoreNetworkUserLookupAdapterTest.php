@@ -110,6 +110,20 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
     }
 
     #[Test]
+    public function findByUidReturnsNullWhenUidInvalid(): void
+    {
+        $this->repository->expects(self::never())->method('findByUid');
+        self::assertNull($this->adapter->findByUid(''));
+    }
+
+    #[Test]
+    public function findByNickReturnsNullWhenNickInvalid(): void
+    {
+        $this->repository->expects(self::never())->method('findByNick');
+        self::assertNull($this->adapter->findByNick(''));
+    }
+
+    #[Test]
     public function listConnectedUidsReturnsArrayOfUids(): void
     {
         $user1 = $this->createNetworkUser('001AAA', 'User1', 'u1', 'h1', 'c1', '+r');

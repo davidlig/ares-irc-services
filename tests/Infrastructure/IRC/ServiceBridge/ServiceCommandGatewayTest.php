@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use stdClass;
 
 #[CoversClass(ServiceCommandGateway::class)]
 final class ServiceCommandGatewayTest extends TestCase
@@ -210,5 +211,22 @@ final class ServiceCommandGatewayTest extends TestCase
 
         $event = new MessageReceivedEvent($message);
         $this->gateway->onMessage($event);
+    }
+
+    #[Test]
+    public function skipsNonListenerItemsInIterable(): void
+    {
+        $gateway = new ServiceCommandGateway(
+            listeners: [$this->nickservListener, new stdClass(), $this->chanservListener],
+            logger: $this->logger,
+        );
+        $message = new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: '001ABCD',
+            params: ['NickServ'],
+            trailing: 'HELP',
+        );
+        $this->nickservListener->expects(self::once())->method('onCommand')->with('001ABCD', 'HELP');
+        $gateway->onMessage(new MessageReceivedEvent($message));
     }
 }
