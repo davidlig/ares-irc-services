@@ -51,4 +51,16 @@ final class UnrealIRCdChannelModeSupportTest extends TestCase
         self::assertContains('n', $support->getChannelSettingModesUnsetWithoutParam());
         self::assertContains('t', $support->getChannelSettingModesUnsetWithoutParam());
     }
+
+    #[Test]
+    public function getChannelSettingModesWithParamOnSetReturnsExpectedModes(): void
+    {
+        $support = new UnrealIRCdChannelModeSupport();
+
+        $modes = $support->getChannelSettingModesWithParamOnSet();
+
+        self::assertContains('k', $modes);
+        self::assertContains('l', $modes);
+        self::assertContains('L', $modes);
+    }
 }

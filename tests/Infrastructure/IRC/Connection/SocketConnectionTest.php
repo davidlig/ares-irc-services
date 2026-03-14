@@ -46,6 +46,16 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
+    public function connectThrowsWhenConnectionFails(): void
+    {
+        $conn = new SocketConnection('127.0.0.1', 59999, false, 1);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to connect to');
+
+        $conn->connect();
+    }
+
+    #[Test]
     public function disconnectWhenNotConnectedDoesNotThrow(): void
     {
         $conn = new SocketConnection('127.0.0.1', 7000);

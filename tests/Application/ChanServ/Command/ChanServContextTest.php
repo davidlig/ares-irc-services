@@ -12,6 +12,7 @@ use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
 use App\Application\Port\SenderView;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
+use DateTime;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -143,6 +144,25 @@ final class ChanServContextTest extends TestCase
         );
 
         self::assertSame('—', $context->formatDate(null));
+    }
+
+    #[Test]
+    public function formatDateConvertsDateTimeToImmutableAndFormats(): void
+    {
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $notifier,
+            $translator,
+            [],
+        );
+        $date = new DateTime('2024-06-15 14:30:00', new DateTimeZone('UTC'));
+
+        $formatted = $context->formatDate($date);
+
+        self::assertStringContainsString('15/06/2024', $formatted);
+        self::assertMatchesRegularExpression('/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/', $formatted);
     }
 
     #[Test]
