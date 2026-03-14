@@ -30,11 +30,13 @@ use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\ChanServ\ChannelRankSyncPendingRegistry;
 use App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServChannelRankSubscriber::class)]
 final class ChanServChannelRankSubscriberTest extends TestCase
 {

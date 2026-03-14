@@ -73,7 +73,7 @@ Since the application involves long-running workers and infinite socket loops (e
 - **Unit Tests**: Focus on Domain logic (Entities, VOs). Mock interfaces.
 - **Integration Tests**: Focus on Infrastructure (Repositories, external services).
 - **Application Tests**: Test the Command Handlers to ensure the flow works.
-- **Context-specific skills**: For testing tasks (adding tests, reviewing coverage, prioritising what to test), consult **`.agents/testing/`**: see `.agents/README.md` (index of types) and **`.agents/testing/README.md`** (conventions, commands). Full detail in `.agents/testing/testing-coverage-priorities.md`.
+- **Context-specific skills**: For testing tasks (adding tests, reviewing coverage, prioritising what to test), consult **`.agents/testing/`**: see `.agents/README.md` (index of types) and **`.agents/testing/README.md`** (conventions, commands, **CRITICAL RULES** for deprecations and coverage analysis). Full detail in `.agents/testing/testing-coverage-priorities.md`.
 
 ---
 

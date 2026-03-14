@@ -9,6 +9,7 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +17,7 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(PurgeInactiveNicknamesTask::class)]
 final class PurgeInactiveNicknamesTaskTest extends TestCase
 {

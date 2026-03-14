@@ -14,11 +14,13 @@ use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\Bot\NickServBot;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(NickServBot::class)]
 final class NickServBotTest extends TestCase
 {

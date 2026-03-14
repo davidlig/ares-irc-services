@@ -20,12 +20,14 @@ use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServPendingChannelNoticeSubscriber::class)]
 final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 {

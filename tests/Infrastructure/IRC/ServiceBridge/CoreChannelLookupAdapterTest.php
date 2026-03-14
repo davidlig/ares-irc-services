@@ -12,10 +12,12 @@ use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(CoreChannelLookupAdapter::class)]
 final class CoreChannelLookupAdapterTest extends TestCase
 {

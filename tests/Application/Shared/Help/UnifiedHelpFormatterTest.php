@@ -6,12 +6,14 @@ namespace App\Tests\Application\Shared\Help;
 
 use App\Application\Shared\Help\HelpFormatterContextInterface;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function strlen;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(UnifiedHelpFormatter::class)]
 final class UnifiedHelpFormatterTest extends TestCase
 {

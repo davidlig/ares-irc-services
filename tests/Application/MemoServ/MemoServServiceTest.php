@@ -12,6 +12,7 @@ use App\Application\MemoServ\MemoServService;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +20,7 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServService::class)]
 final class MemoServServiceTest extends TestCase
 {

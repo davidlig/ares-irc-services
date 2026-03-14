@@ -19,6 +19,7 @@ use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -27,6 +28,7 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(IRCClient::class)]
 final class IRCClientTest extends TestCase
 {

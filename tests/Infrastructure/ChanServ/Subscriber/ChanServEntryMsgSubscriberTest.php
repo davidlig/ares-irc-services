@@ -12,11 +12,13 @@ use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServEntryMsgSubscriber::class)]
 final class ChanServEntryMsgSubscriberTest extends TestCase
 {

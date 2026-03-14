@@ -11,11 +11,13 @@ use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(CoreNetworkUserLookupAdapter::class)]
 final class CoreNetworkUserLookupAdapterTest extends TestCase
 {

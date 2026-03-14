@@ -9,11 +9,13 @@ use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(MemoServNickDropCleanupSubscriber::class)]
 final class MemoServNickDropCleanupSubscriberTest extends TestCase
 {

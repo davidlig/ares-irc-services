@@ -19,6 +19,7 @@ use App\Infrastructure\ChanServ\Bot\ChanServBot;
 use App\Infrastructure\ChanServ\Subscriber\ChanServCommandListener;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -27,6 +28,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServCommandListener::class)]
 final class ChanServCommandListenerTest extends TestCase
 {

@@ -13,6 +13,7 @@ use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\ServerDelinkedSubscriber;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -20,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ServerDelinkedSubscriber::class)]
 final class ServerDelinkedSubscriberTest extends TestCase
 {

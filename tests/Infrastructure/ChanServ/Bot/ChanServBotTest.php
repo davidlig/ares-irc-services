@@ -13,10 +13,12 @@ use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\ChanServ\Bot\ChanServBot;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServBot::class)]
 final class ChanServBotTest extends TestCase
 {
