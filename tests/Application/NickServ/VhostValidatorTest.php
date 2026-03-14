@@ -49,6 +49,15 @@ final class VhostValidatorTest extends TestCase
     }
 
     #[Test]
+    public function normalizeAcceptsMaxLengthBoundary(): void
+    {
+        $v = new VhostValidator();
+        $exactlyMax = str_repeat('a', VhostValidator::MAX_LENGTH);
+
+        self::assertSame($exactlyMax, $v->normalize($exactlyMax));
+    }
+
+    #[Test]
     public function normalizeReturnsNullWhenInvalidChars(): void
     {
         $v = new VhostValidator();

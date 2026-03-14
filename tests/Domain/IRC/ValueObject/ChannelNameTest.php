@@ -57,4 +57,13 @@ final class ChannelNameTest extends TestCase
 
         self::assertTrue($a->equals($b));
     }
+
+    #[Test]
+    public function equalsReturnsFalseWhenDifferent(): void
+    {
+        $a = new ChannelName('#foo');
+        $b = new ChannelName('#bar');
+
+        self::assertFalse($a->equals($b));
+    }
 }
