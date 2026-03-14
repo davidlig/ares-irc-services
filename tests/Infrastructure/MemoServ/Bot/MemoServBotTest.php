@@ -92,6 +92,66 @@ final class MemoServBotTest extends TestCase
         $this->bot->sendNotice('001USER', 'Hi');
     }
 
+    #[Test]
+    public function getNickAndGetUidReturnConfiguredValues(): void
+    {
+        self::assertSame('MemoServ', $this->bot->getNick());
+        self::assertSame(self::MEMOSERV_UID, $this->bot->getUid());
+    }
+
+    #[Test]
+    public function sendNoticeDoesNotWriteWhenNotConnected(): void
+    {
+        $this->bot->sendNotice('001USER', 'Hi');
+        self::assertFalse($this->connectionHolder->isConnected());
+    }
+
+    #[Test]
+    public function sendMessageDoesNotWriteWhenModuleNotSet(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::never())->method('writeLine');
+        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $this->bot->sendMessage('001U', 'Line', 'NOTICE');
+    }
+
+    #[Test]
+    public function sendMessageWithPrivmsgFormatsAsPrivmsg(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $lines = [];
+        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
+            $lines[] = $line;
+        });
+        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
+        $handler->method('formatMessage')->willReturn('PRIVMSG 001U :Hi');
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getHandler')->willReturn($handler);
+        $this->connectionHolder->setProtocolModule($module);
+        $this->bot->sendMessage('001U', 'Hi', 'PRIVMSG');
+        self::assertCount(1, $lines);
+        self::assertSame('PRIVMSG 001U :Hi', $lines[0]);
+    }
+
+    #[Test]
+    public function sendMessageSplitsLinesAndSkipsEmpty(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $lines = [];
+        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
+            $lines[] = $line;
+        });
+        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
+        $handler->method('formatMessage')->willReturnCallback(static fn (): string => 'NOTICE 001U :x');
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getHandler')->willReturn($handler);
+        $this->connectionHolder->setProtocolModule($module);
+        $this->bot->sendMessage('001U', "First\n\nSecond", 'NOTICE');
+        self::assertCount(2, $lines);
+    }
+
     private function createModuleWithHandlerThatReturnsLine(string $line): ProtocolModuleInterface
     {
         $handler = $this->createStub(ProtocolHandlerInterface::class);

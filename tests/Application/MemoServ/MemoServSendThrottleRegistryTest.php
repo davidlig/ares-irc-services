@@ -54,4 +54,16 @@ final class MemoServSendThrottleRegistryTest extends TestCase
         self::assertGreaterThan(0, $remaining);
         self::assertLessThanOrEqual(120, $remaining);
     }
+
+    #[Test]
+    public function getRemainingCooldownSecondsReturnsZeroAfterCooldownExpired(): void
+    {
+        $registry = new MemoServSendThrottleRegistry();
+        $registry->recordSend('UID1');
+
+        sleep(2);
+        $remaining = $registry->getRemainingCooldownSeconds('UID1', 1);
+
+        self::assertSame(0, $remaining);
+    }
 }
