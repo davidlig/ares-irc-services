@@ -145,6 +145,24 @@ final class ChanServAccessHelperTest extends TestCase
     }
 
     #[Test]
+    public function canManageLevelReturnsFalseWhenManagerLevelNotStrictlyHigher(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(300);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertFalse($helper->canManageLevel($channel, 10, 300));
+        self::assertFalse($helper->canManageLevel($channel, 10, 400));
+    }
+
+    #[Test]
     public function getDesiredPrefixLetterReturnsFirstSupportedForFounder(): void
     {
         $channel = $this->createStub(RegisteredChannel::class);
