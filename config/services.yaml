@@ -463,6 +463,9 @@ services:
 
     # --- ChanServ Service -------------------------------------------------------
 
+    App\Application\Port\ChanServDispatchPort:
+        alias: App\Application\ChanServ\ChanServService
+
     App\Application\ChanServ\ChanServService:
         arguments:
             $defaultLanguage: '%services.default_language%'

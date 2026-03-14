@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Subscriber;
 
-use App\Application\ChanServ\ChanServService;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\Port\ChanServDispatchPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ServiceCommandListenerInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
@@ -27,7 +27,7 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
 {
     public function __construct(
         private ChanServBot $chanServBot,
-        private ChanServService $chanServService,
+        private ChanServDispatchPort $chanServService,
         private NetworkUserLookupPort $userLookup,
         private ChanServNotifierInterface $chanServNotifier,
         private UserMessageTypeResolver $messageTypeResolver,
