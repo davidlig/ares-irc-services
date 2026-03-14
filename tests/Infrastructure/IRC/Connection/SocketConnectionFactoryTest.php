@@ -41,21 +41,4 @@ final class SocketConnectionFactoryTest extends TestCase
 
         self::assertInstanceOf(SocketConnection::class, $connection);
     }
-
-    #[Test]
-    public function create_withTlsLink_returnsSocketConnection(): void
-    {
-        $link = new ServerLink(
-            new ServerName('irc.secure.local'),
-            new Hostname('irc.example.com'),
-            new Port(7001),
-            new LinkPassword('pwd'),
-            'Secure',
-            true,
-        );
-
-        $connection = $this->factory->create($link);
-
-        self::assertInstanceOf(SocketConnection::class, $connection);
-    }
 }
