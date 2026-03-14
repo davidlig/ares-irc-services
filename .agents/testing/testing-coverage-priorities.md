@@ -30,10 +30,10 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 1209 tests, 3119 assertions.
+- **Suite:** 1237 tests, 3530 assertions.
 - **Coverage (with PCOV):** Generate with `./vendor/bin/phpunit --coverage-text --coverage-filter=src`. Run with `--display-deprecations --display-phpunit-deprecations` to ensure 0 deprecations/notices.
 - **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
-- Newly covered: NickServContext, NickServ HelpFormatterContextAdapter, NickProtectionService, IdentifiedUserVhostSyncService, PruneMemoryRegistriesTask, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, all six NickServ Maintenance pruners, NetworkEventEnricher, LocalUserModeSync, UnrealIRCdNetworkStateAdapter, InspIRCdNetworkStateAdapter.
+- Newly covered: NickServContext, NickServ HelpFormatterContextAdapter, NickProtectionService (including onUserQuit, enforceProtection branches), IdentifiedUserVhostSyncService, PruneMemoryRegistriesTask, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, all six NickServ Maintenance pruners, NetworkEventEnricher (onQuitReceived, onNickChangeReceived, onPartReceived), LocalUserModeSync, UnrealIRCdNetworkStateAdapter (UID, NICK, QUIT, SQUIT), InspIRCdNetworkStateAdapter (UID, NICK, QUIT, SQUIT), ChanServ AccessCommand (LIST/ADD/DEL subcommands), ChanServService (catch Throwable), ChannelRegisterThrottleRegistry (getRemainingCooldownSeconds expired, pruneExpiredCooldowns).
 - Remaining gaps: see coverage HTML report for per-file details. Many Application command handlers may still have partial coverage.
 
 The prioritisation below is based on code structure and which parts already have associated tests.

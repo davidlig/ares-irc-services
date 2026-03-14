@@ -79,4 +79,30 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
 
         self::assertSame(0, $registry->pruneExpiredCooldowns(0));
     }
+
+    #[Test]
+    public function getRemainingCooldownSecondsReturnsZeroWhenCooldownExpired(): void
+    {
+        $registry = new ChannelRegisterThrottleRegistry();
+        $registry->recordRegistration(1);
+
+        sleep(2);
+
+        self::assertSame(0, $registry->getRemainingCooldownSeconds(1, 1));
+    }
+
+    #[Test]
+    public function pruneExpiredCooldownsRemovesOnlyExpiredEntries(): void
+    {
+        $registry = new ChannelRegisterThrottleRegistry();
+        $registry->recordRegistration(1);
+        $registry->recordRegistration(2);
+
+        sleep(2);
+
+        $removed = $registry->pruneExpiredCooldowns(1);
+
+        self::assertGreaterThanOrEqual(1, $removed);
+        self::assertLessThanOrEqual(2, $removed);
+    }
 }
