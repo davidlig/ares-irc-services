@@ -75,6 +75,61 @@ final class UnifiedHelpFormatterTest extends TestCase
     }
 
     #[Test]
+    public function showGeneralHelpOmitsHelpCommandFromCommandList(): void
+    {
+        $helpCmd = new class {
+            public function getName(): string
+            {
+                return 'HELP';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.help';
+            }
+        };
+        $fooCmd = new class {
+            public function getName(): string
+            {
+                return 'FOO';
+            }
+
+            public function getOrder(): int
+            {
+                return 1;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.foo';
+            }
+        };
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->method('getCommandsForGeneralHelp')->willReturn([$helpCmd, $fooCmd]);
+        $context->method('shouldShowCommandInGeneralHelp')->willReturn(true);
+        $context->method('trans')->willReturn('');
+        $context->expects(self::atLeastOnce())->method('replyRaw');
+        $commandLineCalls = 0;
+        $context->method('reply')->willReturnCallback(
+            static function (string $key) use (&$commandLineCalls): void {
+                if ('help.command_line' === $key) {
+                    ++$commandLineCalls;
+                }
+            }
+        );
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showGeneralHelp($context);
+
+        self::assertSame(1, $commandLineCalls, 'HELP command should be omitted; only FOO should produce one command_line');
+    }
+
+    #[Test]
     public function showCommandHelpCallsReplyWithHandlerData(): void
     {
         $handler = new class {
