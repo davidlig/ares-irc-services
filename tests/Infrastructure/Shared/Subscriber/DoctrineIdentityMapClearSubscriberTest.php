@@ -7,11 +7,13 @@ namespace App\Tests\Infrastructure\Shared\Subscriber;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Infrastructure\Shared\Subscriber\DoctrineIdentityMapClearSubscriber;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(DoctrineIdentityMapClearSubscriber::class)]
+#[AllowMockObjectsWithoutExpectations]
 final class DoctrineIdentityMapClearSubscriberTest extends TestCase
 {
     #[Test]
