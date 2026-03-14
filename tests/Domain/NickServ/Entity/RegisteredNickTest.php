@@ -6,6 +6,7 @@ namespace App\Tests\Domain\NickServ\Entity;
 
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
+use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -30,6 +31,7 @@ final class RegisteredNickTest extends TestCase
             $expiresAt,
         );
 
+        self::assertSame(NickStatus::Pending, $nick->getStatus());
         self::assertSame('Nick', $nick->getNickname());
         self::assertSame('nick', $nick->getNicknameLower());
         self::assertTrue($nick->isPending());
@@ -43,10 +45,26 @@ final class RegisteredNickTest extends TestCase
     }
 
     #[Test]
+    public function createPendingWithInvalidEmailThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid email');
+
+        RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'not-an-email',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+    }
+
+    #[Test]
     public function createForbiddenSetsForbiddenState(): void
     {
         $nick = RegisteredNick::createForbidden('BadNick', 'Reason', 'es');
 
+        self::assertSame(NickStatus::Forbidden, $nick->getStatus());
         self::assertSame('BadNick', $nick->getNickname());
         self::assertSame('badnick', $nick->getNicknameLower());
         self::assertTrue($nick->isForbidden());
@@ -70,6 +88,7 @@ final class RegisteredNickTest extends TestCase
 
         $nick->activate();
 
+        self::assertSame(NickStatus::Registered, $nick->getStatus());
         self::assertFalse($nick->isPending());
         self::assertTrue($nick->isRegistered());
         self::assertNull($nick->getExpiresAt());
@@ -94,8 +113,59 @@ final class RegisteredNickTest extends TestCase
 
         $nick->unsuspend();
 
+        self::assertSame(NickStatus::Registered, $nick->getStatus());
         self::assertTrue($nick->isRegistered());
         self::assertNull($nick->getReason());
+    }
+
+    #[Test]
+    public function changeLanguageRejectsUnsupportedLanguage(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Unsupported language');
+
+        $nick->changeLanguage('fr');
+    }
+
+    #[Test]
+    public function changeTimezoneWithEmptyOrWhitespaceClearsTimezone(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->changeTimezone('UTC');
+        self::assertSame('UTC', $nick->getTimezone());
+
+        $nick->changeTimezone('');
+        self::assertNull($nick->getTimezone());
+
+        $nick->changeTimezone('Europe/Madrid');
+        self::assertSame('Europe/Madrid', $nick->getTimezone());
+
+        $nick->changeTimezone('   ');
+        self::assertNull($nick->getTimezone());
+    }
+
+    #[Test]
+    public function verifyPasswordReturnsFalseWhenPasswordHashIsNull(): void
+    {
+        $nick = RegisteredNick::createForbidden('ForbiddenNick', 'Abuse', 'en');
+
+        self::assertNull($nick->getPasswordHash());
+        self::assertFalse($nick->verifyPassword('any'));
     }
 
     #[Test]
