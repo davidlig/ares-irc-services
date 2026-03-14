@@ -30,13 +30,10 @@ use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\ChanServ\ChannelRankSyncPendingRegistry;
 use App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-#[AllowMockObjectsWithoutExpectations]
 #[CoversClass(ChanServChannelRankSubscriber::class)]
 final class ChanServChannelRankSubscriberTest extends TestCase
 {
@@ -46,21 +43,21 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
     private const NICK_ID = 10;
 
-    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+    private RegisteredChannelRepositoryInterface $channelRepository;
 
-    private NetworkUserLookupPort&MockObject $userLookup;
+    private NetworkUserLookupPort $userLookup;
 
-    private RegisteredNickRepositoryInterface&MockObject $nickRepository;
+    private RegisteredNickRepositoryInterface $nickRepository;
 
-    private ChannelLookupPort&MockObject $channelLookup;
+    private ChannelLookupPort $channelLookup;
 
-    private ChannelServiceActionsPort&MockObject $channelServiceActions;
+    private ChannelServiceActionsPort $channelServiceActions;
 
-    private ActiveChannelModeSupportProviderInterface&MockObject $modeSupportProvider;
+    private ActiveChannelModeSupportProviderInterface $modeSupportProvider;
 
-    private ChannelAccessRepositoryInterface&MockObject $accessRepository;
+    private ChannelAccessRepositoryInterface $accessRepository;
 
-    private ChannelLevelRepositoryInterface&MockObject $levelRepository;
+    private ChannelLevelRepositoryInterface $levelRepository;
 
     private ChanServAccessHelper $accessHelper;
 
@@ -70,17 +67,41 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
-        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
-        $this->modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
-        $this->accessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $this->levelRepository = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $this->channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->method('listAll')->willReturn([]);
+        $this->channelRepository->method('findByChannelName')->willReturn(null);
+        $this->userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $this->userLookup->method('findByUid')->willReturn(null);
+        $this->nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $this->nickRepository->method('findByNick')->willReturn(null);
+        $this->channelLookup = $this->createStub(ChannelLookupPort::class);
+        $this->channelLookup->method('findByChannelName')->willReturn(null);
+        $this->channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);
+        $this->modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $this->modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
+        $this->accessRepository = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $this->accessRepository->method('findByChannelAndNick')->willReturn(null);
+        $this->levelRepository = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $this->levelRepository->method('findByChannelAndKey')->willReturn(null);
         $this->accessHelper = new ChanServAccessHelper($this->accessRepository, $this->levelRepository);
         $this->syncPendingRegistry = new ChannelRankSyncPendingRegistry();
 
+        $this->subscriber = new ChanServChannelRankSubscriber(
+            $this->channelRepository,
+            $this->userLookup,
+            $this->nickRepository,
+            $this->channelLookup,
+            $this->channelServiceActions,
+            $this->modeSupportProvider,
+            $this->accessHelper,
+            $this->syncPendingRegistry,
+            self::CHANSERV_UID,
+        );
+    }
+
+    private function rebuildSubscriber(): void
+    {
+        $this->accessHelper = new ChanServAccessHelper($this->accessRepository, $this->levelRepository);
         $this->subscriber = new ChanServChannelRankSubscriber(
             $this->channelRepository,
             $this->userLookup,
@@ -116,8 +137,9 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     public function onSyncCompleteWithNoRegisteredChannelsDoesNotCallSetChannelModes(): void
     {
         $connection = $this->createStub(ConnectionInterface::class);
-        $this->channelRepository->method('listAll')->willReturn([]);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->rebuildSubscriber();
 
         $this->subscriber->onSyncComplete(new NetworkSyncCompleteEvent($connection, '001'));
     }
@@ -125,15 +147,19 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteWhenChannelLookupReturnsNullDoesNotCallSetChannelModes(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $this->channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->method('listAll')->willReturn([$channel]);
+        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
         $this->channelLookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->rebuildSubscriber();
 
         $this->subscriber->onSyncComplete(new NetworkSyncCompleteEvent($connection, '001'));
     }
@@ -142,9 +168,9 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     public function onSyncCompleteWithRegisteredChannelAndMemberCallsSetChannelModes(): void
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
-        $channel->method('getName')->willReturn('#test');
-        $channel->method('getId')->willReturn(self::CHANNEL_ID);
-        $channel->method('isSecure')->willReturn(false);
+        $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
+        $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
+        $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
 
         $view = new ChannelView(
@@ -156,7 +182,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
                 ['uid' => '001USER', 'roleLetter' => '', 'prefixLetters' => []],
             ],
         );
-        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
         $sender = new SenderView(
             uid: '001USER',
@@ -172,38 +198,49 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
-        $this->channelRepository->method('listAll')->willReturn([$channel]);
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::atLeastOnce())->method('listAll')->willReturn([$channel]);
+        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
         $this->channelLookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($view);
-        $this->modeSupportProvider->method('getSupport')->willReturn($modeSupport);
+        $this->modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $this->modeSupportProvider->expects(self::atLeastOnce())->method('getSupport')->willReturn($modeSupport);
+        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn($sender);
         $this->userLookup->expects(self::never())->method('findByNick');
+        $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->accessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
         $this->accessRepository->expects(self::atLeastOnce())->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($accessStub);
-        $this->levelRepository->method('findByChannelAndKey')->willReturnCallback(
+        $this->levelRepository = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $this->levelRepository->expects(self::atLeastOnce())->method('findByChannelAndKey')->willReturnCallback(
             static fn (int $channelId, string $key): ?ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel($channelId, $key, 200),
                 ChannelLevel::KEY_AUTOOP => new ChannelLevel($channelId, $key, 100),
                 default => null,
             },
         );
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::atLeastOnce())->method('setChannelModes')->with('#test', self::anything(), self::anything());
+        $this->rebuildSubscriber();
 
         $connection = $this->createStub(ConnectionInterface::class);
-        $this->channelServiceActions->expects(self::atLeastOnce())->method('setChannelModes')->with('#test', self::anything(), self::anything());
-
         $this->subscriber->onSyncComplete(new NetworkSyncCompleteEvent($connection, '001'));
     }
 
     #[Test]
     public function onUserJoinedChannelWhenChannelNotRegisteredDoesNotCallSetChannelMemberMode(): void
     {
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->rebuildSubscriber();
+
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
             channel: new ChannelName('#test'),
             role: ChannelMemberRole::None,
         );
-        $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
-        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
-
         $this->subscriber->onUserJoinedChannel($event);
     }
 
@@ -211,9 +248,9 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     public function onUserJoinedChannelWhenRegisteredAndIdentifiedGrantsDesiredPrefix(): void
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
-        $channel->method('getName')->willReturn('#test');
-        $channel->method('getId')->willReturn(self::CHANNEL_ID);
-        $channel->method('isSecure')->willReturn(false);
+        $channel->expects(self::never())->method('getName');
+        $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
+        $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
         $sender = new SenderView(
             uid: '001USER',
@@ -228,24 +265,32 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $account->method('getId')->willReturn(self::NICK_ID);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
-        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
 
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
         $this->channelRepository->expects(self::once())->method('save')->with($channel);
+        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with('001USER')->willReturn($sender);
         $this->userLookup->expects(self::never())->method('findByNick');
+        $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $this->nickRepository->expects(self::atLeastOnce())->method('findByNick')->with('TestUser')->willReturn($account);
+        $this->accessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
         $this->accessRepository->expects(self::atLeastOnce())->method('findByChannelAndNick')->with(self::CHANNEL_ID, self::NICK_ID)->willReturn($accessStub);
-        $this->levelRepository->method('findByChannelAndKey')->willReturnCallback(
+        $this->levelRepository = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $this->levelRepository->expects(self::atLeastOnce())->method('findByChannelAndKey')->willReturnCallback(
             static fn (int $channelId, string $key): ?ChannelLevel => match ($key) {
                 ChannelLevel::KEY_AUTOADMIN => new ChannelLevel($channelId, $key, 200),
                 ChannelLevel::KEY_AUTOOP => new ChannelLevel($channelId, $key, 100),
                 default => null,
             },
         );
+        $this->modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $this->modeSupportProvider->method('getSupport')->willReturn($modeSupport);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->channelServiceActions->expects(self::once())->method('setChannelMemberMode')->with('#test', '001USER', 'o', true);
+        $this->rebuildSubscriber();
 
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
@@ -269,15 +314,19 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->syncPendingRegistry->add('#test');
         $this->syncPendingRegistry->snapshotPendingAtStart();
 
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
         $view = new ChannelView('#test', '+nt', null, 0, []);
 
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
         $this->channelLookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($view);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->rebuildSubscriber();
 
         $this->subscriber->onIrcMessageProcessed(new IrcMessageProcessedEvent());
 
