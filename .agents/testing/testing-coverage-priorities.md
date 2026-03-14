@@ -30,8 +30,8 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 791 tests, 1876 assertions.
-- **Coverage:** Classes 32.40% (81/250), Methods 41.99% (587/1398), Lines 50.91% (3261/6406).
+- **Suite:** 795 tests, 1884 assertions.
+- **Coverage:** Classes 32.80% (82/250), Methods 42.13% (589/1398), Lines 51.17% (3278/6406).
 - Covered classes are those listed in section 1 and in the coverage report (`--coverage-text`).
 
 The prioritisation below is based on code structure and which parts already have associated tests.
