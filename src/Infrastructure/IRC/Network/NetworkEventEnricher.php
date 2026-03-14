@@ -52,7 +52,7 @@ use function str_split;
  * Single place that uses ChannelRepository and NetworkUserRepository for protocol→state.
  * Adapters no longer inject repos; they only parse and dispatch raw events.
  */
-final readonly class NetworkEventEnricher implements EventSubscriberInterface
+final readonly class NetworkEventEnricher implements EventSubscriberInterface, ApplyOutgoingChannelModesApplicatorInterface
 {
     public function __construct(
         private readonly ChannelRepositoryInterface $channelRepository,

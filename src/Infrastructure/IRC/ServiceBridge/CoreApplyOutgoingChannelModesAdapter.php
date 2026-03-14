@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ApplyOutgoingChannelModesPort;
-use App\Infrastructure\IRC\Network\NetworkEventEnricher;
+use App\Infrastructure\IRC\Network\ApplyOutgoingChannelModesApplicatorInterface;
 
 /**
  * Core implements ApplyOutgoingChannelModesPort: applies MODE sent by services
@@ -14,12 +14,12 @@ use App\Infrastructure\IRC\Network\NetworkEventEnricher;
 final readonly class CoreApplyOutgoingChannelModesAdapter implements ApplyOutgoingChannelModesPort
 {
     public function __construct(
-        private NetworkEventEnricher $networkEventEnricher,
+        private ApplyOutgoingChannelModesApplicatorInterface $applicator,
     ) {
     }
 
     public function applyOutgoingChannelModes(string $channelName, string $modeStr, array $params = []): void
     {
-        $this->networkEventEnricher->applyOutgoingChannelModes($channelName, $modeStr, $params);
+        $this->applicator->applyOutgoingChannelModes($channelName, $modeStr, $params);
     }
 }
