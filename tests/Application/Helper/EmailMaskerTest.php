@@ -37,6 +37,12 @@ final class EmailMaskerTest extends TestCase
     }
 
     #[Test]
+    public function maskLocalPartEmptyReturnsFallback(): void
+    {
+        self::assertSame('***@***', EmailMasker::mask('@domain.com'));
+    }
+
+    #[Test]
     public function maskTrimsWhitespace(): void
     {
         self::assertSame('da****@example.com', EmailMasker::mask('  david@example.com  '));
