@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(ChannelAccess::class)]
 final class ChannelAccessTest extends TestCase
@@ -76,5 +77,17 @@ final class ChannelAccessTest extends TestCase
         $access = new ChannelAccess(1, 10, 50);
         $this->expectException(InvalidArgumentException::class);
         $access->updateLevel(500);
+    }
+
+    #[Test]
+    public function getIdReturnsValueSetByPersistence(): void
+    {
+        $access = new ChannelAccess(1, 10, 50);
+        $reflection = new ReflectionClass($access);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($access, 99);
+
+        self::assertSame(99, $access->getId());
     }
 }

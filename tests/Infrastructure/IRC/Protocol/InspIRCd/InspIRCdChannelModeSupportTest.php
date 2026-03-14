@@ -51,4 +51,26 @@ final class InspIRCdChannelModeSupportTest extends TestCase
 
         self::assertSame(['k'], $support->getChannelSettingModesUnsetWithParam());
     }
+
+    #[Test]
+    public function getChannelSettingModesUnsetWithoutParamReturnsList(): void
+    {
+        $support = new InspIRCdChannelModeSupport();
+
+        $modes = $support->getChannelSettingModesUnsetWithoutParam();
+
+        self::assertContains('n', $modes);
+        self::assertContains('t', $modes);
+    }
+
+    #[Test]
+    public function getChannelSettingModesWithParamOnSetReturnsExpectedModes(): void
+    {
+        $support = new InspIRCdChannelModeSupport();
+
+        $modes = $support->getChannelSettingModesWithParamOnSet();
+
+        self::assertContains('k', $modes);
+        self::assertContains('l', $modes);
+    }
 }

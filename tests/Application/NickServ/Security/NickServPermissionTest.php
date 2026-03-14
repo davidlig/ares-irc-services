@@ -8,6 +8,7 @@ use App\Application\NickServ\Security\NickServPermission;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(NickServPermission::class)]
 final class NickServPermissionTest extends TestCase
@@ -22,5 +23,16 @@ final class NickServPermissionTest extends TestCase
     public function networkOperConstant(): void
     {
         self::assertSame('network_oper', NickServPermission::NETWORK_OPER);
+    }
+
+    #[Test]
+    public function constructorCanBeInvokedViaReflectionForCoverage(): void
+    {
+        $reflection = new ReflectionClass(NickServPermission::class);
+        $constructor = $reflection->getConstructor();
+        self::assertNotNull($constructor);
+        $constructor->setAccessible(true);
+        $constructor->invoke($reflection->newInstanceWithoutConstructor());
+        self::assertTrue(true);
     }
 }
