@@ -111,7 +111,46 @@ The prioritisation below is based on code structure and which parts already have
 
 ---
 
-## 4. Coverage threshold (optional)
+## 4. División por Agents
+
+Para ejecutar cobertura por áreas en paralelo (cada Agent solo sus tests y su `src/`):
+
+| Agent | Alcance | Comandos PHPUnit (con cobertura) |
+|-------|--------|----------------------------------|
+| **1 ChanServ** | Application + Infrastructure ChanServ | `tests/Application/ChanServ` + `tests/Infrastructure/ChanServ` con `--coverage-filter=src/Application/ChanServ` y `src/Infrastructure/ChanServ` |
+| **2 NickServ** | Application + Infrastructure NickServ | `tests/Application/NickServ` + `tests/Infrastructure/NickServ` con filtros a su `src/` |
+| **3 MemoServ** | Application + Infrastructure MemoServ | `tests/Application/MemoServ` + `tests/Infrastructure/MemoServ` con filtros a su `src/` |
+| **4 IRC Core** | Infrastructure IRC (adapters, enricher, sync) | `tests/Infrastructure/IRC` con `--coverage-filter=src/Infrastructure/IRC` |
+| **5 Shared/CLI/Mail/Messenger** | UI/CLI, Mail, Messenger, opcional Maintenance | `tests/UI/CLI` + `tests/Infrastructure/Mail` + `tests/Infrastructure/Messenger` (+ opcional `tests/Application/Maintenance`) con filtros a `src/UI`, `src/Infrastructure/Mail`, `src/Infrastructure/Messenger`, `src/Application/Maintenance` |
+
+**Agent 5 — Comandos concretos:**
+
+```bash
+./vendor/bin/phpunit tests/UI/CLI --coverage-text --coverage-filter=src/UI
+./vendor/bin/phpunit tests/Infrastructure/Mail --coverage-text --coverage-filter=src/Infrastructure/Mail
+./vendor/bin/phpunit tests/Infrastructure/Messenger --coverage-text --coverage-filter=src/Infrastructure/Messenger
+./vendor/bin/phpunit tests/Application/Maintenance --coverage-text --coverage-filter=src/Application/Maintenance
+```
+
+Cada agente debe usar `--display-deprecations --display-phpunit-deprecations`. Para huecos concretos, revisar `<line count="0">` en `var/coverage/clover.xml` para sus archivos.
+
+### Agent 1 (ChanServ) — Estado actual
+
+- **Comandos (ejecutar ambos para cobertura completa de ChanServ):**
+  ```bash
+  ./vendor/bin/phpunit tests/Application/ChanServ tests/Infrastructure/ChanServ --coverage-text --coverage-filter=src/Application/ChanServ --coverage-filter=src/Infrastructure/ChanServ --display-deprecations --display-phpunit-deprecations
+  ```
+  Nota: si el driver de cobertura solo aplica un filtro, ejecutar por separado:
+  `tests/Application/ChanServ` con `--coverage-filter=src/Application/ChanServ` y
+  `tests/Infrastructure/ChanServ` con `--coverage-filter=src/Infrastructure/ChanServ`.
+
+- **Código clave:** `src/Application/ChanServ/`, `src/Infrastructure/ChanServ/`.
+
+- **Cobertura actual (suite ChanServ):** Muchas clases ya al 100% (ChanServAccessHelper, ChannelRegisterThrottleRegistry, SetEmailHandler, SetEntrymsgHandler, SetMlockHandler, SetSecureHandler, SetSuccessorHandler, SetTopiclockHandler, PurgeInactiveChannelsTask, HelpFormatterContextAdapter, ChanServCommandListener, etc.). Gaps: ChanServService 50% métodos (1/2), ChanServContext 93% métodos (14/15), comandos OP/DEOP/VOICE/etc. con ~8–25% métodos (subcomandos sin cubrir), SetFounderHandler 20% métodos, ChanServBot 33% métodos, ChanServChannelRankSubscriber y ChanServMlockEnforceSubscriber con métodos sin cubrir.
+
+---
+
+## 5. Coverage threshold (optional)
 
 To fail the build if line coverage drops below a minimum:
 
@@ -123,7 +162,7 @@ To fail the build if line coverage drops below a minimum:
 
 The script runs PHPUnit with Clover, parses `var/coverage/clover.xml`, and exits with 1 if coverage is below the given percentage.
 
-## 5. Useful commands
+## 6. Useful commands
 
 ```bash
 # All tests (no coverage)
@@ -145,7 +184,7 @@ The script runs PHPUnit with Clover, parses `var/coverage/clover.xml`, and exits
 
 ---
 
-## 6. Maintaining this document
+## 7. Maintaining this document
 
 When you run coverage and want to keep this document in sync:
 
