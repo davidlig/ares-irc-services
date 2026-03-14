@@ -13,9 +13,14 @@ use PHPUnit\Framework\TestCase;
 final class NickServPermissionTest extends TestCase
 {
     #[Test]
-    public function constantsHaveExpectedValues(): void
+    public function identifiedOwnerConstant(): void
     {
         self::assertSame('nickserv_identified_owner', NickServPermission::IDENTIFIED_OWNER);
+    }
+
+    #[Test]
+    public function networkOperConstant(): void
+    {
         self::assertSame('network_oper', NickServPermission::NETWORK_OPER);
     }
 }

@@ -27,7 +27,7 @@
         <report>
             <html outputDirectory="var/coverage/html"/>
             <clover outputFile="var/coverage/clover.xml"/>
-            <text outputFile="php://stdout" showUncoveredFiles="false"/>
+            <text outputFile="php://stdout" showUncoveredFiles="true"/>
         </report>
     </coverage>
 
@@ -39,6 +39,9 @@
         <include>
             <directory>src</directory>
         </include>
+        <exclude>
+            <file>src/Kernel.php</file>
+        </exclude>
 
         <deprecationTrigger>
             <method>Doctrine\Deprecations\Deprecation::trigger</method>

@@ -30,9 +30,11 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 914 tests, 2161 assertions.
-- **Coverage:** See `--coverage-text`. Newly covered: IdentifiedSessionRegistry, IdentifyFailedAttemptRegistry, PendingEmailChangeRegistry, BurstState, MemoServSendThrottleRegistry (extended).
-- Covered classes are those listed in section 1 and in the coverage report (`--coverage-text`).
+- **Suite:** 985 tests, 2308 assertions.
+- **Coverage (with PCOV):** Classes 56.00%, Methods 51.86%, Lines 57.90% (target: 100%). Generate with `./vendor/bin/phpunit --coverage-text --coverage-filter=src`.
+- **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
+- Newly covered in this pass: Domain IRC events (MessageReceivedEvent, QuitReceivedEvent, ServerDelinkedEvent, etc.), NickDropEvent, RunMaintenanceCycle, NickStatus, ConnectionStatus, ProtocolModuleRegistry, UnrealIRCdModule, InspIRCdModule, IrcServiceUser, IrcServiceToken, SymfonyAuthorizationContext, NickServPermission.
+- Remaining gaps: many Application command handlers and Context/HelpFormatterContextAdapter (0%), ChanServ Set* handlers (SetFounderHandler, SetMlockHandler, etc.), maintenance tasks and pruners, NetworkStateAdapters, NetworkEventEnricher, CommandListeners, partial coverage in bots and subscribers. See coverage HTML report for per-file details.
 
 The prioritisation below is based on code structure and which parts already have associated tests.
 
@@ -109,7 +111,19 @@ The prioritisation below is based on code structure and which parts already have
 
 ---
 
-## 4. Useful commands
+## 4. Coverage threshold (optional)
+
+To fail the build if line coverage drops below a minimum:
+
+```bash
+./scripts/check-coverage.sh [MIN_PERCENT]
+# Example: ./scripts/check-coverage.sh 57   # enforce current baseline
+#          ./scripts/check-coverage.sh 100  # enforce 100% (once reached)
+```
+
+The script runs PHPUnit with Clover, parses `var/coverage/clover.xml`, and exits with 1 if coverage is below the given percentage.
+
+## 5. Useful commands
 
 ```bash
 # All tests (no coverage)
@@ -131,7 +145,7 @@ The prioritisation below is based on code structure and which parts already have
 
 ---
 
-## 5. Maintaining this document
+## 6. Maintaining this document
 
 When you run coverage and want to keep this document in sync:
 
