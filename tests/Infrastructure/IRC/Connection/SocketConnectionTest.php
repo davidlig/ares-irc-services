@@ -65,6 +65,34 @@ final class SocketConnectionTest extends TestCase
     }
 
     /**
+     * When connected but no data available, readLine returns null (fgets returns false).
+     */
+    #[Test]
+    #[Group('integration')]
+    public function readLineReturnsNullWhenConnectedButNoDataAvailable(): void
+    {
+        $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
+        self::assertNotFalse($server, "Failed to create server: $errstr ($errno)");
+        $addr = stream_socket_get_name($server, false);
+        self::assertNotFalse($addr);
+        [$host, $port] = explode(':', $addr);
+
+        $conn = new SocketConnection($host, (int) $port, false, 2);
+        $conn->connect();
+        self::assertTrue($conn->isConnected());
+
+        // Server accepts but does not send; readLine returns null when fgets gets no data
+        $client = stream_socket_accept($server, 2.0);
+        self::assertNotFalse($client);
+        $line = $conn->readLine();
+        self::assertNull($line);
+
+        fclose($client);
+        $conn->disconnect();
+        fclose($server);
+    }
+
+    /**
      * Connects to a local TCP server, writes a line, reads it back, disconnects.
      * Requires no external network; server runs in-process.
      */

@@ -214,6 +214,18 @@ final class MemoDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function findByTargetChannelAndIndexReturnsNullWhenIndexOutOfRange(): void
+    {
+        $memo = new Memo(targetNickId: null, targetChannelId: 10, senderNickId: 1, message: 'Only one');
+        $this->repository->save($memo);
+        $this->flushAndClear();
+
+        self::assertNull($this->repository->findByTargetChannelAndIndex(10, 0));
+        self::assertNull($this->repository->findByTargetChannelAndIndex(10, 2));
+        self::assertNull($this->repository->findByTargetChannelAndIndex(999, 1));
+    }
+
+    #[Test]
     public function deleteRemovesMemo(): void
     {
         $memo = new Memo(targetNickId: 1, targetChannelId: null, senderNickId: 2, message: 'To delete');

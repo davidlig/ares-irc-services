@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 final class RunMaintenanceCycleTest extends TestCase
 {
     #[Test]
-    public function canBeInstantiated(): void
+    public function messageCanBeInstantiated(): void
     {
         $message = new RunMaintenanceCycle();
 
