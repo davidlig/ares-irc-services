@@ -67,9 +67,12 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
             null,
         );
 
+        // @codeCoverageIgnoreStart
+        // Cannot test proc_open failure in unit tests - requires OS-level failure.
         if (false === $proc || !is_resource($proc)) {
             throw new RuntimeException('Failed to start Messenger consumer process.');
         }
+        // @codeCoverageIgnoreEnd
 
         $this->process = $proc;
         $this->pipes = $pipes;
@@ -102,9 +105,12 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
 
         if (null !== $this->pipes) {
             foreach ($this->pipes as $pipe) {
+                // @codeCoverageIgnoreStart
+                // Cannot test fclose on invalid resource in unit tests.
                 if (is_resource($pipe)) {
                     fclose($pipe);
                 }
+                // @codeCoverageIgnoreEnd
             }
         }
 
