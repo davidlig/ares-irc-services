@@ -24,8 +24,8 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
 {
     private const int STOP_TIMEOUT_SECONDS = 10;
 
-    /** @var resource|null */
-    private $process;
+    /** @var resource|null Process handle from proc_open */
+    private mixed $process = null;
 
     /** @var array{pipe: array<int, resource>}|null */
     private ?array $pipes = null;
