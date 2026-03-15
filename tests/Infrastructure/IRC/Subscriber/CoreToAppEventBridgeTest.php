@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Subscriber;
 
 use App\Application\Event\UserJoinedNetworkAppEvent;
+use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\ValueObject\Ident;
@@ -18,6 +19,8 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(CoreToAppEventBridge::class)]
+#[CoversClass(UserJoinedNetworkAppEvent::class)]
+#[CoversClass(UserJoinedNetworkDTO::class)]
 final class CoreToAppEventBridgeTest extends TestCase
 {
     #[Test]
