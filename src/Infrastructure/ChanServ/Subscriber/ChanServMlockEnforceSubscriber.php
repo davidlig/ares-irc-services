@@ -118,24 +118,39 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
 
     private function enforceMlockForChannel(string $channelName, ChannelView $view, RegisteredChannel $registered): void
     {
-        $mlockStr = $registered->getMlock();
-        $mlockLetters = $this->parseMlockLetters($mlockStr);
-        // Empty mlock = lock to no modes: strip all channel modes except +r (set by services).
-
+        $mlockLetters = $this->parseMlockLetters($registered->getMlock());
         $support = $this->modeSupportProvider->getSupport();
+        $currentLetters = $this->parseChannelModeLettersPreservingCase($view->modes);
+
         $unsetWithoutParam = $support->getChannelSettingModesUnsetWithoutParam();
         $unsetWithParam = $support->getChannelSettingModesUnsetWithParam();
         $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
-        $currentLettersRaw = $this->parseChannelModeLettersPreservingCase($view->modes);
 
-        // Remove modes not in MLOCK (except +r channel-registered). Mode letters are case-sensitive (+M ≠ +m).
-        // For modes that need param to unset (k, L), only add to toRemove if we have the stored param.
+        $toRemove = $this->calculateModesToRemove($currentLetters, $mlockLetters, $view, $unsetWithoutParam, $unsetWithParam);
+        $toAdd = $this->calculateModesToAdd($mlockLetters, $currentLetters);
+
+        if ([] === $toRemove && [] === $toAdd) {
+            return;
+        }
+
+        [$modeStr, $params] = $this->formatModeString($toRemove, $toAdd, $view, $registered, $unsetWithParam, $withParamOnSet);
+        $this->channelServiceActions->setChannelModes($channelName, $modeStr, $params);
+    }
+
+    /**
+     * @param list<string> $currentLetters
+     * @param list<string> $mlockLetters
+     * @param list<string> $unsetWithoutParam
+     * @param list<string> $unsetWithParam
+     *
+     * @return list<string>
+     */
+    private function calculateModesToRemove(array $currentLetters, array $mlockLetters, ChannelView $view, array $unsetWithoutParam, array $unsetWithParam): array
+    {
         $toRemove = [];
-        foreach ($currentLettersRaw as $letter) {
-            if (in_array($letter, $mlockLetters, true)) {
-                continue;
-            }
-            if ('r' === $letter) {
+
+        foreach ($currentLetters as $letter) {
+            if (in_array($letter, $mlockLetters, true) || 'r' === $letter) {
                 continue;
             }
             if (in_array($letter, $unsetWithoutParam, true) && !in_array($letter, $toRemove, true)) {
@@ -147,19 +162,40 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
             }
         }
 
+        return $toRemove;
+    }
+
+    /**
+     * @param list<string> $mlockLetters
+     * @param list<string> $currentLetters
+     *
+     * @return list<string>
+     */
+    private function calculateModesToAdd(array $mlockLetters, array $currentLetters): array
+    {
         $toAdd = [];
         foreach ($mlockLetters as $letter) {
-            if (!in_array($letter, $currentLettersRaw, true) && !in_array($letter, $toAdd, true)) {
+            if (!in_array($letter, $currentLetters, true) && !in_array($letter, $toAdd, true)) {
                 $toAdd[] = $letter;
             }
         }
 
-        if ([] === $toRemove && [] === $toAdd) {
-            return;
-        }
+        return $toAdd;
+    }
 
+    /**
+     * @param list<string> $toRemove
+     * @param list<string> $toAdd
+     * @param list<string> $unsetWithParam
+     * @param list<string> $withParamOnSet
+     *
+     * @return array{0: string, 1: list<string>}
+     */
+    private function formatModeString(array $toRemove, array $toAdd, ChannelView $view, RegisteredChannel $registered, array $unsetWithParam, array $withParamOnSet): array
+    {
         $parts = [];
         $params = [];
+
         if ([] !== $toRemove) {
             $parts[] = '-' . implode('', $toRemove);
             foreach ($toRemove as $letter) {
@@ -171,6 +207,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
                 }
             }
         }
+
         if ([] !== $toAdd) {
             $parts[] = '+' . implode('', $toAdd);
             foreach ($toAdd as $letter) {
@@ -182,9 +219,8 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
                 }
             }
         }
-        $modeStr = implode('', $parts);
 
-        $this->channelServiceActions->setChannelModes($channelName, $modeStr, $params);
+        return [implode('', $parts), $params];
     }
 
     /**

@@ -11,12 +11,12 @@ use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChanServDispatchPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -38,7 +38,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         private RegisteredChannelRepositoryInterface $channelRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
         private ChanServNotifierInterface $notifier,
-        private UserMessageTypeResolver $messageTypeResolver,
+        private UserMessageTypeResolverInterface $messageTypeResolver,
         private TranslatorInterface $translator,
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,

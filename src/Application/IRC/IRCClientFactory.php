@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\IRC;
 
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\ProtocolModuleRegistryInterface;
 use App\Domain\IRC\Connection\ConnectionFactoryInterface;
 use App\Domain\IRC\Server\ServerLink;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -23,7 +23,7 @@ final readonly class IRCClientFactory implements IRCClientFactoryInterface
     public function __construct(
         private readonly ProtocolModuleRegistryInterface $moduleRegistry,
         private readonly ConnectionFactoryInterface $connectionFactory,
-        private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly MessageBusInterface $messageBus,
         private readonly BurstCompleteRegistry $burstCompleteRegistry,

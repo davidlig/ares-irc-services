@@ -11,8 +11,8 @@ use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -35,7 +35,7 @@ final readonly class NickServService
         private readonly NickServCommandRegistry $commandRegistry,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickServNotifierInterface $notifier,
-        private readonly UserMessageTypeResolver $messageTypeResolver,
+        private readonly UserMessageTypeResolverInterface $messageTypeResolver,
         private readonly TranslatorInterface $translator,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
         private readonly RecoveryTokenRegistry $recoveryTokenRegistry,

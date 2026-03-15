@@ -303,6 +303,9 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
+    App\Infrastructure\IRC\Subscriber\CoreToAppEventBridge:
+        tags: ['kernel.event_subscriber']
+
     App\Infrastructure\IRC\Network\LocalUserModeSync: ~
 
     App\Domain\IRC\LocalUserModeSyncInterface:
@@ -353,6 +356,9 @@ services:
             $nullSupport: '@App\Infrastructure\IRC\Protocol\NullChannelModeSupport'
 
     # --- ActiveConnectionHolder — stores the live S2S connection for all services ---
+
+    App\Application\Port\ActiveConnectionHolderInterface:
+        alias: App\Infrastructure\IRC\Connection\ActiveConnectionHolder
 
     App\Infrastructure\IRC\Connection\ActiveConnectionHolder:
         tags: ['kernel.event_subscriber']
@@ -784,5 +790,8 @@ services:
             $defaultLanguage: '%services.default_language%'
 
     # --- UserMessageTypeResolver — NOTICE vs PRIVMSG preference -----------------
+
+    App\Application\Port\UserMessageTypeResolverInterface:
+        alias: App\Infrastructure\NickServ\UserMessageTypeResolver
 
     App\Infrastructure\NickServ\UserMessageTypeResolver: ~
