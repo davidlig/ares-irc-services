@@ -258,4 +258,37 @@ final class ResendCommandTest extends TestCase
 
         self::assertSame(['error.mail_failed'], $messages);
     }
+
+    #[Test]
+    public function noThrottleWhenNoPreviousResendAndIntervalPositive(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+        $account->method('getEmail')->willReturn('user@example.com');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $dispatched = [];
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
+            $dispatched[] = $m;
+
+            return new Envelope($m);
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+        $pending = new PendingVerificationRegistry();
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new ResendCommand($nickRepo, $messageBus, $translator, $logger, 3600);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), [], $notifier, $translator, $pending));
+
+        self::assertSame(['resend.success'], $messages);
+        self::assertCount(1, $dispatched);
+    }
 }

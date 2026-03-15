@@ -234,4 +234,34 @@ final class SetEmailHandlerTest extends TestCase
 
         self::assertSame(['error.not_identified'], $messages);
     }
+
+    #[Test]
+    public function requestEmailChangeEmailAlreadyUsedByOtherAccount(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getEmail')->willReturn('old@example.com');
+
+        $otherAccount = $this->createStub(RegisteredNick::class);
+        $otherAccount->method('getNickname')->willReturn('OtherUser');
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn($otherAccount);
+        $pending = new PendingEmailChangeRegistry();
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler->handle($this->createContext($notifier, $translator, 'other@example.com'), $account, 'other@example.com');
+
+        self::assertSame(['register.email_already_used'], $messages);
+    }
 }

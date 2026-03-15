@@ -84,4 +84,22 @@ final class TimezoneHelpProviderTest extends TestCase
         self::assertSame([], $provider->getTimezonesForRegion('UnknownRegion'));
         self::assertSame([], $provider->getTimezonesForRegion(''));
     }
+
+    #[Test]
+    public function resolveRegionReturnsCanonicalName(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        self::assertSame('Europe', $provider->resolveRegion('Europe'));
+        self::assertSame('America', $provider->resolveRegion('AMERICA'));
+        self::assertSame('Asia', $provider->resolveRegion('asia'));
+        self::assertNull($provider->resolveRegion('InvalidRegion'));
+        self::assertNull($provider->resolveRegion(''));
+    }
+
+    #[Test]
+    public function getRegionForTimezoneReturnsNullForUnknownPrefix(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        self::assertNull($provider->getRegionForTimezone('Unknown/City'));
+    }
 }

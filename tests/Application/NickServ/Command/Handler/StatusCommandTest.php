@@ -286,4 +286,72 @@ final class StatusCommandTest extends TestCase
         self::assertContains('status.suspended', $messages);
         self::assertNotContains('status.suspended_reason', $messages);
     }
+
+    #[Test]
+    public function pendingWithExpiryShowsFormatDate(): void
+    {
+        $expires = (new DateTimeImmutable())->modify('+30 minutes');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Pending);
+        $account->method('getExpiresAt')->willReturn($expires);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
+            if (isset($params['date'])) {
+                return $params['date'];
+            }
+
+            return $id;
+        });
+
+        $context = new NickServContext(
+            new SenderView('UID1', 'Caller', 'i', 'h', 'c', 'ip'),
+            null,
+            'STATUS',
+            ['Nick'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new \App\Application\NickServ\PendingVerificationRegistry(),
+            new \App\Application\NickServ\RecoveryTokenRegistry(),
+        );
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($context);
+
+        self::assertContains('status.pending', $messages);
+        self::assertContains('status.pending_expires_at', $messages);
+    }
+
+    #[Test]
+    public function interfaceMethodsReturnExpectedValues(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+
+        self::assertSame('STATUS', $cmd->getName());
+        self::assertSame([], $cmd->getAliases());
+        self::assertSame(1, $cmd->getMinArgs());
+        self::assertSame('status.syntax', $cmd->getSyntaxKey());
+        self::assertSame('status.help', $cmd->getHelpKey());
+        self::assertSame(5, $cmd->getOrder());
+        self::assertSame('status.short', $cmd->getShortDescKey());
+        self::assertSame([], $cmd->getSubCommandHelp());
+        self::assertFalse($cmd->isOperOnly());
+        self::assertNull($cmd->getRequiredPermission());
+    }
 }
