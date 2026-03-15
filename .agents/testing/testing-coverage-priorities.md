@@ -26,23 +26,21 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 2203 tests, 6474 assertions.
-- **Coverage (with PCOV):** Classes 96.80%, Methods 99.21%, Lines 99.56% (2026-03-15).
+- **Suite:** 2207 tests, 6514 assertions.
+- **Coverage (with PCOV):** Classes 98.00%, Methods 99.43%, Lines 99.61% (2026-03-15).
 - **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
 - **PHPUnit Issues:** 0 notices, 0 warnings, 0 skipped, 0 deprecations. STRICT ENFORCEMENT is active. No exceptions allowed.
-- **Coverage by Layer (2026-03-15):** Domain ~100%, Application 99-100%, Infrastructure 98-99%, UI ~96%.
+- **Coverage by Layer (2026-03-15):** Domain 100%, Application 99-100%, Infrastructure 98-99%, UI ~96%.
 
-### Remaining Uncovered Lines (Low Priority / Not Testable)
+### Remaining Uncovered Lines (Not Testable)
 
 | File | Lines | Reason |
 |------|-------|--------|
-| `RegisteredChannel.php` | 84-86 | Entity `getId()` - Doctrine uses property access |
-| `RegisteredNick.php` | 192-194 | Entity `getId()` - Doctrine uses property access |
-| `ChanServChannelRankSubscriber.php` | 448-470 | `collectOpsForSecureStrip` - unreachable private method (dead code in sync path) |
-| `ConsumerProcessManager.php` | 71, 106 | Defensive: `proc_open` returning `false`, `fclose` on resource |
-| `ConnectCommand.php` | 155-170 | PCNTL signal handler lambdas |
-| `NetworkEventEnricher.php` | 516 | `catch (InvalidArgumentException)` - Uid VO validates format, never throws |
-| `Argon2PasswordHasher.php` | 19 | Native `password_hash()` returning `false` - impossible to simulate |
+| `ChanServChannelRankSubscriber.php` | 379-382, 416, 448-470 | Unreachable defensive code (`collectOpsForSecureStrip` - sync path conditions can never satisfy) |
+| `NetworkEventEnricher.php` | 516 | `catch (InvalidArgumentException)` unreachable - regex validates before Uid constructor |
+| `ConsumerProcessManager.php` | 71, 106 | Infrastructure: `proc_open` failure, `fclose` pipe - require integration testing |
+| `Argon2PasswordHasher.php` | 19 | Native `password_hash()` failure - impossible to simulate |
+| `ConnectCommand.php` | 155, 163, 166, 170 | PCNTL signal handler bodies - cannot unit test async callbacks |
 
 ### Coverage Improvements (2026-03-15)
 
