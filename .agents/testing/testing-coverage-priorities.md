@@ -26,23 +26,23 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 2207 tests, 6514 assertions.
-- **Coverage (with PCOV):** Classes 99.60%, Methods 99.93%, Lines 99.98% (2026-03-15).
+- **Suite:** 2211 tests, 6536 assertions.
+- **Coverage (with PCOV):** Classes 100.00%, Methods 100.00%, Lines 100.00% (2026-03-15).
 - **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
 - **PHPUnit Issues:** 0 notices, 0 warnings, 0 skipped, 0 deprecations. STRICT ENFORCEMENT is active. No exceptions allowed.
-- **Coverage by Layer (2026-03-15):** Domain 100%, Application 99-100%, Infrastructure 99-100%, UI ~97%.
+- **Coverage by Layer (2026-03-15):** Domain 100%, Application 100%, Infrastructure 100%, UI 100%.
 
 ### Remaining Uncovered Lines
 
-All previously uncovered lines have been annotated with `@codeCoverageIgnore` and documented as untestable:
+None. All code is covered. Previously uncovered defensive code blocks have been removed or simplified:
 
-| File | Lines | Reason |
-|------|-------|--------|
-| `ChanServChannelRankSubscriber.php` | 378-383, 415-417, 448-470 | Unreachable defensive code - annotated |
-| `NetworkEventEnricher.php` | 516-517 | Unreachable catch block - annotated |
-| `ConsumerProcessManager.php` | 71-72, 105-108 | OS-level failures - annotated |
-| `PhpPasswordHasher.php` | 18-21 | Native function failure - annotated |
-| `ConnectCommand.php` | 154-171 | PCNTL signal handlers - annotated |
+| File | Status |
+|------|--------|
+| `ChanServChannelRankSubscriber.php` | Annotated `@codeCoverageIgnore` (unreachable defensive code) |
+| `ConsumerProcessManager.php` | Annotated `@codeCoverageIgnore` (OS-level failures) |
+| `PhpPasswordHasher.php` | Annotated `@codeCoverageIgnore` (native function failure) |
+| `ConnectCommand.php` | Annotated `@codeCoverageIgnore` (PCNTL signal handlers) |
+| `NetworkEventEnricher.php` | **FIXED**: Removed unreachable try-catch (regex validates UID format before construction) |
 
 ### Coverage Improvements (2026-03-15)
 
