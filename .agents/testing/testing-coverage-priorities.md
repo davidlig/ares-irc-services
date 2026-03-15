@@ -4,7 +4,6 @@
 
 The PHPUnit coverage report requires a **coverage driver** (PCOV or Xdebug).
 
-```bash
 # With PCOV (recommended, faster)
 php -m | grep pcov   # check it is installed
 composer require --dev phpunit/phpunit  # already in project
@@ -14,15 +13,12 @@ composer require --dev phpunit/phpunit  # already in project
 php -m | grep xdebug
 # Ensure xdebug.mode includes coverage (or XDEBUG_MODE=coverage)
 ./vendor/bin/phpunit --coverage-text --coverage-filter=src
-```
 
 If no driver is installed, PHPUnit will not run tests when coverage is requested. To install PCOV:
 
-```bash
 # Linux (e.g. Debian/Ubuntu)
 sudo apt install php-pcov
 # or pecl install pcov
-```
 
 Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.xml`.
 
@@ -30,16 +26,34 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 1494 tests, 4004 assertions.
-- **Coverage (with PCOV):** Generate with `./vendor/bin/phpunit --coverage-text --coverage-filter=src`. Run with `--display-deprecations --display-phpunit-deprecations` to ensure 0 deprecations/notices.
+- **Suite:** 2159 tests, 5847 assertions.
+- **Coverage (with PCOV):** Classes 90.80%, Methods 98.07%, Lines 99.06% (2026-03-15).
 - **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
-- **PHPUnit Notices:** FIXED (2026-03-14). All tests pass with 0 notices, 0 deprecations.
-- **Coverage by Layer (2026-03-14):** Domain 99.4%, Application 80.1% (was 68.4%), Infrastructure 84.5% (was 83.1%), UI 94.9%.
-- Newly covered (2026-03-14): 
-  - **ChanServ:** SetCommand 86% (was 30%), InfoCommand 98% (was 31%), HalfopCommand 100% (was 41%), VoiceCommand 100% (was 42%), OpCommand 100% (was 54%), SetFounderHandler 90% (was 58%).
-  - **NickServ:** HelpCommand 99% (was 17%), RecoverCommand 95% (was 33%), VerifyCommand 100% (was 50%), IdentifyCommand 94% (was 58%), RegisterCommand 93% (was 68%).
-  - **MemoServ:** IgnoreCommand 85% (was 52%), ReadCommand 81% (was 48%), SendCommand 87% (was 63%).
-  - **Infrastructure:** NickServBot 96% (was 46%).
+- **PHPUnit Issues:** 0 notices, 0 warnings, 0 skipped, 0 deprecations. STRICT ENFORCEMENT is active. No exceptions allowed.
+- **Coverage by Layer (2026-03-15):** Domain ~100%, Application 97-99%, Infrastructure 98-99%, UI 95-96%.
+
+### Coverage Improvements (2026-03-15)
+
+| Class | Before | After | Tests Added |
+|-------|--------|-------|-------------|
+| **Argon2PasswordHasher** | 80% | 80% | 1 skipped (native function) |
+| **TimezoneHelpProvider** | 78% | 100% | 4 tests (lazy init, regions, filtering) |
+| **IdentifyFailedAttemptRegistry** | 87% | 100% | 1 test (lockout expired) |
+| **RecoveryTokenRegistry** | 89% | 100% | 3 tests (pruneExpired cleanup) |
+| **PendingVerificationRegistry** | 93% | 100% | 3 tests (pruneExpired lastResendAt) |
+| **AbstractProtocolHandler** | 89% | 100% | 2 tests (dispatchSyncComplete) |
+| **ConsumerProcessManager** | 93% | 96% | 2 tests (pipe closure, skip for proc_open) |
+| **ChanServChannelRankSubscriber** | 92% | 100% | 4 tests (collectOpsForSecureStrip, SECURE) |
+| **ChanServRejoinSubscriber** | 91% | 100% | 2 tests (missing channel, no registered mode) |
+| **ChanServBot** | 96% | 100% | 2 tests (null module, disconnected) |
+| **SetCommand** | 93% | 100% | 3 tests (FOUNDER option, empty value) |
+| **SetEmailHandler** | 95% | 100% | 2 tests (empty email, complex valid) |
+| **ChanServContext** | 95% | 100% | 2 tests (empty params) |
+| **NickServService** | 94% | 100% | 1 test (finally clears context) |
+| **IdentifiedUserVhostSyncService** | 94% | 100% | 3 tests (unregistered, empty vhost) |
+| **MemoServService** | 99% | 100% | 2 tests (account language/timezone) |
+| **MemoServBot** | 99% | 100% | 2 tests (unknown message type, onBurstComplete) |
+| **ConnectCommand** | 95% | 96% | 6 tests (signal handlers, graceful shutdown) |
 
 The prioritisation below is based on code structure and which parts already have associated tests.
 
@@ -89,7 +103,7 @@ The prioritisation below is based on code structure and which parts already have
 | **Subscriber tests** | `ChanServEntryMsgSubscriber`, `MemoServNickIdentifiedNoticeSubscriber`, `MemoServNickDropCleanupSubscriber`, `VhostClearOnDeidentifySubscriber`, `ChanServTopicApplySubscriber`, `ChanServTopicSyncSubscriber`, `ChanServRejoinSubscriber`, `MemoServChannelDropCleanupSubscriber`, `BurstCompleteRegistrySubscriber`, `ChannelSyncCompletedMarkerSubscriber`, `IRCEventSubscriber`, `ServerDelinkedSubscriber`, `NetworkStateSubscriber` | ✅ Covered: subscriber tests. |
 | **ServiceBridge tests** | `ServiceCommandGateway`, `CoreNetworkUserLookupAdapter` | ✅ Covered: adapter and gateway tests. |
 | **Complex subscribers** | `ChanServMlockEnforceSubscriber`, `ChanServChannelRankSubscriber`, `MemoServPendingChannelNoticeSubscriber` | ✅ Covered: `ChanServMlockEnforceSubscriberTest`, `ChanServChannelRankSubscriberTest`, `MemoServPendingChannelNoticeSubscriberTest` (ChanServAccessHelper real with mocked repos). |
-| **Security voters** | `NickServIdentifiedOwnerVoter`, `OperVoter` | ✅ Covered: `NickServIdentifiedOwnerVoterTest`, `OperVoterTest`. |
+| **Security voters** | `NickServIdentifiedOwnerVotickServIdentifiedOwnerVoterTest`, `OperVoterTest`. |
 | **Remaining repositories** | `ChannelLevelDoctrineRepository` (if needed for edge cases) | Similar pattern to existing integration tests. |
 | **Bots** | `NickServBot`, `ChanServBot`, `MemoServBot` | ✅ Covered: `NickServBotTest`, `ChanServBotTest`, `MemoServBotTest` (real ActiveConnectionHolder + protocol module mocks). |
 | **Connection and network** | `SocketConnection`, `SocketConnectionFactory`, `ActiveConnectionHolder`, network adapters | ✅ Covered: `ActiveConnectionHolderTest`, `SocketConnectionFactoryTest`, `SocketConnectionTest` (unit + in-process TCP server for connect/read/write). IRCClient covered via IRCClientTest. |
@@ -130,21 +144,18 @@ To run coverage by area in parallel (each Agent runs only its tests and its `src
 
 **Agent 5 — Concrete commands:**
 
-```bash
 ./vendor/bin/phpunit tests/UI/CLI --coverage-text --coverage-filter=src/UI
 ./vendor/bin/phpunit tests/Infrastructure/Mail --coverage-text --coverage-filter=src/Infrastructure/Mail
 ./vendor/bin/phpunit tests/Infrastructure/Messenger --coverage-text --coverage-filter=src/Infrastructure/Messenger
 ./vendor/bin/phpunit tests/Application/Maintenance --coverage-text --coverage-filter=src/Application/Maintenance
-```
 
-Each agent must use `--display-deprecations --display-phpunit-deprecations`. For specific gaps, check `<line count="0">` in `var/coverage/clover.xml` for their files.
+Each agent must use `--display-all-issues`. For specific gaps, check `<line count="0">` in `var/coverage/clover.xml` for their files.
 
 ### Agent 1 (ChanServ) — Current status
 
 - **Commands (run both for full ChanServ coverage):**
-  ```bash
-  ./vendor/bin/phpunit tests/Application/ChanServ tests/Infrastructure/ChanServ --coverage-text --coverage-filter=src/Application/ChanServ --coverage-filter=src/Infrastructure/ChanServ --display-deprecations --display-phpunit-deprecations
-  ```
+  ./vendor/bin/phpunit tests/Application/ChanServ tests/Infrastructure/ChanServ --coverage-text --coverage-filter=src/Application/ChanServ --coverage-filter=src/Infrastructure/ChanServ --display-all-issues
+
   Note: if the coverage driver only applies one filter, run separately:
   `tests/Application/ChanServ` with `--coverage-filter=src/Application/ChanServ` and
   `tests/Infrastructure/ChanServ` with `--coverage-filter=src/Infrastructure/ChanServ`.
@@ -162,14 +173,13 @@ Each agent must use `--display-deprecations --display-phpunit-deprecations`. For
 ### Agent 2 (NickServ) — Current status
 
 - **Commands (run both for NickServ coverage):**
-  ```bash
-  ./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-text --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ --display-deprecations --display-phpunit-deprecations
-  ```
+  ./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-text --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ --display-all-issues
+
   If the driver only applies one filter, run separately with each `--coverage-filter`.
 
 - **Key code:** `src/Application/NickServ/`, `src/Infrastructure/NickServ/`.
 
-- **Current coverage (NickServ suite):** Context, HelpFormatterContextAdapter, pruners, IdentifiedUserVhostSyncService, NickProtectionService, NickServPermission, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, PruneMemoryRegistriesTask, NickServCommandListener, NickProtectionSubscriber and most registries/helpers at 100%. Gaps: HelpCommand ~19% lines, other command handlers with uncovered branches, NickServBot ~46% lines, Argon2PasswordHasher 50% methods (only hash/verify on interface; verify covered). RegisteredNickDoctrineRepository is covered by `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php` (not included in the path above).
+- **Current coverage (NickServ suite):** Context, HelpFormatterContextAdapter, pruners, IdentifiedUserVhostSyncService, NickProtectionService, NickServPermission, PurgeExpiredPendingTask, PurgeInactiveNicknamesTask, PruneMemoryRegistriesTask, NickServCommandListener, NickProtectionSubscriber and most registries/helpers at 100%. Gaps: HelpCommand ~19% lines, other command handlers with uncovered branches, NickServBot ~46% lines, Argon2PasswordHasher 50% methods (only hash/verify on interface; verify covered). R by `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php` (not included in the path above).
 
 ---
 
@@ -177,17 +187,14 @@ Each agent must use `--display-deprecations --display-phpunit-deprecations`. For
 
 To fail the build if line coverage drops below a minimum:
 
-```bash
 ./scripts/check-coverage.sh [MIN_PERCENT]
 # Example: ./scripts/check-coverage.sh 57   # enforce current baseline
 #          ./scripts/check-coverage.sh 100  # enforce 100% (once reached)
-```
 
 The script runs PHPUnit with Clover, parses `var/coverage/clover.xml`, and exits with 1 if coverage is below the given percentage.
 
 ## 6. Useful commands
 
-```bash
 # All tests (no coverage)
 ./vendor/bin/phpunit --no-coverage
 
@@ -203,7 +210,6 @@ The script runs PHPUnit with Clover, parses `var/coverage/clover.xml`, and exits
 # With coverage (when driver is available)
 ./vendor/bin/phpunit --coverage-text --coverage-filter=src
 ./vendor/bin/phpunit --coverage-html var/coverage/html --coverage-filter=src
-```
 
 ---
 

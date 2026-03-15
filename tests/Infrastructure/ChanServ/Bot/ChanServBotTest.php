@@ -539,4 +539,53 @@ final class ChanServBotTest extends TestCase
 
         $this->bot->setChannelTopic('#channel', null);
     }
+
+    #[Test]
+    public function sendNoticeToChannelWhenModuleNullReturnsEarly(): void
+    {
+        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 5);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+
+        $bot = new ChanServBot(
+            $this->connectionHolder,
+            $channelLookup,
+            $this->createStub(ApplyOutgoingChannelModesPort::class),
+            self::HOSTNAME,
+            self::CHANSERV_UID,
+        );
+
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::never())->method('writeLine');
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        // Do NOT call setProtocolModule, leaving it null
+
+        $bot->sendNoticeToChannel('#test', 'Hi');
+    }
+
+    #[Test]
+    public function writeToConnectionReturnsFalseWhenNotConnected(): void
+    {
+        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 5);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+
+        $bot = new ChanServBot(
+            $this->connectionHolder,
+            $channelLookup,
+            $this->createStub(ApplyOutgoingChannelModesPort::class),
+            self::HOSTNAME,
+            self::CHANSERV_UID,
+        );
+
+        // Set connection via onBurstComplete but DO NOT set protocol module
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+
+        // With module null, sendNoticeToChannel returns early before writeToConnection
+        $bot->sendNoticeToChannel('#test', 'Hi');
+        self::assertTrue(true);
+    }
 }

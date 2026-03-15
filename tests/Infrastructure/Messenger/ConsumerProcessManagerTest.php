@@ -8,6 +8,7 @@ use App\Infrastructure\Messenger\ConsumerProcessManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(ConsumerProcessManager::class)]
 final class ConsumerProcessManagerTest extends TestCase
@@ -88,5 +89,34 @@ final class ConsumerProcessManagerTest extends TestCase
         file_put_contents($path, "<?php\ndeclare(strict_types=1);\nsleep(" . $seconds . ');' . "\nexit(0);\n");
 
         return $path;
+    }
+
+    #[Test]
+    public function stopClosesPipeResources(): void
+    {
+        $script = $this->createTemporaryConsoleScriptWithSleep(2);
+        try {
+            $manager = new ConsumerProcessManager($script);
+
+            $manager->start();
+
+            $reflection = new ReflectionClass($manager);
+            $pipesProperty = $reflection->getProperty('pipes');
+            $pipesProperty->setAccessible(true);
+            $pipes = $pipesProperty->getValue($manager);
+
+            self::assertNotNull($pipes);
+            self::assertIsArray($pipes);
+            foreach ($pipes as $pipe) {
+                self::assertIsResource($pipe);
+            }
+
+            $manager->stop();
+
+            $pipesAfterStop = $pipesProperty->getValue($manager);
+            self::assertNull($pipesAfterStop);
+        } finally {
+            @unlink($script);
+        }
     }
 }

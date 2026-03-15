@@ -4,7 +4,7 @@ Use this skill when working on tests, coverage, or test prioritisation. Full det
 
 ## CRITICAL RULES
 
-**CRITICAL RULE (Deprecations):** Tests must NEVER contain deprecations. Always execute tests using the flags `--display-deprecations --display-phpunit-deprecations`. If PHPUnit-specific deprecations appear, read `composer.json` to identify the exact PHPUnit version installed, search the official PHPUnit documentation for that specific version using your web search capabilities, and apply the correct modern syntax to fix them.
+**CRITICAL RULE (Zero Tolerance for Test Issues):** Tests must be PRISTINE. It is NON-NEGOTIABLE that test executions result in ZERO warnings, ZERO skipped tests, ZERO incomplete tests, and ZERO deprecations. Always execute tests using the flag `--display-all-issues`. If any PHPUnit-specific issues, deprecations, or warnings appear, read `composer.json` to identify the exact PHPUnit version installed, search the official PHPUnit documentation for that specific version using your web search capabilities, and apply the correct modern syntax to fix them immediately. Mocks must be exact and no test can be bypassed.
 
 **CRITICAL RULE (Coverage Analysis):** When checking for test coverage gaps, you MUST always generate the coverage report and analyze the `var/coverage/clover.xml` file. Use the `<metrics>` and `<line>` tags inside this XML to identify exactly which classes, methods, and lines lack coverage before writing any new tests.
 
@@ -20,23 +20,17 @@ If a test double's behavior must be verified (e.g., ensuring a specific method i
 
 When running tests, you may see `N` characters in the progress output:
 
-```
 ...........N.NN.........N.N......
-```
 
 Each `N` represents a test that triggered a **PHPUnit Notice**. To identify which tests have notices:
 
 1. Run with `--testdox` to see test names:
-   ```bash
    ./vendor/bin/phpunit tests/Path/To/TestFile.php --no-coverage --testdox
-   ```
 
 2. Count the positions: `....N` means the 5th test has a notice.
 
 3. Use `--list-tests` to correlate:
-   ```bash
    ./vendor/bin/phpunit tests/Path/To/TestFile.php --no-coverage --list-tests
-   ```
 
 ### Common PHPUnit Notice Causes and Fixes
 
@@ -44,69 +38,56 @@ Each `N` represents a test that triggered a **PHPUnit Notice**. To identify whic
 
 **Problem:** Using `createMock()` but only configuring `method()` without `expects()`:
 
-```php
 // WRONG - Generates notice
 $repo = $this->createMock(SomeRepository::class);
 $repo->method('find')->willReturn($result);
 // No $repo->expects(...) anywhere
-```
 
 **Fix A - If you DON'T need to verify calls:** Use `createStub()` instead:
 
-```php
 // CORRECT - No notice
 $repo = $this->createStub(SomeRepository::class);
 $repo->method('find')->willReturn($result);
-```
 
 **Fix B - If you DO need to verify calls:** Add `expects()`:
 
-```php
 // CORRECT - No notice (verifying behavior)
 $repo = $this->createMock(SomeRepository::class);
 $repo->expects(self::once())->method('find')->willReturn($result);
-```
 
 #### 2. Mixed Mock/Stub Pattern (Common Pattern)
 
 **Problem:** Mock has multiple methods, only some need verification:
 
-```php
 // WRONG - Generates notice for `method()` without `expects()`
 $repo = $this->createMock(SomeRepository::class);
 $repo->method('find')->willReturn($result);        // No expects() - NOTICE!
 $repo->expects(self::once())->method('save');      // Has expects() - OK
 $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
 $eventDispatcher->expects(self::never())->method('dispatch');  // OK
-```
 
 **Fix:** For methods that just return values, use `createMock` with `expects(self::any())`:
-```php
+
 // CORRECT - but generates DEPRECATION in PHPUnit 13
 $repo->expects(self::any())->method('find')->willReturn($result);
-```
 
 **BETTER Fix for PHPUnit 13+:** Use `createMock` for the methods you verify, `createStub` for those you don't:
 
-```php
 // CORRECT - No notice, no deprecation
 $repo = $this->createMock(SomeRepository::class);
 $repo->method('find')->willReturn($result);  // createMock allows method() without expects()
 $repo->expects(self::once())->method('save');  // Method being verified
-```
 
 Wait - this still causes notices! The real fix:
 
-```php
 // BEST - Use createStub for unverified methods, keep createMock only for verified
 $findResult = $this->createStub(SomeEntity::class);
 $repo = $this->createMock(SomeRepository::class);
 $repo->expects(self::any())->method('find')->willReturn($findResult);  // Deprecated!
 $repo->expects(self::once())->method('save');
-```
 
 **ACTUALLY CORRECT for PHPUnit 13:**
-```php
+
 // The createMock with just method() and willReturn() WITHOUT expects() is OK
 // The problem is when you createMock and DON'T use expects() anywhere
 // If you need ANY expects(), add expects(self::any()) to others
@@ -125,11 +106,9 @@ $repo = $this->createMock(SomeRepository::class);
 $repo->method('find')->willReturn($result);  // Remove this line or add expects
 // Instead, just don't configure unverified methods - PHPUnit returns null by default
 $repo->expects(self::once())->method('save');
-```
 
 **SIMPLEST FIX:** When a mock has ANY method with `expects()`, ALL methods must have `expects()`:
 
-```php
 // WRONG - Mixed pattern causes notice
 $repo = $this->createMock(SomeRepository::class);
 $repo->method('find')->willReturn($result);        // No expects - NOTICE!
@@ -139,11 +118,9 @@ $repo->expects(self::once())->method('save');      // Has expects
 $repo = $this->createMock(SomeRepository::class);
 $repo->expects(self::any())->method('find')->willReturn($result);  // Any is deprecated!
 $repo->expects(self::once())->method('save');
-```
 
 **ACTUAL CORRECT FIX (PHPUnit 13):** Just use `->method()` without `expects()`:
 
-```php
 // CORRECT for PHPUnit 13 - method() alone returns null by default
 // If you need a return value AND verification, structure it like:
 $repo = $this->createMock(SomeRepository::class);
@@ -154,11 +131,9 @@ $repo->method('find')->willReturn($result);  // This alone is OK if no other exp
 $repo = $this->createMock(SomeRepository::class);
 // Don't configure methods you don't verify - they return null/empty arrays
 $repo->expects(self::once())->method('save')->with($entity);
-```
 
 **FINAL ANSWER - Two Patterns:**
 
-```php
 // PATTERN A: Stub only (no verification)
 $repo = $this->createStub(SomeRepository::class);
 $repo->method('find')->willReturn($result);
@@ -177,20 +152,16 @@ $repo->method('find')->willReturn($result);  // DEPRECATED - use stub pattern
 // OR: Add expects to ALL configured methods:
 $repo->expects(self::any())->method('find')->willReturn($result);  // Deprecated!
 $repo->expects(self::once())->method('save');
-```
 
 ### Deprecation: `expects(self::any())`
 
 **Problem:** PHPUnit 13+ deprecates `expects(self::any())`:
 
-```
 The any() invoked count expectation is deprecated and will be removed in PHPUnit 14.
 Use a test stub instead or configure a real invocation count expectation.
-```
 
 **Fix:** Don't use `expects(self::any())`. Instead:
 
-```php
 // DEPRECATED
 $repo->expects(self::any())->method('find')->willReturn($result);
 
@@ -201,43 +172,34 @@ $repo->method('find')->willReturn($result);
 // CORRECT - Or just use method() without expects()
 $repo = $this->createMock(SomeRepository::class);
 $repo->method('find')->willReturn($result);  // OK when no other expects()
-```
 
 ### Step-by-Step Debugging Process
 
 1. **Run the failing test file:**
-   ```bash
    ./vendor/bin/phpunit tests/Path/TestFile.php --no-coverage
-   ```
 
 2. **If you see 'N' characters, run with debug:**
-   ```bash
    ./vendor/bin/phpunit tests/Path/TestFile.php --no-coverage --testdox
-   ```
 
-3. **Check for PHPUnit-specific deprecations:**
-   ```bash
-   ./vendor/bin/phpunit tests/Path/TestFile.php --no-coverage --display-phpunit-deprecations
-   ```
+3. **Check for ALL PHPUnit issues (Strict Mode):**
+   ./vendor/bin/phpunit tests/Path/TestFile.php --no-coverage --display-all-issues
 
 4. **Find patterns in the test file:**
-   ```bash
    grep -n "createMock" tests/Path/TestFile.php
-   ```
 
 5. **For each `createMock`, check if:**
    - There's at least one `->expects(...)` on the mock
    - ALL configured methods have `->expects(...)` or NONE have it
 
 6. **Apply fix:**
-   - If NO verification needed → change to `createStub()`
-   - If MIXED (some verified, some not) → remove unverified method configurations OR change to `createStub()`
+   - If NO verification needed -> change to `createStub()`
+   - If MIXED (some verified, some not) -> remove unverified method configurations OR change to `createStub()`
 
 ### Quick Reference
 
 | Scenario | Pattern | Fix |
 |----------|---------|-----|
-| No verification needed | `createMock()` + `method()` → | `createStub()` |
+| No verification needed | `createMock()` + `method()` | `createStub()` |
 | Need to verify calls | `createMock()` + `expects(once/never)` | Keep as-is |
 | Mixed (some verified, some not) | `createMock()` + `method()` + `expects()` | Use `createMock` only for verified, unconfigured for others |
 | Deprecated `expects(any())` | `expects(self::any())` | Remove or use `createStub()` |
@@ -263,13 +225,11 @@ $repo->method('find')->willReturn($result);  // OK when no other expects()
 
 ## Useful commands
 
-```bash
 ./vendor/bin/phpunit --no-coverage
-./vendor/bin/phpunit --display-deprecations --display-phpunit-deprecations
+./vendor/bin/phpunit --display-all-issues
 ./vendor/bin/phpunit tests/Domain --no-coverage
 ./vendor/bin/phpunit tests/Application --no-coverage
 ./vendor/bin/phpunit --coverage-text --coverage-filter=src
-```
 
 ## Maintenance
 

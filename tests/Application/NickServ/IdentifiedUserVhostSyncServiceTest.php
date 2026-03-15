@@ -14,6 +14,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 #[CoversClass(IdentifiedUserVhostSyncService::class)]
 final class IdentifiedUserVhostSyncServiceTest extends TestCase
@@ -93,6 +94,58 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn($account);
 
         $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver('virtual'));
+        $service->syncVhostForUser($user);
+    }
+
+    #[Test]
+    public function syncVhostForUserDoesNothingWhenAccountNotRegistered(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+        $user = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip', true, false, 'SID');
+        $account = RegisteredNick::createPending('Nick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn($account);
+
+        $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver());
+        $service->syncVhostForUser($user);
+    }
+
+    #[Test]
+    public function syncVhostForUserDoesNothingWhenVhostEmptyAfterDisplayResolution(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+        $user = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip', true, false, 'SID');
+        $account = RegisteredNick::createPending('Nick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+        $account->changeVhost('');
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn($account);
+
+        $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver());
+        $service->syncVhostForUser($user);
+    }
+
+    #[Test]
+    public function syncVhostForUserLogsWhenVhostApplied(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('setUserVhost')
+            ->with('UID1', 'my-vhost', 'SID');
+        $user = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip', true, false, 'SID');
+        $account = RegisteredNick::createPending('Nick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+        $account->changeVhost('my-vhost');
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('Nick')->willReturn($account);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('info')
+            ->with(self::stringContains('IdentifiedUserVhostSync'));
+
+        $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver(), $logger);
         $service->syncVhostForUser($user);
     }
 }

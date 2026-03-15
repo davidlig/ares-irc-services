@@ -9,6 +9,8 @@ use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\NickServService;
+use App\Application\NickServ\PendingVerificationRegistry;
+use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\Security\NickServPermission;
@@ -20,6 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use stdClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -36,8 +39,8 @@ final class NickServServiceTest extends TestCase
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $translator = $this->createStub(TranslatorInterface::class);
-        $pendingRegistry = new \App\Application\NickServ\PendingVerificationRegistry();
-        $recoveryRegistry = new \App\Application\NickServ\RecoveryTokenRegistry();
+        $pendingRegistry = new PendingVerificationRegistry();
+        $recoveryRegistry = new RecoveryTokenRegistry();
         $logger = $this->createStub(LoggerInterface::class);
         $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
 
@@ -145,8 +148,8 @@ final class NickServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $translator = $this->createMock(TranslatorInterface::class);
-        $pendingRegistry = new \App\Application\NickServ\PendingVerificationRegistry();
-        $recoveryRegistry = new \App\Application\NickServ\RecoveryTokenRegistry();
+        $pendingRegistry = new PendingVerificationRegistry();
+        $recoveryRegistry = new RecoveryTokenRegistry();
         $logger = $this->createStub(LoggerInterface::class);
         $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
 
@@ -199,8 +202,8 @@ final class NickServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $this->createStub(TranslatorInterface::class),
-            new \App\Application\NickServ\PendingVerificationRegistry(),
-            new \App\Application\NickServ\RecoveryTokenRegistry(),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
         );
 
         $service->dispatch('   ', $sender);
@@ -296,8 +299,8 @@ final class NickServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
-            new \App\Application\NickServ\PendingVerificationRegistry(),
-            new \App\Application\NickServ\RecoveryTokenRegistry(),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -394,8 +397,8 @@ final class NickServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
-            new \App\Application\NickServ\PendingVerificationRegistry(),
-            new \App\Application\NickServ\RecoveryTokenRegistry(),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
         );
 
         $service->dispatch('NEEDID', $sender);
@@ -486,12 +489,95 @@ final class NickServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
-            new \App\Application\NickServ\PendingVerificationRegistry(),
-            new \App\Application\NickServ\RecoveryTokenRegistry(),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
         );
 
         $service->dispatch('TWOARGS onlyone', $sender);
 
         self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
+    public function clearsAuthorizationContextEvenWhenHandlerThrowsException(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+
+        $exceptionHandler = new class implements NickServCommandInterface {
+            public function getName(): string
+            {
+                return 'CRASH';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(NickServContext $context): void
+            {
+                throw new RuntimeException('Handler error');
+            }
+        };
+
+        $authorizationContext = $this->createMock(AuthorizationContextInterface::class);
+        $authorizationContext->expects(self::once())->method('setCurrentUser')->with($sender);
+        $authorizationContext->expects(self::once())->method('clear');
+
+        $service = new NickServService(
+            $authorizationContext,
+            $this->createStub(AuthorizationCheckerInterface::class),
+            new NickServCommandRegistry([$exceptionHandler]),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Handler error');
+        $service->dispatch('CRASH', $sender);
     }
 }

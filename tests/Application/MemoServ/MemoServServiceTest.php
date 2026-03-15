@@ -510,6 +510,188 @@ final class MemoServServiceTest extends TestCase
     }
 
     #[Test]
+    public function usesAccountLanguageAndTimezoneWhenAccountFound(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getLanguage')->willReturn('es');
+        $account->method('getTimezone')->willReturn('Europe/Madrid');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+        $handler = new class($contextHolder) implements MemoServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'TEST';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'test.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'test.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'test.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $registry = new MemoServCommandRegistry([$handler]);
+        $service = new MemoServService(
+            $registry,
+            $nickRepository,
+            $this->createStub(MemoServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $service->dispatch('TEST', $sender);
+
+        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
+        self::assertSame('es', $contextHolder->context->getLanguage());
+        self::assertSame('Europe/Madrid', $contextHolder->context->getTimezone());
+    }
+
+    #[Test]
+    public function usesDefaultLanguageAndTimezoneWhenAccountNotFound(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn(null);
+
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+        $handler = new class($contextHolder) implements MemoServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'TEST';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'test.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'test.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'test.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $registry = new MemoServCommandRegistry([$handler]);
+        $service = new MemoServService(
+            $registry,
+            $nickRepository,
+            $this->createStub(MemoServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            'fr',
+            'Europe/Paris',
+        );
+
+        $service->dispatch('TEST', $sender);
+
+        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
+        self::assertSame('fr', $contextHolder->context->getLanguage());
+        self::assertSame('Europe/Paris', $contextHolder->context->getTimezone());
+    }
+
+    #[Test]
     public function whenHandlerThrowsGenericThrowableLogsAndRethrows(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');

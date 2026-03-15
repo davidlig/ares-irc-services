@@ -152,6 +152,57 @@ final class MemoServBotTest extends TestCase
         self::assertCount(2, $lines);
     }
 
+    #[Test]
+    public function sendMessageDefaultsUnknownMessageTypeToNotice(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $lines = [];
+        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
+            $lines[] = $line;
+        });
+        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $handler = $this->createMock(ProtocolHandlerInterface::class);
+        $handler->expects(self::once())->method('formatMessage')
+            ->with(self::callback(static fn ($msg): bool => 'NOTICE' === $msg->command));
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getHandler')->willReturn($handler);
+        $this->connectionHolder->setProtocolModule($module);
+        $this->bot->sendMessage('001U', 'Test', 'UNKNOWN_TYPE');
+    }
+
+    #[Test]
+    public function onBurstCompleteLogsIntroduction(): void
+    {
+        $introLine = ':001 UID MemoServ MemoServ 0 0 services.example.com 001MS 0 * Memo Service';
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('writeLine')->with($introLine);
+        $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
+        $formatter->expects(self::atLeastOnce())->method('formatIntroduction')->willReturn($introLine);
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getIntroductionFormatter')->willReturn($formatter);
+
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects(self::once())->method('info')
+            ->with('MemoServ introduced to network.', [
+                'uid' => self::MEMOSERV_UID,
+                'nick' => 'MemoServ',
+            ]);
+
+        $bot = new MemoServBot(
+            $this->connectionHolder,
+            self::HOSTNAME,
+            self::MEMOSERV_UID,
+            'MemoServ',
+            'MemoServ',
+            'Memo Service',
+            $logger,
+        );
+
+        $this->connectionHolder->setProtocolModule($module);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $bot->onBurstComplete($event);
+    }
+
     private function createModuleWithHandlerThatReturnsLine(string $line): ProtocolModuleInterface
     {
         $handler = $this->createStub(ProtocolHandlerInterface::class);
