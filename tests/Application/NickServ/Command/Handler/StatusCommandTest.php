@@ -163,4 +163,127 @@ final class StatusCommandTest extends TestCase
         self::assertContains('status.suspended', $messages);
         self::assertContains('status.suspended_reason', $messages);
     }
+
+    #[Test]
+    public function replyRegisteredOffline(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($this->createContext(['Nick'], $notifier, $translator));
+
+        self::assertContains('status.not_connected', $messages);
+    }
+
+    #[Test]
+    public function replyRegisteredNotIdentified(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(new SenderView('U2', 'Nick', 'i', 'h', 'c', 'ip', false, false, '', ''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($this->createContext(['Nick'], $notifier, $translator));
+
+        self::assertContains('status.not_identified', $messages);
+    }
+
+    #[Test]
+    public function replyForbiddenNoReason(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Forbidden);
+        $account->method('getReason')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($this->createContext(['Nick'], $notifier, $translator));
+
+        self::assertContains('status.forbidden', $messages);
+        self::assertNotContains('status.forbidden_reason', $messages);
+    }
+
+    #[Test]
+    public function replyPendingNullExpiry(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Pending);
+        $account->method('getExpiresAt')->willReturn(null);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($this->createContext(['Nick'], $notifier, $translator));
+
+        self::assertContains('status.pending', $messages);
+    }
+
+    #[Test]
+    public function replySuspendedNoReason(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Suspended);
+        $account->method('getReason')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($this->createContext(['Nick'], $notifier, $translator));
+
+        self::assertContains('status.suspended', $messages);
+        self::assertNotContains('status.suspended_reason', $messages);
+    }
 }

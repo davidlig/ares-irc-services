@@ -71,6 +71,90 @@ final class ReadCommandTest extends TestCase
     }
 
     #[Test]
+    public function doesNothingWhenSenderNull(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new ReadCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
+        $cmd->execute($this->createContext(null, $account, ['1'], $notifier, $translator));
+
+        self::assertSame([], $messages);
+    }
+
+    #[Test]
+    public function replySyntaxErrorWhenEmptyIndex(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new ReadCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, [''], $notifier, $translator));
+
+        self::assertSame(['error.syntax'], $messages);
+    }
+
+    #[Test]
+    public function throwsAccessDeniedWhenNoMemoRead(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(5);
+        $channel->method('isFounder')->willReturn(false);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn(new \App\Domain\ChanServ\Entity\ChannelLevel(5, \App\Domain\ChanServ\Entity\ChannelLevel::KEY_MEMOREAD, 300));
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new ReadCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
+
+        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', '1'], $notifier, $translator));
+    }
+
+    #[Test]
     public function replySyntaxErrorWhenIndexNotDigit(): void
     {
         $account = $this->createStub(RegisteredNick::class);

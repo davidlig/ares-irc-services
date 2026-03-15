@@ -185,4 +185,173 @@ final class DelaccessCommandTest extends TestCase
         $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
     }
+
+    #[Test]
+    public function successDeletesAccessInChannelContext(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(2);
+        $accessEntry = $this->createStub(ChannelAccess::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($accessEntry);
+        $accessRepo->expects(self::once())->method('remove')->with($accessEntry);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('sendNoticeToChannel');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#mychannel'], $notifier, $translator));
+
+        self::assertStringContainsString('delaccess.done', $messages[0]);
+    }
+
+    #[Test]
+    public function replyNotInListWhenNickNotInAccessList(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(99);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $accessRepo->expects(self::never())->method('remove');
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
+
+        self::assertSame(['delaccess.not_in_list'], $messages);
+    }
+
+    #[Test]
+    public function founderCannotDeleteOwnAccessAsFounderNotInAccessList(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $founderAccount = $this->createStub(RegisteredNick::class);
+        $founderAccount->method('getId')->willReturn(1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip'), $founderAccount, ['#test'], $notifier, $translator));
+
+        self::assertSame(['delaccess.founder_not_in_access'], $messages);
+    }
+
+    #[Test]
+    public function getNameReturnsDelaccess(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame('DELACCESS', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsOne(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame(1, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsDelaccessSyntax(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame('delaccess.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsDelaccessHelp(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame('delaccess.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturns9(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame(9, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsDelaccessShort(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame('delaccess.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

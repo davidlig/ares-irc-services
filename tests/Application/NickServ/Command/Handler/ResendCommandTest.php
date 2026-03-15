@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -165,5 +166,96 @@ final class ResendCommandTest extends TestCase
         self::assertSame(['resend.success'], $messages);
         self::assertCount(1, $dispatched);
         self::assertInstanceOf(\App\Application\Mail\Message\SendEmail::class, $dispatched[0]);
+    }
+
+    #[Test]
+    public function replyErrorWhenAccountNullEmail(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+        $account->method('getEmail')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+        $pending = new PendingVerificationRegistry();
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new ResendCommand($nickRepo, $messageBus, $translator, $logger, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), [], $notifier, $translator, $pending));
+
+        self::assertSame(['resend.success'], $messages);
+    }
+
+    #[Test]
+    public function resendWhenIntervalZero(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+        $account->method('getEmail')->willReturn('user@example.com');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $dispatched = [];
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
+            $dispatched[] = $m;
+
+            return new Envelope($m);
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+        $pending = new PendingVerificationRegistry();
+        $pending->recordResend('User');
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new ResendCommand($nickRepo, $messageBus, $translator, $logger, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), [], $notifier, $translator, $pending));
+
+        self::assertSame(['resend.success'], $messages);
+        self::assertCount(1, $dispatched);
+    }
+
+    #[Test]
+    public function mailDispatchFailureLogsAndRepliesError(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(true);
+        $account->method('getEmail')->willReturn('user@example.com');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willThrowException(new RuntimeException('SMTP failure'));
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'NickServ RESEND: failed to dispatch verification email',
+            self::callback(static fn (array $ctx) => isset($ctx['nick'], $ctx['recipient'], $ctx['exception']))
+        );
+        $pending = new PendingVerificationRegistry();
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new ResendCommand($nickRepo, $messageBus, $translator, $logger, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), [], $notifier, $translator, $pending));
+
+        self::assertSame(['error.mail_failed'], $messages);
     }
 }

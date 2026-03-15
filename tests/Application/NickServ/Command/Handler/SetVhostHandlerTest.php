@@ -116,4 +116,81 @@ final class SetVhostHandlerTest extends TestCase
 
         self::assertSame(['set.vhost.success'], $messages);
     }
+
+    #[Test]
+    public function takenVhostRepliesTaken(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $existingAccount = $this->createStub(RegisteredNick::class);
+        $existingAccount->method('getId')->willReturn(2);
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByVhost')->willReturn($existingAccount);
+        $nickRepo->expects(self::never())->method('save');
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('.suffix');
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver);
+        $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'myvhost'), $account, 'myvhost');
+
+        self::assertSame(['set.vhost.taken'], $messages);
+    }
+
+    #[Test]
+    public function emptyStringClearsVhost(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->expects(self::once())->method('changeVhost')->with(null);
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('');
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver);
+        $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, ''), $account, '');
+
+        self::assertSame(['set.vhost.cleared'], $messages);
+    }
+
+    #[Test]
+    public function ownVhostNotTaken(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->expects(self::once())->method('changeVhost')->with('myvhost');
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByVhost')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('.suffix');
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver);
+        $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'myvhost'), $account, 'myvhost');
+
+        self::assertSame(['set.vhost.success'], $messages);
+    }
 }
