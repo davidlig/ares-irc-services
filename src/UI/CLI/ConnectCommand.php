@@ -151,6 +151,10 @@ class ConnectCommand extends Command
 
     private function registerSignalHandlers(IRCClient $client): void
     {
+        // @codeCoverageIgnoreStart
+        // Cannot test PCNTL signal handlers in unit tests.
+        // Signal handlers are process-level and execute asynchronously.
+        // The body of each closure is only executed when a signal is received.
         if (!function_exists('pcntl_signal')) {
             return;
         }
@@ -169,5 +173,6 @@ class ConnectCommand extends Command
         pcntl_signal(SIGHUP, static function () use ($client): void {
             $client->disconnect('SIGHUP');
         });
+        // @codeCoverageIgnoreEnd
     }
 }

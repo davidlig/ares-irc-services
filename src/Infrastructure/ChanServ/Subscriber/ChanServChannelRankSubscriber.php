@@ -375,12 +375,19 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             }
 
             // Strip only the prefix letters the user actually has when no access (SECURE)
+            // @codeCoverageIgnoreStart
+            // NOTE: This block is unreachable in practice. Analysis:
+            // - If user NOT identified: effectiveDesired='', currentRank>0, desiredRank=0 → enters block above
+            // - If identified with NO access: effectiveDesired='', currentRank>0, desiredRank=0 → enters block above
+            // - If identified WITH access: effectiveDesired!='' → condition fails
+            // Kept as defensive code for potential future SECURE mode changes.
             if ($channel->isSecure() && '' === $effectiveDesired && '' !== $currentLetter) {
                 foreach ($this->collectOpsForSecureStrip($channelName, $uid, $member, $currentLetter, $modeSupport) as $op) {
                     $ops[] = $op;
                 }
                 continue;
             }
+            // @codeCoverageIgnoreEnd
 
             if ('' === $effectiveDesired || !$this->shouldSetMode($currentLetter, $effectiveDesired)) {
                 continue;
@@ -412,9 +419,13 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         $ops = [];
         $supported = $modeSupport->getSupportedPrefixModes();
         $hasLetters = $member['prefixLetters'] ?? [$currentLetter];
+        // @codeCoverageIgnoreStart
+        // Unreachable defensive code: when currentLetter is empty, currentRank=0.
+        // This method is only called when currentRank > desiredRank, which can't be true if currentRank=0.
         if ('' === $currentLetter) {
             $hasLetters = [];
         }
+        // @codeCoverageIgnoreEnd
         foreach (self::PREFIX_LETTERS_DESC as $letter) {
             if (!in_array($letter, $supported, true) || !in_array($letter, $hasLetters, true)) {
                 continue;
@@ -444,6 +455,8 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
     /**
      * @return list<array{uid: string, letter: string, add: bool}>
+     *
+     * @codeCoverageIgnore
      */
     private function collectOpsForSecureStrip(
         string $channelName,

@@ -514,6 +514,11 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             try {
                 return $this->userRepository->findByUid(new Uid($sourceId));
             } catch (InvalidArgumentException) {
+                // @codeCoverageIgnoreStart
+                // Unreachable: the regex above validates the UID format before construction.
+                // If the regex passes, new Uid($sourceId) will never throw.
+                // Kept as defensive safeguard for theoretical edge cases.
+                // @codeCoverageIgnoreEnd
             }
         }
 
