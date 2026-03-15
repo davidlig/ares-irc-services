@@ -42,7 +42,7 @@ class RegisteredNick
 
     private NickStatus $status;
 
-    /** Argon2id hash produced by password_hash(). Null for FORBIDDEN entries. */
+    /** Hash produced by password_hash(). Null for FORBIDDEN entries. */
     private ?string $passwordHash;
 
     /** Null for FORBIDDEN entries. One email per account (unique across nicks). */
