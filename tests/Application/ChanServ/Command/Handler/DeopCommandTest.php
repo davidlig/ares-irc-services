@@ -296,4 +296,96 @@ final class DeopCommandTest extends TestCase
 
         self::assertSame(['error.insufficient_access'], $messages);
     }
+
+    #[Test]
+    public function successWhenDeoppingSelf(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access->method('getLevel')->willReturn(100);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturnCallback(function (int $channelId, string $key) {
+            if (\App\Domain\ChanServ\Entity\ChannelLevel::KEY_OPDEOP === $key) {
+                $level = $this->createStub(\App\Domain\ChanServ\Entity\ChannelLevel::class);
+                $level->method('getValue')->willReturn(50);
+
+                return $level;
+            }
+
+            return null;
+        });
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturnCallback(static fn (string $nick) => 'User' === $nick ? $account : null);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturnCallback(static fn (string $nick) => 'User' === $nick ? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip') : null);
+
+        $messages = [];
+        $modeCalls = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('setChannelMemberMode')->willReturnCallback(static function (string $ch, string $uid, string $letter, bool $add) use (&$modeCalls): void {
+            $modeCalls[] = [$ch, $uid, $letter, $add];
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new DeopCommand($channelRepo, $accessRepo, $levelRepo, $nickRepo, $userLookup);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'User'], $notifier, $translator));
+
+        self::assertSame(['deop.done'], $messages);
+        self::assertSame(['#test', 'UID1', 'o', false], $modeCalls[0]);
+    }
+
+    #[Test]
+    public function successWhenSenderIsFounder(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturnMap([[1, true]]);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn(null);
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(new SenderView('UID2', 'TargetNick', 'i', 'h', 'c', 'ip'));
+
+        $messages = [];
+        $modeCalls = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('setChannelMemberMode')->willReturnCallback(static function (string $ch, string $uid, string $letter, bool $add) use (&$modeCalls): void {
+            $modeCalls[] = [$ch, $uid, $letter, $add];
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new DeopCommand($channelRepo, $accessRepo, $levelRepo, $nickRepo, $userLookup);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'TargetNick'], $notifier, $translator));
+
+        self::assertSame(['deop.done'], $messages);
+        self::assertSame(['#test', 'UID2', 'o', false], $modeCalls[0]);
+    }
 }
