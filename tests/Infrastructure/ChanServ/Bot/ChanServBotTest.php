@@ -404,4 +404,139 @@ final class ChanServBotTest extends TestCase
 
         $this->bot->setChannelTopic('#channel', 'New topic');
     }
+
+    #[Test]
+    public function setChannelMemberModeWhenModuleNullReturnsEarly(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('setChannelMemberMode');
+
+        $this->bot->setChannelMemberMode('#channel', '001USER', 'o', true);
+    }
+
+    #[Test]
+    public function setChannelMemberModeRemoveMode(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('setChannelMemberMode')
+            ->with('001', '#channel', '001USER', 'o', false, self::CHANSERV_UID);
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        $this->connectionHolder->setProtocolModule($module);
+
+        $this->bot->setChannelMemberMode('#channel', '001USER', 'o', false);
+    }
+
+    #[Test]
+    public function inviteToChannelWhenModuleNullReturnsEarly(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('inviteUserToChannel');
+
+        $this->bot->inviteToChannel('#channel', '001USER');
+    }
+
+    #[Test]
+    public function joinChannelAsServiceWhenModuleNullReturnsEarly(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('joinChannelAsService');
+
+        $this->bot->joinChannelAsService('#channel');
+    }
+
+    #[Test]
+    public function setChannelTopicWhenModuleNullReturnsEarly(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('setChannelTopic');
+
+        $this->bot->setChannelTopic('#channel', 'Topic');
+    }
+
+    #[Test]
+    public function sendNoticeToChannelWhenMemberCountZeroReturnsEarly(): void
+    {
+        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 0);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+
+        $bot = new ChanServBot(
+            $this->connectionHolder,
+            $channelLookup,
+            $this->createStub(ApplyOutgoingChannelModesPort::class),
+            self::HOSTNAME,
+            self::CHANSERV_UID,
+        );
+
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::never())->method('writeLine');
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        $this->connectionHolder->setProtocolModule($this->createModuleWithHandlerThatReturnsLine('NOTICE #test :Hi'));
+
+        $bot->sendNoticeToChannel('#test', 'Hi');
+    }
+
+    #[Test]
+    public function joinChannelAsServiceFallsBackToLowerPrefix(): void
+    {
+        $channelModeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $channelModeSupport->method('getSupportedPrefixModes')->willReturn(['o', 'h', 'v']);
+
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('joinChannelAsService')->with(
+            '001',
+            '#channel',
+            self::CHANSERV_UID,
+            'o',
+            null,
+        );
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+        $module->method('getChannelModeSupport')->willReturn($channelModeSupport);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        $this->connectionHolder->setProtocolModule($module);
+
+        $this->bot->joinChannelAsService('#channel');
+    }
+
+    #[Test]
+    public function sendMessageSkipsEmptyLines(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::exactly(2))->method('writeLine');
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        $this->connectionHolder->setProtocolModule($this->createModuleWithHandlerThatReturnsLine('NOTICE 001USER :Line'));
+
+        $this->bot->sendMessage('001USER', "Line1\n\nLine2", 'NOTICE');
+    }
+
+    #[Test]
+    public function setChannelTopicNullTopic(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('setChannelTopic')
+            ->with('001', '#channel', null, self::CHANSERV_UID);
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        $this->connectionHolder->setProtocolModule($module);
+
+        $this->bot->setChannelTopic('#channel', null);
+    }
 }

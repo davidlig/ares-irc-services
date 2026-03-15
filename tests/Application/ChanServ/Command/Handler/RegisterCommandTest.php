@@ -409,4 +409,124 @@ final class RegisterCommandTest extends TestCase
 
         self::assertStringContainsString('register.success', $messages[0]);
     }
+
+    #[Test]
+    public function getNameReturnsRegister(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame('REGISTER', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsRegisterSyntax(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame('register.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsRegisterHelp(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame('register.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsOne(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame(1, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsRegisterShort(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame('register.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

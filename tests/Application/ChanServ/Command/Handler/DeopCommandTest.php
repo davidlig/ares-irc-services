@@ -388,4 +388,144 @@ final class DeopCommandTest extends TestCase
         self::assertSame(['deop.done'], $messages);
         self::assertSame(['#test', 'UID2', 'o', false], $modeCalls[0]);
     }
+
+    #[Test]
+    public function getNameReturnsDeop(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame('DEOP', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsDeopSyntax(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame('deop.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsDeopHelp(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame('deop.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsTwentyOne(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame(21, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsDeopShort(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame('deop.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new DeopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

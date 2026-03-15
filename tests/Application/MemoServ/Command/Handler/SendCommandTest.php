@@ -782,4 +782,254 @@ final class SendCommandTest extends TestCase
 
         self::assertSame(['send.sent_channel'], $messages);
     }
+
+    #[Test]
+    public function accessorGetNameReturnsSend(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame('SEND', $cmd->getName());
+    }
+
+    #[Test]
+    public function accessorGetAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function accessorGetMinArgsReturnsTwo(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function accessorGetSyntaxKeyReturnsSendSyntax(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame('send.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function accessorGetHelpKeyReturnsSendHelp(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame('send.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function accessorGetOrderReturnsOne(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame(1, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function accessorGetShortDescKeyReturnsSendShort(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame('send.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function accessorGetSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function accessorIsOperOnlyReturnsFalse(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function accessorGetRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            20,
+            50,
+            0,
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

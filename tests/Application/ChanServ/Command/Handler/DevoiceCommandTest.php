@@ -290,4 +290,164 @@ final class DevoiceCommandTest extends TestCase
 
         self::assertSame(['error.insufficient_access'], $messages);
     }
+
+    #[Test]
+    public function getNameReturnsDevoice(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame('DEVOICE', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsDevoiceSyntax(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame('devoice.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsDevoiceHelp(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame('devoice.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsTwentyThree(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame(23, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsDevoiceShort(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame('devoice.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

@@ -703,4 +703,198 @@ final class IgnoreCommandTest extends TestCase
 
         self::assertSame(['error.syntax'], $messages);
     }
+
+    #[Test]
+    public function accessorGetNameReturnsIgnore(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertSame('IGNORE', $cmd->getName());
+    }
+
+    #[Test]
+    public function accessorGetAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function accessorGetMinArgsReturnsOne(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertSame(1, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function accessorGetSyntaxKeyReturnsIgnoreSyntax(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertSame('ignore.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function accessorGetHelpKeyReturnsIgnoreHelp(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertSame('ignore.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function accessorGetOrderReturnsFive(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertSame(5, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function accessorGetShortDescKeyReturnsIgnoreShort(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertSame('ignore.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function accessorGetSubCommandHelpReturnsSubcommands(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        $subCommands = $cmd->getSubCommandHelp();
+
+        self::assertCount(3, $subCommands);
+        self::assertSame('ADD', $subCommands[0]['name']);
+        self::assertSame('ignore.add.short', $subCommands[0]['desc_key']);
+        self::assertSame('ignore.add.help', $subCommands[0]['help_key']);
+        self::assertSame('ignore.add.syntax', $subCommands[0]['syntax_key']);
+        self::assertSame('DEL', $subCommands[1]['name']);
+        self::assertSame('ignore.del.short', $subCommands[1]['desc_key']);
+        self::assertSame('ignore.del.help', $subCommands[1]['help_key']);
+        self::assertSame('ignore.del.syntax', $subCommands[1]['syntax_key']);
+        self::assertSame('LIST', $subCommands[2]['name']);
+        self::assertSame('ignore.list.short', $subCommands[2]['desc_key']);
+        self::assertSame('ignore.list.help', $subCommands[2]['help_key']);
+        self::assertSame('ignore.list.syntax', $subCommands[2]['syntax_key']);
+    }
+
+    #[Test]
+    public function accessorIsOperOnlyReturnsFalse(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function accessorGetRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new IgnoreCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            20,
+            50,
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

@@ -397,4 +397,164 @@ final class ReadCommandTest extends TestCase
 
         self::assertStringContainsString('42', $messages[0]);
     }
+
+    #[Test]
+    public function accessorGetNameReturnsRead(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('READ', $cmd->getName());
+    }
+
+    #[Test]
+    public function accessorGetAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function accessorGetMinArgsReturnsOne(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame(1, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function accessorGetSyntaxKeyReturnsReadSyntax(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('read.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function accessorGetHelpKeyReturnsReadHelp(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('read.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function accessorGetOrderReturnsTwo(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame(2, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function accessorGetShortDescKeyReturnsReadShort(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('read.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function accessorGetSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function accessorIsOperOnlyReturnsFalse(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function accessorGetRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new ReadCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

@@ -1505,4 +1505,483 @@ final class NetworkEventEnricherTest extends TestCase
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
     }
+
+    #[Test]
+    public function onFjoinReceivedWithModeParamsAppliesThemToChannel(): void
+    {
+        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k', 'l', 'L']);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $event = new FjoinReceivedEvent(
+            new ChannelName('#test'),
+            1704067200,
+            '+lk',
+            [],
+            [],
+            ['key123', '100'],
+        );
+        $enricher->onFjoinReceived($event);
+    }
+
+    #[Test]
+    public function onFjoinReceivedWithMinusModeStrSkipsParamApplication(): void
+    {
+        $channel = new Channel(new ChannelName('#test'), '+lk', new DateTimeImmutable('@0'));
+        $channel->applyModeParam('k', 'oldkey');
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::atLeastOnce())->method('dispatch');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k', 'l', 'L']);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $event = new FjoinReceivedEvent(
+            new ChannelName('#test'),
+            1704067200,
+            '-l+k',
+            [['uid' => new Uid('001ABC'), 'role' => ChannelMemberRole::Op, 'prefixLetters' => ['o']]],
+            [],
+            ['newkey'],
+        );
+        $enricher->onFjoinReceived($event);
+    }
+
+    #[Test]
+    public function onFjoinReceivedModeParamsExhaustedBreaksLoop(): void
+    {
+        $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn(null);
+        $channelRepo->expects(self::once())->method('save');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k', 'l', 'L']);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $event = new FjoinReceivedEvent(
+            new ChannelName('#test'),
+            1704067200,
+            '+kl',
+            [],
+            [],
+            ['keyonly'],
+        );
+        $enricher->onFjoinReceived($event);
+    }
+
+    #[Test]
+    public function onModeReceivedPrefixModeParamsExhaustedBreaksLoop(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABC123'),
+            new Nick('Nick'),
+            new Ident('ident'),
+            'host.example',
+            'cloak.example',
+            'vhost.example',
+            '+i',
+            new DateTimeImmutable('2024-01-01'),
+            'Real',
+            '001',
+            '*',
+        );
+
+        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+o', []));
+    }
+
+    #[Test]
+    public function onModeReceivedListModeParamsExhaustedBreaksLoop(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+b', []));
+    }
+
+    #[Test]
+    public function onModeReceivedChannelSettingModeParamsExhaustedBreaksLoop(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k', 'l']);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+k', []));
+    }
+
+    #[Test]
+    public function onModeReceivedRemovesExemptMode(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel->addExempt('*!*@exempt.host');
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '-e', ['*!*@exempt.host']));
+
+        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+    }
+
+    #[Test]
+    public function onModeReceivedRemovesInviteException(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
+        $channel->addInviteException('*!*@invite.host');
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '-I', ['*!*@invite.host']));
+
+        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+    }
+
+    #[Test]
+    public function onModeReceivedClearsModeParamOnUnset(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+nk', new DateTimeImmutable('@0'));
+        $channel->applyModeParam('k', 'secretkey');
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k']);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '-k', []));
+
+        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+    }
+
+    #[Test]
+    public function mergeModeStringReturnsCurrentWhenDeltaIsEmpty(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->applyOutgoingChannelModes('#chan', '', []);
+
+        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+        self::assertSame('+nt', $channel->getModes());
+    }
+
+    #[Test]
+    public function onModeReceivedWithMixedAddRemoveModes(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+s-n', []));
+
+        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+        self::assertStringContainsString('s', $channel->getModes());
+        self::assertStringNotContainsString('n', $channel->getModes());
+    }
+
+    #[Test]
+    public function onLmodeReceivedDoesNothingWhenChannelNotFound(): void
+    {
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn(null);
+        $channelRepo->expects(self::never())->method('save');
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onLmodeReceived(new LmodeReceivedEvent(new ChannelName('#chan'), 'b', ['*!*@bad.host']));
+    }
+
+    #[Test]
+    public function onFmodeReceivedEmptyModeStrMergesCorrectly(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onFmodeReceived(new FmodeReceivedEvent(new ChannelName('#chan'), ''));
+
+        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+        self::assertSame('+nt', $channel->getModes());
+    }
+
+    #[Test]
+    public function onModeReceivedUnsetsChannelSettingMode(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+nkl', new DateTimeImmutable('@0'));
+        $channel->applyModeParam('k', 'secretkey');
+        $channel->applyModeParam('l', '100');
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k', 'l', 'L']);
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+        );
+
+        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '-k-l', ['dummykey', '']));
+
+        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+    }
 }

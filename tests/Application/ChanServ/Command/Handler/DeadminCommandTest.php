@@ -367,4 +367,164 @@ final class DeadminCommandTest extends TestCase
 
         self::assertSame(['error.insufficient_access'], $messages);
     }
+
+    #[Test]
+    public function getNameReturnsDeadmin(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('DEADMIN', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsDeadminSyntax(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('deadmin.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsDeadminHelp(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('deadmin.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsNineteen(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame(19, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsDeadminShort(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('deadmin.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

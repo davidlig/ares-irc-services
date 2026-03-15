@@ -687,4 +687,242 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertInstanceOf(\App\Domain\IRC\Event\LmodeReceivedEvent::class, $captured);
         self::assertSame(['*!*@host', 'extra'], $captured->params);
     }
+
+    #[Test]
+    public function handleNickWithEmptyNewNickDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('NICK', 'abc123', [''], null));
+    }
+
+    #[Test]
+    public function handleUidWithInvalidIpFallbackToBase64EncodingRawString(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $message = new IRCMessage(
+            'UID',
+            '001',
+            [
+                'abc123',
+                '1234567890',
+                'InspNick',
+                'host.name',
+                'cloak.host',
+                'displayuser',
+                'not-a-valid-ip',
+                '1234567890',
+                '+i',
+                '',
+            ],
+            'Real Name',
+        );
+        $adapter->handleMessage($message);
+
+        self::assertInstanceOf(UserJoinedNetworkEvent::class, $captured);
+        self::assertSame(base64_encode('not-a-valid-ip'), $captured->user->ipBase64);
+    }
+
+    #[Test]
+    public function handleUidWithIpv4AddressEncodesToBase64(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $message = new IRCMessage(
+            'UID',
+            '001',
+            [
+                'abc123',
+                '1234567890',
+                'InspNick',
+                'host.name',
+                'cloak.host',
+                'displayuser',
+                '192.168.1.1',
+                '1234567890',
+                '+i',
+                '',
+            ],
+            'Real Name',
+        );
+        $adapter->handleMessage($message);
+
+        self::assertInstanceOf(UserJoinedNetworkEvent::class, $captured);
+        self::assertSame(base64_encode(inet_pton('192.168.1.1')), $captured->user->ipBase64);
+    }
+
+    #[Test]
+    public function handleFjoinWithEntryWhereColonBeforeCommaSkipsEntry(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], ':0 o,abc123:0'));
+
+        self::assertInstanceOf(\App\Domain\IRC\Event\FjoinReceivedEvent::class, $captured);
+        self::assertCount(1, $captured->members);
+        self::assertSame('abc123', $captured->members[0]['uid']->value);
+    }
+
+    #[Test]
+    public function handleFjoinWithEntryMissingColonSkipsEntry(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], 'o,abc123 o,def456:0'));
+
+        self::assertInstanceOf(\App\Domain\IRC\Event\FjoinReceivedEvent::class, $captured);
+        self::assertCount(1, $captured->members);
+        self::assertSame('def456', $captured->members[0]['uid']->value);
+    }
+
+    #[Test]
+    public function handleFjoinWithEntryMissingCommaSkipsEntry(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], 'abc123:0'));
+
+        self::assertInstanceOf(\App\Domain\IRC\Event\FjoinReceivedEvent::class, $captured);
+        self::assertCount(0, $captured->members);
+    }
+
+    #[Test]
+    public function handleFjoinWithNoneRoleMemberHasEmptyPrefixLetters(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], ',abc123:0'));
+
+        self::assertInstanceOf(\App\Domain\IRC\Event\FjoinReceivedEvent::class, $captured);
+        self::assertCount(1, $captured->members);
+        self::assertSame('abc123', $captured->members[0]['uid']->value);
+        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame([], $captured->members[0]['prefixLetters']);
+    }
+
+    #[Test]
+    public function handleKickWithEmptyTargetIdDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('KICK', 'abc123', ['#chan', ''], 'Kicked'));
+    }
+
+    #[Test]
+    public function handlePartWithEmptySourceDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('PART', null, ['#test'], 'Bye'));
+    }
+
+    #[Test]
+    public function handleUidWithNullTrailingUsesEmptyRealName(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $message = new IRCMessage(
+            'UID',
+            '001',
+            [
+                'abc123',
+                '1234567890',
+                'InspNick',
+                'host.name',
+                'cloak.host',
+                'displayuser',
+                '127.0.0.1',
+                '1234567890',
+                '+i',
+                '',
+            ],
+            null,
+        );
+        $adapter->handleMessage($message);
+
+        self::assertInstanceOf(UserJoinedNetworkEvent::class, $captured);
+        self::assertSame('', $captured->user->realName);
+    }
+
+    #[Test]
+    public function handleFtopicWithNullTopicDispatchesEvent(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FTOPIC', null, ['#test', '1704067200'], null));
+
+        self::assertInstanceOf(\App\Domain\IRC\Event\FtopicReceivedEvent::class, $captured);
+        self::assertNull($captured->topic);
+    }
 }

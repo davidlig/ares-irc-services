@@ -615,6 +615,96 @@ final class IdentifyCommandTest extends TestCase
     }
 
     #[Test]
+    public function getSyntaxKeyReturnsExpectedKey(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertSame('identify.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsExpectedKey(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertSame('identify.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsTwo(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertSame(2, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsExpectedKey(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertSame('identify.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
     public function isOperOnlyReturnsFalse(): void
     {
         $cmd = new IdentifyCommand(

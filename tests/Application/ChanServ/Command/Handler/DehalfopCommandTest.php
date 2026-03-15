@@ -367,4 +367,164 @@ final class DehalfopCommandTest extends TestCase
 
         self::assertSame(['error.insufficient_access'], $messages);
     }
+
+    #[Test]
+    public function getNameReturnsDehalfop(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('DEHALFOP', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsDehalfopSyntax(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('dehalfop.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsDehalfopHelp(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('dehalfop.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsTwentySix(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame(26, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsDehalfopShort(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('dehalfop.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new DehalfopCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }

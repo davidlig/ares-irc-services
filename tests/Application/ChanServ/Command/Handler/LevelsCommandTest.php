@@ -391,4 +391,120 @@ final class LevelsCommandTest extends TestCase
             self::assertStringNotContainsString('HALFOPDEHALFOP', $msg);
         }
     }
+
+    #[Test]
+    public function getNameReturnsLevels(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertSame('LEVELS', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsTwo(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertSame(2, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsLevelsSyntax(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertSame('levels.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsLevelsHelp(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertSame('levels.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsNine(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertSame(9, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsLevelsShort(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertSame('levels.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsArrayWithListSetReset(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        $help = $cmd->getSubCommandHelp();
+
+        self::assertSame([
+            ['name' => 'LIST', 'desc_key' => 'levels.list.short', 'help_key' => 'levels.list.help', 'syntax_key' => 'levels.list.syntax'],
+            ['name' => 'SET', 'desc_key' => 'levels.set.short', 'help_key' => 'levels.set.help', 'syntax_key' => 'levels.set.syntax'],
+            ['name' => 'RESET', 'desc_key' => 'levels.reset.short', 'help_key' => 'levels.reset.help', 'syntax_key' => 'levels.reset.syntax'],
+        ], $help);
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsIdentified(): void
+    {
+        $cmd = new LevelsCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+
+        self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
 }
