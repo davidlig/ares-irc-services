@@ -774,4 +774,134 @@ final class InfoCommandTest extends TestCase
         self::assertContains('info.channels_entry_successor', $messages);
         self::assertContains('info.channels_entry_access', $messages);
     }
+
+    #[Test]
+    public function getNameReturnsInfo(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertSame('INFO', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsOne(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertSame(1, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsExpectedKey(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertSame('info.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsExpectedKey(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertSame('info.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsSix(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertSame(6, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsExpectedKey(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertSame('info.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsNull(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+        );
+        self::assertNull($cmd->getRequiredPermission());
+    }
 }

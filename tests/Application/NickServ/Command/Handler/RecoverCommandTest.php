@@ -541,6 +541,81 @@ final class RecoverCommandTest extends TestCase
     }
 
     #[Test]
+    public function getSyntaxKeyReturnsExpectedKey(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertSame('recover.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsExpectedKey(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertSame('recover.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsFive(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertSame(5, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsExpectedKey(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertSame('recover.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new RecoverCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            $this->createStub(LoggerInterface::class),
+            3600,
+            0,
+        );
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
     public function isOperOnlyReturnsFalse(): void
     {
         $cmd = new RecoverCommand(

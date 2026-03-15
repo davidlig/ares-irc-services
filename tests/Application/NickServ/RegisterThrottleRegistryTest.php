@@ -90,4 +90,90 @@ final class RegisterThrottleRegistryTest extends TestCase
 
         self::assertSame(0, $removed);
     }
+
+    #[Test]
+    public function getRemainingCooldownSecondsReturnsZeroAfterCooldownExpires(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('client1');
+        $remaining = $registry->getRemainingCooldownSeconds('client1', 0);
+        self::assertSame(0, $remaining);
+    }
+
+    #[Test]
+    public function recordAttemptOverwritesPrevious(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('key');
+        $first = $registry->getLastAttemptAt('key');
+        usleep(10000);
+        $registry->recordAttempt('key');
+        $second = $registry->getLastAttemptAt('key');
+        self::assertGreaterThanOrEqual($first, $second);
+    }
+
+    #[Test]
+    public function pruneExpiredCooldownsKeepsFreshEntries(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('fresh');
+        $removed = $registry->pruneExpiredCooldowns(3600);
+        self::assertSame(0, $removed);
+        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('fresh'));
+    }
+
+    #[Test]
+    public function pruneExpiredCooldownsReturnsZeroWhenRegistryIsEmpty(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        self::assertSame(0, $registry->pruneExpiredCooldowns(60));
+    }
+
+    #[Test]
+    public function pruneExpiredCooldownsRemovesMultipleExpiredEntries(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('old1');
+        $registry->recordAttempt('old2');
+        $registry->recordAttempt('old3');
+        sleep(2);
+        $removed = $registry->pruneExpiredCooldowns(1);
+        self::assertGreaterThanOrEqual(3, $removed);
+    }
+
+    #[Test]
+    public function getRemainingCooldownSecondsReturnsZeroWhenMinIntervalNegative(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('client1');
+        self::assertSame(0, $registry->getRemainingCooldownSeconds('client1', -1));
+    }
+
+    #[Test]
+    public function getLastAttemptAtReturnsNullForNonExistentKey(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        self::assertNull($registry->getLastAttemptAt('nonexistent'));
+    }
+
+    #[Test]
+    public function pruneExpiredCooldownsPrunesMixedEntries(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('old');
+        sleep(2);
+        $registry->recordAttempt('fresh');
+        $removed = $registry->pruneExpiredCooldowns(1);
+        self::assertSame(1, $removed);
+        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('fresh'));
+    }
+
+    #[Test]
+    public function getRemainingCooldownSecondsReturnsZeroAfterSleepExpiry(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('client1');
+        sleep(2);
+        self::assertSame(0, $registry->getRemainingCooldownSeconds('client1', 1));
+    }
 }

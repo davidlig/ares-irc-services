@@ -726,4 +726,181 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         self::assertInstanceOf(ModeReceivedEvent::class, $captured);
         self::assertSame(['secret', 'extra'], $captured->modeParams);
     }
+
+    #[Test]
+    public function handleNickWithEmptyNewNickDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('NICK', '001ABC', [''], null));
+    }
+
+    #[Test]
+    public function handleMdWithNonClientTargetDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('MD', null, ['channel', '#test', 'topic'], 'New topic'));
+    }
+
+    #[Test]
+    public function handleMdWithEmptyUidDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('MD', null, ['client', '', 'account'], 'TestAccount'));
+    }
+
+    #[Test]
+    public function handleMdWithNonAccountKeyDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('MD', null, ['client', '001ABC', 'certfp'], 'somevalue'));
+    }
+
+    #[Test]
+    public function handleUmode2WithModeStrFromTrailing(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('UMODE2', '001ABC', [], '+iwx'));
+
+        self::assertInstanceOf(Umode2ReceivedEvent::class, $captured);
+        self::assertSame('001ABC', $captured->sourceId);
+        self::assertSame('+iwx', $captured->modeStr);
+    }
+
+    #[Test]
+    public function handleUmode2WithEmptyModeStrDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('UMODE2', '001ABC', [''], null));
+    }
+
+    #[Test]
+    public function handleTopicWithEmptyChannelDispatchesNothing(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('TOPIC', null, [''], 'Topic'));
+    }
+
+    #[Test]
+    public function handleTopicWithSetterNickWithoutBang(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('TOPIC', null, ['#test', 'SetterNick'], 'New topic'));
+
+        self::assertInstanceOf(FtopicReceivedEvent::class, $captured);
+        self::assertSame('SetterNick', $captured->setterNick);
+    }
+
+    #[Test]
+    public function handleTopicWithEmptySetterParamSetsNullSetterNick(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('TOPIC', null, ['#test'], 'New topic'));
+
+        self::assertInstanceOf(FtopicReceivedEvent::class, $captured);
+        self::assertNull($captured->setterNick);
+    }
+
+    #[Test]
+    public function handleSjoinWithExtPrefixLoggedInUserParsesUid(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '<ext:001ABC>'));
+
+        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertCount(0, $captured->members);
+    }
+
+    #[Test]
+    public function handleSjoinWithNoModesParams(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '001ABC123'));
+
+        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertSame('', $captured->modeStr);
+        self::assertSame([], $captured->modeParams);
+    }
+
+    #[Test]
+    public function handleSethostWithEmptyNewHostDispatchesEvent(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SETHOST', '001ABC', [], ''));
+
+        self::assertInstanceOf(SethostReceivedEvent::class, $captured);
+        self::assertSame('001ABC', $captured->sourceId);
+        self::assertSame('', $captured->newHost);
+    }
 }

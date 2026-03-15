@@ -291,4 +291,134 @@ final class ResendCommandTest extends TestCase
         self::assertSame(['resend.success'], $messages);
         self::assertCount(1, $dispatched);
     }
+
+    #[Test]
+    public function getNameReturnsResend(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame('RESEND', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsEmptyArray(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame([], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsZero(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame(0, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsExpectedKey(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame('resend.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsExpectedKey(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame('resend.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsFour(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame(4, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsExpectedKey(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame('resend.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsNull(): void
+    {
+        $cmd = new ResendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertNull($cmd->getRequiredPermission());
+    }
 }

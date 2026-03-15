@@ -12,6 +12,9 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
@@ -558,5 +561,272 @@ final class ChanServServiceTest extends TestCase
         $this->expectExceptionMessage('Handler failed for test');
 
         $service->dispatch('THROW', $sender);
+    }
+
+    #[Test]
+    public function rethrowsChannelNotRegisteredExceptionWithoutLogging(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+
+        $throwingHandler = new class implements ChanServCommandInterface {
+            public function getName(): string
+            {
+                return 'FAIL';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                throw ChannelNotRegisteredException::forChannel('#test');
+            }
+        };
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('error');
+
+        $registry = new ChanServCommandRegistry([$throwingHandler]);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = new ChanServService(
+            $registry,
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $nickRepository,
+            $this->createStub(ChanServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            'en',
+            'UTC',
+            $logger,
+        );
+
+        $this->expectException(ChannelNotRegisteredException::class);
+
+        $service->dispatch('FAIL', $sender);
+    }
+
+    #[Test]
+    public function rethrowsChannelAlreadyRegisteredExceptionWithoutLogging(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+
+        $throwingHandler = new class implements ChanServCommandInterface {
+            public function getName(): string
+            {
+                return 'FAIL';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                throw new ChannelAlreadyRegisteredException('#test');
+            }
+        };
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('error');
+
+        $registry = new ChanServCommandRegistry([$throwingHandler]);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = new ChanServService(
+            $registry,
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $nickRepository,
+            $this->createStub(ChanServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            'en',
+            'UTC',
+            $logger,
+        );
+
+        $this->expectException(ChannelAlreadyRegisteredException::class);
+
+        $service->dispatch('FAIL', $sender);
+    }
+
+    #[Test]
+    public function rethrowsInsufficientAccessExceptionWithoutLogging(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+
+        $throwingHandler = new class implements ChanServCommandInterface {
+            public function getName(): string
+            {
+                return 'FAIL';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                throw new InsufficientAccessException('#test');
+            }
+        };
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::never())->method('error');
+
+        $registry = new ChanServCommandRegistry([$throwingHandler]);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = new ChanServService(
+            $registry,
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $nickRepository,
+            $this->createStub(ChanServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            'en',
+            'UTC',
+            $logger,
+        );
+
+        $this->expectException(InsufficientAccessException::class);
+
+        $service->dispatch('FAIL', $sender);
     }
 }

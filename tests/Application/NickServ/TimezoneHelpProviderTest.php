@@ -102,4 +102,32 @@ final class TimezoneHelpProviderTest extends TestCase
         $provider = new TimezoneHelpProvider();
         self::assertNull($provider->getRegionForTimezone('Unknown/City'));
     }
+
+    #[Test]
+    public function resolveRegionHandlesWhitespace(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        self::assertSame('Europe', $provider->resolveRegion('  Europe  '));
+        self::assertNull($provider->resolveRegion('   '));
+    }
+
+    #[Test]
+    public function getRegionForTimezoneHandlesWhitespace(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        self::assertSame('Europe', $provider->getRegionForTimezone('  Europe/Madrid  '));
+        self::assertNull($provider->getRegionForTimezone('   '));
+    }
+
+    #[Test]
+    public function getTimezonesForRegionHandlesWhitespace(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        $regions = $provider->getRegions();
+        if ([] === $regions) {
+            self::markTestSkipped('No timezone regions');
+        }
+        $tzs = $provider->getTimezonesForRegion('  ' . $regions[0] . '  ');
+        self::assertNotEmpty($tzs);
+    }
 }

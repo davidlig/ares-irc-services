@@ -515,6 +515,86 @@ final class RegisterCommandTest extends TestCase
     }
 
     #[Test]
+    public function getSyntaxKeyReturnsExpectedKey(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame('register.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsExpectedKey(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame('register.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturnsOne(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame(1, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsExpectedKey(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame('register.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new RegisterCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
     public function isOperOnlyReturnsFalse(): void
     {
         $cmd = new RegisterCommand(
