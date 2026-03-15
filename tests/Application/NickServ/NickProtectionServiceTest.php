@@ -490,4 +490,113 @@ final class NickProtectionServiceTest extends TestCase
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving now', 'myident', 'host.example');
         self::assertSame('Leaving now (myident@host.example)', $account->getLastQuitMessage());
     }
+
+    #[Test]
+    public function onNickChangedReturnsEarlyWhenBurstNotComplete(): void
+    {
+        $burstState = new BurstState();
+        self::assertFalse($burstState->isComplete());
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::never())->method('findByNick');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            $burstState,
+            new IdentifiedSessionRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', 'NewNick');
+    }
+
+    #[Test]
+    public function onNickChangedSkipsWhenAccountIsNull(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNick')->with('NewNick')->willReturn(null);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('forceNick');
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $notifier,
+            $burstState,
+            new IdentifiedSessionRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', 'NewNick');
+    }
+
+    #[Test]
+    public function onNickChangedSkipsWhenAccountNotRegistered(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+
+        $account = RegisteredNick::createPending('NewNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        self::assertFalse($account->isRegistered());
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('forceNick');
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $notifier,
+            $burstState,
+            new IdentifiedSessionRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', 'NewNick');
+    }
+
+    #[Test]
+    public function onNickChangedSkipsWhenUserLookupReturnsNull(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+
+        $account = RegisteredNick::createPending('NewNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn(null);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('forceNick');
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $service = new NickProtectionService(
+            $repo,
+            $userLookup,
+            $notifier,
+            $burstState,
+            new IdentifiedSessionRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', 'NewNick');
+    }
 }

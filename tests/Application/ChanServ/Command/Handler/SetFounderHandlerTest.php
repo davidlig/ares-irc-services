@@ -823,7 +823,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
         $messageBus = $this->createMock(MessageBusInterface::class);
@@ -872,7 +872,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
         $messageBus = $this->createMock(MessageBusInterface::class);
@@ -921,7 +921,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
         $messageBus = $this->createMock(MessageBusInterface::class);

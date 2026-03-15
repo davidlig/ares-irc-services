@@ -16,6 +16,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -263,5 +264,38 @@ final class SetEmailHandlerTest extends TestCase
         $handler->handle($this->createContext($notifier, $translator, 'other@example.com'), $account, 'other@example.com');
 
         self::assertSame(['register.email_already_used'], $messages);
+    }
+
+    #[Test]
+    public function requestEmailChangeDispatchExceptionRepliesMailFailed(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getEmail')->willReturn('old@example.com');
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $pending = new PendingEmailChangeRegistry();
+
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus->method('dispatch')->willThrowException(new RuntimeException('Mail server offline'));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')
+            ->with('NickServ SET EMAIL: failed to dispatch token email', self::anything());
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
+
+        self::assertSame(['error.mail_failed'], $messages);
     }
 }

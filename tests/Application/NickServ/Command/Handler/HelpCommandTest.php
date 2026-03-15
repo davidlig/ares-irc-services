@@ -902,4 +902,11 @@ final class HelpCommandTest extends TestCase
         $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
         self::assertNull($cmd->getRequiredPermission());
     }
+
+    #[Test]
+    public function getNameReturnsHelp(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        self::assertSame('HELP', $cmd->getName());
+    }
 }

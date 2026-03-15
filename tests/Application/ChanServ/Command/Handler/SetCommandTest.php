@@ -326,4 +326,76 @@ final class SetCommandTest extends TestCase
         );
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
     }
+
+    #[Test]
+    public function founderOptionThrowsWhenNotFounder(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('isFounder')->willReturn(false);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessHelper = new ChanServAccessHelper(
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(2);
+
+        $cmd = $this->createSetCommand($channelRepo, $accessHelper);
+        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'FOUNDER', 'NewFounder', 'token123'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function successorOptionThrowsWhenNotFounder(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('isFounder')->willReturn(false);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessHelper = new ChanServAccessHelper(
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(2);
+
+        $cmd = $this->createSetCommand($channelRepo, $accessHelper);
+        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'SUCCESSOR', 'NewSuccessor'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function otherOptionRequiresSetLevel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn(null);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(2);
+
+        $cmd = $this->createSetCommand($channelRepo, $accessHelper);
+        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'DESC', 'New description'], $notifier, $translator));
+    }
 }
