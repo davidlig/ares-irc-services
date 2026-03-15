@@ -298,4 +298,32 @@ final class SetEmailHandlerTest extends TestCase
 
         self::assertSame(['error.mail_failed'], $messages);
     }
+
+    #[Test]
+    public function requestEmailChangeDefensiveNullEmailInMethod(): void
+    {
+        $account = $this->createConfiguredStub(RegisteredNick::class, [
+            'getNickname' => 'User',
+        ]);
+        $account->method('getEmail')->willReturnOnConsecutiveCalls('valid@example.com', null);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $pending = new PendingEmailChangeRegistry();
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
+
+        self::assertSame(['error.not_identified'], $messages);
+    }
 }

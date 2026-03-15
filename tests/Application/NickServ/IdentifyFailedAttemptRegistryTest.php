@@ -201,4 +201,56 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         sleep(2);
         self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 1, 1));
     }
+
+    #[Test]
+    public function getRemainingLockoutSecondsReturnsZeroWhenLockoutExpiredDuringCheck(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        for ($i = 0; $i < 3; ++$i) {
+            $registry->recordFailedAttempt('key', 3600);
+        }
+        $remaining = $registry->getRemainingLockoutSeconds('key', 3, 3600, 0);
+        self::assertSame(0, $remaining);
+    }
+
+    #[Test]
+    public function getRemainingLockoutSecondsReturnsZeroWhenNowExceedsLockoutUntil(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        for ($i = 0; $i < 3; ++$i) {
+            $registry->recordFailedAttempt('key', 1);
+        }
+        sleep(2);
+        $remaining = $registry->getRemainingLockoutSeconds('key', 3, 1, 1);
+        self::assertSame(0, $remaining);
+    }
+
+    #[Test]
+    public function recordFailedAttemptPreservesKeyWhenTimestampsRemain(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        $registry->recordFailedAttempt('key', 3600);
+        $registry->recordFailedAttempt('key', 3600);
+        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key', 2, 3600, 60));
+    }
+
+    #[Test]
+    public function recordFailedAttemptUnsetsKeyWhenAllTimestampsFilteredOutWithNegativeWindow(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        $registry->recordFailedAttempt('key', -1);
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 60, 30));
+    }
+
+    #[Test]
+    public function getRemainingLockoutSecondsReturnsZeroWhenLockoutExpiresWhileTimestampsRemainInWindow(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        for ($i = 0; $i < 3; ++$i) {
+            $registry->recordFailedAttempt('key', 100);
+        }
+        sleep(2);
+        $remaining = $registry->getRemainingLockoutSeconds('key', 3, 100, 1);
+        self::assertSame(0, $remaining);
+    }
 }

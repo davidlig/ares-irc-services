@@ -119,4 +119,60 @@ final class ConsumerProcessManagerTest extends TestCase
             @unlink($script);
         }
     }
+
+    #[Test]
+    public function startWithCustomTransportNames(): void
+    {
+        $script = $this->createTemporaryConsoleScriptWithSleep(2);
+        try {
+            $manager = new ConsumerProcessManager($script, ['async', 'async_emails']);
+
+            $manager->start();
+
+            self::assertTrue($manager->isRunning());
+            $manager->stop();
+            self::assertFalse($manager->isRunning());
+        } finally {
+            @unlink($script);
+        }
+    }
+
+    #[Test]
+    public function stopWhenProcessAlreadyTerminated(): void
+    {
+        $script = $this->createTemporaryConsoleScript();
+        try {
+            $manager = new ConsumerProcessManager($script);
+
+            $manager->start();
+            usleep(100000);
+            $manager->stop();
+            $manager->stop();
+
+            self::assertFalse($manager->isRunning());
+        } finally {
+            @unlink($script);
+        }
+    }
+
+    #[Test]
+    public function isRunningReturnsFalseWhenProcessResourceIsNotValid(): void
+    {
+        $script = $this->createTemporaryConsoleScript();
+        try {
+            $manager = new ConsumerProcessManager($script);
+
+            $manager->start();
+            $manager->stop();
+
+            $reflection = new ReflectionClass($manager);
+            $processProperty = $reflection->getProperty('process');
+            $processProperty->setAccessible(true);
+            $processProperty->setValue($manager, null);
+
+            self::assertFalse($manager->isRunning());
+        } finally {
+            @unlink($script);
+        }
+    }
 }

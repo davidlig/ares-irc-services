@@ -376,6 +376,41 @@ final class IgnoreCommandTest extends TestCase
     }
 
     #[Test]
+    public function listSkipsNonMemoIgnoreItems(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $ignoredNick = $this->createStub(RegisteredNick::class);
+        $ignoredNick->method('getId')->willReturn(2);
+        $ignoredNick->method('getNickname')->willReturn('IgnoredUser');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($ignoredNick);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $ignore = $this->createStub(MemoIgnore::class);
+        $ignore->method('getIgnoredNickId')->willReturn(2);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $ignoreRepo->method('listByTargetNick')->willReturn(['invalid', $ignore, 123]);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IgnoreCommand($nickRepo, $channelRepo, $ignoreRepo, $accessHelper, 20, 50);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['LIST'], $notifier, $translator));
+
+        self::assertSame('ignore.list_header', $messages[0]);
+        self::assertSame('  IgnoredUser', $messages[1]);
+        self::assertSame('ignore.list_footer', $messages[2]);
+    }
+
+    #[Test]
     public function channelListRepliesChannelNotRegistered(): void
     {
         $account = $this->createStub(RegisteredNick::class);

@@ -588,4 +588,17 @@ final class ChanServBotTest extends TestCase
         $bot->sendNoticeToChannel('#test', 'Hi');
         self::assertTrue(true);
     }
+
+    #[Test]
+    public function writeToConnectionReturnsTrueWhenConnected(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('writeLine')->with('NOTICE 001USER :Test message');
+
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        $this->connectionHolder->setProtocolModule($this->createModuleWithHandlerThatReturnsLine('NOTICE 001USER :Test message'));
+
+        $this->bot->sendNotice('001USER', 'Test message');
+    }
 }

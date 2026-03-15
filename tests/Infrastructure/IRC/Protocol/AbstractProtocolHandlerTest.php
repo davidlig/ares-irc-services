@@ -146,7 +146,7 @@ final class AbstractProtocolHandlerTest extends TestCase
             }));
 
         $handler = new class(eventDispatcher: $eventDispatcher) extends AbstractProtocolHandler {
-            public function testDispatchSyncComplete(\App\Domain\IRC\Connection\ConnectionInterface $connection, string $sid): void
+            public function dispatchSyncCompleteForTest(\App\Domain\IRC\Connection\ConnectionInterface $connection, string $sid): void
             {
                 $this->dispatchSyncComplete($connection, $sid);
             }
@@ -161,7 +161,7 @@ final class AbstractProtocolHandlerTest extends TestCase
             }
         };
 
-        $handler->testDispatchSyncComplete($connection, '0AB');
+        $handler->dispatchSyncCompleteForTest($connection, '0AB');
     }
 
     #[Test]
@@ -170,7 +170,7 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
 
         $handler = new class(eventDispatcher: null) extends AbstractProtocolHandler {
-            public function testDispatchSyncComplete(\App\Domain\IRC\Connection\ConnectionInterface $connection, string $sid): void
+            public function dispatchSyncCompleteForTest(\App\Domain\IRC\Connection\ConnectionInterface $connection, string $sid): void
             {
                 $this->dispatchSyncComplete($connection, $sid);
             }
@@ -185,7 +185,7 @@ final class AbstractProtocolHandlerTest extends TestCase
             }
         };
 
-        $handler->testDispatchSyncComplete($connection, '0AB');
+        $handler->dispatchSyncCompleteForTest($connection, '0AB');
 
         $this->expectNotToPerformAssertions();
     }

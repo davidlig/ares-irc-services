@@ -545,6 +545,78 @@ final class SendCommandTest extends TestCase
     }
 
     #[Test]
+    public function sendsNoNotificationWhenRecipientHasZeroUnreadMemos(): void
+    {
+        $senderAccount = $this->createStub(RegisteredNick::class);
+        $senderAccount->method('getId')->willReturn(1);
+        $recipient = $this->createStub(RegisteredNick::class);
+        $recipient->method('getId')->willReturn(2);
+        $recipient->method('getNickname')->willReturn('Other');
+        $recipient->method('getLanguage')->willReturn('en');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($recipient);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createMock(MemoRepositoryInterface::class);
+        $memoRepo->method('countByTargetNick')->willReturn(0);
+        $memoRepo->method('countUnreadByTargetNick')->willReturn(0);
+        $memoRepo->expects(self::once())->method('save')->with(self::isInstanceOf(Memo::class));
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $ignoreRepo->method('findByTargetNickAndIgnored')->willReturn(null);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $settingsRepo->method('isEnabledForNick')->willReturn(true);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $recipientView = new SenderView('UID2', 'Other', 'i', 'h', 'c', 'ip');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn($recipientView);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], ?string $domain = null, ?string $locale = null): string => $id);
+
+        $messages = [];
+        $notifier = $this->createMock(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->expects(self::never())->method('sendNotice');
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $senderAccount, ['Other', 'Hello'], $notifier, $translator));
+
+        self::assertSame(['send.sent_nick'], $messages);
+    }
+
+    #[Test]
+    public function doesNotNotifyWhenSenderIsNull(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $settingsRepo = $this->createStub(MemoSettingsRepositoryInterface::class);
+        $throttle = new MemoServSendThrottleRegistry();
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
+        $cmd->execute($this->createContext(null, $account, ['Other', 'Hi'], $notifier, $translator));
+
+        self::assertSame([], $messages);
+    }
+
+    #[Test]
     public function sendsNotificationWhenRecipientOnline(): void
     {
         $senderAccount = $this->createStub(RegisteredNick::class);

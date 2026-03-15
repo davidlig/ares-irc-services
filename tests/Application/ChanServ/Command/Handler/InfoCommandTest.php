@@ -266,6 +266,34 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function showsMlockNoModesWhenActiveButEmpty(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->configureMlock(true, '');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.mlock_modes', $rawMessages);
+        $mlockLine = array_filter($rawMessages, static fn (string $m): bool => str_contains($m, 'info.mlock_modes'));
+        self::assertNotEmpty($mlockLine);
+    }
+
+    #[Test]
     public function getNameReturnsInfo(): void
     {
         $cmd = new InfoCommand(

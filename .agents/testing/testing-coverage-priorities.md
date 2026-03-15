@@ -26,28 +26,57 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 2159 tests, 5847 assertions.
-- **Coverage (with PCOV):** Classes 90.80%, Methods 98.07%, Lines 99.06% (2026-03-15).
+- **Suite:** 2203 tests, 6474 assertions.
+- **Coverage (with PCOV):** Classes 96.80%, Methods 99.21%, Lines 99.56% (2026-03-15).
 - **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
 - **PHPUnit Issues:** 0 notices, 0 warnings, 0 skipped, 0 deprecations. STRICT ENFORCEMENT is active. No exceptions allowed.
-- **Coverage by Layer (2026-03-15):** Domain ~100%, Application 97-99%, Infrastructure 98-99%, UI 95-96%.
+- **Coverage by Layer (2026-03-15):** Domain ~100%, Application 99-100%, Infrastructure 98-99%, UI ~96%.
+
+### Remaining Uncovered Lines (Low Priority / Not Testable)
+
+| File | Lines | Reason |
+|------|-------|--------|
+| `RegisteredChannel.php` | 84-86 | Entity `getId()` - Doctrine uses property access |
+| `RegisteredNick.php` | 192-194 | Entity `getId()` - Doctrine uses property access |
+| `ChanServChannelRankSubscriber.php` | 448-470 | `collectOpsForSecureStrip` - unreachable private method (dead code in sync path) |
+| `ConsumerProcessManager.php` | 71, 106 | Defensive: `proc_open` returning `false`, `fclose` on resource |
+| `ConnectCommand.php` | 155-170 | PCNTL signal handler lambdas |
+| `NetworkEventEnricher.php` | 516 | `catch (InvalidArgumentException)` - Uid VO validates format, never throws |
+| `Argon2PasswordHasher.php` | 19 | Native `password_hash()` returning `false` - impossible to simulate |
 
 ### Coverage Improvements (2026-03-15)
 
 | Class | Before | After | Tests Added |
 |-------|--------|-------|-------------|
 | **Argon2PasswordHasher** | 80% | 80% | 1 skipped (native function) |
-| **TimezoneHelpProvider** | 78% | 100% | 4 tests (lazy init, regions, filtering) |
-| **IdentifyFailedAttemptRegistry** | 87% | 100% | 1 test (lockout expired) |
+| **TimezoneHelpProvider** | 78% | 100% | 7 tests (regions, filtering, slash handling) |
+| **IdentifyFailedAttemptRegistry** | 87% | 100% | 3 tests (negative window, key persistence, lockout expiry) |
+| **NickServContext** | 96% | 100% | 1 test (idempotent param wrapping) |
+| **NickServ SetEmailHandler** | 96% | 100% | 1 test (null email check) |
 | **RecoveryTokenRegistry** | 89% | 100% | 3 tests (pruneExpired cleanup) |
 | **PendingVerificationRegistry** | 93% | 100% | 3 tests (pruneExpired lastResendAt) |
 | **AbstractProtocolHandler** | 89% | 100% | 2 tests (dispatchSyncComplete) |
-| **ConsumerProcessManager** | 93% | 96% | 2 tests (pipe closure, skip for proc_open) |
-| **ChanServChannelRankSubscriber** | 92% | 100% | 4 tests (collectOpsForSecureStrip, SECURE) |
+| **ConsumerProcessManager** | 93% | 96% | 3 tests (custom transport, stop when terminated, isRunning) |
+| **ChanServChannelRankSubscriber** | 92% | 93% | 7 tests (SECURE strip, prefixLetters, no Q mode support) |
+| **ChanServMlockEnforceSubscriber** | 72% | 100% | 2 tests (case preservation, + prefix in MLOCK) |
 | **ChanServRejoinSubscriber** | 91% | 100% | 2 tests (missing channel, no registered mode) |
-| **ChanServBot** | 96% | 100% | 2 tests (null module, disconnected) |
+| **ChanServBot** | 96% | 99% | 1 test (writeToConnection when connected) |
+| **NickServBot** | ~34% | 100% | Multiple tests (onBurstComplete, unknown message, disconnected) |
+| **MemoServBot** | ~88% | 100% | 2 tests (unknown message type, onBurstComplete) |
+| **SetFounderHandler** | 95% | 100% | 2 tests (cannot_be_self, cannot_be_successor) |
+| **AccessCommand** | 98% | 100% | 1 test (cannot manage existing entry level) |
+| **InfoCommand** | 56% | 100% | 1 test (mlock no_modes display) |
+| **LevelsCommand** | 73% | 100% | 1 test (list with entries shows stored values) |
+| **DelCommand** | ~49% | 100% | 1 test (channel syntax error missing arg) |
+| **DisableCommand** | ~63% | 100% | 1 test (new settings for channel) |
+| **EnableCommand** | ~62% | 100% | 1 test (enable when settings exist but disabled) |
+| **IgnoreCommand** | ~52% | 100% | 1 test (list skips non-MemoIgnore items) |
+| **ListCommand** | ~37% | 100% | 1 test (list skips non-Memo items) |
+| **SendCommand** | ~71% | 100% | 2 tests (zero unread, null sender) |
+| **InspIRCdNetworkStateAdapter** | ~41% | ~50% | 3 tests (UID format, FMODE/FJOIN early return) |
+| **UnrealIRCdNetworkStateAdapter** | ~30% | ~50% | 6 tests (MD value, UID null trailing, SJOIN edge cases) |
 | **SetCommand** | 93% | 100% | 3 tests (FOUNDER option, empty value) |
-| **SetEmailHandler** | 95% | 100% | 2 tests (empty email, complex valid) |
+| **SetEmailHandler (ChanServ)** | 95% | 100% | 2 tests (empty email, complex valid) |
 | **ChanServContext** | 95% | 100% | 2 tests (empty params) |
 | **NickServService** | 94% | 100% | 1 test (finally clears context) |
 | **IdentifiedUserVhostSyncService** | 94% | 100% | 3 tests (unregistered, empty vhost) |
