@@ -269,6 +269,37 @@ final class EnableCommandTest extends TestCase
     }
 
     #[Test]
+    public function enableChannelWhenSettingsExistButDisabled(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(10);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('isFounder')->willReturn(true);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $settings = $this->createStub(MemoSettings::class);
+        $settings->method('isEnabled')->willReturn(false);
+        $settingsRepo = $this->createMock(MemoSettingsRepositoryInterface::class);
+        $settingsRepo->method('findByTargetChannel')->willReturn($settings);
+        $settingsRepo->expects(self::once())->method('save')->with($settings);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new EnableCommand($channelRepo, $settingsRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
+
+        self::assertSame(['enable.enabled_channel'], $messages);
+    }
+
+    #[Test]
     public function enableChannelSuccessSavesAndReplies(): void
     {
         $account = $this->createStub(RegisteredNick::class);

@@ -160,7 +160,7 @@ final class ConnectCommandTest extends TestCase
     }
 
     #[Test]
-    public function testSignalHandlerGracefulShutdown(): void
+    public function signalHandlerGracefulShutdown(): void
     {
         $clientMock = $this->createMock(IRCClient::class);
         $clientMock->expects(self::once())->method('disconnect')->with('SIGTERM');
@@ -183,7 +183,7 @@ final class ConnectCommandTest extends TestCase
     }
 
     #[Test]
-    public function testSignalHandlerInterrupt(): void
+    public function signalHandlerInterrupt(): void
     {
         $clientMock = $this->createMock(IRCClient::class);
         $clientMock->expects(self::once())->method('disconnect')->with('CTRL+C');
@@ -206,7 +206,7 @@ final class ConnectCommandTest extends TestCase
     }
 
     #[Test]
-    public function testConsumerProcessRestartOnTermination(): void
+    public function consumerProcessRestartOnTermination(): void
     {
         $clientMock = $this->createMock(IRCClient::class);
         $clientMock->expects(self::once())->method('disconnect')->with('SIGTERM');
@@ -263,7 +263,7 @@ final class ConnectCommandTest extends TestCase
     }
 
     #[Test]
-    public function testSighupHandlerDisconnectsClient(): void
+    public function sighupHandlerDisconnectsClient(): void
     {
         $clientMock = $this->createMock(IRCClient::class);
         $clientMock->expects(self::once())->method('disconnect')->with('SIGHUP');

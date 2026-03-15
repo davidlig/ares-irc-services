@@ -453,6 +453,41 @@ final class ListCommandTest extends TestCase
     }
 
     #[Test]
+    public function listSkipsNonMemoItems(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $account->method('getNickname')->willReturn('User');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $senderNick = $this->createStub(RegisteredNick::class);
+        $senderNick->method('getNickname')->willReturn('Alice');
+        $nickRepo->method('findById')->willReturn($senderNick);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $memo = new Memo(10, null, 2, 'Valid memo', new DateTimeImmutable('2025-03-14 12:00:00'));
+        $memoRepo = $this->createStub(MemoRepositoryInterface::class);
+        $memoRepo->method('findByTargetNick')->willReturn(['invalid', $memo, 123, null]);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%target%'] ?? ''));
+
+        $cmd = new ListCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
+        $cmd->execute($this->createContext($sender, $account, [], $notifier, $translator));
+
+        self::assertSame('list.headerUser', $messages[0]);
+        self::assertStringContainsString('Valid memo', $messages[1]);
+        self::assertCount(3, $messages);
+    }
+
+    #[Test]
     public function getNameReturnsList(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);

@@ -1069,4 +1069,118 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $event = new ChannelModesChangedEvent($channel, '+nt', []);
         $this->subscriber->onChannelModesChanged($event);
     }
+
+    #[Test]
+    public function enforcesMlockPreservingCaseForUppercaseAndLowercaseModes(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+        $channel->updateModes('+ntrR');
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isMlockActive')->willReturn(true);
+        $registered->method('getMlock')->willReturn('nt');
+        $registered->method('getMlockParam')->willReturn(null);
+
+        $view = new ChannelView(name: '#test', modes: '+ntrR', topic: null, memberCount: 5);
+
+        $this->burstCompletePort
+            ->expects(self::atLeastOnce())
+            ->method('isComplete')
+            ->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::atLeastOnce())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelLookup
+            ->expects(self::atLeastOnce())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->modeSupportProvider
+            ->expects(self::atLeastOnce())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesUnsetWithoutParam')
+            ->willReturn(['s', 'm', 'i', 'n', 't', 'r', 'R']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesUnsetWithParam')
+            ->willReturn(['k']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesWithParamOnSet')
+            ->willReturn(['k', 'l']);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelModes')
+            ->with('#test', '-R', []);
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
+
+    #[Test]
+    public function parseMlockLettersWithPlusPrefix(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+        $channel->updateModes('+ntms');
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isMlockActive')->willReturn(true);
+        $registered->method('getMlock')->willReturn('+nt');
+        $registered->method('getMlockParam')->willReturn(null);
+
+        $view = new ChannelView(name: '#test', modes: '+ntms', topic: null, memberCount: 5);
+
+        $this->burstCompletePort
+            ->expects(self::atLeastOnce())
+            ->method('isComplete')
+            ->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::atLeastOnce())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelLookup
+            ->expects(self::atLeastOnce())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->modeSupportProvider
+            ->expects(self::atLeastOnce())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesUnsetWithoutParam')
+            ->willReturn(['s', 'm', 'i', 'n', 't']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesUnsetWithParam')
+            ->willReturn(['k']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesWithParamOnSet')
+            ->willReturn(['k', 'l']);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelModes')
+            ->with('#test', '-ms', []);
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
 }

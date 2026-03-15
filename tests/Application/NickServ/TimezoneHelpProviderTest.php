@@ -8,6 +8,9 @@ use App\Application\NickServ\TimezoneHelpProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+
+use function in_array;
 
 #[CoversClass(TimezoneHelpProvider::class)]
 final class TimezoneHelpProviderTest extends TestCase
@@ -162,5 +165,71 @@ final class TimezoneHelpProviderTest extends TestCase
             self::assertStringContainsString('/', $tz, 'Each timezone should contain a slash');
             self::assertStringStartsWith('Europe/', $tz, "Each timezone should start with 'Europe/'");
         }
+    }
+
+    #[Test]
+    public function getRegionsReturnsRegionsInExpectedOrder(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        $regions = $provider->getRegions();
+
+        $expectedOrder = ['Africa', 'America', 'Antarctica', 'Arctic', 'Asia', 'Atlantic', 'Australia', 'Europe', 'Indian', 'Pacific'];
+        $expectedInRegions = array_filter($expectedOrder, static fn ($r) => in_array($r, $regions, true));
+        $actualInExpected = array_filter($regions, static fn ($r) => in_array($r, $expectedOrder, true));
+
+        self::assertSame($expectedInRegions, $actualInExpected, 'Regions should be in PHP manual order');
+    }
+
+    #[Test]
+    public function getTimezonesForRegionNormalizesRegionCase(): void
+    {
+        $provider = new TimezoneHelpProvider();
+
+        $canonical = $provider->getTimezonesForRegion('Europe');
+        $lowercase = $provider->getTimezonesForRegion('europe');
+        $uppercase = $provider->getTimezonesForRegion('EUROPE');
+        $mixedCase = $provider->getTimezonesForRegion('EuRoPe');
+
+        self::assertSame($canonical, $lowercase, 'Lowercase region should return same result');
+        self::assertSame($canonical, $uppercase, 'Uppercase region should return same result');
+        self::assertSame($canonical, $mixedCase, 'Mixed case region should return same result');
+    }
+
+    #[Test]
+    public function identifersWithoutSlashAreExcludedFromRegionLists(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        $allTimezones = [];
+
+        foreach ($provider->getRegions() as $region) {
+            foreach ($provider->getTimezonesForRegion($region) as $tz) {
+                $allTimezones[] = $tz;
+            }
+        }
+
+        self::assertNotContains('UTC', $allTimezones, 'UTC has no slash and should be excluded');
+        self::assertNotContains('GMT', $allTimezones, 'GMT has no slash and should be excluded');
+
+        foreach ($allTimezones as $tz) {
+            self::assertMatchesRegularExpression('/^[A-Za-z]+\/.+/', $tz, 'All identifiers should contain a slash after region prefix');
+        }
+    }
+
+    #[Test]
+    public function ensureLoadedInitializesByRegionWhenNull(): void
+    {
+        $reflection = new ReflectionClass(TimezoneHelpProvider::class);
+        $property = $reflection->getProperty('byRegion');
+        $property->setAccessible(true);
+        $property->setValue(null, null);
+
+        $provider = new TimezoneHelpProvider();
+        $regions = $provider->getRegions();
+
+        self::assertNotEmpty($regions);
+
+        $byRegion = $property->getValue();
+        self::assertIsArray($byRegion);
+        self::assertArrayHasKey('Europe', $byRegion);
     }
 }

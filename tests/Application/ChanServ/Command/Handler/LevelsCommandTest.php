@@ -393,6 +393,50 @@ final class LevelsCommandTest extends TestCase
     }
 
     #[Test]
+    public function listWithEntriesShowsStoredValues(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(true);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $levelAutoop = $this->createStub(ChannelLevel::class);
+        $levelAutoop->method('getLevelKey')->willReturn('AUTOOP');
+        $levelAutoop->method('getValue')->willReturn(250);
+        $levelInvite = $this->createStub(ChannelLevel::class);
+        $levelInvite->method('getLevelKey')->willReturn('INVITE');
+        $levelInvite->method('getValue')->willReturn(100);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('listByChannel')->willReturn([$levelAutoop, $levelInvite]);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new LevelsCommand($channelRepo, $levelRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'LIST'], $notifier, $translator));
+
+        self::assertSame('levels.list.header', $messages[0]);
+        $foundAutoop = false;
+        $foundInvite = false;
+        foreach ($messages as $msg) {
+            if (str_contains($msg, 'AUTOOP') && str_contains($msg, '250')) {
+                $foundAutoop = true;
+            }
+            if (str_contains($msg, 'INVITE') && str_contains($msg, '100')) {
+                $foundInvite = true;
+            }
+        }
+        self::assertTrue($foundAutoop, 'AUTOOP level should be displayed');
+        self::assertTrue($foundInvite, 'INVITE level should be displayed');
+    }
+
+    #[Test]
     public function getNameReturnsLevels(): void
     {
         $cmd = new LevelsCommand(
