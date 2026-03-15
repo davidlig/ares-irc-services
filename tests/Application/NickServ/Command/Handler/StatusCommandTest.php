@@ -354,4 +354,29 @@ final class StatusCommandTest extends TestCase
         self::assertFalse($cmd->isOperOnly());
         self::assertNull($cmd->getRequiredPermission());
     }
+
+    #[Test]
+    public function replyForbiddenWithReason(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Forbidden);
+        $account->method('getReason')->willReturn('Nickname reserved for network staff');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($this->createContext(['Nick'], $notifier, $translator));
+
+        self::assertContains('status.forbidden', $messages);
+        self::assertContains('status.forbidden_reason', $messages);
+    }
 }
