@@ -302,4 +302,54 @@ final class ChanServContextTest extends TestCase
 
         self::assertSame(['Raw text'], $messages);
     }
+
+    #[Test]
+    public function replyWithEmptyParamsTranslatesSuccessfully(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())
+            ->method('trans')
+            ->with('test.key', [], 'chanserv', 'en')
+            ->willReturn('Translated message');
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $notifier,
+            $translator,
+            [],
+        );
+
+        $context->reply('test.key');
+
+        self::assertSame(['Translated message'], $messages);
+    }
+
+    #[Test]
+    public function replyWithParamsWrapsPercentSigns(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())
+            ->method('trans')
+            ->with('test.key', ['%name%' => 'User', '%count%' => '5'], 'chanserv', 'en')
+            ->willReturn('User has 5 items');
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $notifier,
+            $translator,
+            [],
+        );
+
+        $context->reply('test.key', ['name' => 'User', 'count' => '5']);
+
+        self::assertSame(['User has 5 items'], $messages);
+    }
 }

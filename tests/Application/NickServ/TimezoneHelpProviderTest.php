@@ -130,4 +130,37 @@ final class TimezoneHelpProviderTest extends TestCase
         $tzs = $provider->getTimezonesForRegion('  ' . $regions[0] . '  ');
         self::assertNotEmpty($tzs);
     }
+
+    #[Test]
+    public function ensureLoadedInitializesStaticCache(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        $regions = $provider->getRegions();
+        self::assertNotEmpty($regions);
+        $secondProvider = new TimezoneHelpProvider();
+        $regions2 = $secondProvider->getRegions();
+        self::assertSame($regions, $regions2);
+    }
+
+    #[Test]
+    public function getRegionsReturnsAllExpectedRegions(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        $regions = $provider->getRegions();
+        $expectedRegions = ['Africa', 'America', 'Antarctica', 'Arctic', 'Asia', 'Atlantic', 'Australia', 'Europe', 'Indian', 'Pacific'];
+        foreach ($expectedRegions as $expected) {
+            self::assertContains($expected, $regions, "Region {$expected} should be in the list");
+        }
+    }
+
+    #[Test]
+    public function getTimezonesForRegionFiltersIdentifiersWithoutSlash(): void
+    {
+        $provider = new TimezoneHelpProvider();
+        $europeTimezones = $provider->getTimezonesForRegion('Europe');
+        foreach ($europeTimezones as $tz) {
+            self::assertStringContainsString('/', $tz, 'Each timezone should contain a slash');
+            self::assertStringStartsWith('Europe/', $tz, "Each timezone should start with 'Europe/'");
+        }
+    }
 }

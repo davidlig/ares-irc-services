@@ -128,4 +128,65 @@ final class AbstractProtocolHandlerTest extends TestCase
         $message = new IRCMessage('JOIN', null, ['#test'], null);
         $handler->handleIncoming($message, $connection);
     }
+
+    #[Test]
+    public function dispatchSyncCompleteDispatchesNetworkSyncCompleteEvent(): void
+    {
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $eventDispatcher = $this->createMock(\Symfony\Contracts\EventDispatcher\EventDispatcherInterface::class);
+
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static function (object $event) use ($connection): bool {
+                self::assertInstanceOf(\App\Domain\IRC\Event\NetworkSyncCompleteEvent::class, $event);
+                self::assertSame($connection, $event->connection);
+                self::assertSame('0AB', $event->serverSid);
+
+                return true;
+            }));
+
+        $handler = new class(eventDispatcher: $eventDispatcher) extends AbstractProtocolHandler {
+            public function testDispatchSyncComplete(\App\Domain\IRC\Connection\ConnectionInterface $connection, string $sid): void
+            {
+                $this->dispatchSyncComplete($connection, $sid);
+            }
+
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
+
+        $handler->testDispatchSyncComplete($connection, '0AB');
+    }
+
+    #[Test]
+    public function dispatchSyncCompleteDoesNothingWhenEventDispatcherIsNull(): void
+    {
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+
+        $handler = new class(eventDispatcher: null) extends AbstractProtocolHandler {
+            public function testDispatchSyncComplete(\App\Domain\IRC\Connection\ConnectionInterface $connection, string $sid): void
+            {
+                $this->dispatchSyncComplete($connection, $sid);
+            }
+
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
+
+        $handler->testDispatchSyncComplete($connection, '0AB');
+
+        $this->expectNotToPerformAssertions();
+    }
 }

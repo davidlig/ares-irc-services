@@ -252,4 +252,71 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncCompleteSetChannelRegistered($event);
     }
+
+    #[Test]
+    public function onSyncCompleteSkipsMissingChannel(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#channelnotonnetwork');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasChannelRegisteredMode')
+            ->willReturn(true);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#channelnotonnetwork')
+            ->willReturn(null);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteSetChannelRegistered($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsWhenNoRegisteredMode(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#test');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasChannelRegisteredMode')
+            ->willReturn(false);
+
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteSetChannelRegistered($event);
+    }
 }

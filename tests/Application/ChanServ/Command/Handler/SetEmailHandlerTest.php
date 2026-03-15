@@ -54,4 +54,32 @@ final class SetEmailHandlerTest extends TestCase
         $handler = new SetEmailHandler($channelRepo);
         $handler->handle($context, $channel, '   ');
     }
+
+    #[Test]
+    public function emptyStringClearsEmail(): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::once())->method('updateEmail')->with(null);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+        $context = $this->createMock(ChanServContext::class);
+        $context->expects(self::once())->method('reply')->with('set.email.cleared');
+
+        $handler = new SetEmailHandler($channelRepo);
+        $handler->handle($context, $channel, '');
+    }
+
+    #[Test]
+    public function complexValidEmailUpdatesCorrectly(): void
+    {
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::once())->method('updateEmail')->with('user+tag@sub.domain.example.com');
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+        $context = $this->createMock(ChanServContext::class);
+        $context->expects(self::once())->method('reply')->with('set.email.updated');
+
+        $handler = new SetEmailHandler($channelRepo);
+        $handler->handle($context, $channel, 'user+tag@sub.domain.example.com');
+    }
 }

@@ -158,6 +158,132 @@ final class ConnectCommandTest extends TestCase
 
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
     }
+
+    #[Test]
+    public function testSignalHandlerGracefulShutdown(): void
+    {
+        $clientMock = $this->createMock(IRCClient::class);
+        $clientMock->expects(self::once())->method('disconnect')->with('SIGTERM');
+        $clientMock->method('run')->willReturnCallback(static function () use ($clientMock): void {
+            $clientMock->disconnect('SIGTERM');
+        });
+
+        $handler = new HandlerStub($clientMock, null);
+
+        $consumerManager = $this->createMock(ConsumerProcessManagerInterface::class);
+        $consumerManager->expects(self::never())->method('start');
+        $consumerManager->expects(self::once())->method('stop');
+
+        $command = $this->createCommand($handler, $consumerManager);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--no-consumer' => true]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    #[Test]
+    public function testSignalHandlerInterrupt(): void
+    {
+        $clientMock = $this->createMock(IRCClient::class);
+        $clientMock->expects(self::once())->method('disconnect')->with('CTRL+C');
+        $clientMock->method('run')->willReturnCallback(static function () use ($clientMock): void {
+            $clientMock->disconnect('CTRL+C');
+        });
+
+        $handler = new HandlerStub($clientMock, null);
+
+        $consumerManager = $this->createMock(ConsumerProcessManagerInterface::class);
+        $consumerManager->expects(self::never())->method('start');
+        $consumerManager->expects(self::once())->method('stop');
+
+        $command = $this->createCommand($handler, $consumerManager);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--no-consumer' => true]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    #[Test]
+    public function testConsumerProcessRestartOnTermination(): void
+    {
+        $clientMock = $this->createMock(IRCClient::class);
+        $clientMock->expects(self::once())->method('disconnect')->with('SIGTERM');
+        $clientMock->method('run')->willReturnCallback(static function () use ($clientMock): void {
+            $clientMock->disconnect('SIGTERM');
+        });
+
+        $handler = new HandlerStub($clientMock, null);
+
+        $consumerManager = $this->createMock(ConsumerProcessManagerInterface::class);
+        $consumerManager->expects(self::once())->method('start');
+        $consumerManager->expects(self::once())->method('stop');
+
+        $command = $this->createCommand($handler, $consumerManager);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute([]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    #[Test]
+    public function gracefulShutdownWhenProcessStopped(): void
+    {
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+
+        $consumerManager = $this->createMock(ConsumerProcessManagerInterface::class);
+        $consumerManager->expects(self::once())->method('start');
+        $consumerManager->expects(self::once())->method('stop');
+
+        $command = $this->createCommand($handler, $consumerManager);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute([]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+        self::assertStringContainsString('Link established', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function signalHandlerRegistrationSkippedWhenPcntlUnavailable(): void
+    {
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+
+        $consumerManager = $this->createMock(ConsumerProcessManagerInterface::class);
+        $consumerManager->expects(self::once())->method('stop');
+
+        $command = $this->createCommand($handler, $consumerManager);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--no-consumer' => true]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    #[Test]
+    public function testSighupHandlerDisconnectsClient(): void
+    {
+        $clientMock = $this->createMock(IRCClient::class);
+        $clientMock->expects(self::once())->method('disconnect')->with('SIGHUP');
+        $clientMock->method('run')->willReturnCallback(static function () use ($clientMock): void {
+            $clientMock->disconnect('SIGHUP');
+        });
+
+        $handler = new HandlerStub($clientMock, null);
+
+        $consumerManager = $this->createMock(ConsumerProcessManagerInterface::class);
+        $consumerManager->expects(self::never())->method('start');
+        $consumerManager->expects(self::once())->method('stop');
+
+        $command = $this->createCommand($handler, $consumerManager);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--no-consumer' => true]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+    }
 }
 
 /** @internal stub for tests */

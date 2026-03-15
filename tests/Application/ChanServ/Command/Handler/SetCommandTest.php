@@ -32,6 +32,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -64,9 +65,10 @@ final class SetCommandTest extends TestCase
     private function createSetCommand(
         RegisteredChannelRepositoryInterface $channelRepo,
         ChanServAccessHelper $accessHelper,
+        ?RegisteredNickRepositoryInterface $nickRepo = null,
     ): SetCommand {
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo ??= $this->createStub(RegisteredNickRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
         $messageBus = $this->createStub(\Symfony\Component\Messenger\MessageBusInterface::class);
@@ -397,5 +399,156 @@ final class SetCommandTest extends TestCase
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
         $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'DESC', 'New description'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function founderOptionPassesSingleArgumentToHandler(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('isFounder')->willReturn(true);
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $newFounder = $this->createStub(RegisteredNick::class);
+        $newFounder->method('getStatus')->willReturn(\App\Domain\NickServ\ValueObject\NickStatus::Registered);
+        $newFounder->method('getId')->willReturn(20);
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findByNick')->with('NewFounder')->willReturn($newFounder);
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@test.com');
+        $nickRepo->method('findById')->willReturn($currentFounder);
+        $accessHelper = new ChanServAccessHelper(
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
+        $messageBus = $this->createMock(\Symfony\Component\Messenger\MessageBusInterface::class);
+        $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
+
+        $cmd = new SetCommand(
+            $channelRepo,
+            $accessHelper,
+            new SetFounderHandler(
+                $channelRepo,
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $nickRepo,
+                new FounderChangeTokenRegistry(),
+                $this->createStub(EventDispatcherInterface::class),
+                $messageBus,
+                $translator,
+                3600,
+                600,
+                3,
+                $this->createStub(LoggerInterface::class),
+            ),
+            new SetSuccessorHandler($channelRepo, $nickRepo),
+            new SetDescHandler($channelRepo),
+            new SetUrlHandler($channelRepo),
+            new SetEmailHandler($channelRepo),
+            new SetEntrymsgHandler($channelRepo),
+            new SetTopiclockHandler($channelRepo, $this->createStub(EventDispatcherInterface::class), new MlockStateFromChannelResolver()),
+            new SetMlockHandler($channelRepo, $this->createStub(EventDispatcherInterface::class), new MlockStateFromChannelResolver()),
+            new SetSecureHandler($channelRepo, $this->createStub(EventDispatcherInterface::class)),
+        );
+        $cmd->execute($this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $account,
+            ['#test', 'FOUNDER', 'NewFounder'],
+            $notifier,
+            $translator,
+        ));
+
+        self::assertSame(['set.founder.token_sent'], $messages);
+    }
+
+    #[Test]
+    public function founderOptionWithEmptyValueRepliesSyntax(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('isFounder')->willReturn(true);
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $accessHelper = new ChanServAccessHelper(
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+
+        $cmd = $this->createSetCommand($channelRepo, $accessHelper);
+        $cmd->execute($this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $account,
+            ['#test', 'FOUNDER'],
+            $notifier,
+            $translator,
+        ));
+
+        self::assertSame(['set.founder.syntax'], $messages);
+    }
+
+    #[Test]
+    public function nonFounderOptionJoinsAllArguments(): void
+    {
+        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('isFounder')->willReturn(false);
+        $channel->expects(self::once())->method('updateDescription')->with('multi word description');
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access->method('getLevel')->willReturn(300);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $level = new \App\Domain\ChanServ\Entity\ChannelLevel(1, \App\Domain\ChanServ\Entity\ChannelLevel::KEY_SET, 10);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturn($level);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+
+        $cmd = $this->createSetCommand($channelRepo, $accessHelper);
+        $cmd->execute($this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $account,
+            ['#test', 'DESC', 'multi', 'word', 'description'],
+            $notifier,
+            $translator,
+        ));
+
+        self::assertSame(['set.desc.updated'], $messages);
     }
 }

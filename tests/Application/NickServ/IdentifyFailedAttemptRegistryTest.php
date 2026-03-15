@@ -190,4 +190,15 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         self::assertSame(0, $removed);
         self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('recent', 1, 3600, 60));
     }
+
+    #[Test]
+    public function getRemainingLockoutSecondsReturnsZeroWhenLockoutExpired(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        for ($i = 0; $i < 3; ++$i) {
+            $registry->recordFailedAttempt('key', 1);
+        }
+        sleep(2);
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 1, 1));
+    }
 }
