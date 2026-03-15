@@ -147,4 +147,91 @@ final class SetEmailHandlerTest extends TestCase
         self::assertSame(['set.email.pending_sent'], $messages);
         self::assertCount(1, $dispatched);
     }
+
+    #[Test]
+    public function confirmEmailChangeSuccess(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getEmail')->willReturn('old@example.com');
+        $account->method('getId')->willReturn(1);
+        $account->expects(self::once())->method('changeEmail')->with('new@example.com');
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+        $pending = new PendingEmailChangeRegistry();
+        $token = 'validtoken123';
+        $pending->store('User', 'new@example.com', $token);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler->handle($this->createContext($notifier, $translator, 'new@example.com ' . $token), $account, 'new@example.com ' . $token);
+
+        self::assertSame(['set.email.success'], $messages);
+    }
+
+    #[Test]
+    public function confirmEmailChangeEmailAlreadyUsed(): void
+    {
+        $existingAccount = $this->createStub(RegisteredNick::class);
+        $existingAccount->method('getId')->willReturn(2);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getEmail')->willReturn('old@example.com');
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn($existingAccount);
+        $pending = new PendingEmailChangeRegistry();
+        $token = 'validtoken123';
+        $pending->store('User', 'new@example.com', $token);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler->handle($this->createContext($notifier, $translator, 'new@example.com ' . $token), $account, 'new@example.com ' . $token);
+
+        self::assertSame(['register.email_already_used'], $messages);
+    }
+
+    #[Test]
+    public function accountWithoutEmail(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getEmail')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $pending = new PendingEmailChangeRegistry();
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
+
+        self::assertSame(['error.not_identified'], $messages);
+    }
 }

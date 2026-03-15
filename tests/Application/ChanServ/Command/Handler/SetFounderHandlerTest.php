@@ -24,6 +24,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use stdClass;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -746,5 +747,54 @@ final class SetFounderHandlerTest extends TestCase
         );
 
         self::assertSame(['set.founder.updated'], $messages);
+    }
+
+    #[Test]
+    public function requestTokenFailsOnMailError(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('getFounderNickId')->willReturn(10);
+        $channel->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($newAccount);
+        $nickRepo->method('findById')->willReturn($currentFounder);
+        $registry = new FounderChangeTokenRegistry();
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
+        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('Mail failure'));
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $this->createStub(EventDispatcherInterface::class),
+            $messageBus,
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder']),
+            $channel,
+            'NewFounder',
+        );
+
+        self::assertSame(['error.mail_failed'], $messages);
     }
 }

@@ -68,4 +68,26 @@ final class RegisterThrottleRegistryTest extends TestCase
 
         self::assertGreaterThanOrEqual(0, $removed);
     }
+
+    #[Test]
+    public function multipleClientsAreIndependent(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('client1');
+        $registry->recordAttempt('client2');
+
+        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('client1'));
+        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('client2'));
+    }
+
+    #[Test]
+    public function pruneExpiredCooldownsWithZeroIntervalReturnsZero(): void
+    {
+        $registry = new RegisterThrottleRegistry();
+        $registry->recordAttempt('client1');
+
+        $removed = $registry->pruneExpiredCooldowns(0);
+
+        self::assertSame(0, $removed);
+    }
 }

@@ -66,4 +66,24 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $registry->recordFailedAttempt('key', 0);
         self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 60, 30));
     }
+
+    #[Test]
+    public function recordFailedAttemptFiltersOldTimestamps(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        $registry->recordFailedAttempt('key', 60);
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 60, 30));
+    }
+
+    #[Test]
+    public function multipleKeysAreIndependent(): void
+    {
+        $registry = new IdentifyFailedAttemptRegistry();
+        for ($i = 0; $i < 3; ++$i) {
+            $registry->recordFailedAttempt('key1', 60);
+        }
+        $registry->recordFailedAttempt('key2', 60);
+        self::assertGreaterThan(0, $registry->getRemainingLockoutSeconds('key1', 3, 60, 30));
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key2', 3, 60, 30));
+    }
 }

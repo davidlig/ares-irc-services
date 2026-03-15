@@ -385,6 +385,46 @@ final class RegisterCommandTest extends TestCase
     }
 
     #[Test]
+    public function replyEmailAlreadyUsedWhenPendingAccountHasSameEmail(): void
+    {
+        $sender = new SenderView('UID1', 'NewUser', 'i', 'h', 'c', 'ip');
+        $existingPending = $this->createStub(RegisteredNick::class);
+        $existingPending->method('getStatus')->willReturn(NickStatus::Pending);
+        $throttle = new RegisterThrottleRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn($existingPending);
+        $nickRepo->method('findByNick')->willReturn(null);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $passwordHasher,
+            $throttle,
+            $clientKeyResolver,
+            $messageBus,
+            $translator,
+            $logger,
+            0,
+        );
+
+        $context = $this->createContext($sender, ['password', 'pending@example.com'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertSame(['register.email_already_used'], $messages);
+    }
+
+    #[Test]
     public function doesNothingWhenSenderNull(): void
     {
         $throttle = new RegisterThrottleRegistry();

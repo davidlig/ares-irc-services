@@ -12,6 +12,7 @@ use App\Application\ChanServ\Command\Handler\AdminCommand;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -339,6 +340,61 @@ final class AdminCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'TargetNick'], $notifier, $translator));
 
         self::assertSame(['admin.done'], $messages);
+    }
+
+    #[Test]
+    public function replySecureRequiresMinLevelWhenSecureChannelAndTargetLevelTooLow(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getFounderNickId')->willReturn(1);
+        $channel->method('isFounder')->willReturnCallback(static fn (int $id): bool => 1 === $id);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('isSecure')->willReturn(true);
+
+        $targetAccount = $this->createStub(RegisteredNick::class);
+        $targetAccount->method('getId')->willReturn(2);
+        $targetSender = new SenderView('UID2', 'TargetNick', 'i', 'h', 'c', 'ip');
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($targetAccount);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn($targetSender);
+
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $autoAdminLevel = $this->createStub(ChannelLevel::class);
+        $autoAdminLevel->method('getValue')->willReturn(50);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('findByChannelAndKey')->willReturnMap([
+            [1, ChannelLevel::KEY_AUTOADMIN, $autoAdminLevel],
+            [1, ChannelLevel::KEY_ADMINDEADMIN, null],
+        ]);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AdminCommand(
+            $channelRepo,
+            $nickRepo,
+            $userLookup,
+            $accessHelper,
+        );
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'TargetNick'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('secure.requires_min_level', $messages[0]);
     }
 
     #[Test]

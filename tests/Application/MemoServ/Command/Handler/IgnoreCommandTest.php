@@ -575,4 +575,132 @@ final class IgnoreCommandTest extends TestCase
         self::assertSame('  IgnoredUser', $messages[1]);
         self::assertSame('ignore.list_footer', $messages[2]);
     }
+
+    #[Test]
+    public function channelDelRepliesNotIgnoredWhenNotInList(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $ignoredAccount = $this->createStub(RegisteredNick::class);
+        $ignoredAccount->method('getId')->willReturn(2);
+        $ignoredAccount->method('getNickname')->willReturn('Other');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($ignoredAccount);
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(10);
+        $channel->method('isFounder')->willReturn(true);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $ignoreRepo->method('findByTargetChannelAndIgnored')->willReturn(null);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IgnoreCommand($nickRepo, $channelRepo, $ignoreRepo, $accessHelper, 20, 50);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['DEL', '#test', 'Other'], $notifier, $translator));
+
+        self::assertSame(['ignore.not_ignored'], $messages);
+    }
+
+    #[Test]
+    public function channelDelNickNotRegisteredRepliesError(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(10);
+        $channel->method('isFounder')->willReturn(true);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn(null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IgnoreCommand($nickRepo, $channelRepo, $ignoreRepo, $accessHelper, 20, 50);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['DEL', '#test', 'Unknown'], $notifier, $translator));
+
+        self::assertSame(['ignore.nick_not_registered'], $messages);
+    }
+
+    #[Test]
+    public function channelAddRepliesAlreadyIgnoredWhenAlreadyInList(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $ignoredAccount = $this->createStub(RegisteredNick::class);
+        $ignoredAccount->method('getId')->willReturn(2);
+        $ignoredAccount->method('getNickname')->willReturn('Other');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($ignoredAccount);
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getId')->willReturn(10);
+        $channel->method('isFounder')->willReturn(true);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $existing = $this->createStub(MemoIgnore::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $ignoreRepo->method('findByTargetChannelAndIgnored')->willReturn($existing);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IgnoreCommand($nickRepo, $channelRepo, $ignoreRepo, $accessHelper, 20, 50);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['ADD', '#test', 'Other'], $notifier, $translator));
+
+        self::assertSame(['ignore.already_ignored'], $messages);
+    }
+
+    #[Test]
+    public function replySyntaxErrorWhenEmptyNickToDel(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $ignoreRepo = $this->createStub(MemoIgnoreRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IgnoreCommand($nickRepo, $channelRepo, $ignoreRepo, $accessHelper, 20, 50);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['DEL'], $notifier, $translator));
+
+        self::assertSame(['error.syntax'], $messages);
+    }
 }

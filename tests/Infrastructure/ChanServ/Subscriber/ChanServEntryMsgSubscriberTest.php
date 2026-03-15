@@ -168,4 +168,126 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
 
         $this->subscriber->onUserJoinedChannel($event);
     }
+
+    #[Test]
+    public function sendsEntryMsgWithSpecialCharacters(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001ABCD'),
+            channel: new ChannelName('#test'),
+            role: ChannelMemberRole::None,
+        );
+
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getEntrymsg')->willReturn('Welcome to #test! Enjoy your stay :)');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($channel);
+
+        $this->notifier
+            ->expects(self::once())
+            ->method('sendNotice')
+            ->with('001ABCD', "[\x0303#test\x03] Welcome to #test! Enjoy your stay :)");
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function doesNotSendWhenChanservUidExactMatch(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid($this->chanservUid),
+            channel: new ChannelName('#test'),
+            role: ChannelMemberRole::None,
+        );
+
+        $this->channelRepository
+            ->expects(self::never())
+            ->method('findByChannelName');
+
+        $this->notifier
+            ->expects(self::never())
+            ->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function sendsEntryMsgForDifferentChannelRoles(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001ABCD'),
+            channel: new ChannelName('#test'),
+            role: ChannelMemberRole::Op,
+        );
+
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getEntrymsg')->willReturn('Welcome operator!');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($channel);
+
+        $this->notifier
+            ->expects(self::once())
+            ->method('sendNotice')
+            ->with('001ABCD', "[\x0303#test\x03] Welcome operator!");
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function sendsEntryMsgForVoiceRole(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001ABCD'),
+            channel: new ChannelName('#test'),
+            role: ChannelMemberRole::Voice,
+        );
+
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getEntrymsg')->willReturn('Welcome!');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($channel);
+
+        $this->notifier
+            ->expects(self::once())
+            ->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function entryMsgWithEmptyStringFromRegisteredChannel(): void
+    {
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001ABCD'),
+            channel: new ChannelName('#test'),
+            role: ChannelMemberRole::None,
+        );
+
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getEntrymsg')->willReturn('');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($channel);
+
+        $this->notifier
+            ->expects(self::never())
+            ->method('sendNotice');
+
+        $this->subscriber->onUserJoinedChannel($event);
+    }
 }

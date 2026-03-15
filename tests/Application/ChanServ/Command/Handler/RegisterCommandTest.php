@@ -247,4 +247,166 @@ final class RegisterCommandTest extends TestCase
 
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
     }
+
+    #[Test]
+    public function replyThrottleExpiresWhenCooldownElapses(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('existsByChannelName')->willReturn(false);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref->setAccessible(true);
+            $ref->setValue($channel, 1);
+        });
+        $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $levelRepo->expects(self::atLeastOnce())->method('save');
+        $throttle = new ChannelRegisterThrottleRegistry();
+        $channelView = new ChannelView('#test', '+n', null, 0);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
+
+        self::assertSame(['register.success'], $messages);
+    }
+
+    #[Test]
+    public function throwsWhenChannelAlreadyRegisteredByDifferentUser(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('existsByChannelName')->willReturn(true);
+        $channelRepo->method('findByChannelName')->willReturn(null);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $throttle = new ChannelRegisterThrottleRegistry();
+        $channelView = new ChannelView('#test', '+n', null, 0);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+
+        $this->expectException(\App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException::class);
+
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
+    }
+
+    #[Test]
+    public function doesNotThrottleDifferentAccounts(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(2);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('existsByChannelName')->willReturn(false);
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref->setAccessible(true);
+            $ref->setValue($channel, 1);
+        });
+        $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $levelRepo->expects(self::atLeastOnce())->method('save');
+        $throttle = new ChannelRegisterThrottleRegistry();
+        $throttle->recordRegistration(1);
+        $channelView = new ChannelView('#test', '+n', null, 0);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 3600);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
+
+        self::assertSame(['register.success'], $messages);
+    }
+
+    #[Test]
+    public function bypassesThrottleWhenCooldownIsZero(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('existsByChannelName')->willReturn(false);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref->setAccessible(true);
+            $ref->setValue($channel, 1);
+        });
+        $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $levelRepo->expects(self::atLeastOnce())->method('save');
+        $throttle = new ChannelRegisterThrottleRegistry();
+        $throttle->recordRegistration(10);
+        $channelView = new ChannelView('#test', '+n', null, 0);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
+
+        self::assertSame(['register.success'], $messages);
+    }
+
+    #[Test]
+    public function normalizesChannelNameToLowercase(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('existsByChannelName')->with('#testchan')->willReturn(false);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref->setAccessible(true);
+            $ref->setValue($channel, 1);
+        });
+        $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $levelRepo->expects(self::atLeastOnce())->method('save');
+        $throttle = new ChannelRegisterThrottleRegistry();
+        $channelView = new ChannelView('#TestChan', '+n', null, 0);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd->execute($this->createContext($sender, $account, ['#TESTCHAN', 'Desc'], $notifier, $translator, $channelLookup));
+
+        self::assertStringContainsString('register.success', $messages[0]);
+    }
 }

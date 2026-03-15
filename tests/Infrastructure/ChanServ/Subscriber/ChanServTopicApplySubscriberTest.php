@@ -213,4 +213,160 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncComplete($event);
     }
+
+    #[Test]
+    public function onSyncCompleteSkipsChannelWhenLookupReturnsNull(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#channel1');
+        $registered->method('getTopic')->willReturn('Topic 1');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#channel1')
+            ->willReturn(null);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsWhenNoStoredTopic(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#channel1');
+        $registered->method('getTopic')->willReturn(null);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->channelLookup
+            ->expects(self::never())
+            ->method('findByChannelName');
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsWhenTopicsMatch(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#channel1');
+        $registered->method('getTopic')->willReturn('Same topic');
+
+        $view = new ChannelView(name: '#channel1', modes: '+nt', topic: 'Same topic', memberCount: 5);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#channel1')
+            ->willReturn($view);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+        $this->logger->expects(self::never())->method('warning');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteWithEmptyChannelList(): void
+    {
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([]);
+
+        $this->channelLookup
+            ->expects(self::never())
+            ->method('findByChannelName');
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onChannelSyncedAppliesTopicWhenCurrentTopicIsNull(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getTopic')->willReturn('Stored topic from DB');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelTopic')
+            ->with('#test', 'Stored topic from DB');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger->expects(self::never())->method('warning');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
+
+    #[Test]
+    public function onChannelSyncedHandlesEmptyStringTopic(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+        $channel->updateTopic('');
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getTopic')->willReturn('Stored topic');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelTopic')
+            ->with('#test', 'Stored topic');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger->expects(self::never())->method('warning');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
 }

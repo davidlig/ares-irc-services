@@ -412,4 +412,150 @@ final class HelpCommandTest extends TestCase
 
         self::assertContains('send.help', $messages);
     }
+
+    #[Test]
+    public function knownCommandWithSubCommandCaseInsensitiveShowsSubCommandHelp(): void
+    {
+        $messages = [];
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $sendHandler = new class implements MemoServCommandInterface {
+            public function getName(): string
+            {
+                return 'SEND';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'send.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'send.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'send.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [
+                    ['name' => 'ADD', 'desc_key' => 'send.add.desc', 'help_key' => 'send.add.help', 'syntax_key' => 'send.add.syntax'],
+                ];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(MemoServContext $c): void
+            {
+            }
+        };
+        $registry = new MemoServCommandRegistry([$sendHandler]);
+
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        $cmd->execute($this->createContext(['SEND', 'add'], $notifier, $translator, $registry));
+
+        self::assertContains('send.add.help', $messages);
+    }
+
+    #[Test]
+    public function getNameReturnsHelp(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertSame('HELP', $cmd->getName());
+    }
+
+    #[Test]
+    public function getAliasesReturnsQuestionMark(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertSame(['?'], $cmd->getAliases());
+    }
+
+    #[Test]
+    public function getMinArgsReturnsZero(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertSame(0, $cmd->getMinArgs());
+    }
+
+    #[Test]
+    public function getSyntaxKeyReturnsHelpSyntax(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertSame('help.syntax', $cmd->getSyntaxKey());
+    }
+
+    #[Test]
+    public function getHelpKeyReturnsHelpHelp(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertSame('help.help', $cmd->getHelpKey());
+    }
+
+    #[Test]
+    public function getOrderReturns99(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertSame(99, $cmd->getOrder());
+    }
+
+    #[Test]
+    public function getShortDescKeyReturnsHelpShort(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertSame('help.short', $cmd->getShortDescKey());
+    }
+
+    #[Test]
+    public function getSubCommandHelpReturnsEmptyArray(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertSame([], $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
+    public function isOperOnlyReturnsFalse(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertFalse($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getRequiredPermissionReturnsNull(): void
+    {
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        self::assertNull($cmd->getRequiredPermission());
+    }
 }
