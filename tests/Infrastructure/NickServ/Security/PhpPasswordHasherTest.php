@@ -4,27 +4,30 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\NickServ\Security;
 
-use App\Infrastructure\NickServ\Security\Argon2PasswordHasher;
+use App\Infrastructure\NickServ\Security\PhpPasswordHasher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(Argon2PasswordHasher::class)]
-final class Argon2PasswordHasherTest extends TestCase
+use const PASSWORD_DEFAULT;
+
+#[CoversClass(PhpPasswordHasher::class)]
+final class PhpPasswordHasherTest extends TestCase
 {
-    private Argon2PasswordHasher $hasher;
+    private PhpPasswordHasher $hasher;
 
     protected function setUp(): void
     {
-        $this->hasher = new Argon2PasswordHasher();
+        $this->hasher = new PhpPasswordHasher();
     }
 
     #[Test]
-    public function hashProducesValidArgon2idHash(): void
+    public function hashProducesValidDefaultAlgorithmHash(): void
     {
         $hash = $this->hasher->hash('myPlainPassword');
 
-        self::assertStringStartsWith('$argon2id$', $hash);
+        $info = password_get_info($hash);
+        self::assertSame(PASSWORD_DEFAULT, $info['algo']);
     }
 
     #[Test]
@@ -71,7 +74,8 @@ final class Argon2PasswordHasherTest extends TestCase
     {
         $hash = $this->hasher->hash('');
 
-        self::assertStringStartsWith('$argon2id$', $hash);
+        $info = password_get_info($hash);
+        self::assertSame(PASSWORD_DEFAULT, $info['algo']);
         self::assertTrue($this->hasher->verify('', $hash));
     }
 

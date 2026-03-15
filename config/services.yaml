@@ -116,7 +116,7 @@ services:
             $senderName: '%irc.server_name%'
 
     App\Domain\NickServ\Service\PasswordHasherInterface:
-        class: App\Infrastructure\NickServ\Security\Argon2PasswordHasher
+        class: App\Infrastructure\NickServ\Security\PhpPasswordHasher
 
     App\Infrastructure\Messenger\Middleware\EmailDelayMiddleware:
         arguments:
