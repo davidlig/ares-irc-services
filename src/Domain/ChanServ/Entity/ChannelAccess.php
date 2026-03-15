@@ -28,7 +28,14 @@ class ChannelAccess
 
     private int $nickId;
 
-    private int $level;
+    private int $level {
+        set(int $value) {
+            if ($value < self::LEVEL_MIN || $value > self::LEVEL_MAX) {
+                throw new InvalidArgumentException(sprintf('Access level must be between %d and %d.', self::LEVEL_MIN, self::LEVEL_MAX));
+            }
+            $this->level = $value;
+        }
+    }
 
     public function __construct(
         int $channelId,
@@ -38,9 +45,6 @@ class ChannelAccess
         $this->channelId = $channelId;
         $this->nickId = $nickId;
         $this->level = $level;
-        if ($level < self::LEVEL_MIN || $level > self::LEVEL_MAX) {
-            throw new InvalidArgumentException(sprintf('Access level must be between %d and %d.', self::LEVEL_MIN, self::LEVEL_MAX));
-        }
     }
 
     public function getId(): int
@@ -65,9 +69,6 @@ class ChannelAccess
 
     public function updateLevel(int $level): void
     {
-        if ($level < self::LEVEL_MIN || $level > self::LEVEL_MAX) {
-            throw new InvalidArgumentException(sprintf('Access level must be between %d and %d.', self::LEVEL_MIN, self::LEVEL_MAX));
-        }
         $this->level = $level;
     }
 }

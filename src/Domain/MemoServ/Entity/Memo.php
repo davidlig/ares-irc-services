@@ -7,6 +7,9 @@ namespace App\Domain\MemoServ\Entity;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
+use function sprintf;
+use function strlen;
+
 /**
  * A memo sent to a nickname or a channel.
  * Exactly one of targetNickId or targetChannelId must be set.
@@ -23,7 +26,14 @@ class Memo
 
     private int $senderNickId;
 
-    private string $message;
+    private string $message {
+        set(string $value) {
+            if (strlen($value) > self::MESSAGE_MAX_LENGTH) {
+                throw new InvalidArgumentException(sprintf('Message cannot exceed %d characters.', self::MESSAGE_MAX_LENGTH));
+            }
+            $this->message = $value;
+        }
+    }
 
     private DateTimeImmutable $createdAt;
 

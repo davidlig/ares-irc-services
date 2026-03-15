@@ -35,7 +35,14 @@ class RegisteredChannel
 
     private ?string $email = null;
 
-    private string $entrymsg = '';
+    private string $entrymsg {
+        set(string $value) {
+            if (strlen($value) > self::ENTRYMSG_MAX_LENGTH) {
+                throw new InvalidArgumentException(sprintf('Entry message cannot exceed %d characters.', self::ENTRYMSG_MAX_LENGTH));
+            }
+            $this->entrymsg = $value;
+        }
+    }
 
     private bool $topicLock = false;
 
@@ -63,6 +70,7 @@ class RegisteredChannel
 
     private function __construct()
     {
+        $this->entrymsg = '';
         $this->createdAt = new DateTimeImmutable();
     }
 
@@ -212,9 +220,6 @@ class RegisteredChannel
 
     public function updateEntrymsg(string $entrymsg): void
     {
-        if (strlen($entrymsg) > self::ENTRYMSG_MAX_LENGTH) {
-            throw new InvalidArgumentException(sprintf('Entry message cannot exceed %d characters.', self::ENTRYMSG_MAX_LENGTH));
-        }
         $this->entrymsg = $entrymsg;
     }
 
