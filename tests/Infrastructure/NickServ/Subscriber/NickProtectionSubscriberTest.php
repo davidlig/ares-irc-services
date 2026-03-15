@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\NickServ\Subscriber;
 
+use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
@@ -13,18 +14,15 @@ use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
-use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
-use App\Domain\IRC\Network\NetworkUser;
-use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber;
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -87,7 +85,7 @@ final class NickProtectionSubscriberTest extends TestCase
 
         self::assertSame(
             [
-                UserJoinedNetworkEvent::class => ['onUserJoined', 0],
+                UserJoinedNetworkAppEvent::class => ['onUserJoined', 0],
                 UserQuitNetworkEvent::class => ['onUserQuit', 0],
                 UserNickChangedEvent::class => ['onNickChanged', 0],
                 NetworkBurstCompleteEvent::class => ['onBurstComplete', -256],
@@ -99,8 +97,8 @@ final class NickProtectionSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedReturnsEarlyWhenSenderViewNotFound(): void
     {
-        $user = $this->createNetworkUser('001ABC');
-        $event = new UserJoinedNetworkEvent($user);
+        $dto = $this->createUserJoinedDTO('001ABC');
+        $event = new UserJoinedNetworkAppEvent($dto);
 
         $this->networkUserLookup
             ->expects(self::once())
@@ -116,8 +114,8 @@ final class NickProtectionSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedAddsPendingWhenBurstNotComplete(): void
     {
-        $user = $this->createNetworkUser('001ABC');
-        $event = new UserJoinedNetworkEvent($user);
+        $dto = $this->createUserJoinedDTO('001ABC');
+        $event = new UserJoinedNetworkAppEvent($dto);
         $senderView = new SenderView(
             uid: '001ABC',
             nick: 'Test',
@@ -149,8 +147,8 @@ final class NickProtectionSubscriberTest extends TestCase
     public function onUserJoinedSyncsVhostAndRunsProtectionWhenBurstComplete(): void
     {
         $this->burstState->markComplete();
-        $user = $this->createNetworkUser('001ABC');
-        $event = new UserJoinedNetworkEvent($user);
+        $dto = $this->createUserJoinedDTO('001ABC');
+        $event = new UserJoinedNetworkAppEvent($dto);
         $senderView = new SenderView(
             uid: '001ABC',
             nick: 'Test',
@@ -251,20 +249,19 @@ final class NickProtectionSubscriberTest extends TestCase
         self::assertTrue(true, 'No exception when delegating onUserQuit');
     }
 
-    private function createNetworkUser(string $uid): NetworkUser
+    private function createUserJoinedDTO(string $uid): UserJoinedNetworkDTO
     {
-        return new NetworkUser(
-            uid: new Uid($uid),
-            nick: new Nick('Test'),
-            ident: new Ident('test'),
+        return new UserJoinedNetworkDTO(
+            uid: $uid,
+            nick: 'Test',
+            ident: 'test',
             hostname: 'host.example',
             cloakedHost: 'cloak.example',
-            virtualHost: '',
-            modes: '+i',
-            connectedAt: new DateTimeImmutable(),
-            realName: 'Test User',
-            serverSid: '001',
             ipBase64: 'dGVzdA==',
+            displayHost: 'cloak.example',
+            isIdentified: false,
+            isOper: false,
+            serverSid: '001',
         );
     }
 }

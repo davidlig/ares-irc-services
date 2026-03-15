@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Subscriber;
 
+use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
-use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Subscriber: forwards IRC domain events to NickServ application services.
+ * Subscriber: forwards Application-layer events to NickServ services.
+ * Receives UserJoinedNetworkAppEvent (DTO-based) instead of Core Domain events.
  * Orchestrates burst (BurstState) and calls IdentifiedUserVhostSync then NickProtection
  * so vhost sync and protection stay in separate application services.
  */
@@ -37,16 +38,16 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
     public static function getSubscribedEvents(): array
     {
         return [
-            UserJoinedNetworkEvent::class => ['onUserJoined', 0],
+            UserJoinedNetworkAppEvent::class => ['onUserJoined', 0],
             UserQuitNetworkEvent::class => ['onUserQuit', 0],
             UserNickChangedEvent::class => ['onNickChanged', 0],
             NetworkBurstCompleteEvent::class => ['onBurstComplete', -256],
         ];
     }
 
-    public function onUserJoined(UserJoinedNetworkEvent $event): void
+    public function onUserJoined(UserJoinedNetworkAppEvent $event): void
     {
-        $senderView = $this->networkUserLookup->findByUid($event->user->uid->value);
+        $senderView = $this->networkUserLookup->findByUid($event->user->uid);
         if (null === $senderView) {
             return;
         }

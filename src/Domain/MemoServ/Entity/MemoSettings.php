@@ -55,9 +55,14 @@ class MemoSettings
         return $this->enabled;
     }
 
-    public function setEnabled(bool $enabled): void
+    public function enable(): void
     {
-        $this->enabled = $enabled;
+        $this->enabled = true;
+    }
+
+    public function disable(): void
+    {
+        $this->enabled = false;
     }
 
     /**

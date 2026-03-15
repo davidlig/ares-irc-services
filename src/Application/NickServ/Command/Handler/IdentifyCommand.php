@@ -106,16 +106,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         }
 
         $clientKey = $this->clientKeyResolver->getClientKey($sender);
-        $remaining = $this->failedAttemptRegistry->getRemainingLockoutSeconds(
-            $clientKey,
-            $this->identifyMaxFailedAttempts,
-            $this->identifyFailedWindowSeconds,
-            $this->identifyLockoutSeconds,
-        );
-        if ($remaining > 0) {
-            $minutes = (int) ceil($remaining / 60);
-            $context->reply('identify.locked_out', ['minutes' => (string) $minutes]);
-
+        if ($this->isLockedOut($context, $clientKey)) {
             return;
         }
 
@@ -127,24 +118,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
-        if ($account->isPending()) {
-            $context->reply('identify.pending', ['nickname' => $targetNick]);
-
-            return;
-        }
-
-        if ($account->isSuspended()) {
-            $context->reply('identify.suspended', [
-                'nickname' => $targetNick,
-                'reason' => $account->getReason() ?? '',
-            ]);
-
-            return;
-        }
-
-        if ($account->isForbidden()) {
-            $context->reply('identify.forbidden', ['nickname' => $targetNick]);
-
+        if (!$this->validateAccountStatus($context, $account, $targetNick)) {
             return;
         }
 
@@ -155,6 +129,61 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
+        $this->handleSuccessfulIdentification($context, $sender, $account, $targetNick, $clientKey);
+    }
+
+    private function isLockedOut(NickServContext $context, string $clientKey): bool
+    {
+        $remaining = $this->failedAttemptRegistry->getRemainingLockoutSeconds(
+            $clientKey,
+            $this->identifyMaxFailedAttempts,
+            $this->identifyFailedWindowSeconds,
+            $this->identifyLockoutSeconds,
+        );
+
+        if ($remaining > 0) {
+            $minutes = (int) ceil($remaining / 60);
+            $context->reply('identify.locked_out', ['minutes' => (string) $minutes]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function validateAccountStatus(NickServContext $context, RegisteredNick $account, string $targetNick): bool
+    {
+        if ($account->isPending()) {
+            $context->reply('identify.pending', ['nickname' => $targetNick]);
+
+            return false;
+        }
+
+        if ($account->isSuspended()) {
+            $context->reply('identify.suspended', [
+                'nickname' => $targetNick,
+                'reason' => $account->getReason() ?? '',
+            ]);
+
+            return false;
+        }
+
+        if ($account->isForbidden()) {
+            $context->reply('identify.forbidden', ['nickname' => $targetNick]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function handleSuccessfulIdentification(
+        NickServContext $context,
+        SenderView $sender,
+        RegisteredNick $account,
+        string $targetNick,
+        string $clientKey,
+    ): void {
         $this->failedAttemptRegistry->clearFailedAttempts($clientKey);
         $account->markSeen();
         $this->nickRepository->save($account);

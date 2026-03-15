@@ -103,7 +103,7 @@ final readonly class EnableCommand implements MemoServCommandInterface
 
                 return;
             }
-            $settings->setEnabled(true);
+            $settings->enable();
         } else {
             $settings = new MemoSettings($nickId, null, true);
         }
@@ -131,7 +131,7 @@ final readonly class EnableCommand implements MemoServCommandInterface
 
                 return;
             }
-            $settings->setEnabled(true);
+            $settings->enable();
         } else {
             $settings = new MemoSettings(null, $channel->getId(), true);
         }

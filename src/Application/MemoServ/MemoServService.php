@@ -8,9 +8,9 @@ use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -30,7 +30,7 @@ final readonly class MemoServService
         private MemoServCommandRegistry $commandRegistry,
         private RegisteredNickRepositoryInterface $nickRepository,
         private MemoServNotifierInterface $notifier,
-        private UserMessageTypeResolver $messageTypeResolver,
+        private UserMessageTypeResolverInterface $messageTypeResolver,
         private TranslatorInterface $translator,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',

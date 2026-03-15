@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Connection;
 
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
@@ -15,7 +16,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Services obtain the module (handler, formatters, actions) from here; each IRCd
  * type is encapsulated in its own module (Unreal, InspIRCd, etc.).
  */
-final class ActiveConnectionHolder implements EventSubscriberInterface
+final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, EventSubscriberInterface
 {
     private ?ConnectionInterface $connection = null;
 

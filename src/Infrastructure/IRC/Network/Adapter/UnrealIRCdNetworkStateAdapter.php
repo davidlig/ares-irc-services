@@ -197,7 +197,6 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         $modeParams = [];
         if (isset($message->params[2]) && str_starts_with((string) $message->params[2], '+')) {
             $modeStr = (string) $message->params[2];
-            // Unreal SJOIN: "modes and parameters, eg: +lk 666 key" — params[3], params[4], ... in order of mode letters
             $modeParams = array_values(array_slice($message->params, 3));
         }
 
@@ -206,49 +205,84 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
 
         foreach (explode(' ', $buffer) as $entry) {
             $entry = trim($entry);
-
             if ('' === $entry) {
                 continue;
             }
 
-            if (str_starts_with($entry, '<')) {
-                $closingPos = strpos($entry, '>');
-                if (false !== $closingPos) {
-                    $entry = substr($entry, $closingPos + 1);
-                }
-            }
-
-            $firstChar = $entry[0] ?? '';
-
-            if ('&' === $firstChar) {
-                $listModes['b'][] = substr($entry, 1);
+            $listModeEntry = $this->parseListModeEntry($entry);
+            if (null !== $listModeEntry) {
+                $listModes[$listModeEntry['mode']][] = $listModeEntry['value'];
                 continue;
             }
 
-            if ('"' === $firstChar) {
-                $listModes['e'][] = substr($entry, 1);
-                continue;
+            $memberEntry = $this->parseMemberEntry($entry);
+            if (null !== $memberEntry) {
+                $members[] = $memberEntry;
             }
-
-            if ("'" === $firstChar) {
-                $listModes['I'][] = substr($entry, 1);
-                continue;
-            }
-
-            $prefixLetters = ChannelMemberRole::fromSjoinEntryToLetters($entry);
-            $role = ChannelMemberRole::highestRoleFromLetters($prefixLetters);
-
-            try {
-                $uid = new Uid($entry);
-            } catch (InvalidArgumentException) {
-                $this->logger->debug('SJOIN: skipping non-UID member entry: ' . $entry);
-                continue;
-            }
-
-            $members[] = ['uid' => $uid, 'role' => $role, 'prefixLetters' => $prefixLetters];
         }
 
         $this->eventDispatcher->dispatch(new FjoinReceivedEvent($channelName, $timestamp, $modeStr, $members, $listModes, $modeParams));
+    }
+
+    /**
+     * Parses a list mode entry (ban/exempt/invex) from SJOIN buffer.
+     *
+     * @return array{mode: string, value: string}|null
+     */
+    private function parseListModeEntry(string $entry): ?array
+    {
+        $firstChar = $entry[0] ?? '';
+
+        if ('&' === $firstChar) {
+            return ['mode' => 'b', 'value' => substr($entry, 1)];
+        }
+
+        if ('"' === $firstChar) {
+            return ['mode' => 'e', 'value' => substr($entry, 1)];
+        }
+
+        if ("'" === $firstChar) {
+            return ['mode' => 'I', 'value' => substr($entry, 1)];
+        }
+
+        return null;
+    }
+
+    /**
+     * Parses a member entry from SJOIN buffer, extracting UID and role.
+     *
+     * @return array{uid: Uid, role: ChannelMemberRole, prefixLetters: string}|null
+     */
+    private function parseMemberEntry(string $entry): ?array
+    {
+        $entry = $this->stripExtAccount($entry);
+        $prefixLetters = ChannelMemberRole::fromSjoinEntryToLetters($entry);
+        $role = ChannelMemberRole::highestRoleFromLetters($prefixLetters);
+
+        try {
+            $uid = new Uid($entry);
+        } catch (InvalidArgumentException) {
+            $this->logger->debug('SJOIN: skipping non-UID member entry: ' . $entry);
+
+            return null;
+        }
+
+        return ['uid' => $uid, 'role' => $role, 'prefixLetters' => $prefixLetters];
+    }
+
+    /**
+     * Strips <ext:account> prefix from SJOIN entry if present.
+     */
+    private function stripExtAccount(string $entry): string
+    {
+        if (str_starts_with($entry, '<')) {
+            $closingPos = strpos($entry, '>');
+            if (false !== $closingPos) {
+                return substr($entry, $closingPos + 1);
+            }
+        }
+
+        return $entry;
     }
 
     private function handlePart(IRCMessage $message): void

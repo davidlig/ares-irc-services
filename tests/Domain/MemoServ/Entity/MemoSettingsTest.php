@@ -61,11 +61,15 @@ final class MemoSettingsTest extends TestCase
     }
 
     #[Test]
-    public function setEnabledUpdatesValue(): void
+    public function enableAndDisableUpdateValue(): void
     {
         $settings = new MemoSettings(10, null, false);
-        $settings->setEnabled(true);
+        self::assertFalse($settings->isEnabled());
 
+        $settings->enable();
         self::assertTrue($settings->isEnabled());
+
+        $settings->disable();
+        self::assertFalse($settings->isEnabled());
     }
 }
