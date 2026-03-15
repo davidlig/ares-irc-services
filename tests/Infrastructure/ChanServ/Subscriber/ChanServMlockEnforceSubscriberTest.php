@@ -19,7 +19,6 @@ use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\ChanServ\Subscriber\ChanServMlockEnforceSubscriber;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -749,7 +748,6 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function onSyncCompleteSkipsChannelNotFoundInLookup(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -772,6 +770,8 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelModes');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
@@ -779,7 +779,6 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function onSyncCompleteSkipsWhenMlockNotActive(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -801,6 +800,8 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelModes');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
@@ -864,7 +865,6 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function onMlockUpdatedDoesNothingWhenChannelNotRegistered(): void
     {
         $this->channelRepository
@@ -878,13 +878,14 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->method('setChannelModes');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $event = new ChannelMlockUpdatedEvent(channelName: '#test');
         $this->subscriber->onMlockUpdated($event);
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function onMlockUpdatedDoesNothingWhenMlockNotActive(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -901,13 +902,14 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->method('setChannelModes');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $event = new ChannelMlockUpdatedEvent(channelName: '#test');
         $this->subscriber->onMlockUpdated($event);
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function onMlockUpdatedDoesNothingWhenChannelLookupNull(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -930,13 +932,14 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelModes');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $event = new ChannelMlockUpdatedEvent(channelName: '#test');
         $this->subscriber->onMlockUpdated($event);
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function onSyncCompleteWithEmptyListAll(): void
     {
         $this->channelRepository
@@ -951,6 +954,9 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelModes');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
@@ -1014,7 +1020,6 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function onChannelModesChangedDoesNothingWhenModesAlreadyMatch(): void
     {
         $channel = new Channel(new ChannelName('#test'));
@@ -1059,6 +1064,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelModes');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
 
         $event = new ChannelModesChangedEvent($channel, '+nt', []);
         $this->subscriber->onChannelModesChanged($event);

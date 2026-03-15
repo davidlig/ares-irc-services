@@ -24,7 +24,6 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use InvalidArgumentException;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -528,13 +527,9 @@ final class SetCommandTest extends TestCase
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function languageHandlerReturnsInvalidLanguageError(): void
     {
-        $account = $this->getMockBuilder(RegisteredNick::class)
-            ->setConstructorArgs([])
-            ->onlyMethods(['getLanguage', 'changeLanguage'])
-            ->getMock();
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('en');
         $account->method('changeLanguage')->willThrowException(new InvalidArgumentException('Unsupported language'));
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -642,13 +637,9 @@ final class SetCommandTest extends TestCase
     }
 
     #[Test]
-    #[AllowMockObjectsWithoutExpectations]
     public function timezoneHandlerReturnsInvalidTimezoneError(): void
     {
-        $account = $this->getMockBuilder(RegisteredNick::class)
-            ->setConstructorArgs([])
-            ->onlyMethods(['getTimezone', 'changeTimezone'])
-            ->getMock();
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getTimezone')->willReturn('UTC');
         $account->method('changeTimezone')->willThrowException(new InvalidArgumentException('Invalid timezone'));
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -669,9 +660,9 @@ final class SetCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', ''], $notifier, $translator));
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', 'Not/A/Timezone'], $notifier, $translator));
 
-        self::assertSame(['error.syntax'], $messages);
+        self::assertSame(['set.timezone.invalid'], $messages);
     }
 
     #[Test]
