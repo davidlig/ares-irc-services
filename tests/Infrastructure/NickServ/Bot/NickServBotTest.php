@@ -387,6 +387,23 @@ final class NickServBotTest extends TestCase
     }
 
     #[Test]
+    public function setUserVhostDoesNothingWhenNotConnected(): void
+    {
+        $vhostBuilder = $this->createStub(VhostCommandBuilderInterface::class);
+        $vhostBuilder->method('getSetVhostLine')->willReturn('FAKE SETHOST LINE');
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getVhostCommandBuilder')->willReturn($vhostBuilder);
+
+        $this->connectionHolder->setProtocolModule($module);
+        // Do NOT call onBurstComplete — holder has no connection, isConnected() is false.
+
+        $this->bot->setUserVhost('001USER', 'new.vhost', '001');
+        // write() is called but writeToConnection() returns false; no writeLine, no exception.
+        self::assertFalse($this->connectionHolder->isConnected());
+    }
+
+    #[Test]
     public function setUserVhostSkipsWhenVhostMatchesDisplayHost(): void
     {
         $vhostBuilder = $this->createMock(VhostCommandBuilderInterface::class);
