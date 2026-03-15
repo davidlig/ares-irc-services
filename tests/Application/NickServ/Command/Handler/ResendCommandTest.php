@@ -236,7 +236,7 @@ final class ResendCommandTest extends TestCase
         $account->method('getEmail')->willReturn('user@example.com');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
-        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
         $messageBus->method('dispatch')->willThrowException(new RuntimeException('SMTP failure'));
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);

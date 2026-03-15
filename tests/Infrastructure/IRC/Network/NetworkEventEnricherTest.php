@@ -802,7 +802,7 @@ final class NetworkEventEnricherTest extends TestCase
     {
         $existingChannel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
 
-        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo = $this->createStub(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn($existingChannel);
 
         $dispatched = [];
@@ -1475,7 +1475,7 @@ final class NetworkEventEnricherTest extends TestCase
         $channelRepo->method('findByName')->willReturn($channel);
         $channelRepo->expects(self::once())->method('save');
 
-        $userRepo = $this->createMock(NetworkUserRepositoryInterface::class);
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
 
         $captured = null;

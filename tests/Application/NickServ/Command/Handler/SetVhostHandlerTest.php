@@ -120,7 +120,7 @@ final class SetVhostHandlerTest extends TestCase
     #[Test]
     public function takenVhostRepliesTaken(): void
     {
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $existingAccount = $this->createStub(RegisteredNick::class);
         $existingAccount->method('getId')->willReturn(2);

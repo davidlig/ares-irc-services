@@ -417,7 +417,7 @@ final class NickProtectionServiceTest extends TestCase
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn($account);
 
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($user);
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
