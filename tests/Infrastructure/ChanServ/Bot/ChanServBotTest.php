@@ -176,7 +176,7 @@ final class ChanServBotTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);
@@ -193,7 +193,7 @@ final class ChanServBotTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);
@@ -220,7 +220,7 @@ final class ChanServBotTest extends TestCase
         $module->method('getServiceActions')->willReturn($serviceActions);
         $module->method('getChannelModeSupport')->willReturn($channelModeSupport);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);
@@ -237,7 +237,7 @@ final class ChanServBotTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);
@@ -314,7 +314,7 @@ final class ChanServBotTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);
@@ -342,7 +342,7 @@ final class ChanServBotTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);
@@ -359,7 +359,7 @@ final class ChanServBotTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);
@@ -380,7 +380,7 @@ final class ChanServBotTest extends TestCase
         $module->method('getServiceActions')->willReturn($serviceActions);
         $module->method('getChannelModeSupport')->willReturn($channelModeSupport);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);
@@ -397,7 +397,7 @@ final class ChanServBotTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($module);

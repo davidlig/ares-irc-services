@@ -19,6 +19,7 @@ use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\ChanServ\Subscriber\ChanServMlockEnforceSubscriber;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -748,6 +749,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function onSyncCompleteSkipsChannelNotFoundInLookup(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -777,6 +779,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function onSyncCompleteSkipsWhenMlockNotActive(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -861,6 +864,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function onMlockUpdatedDoesNothingWhenChannelNotRegistered(): void
     {
         $this->channelRepository
@@ -880,6 +884,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function onMlockUpdatedDoesNothingWhenMlockNotActive(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -902,6 +907,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function onMlockUpdatedDoesNothingWhenChannelLookupNull(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
@@ -930,6 +936,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function onSyncCompleteWithEmptyListAll(): void
     {
         $this->channelRepository
@@ -1007,6 +1014,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function onChannelModesChangedDoesNothingWhenModesAlreadyMatch(): void
     {
         $channel = new Channel(new ChannelName('#test'));

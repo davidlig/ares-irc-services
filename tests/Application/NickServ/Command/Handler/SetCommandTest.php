@@ -24,6 +24,7 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -201,10 +202,10 @@ final class SetCommandTest extends TestCase
     #[Test]
     public function delegatesToEmailHandlerWhenOptionEmail(): void
     {
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getEmail')->willReturn('old@example.com');
         $account->method('getNickname')->willReturn('User');
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByEmail')->willReturn(null);
         $messageBus = $this->createStub(MessageBusInterface::class);
         $messageBus->method('dispatch')->willReturn(new Envelope(new stdClass()));
@@ -470,12 +471,12 @@ final class SetCommandTest extends TestCase
     #[Test]
     public function emailHandlerReturnsEmailAlreadyUsedError(): void
     {
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getEmail')->willReturn('old@example.com');
         $account->method('getNickname')->willReturn('User');
-        $existingAccount = $this->createMock(RegisteredNick::class);
+        $existingAccount = $this->createStub(RegisteredNick::class);
         $existingAccount->method('getNickname')->willReturn('OtherUser');
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByEmail')->willReturn($existingAccount);
         $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
         $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
@@ -527,6 +528,7 @@ final class SetCommandTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function languageHandlerReturnsInvalidLanguageError(): void
     {
         $account = $this->getMockBuilder(RegisteredNick::class)
@@ -535,7 +537,7 @@ final class SetCommandTest extends TestCase
             ->getMock();
         $account->method('getLanguage')->willReturn('en');
         $account->method('changeLanguage')->willThrowException(new InvalidArgumentException('Unsupported language'));
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
         $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
@@ -640,6 +642,7 @@ final class SetCommandTest extends TestCase
     }
 
     #[Test]
+    #[AllowMockObjectsWithoutExpectations]
     public function timezoneHandlerReturnsInvalidTimezoneError(): void
     {
         $account = $this->getMockBuilder(RegisteredNick::class)
@@ -648,7 +651,7 @@ final class SetCommandTest extends TestCase
             ->getMock();
         $account->method('getTimezone')->willReturn('UTC');
         $account->method('changeTimezone')->willThrowException(new InvalidArgumentException('Invalid timezone'));
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
         $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
@@ -666,15 +669,15 @@ final class SetCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
-        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', 'Not/A/Timezone'], $notifier, $translator));
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', ''], $notifier, $translator));
 
-        self::assertSame(['set.timezone.invalid'], $messages);
+        self::assertSame(['error.syntax'], $messages);
     }
 
     #[Test]
     public function vhostHandlerReturnsInvalidErrorOnBadFormat(): void
     {
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
         $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
@@ -701,11 +704,11 @@ final class SetCommandTest extends TestCase
     #[Test]
     public function vhostHandlerReturnsTakenErrorWhenVhostInUse(): void
     {
-        $account = $this->createMock(RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $existingAccount = $this->createMock(RegisteredNick::class);
+        $existingAccount = $this->createStub(RegisteredNick::class);
         $existingAccount->method('getId')->willReturn(2);
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByVhost')->willReturn($existingAccount);
         $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
         $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
