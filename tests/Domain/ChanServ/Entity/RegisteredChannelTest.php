@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(RegisteredChannel::class)]
 final class RegisteredChannelTest extends TestCase
@@ -117,5 +118,17 @@ final class RegisteredChannelTest extends TestCase
 
         $channel->touchLastUsed();
         self::assertInstanceOf(DateTimeImmutable::class, $channel->getLastUsedAt());
+    }
+
+    #[Test]
+    public function getIdReturnsValueSetByPersistence(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $reflection = new ReflectionClass($channel);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($channel, 42);
+
+        self::assertSame(42, $channel->getId());
     }
 }

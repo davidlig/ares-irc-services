@@ -18,6 +18,7 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(ChanServBot::class)]
 final class ChanServBotTest extends TestCase
@@ -565,28 +566,26 @@ final class ChanServBotTest extends TestCase
     }
 
     #[Test]
-    public function writeToConnectionReturnsFalseWhenNotConnected(): void
+    public function writeToConnectionReturnsFalseWhenDisconnected(): void
     {
-        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 5);
-        $channelLookup = $this->createStub(ChannelLookupPort::class);
-        $channelLookup->method('findByChannelName')->willReturn($channelView);
+        $disconnectedHolder = new ActiveConnectionHolder();
+        $disconnectedHolder->setProtocolModule($this->createModuleWithHandlerThatReturnsLine('test'));
 
         $bot = new ChanServBot(
-            $this->connectionHolder,
-            $channelLookup,
+            $disconnectedHolder,
+            $this->createStub(ChannelLookupPort::class),
             $this->createStub(ApplyOutgoingChannelModesPort::class),
             self::HOSTNAME,
             self::CHANSERV_UID,
         );
 
-        // Set connection via onBurstComplete but DO NOT set protocol module
-        $connection = $this->createStub(ConnectionInterface::class);
-        $event = new NetworkBurstCompleteEvent($connection, '001');
-        $this->connectionHolder->onBurstComplete($event);
+        $reflection = new ReflectionClass($bot);
+        $method = $reflection->getMethod('writeToConnection');
+        $method->setAccessible(true);
 
-        // With module null, sendNoticeToChannel returns early before writeToConnection
-        $bot->sendNoticeToChannel('#test', 'Hi');
-        self::assertTrue(true);
+        $result = $method->invoke($bot, 'test line');
+
+        self::assertFalse($result);
     }
 
     #[Test]

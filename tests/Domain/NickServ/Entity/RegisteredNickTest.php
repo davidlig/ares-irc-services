@@ -12,6 +12,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 use const PASSWORD_DEFAULT;
 
@@ -350,5 +351,24 @@ final class RegisteredNickTest extends TestCase
         $nick->changePasswordWithHasher('secret', $hasher);
 
         self::assertSame('hashed-secret', $nick->getPasswordHash());
+    }
+
+    #[Test]
+    public function getIdReturnsValueSetByPersistence(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $reflection = new ReflectionClass($nick);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($nick, 99);
+
+        self::assertSame(99, $nick->getId());
     }
 }
