@@ -1,6 +1,6 @@
 # .agents — Context-specific skills and instructions
 
-This directory contains **skills** (domain- or task-specific instructions) that the agent should consult when the work requires it. They do not replace `AGENTS.md`, which defines the project’s global rules.
+This directory contains **skills** (domain- or task-specific instructions) that the agent should consult when the work requires it. They do not replace `AGENTS.md`, which defines the project's global rules.
 
 Content is grouped **by type** in subdirectories. Each type has a `README.md` (short skill) and any supporting `.md` files.
 
@@ -14,6 +14,9 @@ Content is grouped **by type** in subdirectories. Each type has a `README.md` (s
 | Type     | Path                  | When to use |
 |----------|-----------------------|-------------|
 | Testing  | `.agents/testing/`    | Add tests, review coverage, prioritise what to test, run PHPUnit. |
+| Memory   | `.agents/memory/`     | Long-running daemons, memory leaks, Doctrine clear, GC cycles. |
+| Protocol | `.agents/protocol/`   | IRCd protocol modules, wire format, adding new IRCd support. |
+| Services | `.agents/services/`   | Core vs Services architecture, Ports, Bots, adding new service, HELP design. |
 
 ## Adding a new type
 
