@@ -824,7 +824,7 @@ services:
         arguments:
             $rootUsers: '%operserv.root_users%'
 
-    App\Application\OperServ\AdminAccessHelper: ~
+    App\Application\OperServ\IrcopAccessHelper: ~
 
     App\Application\OperServ\Command\OperServCommandRegistry:
         arguments:

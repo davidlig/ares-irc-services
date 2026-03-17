@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\OperServ\AdminAccessHelper;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
+use App\Application\OperServ\IrcopAccessHelper;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperAdmin;
 use App\Domain\OperServ\Repository\OperAdminRepositoryInterface;
@@ -22,7 +22,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private OperAdminRepositoryInterface $adminRepository,
         private OperRoleRepositoryInterface $roleRepository,
-        private AdminAccessHelper $accessHelper,
+        private IrcopAccessHelper $accessHelper,
     ) {
     }
 

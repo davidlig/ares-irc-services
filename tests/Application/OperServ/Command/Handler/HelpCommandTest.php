@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command\Handler;
 
-use App\Application\OperServ\AdminAccessHelper;
 use App\Application\OperServ\Command\Handler\HelpCommand;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
+use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
@@ -23,14 +23,14 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
-    private function createAccessHelper(bool $isRoot): AdminAccessHelper
+    private function createAccessHelper(bool $isRoot): IrcopAccessHelper
     {
         $rootUsers = $isRoot ? 'TestUser' : '';
         $rootRegistry = new RootUserRegistry($rootUsers);
         $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
 
-        return new AdminAccessHelper($rootRegistry, $adminRepo, $roleRepo);
+        return new IrcopAccessHelper($rootRegistry, $adminRepo, $roleRepo);
     }
 
     private function createContext(
@@ -39,7 +39,7 @@ final class HelpCommandTest extends TestCase
         OperServNotifierInterface $notifier,
         TranslatorInterface $translator,
         OperServCommandRegistry $registry,
-        AdminAccessHelper $accessHelper,
+        IrcopAccessHelper $accessHelper,
     ): OperServContext {
         return new OperServContext(
             $sender,

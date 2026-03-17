@@ -8,7 +8,7 @@ use App\Domain\OperServ\Entity\OperAdmin;
 use App\Domain\OperServ\Repository\OperAdminRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 
-final readonly class AdminAccessHelper
+final readonly class IrcopAccessHelper
 {
     public function __construct(
         private RootUserRegistry $rootUserRegistry,

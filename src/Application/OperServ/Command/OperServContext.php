@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command;
 
-use App\Application\OperServ\AdminAccessHelper;
+use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
@@ -26,7 +26,7 @@ readonly class OperServContext
         private readonly string $timezone,
         private readonly string $messageType,
         private readonly OperServCommandRegistry $registry,
-        private readonly AdminAccessHelper $accessHelper,
+        private readonly IrcopAccessHelper $accessHelper,
     ) {
     }
 
@@ -72,7 +72,7 @@ readonly class OperServContext
         return $this->registry;
     }
 
-    public function getAccessHelper(): AdminAccessHelper
+    public function getAccessHelper(): IrcopAccessHelper
     {
         return $this->accessHelper;
     }

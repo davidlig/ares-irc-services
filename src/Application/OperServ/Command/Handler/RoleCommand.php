@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\OperServ\AdminAccessHelper;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
+use App\Application\OperServ\IrcopAccessHelper;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -20,7 +20,7 @@ final readonly class RoleCommand implements OperServCommandInterface
     public function __construct(
         private OperRoleRepositoryInterface $roleRepository,
         private OperPermissionRepositoryInterface $permissionRepository,
-        private AdminAccessHelper $accessHelper,
+        private IrcopAccessHelper $accessHelper,
     ) {
     }
 

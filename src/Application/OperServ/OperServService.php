@@ -28,7 +28,7 @@ final readonly class OperServService
         private OperServNotifierInterface $notifier,
         private UserMessageTypeResolverInterface $messageTypeResolver,
         private TranslatorInterface $translator,
-        private AdminAccessHelper $accessHelper,
+        private IrcopAccessHelper $accessHelper,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
