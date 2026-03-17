@@ -1,0 +1,108 @@
+# OperServ translations — English
+# Domain: operserv
+#
+# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
+#   \x02        bold on/off
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
+#   \x03        reset color
+#   \x0F        reset all formatting
+
+unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:           "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 This command is restricted to IRC Operators."
+  permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
+  root_only:        "\x0304✗\x03 This command is restricted to network root administrators."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is not registered."
+
+# --- IRCOP ------------------------------------------------------------------
+ircop:
+  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <role>"
+  short:            "Manage network IRC operators."
+  help:             "Manage network IRC operators. ADD adds a registered nickname\nas an operator with the specified role.\nDEL removes an operator. LIST shows all operators.\nUse ROLE LIST to see available roles.\nThis command is restricted to Root users configured in services."
+
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
+  unknown_role:     "\x0304✗\x03 Role \x02%role%\x02 does not exist. Use \x0303/msg %bot% ROLE LIST\x03 to see available roles."
+  already_admin:    "\x0304✗\x03 \x02%nick%\x02 is already an IRC operator (role: %role%)."
+  role_changed:     "\x0303✓\x03 Changed role for \x02%nick%\x02 from %old% to %new%."
+
+  add:
+    syntax:         "IRCOP <nickname> ADD <role>"
+    short:          "Add a network IRC operator."
+    help:           "Adds a registered nickname as a network IRC operator.\nUse ROLE LIST to see available roles.\nThis command is restricted to Root users."
+    done:           "\x0303✓\x03 Added \x02%nick%\x02 as \x02%role%\x02."
+    nick_not_active: "\x0304✗\x03 Nickname \x02%nick%\x02 is not an active registered nickname."
+
+  del:
+    syntax:         "IRCOP <nickname> DEL"
+    short:          "Remove a network IRC operator."
+    help:            "Removes a network IRC operator from the list.\nThis command is restricted to Root users."
+    done:           "\x0303✓\x03 Removed \x02%nick%\x02 from IRC operators."
+    not_admin:      "\x0304✗\x03 \x02%nick%\x02 is not an IRC operator."
+
+  list:
+    syntax:         "IRCOP LIST"
+    short:          "List all network IRC operators."
+    help:            "Lists all network IRC operators with their roles and registration date.\nThis command is restricted to Root users."
+    header:         "\x0307---\x03 \x02Network IRC Operators\x02 \x0307---\x03"
+    empty:          "There are no IRC operators."
+
+# --- ROLE --------------------------------------------------------------------
+role:
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS} <name> ..."
+  short:            "Manage operator roles."
+  help:             "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."
+
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, or PERMS."
+  not_found:        "\x0304✗\x03 Role \x02%role%\x02 does not exist."
+  already_exists:   "\x0304✗\x03 Role \x02%role%\x02 already exists."
+  protected:        "\x0304✗\x03 Role \x02%role%\x02 is protected and cannot be deleted."
+
+  add:
+    syntax:         "ROLE ADD <name> [description]"
+    short:          "Create a new role."
+    help:            "Creates a new custom role. Description is optional.\nThis command is restricted to Root users."
+    done:           "\x0303✓\x03 Created role \x02%role%\x02."
+
+  del:
+    syntax:         "ROLE DEL <name>"
+    short:          "Delete a role."
+    help:            "Deletes a custom role. Protected roles (ADMIN, OPER, PREOPER)\ncannot be deleted. If the role has operators assigned,\nyou must reassign them first.\nThis command is restricted to Root users."
+    done:           "\x0303✓\x03 Deleted role \x02%role%\x02."
+
+  list:
+    syntax:         "ROLE LIST"
+    short:          "List all roles."
+    help:            "Lists all roles. Protected roles are marked with [PROTECTED].\nThis command is restricted to Root users."
+    header:         "\x0307---\x03 \x02Operator Roles\x02 \x0307---\x03"
+    empty:          "There are no operator roles."
+
+  perms:
+    syntax:         "ROLE PERMS <role> {LIST|ADD|DEL} [permission]"
+    short:          "Manage role permissions."
+    help:            "Manage permissions assigned to a role.\nLIST shows all permissions for the role.\nADD assigns a permission to the role.\nDEL removes a permission from the role (not for protected roles).\nThis command is restricted to Root users."
+    unknown_action:  "\x0304✗\x03 Unknown action \x02%action%\x02. Use LIST, ADD, or DEL."
+    not_found:       "\x0304✗\x03 Permission \x02%perm%\x02 does not exist."
+    already_has:     "\x0304✗\x03 Role \x02%role%\x02 already has permission \x02%perm%\x02."
+    does_not_have:   "\x0304✗\x03 Role \x02%role%\x02 does not have permission \x02%perm%\x02."
+    protected:      "\x0304✗\x03 Cannot modify permissions for protected role \x02%role%\x02."
+
+    list:
+      syntax:       "ROLE PERMS <role> LIST"
+      short:        "List permissions for a role."
+      help:         "Lists all permissions assigned to a role.\nThis command is restricted to Root users."
+      header:        "\x0307---\x03 \x02Permissions for %role%\x02 \x0307---\x03"
+      empty:        "Role \x02%role%\x02 has no permissions assigned."
+
+    add:
+      syntax:       "ROLE PERMS <role> ADD <permission>"
+      short:        "Add a permission to a role."
+      help:         "Adds a permission to a role.\nThis command is restricted to Root users."
+      done:         "\x0303✓\x03 Added permission \x02%perm%\x02 to role \x02%role%\x02."
+
+    del:
+      syntax:       "ROLE PERMS <role> DEL <permission>"
+      short:        "Remove a permission from a role."
+      help:         "Removes a permission from a role.\nCannot modify protected roles.\nThis command is restricted to Root users."
+      done:         "\x0303✓\x03 Removed permission \x02%perm%\x02 from role \x02%role%\x02."
