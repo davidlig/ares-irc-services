@@ -9,6 +9,25 @@
 
 unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
 
+# --- HELP --------------------------------------------------------------------
+help:
+  header_title:    "Ayuda de OperServ"
+  intro:           "OperServ proporciona comandos de gestión de red para operadores de IRC."
+  general_header:  "Para más información sobre un comando, escribe:"
+  general_footer:  "En todos los comandos, los parámetros en <> son obligatorios, en [] opcionales."
+  intro_expiration: "Los nicks no usados durante %days% días expirarán."
+  syntax_label:    "\x0307▶\x03 \x02Sintaxis:\x02 %syntax%"
+  footer:          "\x0307───\x03 \x02Fin de la ayuda\x02 \x0307───\x03"
+  command_line:    "  %command% %description%"
+  subcommand_line: "  %command% %description%"
+  options_header:  "\x0307▶\x03 \x02Opciones:\x02"
+  set_sub_footer:  "Escribe \x0303/msg %bot% HELP %command% <opción>\x03 para más información."
+  unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02."
+  syntax:          "HELP [comando [sub-opción]]"
+  short:           "Muestra ayuda para comandos de OperServ."
+  help:             "Muestra ayuda para los comandos de OperServ.\nSin argumentos: lista todos los comandos disponibles.\nHELP <comando>: ayuda detallada para ese comando.\nHELP <comando> <opción>: ayuda para una sub-opción."
+  short_desc:       "Muestra ayuda para comandos de OperServ."
+
 error:
   syntax:           "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
   oper_only:        "\x0304✗\x03 Este comando está restringido a Operadores de IRC."

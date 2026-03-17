@@ -842,6 +842,9 @@ services:
     App\Application\OperServ\Command\Handler\RoleCommand:
         tags: ['operserv.command']
 
+    App\Application\OperServ\Command\Handler\HelpCommand:
+        tags: ['operserv.command']
+
     # --- OperServ Infrastructure -------------------------------------------------
 
     App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter:

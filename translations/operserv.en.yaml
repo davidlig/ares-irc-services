@@ -9,6 +9,25 @@
 
 unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
 
+# --- HELP --------------------------------------------------------------------
+help:
+  header_title:    "OperServ Help"
+  intro:           "OperServ provides network management commands for IRC operators."
+  general_header:  "For more information on a command, type:"
+  general_footer:  "In all commands, parameters in <> are mandatory, in [] are optional."
+  intro_expiration: "Nicks not used for %days% days will expire."
+  syntax_label:    "\x0307▶\x03 \x02Syntax:\x02 %syntax%"
+  footer:          "\x0307───\x03 \x02End of help\x02 \x0307───\x03"
+  command_line:    "  %command% %description%"
+  subcommand_line: "  %command% %description%"
+  options_header:  "\x0307▶\x03 \x02Options:\x02"
+  set_sub_footer:  "Type \x0303/msg %bot% HELP %command% <option>\x03 for more information."
+  unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02."
+  syntax:          "HELP [command [sub-option]]"
+  short:           "Show help for OperServ commands."
+  help:             "Displays help for OperServ commands.\nWithout arguments: lists all available commands.\nHELP <command>: detailed help for that command.\nHELP <command> <option>: help for a sub-option."
+  short_desc:       "Show help for OperServ commands."
+
 error:
   syntax:           "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
   oper_only:        "\x0304✗\x03 This command is restricted to IRC Operators."
