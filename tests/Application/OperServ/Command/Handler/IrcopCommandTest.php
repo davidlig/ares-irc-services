@@ -12,7 +12,7 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Domain\OperServ\Repository\OperAdminRepositoryInterface;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,10 +26,10 @@ final class IrcopCommandTest extends TestCase
     {
         $rootUsers = $isRoot ? 'TestUser' : '';
         $rootRegistry = new RootUserRegistry($rootUsers);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
 
-        return new IrcopAccessHelper($rootRegistry, $adminRepo, $roleRepo);
+        return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
     private function createContext(
@@ -69,11 +69,11 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(false);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.root_only', $messages);
@@ -93,11 +93,11 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, ['INVALID'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.unknown_sub', $messages);
@@ -117,11 +117,11 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, ['ADD', 'TestNick'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -144,11 +144,11 @@ final class IrcopCommandTest extends TestCase
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn(null);
 
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, ['ADD', 'TestNick', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.nick_not_registered', $messages);
@@ -169,12 +169,12 @@ final class IrcopCommandTest extends TestCase
         $accessHelper = $this->createAccessHelper(true);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
-        $adminRepo->method('findAll')->willReturn([]);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findAll')->willReturn([]);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.list.empty', $messages);
@@ -184,11 +184,11 @@ final class IrcopCommandTest extends TestCase
     public function getNameReturnsIrcop(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         self::assertSame('IRCOP', $cmd->getName());
     }
 
@@ -196,11 +196,11 @@ final class IrcopCommandTest extends TestCase
     public function getMinArgsReturnsOne(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         self::assertSame(1, $cmd->getMinArgs());
     }
 
@@ -208,11 +208,11 @@ final class IrcopCommandTest extends TestCase
     public function isOperOnlyReturnsTrue(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         self::assertTrue($cmd->isOperOnly());
     }
 
@@ -220,11 +220,11 @@ final class IrcopCommandTest extends TestCase
     public function getSubCommandHelpReturnsArray(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $adminRepo, $roleRepo, $accessHelper);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper);
         $subs = $cmd->getSubCommandHelp();
 
         self::assertCount(3, $subs);

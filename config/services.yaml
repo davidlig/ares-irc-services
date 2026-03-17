@@ -809,8 +809,8 @@ services:
 
     # --- OperServ Domain --------------------------------------------------------
 
-    App\Domain\OperServ\Repository\OperAdminRepositoryInterface:
-        class: App\Infrastructure\OperServ\Doctrine\OperAdminDoctrineRepository
+    App\Domain\OperServ\Repository\OperIrcopRepositoryInterface:
+        class: App\Infrastructure\OperServ\Doctrine\OperIrcopDoctrineRepository
 
     App\Domain\OperServ\Repository\OperRoleRepositoryInterface:
         class: App\Infrastructure\OperServ\Doctrine\OperRoleDoctrineRepository

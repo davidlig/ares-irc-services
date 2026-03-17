@@ -8,8 +8,8 @@ use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Domain\OperServ\Entity\OperAdmin;
-use App\Domain\OperServ\Repository\OperAdminRepositoryInterface;
+use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 
 use function count;
@@ -20,7 +20,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
-        private OperAdminRepositoryInterface $adminRepository,
+        private OperIrcopRepositoryInterface $ircopRepository,
         private OperRoleRepositoryInterface $roleRepository,
         private IrcopAccessHelper $accessHelper,
     ) {
@@ -139,7 +139,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
             return;
         }
 
-        $existing = $this->adminRepository->findByNickId($targetAccount->getId());
+        $existing = $this->ircopRepository->findByNickId($targetAccount->getId());
         if (null !== $existing) {
             $oldRoleName = $existing->getRole()->getName();
             if ($oldRoleName === $roleName) {
@@ -149,20 +149,20 @@ final readonly class IrcopCommand implements OperServCommandInterface
             }
 
             $existing->changeRole($role);
-            $this->adminRepository->save($existing);
+            $this->ircopRepository->save($existing);
             $context->reply('ircop.role_changed', ['%nick%' => $nickname, '%old%' => $oldRoleName, '%new%' => $roleName]);
 
             return;
         }
 
-        $admin = OperAdmin::create(
+        $ircop = OperIrcop::create(
             $targetAccount->getId(),
             $role,
             $context->senderAccount?->getId(),
             null
         );
 
-        $this->adminRepository->save($admin);
+        $this->ircopRepository->save($ircop);
         $context->reply('ircop.add.done', ['%nick%' => $nickname, '%role%' => $roleName]);
     }
 
@@ -183,22 +183,22 @@ final readonly class IrcopCommand implements OperServCommandInterface
             return;
         }
 
-        $admin = $this->adminRepository->findByNickId($targetAccount->getId());
-        if (null === $admin) {
+        $ircop = $this->ircopRepository->findByNickId($targetAccount->getId());
+        if (null === $ircop) {
             $context->reply('ircop.not_admin', ['%nick%' => $nickname]);
 
             return;
         }
 
-        $this->adminRepository->remove($admin);
+        $this->ircopRepository->remove($ircop);
         $context->reply('ircop.del.done', ['%nick%' => $nickname]);
     }
 
     private function doList(OperServContext $context): void
     {
-        $admins = $this->adminRepository->findAll();
+        $ircops = $this->ircopRepository->findAll();
 
-        if ([] === $admins) {
+        if ([] === $ircops) {
             $context->reply('ircop.list.empty');
 
             return;
@@ -206,11 +206,11 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
         $context->reply('ircop.list.header');
 
-        foreach ($admins as $admin) {
-            $nick = $this->nickRepository->findById($admin->getNickId());
-            $nickName = null !== $nick ? $nick->getNickname() : (string) $admin->getNickId();
-            $roleName = $admin->getRole()->getName();
-            $addedAt = $context->formatDate($admin->getAddedAt());
+        foreach ($ircops as $ircop) {
+            $nick = $this->nickRepository->findById($ircop->getNickId());
+            $nickName = null !== $nick ? $nick->getNickname() : (string) $ircop->getNickId();
+            $roleName = $ircop->getRole()->getName();
+            $addedAt = $context->formatDate($ircop->getAddedAt());
             $context->replyRaw(sprintf('  %-20s %-10s %s', $nickName, $roleName, $addedAt));
         }
     }

@@ -125,6 +125,6 @@ final readonly class OperServService
         }
 
         return $this->accessHelper->isRoot($sender->nick)
-            || null !== $this->accessHelper->getAdminByNickId($account->getId());
+            || null !== $this->accessHelper->getIrcopByNickId($account->getId());
     }
 }

@@ -6,7 +6,7 @@ namespace App\Domain\OperServ\Entity;
 
 use DateTimeImmutable;
 
-class OperAdmin
+class OperIrcop
 {
     private int $id;
 

@@ -26,7 +26,7 @@ final class RoleCommandTest extends TestCase
     {
         $rootUsers = $isRoot ? 'TestUser' : '';
         $rootRegistry = new RootUserRegistry($rootUsers);
-        $adminRepo = $this->createStub(\App\Domain\OperServ\Repository\OperAdminRepositoryInterface::class);
+        $adminRepo = $this->createStub(\App\Domain\OperServ\Repository\OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
 
         return new IrcopAccessHelper($rootRegistry, $adminRepo, $roleRepo);

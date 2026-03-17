@@ -13,7 +13,7 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
-use App\Domain\OperServ\Repository\OperAdminRepositoryInterface;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,10 +27,10 @@ final class HelpCommandTest extends TestCase
     {
         $rootUsers = $isRoot ? 'TestUser' : '';
         $rootRegistry = new RootUserRegistry($rootUsers);
-        $adminRepo = $this->createStub(OperAdminRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
 
-        return new IrcopAccessHelper($rootRegistry, $adminRepo, $roleRepo);
+        return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
     private function createContext(

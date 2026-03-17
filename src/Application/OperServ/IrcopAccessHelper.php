@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ;
 
-use App\Domain\OperServ\Entity\OperAdmin;
-use App\Domain\OperServ\Repository\OperAdminRepositoryInterface;
+use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 
 final readonly class IrcopAccessHelper
 {
     public function __construct(
         private RootUserRegistry $rootUserRegistry,
-        private OperAdminRepositoryInterface $adminRepository,
+        private OperIrcopRepositoryInterface $ircopRepository,
         private OperRoleRepositoryInterface $roleRepository,
     ) {
     }
@@ -22,9 +22,9 @@ final readonly class IrcopAccessHelper
         return $this->rootUserRegistry->isRoot($nick);
     }
 
-    public function getAdminByNickId(int $nickId): ?OperAdmin
+    public function getIrcopByNickId(int $nickId): ?OperIrcop
     {
-        return $this->adminRepository->findByNickId($nickId);
+        return $this->ircopRepository->findByNickId($nickId);
     }
 
     public function hasPermission(int $nickId, string $nickLower, string $permission): bool
@@ -33,12 +33,12 @@ final readonly class IrcopAccessHelper
             return true;
         }
 
-        $admin = $this->adminRepository->findByNickId($nickId);
-        if (null === $admin) {
+        $ircop = $this->ircopRepository->findByNickId($nickId);
+        if (null === $ircop) {
             return false;
         }
 
-        return $this->roleRepository->hasPermission($admin->getRole()->getId(), $permission);
+        return $this->roleRepository->hasPermission($ircop->getRole()->getId(), $permission);
     }
 
     public function hasAnyPermission(int $nickId, string $nickLower, array $permissions): bool
@@ -58,8 +58,8 @@ final readonly class IrcopAccessHelper
             return 'ROOT';
         }
 
-        $admin = $this->adminRepository->findByNickId($nickId);
+        $ircop = $this->ircopRepository->findByNickId($nickId);
 
-        return $admin?->getRole()->getName();
+        return $ircop?->getRole()->getName();
     }
 }
