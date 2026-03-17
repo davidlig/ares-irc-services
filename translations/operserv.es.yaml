@@ -1,11 +1,15 @@
-# OperServ translations — Spanish
+# OperServ translations — Español
 # Domain: operserv
 #
 # IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
 #   \x02        bold on/off
-#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
+#   \x03NN      color (DECIMAL: 03=verde, 04=rojo, 07=naranja, 14=gris oscuro)
 #   \x03        reset color
 #   \x0F        reset all formatting
+#
+# NOTA: Los colores IRC usan números DECIMALES (0-15), no hexadecimales.
+#   \x0314 = gris oscuro (14 decimal)  ← CORRECTO
+#   \x030F = color 0 + letra "F"       ← ERROR (0F es hex, no decimal)
 
 unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
 

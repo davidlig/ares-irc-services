@@ -6,6 +6,10 @@
 #   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
 #   \x03        reset color
 #   \x0F        reset all formatting
+#
+# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark grey (14 decimal)  ← CORRECT
+#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
 
 unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
 
