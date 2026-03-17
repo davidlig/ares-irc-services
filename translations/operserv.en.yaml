@@ -1,36 +1,7 @@
 # OperServ translations — English
 # Domain: operserv
-#
-# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
-#   \x02        bold on/off
-#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
-#   \x03        reset color
-#   \x0F        reset all formatting
-#
-# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
-#   \x0314 = dark grey (14 decimal)  ← CORRECT
-#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
 
 unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
-
-# --- HELP --------------------------------------------------------------------
-help:
-  header_title:    "OperServ Help"
-  intro:           "OperServ provides network management commands for IRC operators."
-  general_header:  "For more information on a command, type:"
-  general_footer:  "In all commands, parameters in <> are mandatory, in [] are optional."
-  intro_expiration: "Nicks not used for %days% days will expire."
-  syntax_label:    "\x0307▶\x03 \x02Syntax:\x02 %syntax%"
-  footer:          "\x0307───\x03 \x02End of help\x02 \x0307───\x03"
-  command_line:    "  %command% %description%"
-  subcommand_line: "  %command% %description%"
-  options_header:  "\x0307▶\x03 \x02Options:\x02"
-  set_sub_footer:  "Type \x0303/msg %bot% HELP %command% <option>\x03 for more information."
-  unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02."
-  syntax:          "HELP [command [sub-option]]"
-  short:           "Show help for OperServ commands."
-  help:             "Displays help for OperServ commands.\nWithout arguments: lists all available commands.\nHELP <command>: detailed help for that command.\nHELP <command> <option>: help for a sub-option."
-  short_desc:       "Show help for OperServ commands."
 
 error:
   syntax:           "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
@@ -39,7 +10,26 @@ error:
   root_only:        "\x0304✗\x03 This command is restricted to network root administrators."
   nick_not_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is not registered."
 
-# --- IRCOP ------------------------------------------------------------------
+# --- HELP --------------------------------------------------------------------
+help:
+  syntax:           "HELP [command [sub-option]]"
+  short:            "List commands or show help for a command."
+  help:             "Without arguments lists all commands. Use \x0303HELP <command>\x03 for full help, or \x0303HELP <command> <option>\x03 for sub-options."
+  header_title:     "OperServ"
+  intro:            "Network management service for IRC operators."
+  general_header:   "\x02\x0314Available commands:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Options:\x03\x0F"
+  general_footer:   "Use \x0303/msg %bot% HELP <command>\x03 for more information."
+  set_sub_footer:   "Use \x0303/msg %bot% HELP %command% <option>\x03 for more information."
+  syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "NOTE: Nicks \x0304\x1Funused\x0F for more than %days% days are automatically removed."
+  unknown_command:  "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+  suboptions:       "Sub-options:"
+
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <role>"
   short:            "Manage network IRC operators."

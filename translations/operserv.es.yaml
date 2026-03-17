@@ -1,36 +1,7 @@
 # OperServ translations — Español
 # Domain: operserv
-#
-# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
-#   \x02        bold on/off
-#   \x03NN      color (DECIMAL: 03=verde, 04=rojo, 07=naranja, 14=gris oscuro)
-#   \x03        reset color
-#   \x0F        reset all formatting
-#
-# NOTA: Los colores IRC usan números DECIMALES (0-15), no hexadecimales.
-#   \x0314 = gris oscuro (14 decimal)  ← CORRECTO
-#   \x030F = color 0 + letra "F"       ← ERROR (0F es hex, no decimal)
 
 unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
-
-# --- HELP --------------------------------------------------------------------
-help:
-  header_title:    "Ayuda de OperServ"
-  intro:           "OperServ proporciona comandos de gestión de red para operadores de IRC."
-  general_header:  "Para más información sobre un comando, escribe:"
-  general_footer:  "En todos los comandos, los parámetros en <> son obligatorios, en [] opcionales."
-  intro_expiration: "Los nicks no usados durante %days% días expirarán."
-  syntax_label:    "\x0307▶\x03 \x02Sintaxis:\x02 %syntax%"
-  footer:          "\x0307───\x03 \x02Fin de la ayuda\x02 \x0307───\x03"
-  command_line:    "  %command% %description%"
-  subcommand_line: "  %command% %description%"
-  options_header:  "\x0307▶\x03 \x02Opciones:\x02"
-  set_sub_footer:  "Escribe \x0303/msg %bot% HELP %command% <opción>\x03 para más información."
-  unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02."
-  syntax:          "HELP [comando [sub-opción]]"
-  short:           "Muestra ayuda para comandos de OperServ."
-  help:             "Muestra ayuda para los comandos de OperServ.\nSin argumentos: lista todos los comandos disponibles.\nHELP <comando>: ayuda detallada para ese comando.\nHELP <comando> <opción>: ayuda para una sub-opción."
-  short_desc:       "Muestra ayuda para comandos de OperServ."
 
 error:
   syntax:           "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
@@ -39,7 +10,26 @@ error:
   root_only:        "\x0304✗\x03 Este comando está restringido a administradores root de la red."
   nick_not_registered: "\x0304✗\x03 El nickname \x02%nick%\x02 no está registrado."
 
-# --- IRCOP ------------------------------------------------------------------
+# --- HELP --------------------------------------------------------------------
+help:
+  syntax:           "HELP [comando [sub-opción]]"
+  short:            "Listar comandos o mostrar ayuda de un comando."
+  help:             "Sin argumentos lista todos los comandos. Usa \x0303HELP <comando>\x03 para ayuda completa, o \x0303HELP <comando> <opción>\x03 para sub-opciones."
+  header_title:     "OperServ"
+  intro:            "Servicio de gestión de red para operadores de IRC."
+  general_header:   "\x02\x0314Comandos disponibles:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Opciones:\x03\x0F"
+  general_footer:   "Usa \x0303/msg %bot% HELP <comando>\x03 para más información."
+  set_sub_footer:   "Usa \x0303/msg %bot% HELP %command% <opción>\x03 para más información."
+  syntax_label:     "\x0307Sintaxis:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "NOTA: Los nicks \x0304\x1Fsin usar\x0F durante más de %days% días se eliminan automáticamente."
+  unknown_command:  "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
+  suboptions:       "Sub-opciones:"
+
+# --- IRCOP --------------------------------------------------------------------
 ircop:
   syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <rol>"
   short:            "Gestiona operadores de red."
@@ -85,7 +75,7 @@ role:
   add:
     syntax:         "ROLE ADD <nombre> [descripción]"
     short:          "Crea un nuevo rol."
-    help:            "Crea un rol personalizado. La descripción es opcional.\nEste comando está restringido a usuarios Root."
+    help:            "Crea un nuevo rol personalizado. La descripción es opcional.\nEste comando está restringido a usuarios Root."
     done:           "\x0303✓\x03 Creado el rol \x02%role%\x02."
 
   del:
