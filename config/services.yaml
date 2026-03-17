@@ -867,8 +867,3 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
-
-    App\Infrastructure\OperServ\Subscriber\OperServRoleInitializer:
-        arguments:
-            $logger: '@monolog.logger.irc'
-        tags: ['kernel.event_subscriber']

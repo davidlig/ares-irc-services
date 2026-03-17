@@ -9,12 +9,6 @@ use Doctrine\Common\Collections\Collection;
 
 class OperRole
 {
-    public const string ROLE_ADMIN = 'ADMIN';
-
-    public const string ROLE_OPER = 'OPER';
-
-    public const string ROLE_PREOPER = 'PREOPER';
-
     private int $id;
 
     private string $name;
