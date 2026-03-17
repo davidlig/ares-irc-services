@@ -68,11 +68,6 @@ final readonly class HelpCommand implements OperServCommandInterface
 
     public function execute(OperServContext $context): void
     {
-        $sender = $context->sender;
-        if (null === $sender) {
-            return;
-        }
-
         if (empty($context->args)) {
             $this->showGeneralHelp($context);
 
@@ -82,7 +77,7 @@ final readonly class HelpCommand implements OperServCommandInterface
         $targetCmd = strtoupper($context->args[0]);
         $handler = $context->getRegistry()->find($targetCmd);
 
-        if (null === $handler || ($handler->isOperOnly() && !$sender->isOper)) {
+        if (null === $handler || ($handler->isOperOnly() && !$context->isRoot())) {
             $context->reply('help.unknown_command', ['%command%' => $targetCmd]);
 
             return;
