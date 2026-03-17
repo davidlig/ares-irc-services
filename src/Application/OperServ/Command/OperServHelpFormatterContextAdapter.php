@@ -36,9 +36,7 @@ final readonly class OperServHelpFormatterContextAdapter implements HelpFormatte
     public function shouldShowCommandInGeneralHelp(object $command): bool
     {
         if ($command->isOperOnly()) {
-            $isOper = $this->context->sender?->isOper ?? false;
-
-            return $isOper;
+            return $this->context->isRoot();
         }
 
         return true;
