@@ -1,0 +1,108 @@
+# OperServ translations — Spanish
+# Domain: operserv
+#
+# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
+#   \x02        bold on/off
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
+#   \x03        reset color
+#   \x0F        reset all formatting
+
+unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:           "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 Este comando está restringido a Operadores de IRC."
+  permission_denied: "\x0304✗\x03 Permiso denegado. No tienes acceso a este comando."
+  root_only:        "\x0304✗\x03 Este comando está restringido a administradores root de la red."
+  nick_not_registered: "\x0304✗\x03 El nickname \x02%nick%\x02 no está registrado."
+
+# --- IRCOP ------------------------------------------------------------------
+ircop:
+  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <rol>"
+  short:            "Gestiona operadores de red."
+  help:             "Gestiona operadores de red. ADD añade un nickname registrado\ncomo operador con el rol especificado.\nDEL elimina un operador. LIST muestra todos los operadores.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root configurados en los servicios."
+
+  unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
+  unknown_role:     "\x0304✗\x03 El rol \x02%role%\x02 no existe. Usa \x0303/msg %bot% ROLE LIST\x03 para ver los roles disponibles."
+  already_admin:   "\x0304✗\x03 \x02%nick%\x02 ya es operador (rol: %role%)."
+  role_changed:    "\x0303✓\x03 Cambiado el rol de \x02%nick%\x02 de %old% a %new%."
+
+  add:
+    syntax:         "IRCOP <nickname> ADD <rol>"
+    short:          "Añade un operador de red."
+    help:            "Añade un nickname registrado como operador de red.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root."
+    done:           "\x0303✓\x03 Añadido \x02%nick%\x02 como \x02%role%\x02."
+    nick_not_active: "\x0304✗\x03 El nickname \x02%nick%\x02 no es un nickname registrado activo."
+
+  del:
+    syntax:         "IRCOP <nickname> DEL"
+    short:          "Elimina un operador de red."
+    help:            "Elimina un operador de red de la lista.\nEste comando está restringido a usuarios Root."
+    done:           "\x0303✓\x03 Eliminado \x02%nick%\x02 de operadores."
+    not_admin:      "\x0304✗\x03 \x02%nick%\x02 no es un operador de red."
+
+  list:
+    syntax:         "IRCOP LIST"
+    short:          "Lista todos los operadores de red."
+    help:            "Lista todos los operadores de red con sus roles y fecha de registro.\nEste comando está restringido a usuarios Root."
+    header:         "\x0307---\x03 \x02Operadores de Red\x02 \x0307---\x03"
+    empty:          "No hay operadores de red."
+
+# --- ROLE --------------------------------------------------------------------
+role:
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS} <nombre> ..."
+  short:            "Gestiona roles de operadores."
+  help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
+
+  unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST o PERMS."
+  not_found:        "\x0304✗\x03 El rol \x02%role%\x02 no existe."
+  already_exists:   "\x0304✗\x03 El rol \x02%role%\x02 ya existe."
+  protected:        "\x0304✗\x03 El rol \x02%role%\x02 está protegido y no puede eliminarse."
+
+  add:
+    syntax:         "ROLE ADD <nombre> [descripción]"
+    short:          "Crea un nuevo rol."
+    help:            "Crea un rol personalizado. La descripción es opcional.\nEste comando está restringido a usuarios Root."
+    done:           "\x0303✓\x03 Creado el rol \x02%role%\x02."
+
+  del:
+    syntax:         "ROLE DEL <nombre>"
+    short:          "Elimina un rol."
+    help:            "Elimina un rol personalizado. Los roles protegidos (ADMIN, OPER, PREOPER)\nno pueden eliminarse. Si el rol tiene operadores asignados,\ndebes reasignarlos primero.\nEste comando está restringido a usuarios Root."
+    done:           "\x0303✓\x03 Eliminado el rol \x02%role%\x02."
+
+  list:
+    syntax:         "ROLE LIST"
+    short:          "Lista todos los roles."
+    help:            "Lista todos los roles. Los roles protegidos se marcan con [PROTEGIDO].\nEste comando está restringido a usuarios Root."
+    header:         "\x0307---\x03 \x02Roles de Operadores\x02 \x0307---\x03"
+    empty:          "No hay roles de operadores."
+
+  perms:
+    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL} [permiso]"
+    short:          "Gestiona permisos de un rol."
+    help:            "Gestiona permisos asignados a un rol.\nLIST muestra todos los permisos del rol.\nADD asigna un permiso al rol.\nDEL quita un permiso del rol (no para roles protegidos).\nEste comando está restringido a usuarios Root."
+    unknown_action:  "\x0304✗\x03 Acción desconocida \x02%action%\x02. Usa LIST, ADD o DEL."
+    not_found:       "\x0304✗\x03 El permiso \x02%perm%\x02 no existe."
+    already_has:     "\x0304✗\x03 El rol \x02%role%\x02 ya tiene el permiso \x02%perm%\x02."
+    does_not_have:   "\x0304✗\x03 El rol \x02%role%\x02 no tiene el permiso \x02%perm%\x02."
+    protected:      "\x0304✗\x03 No se pueden modificar permisos del rol protegido \x02%role%\x02."
+
+    list:
+      syntax:       "ROLE PERMS <rol> LIST"
+      short:        "Lista permisos de un rol."
+      help:         "Lista todos los permisos asignados a un rol.\nEste comando está restringido a usuarios Root."
+      header:        "\x0307---\x03 \x02Permisos de %role%\x02 \x0307---\x03"
+      empty:        "El rol \x02%role%\x02 no tiene permisos asignados."
+
+    add:
+      syntax:       "ROLE PERMS <rol> ADD <permiso>"
+      short:        "Añade un permiso a un rol."
+      help:         "Añade un permiso a un rol.\nEste comando está restringido a usuarios Root."
+      done:         "\x0303✓\x03 Añadido permiso \x02%perm%\x02 al rol \x02%role%\x02."
+
+    del:
+      syntax:       "ROLE PERMS <rol> DEL <permiso>"
+      short:        "Quita un permiso de un rol."
+      help:         "Quita un permiso de un rol.\nNo se pueden modificar roles protegidos.\nEste comando está restringido a usuarios Root."
+      done:         "\x0303✓\x03 Quitado permiso \x02%perm%\x02 del rol \x02%role%\x02."

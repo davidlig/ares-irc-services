@@ -1,7 +1,7 @@
 # MemoServ translations — Spanish
 # Domain: memoserv
 
-unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg MemoServ HELP\x03."
+unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
 
 error:
   syntax: "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
@@ -111,12 +111,12 @@ help:
   command_line: "  \x0307%command%\x03%description%"
   subcommand_line: "  \x0307%command%\x03%description%"
   options_header: "\x02\x0314Opciones:\x03\x0F"
-  general_footer: "Usa \x0303/msg MemoServ HELP <comando>\x03 para más información."
-  set_sub_footer: "Usa \x0303/msg MemoServ HELP %command% <opción>\x03 para más información."
+  general_footer: "Usa \x0303/msg %bot% HELP <comando>\x03 para más información."
+  set_sub_footer: "Usa \x0303/msg %bot% HELP %command% <opción>\x03 para más información."
   syntax_label: "\x0307Sintaxis:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
-  unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg MemoServ HELP\x03."
+  unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
 
 notify:
-  nick_pending: "Tienes \x02%count%\x02 mensaje(s) pendiente(s) de leer. Para listar los mensajes: \x0309/msg MemoServ LIST\x03"
-  channel_pending: "El canal \x02%channel%\x02 tiene \x02%count%\x02 mensaje(s) pendiente(s) de leer. Revisa los mensajes con \x0309/msg MemoServ LIST %channel%\x03."
+  nick_pending: "Tienes \x02%count%\x02 mensaje(s) pendiente(s) de leer. Para listar los mensajes: \x0309/msg %bot% LIST\x03"
+  channel_pending: "El canal \x02%channel%\x02 tiene \x02%count%\x02 mensaje(s) pendiente(s) de leer. Revisa los mensajes con \x0309/msg %bot% LIST %channel%\x03."

@@ -130,6 +130,7 @@ readonly class NickServContext
     /**
      * Ensures each parameter key is wrapped with % for Symfony's strtr-based translator.
      * Idempotent: keys already wrapped are left unchanged.
+     * Also injects %bot% automatically for all translations.
      *
      * @param array<string, mixed> $params
      *
@@ -137,7 +138,7 @@ readonly class NickServContext
      */
     private function wrapParams(array $params): array
     {
-        $wrapped = [];
+        $wrapped = ['%bot%' => $this->notifier->getNick()];
         foreach ($params as $key => $value) {
             $wrapped['%' . trim((string) $key, '%') . '%'] = $value;
         }

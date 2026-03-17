@@ -51,4 +51,9 @@ interface NickServNotifierInterface
      * When $vhost is empty string, the implementation must clear the vhost.
      */
     public function setUserVhost(string $targetUid, string $vhost, string $sourceServerSid): void;
+
+    /**
+     * Get the bot's nickname.
+     */
+    public function getNick(): string;
 }

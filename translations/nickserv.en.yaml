@@ -11,22 +11,22 @@
 #   \x0314 = dark grey (14 decimal)  ← CORRECT
 #   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
 
-unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg NickServ HELP\x03."
+unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
 
 error:
   syntax:         "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 This command is restricted to IRC Operators."
-  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg NickServ IDENTIFY <nickname> <password>\x03"
+  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
   mail_failed:    "\x0304✗\x03 The email could not be sent. Check your address or try again later."
 
 # --- REGISTER ---------------------------------------------------------------
 register:
   syntax:           "REGISTER <password> <email>"
   short:            "Register your nickname with the services."
-  help:             "Starts the registration of your current nickname. A verification token\nwill be sent to the provided email address. Complete the registration\nby running \x0303/msg NickServ VERIFY <token>\x03. The token expires in 1 hour.\nIf it does not arrive, check your spam folder or use \x0303RESEND\x03."
-  pending:          "\x0307→\x03 A verification token has been sent to \x02%email%\x02.\n  Run \x0303/msg NickServ VERIFY <token>\x03 to complete registration.\n  Didn't receive it? Check spam or use \x0303/msg NickServ RESEND\x03\n  The token will expire in \x021 hour\x02."
+  help:             "Starts the registration of your current nickname. A verification token\nwill be sent to the provided email address. Complete the registration\nby running \x0303/msg %bot% VERIFY <token>\x03. The token expires in 1 hour.\nIf it does not arrive, check your spam folder or use \x0303RESEND\x03."
+  pending:          "\x0307→\x03 A verification token has been sent to \x02%email%\x02.\n  Run \x0303/msg %bot% VERIFY <token>\x03 to complete registration.\n  Didn't receive it? Check spam or use \x0303/msg %bot% RESEND\x03\n  The token will expire in \x021 hour\x02."
   already_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is already registered."
-  already_pending:  "\x0304✗\x03 Nickname \x02%nickname%\x02 already has a pending verification.\n  Use \x0303/msg NickServ VERIFY <token>\x03 or \x0303/msg NickServ RESEND\x03."
+  already_pending:  "\x0304✗\x03 Nickname \x02%nickname%\x02 already has a pending verification.\n  Use \x0303/msg %bot% VERIFY <token>\x03 or \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be registered on this network."
   invalid_email:    "\x0304✗\x03 The email address provided is not valid."
   email_already_used: "\x0304✗\x03 The email \x02%email%\x02 is already in use by another account. Use a different address."
@@ -38,7 +38,7 @@ verify:
   short:            "Confirm your email address and activate your account."
   help:             "Completes the registration by verifying the token sent to your email.\nThe token is valid for 1 hour from the moment of registration."
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 has been successfully registered and you are now identified."
-  invalid_token:    "\x0304✗\x03 The token is invalid or has expired. Use \x0303/msg NickServ REGISTER\x03 to start over."
+  invalid_token:    "\x0304✗\x03 The token is invalid or has expired. Use \x0303/msg %bot% REGISTER\x03 to start over."
   no_pending:       "\x0304✗\x03 You have no pending registration to verify."
 
 # --- RESEND -----------------------------------------------------------------
@@ -64,7 +64,7 @@ recover:
   throttled:        "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another recovery email."
   invalid_token:    "\x0304✗\x03 The token is invalid or has expired. Request a new one with \x0303RECOVER %nickname%\x03."
   success_identify: "\x0303✔\x03 Password reset. Identify now: \x0303%identify_cmd%\x03"
-  success_then_change: "Then change your password: \x0303/msg NickServ SET PASSWORD <new_password>\x03"
+  success_then_change: "Then change your password: \x0303/msg %bot% SET PASSWORD <new_password>\x03"
 
 # --- IDENTIFY ---------------------------------------------------------------
 identify:
@@ -78,7 +78,7 @@ identify:
   locked_out:         "\x0304✗\x03 Too many failed attempts. Try again in \x02%minutes%\x02 minute(s)."
   ghost_released:   "\x0307⚡\x03 The ghost session holding \x02%nickname%\x02 has been disconnected."
   kill_reason:      "Nick %nickname% reclaimed by %source% (the registered owner has identified)"
-  pending:          "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending email verification.\n  Run \x0303/msg NickServ VERIFY <token>\x03 or \x0303/msg NickServ RESEND\x03."
+  pending:          "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending email verification.\n  Run \x0303/msg %bot% VERIFY <token>\x03 or \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Reason: %reason%"
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be used on this network."
 
@@ -146,7 +146,7 @@ set:
     short:          "Change the email address linked to your account (two-step confirmation)."
     help:           "Email change in two steps for security.\n1) \x0303SET EMAIL <new_email>\x03 — a token is sent to your current email.\n2) \x0303SET EMAIL <new_email> <token>\x03 — confirm with the token received.\nThe token expires in 1 hour."
     success:        "\x0303✔\x03 Your email has been updated to \x02%email%\x02."
-    pending_sent:   "\x0307→\x03 A confirmation token has been sent to \x02%current_email%\x02.\n  To confirm the change to \x02%new_email%\x02 run:\n  \x0303/msg NickServ SET EMAIL %new_email% <token>\x03\n  The token expires in 1 hour."
+    pending_sent:   "\x0307→\x03 A confirmation token has been sent to \x02%current_email%\x02.\n  To confirm the change to \x02%new_email%\x02 run:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  The token expires in 1 hour."
     invalid_token:  "\x0304✗\x03 The token is invalid or has expired. Request a new one with \x0303SET EMAIL <new_email>\x03."
 
   language:
@@ -199,8 +199,8 @@ help:
   command_line:     "  \x0307%command%\x03%description%"
   subcommand_line:  "  \x0307%command%\x03%description%"
   options_header:   "\x02\x0314Options:\x03\x0F"
-  general_footer:   "Use \x0303/msg NickServ HELP <command>\x03 for more information."
-  set_sub_footer:   "Use \x0303/msg NickServ HELP %command% <option>\x03 for more information."
+  general_footer:   "Use \x0303/msg %bot% HELP <command>\x03 for more information."
+  set_sub_footer:   "Use \x0303/msg %bot% HELP %command% <option>\x03 for more information."
   command_header:   "\x02Help for %command%:\x02"
   syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
@@ -214,4 +214,4 @@ help:
 # --- Nick Protection --------------------------------------------------------
 protection:
   nick_in_use:      "\x0304⚠\x03 Nick \x02%nickname%\x02 is registered. You will be renamed if you do not identify."
-  renamed_to:       "\x0307→\x03 You have been renamed to \x02%guest_nick%\x02. To reclaim your nick:\n\x0303/msg NickServ IDENTIFY %nickname% <password>\x03"
+  renamed_to:       "\x0307→\x03 You have been renamed to \x02%guest_nick%\x02. To reclaim your nick:\n\x0303/msg %bot% IDENTIFY %nickname% <password>\x03"

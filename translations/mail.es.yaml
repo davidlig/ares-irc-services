@@ -11,7 +11,7 @@ register_verification_body: |
   Tu token de verificación es: %token%
 
   Para completar el registro, envía este comando a NickServ (sustituye <token> por el token anterior):
-    /msg NickServ VERIFY %token%
+    /msg %bot% VERIFY %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
 
@@ -25,7 +25,7 @@ resend_verification_body: |
   Tu token de verificación es: %token%
 
   Para completar el registro, envía a NickServ:
-    /msg NickServ VERIFY %token%
+    /msg %bot% VERIFY %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
 
@@ -39,7 +39,7 @@ email_change_token_body: |
   Tu token de confirmación es: %token%
 
   Para confirmar el cambio, envía a NickServ:
-    /msg NickServ SET EMAIL %new_email% %token%
+    /msg %bot% SET EMAIL %new_email% %token%
 
   El token expira en 1 hora. Si no solicitaste este cambio, ignora este correo.
 
@@ -53,7 +53,7 @@ recovery_token_body: |
   Tu token de recuperación es: %token%
 
   Para restablecer tu contraseña, envía a NickServ:
-    /msg NickServ RECOVER %nickname% %token%
+    /msg %bot% RECOVER %nickname% %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
 
@@ -68,6 +68,6 @@ founder_change_token_body: |
 
   Para completar el cambio, envía a ChanServ este comando (puedes copiarlo y pegarlo):
 
-    /msg ChanServ %command%
+    /msg %bot% %command%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.

@@ -1,7 +1,7 @@
 # MemoServ translations — English
 # Domain: memoserv
 
-unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg MemoServ HELP\x03."
+unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
 
 error:
   syntax: "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
@@ -111,12 +111,12 @@ help:
   command_line: "  \x0307%command%\x03%description%"
   subcommand_line: "  \x0307%command%\x03%description%"
   options_header: "\x02\x0314Options:\x03\x0F"
-  general_footer: "Use \x0303/msg MemoServ HELP <command>\x03 for more information."
-  set_sub_footer: "Use \x0303/msg MemoServ HELP %command% <option>\x03 for more information."
+  general_footer: "Use \x0303/msg %bot% HELP <command>\x03 for more information."
+  set_sub_footer: "Use \x0303/msg %bot% HELP %command% <option>\x03 for more information."
   syntax_label: "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer: "\x0314─────────────────────────────\x03"
-  unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg MemoServ HELP\x03."
+  unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
 
 notify:
-  nick_pending: "You have \x02%count%\x02 unread message(s). To list them: \x0309/msg MemoServ LIST\x03"
-  channel_pending: "The channel \x02%channel%\x02 has \x02%count%\x02 unread message(s). Use \x0309/msg MemoServ LIST %channel%\x03 to list them."
+  nick_pending: "You have \x02%count%\x02 unread message(s). To list them: \x0309/msg %bot% LIST\x03"
+  channel_pending: "The channel \x02%channel%\x02 has \x02%count%\x02 unread message(s). Use \x0309/msg %bot% LIST %channel%\x03 to list them."

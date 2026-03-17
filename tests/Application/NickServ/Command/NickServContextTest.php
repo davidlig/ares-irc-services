@@ -240,10 +240,11 @@ final class NickServContextTest extends TestCase
     public function wrapParamsIsIdempotentForAlreadyWrappedKeys(): void
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('NickServ');
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
             ->method('trans')
-            ->with('key', self::callback(static fn (array $p) => isset($p['%nick%']) && 'User' === $p['%nick%']), 'nickserv', 'en')
+            ->with('key', self::callback(static fn (array $p) => isset($p['%nick%']) && 'User' === $p['%nick%'] && isset($p['%bot%']) && 'NickServ' === $p['%bot%']), 'nickserv', 'en')
             ->willReturn('Hello User');
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),

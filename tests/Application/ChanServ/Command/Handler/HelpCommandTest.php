@@ -339,7 +339,7 @@ final class HelpCommandTest extends TestCase
 
         $all = implode(' ', $messages);
         self::assertStringContainsString('help.intro_expiration', $all);
-        self::assertContains('help.footer', $messages);
+        self::assertStringContainsString('help.footer', $all);
     }
 
     #[Test]

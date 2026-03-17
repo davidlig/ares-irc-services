@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\OperServ\Entity\OperAdmin" table="oper_admins">
+        <unique-constraints>
+            <unique-constraint name="uniq_admin_nick" columns="nick_id"/>
+        </unique-constraints>
+        <indexes>
+            <index name="idx_admin_role" columns="role_id"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="nickId" type="integer" column="nick_id"/>
+        <field name="addedAt" type="datetime_immutable" column="added_at"/>
+        <field name="addedById" type="integer" column="added_by_id" nullable="true"/>
+        <field name="reason" type="string" length="255" column="reason" nullable="true"/>
+        <many-to-one field="role" target-entity="App\Domain\OperServ\Entity\OperRole">
+            <join-column name="role_id" referenced-column-name="id" nullable="false"/>
+        </many-to-one>
+    </entity>
+</doctrine-mapping>

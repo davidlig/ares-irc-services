@@ -311,10 +311,11 @@ final class ChanServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $notifier->method('getNick')->willReturn('ChanServ');
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
             ->method('trans')
-            ->with('test.key', [], 'chanserv', 'en')
+            ->with('test.key', ['%bot%' => 'ChanServ'], 'chanserv', 'en')
             ->willReturn('Translated message');
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -336,10 +337,11 @@ final class ChanServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $notifier->method('getNick')->willReturn('ChanServ');
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::once())
             ->method('trans')
-            ->with('test.key', ['%name%' => 'User', '%count%' => '5'], 'chanserv', 'en')
+            ->with('test.key', ['%bot%' => 'ChanServ', '%name%' => 'User', '%count%' => '5'], 'chanserv', 'en')
             ->willReturn('User has 5 items');
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),

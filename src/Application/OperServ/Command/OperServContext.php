@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Application\ChanServ\Command;
+namespace App\Application\OperServ\Command;
 
-use App\Application\Port\ChannelLookupPort;
-use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelView;
+use App\Application\OperServ\AdminAccessHelper;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
@@ -14,11 +12,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Context for ChanServ command execution. Commands reply via reply() / replyRaw();
- * channel data and actions go through the injected ports and notifier.
- */
-readonly class ChanServContext
+readonly class OperServContext
 {
     public function __construct(
         public readonly ?SenderView $sender,
@@ -26,20 +20,19 @@ readonly class ChanServContext
         public readonly string $command,
         /** @var string[] */
         public readonly array $args,
-        private readonly ChanServNotifierInterface $notifier,
+        private readonly OperServNotifierInterface $notifier,
         private readonly TranslatorInterface $translator,
         private readonly string $language,
         private readonly string $timezone,
         private readonly string $messageType,
-        private readonly ChanServCommandRegistry $registry,
-        private readonly ChannelLookupPort $channelLookup,
-        private readonly ChannelModeSupportInterface $channelModeSupport,
+        private readonly OperServCommandRegistry $registry,
+        private readonly AdminAccessHelper $accessHelper,
     ) {
     }
 
     public function reply(string $key, array $params = []): void
     {
-        $message = $this->translator->trans($key, $this->wrapParams($params), 'chanserv', $this->language);
+        $message = $this->translator->trans($key, $this->wrapParams($params), 'operserv', $this->language);
         $this->sendRaw($message);
     }
 
@@ -48,19 +41,9 @@ readonly class ChanServContext
         $this->sendRaw($message);
     }
 
-    public function getNotifier(): ChanServNotifierInterface
+    public function getNotifier(): OperServNotifierInterface
     {
         return $this->notifier;
-    }
-
-    public function getChannelLookup(): ChannelLookupPort
-    {
-        return $this->channelLookup;
-    }
-
-    public function getChannelModeSupport(): ChannelModeSupportInterface
-    {
-        return $this->channelModeSupport;
     }
 
     public function getLanguage(): string
@@ -84,35 +67,36 @@ readonly class ChanServContext
         return $dt->setTimezone(new DateTimeZone($this->timezone))->format('d/m/Y H:i T');
     }
 
-    public function getRegistry(): ChanServCommandRegistry
+    public function getRegistry(): OperServCommandRegistry
     {
         return $this->registry;
     }
 
+    public function getAccessHelper(): AdminAccessHelper
+    {
+        return $this->accessHelper;
+    }
+
     public function trans(string $key, array $params = []): string
     {
-        return $this->translator->trans($key, $this->wrapParams($params), 'chanserv', $this->language);
+        return $this->translator->trans($key, $this->wrapParams($params), 'operserv', $this->language);
     }
 
-    /** First argument as channel name (e.g. #channel). Returns null if missing or not channel-like. */
-    public function getChannelNameArg(int $index = 0): ?string
+    public function isRoot(): bool
     {
-        $name = $this->args[$index] ?? '';
+        if (null === $this->sender) {
+            return false;
+        }
 
-        return str_starts_with($name, '#') ? $name : null;
+        return $this->accessHelper->isRoot($this->sender->nick);
     }
 
-    /** Get current channel state on the network (modes, topic) or null if not on network. */
-    public function getChannelView(string $channelName): ?ChannelView
+    public function getBotName(): string
     {
-        return $this->channelLookup->findByChannelName($channelName);
+        return $this->notifier->getNick();
     }
 
-    /**
-     * @param array<string, mixed> $params
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function wrapParams(array $params): array
     {
         $wrapped = ['%bot%' => $this->notifier->getNick()];

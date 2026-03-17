@@ -27,4 +27,9 @@ interface ChanServNotifierInterface
     public function inviteToChannel(string $channelName, string $targetUid): void;
 
     public function joinChannelAsService(string $channelName, ?int $channelTimestamp = null): void;
+
+    /**
+     * Get the bot's nickname.
+     */
+    public function getNick(): string;
 }

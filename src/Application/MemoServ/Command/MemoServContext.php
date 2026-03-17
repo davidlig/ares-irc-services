@@ -85,7 +85,7 @@ readonly class MemoServContext
      */
     private function wrapParams(array $params): array
     {
-        $wrapped = [];
+        $wrapped = ['%bot%' => $this->notifier->getNick()];
         foreach ($params as $key => $value) {
             $wrapped['%' . trim((string) $key, '%') . '%'] = $value;
         }

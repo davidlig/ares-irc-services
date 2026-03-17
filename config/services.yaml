@@ -83,6 +83,17 @@ parameters:
     memoserv.ignore_list_limit_channel_default: 100
     memoserv.ignore_list_limit_channel: '%env(int:default:memoserv.ignore_list_limit_channel_default:MEMOSERV_IGNORE_LIST_LIMIT_CHANNEL)%'
 
+    # OperServ pseudo-client
+    operserv.uid: '%env(OPERSERV_UID)%'
+    operserv.nick_default: 'OperServ'
+    operserv.nick: '%env(string:default:operserv.nick_default:OPERSERV_NICK)%'
+    operserv.ident_default: 'OperServ'
+    operserv.ident: '%env(string:default:operserv.ident_default:OPERSERV_IDENT)%'
+    operserv.realname_default: 'Network Operations Services'
+    operserv.realname: '%env(string:default:operserv.realname_default:OPERSERV_REALNAME)%'
+    operserv.root_users_default: ''
+    operserv.root_users: '%env(string:default:operserv.root_users_default:OPERSERV_ROOT_USERS)%'
+
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
     mailer.send_delay_seconds_default: 5
@@ -795,3 +806,69 @@ services:
         alias: App\Infrastructure\NickServ\UserMessageTypeResolver
 
     App\Infrastructure\NickServ\UserMessageTypeResolver: ~
+
+    # --- OperServ Domain --------------------------------------------------------
+
+    App\Domain\OperServ\Repository\OperAdminRepositoryInterface:
+        class: App\Infrastructure\OperServ\Doctrine\OperAdminDoctrineRepository
+
+    App\Domain\OperServ\Repository\OperRoleRepositoryInterface:
+        class: App\Infrastructure\OperServ\Doctrine\OperRoleDoctrineRepository
+
+    App\Domain\OperServ\Repository\OperPermissionRepositoryInterface:
+        class: App\Infrastructure\OperServ\Doctrine\OperPermissionDoctrineRepository
+
+    # --- OperServ Application ---------------------------------------------------
+
+    App\Application\OperServ\RootUserRegistry:
+        arguments:
+            $rootUsers: '%operserv.root_users%'
+
+    App\Application\OperServ\AdminAccessHelper: ~
+
+    App\Application\OperServ\Command\OperServCommandRegistry:
+        arguments:
+            $commands: !tagged_iterator operserv.command
+
+    App\Application\OperServ\OperServService:
+        arguments:
+            $defaultLanguage: '%services.default_language%'
+            $defaultTimezone: '%services.default_timezone%'
+            $logger: '@monolog.logger.irc'
+
+    App\Application\OperServ\Command\Handler\IrcopCommand:
+        tags: ['operserv.command']
+
+    App\Application\OperServ\Command\Handler\RoleCommand:
+        tags: ['operserv.command']
+
+    # --- OperServ Infrastructure -------------------------------------------------
+
+    App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter:
+        class: App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter
+        arguments:
+            $senderUid: '%operserv.uid%'
+
+    App\Infrastructure\OperServ\Bot\OperServBot:
+        arguments:
+            $servicesHostname: '%services.hostname%'
+            $operservUid: '%operserv.uid%'
+            $operservNick: '%operserv.nick%'
+            $operservIdent: '%operserv.ident%'
+            $operservRealname: '%operserv.realname%'
+            $logger: '@monolog.logger.irc'
+            $sendNoticePort: '@App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter'
+        tags: ['kernel.event_subscriber']
+
+    App\Application\OperServ\Command\OperServNotifierInterface:
+        alias: App\Infrastructure\OperServ\Bot\OperServBot
+
+    App\Infrastructure\OperServ\Subscriber\OperServCommandListener:
+        arguments:
+            $logger: '@monolog.logger.irc'
+        tags: ['service_command_listener']
+
+    App\Infrastructure\OperServ\Subscriber\OperServRoleInitializer:
+        arguments:
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
