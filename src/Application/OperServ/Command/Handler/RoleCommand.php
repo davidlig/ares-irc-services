@@ -176,7 +176,7 @@ final readonly class RoleCommand implements OperServCommandInterface
 
         foreach ($roles as $role) {
             $protected = $role->isProtected() ? ' [PROTECTED]' : '';
-            $context->replyRaw(sprintf('  %-12s%s', $role->getName(), $protected));
+            $context->replyRaw(sprintf('  %-12s%-40s%s', $role->getName(), $role->getDescription(), $protected));
         }
     }
 

@@ -320,10 +320,11 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $this->levelRepository->expects(self::atLeastOnce())->method('findByChannelAndKey')->with(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD)->willReturn(new ChannelLevel(self::CHANNEL_ID, ChannelLevel::KEY_MEMOREAD, 200));
         $this->translator->expects(self::atLeastOnce())->method('trans')->with(
             'notify.channel_pending',
-            ['%channel%' => '#test', '%count%' => 2],
+            ['%channel%' => '#test', '%count%' => 2, '%bot%' => 'MemoServ'],
             'memoserv',
             'en',
         )->willReturn('You have 2 pending memo(s) for #test.');
+        $this->notifier->method('getNick')->willReturn('MemoServ');
         $this->notifier->expects(self::once())->method('sendNotice')->with('001USER', 'You have 2 pending memo(s) for #test.');
 
         $this->subscriber->onUserJoinedChannel($event);

@@ -155,11 +155,12 @@ final class NickServServiceTest extends TestCase
 
         $registry = new NickServCommandRegistry([]);
 
+        $notifier->method('getNick')->willReturn('NickServ');
         $translator->expects(self::once())
             ->method('trans')
             ->with(
                 'unknown_command',
-                ['command' => 'UNKNOWN'],
+                ['%command%' => 'UNKNOWN', '%bot%' => 'NickServ'],
                 'nickserv',
                 'en',
             )

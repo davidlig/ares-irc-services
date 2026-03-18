@@ -82,10 +82,13 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
             ->with(12345)
             ->willReturn($account);
 
+        $this->notifier
+            ->method('getNick')
+            ->willReturn('MemoServ');
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('notify.nick_pending', ['%count%' => 3], 'memoserv', 'es')
+            ->with('notify.nick_pending', ['%count%' => 3, '%bot%' => 'MemoServ'], 'memoserv', 'es')
             ->willReturn('You have 3 new memos.');
 
         $this->notifier
@@ -144,10 +147,13 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
             ->with(12345)
             ->willReturn(null);
 
+        $this->notifier
+            ->method('getNick')
+            ->willReturn('MemoServ');
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('notify.nick_pending', ['%count%' => 1], 'memoserv', 'en')
+            ->with('notify.nick_pending', ['%count%' => 1, '%bot%' => 'MemoServ'], 'memoserv', 'en')
             ->willReturn('You have 1 new memo.');
 
         $this->notifier
@@ -182,10 +188,13 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
             ->with(12345)
             ->willReturn($account);
 
+        $this->notifier
+            ->method('getNick')
+            ->willReturn('MemoServ');
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('notify.nick_pending', ['%count%' => 5], 'memoserv', 'fr')
+            ->with('notify.nick_pending', ['%count%' => 5, '%bot%' => 'MemoServ'], 'memoserv', 'fr')
             ->willReturn('You have 5 new memos.');
 
         $this->notifier

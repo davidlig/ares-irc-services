@@ -223,7 +223,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#test'], 'memoserv', 'es')
+            ->with('error.channel_not_registered', ['%channel%' => '#test', '%bot%' => 'MemoServ'], 'memoserv', 'es')
             ->willReturn('El canal #test no está registrado.');
 
         $this->memoServNotifier
@@ -268,7 +268,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#other'], 'memoserv', 'en')
+            ->with('error.channel_not_registered', ['%channel%' => '#other', '%bot%' => 'MemoServ'], 'memoserv', 'en')
             ->willReturn('Channel #other is not registered.');
 
         $this->memoServNotifier
@@ -319,7 +319,7 @@ final class MemoServCommandListenerTest extends TestCase
             ->method('trans')
             ->with(
                 'error.insufficient_access',
-                ['%operation%' => 'SEND', '%channel%' => '#chan'],
+                ['%operation%' => 'SEND', '%channel%' => '#chan', '%bot%' => 'MemoServ'],
                 'memoserv',
                 'fr',
             )

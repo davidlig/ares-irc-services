@@ -124,8 +124,9 @@ final class MemoServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(MemoServNotifierInterface::class);
         $translator = $this->createMock(TranslatorInterface::class);
+        $notifier->method('getNick')->willReturn('MemoServ');
         $translator->expects(self::once())->method('trans')
-            ->with('unknown_command', ['%command%' => 'UNKNOWN'], 'memoserv', 'en')
+            ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'MemoServ'], 'memoserv', 'en')
             ->willReturn('Unknown command');
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Unknown command', 'NOTICE');
 

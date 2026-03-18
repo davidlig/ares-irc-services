@@ -225,7 +225,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#mychan'], 'chanserv', 'en')
+            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'chanserv', 'en')
             ->willReturn('Channel #mychan is not registered.');
 
         $exception = ChannelNotRegisteredException::forChannel('#mychan');
@@ -254,7 +254,7 @@ final class ChanServCommandListenerTest extends TestCase
         $this->translator
             ->expects(self::once())
             ->method('trans')
-            ->with('error.channel_not_registered', ['%channel%' => '#mychan'], 'chanserv', 'es')
+            ->with('error.channel_not_registered', ['%channel%' => '#mychan', '%bot%' => 'ChanServ'], 'chanserv', 'es')
             ->willReturn('El canal #mychan no está registrado.');
 
         $exception = ChannelNotRegisteredException::forChannel('#mychan');
@@ -281,7 +281,7 @@ final class ChanServCommandListenerTest extends TestCase
             ->method('trans')
             ->with(
                 'error.insufficient_access',
-                ['%operation%' => 'OP', '%channel%' => '#mychan'],
+                ['%operation%' => 'OP', '%channel%' => '#mychan', '%bot%' => 'ChanServ'],
                 'chanserv',
                 'en',
             )
