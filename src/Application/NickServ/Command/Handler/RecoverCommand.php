@@ -169,6 +169,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
             $body = $this->translator->trans('recovery_token_body', [
                 '%nickname%' => $targetNick,
                 '%token%' => $token,
+                '%bot%' => $context->getNotifier()->getNick(),
             ], 'mail', $locale);
             $this->messageBus->dispatch(new SendEmail($email, $subject, $body));
         } catch (Throwable $e) {

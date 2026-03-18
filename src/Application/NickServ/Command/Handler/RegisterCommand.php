@@ -167,7 +167,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         try {
             $locale = $context->getLanguage();
             $subject = $this->translator->trans('register_verification_subject', [], 'mail', $locale);
-            $body = $this->translator->trans('register_verification_body', ['%nickname%' => $nick, '%token%' => $token], 'mail', $locale);
+            $body = $this->translator->trans('register_verification_body', ['%nickname%' => $nick, '%token%' => $token, '%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
             $this->messageBus->dispatch(new SendEmail($email, $subject, $body));
         } catch (Throwable $e) {
             $this->logger->error('NickServ REGISTER: failed to dispatch verification email', [

@@ -191,7 +191,7 @@ final readonly class SendCommand implements MemoServCommandInterface
         }
 
         $language = $recipient->getLanguage();
-        $message = $this->translator->trans('notify.nick_pending', ['%count%' => $unread], 'memoserv', $language);
+        $message = $this->translator->trans('notify.nick_pending', ['%count%' => $unread, '%bot%' => $context->getNotifier()->getNick()], 'memoserv', $language);
         $context->getNotifier()->sendNotice($recipientView->uid, $message);
     }
 

@@ -84,7 +84,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
         try {
             $locale = $context->getLanguage();
             $subject = $this->translator->trans('email_change_token_subject', [], 'mail', $locale);
-            $body = $this->translator->trans('email_change_token_body', ['%new_email%' => $newEmail, '%token%' => $token], 'mail', $locale);
+            $body = $this->translator->trans('email_change_token_body', ['%new_email%' => $newEmail, '%token%' => $token, '%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
             $this->messageBus->dispatch(new SendEmail($currentEmail, $subject, $body));
         } catch (Throwable $e) {
             $this->logger->error('NickServ SET EMAIL: failed to dispatch token email', [

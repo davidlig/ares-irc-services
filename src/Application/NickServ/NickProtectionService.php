@@ -205,10 +205,11 @@ final readonly class NickProtectionService
         }
 
         $language = $account->getLanguage() ?? $this->defaultLanguage;
+        $botName = $this->notifier->getNick();
 
         $warning = $this->translator->trans(
             'protection.nick_in_use',
-            ['%nickname%' => $nick],
+            ['%nickname%' => $nick, '%bot%' => $botName],
             'nickserv',
             $language,
         );
@@ -220,7 +221,7 @@ final readonly class NickProtectionService
 
         $renameMsg = $this->translator->trans(
             'protection.renamed_to',
-            ['%guest_nick%' => $guestNick, '%nickname%' => $nick],
+            ['%guest_nick%' => $guestNick, '%nickname%' => $nick, '%bot%' => $botName],
             'nickserv',
             $language,
         );

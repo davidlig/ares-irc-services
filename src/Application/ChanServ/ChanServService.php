@@ -68,7 +68,7 @@ final readonly class ChanServService implements ChanServDispatchPort
             $messageType = $this->messageTypeResolver->resolve($sender);
             $this->notifier->sendMessage(
                 $sender->uid,
-                $this->translator->trans('unknown_command', ['%command%' => $cmdName], 'chanserv', $this->defaultLanguage),
+                $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'chanserv', $this->defaultLanguage),
                 $messageType
             );
 

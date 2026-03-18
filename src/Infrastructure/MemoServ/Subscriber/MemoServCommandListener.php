@@ -66,7 +66,7 @@ final readonly class MemoServCommandListener implements ServiceCommandListenerIn
         } catch (ChannelNotRegisteredException $e) {
             $messageType = $this->messageTypeResolver->resolve($sender);
             $language = $this->nickRepository->findByNick($sender->nick)?->getLanguage() ?? $this->defaultLanguage;
-            $message = $this->translator->trans('error.channel_not_registered', ['%channel%' => $e->getChannelName()], 'memoserv', $language);
+            $message = $this->translator->trans('error.channel_not_registered', ['%channel%' => $e->getChannelName(), '%bot%' => $this->memoServBot->getNick()], 'memoserv', $language);
             $this->memoServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (InsufficientAccessException $e) {
             $messageType = $this->messageTypeResolver->resolve($sender);
@@ -74,6 +74,7 @@ final readonly class MemoServCommandListener implements ServiceCommandListenerIn
             $message = $this->translator->trans('error.insufficient_access', [
                 '%operation%' => $e->getOperation(),
                 '%channel%' => $e->getChannelName(),
+                '%bot%' => $this->memoServBot->getNick(),
             ], 'memoserv', $language);
             $this->memoServNotifier->sendMessage($sender->uid, $message, $messageType);
         } catch (Throwable $e) {

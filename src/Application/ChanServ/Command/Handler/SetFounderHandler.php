@@ -136,6 +136,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             '%new_nick%' => $newNickname,
             '%token%' => $token,
             '%command%' => $command,
+            '%bot%' => $context->getNotifier()->getNick(),
         ], 'mail', $locale);
 
         try {

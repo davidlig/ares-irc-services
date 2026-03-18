@@ -67,7 +67,7 @@ final readonly class NickServService
             $messageType = $this->messageTypeResolver->resolve($sender);
             $this->notifier->sendMessage(
                 $sender->uid,
-                $this->translator->trans('unknown_command', ['command' => $cmdName], 'nickserv', $this->defaultLanguage),
+                $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'nickserv', $this->defaultLanguage),
                 $messageType
             );
 

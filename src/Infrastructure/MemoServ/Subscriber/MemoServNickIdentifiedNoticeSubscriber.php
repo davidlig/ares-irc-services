@@ -41,7 +41,7 @@ final readonly class MemoServNickIdentifiedNoticeSubscriber implements EventSubs
 
         $account = $this->nickRepository->findById($event->nickId);
         $language = null !== $account ? $account->getLanguage() : $this->defaultLanguage;
-        $message = $this->translator->trans('notify.nick_pending', ['%count%' => $unread], 'memoserv', $language);
+        $message = $this->translator->trans('notify.nick_pending', ['%count%' => $unread, '%bot%' => $this->notifier->getNick()], 'memoserv', $language);
         $this->notifier->sendNotice($event->uid, $message);
     }
 }

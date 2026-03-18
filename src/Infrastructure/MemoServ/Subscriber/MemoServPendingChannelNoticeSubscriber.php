@@ -83,6 +83,7 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
         $message = $this->translator->trans('notify.channel_pending', [
             '%channel%' => $event->channel->value,
             '%count%' => $unread,
+            '%bot%' => $this->notifier->getNick(),
         ], 'memoserv', $language);
         $this->notifier->sendNotice($event->uid->value, $message);
     }
