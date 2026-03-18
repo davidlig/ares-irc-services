@@ -15,6 +15,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Event\ModeReceivedEvent;
@@ -78,6 +79,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
             UserLeftChannelEvent::class => ['onUserLeftChannel', 0],
             NetworkSyncCompleteEvent::class => ['onSyncComplete', 0],
+            ChannelSyncedEvent::class => ['onChannelSynced', -5],
             ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
             ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
             ModeReceivedEvent::class => ['onModeReceived', 255],
@@ -271,6 +273,22 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         foreach ($channels as $channel) {
             $this->syncRanksForChannel($channel);
         }
+    }
+
+    /**
+     * On ChannelSyncedEvent: sync ranks for this channel (handles new channels from SJOIN).
+     * During burst, bots are not introduced yet, so this runs after EOS via NetworkSyncCompleteEvent.
+     * For channels created after burst via SJOIN, this handles SECURE strip for users who joined
+     * with the channel (no UserJoinedChannelEvent dispatched for new channels).
+     */
+    public function onChannelSynced(ChannelSyncedEvent $event): void
+    {
+        $channel = $this->channelRepository->findByChannelName(strtolower($event->channel->name->value));
+        if (null === $channel) {
+            return;
+        }
+
+        $this->syncRanksForChannel($channel);
     }
 
     /**

@@ -19,6 +19,7 @@ use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Event\ModeReceivedEvent;
@@ -129,6 +130,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
                 UserJoinedChannelEvent::class => ['onUserJoinedChannel', 0],
                 UserLeftChannelEvent::class => ['onUserLeftChannel', 0],
                 NetworkSyncCompleteEvent::class => ['onSyncComplete', 0],
+                ChannelSyncedEvent::class => ['onChannelSynced', -5],
                 ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
                 ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
                 ModeReceivedEvent::class => ['onModeReceived', 255],
@@ -2433,5 +2435,72 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $connection = $this->createStub(ConnectionInterface::class);
         $this->subscriber->onSyncComplete(new NetworkSyncCompleteEvent($connection, '001'));
+    }
+
+    #[Test]
+    public function onChannelSyncedWithSecureChannelStripsOpFromUnidentifiedUser(): void
+    {
+        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
+        $channel->method('isSecure')->willReturn(true);
+
+        $coreChannel = new \App\Domain\IRC\Network\Channel(new ChannelName('#test'));
+
+        $view = new ChannelView(
+            name: '#test',
+            modes: '+nt',
+            topic: null,
+            memberCount: 1,
+            members: [
+                ['uid' => '001USER', 'roleLetter' => 'o', 'prefixLetters' => ['o']],
+            ],
+        );
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
+        $sender = new SenderView(
+            uid: '001USER',
+            nick: 'TestUser',
+            ident: '~u',
+            hostname: 'user.example.com',
+            cloakedHost: 'user.example.com',
+            ipBase64: '',
+            isIdentified: false,
+        );
+
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
+        $this->channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($view);
+        $this->modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $this->modeSupportProvider->expects(self::atLeastOnce())->method('getSupport')->willReturn($modeSupport);
+        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $this->userLookup->expects(self::once())->method('findByUid')->with('001USER')->willReturn($sender);
+        $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $this->nickRepository->expects(self::once())->method('findByNick')->with('TestUser')->willReturn(null);
+        $this->accessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $this->levelRepository = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::once())->method('setChannelModes')->with(
+            '#test',
+            '-o',
+            ['001USER'],
+        );
+        $this->rebuildSubscriber();
+
+        $this->subscriber->onChannelSynced(new ChannelSyncedEvent($coreChannel, channelSetupApplicable: true));
+    }
+
+    #[Test]
+    public function onChannelSyncedWhenChannelNotRegisteredDoesNothing(): void
+    {
+        $coreChannel = new \App\Domain\IRC\Network\Channel(new ChannelName('#test'));
+
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(null);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->rebuildSubscriber();
+
+        $this->subscriber->onChannelSynced(new ChannelSyncedEvent($coreChannel, channelSetupApplicable: true));
     }
 }
