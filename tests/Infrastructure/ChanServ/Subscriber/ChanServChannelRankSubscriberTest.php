@@ -2477,8 +2477,8 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->userLookup->expects(self::once())->method('findByUid')->with('001USER')->willReturn($sender);
         $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $this->nickRepository->expects(self::once())->method('findByNick')->with('TestUser')->willReturn(null);
-        $this->accessRepository = $this->createMock(ChannelAccessRepositoryInterface::class);
-        $this->levelRepository = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $this->accessRepository = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $this->levelRepository = $this->createStub(ChannelLevelRepositoryInterface::class);
         $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->channelServiceActions->expects(self::once())->method('setChannelModes')->with(
             '#test',
