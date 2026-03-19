@@ -165,8 +165,24 @@ class ChannelAkick
 
     public static function isSafeMask(string $mask): bool
     {
+        $exclamationPos = strpos($mask, '!');
+        if (false === $exclamationPos) {
+            return false;
+        }
+
+        $nickPart = substr($mask, 0, $exclamationPos);
+        $restMask = substr($mask, $exclamationPos + 1);
+
+        // If nick part has alphanumeric chars, the mask is specific enough to be safe
+        foreach (str_split($nickPart) as $char) {
+            if (ctype_alnum($char)) {
+                return true;
+            }
+        }
+
+        // Nick is only wildcards, check the user@host part for enough alnum chars
         $alnumCount = 0;
-        foreach (str_split($mask) as $char) {
+        foreach (str_split($restMask) as $char) {
             if (ctype_alnum($char)) {
                 ++$alnumCount;
             }

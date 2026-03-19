@@ -175,6 +175,24 @@ final class ChannelAkickTest extends TestCase
     }
 
     #[Test]
+    public function isSafeMaskAcceptsNickSpecificMasks(): void
+    {
+        self::assertTrue(ChannelAkick::isSafeMask('a!*@*'), 'Specific nick: a');
+        self::assertTrue(ChannelAkick::isSafeMask('User!*@*'), 'Specific nick: User');
+        self::assertTrue(ChannelAkick::isSafeMask('nick123!*@*'), 'Specific nick: nick123');
+        self::assertTrue(ChannelAkick::isSafeMask('X!*@*'), 'Specific nick: X');
+        self::assertTrue(ChannelAkick::isSafeMask('*abc*!*@*'), 'Wildcard nick with 3 chars: abc');
+    }
+
+    #[Test]
+    public function isSafeMaskRejectsWildcardNickWithInsufficientHostChars(): void
+    {
+        self::assertFalse(ChannelAkick::isSafeMask('*!*@abc'), '3 chars in host: not enough');
+        self::assertTrue(ChannelAkick::isSafeMask('*!*@host'), '4 chars in host: enough');
+        self::assertTrue(ChannelAkick::isSafeMask('*abc*!*@host'), 'Both nick and host specific enough');
+    }
+
+    #[Test]
     public function isSafeMaskBoundaryCases(): void
     {
         self::assertFalse(ChannelAkick::isSafeMask('*!*@abc'), '3 chars: abc (below minimum)');
