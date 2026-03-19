@@ -560,6 +560,8 @@ services:
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\AkickCommand:
+        arguments:
+            $accessRepository: '@App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Maintenance\PurgeExpiredAkickTask:

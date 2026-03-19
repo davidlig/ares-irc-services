@@ -14,6 +14,7 @@ use App\Domain\ChanServ\Entity\ChannelAkick;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
+use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -22,6 +23,7 @@ use DateTimeImmutable;
 
 use function count;
 use function ctype_digit;
+use function fnmatch;
 use function preg_match;
 use function strtolower;
 use function strtoupper;
@@ -42,6 +44,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelAkickRepositoryInterface $akickRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
+        private ChannelAccessRepositoryInterface $accessRepository,
         private ChanServAccessHelper $accessHelper,
         private ChannelLookupPort $channelLookup,
     ) {
@@ -201,6 +204,13 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         if (!ChannelAkick::isSafeMask($mask)) {
             $context->reply('akick.dangerous_mask', ['%mask%' => $mask]);
+
+            return;
+        }
+
+        $protectedNick = $this->findProtectedUser($channel, $mask);
+        if (null !== $protectedNick) {
+            $context->reply('akick.protected_user', ['%nick%' => $protectedNick]);
 
             return;
         }
@@ -429,5 +439,73 @@ final readonly class AkickCommand implements ChanServCommandInterface
     private function buildUserMask(string $nick, string $ident, string $host): string
     {
         return $nick . '!' . $ident . '@' . $host;
+    }
+
+    /**
+     * Check if the AKICK mask would match any protected user (founder, successor, or access list member).
+     * Returns the nickname of the first protected user that matches, or null if none match.
+     */
+    private function findProtectedUser(RegisteredChannel $channel, string $mask): ?string
+    {
+        $exclamationPos = strpos($mask, '!');
+        if (false === $exclamationPos) {
+            return null;
+        }
+
+        $nickPattern = substr($mask, 0, $exclamationPos);
+
+        // If nick pattern is only wildcards (* or combinations like **), it's not targeting any specific nick
+        // so we should not block it (host-based bans like *!*@*.isp.com should be allowed)
+        $strippedPattern = str_replace('*', '', $nickPattern);
+        if ('' === $strippedPattern) {
+            return null;
+        }
+
+        $protectedNicks = $this->getProtectedNicks($channel);
+
+        foreach ($protectedNicks as $protectedNick) {
+            $testMask = strtolower($protectedNick . '!*@*');
+            $pattern = strtolower($nickPattern . '!*@*');
+
+            if (fnmatch($pattern, $testMask)) {
+                return $protectedNick;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return string[] List of protected nicknames (founder, successor, and access list members)
+     */
+    private function getProtectedNicks(RegisteredChannel $channel): array
+    {
+        $nicks = [];
+
+        // Founder
+        $founder = $this->nickRepository->findById($channel->getFounderNickId());
+        if (null !== $founder) {
+            $nicks[] = $founder->getNickname();
+        }
+
+        // Successor
+        $successorId = $channel->getSuccessorNickId();
+        if (null !== $successorId) {
+            $successor = $this->nickRepository->findById($successorId);
+            if (null !== $successor) {
+                $nicks[] = $successor->getNickname();
+            }
+        }
+
+        // Access list
+        $accessList = $this->accessRepository->listByChannel($channel->getId());
+        foreach ($accessList as $access) {
+            $nick = $this->nickRepository->findById($access->getNickId());
+            if (null !== $nick) {
+                $nicks[] = $nick->getNickname();
+            }
+        }
+
+        return $nicks;
     }
 }

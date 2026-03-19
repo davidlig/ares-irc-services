@@ -277,6 +277,7 @@ akick:
   unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, or ENFORCE."
   invalid_mask:     "\x0304✗\x03 Invalid mask format. Use \x02nick!user@host\x02 with wildcards (*)."
   dangerous_mask:   "\x0304✗\x03 The mask \x02%mask%\x02 is too broad. It must contain at least 4 alphanumeric characters."
+  protected_user:   "\x0304✗\x03 User \x02%nick%\x02 has access in this channel."
   max_entries:      "\x0304✗\x03 Maximum %max% AKICK entries per channel."
   add:
     syntax:         "AKICK <#channel> ADD <mask> [reason] [expiry]"
