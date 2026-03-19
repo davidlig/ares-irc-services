@@ -21,6 +21,59 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 - **Recent commits**: You MUST also **review recent commits** (`git log` or the commit history) to check whether the bug was **introduced in a specific commit**. If the user indicates a commit (e.g. "el bug se introdujo en el commit X"), inspect that commit with `git show <hash>` and base the fix or re-implementation on it. Even when no commit is mentioned, scanning the last few commits touching the affected area can pinpoint regressions.
 - **Workflow**: (1) Read the pertinent `var/log/*.log` entries for the reported scenario. (2) If a commit is mentioned or the bug looks like a regression, review the relevant commit(s) with `git show` / `git log`. (3) Correlate log lines and diff with the user's description. (4) Form a hypothesis and then search the codebase or implement the fix. Do **not** skip log review when debugging reported errors.
 
+### 1.3 Test Coverage (CRITICAL — NON-NEGOTIABLE)
+
+**100% test coverage is MANDATORY for ALL new code. There are NO exceptions.**
+
+#### When writing new code or modifying existing code:
+
+1. **Every new class MUST have tests** with `#[CoversClass(ClassName::class)]` attribute
+2. **Every public method MUST have at least one test** covering the happy path
+3. **Every branch/condition MUST be tested** — if-statements, early returns, edge cases, null checks
+4. **Run coverage BEFORE claiming a task is complete**:
+   ```bash
+   ./vendor/bin/phpunit --coverage-text --coverage-filter=src
+   ```
+5. **Verify these metrics BEFORE committing**:
+   - Classes: 100%
+   - Methods: 100%
+   - Lines: ≥99.9%
+
+#### Test writing workflow (MANDATORY):
+
+1. **After implementing new code**, immediately create its test file
+2. **Run tests with strict mode** to catch warnings/deprecations:
+   ```bash
+   ./vendor/bin/phpunit --no-coverage --display-all-issues
+   ```
+3. **Generate coverage report** and identify uncovered lines:
+   ```bash
+   ./vendor/bin/phpunit --coverage-text --coverage-filter=src
+   ```
+4. **Check `var/coverage/clover.xml`** for `<line num="X" type="stmt" count="0"/>` entries
+5. **Add tests until ALL branches/lines are covered**
+
+#### Test quality requirements:
+
+- **Use `createStub()`** for dependencies that only provide values (no behavior verification)
+- **Use `createMock()` with `expects()`** ONLY when verifying method calls
+- **NEVER use `#[AllowMockObjectsWithoutExpectations]` or `#[DoesNotPerformAssertions]`** to silence warnings
+- **Integration tests** for repositories use `KernelTestCase` and SQLite in-memory database
+- **All tests MUST pass with ZERO warnings, ZERO skipped, ZERO deprecated**
+
+#### If coverage is below 100%:
+
+- **DO NOT commit** — fix the missing tests first
+- Check for missing edge cases: null values, empty arrays, early returns, exception paths
+- Ensure all `if` branches have corresponding tests
+- Run `grep "count=\"0\"" var/coverage/clover.xml` to find uncovered lines quickly
+
+#### Reference files:
+
+- Unit test pattern: `tests/Application/NickServ/RegisterThrottleRegistryTest.php`
+- Integration test pattern: `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php`
+- Coverage documentation: `.agents/testing/testing-coverage-priorities.md`
+
 ---
 
 ## PART 2: ARCHITECTURE & CODING STANDARDS
