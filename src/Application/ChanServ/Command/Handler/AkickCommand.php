@@ -260,7 +260,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         $context->reply('akick.add.done', ['%mask%' => $mask]);
 
-        $noticeReason = $reason ?? 'No reason';
+        $noticeReason = null === $reason ? $context->trans('akick.list.no_reason') : $reason;
         $channelNotice = $context->trans('akick.add.notice_channel', [
             '%from%' => $context->sender->nick,
             '%mask%' => $mask,
