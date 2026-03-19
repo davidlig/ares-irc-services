@@ -36,7 +36,9 @@ final readonly class IdentifiedUserVhostSyncService
     public function syncVhostForUser(SenderView $user): void
     {
         if (!$user->isIdentified) {
-            $this->notifier->setUserVhost($user->uid, '', $user->serverSid);
+            if ($user->displayHost !== $user->cloakedHost) {
+                $this->notifier->setUserVhost($user->uid, '', $user->serverSid);
+            }
 
             return;
         }

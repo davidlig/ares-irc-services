@@ -20,13 +20,25 @@ use Psr\Log\LoggerInterface;
 final class IdentifiedUserVhostSyncServiceTest extends TestCase
 {
     #[Test]
-    public function syncVhostForUserClearsVhostWhenNotIdentified(): void
+    public function syncVhostForUserClearsVhostWhenNotIdentifiedAndVhostActive(): void
     {
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())
             ->method('setUserVhost')
             ->with('UID1', '', 'SID');
-        $user = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip', false, false, 'SID');
+        $user = new SenderView('UID1', 'Nick', 'i', 'h', 'Cloak123', 'ip', false, false, 'SID', 'Vhost123');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver());
+        $service->syncVhostForUser($user);
+    }
+
+    #[Test]
+    public function syncVhostForUserDoesNotClearVhostWhenNotIdentifiedAndNoVhost(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+        $user = new SenderView('UID1', 'Nick', 'i', 'h', 'Cloak123', 'ip', false, false, 'SID', 'Cloak123');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
 
         $service = new IdentifiedUserVhostSyncService($repo, $notifier, new VhostDisplayResolver());
