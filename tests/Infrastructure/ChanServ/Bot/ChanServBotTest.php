@@ -600,4 +600,31 @@ final class ChanServBotTest extends TestCase
 
         $this->bot->sendNotice('001USER', 'Test message');
     }
+
+    #[Test]
+    public function kickFromChannelWhenModuleNullReturnsEarly(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('kickFromChannel');
+
+        $this->bot->kickFromChannel('#channel', '001USER', 'Test reason');
+    }
+
+    #[Test]
+    public function kickFromChannelWithModuleDelegates(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('kickFromChannel')
+            ->with('001', '#channel', '001USER', 'Test reason', self::CHANSERV_UID);
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        $this->connectionHolder->setProtocolModule($module);
+
+        $this->bot->kickFromChannel('#channel', '001USER', 'Test reason');
+    }
 }

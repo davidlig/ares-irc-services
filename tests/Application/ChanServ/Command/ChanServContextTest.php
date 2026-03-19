@@ -10,6 +10,7 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use DateTime;
@@ -44,6 +45,7 @@ final class ChanServContextTest extends TestCase
             new ChanServCommandRegistry([]),
             $channelLookup ?? $this->createStub(ChannelLookupPort::class),
             $modeSupport ?? new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 
@@ -198,6 +200,7 @@ final class ChanServContextTest extends TestCase
             $registry,
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         self::assertSame($registry, $context->getRegistry());
@@ -222,11 +225,35 @@ final class ChanServContextTest extends TestCase
             new ChanServCommandRegistry([]),
             $lookup,
             $modeSupport,
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         self::assertSame($notifier, $context->getNotifier());
         self::assertSame($lookup, $context->getChannelLookup());
         self::assertSame($modeSupport, $context->getChannelModeSupport());
+    }
+
+    #[Test]
+    public function getUserLookupReturnsInjectedInstance(): void
+    {
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $context = new ChanServContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            null,
+            'INFO',
+            [],
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $this->createStub(ChannelLookupPort::class),
+            new NullChannelModeSupport(),
+            $userLookup,
+        );
+
+        self::assertSame($userLookup, $context->getUserLookup());
     }
 
     #[Test]

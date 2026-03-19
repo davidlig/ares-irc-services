@@ -26,11 +26,11 @@ Reports are generated in `var/coverage/` (HTML and Clover) as per `phpunit.dist.
 
 ## Summary
 
-- **Suite:** 2211 tests, 6536 assertions.
-- **Coverage (with PCOV):** Classes 100.00%, Methods 100.00%, Lines 100.00% (2026-03-15).
+- **Suite:** 2579 tests, 7309 assertions.
+- **Coverage (with PCOV):** Classes 100.00% (277/277), Methods 100.00% (1617/1617), Lines 99.99% (7235/7236) (2026-03-19).
 - **Excluded from coverage:** `src/Kernel.php` (Symfony bootstrap).
 - **PHPUnit Issues:** 0 notices, 0 warnings, 0 skipped, 0 deprecations. STRICT ENFORCEMENT is active. No exceptions allowed.
-- **Coverage by Layer (2026-03-15):** Domain 100%, Application 100%, Infrastructure 100%, UI 100%.
+- **Coverage by Layer (2026-03-19):** Domain 100%, Application 100%, Infrastructure 100%, UI 100%.
 
 ### Remaining Uncovered Lines
 
@@ -78,6 +78,11 @@ None. All code is covered. Previously uncovered defensive code blocks have been 
 | **SetCommand** | 93% | 100% | 3 tests (FOUNDER option, empty value) |
 | **SetEmailHandler (ChanServ)** | 95% | 100% | 2 tests (empty email, complex valid) |
 | **ChanServContext** | 95% | 100% | 2 tests (empty params) |
+| **ChanServContext::getUserLookup** | 93.75% | 100% | 1 test (getUserLookup returns injected) |
+| **ChanServBot::kickFromChannel** | 93.75% | 100% | 2 tests (module null, delegates to service actions) |
+| **InspIRCdProtocolServiceActions** | 91.67% | 100% | 2 tests (kickFromChannel with/without serviceUid) |
+| **UnrealIRCdProtocolServiceActions** | 91.67% | 100% | 2 tests (kickFromChannel with/without serviceUid) |
+| **ChannelAkickDoctrineRepository** | 0% | 100% | 20 tests (all repository methods) |
 | **NickServService** | 94% | 100% | 1 test (finally clears context) |
 | **IdentifiedUserVhostSyncService** | 94% | 100% | 3 tests (unregistered, empty vhost) |
 | **MemoServService** | 99% | 100% | 2 tests (account language/timezone) |

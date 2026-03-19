@@ -192,6 +192,28 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
+    public function kickFromChannelSendsKickCommand(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->kickFromChannel('001', '#test', '001ABCD', 'Kicked for abuse', '001CSRV');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001CSRV KICK #test 001ABCD :Kicked for abuse', $this->written[0]);
+    }
+
+    #[Test]
+    public function kickFromChannelUsesServerSidWhenServiceUidEmpty(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->kickFromChannel('001', '#test', '001ABCD', 'reason');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 KICK #test 001ABCD :reason', $this->written[0]);
+    }
+
+    #[Test]
     public function methodsDoNothingWhenDisconnected(): void
     {
         $connectionHolder = new ActiveConnectionHolder();
