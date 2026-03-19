@@ -40,6 +40,14 @@ final class ChannelAkickTest extends TestCase
     }
 
     #[Test]
+    public function createWithEmptyStringReasonSetsNull(): void
+    {
+        $akick = ChannelAkick::create(1, 2, '*!*@host.com', '');
+
+        self::assertNull($akick->getReason());
+    }
+
+    #[Test]
     public function isExpiredReturnsTrueWhenExpired(): void
     {
         $akick = ChannelAkick::create(1, 2, '*!*@host.com', null, new DateTimeImmutable('-1 day'));
@@ -199,5 +207,13 @@ final class ChannelAkickTest extends TestCase
         self::assertTrue(ChannelAkick::isSafeMask('*!*@abcd'), '4 chars: abcd (at minimum)');
         self::assertTrue(ChannelAkick::isSafeMask('*!*@abcde'), '5 chars: abcde (above minimum)');
         self::assertFalse(ChannelAkick::isSafeMask('*!*@*abc*'), '3 chars: abc (below minimum)');
+    }
+
+    #[Test]
+    public function isSafeMaskRejectsMaskWithoutExclamation(): void
+    {
+        self::assertFalse(ChannelAkick::isSafeMask('invalid'), 'No exclamation mark');
+        self::assertFalse(ChannelAkick::isSafeMask('*@host.com'), 'No exclamation mark');
+        self::assertFalse(ChannelAkick::isSafeMask(''), 'Empty string');
     }
 }
