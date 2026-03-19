@@ -9,6 +9,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\LevelsCommand;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -46,6 +47,7 @@ final class LevelsCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

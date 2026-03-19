@@ -47,6 +47,7 @@ final class VoiceCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 
@@ -142,6 +143,7 @@ final class VoiceCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $cmd = new VoiceCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
@@ -183,6 +185,7 @@ final class VoiceCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $cmd = new VoiceCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);

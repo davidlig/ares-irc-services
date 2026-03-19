@@ -11,6 +11,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
@@ -118,6 +119,7 @@ final class ChanServServiceTest extends TestCase
             $translator,
             $channelLookup,
             $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
             'en',
             'UTC',
             $logger,
@@ -154,6 +156,7 @@ final class ChanServServiceTest extends TestCase
             $translator,
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
             'en',
             'UTC',
             $this->createStub(LoggerInterface::class),
@@ -178,6 +181,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $service->dispatch('   ', $sender);
@@ -269,6 +273,7 @@ final class ChanServServiceTest extends TestCase
             $translator,
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -367,6 +372,7 @@ final class ChanServServiceTest extends TestCase
             $translator,
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $service->dispatch('NEEDID', $sender);
@@ -462,6 +468,7 @@ final class ChanServServiceTest extends TestCase
             $translator,
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $service->dispatch('TWOARGS onlyone', $sender);
@@ -553,6 +560,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
             'en',
             'UTC',
             $logger,
@@ -643,6 +651,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
             'en',
             'UTC',
             $logger,
@@ -732,6 +741,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
             'en',
             'UTC',
             $logger,
@@ -821,6 +831,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
             'en',
             'UTC',
             $logger,

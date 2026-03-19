@@ -13,6 +13,7 @@ use App\Application\ChanServ\Service\MlockStateFromChannelResolver;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -45,6 +46,7 @@ final class SetMlockHandlerTest extends TestCase
             new ChanServCommandRegistry([]),
             $channelLookup ?? $this->createStub(ChannelLookupPort::class),
             $modeSupport ?? new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

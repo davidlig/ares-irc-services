@@ -29,4 +29,13 @@ interface ChannelServiceActionsPort
      * Set or clear the channel topic. Null = clear topic.
      */
     public function setChannelTopic(string $channelName, ?string $topic): void;
+
+    /**
+     * Kick a user from a channel.
+     *
+     * @param string $channelName Channel name (e.g., #channel)
+     * @param string $targetUid   Target user's UID
+     * @param string $reason      Kick reason shown to the user
+     */
+    public function kickFromChannel(string $channelName, string $targetUid, string $reason): void;
 }

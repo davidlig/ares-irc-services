@@ -46,4 +46,15 @@ interface ProtocolServiceActionsInterface
      * Set or clear the channel topic. Null = clear. Source of the TOPIC line is $serviceUid when non-empty.
      */
     public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = ''): void;
+
+    /**
+     * Kick a user from a channel. Source is $serviceUid when non-empty.
+     *
+     * @param string $serverSid   Server SID (source of the KICK command)
+     * @param string $channelName Channel name (e.g., #channel)
+     * @param string $targetUid   Target user's UID
+     * @param string $reason      Kick reason
+     * @param string $serviceUid  Optional service UID as source (e.g., ChanServ's UID)
+     */
+    public function kickFromChannel(string $serverSid, string $channelName, string $targetUid, string $reason, string $serviceUid = ''): void;
 }

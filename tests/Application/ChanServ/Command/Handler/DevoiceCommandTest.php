@@ -47,6 +47,7 @@ final class DevoiceCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

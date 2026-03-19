@@ -29,6 +29,15 @@ interface ChanServNotifierInterface
     public function joinChannelAsService(string $channelName, ?int $channelTimestamp = null): void;
 
     /**
+     * Kick a user from a channel.
+     *
+     * @param string $channelName Channel name (e.g., #channel)
+     * @param string $targetUid   Target user's UID
+     * @param string $reason      Kick reason shown to the user
+     */
+    public function kickFromChannel(string $channelName, string $targetUid, string $reason): void;
+
+    /**
      * Get the bot's nickname.
      */
     public function getNick(): string;

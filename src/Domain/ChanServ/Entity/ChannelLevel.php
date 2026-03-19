@@ -52,6 +52,9 @@ class ChannelLevel
     /** MemoServ: delete/change memos in channel (default 300). */
     public const string KEY_MEMOCHANGE = 'MEMOCHANGE';
 
+    /** ChanServ: manage AKICK list (default 450). */
+    public const string KEY_AKICK = 'AKICK';
+
     /** Default values per key (used on LEVELS RESET and new channel). */
     public const array DEFAULTS = [
         self::KEY_AUTOADMIN => 400,
@@ -68,6 +71,7 @@ class ChannelLevel
         self::KEY_ACCESSCHANGE => 499,
         self::KEY_MEMOREAD => 200,
         self::KEY_MEMOCHANGE => 300,
+        self::KEY_AKICK => 450,
     ];
 
     private int $channelId;

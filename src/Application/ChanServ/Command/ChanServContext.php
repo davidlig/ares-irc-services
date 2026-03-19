@@ -7,6 +7,7 @@ namespace App\Application\ChanServ\Command;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
@@ -34,6 +35,7 @@ readonly class ChanServContext
         private readonly ChanServCommandRegistry $registry,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ChannelModeSupportInterface $channelModeSupport,
+        private readonly NetworkUserLookupPort $userLookup,
     ) {
     }
 
@@ -106,6 +108,11 @@ readonly class ChanServContext
     public function getChannelView(string $channelName): ?ChannelView
     {
         return $this->channelLookup->findByChannelName($channelName);
+    }
+
+    public function getUserLookup(): NetworkUserLookupPort
+    {
+        return $this->userLookup;
     }
 
     /**

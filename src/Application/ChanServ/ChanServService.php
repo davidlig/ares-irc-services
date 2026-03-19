@@ -10,6 +10,7 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChanServDispatchPort;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
@@ -42,6 +43,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         private TranslatorInterface $translator,
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        private NetworkUserLookupPort $userLookup,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -94,6 +96,7 @@ final readonly class ChanServService implements ChanServDispatchPort
             registry: $this->commandRegistry,
             channelLookup: $this->channelLookup,
             channelModeSupport: $modeSupport,
+            userLookup: $this->userLookup,
         );
 
         try {

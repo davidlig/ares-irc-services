@@ -11,6 +11,7 @@ use App\Application\ChanServ\Command\Handler\SetFounderHandler;
 use App\Application\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -52,6 +53,7 @@ final class SetFounderHandlerTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

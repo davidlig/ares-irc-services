@@ -11,6 +11,7 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\HelpFormatterContextAdapter;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -40,6 +41,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $registry,
             $this->createStub(ChannelLookupPort::class),
             $channelModeSupport ?? new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 
@@ -436,6 +438,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $registry,
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
         $adapter = new HelpFormatterContextAdapter($context);
 

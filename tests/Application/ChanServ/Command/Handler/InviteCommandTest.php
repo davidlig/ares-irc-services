@@ -10,6 +10,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\InviteCommand;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
@@ -45,6 +46,7 @@ final class InviteCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

@@ -21,6 +21,7 @@ use App\Application\ChanServ\Command\Handler\SetUrlHandler;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
 use App\Application\ChanServ\Service\MlockStateFromChannelResolver;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -59,6 +60,7 @@ final class SetCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

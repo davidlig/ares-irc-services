@@ -194,6 +194,15 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         }
     }
 
+    public function kickFromChannel(string $channelName, string $targetUid, string $reason): void
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+        $sid = $this->connectionHolder->getServerSid() ?? '';
+        if (null !== $module && '' !== $sid) {
+            $module->getServiceActions()->kickFromChannel($sid, $channelName, $targetUid, $reason, $this->chanservUid);
+        }
+    }
+
     private function writeToConnection(string $line): bool
     {
         if (!$this->connectionHolder->isConnected()) {

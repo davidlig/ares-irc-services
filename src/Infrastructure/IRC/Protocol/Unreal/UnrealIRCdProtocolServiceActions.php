@@ -82,6 +82,12 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         $this->write(sprintf(':%s TOPIC %s%s', $prefix, $channelName, $trailing));
     }
 
+    public function kickFromChannel(string $serverSid, string $channelName, string $targetUid, string $reason, string $serviceUid = ''): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $this->write(sprintf(':%s KICK %s %s :%s', $prefix, $channelName, $targetUid, $reason));
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

@@ -51,6 +51,7 @@ final class AdminCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             $modeSupport,
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

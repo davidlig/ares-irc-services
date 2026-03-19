@@ -11,6 +11,7 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\RegisterCommand;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -46,6 +47,7 @@ final class RegisterCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $channelLookup,
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

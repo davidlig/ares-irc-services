@@ -47,6 +47,7 @@ final class DehalfopCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new UnrealIRCdChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 
@@ -131,6 +132,7 @@ final class DehalfopCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             $modeSupport,
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $messages = [];
@@ -163,6 +165,7 @@ final class DehalfopCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             $modeSupport,
+            $this->createStub(NetworkUserLookupPort::class),
         ));
 
         self::assertSame(['halfop.not_supported'], $messages);

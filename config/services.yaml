@@ -21,6 +21,7 @@ parameters:
 
     # Maintenance scheduler
     maintenance.interval: '%env(int:MAINTENANCE_INTERVAL)%'
+    maintenance.purge_expired_akick_interval: '%env(int:MAINTENANCE_INTERVAL)%'
 
     # NickServ pseudo-client
     nickserv.nick:     '%env(NICKSERV_NICK)%'
@@ -487,7 +488,8 @@ services:
         arguments:
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
-            $logger:          '@monolog.logger.irc'
+            $logger: '@monolog.logger.irc'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
 
     App\Application\ChanServ\Command\ChanServCommandRegistry:
         arguments:
@@ -556,6 +558,25 @@ services:
 
     App\Application\ChanServ\Command\Handler\DehalfopCommand:
         tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\AkickCommand:
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Maintenance\PurgeExpiredAkickTask:
+        arguments:
+            $intervalSeconds: '%maintenance.purge_expired_akick_interval%'
+            $logger: '@monolog.logger.irc'
+        tags: ['maintenance.task']
+
+    App\Infrastructure\ChanServ\Doctrine\ChannelAkickDoctrineRepository: ~
+
+    App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface:
+        '@App\Infrastructure\ChanServ\Doctrine\ChannelAkickDoctrineRepository'
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServAkickEnforceSubscriber:
+        arguments:
+            $chanservNick: '%chanserv.nick%'
+            $logger: '@monolog.logger.irc'
 
     # --- MemoServ Service -------------------------------------------------------
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\ChanServ\Entity\ChannelAkick" table="channel_akick">
+        <indexes>
+            <index name="idx_channel_akick_channel_id" columns="channel_id"/>
+            <index name="idx_channel_akick_creator_nick_id" columns="creator_nick_id"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="channelId" type="integer" column="channel_id"/>
+        <field name="creatorNickId" type="integer" column="creator_nick_id"/>
+        <field name="mask" type="string" column="mask" length="255"/>
+        <field name="reason" type="string" column="reason" length="255" nullable="true"/>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+        <field name="expiresAt" type="datetime_immutable" column="expires_at" nullable="true"/>
+    </entity>
+</doctrine-mapping>

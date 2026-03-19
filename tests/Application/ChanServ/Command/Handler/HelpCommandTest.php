@@ -10,6 +10,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\HelpCommand;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
@@ -40,6 +41,7 @@ final class HelpCommandTest extends TestCase
             $registry,
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 

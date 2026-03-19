@@ -47,6 +47,7 @@ final class HalfopCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new UnrealIRCdChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
     }
 
@@ -146,6 +147,7 @@ final class HalfopCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new \App\Infrastructure\IRC\Protocol\NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
@@ -181,6 +183,7 @@ final class HalfopCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new UnrealIRCdChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
@@ -222,6 +225,7 @@ final class HalfopCommandTest extends TestCase
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
             new UnrealIRCdChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
         );
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
