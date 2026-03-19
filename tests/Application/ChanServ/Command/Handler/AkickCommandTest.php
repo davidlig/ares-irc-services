@@ -1847,4 +1847,53 @@ final class AkickCommandTest extends TestCase
         self::assertNotNull($saved);
         self::assertSame('*!*@*.isp.com', $saved->getMask());
     }
+
+    #[Test]
+    public function addWithSpecificNickNotMatchingProtectedUserSucceeds(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $founderNick = $this->createStub(RegisteredNick::class);
+        $founderNick->method('getNickname')->willReturn('Founder');
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturnMap([[1, $founderNick]]);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('countByChannel')->willReturn(0);
+        $akickRepo->method('findByChannelAndMask')->willReturn(null);
+
+        $saved = null;
+        $akickRepo->method('save')->willReturnCallback(static function (ChannelAkick $entity) use (&$saved): void {
+            $saved = $entity;
+        });
+
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('listByChannel')->willReturn([]);
+
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('setChannelModes')->willReturnCallback(static function (): void {
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'SpammerBot!*@*.evil.com', 'Bad bot'], $notifier, $translator));
+
+        self::assertSame(['akick.add.done'], $messages);
+        self::assertNotNull($saved);
+        self::assertSame('SpammerBot!*@*.evil.com', $saved->getMask());
+    }
 }

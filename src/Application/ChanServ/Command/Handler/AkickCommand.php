@@ -448,9 +448,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
     private function findProtectedUser(RegisteredChannel $channel, string $mask): ?string
     {
         $exclamationPos = strpos($mask, '!');
-        if (false === $exclamationPos) {
-            return null;
-        }
 
         $nickPattern = substr($mask, 0, $exclamationPos);
 
