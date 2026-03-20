@@ -161,11 +161,13 @@ final class RegisterThrottleRegistryTest extends TestCase
     {
         $registry = new RegisterThrottleRegistry();
         $registry->recordAttempt('old');
-        sleep(2);
+        sleep(1);
         $registry->recordAttempt('fresh');
-        $removed = $registry->pruneExpiredCooldowns(1);
-        self::assertSame(1, $removed);
-        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('fresh'));
+        sleep(3);
+        $removed = $registry->pruneExpiredCooldowns(2);
+        self::assertSame(2, $removed, 'Both entries should be pruned after 3+ seconds');
+        self::assertNull($registry->getLastAttemptAt('old'));
+        self::assertNull($registry->getLastAttemptAt('fresh'));
     }
 
     #[Test]
