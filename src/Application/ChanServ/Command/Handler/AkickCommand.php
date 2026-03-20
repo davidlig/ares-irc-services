@@ -378,7 +378,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
     private function parseExpiry(string $expiryStr): ?DateTimeImmutable
     {
         $expiryStr = strtolower(trim($expiryStr));
-        if ('' === $expiryStr || 'never' === $expiryStr || '0' === $expiryStr) {
+        if ('' === $expiryStr || '0' === $expiryStr) {
             return null;
         }
 
