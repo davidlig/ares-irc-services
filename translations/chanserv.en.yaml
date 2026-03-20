@@ -172,7 +172,8 @@ access:
     short:          "List access list (requires ACCESSLIST level)."
     help:           "Shows nickname and level for each entry."
     header:         "\x0303Access list for \x02%channel%\x02\x03"
-    empty:          "  (empty)"
+    empty:          "\x0307ℹ\x03 Channel \x02%channel%\x02 has no access entries."
+    entry:          "  #%index%: %nick% (level %level%)"
   add:
     syntax:         "ACCESS <#channel> ADD <nickname> <level>"
     short:          "Add or update access level (requires ACCESSCHANGE level)."

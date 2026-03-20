@@ -172,7 +172,8 @@ access:
     short:          "Listar lista de acceso (requiere nivel ACCESSLIST)."
     help:           "Muestra nick y nivel de cada entrada."
     header:         "\x0303Lista de acceso de \x02%channel%\x02\x03"
-    empty:          "  (vacía)"
+    empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no tiene entradas de acceso."
+    entry:          "  #%index%: %nick% (nivel %level%)"
   add:
     syntax:         "ACCESS <#canal> ADD <nick> <nivel>"
     short:          "Añadir o actualizar nivel (requiere nivel ACCESSCHANGE)."

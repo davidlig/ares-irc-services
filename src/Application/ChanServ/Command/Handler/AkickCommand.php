@@ -170,14 +170,13 @@ final readonly class AkickCommand implements ChanServCommandInterface
                 ? $context->formatDate($akick->getExpiresAt())
                 : $context->trans('akick.list.never_expires');
 
-            $context->replyRaw(sprintf(
-                '  #%d %s %s (por %s, expira: %s)',
-                $num,
-                "\x0304" . $akick->getMask() . "\x03",
-                $reason,
-                $creatorName,
-                $expires
-            ));
+            $context->reply('akick.list.entry', [
+                '%index%' => (string) $num,
+                '%mask%' => sprintf("\x0304%s\x03", $akick->getMask()),
+                '%reason%' => $reason,
+                '%nick%' => $creatorName,
+                '%expiration%' => $expires,
+            ]);
             ++$num;
         }
     }

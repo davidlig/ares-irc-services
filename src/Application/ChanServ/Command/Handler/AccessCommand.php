@@ -130,19 +130,24 @@ final readonly class AccessCommand implements ChanServCommandInterface
         $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_ACCESSLIST, $channelName, 'ACCESS LIST');
 
         $entries = $this->accessRepository->listByChannel($channel->getId());
-        $context->reply('access.list.header', ['%channel%' => $channelName]);
 
         if ([] === $entries) {
-            $context->replyRaw('  (vacía)');
+            $context->reply('access.list.empty', ['%channel%' => $channelName]);
 
             return;
         }
+
+        $context->reply('access.list.header', ['%channel%' => $channelName]);
 
         $num = 1;
         foreach ($entries as $access) {
             $nick = $this->nickRepository->findById($access->getNickId());
             $nickName = null !== $nick ? $nick->getNickname() : (string) $access->getNickId();
-            $context->replyRaw('  #' . $num . ' ' . $nickName . ' ' . $access->getLevel());
+            $context->reply('access.list.entry', [
+                '%index%' => (string) $num,
+                '%nick%' => $nickName,
+                '%level%' => (string) $access->getLevel(),
+            ]);
             ++$num;
         }
     }

@@ -168,12 +168,12 @@ final class AccessCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
         $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['access.list.header', '  (vacía)'], $messages);
+        self::assertSame(['access.list.empty{"%bot%":"","%channel%":"#test"}'], $messages);
     }
 
     #[Test]
@@ -201,12 +201,16 @@ final class AccessCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
         $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['access.list.header', '  #1 NickTen 100', '  #2 NickTwenty 50'], $messages);
+        self::assertSame([
+            'access.list.header{"%bot%":"","%channel%":"#test"}',
+            'access.list.entry{"%bot%":"","%index%":"1","%nick%":"NickTen","%level%":"100"}',
+            'access.list.entry{"%bot%":"","%index%":"2","%nick%":"NickTwenty","%level%":"50"}',
+        ], $messages);
     }
 
     #[Test]

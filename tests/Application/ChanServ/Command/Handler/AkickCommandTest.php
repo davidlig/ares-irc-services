@@ -507,7 +507,7 @@ final class AkickCommandTest extends TestCase
         self::assertStringContainsString('akick.list.header', $messages[0]);
         self::assertStringContainsString('*!*@one.com', $messages[1]);
         self::assertStringContainsString('*!*@two.com', $messages[2]);
-        self::assertMatchesRegularExpression('/#\d+ /', $messages[1], 'Entry should start with #N');
+        self::assertStringContainsString('"%index%":"1"', $messages[1], 'Entry should contain index 1');
     }
 
     #[Test]
