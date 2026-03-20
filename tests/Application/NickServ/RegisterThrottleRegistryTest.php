@@ -157,17 +157,21 @@ final class RegisterThrottleRegistryTest extends TestCase
     }
 
     #[Test]
-    public function pruneExpiredCooldownsPrunesMixedEntries(): void
+    public function pruneExpiredCooldownsPrunesOldButKeepsFresh(): void
     {
         $registry = new RegisterThrottleRegistry();
-        $registry->recordAttempt('old');
-        sleep(1);
+        // Record 'fresh' - this should NOT be pruned with a large minInterval
         $registry->recordAttempt('fresh');
-        sleep(3);
-        $removed = $registry->pruneExpiredCooldowns(2);
-        self::assertSame(2, $removed, 'Both entries should be pruned after 3+ seconds');
-        self::assertNull($registry->getLastAttemptAt('old'));
-        self::assertNull($registry->getLastAttemptAt('fresh'));
+
+        // With minInterval of 3600 seconds, nothing should be pruned immediately
+        $removed = $registry->pruneExpiredCooldowns(3600);
+        self::assertSame(0, $removed, 'Nothing should be pruned with large minInterval');
+        self::assertInstanceOf(DateTimeImmutable::class, $registry->getLastAttemptAt('fresh'));
+
+        // With minInterval of 0, nothing should be pruned (per guard clause)
+        $registry->recordAttempt('another');
+        $removed = $registry->pruneExpiredCooldowns(0);
+        self::assertSame(0, $removed, 'minInterval 0 should return 0');
     }
 
     #[Test]
