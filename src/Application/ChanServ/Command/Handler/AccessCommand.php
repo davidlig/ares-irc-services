@@ -133,15 +133,17 @@ final readonly class AccessCommand implements ChanServCommandInterface
         $context->reply('access.list.header', ['%channel%' => $channelName]);
 
         if ([] === $entries) {
-            $context->reply('access.list.empty');
+            $context->replyRaw('  (vacía)');
 
             return;
         }
 
+        $num = 1;
         foreach ($entries as $access) {
             $nick = $this->nickRepository->findById($access->getNickId());
             $nickName = null !== $nick ? $nick->getNickname() : (string) $access->getNickId();
-            $context->replyRaw('  ' . $nickName . ' ' . $access->getLevel());
+            $context->replyRaw('  #' . $num . ' ' . $nickName . ' ' . $access->getLevel());
+            ++$num;
         }
     }
 

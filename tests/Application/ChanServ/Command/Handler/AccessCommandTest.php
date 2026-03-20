@@ -173,7 +173,7 @@ final class AccessCommandTest extends TestCase
         $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['access.list.header', 'access.list.empty'], $messages);
+        self::assertSame(['access.list.header', '  (vacía)'], $messages);
     }
 
     #[Test]
@@ -206,7 +206,7 @@ final class AccessCommandTest extends TestCase
         $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
-        self::assertSame(['access.list.header', '  NickTen 100', '  NickTwenty 50'], $messages);
+        self::assertSame(['access.list.header', '  #1 NickTen 100', '  #2 NickTwenty 50'], $messages);
     }
 
     #[Test]
