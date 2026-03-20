@@ -233,16 +233,28 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $expiresAt = null;
         $reason = null;
 
+        // Check if args[3] looks like a valid expiry (0, or \d+[dhm])
+        // If it does, use it as expiry and args[4+] as reason
+        // Otherwise, use args[3+] as reason (permanent AKICK)
         if (count($context->args) >= 4) {
             $expiryStr = trim($context->args[3]);
-            $expiresAt = $this->parseExpiry($expiryStr);
-        }
+            if ($this->isValidExpiry($expiryStr)) {
+                $expiresAt = $this->parseExpiry($expiryStr);
 
-        if (count($context->args) >= 5) {
-            $reasonParts = array_slice($context->args, 4);
-            $reason = trim(implode(' ', $reasonParts));
-            if ('' === $reason) {
-                $reason = null;
+                if (count($context->args) >= 5) {
+                    $reasonParts = array_slice($context->args, 4);
+                    $reason = trim(implode(' ', $reasonParts));
+                    if ('' === $reason) {
+                        $reason = null;
+                    }
+                }
+            } else {
+                // args[3] is not a valid expiry, so it's the start of the reason
+                $reasonParts = array_slice($context->args, 3);
+                $reason = trim(implode(' ', $reasonParts));
+                if ('' === $reason) {
+                    $reason = null;
+                }
             }
         }
 
@@ -373,6 +385,16 @@ final readonly class AkickCommand implements ChanServCommandInterface
         }
 
         return $this->akickRepository->findByChannelAndMask($channelId, $item);
+    }
+
+    private function isValidExpiry(string $expiryStr): bool
+    {
+        $expiryStr = strtolower(trim($expiryStr));
+        if ('' === $expiryStr || '0' === $expiryStr) {
+            return true;
+        }
+
+        return (bool) preg_match('/^\d+[dhm]$/', $expiryStr);
     }
 
     private function parseExpiry(string $expiryStr): ?DateTimeImmutable

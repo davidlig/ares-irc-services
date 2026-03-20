@@ -1235,7 +1235,7 @@ final class AkickCommandTest extends TestCase
     }
 
     #[Test]
-    public function addWithInvalidExpiryFormatCreatesPermanentAkick(): void
+    public function addWithInvalidExpiryFormatTreatsItAsReason(): void
     {
         $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
         $account = $this->createStub(RegisteredNick::class);
@@ -1269,7 +1269,86 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'invalid', 'Reason'], $notifier, $translator));
 
         self::assertNotNull($saved);
+        self::assertNull($saved->getExpiresAt(), 'Invalid expiry format should result in permanent AKICK');
+        self::assertSame('invalid Reason', $saved->getReason(), 'Invalid expiry should be treated as reason');
+    }
+
+    #[Test]
+    public function addWithOnlyReasonSetsReasonCorrectly(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createChannelMock(1, 1);
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('countByChannel')->willReturn(0);
+        $akickRepo->method('findByChannelAndMask')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        /** @var ChannelAkick|null $saved */
+        $saved = null;
+        $akickRepo->method('save')->willReturnCallback(static function (ChannelAkick $entity) use (&$saved): void {
+            $saved = $entity;
+        });
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m): void {
+        });
+        $notifier->method('setChannelModes')->willReturnCallback(static function (): void {
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Spam', 'bot', 'detected'], $notifier, $translator));
+
+        self::assertNotNull($saved);
+        self::assertNull($saved->getExpiresAt(), 'No expiry should result in permanent AKICK');
+        self::assertSame('Spam bot detected', $saved->getReason(), 'Multi-word reason should be joined');
+    }
+
+    #[Test]
+    public function addWithEmptyReasonStringSetsNull(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createChannelMock(1, 1);
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('countByChannel')->willReturn(0);
+        $akickRepo->method('findByChannelAndMask')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        /** @var ChannelAkick|null $saved */
+        $saved = null;
+        $akickRepo->method('save')->willReturnCallback(static function (ChannelAkick $entity) use (&$saved): void {
+            $saved = $entity;
+        });
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m): void {
+        });
+        $notifier->method('setChannelModes')->willReturnCallback(static function (): void {
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '   '], $notifier, $translator));
+
+        self::assertNotNull($saved);
         self::assertNull($saved->getExpiresAt());
+        self::assertNull($saved->getReason(), 'Whitespace-only reason should be null');
     }
 
     #[Test]
