@@ -26,6 +26,7 @@ use function count;
 use function ctype_digit;
 use function fnmatch;
 use function preg_match;
+use function sprintf;
 use function strtolower;
 use function strtoupper;
 use function trim;
@@ -169,13 +170,14 @@ final readonly class AkickCommand implements ChanServCommandInterface
                 ? $context->formatDate($akick->getExpiresAt())
                 : $context->trans('akick.list.never_expires');
 
-            $context->reply('akick.list.entry', [
-                '%index%' => (string) $num,
-                '%mask%' => $akick->getMask(),
-                '%reason%' => $reason,
-                '%nick%' => $creatorName,
-                '%expiration%' => $expires,
-            ]);
+            $context->replyRaw(sprintf(
+                '  #%d %s %s (por %s, expira: %s)',
+                $num,
+                "\x0304" . $akick->getMask() . "\x03",
+                $reason,
+                $creatorName,
+                $expires
+            ));
             ++$num;
         }
     }
