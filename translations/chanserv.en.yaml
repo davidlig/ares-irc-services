@@ -282,7 +282,7 @@ akick:
   add:
     syntax:         "AKICK <#channel> ADD <mask> [expiry] [reason]"
     short:          "Add AKICK entry."
-    help:           "Expiry: 1d, 7d, 30d, or 0 for permanent. Reason can be multiple words."
+    help:           "Expiry required if reason is specified. Formats: 0 (permanent), 1d, 7d, 30d, 12h, 60m. Examples: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'."
     done:           "\x0303✔\x03 AKICK \x02%mask%\x02 added."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 already exists."
     notice_channel: "\x02%from%\x02 adds AKICK: \x02%mask%\x02 (%reason%)"

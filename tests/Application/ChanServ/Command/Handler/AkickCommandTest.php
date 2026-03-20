@@ -1235,7 +1235,7 @@ final class AkickCommandTest extends TestCase
     }
 
     #[Test]
-    public function addWithInvalidExpiryFormatTreatsItAsReason(): void
+    public function addWithInvalidExpiryFormatReturnsSyntaxError(): void
     {
         $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
         $account = $this->createStub(RegisteredNick::class);
@@ -1249,18 +1249,10 @@ final class AkickCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        /** @var ChannelAkick|null $saved */
-        $saved = null;
-        $akickRepo->method('save')->willReturnCallback(static function (ChannelAkick $entity) use (&$saved): void {
-            $saved = $entity;
-        });
-
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m): void {
-        });
-        $notifier->method('setChannelModes')->willReturnCallback(static function (): void {
-        });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        $messages = [];
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
         });
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -1268,13 +1260,42 @@ final class AkickCommandTest extends TestCase
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'invalid', 'Reason'], $notifier, $translator));
 
-        self::assertNotNull($saved);
-        self::assertNull($saved->getExpiresAt(), 'Invalid expiry format should result in permanent AKICK');
-        self::assertSame('invalid Reason', $saved->getReason(), 'Invalid expiry should be treated as reason');
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('error.syntax', $messages[0]);
     }
 
     #[Test]
-    public function addWithOnlyReasonSetsReasonCorrectly(): void
+    public function addWithOnlyReasonReturnsSyntaxError(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createChannelMock(1, 1);
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('countByChannel')->willReturn(0);
+        $akickRepo->method('findByChannelAndMask')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $messages = [];
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Spam', 'bot', 'detected'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('error.syntax', $messages[0]);
+    }
+
+    #[Test]
+    public function addWithExpiryAndReasonSucceeds(): void
     {
         $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
         $account = $this->createStub(RegisteredNick::class);
@@ -1305,10 +1326,10 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Spam', 'bot', 'detected'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '7d', 'Spam', 'bot', 'detected'], $notifier, $translator));
 
         self::assertNotNull($saved);
-        self::assertNull($saved->getExpiresAt(), 'No expiry should result in permanent AKICK');
+        self::assertNotNull($saved->getExpiresAt(), 'Expiry should be set');
         self::assertSame('Spam bot detected', $saved->getReason(), 'Multi-word reason should be joined');
     }
 
@@ -1721,7 +1742,7 @@ final class AkickCommandTest extends TestCase
             $sender,
             $account,
             'AKICK',
-            ['#test', 'ADD', '*!*@*.isp.com', 'Spam'],
+            ['#test', 'ADD', '*!*@*.isp.com', '0', 'Spam'],
             $notifier,
             $translator,
             'en',
@@ -2008,10 +2029,50 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'SpammerBot!*@*.evil.com', 'Bad bot'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'SpammerBot!*@*.evil.com', '0', 'Bad bot'], $notifier, $translator));
 
         self::assertSame(['akick.add.done'], $messages);
         self::assertNotNull($saved);
         self::assertSame('SpammerBot!*@*.evil.com', $saved->getMask());
+        self::assertSame('Bad bot', $saved->getReason());
+    }
+
+    #[Test]
+    public function addWithReasonButNoExpiryReturnsSyntaxError(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $founderNick = $this->createStub(RegisteredNick::class);
+        $founderNick->method('getNickname')->willReturn('Founder');
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturnMap([[1, $founderNick]]);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('countByChannel')->willReturn(0);
+        $akickRepo->method('findByChannelAndMask')->willReturn(null);
+
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('listByChannel')->willReturn([]);
+
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'NotAnExpiry'], $notifier, $translator));
+
+        self::assertCount(1, $messages);
+        self::assertStringContainsString('error.syntax', $messages[0]);
     }
 }

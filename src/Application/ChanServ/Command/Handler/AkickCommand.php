@@ -233,15 +233,32 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $expiresAt = null;
         $reason = null;
 
-        // Check if args[3] looks like a valid expiry (0, empty, or \d+[dhm])
-        // If it does, use it as expiry and args[4+] as reason
-        // Otherwise, use args[3+] as reason (permanent AKICK)
+        // Syntax: AKICK ADD <mask> [expiry] [reason...]
+        // Valid expiry formats: 0 (permanent), \d+[dhm] (e.g., 7d, 12h, 30m)
+        // If args[3] is provided but NOT a valid expiry, it's a syntax error
         if (count($context->args) >= 4) {
             $expiryStr = trim($context->args[3]);
-            $expiresAt = $this->parseExpiry($expiryStr);
 
-            if (null !== $expiresAt || '' === $expiryStr || '0' === strtolower($expiryStr)) {
-                // Valid expiry or empty/0 (permanent) - args[3] is the expiry
+            if ('' === $expiryStr) {
+                // Empty string after mask - permanent AKICK, no reason
+                $expiresAt = null;
+            } elseif ('0' === strtolower($expiryStr)) {
+                // Explicit permanent - args[4+] is the reason
+                $expiresAt = null;
+                if (count($context->args) >= 5) {
+                    $reasonParts = array_slice($context->args, 4);
+                    $reason = trim(implode(' ', $reasonParts));
+                }
+            } else {
+                // Try to parse as expiry
+                $expiresAt = $this->parseExpiry($expiryStr);
+                if (null === $expiresAt) {
+                    // Not a valid expiry format - syntax error
+                    $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+                    return;
+                }
+                // Valid expiry - args[4+] is the reason
                 if (count($context->args) >= 5) {
                     $reasonParts = array_slice($context->args, 4);
                     $reason = trim(implode(' ', $reasonParts));
@@ -249,10 +266,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
                         $reason = null;
                     }
                 }
-            } else {
-                // args[3] is not a valid expiry format, so it's the start of the reason
-                $reasonParts = array_slice($context->args, 3);
-                $reason = trim(implode(' ', $reasonParts));
             }
         }
 
@@ -388,12 +401,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
     private function parseExpiry(string $expiryStr): ?DateTimeImmutable
     {
         $expiryStr = strtolower(trim($expiryStr));
-        if ('' === $expiryStr || '0' === $expiryStr) {
-            return null;
-        }
 
-        // At this point, expiryStr must match \d+[dhm] because isValidExpiry() was called before
-        // But we still validate for safety
         $matches = [];
         if (!preg_match('/^(\d+)([dhm])$/', $expiryStr, $matches)) {
             return null;

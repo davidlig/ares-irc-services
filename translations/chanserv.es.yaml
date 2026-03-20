@@ -282,7 +282,7 @@ akick:
   add:
     syntax:         "AKICK <#canal> ADD <máscara> [expiración] [razón]"
     short:          "Añadir entrada AKICK."
-    help:           "Expiración: 1d, 7d, 30d, o 0 para permanente. La razón puede tener múltiples palabras."
+    help:           "Expiración obligatoria si se especifica razón. Formatos: 0 (permanente), 1d, 7d, 30d, 12h, 60m. Ejemplos: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'."
     done:           "\x0303✔\x03 AKICK \x02%mask%\x02 añadido."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 ya existe."
     notice_channel: "\x02%from%\x02 añade AKICK: \x02%mask%\x02 (%reason%)"
