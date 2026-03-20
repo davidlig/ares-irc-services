@@ -21,6 +21,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateInterval;
 use DateTimeImmutable;
 
+use function array_slice;
 use function count;
 use function ctype_digit;
 use function fnmatch;
@@ -229,19 +230,20 @@ final readonly class AkickCommand implements ChanServCommandInterface
             return;
         }
 
-        $reason = null;
         $expiresAt = null;
+        $reason = null;
 
         if (count($context->args) >= 4) {
-            $reason = trim($context->args[3]);
-            if ('' === $reason) {
-                $reason = null;
-            }
+            $expiryStr = trim($context->args[3]);
+            $expiresAt = $this->parseExpiry($expiryStr);
         }
 
         if (count($context->args) >= 5) {
-            $expiryStr = trim($context->args[4]);
-            $expiresAt = $this->parseExpiry($expiryStr);
+            $reasonParts = array_slice($context->args, 4);
+            $reason = trim(implode(' ', $reasonParts));
+            if ('' === $reason) {
+                $reason = null;
+            }
         }
 
         $akick = ChannelAkick::create(

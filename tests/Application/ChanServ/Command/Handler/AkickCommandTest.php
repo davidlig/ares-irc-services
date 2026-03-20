@@ -192,7 +192,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Spammer'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '0', 'Spammer'], $notifier, $translator));
 
         self::assertSame(['akick.add.done'], $messages);
         self::assertNotNull($saved);
@@ -612,7 +612,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Spammer', 'never'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'never', 'Spammer'], $notifier, $translator));
 
         self::assertSame(['akick.add.done'], $messages);
         self::assertNotNull($saved);
@@ -1190,7 +1190,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Reason', 'never'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'never', 'Reason'], $notifier, $translator));
 
         self::assertNotNull($saved);
         self::assertNull($saved->getExpiresAt());
@@ -1228,7 +1228,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Reason', '0'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '0', 'Reason'], $notifier, $translator));
 
         self::assertNotNull($saved);
         self::assertNull($saved->getExpiresAt());
@@ -1266,7 +1266,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Reason', 'invalid'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'invalid', 'Reason'], $notifier, $translator));
 
         self::assertNotNull($saved);
         self::assertNull($saved->getExpiresAt());
@@ -1370,7 +1370,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Reason', '30d'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '30d', 'Reason'], $notifier, $translator));
 
         self::assertNotNull($saved);
         self::assertNotNull($saved->getExpiresAt());
@@ -1406,7 +1406,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Reason', '12h'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '12h', 'Reason'], $notifier, $translator));
 
         self::assertNotNull($saved);
         self::assertNotNull($saved->getExpiresAt());
@@ -1442,7 +1442,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Reason', '60m'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '60m', 'Reason'], $notifier, $translator));
 
         self::assertNotNull($saved);
         self::assertNotNull($saved->getExpiresAt());
@@ -1477,7 +1477,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Spam'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '0', 'Spam'], $notifier, $translator));
 
         self::assertCount(1, $bans);
         self::assertSame('+b', $bans[0]['modes']);
@@ -1514,10 +1514,49 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Reason', ''], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '', 'Reason'], $notifier, $translator));
 
         self::assertNotNull($saved);
         self::assertNull($saved->getExpiresAt());
+    }
+
+    #[Test]
+    public function addWithExpiryAndEmptyReasonSetsReasonToNull(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createChannelMock(1, 1);
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('countByChannel')->willReturn(0);
+        $akickRepo->method('findByChannelAndMask')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        /** @var ChannelAkick|null $saved */
+        $saved = null;
+        $akickRepo->method('save')->willReturnCallback(static function (ChannelAkick $entity) use (&$saved): void {
+            $saved = $entity;
+        });
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m): void {
+        });
+        $notifier->method('setChannelModes')->willReturnCallback(static function (): void {
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '7d', '   '], $notifier, $translator));
+
+        self::assertNotNull($saved);
+        self::assertNull($saved->getReason());
+        self::assertNotNull($saved->getExpiresAt());
     }
 
     #[Test]
@@ -1841,7 +1880,7 @@ final class AkickCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', 'Spammer'], $notifier, $translator));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '0', 'Spammer'], $notifier, $translator));
 
         self::assertSame(['akick.add.done'], $messages);
         self::assertNotNull($saved);

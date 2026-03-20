@@ -271,18 +271,18 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nick%\x02 ha sido dehalfopeado."
 
 akick:
-  syntax:           "AKICK <#canal> {ADD|DEL|LIST|ENFORCE} [máscara] [razón] [expiración]"
+  syntax:           "AKICK <#canal> {ADD|DEL|LIST|ENFORCE} [máscara] [expiración] [razón]"
   short:            "Gestionar lista de auto-kick."
-  help:             "ADD: añadir máscara con razón/expiración opcional. DEL: eliminar por máscara o número. LIST: mostrar entradas. ENFORCE: expulsar usuarios coincidentes."
+  help:             "ADD <máscara> [expiración] [razón]: añadir entrada. DEL <máscara|nº>: eliminar. LIST: listar. ENFORCE <máscara>: expulsar."
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST o ENFORCE."
   invalid_mask:     "\x0304✗\x03 Formato de máscara inválido. Usa \x02nick!usuario@host\x02 con comodines (*)."
   dangerous_mask:   "\x0304✗\x03 La máscara \x02%mask%\x02 es demasiado amplia. Debe contener al menos 4 caracteres alfanuméricos."
   protected_user:   "\x0304✗\x03 El usuario \x02%nick%\x02 tiene acceso en este canal."
   max_entries:      "\x0304✗\x03 Máximo %max% entradas AKICK por canal."
   add:
-    syntax:         "AKICK <#canal> ADD <máscara> [razón] [expiración]"
+    syntax:         "AKICK <#canal> ADD <máscara> [expiración] [razón]"
     short:          "Añadir entrada AKICK."
-    help:           "Formato expiración: 1d, 7d, 30d etc. Omitir para permanente."
+    help:           "Expiración: 1d, 7d, 30d, o 0/never para permanente. La razón puede tener múltiples palabras."
     done:           "\x0303✔\x03 AKICK \x02%mask%\x02 añadido."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 ya existe."
     notice_channel: "\x02%from%\x02 añade AKICK: \x02%mask%\x02 (%reason%)"

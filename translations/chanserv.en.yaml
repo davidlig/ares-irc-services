@@ -271,18 +271,18 @@ dehalfop:
   done:             "\x0303✔\x03 \x02%nick%\x02 has been dehalfopped."
 
 akick:
-  syntax:           "AKICK <#channel> {ADD|DEL|LIST|ENFORCE} [mask] [reason] [expiry]"
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|ENFORCE} [mask] [expiry] [reason]"
   short:            "Manage auto-kick list."
-  help:             "ADD: add mask with optional reason/expiry. DEL: remove by mask or number. LIST: show entries. ENFORCE: kick matching users now."
+  help:             "ADD <mask> [expiry] [reason]: add entry. DEL <mask|num>: remove. LIST: list entries. ENFORCE <mask>: kick matching users."
   unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, or ENFORCE."
   invalid_mask:     "\x0304✗\x03 Invalid mask format. Use \x02nick!user@host\x02 with wildcards (*)."
   dangerous_mask:   "\x0304✗\x03 The mask \x02%mask%\x02 is too broad. It must contain at least 4 alphanumeric characters."
   protected_user:   "\x0304✗\x03 User \x02%nick%\x02 has access in this channel."
   max_entries:      "\x0304✗\x03 Maximum %max% AKICK entries per channel."
   add:
-    syntax:         "AKICK <#channel> ADD <mask> [reason] [expiry]"
+    syntax:         "AKICK <#channel> ADD <mask> [expiry] [reason]"
     short:          "Add AKICK entry."
-    help:           "Expiry format: 1d, 7d, 30d etc. Omit for permanent."
+    help:           "Expiry: 1d, 7d, 30d, or 0/never for permanent. Reason can be multiple words."
     done:           "\x0303✔\x03 AKICK \x02%mask%\x02 added."
     already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 already exists."
     notice_channel: "\x02%from%\x02 adds AKICK: \x02%mask%\x02 (%reason%)"
