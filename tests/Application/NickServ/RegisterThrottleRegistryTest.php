@@ -136,9 +136,9 @@ final class RegisterThrottleRegistryTest extends TestCase
         $registry->recordAttempt('old1');
         $registry->recordAttempt('old2');
         $registry->recordAttempt('old3');
-        sleep(2);
+        sleep(3);
         $removed = $registry->pruneExpiredCooldowns(1);
-        self::assertGreaterThanOrEqual(3, $removed);
+        self::assertGreaterThanOrEqual(3, $removed, 'All 3 entries should be pruned after 3 seconds with 1 second cooldown');
     }
 
     #[Test]

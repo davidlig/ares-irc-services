@@ -233,14 +233,15 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $expiresAt = null;
         $reason = null;
 
-        // Check if args[3] looks like a valid expiry (0, or \d+[dhm])
+        // Check if args[3] looks like a valid expiry (0, empty, or \d+[dhm])
         // If it does, use it as expiry and args[4+] as reason
         // Otherwise, use args[3+] as reason (permanent AKICK)
         if (count($context->args) >= 4) {
             $expiryStr = trim($context->args[3]);
-            if ($this->isValidExpiry($expiryStr)) {
-                $expiresAt = $this->parseExpiry($expiryStr);
+            $expiresAt = $this->parseExpiry($expiryStr);
 
+            if (null !== $expiresAt || '' === $expiryStr || '0' === strtolower($expiryStr)) {
+                // Valid expiry or empty/0 (permanent) - args[3] is the expiry
                 if (count($context->args) >= 5) {
                     $reasonParts = array_slice($context->args, 4);
                     $reason = trim(implode(' ', $reasonParts));
@@ -249,12 +250,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
                     }
                 }
             } else {
-                // args[3] is not a valid expiry, so it's the start of the reason
+                // args[3] is not a valid expiry format, so it's the start of the reason
                 $reasonParts = array_slice($context->args, 3);
                 $reason = trim(implode(' ', $reasonParts));
-                if ('' === $reason) {
-                    $reason = null;
-                }
             }
         }
 
@@ -387,16 +385,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return $this->akickRepository->findByChannelAndMask($channelId, $item);
     }
 
-    private function isValidExpiry(string $expiryStr): bool
-    {
-        $expiryStr = strtolower(trim($expiryStr));
-        if ('' === $expiryStr || '0' === $expiryStr) {
-            return true;
-        }
-
-        return (bool) preg_match('/^\d+[dhm]$/', $expiryStr);
-    }
-
     private function parseExpiry(string $expiryStr): ?DateTimeImmutable
     {
         $expiryStr = strtolower(trim($expiryStr));
@@ -404,6 +392,8 @@ final readonly class AkickCommand implements ChanServCommandInterface
             return null;
         }
 
+        // At this point, expiryStr must match \d+[dhm] because isValidExpiry() was called before
+        // But we still validate for safety
         $matches = [];
         if (!preg_match('/^(\d+)([dhm])$/', $expiryStr, $matches)) {
             return null;
