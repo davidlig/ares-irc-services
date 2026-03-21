@@ -300,7 +300,7 @@ akick:
     help:           "Muestra máscara, razón, expiración y quién añadió."
     header:         "\x0303Lista AKICK de \x02%channel%\x02\x03"
     empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no tiene AKICKs."
-    entry:          "  #%index%: %mask% - %reason% (por %nick%, expira: %expiration%)"
+    entry:          "  #%index% %mask% %reason% (por %nick%, expira: %expiration%)"
     no_reason:      "Sin razón"
     never_expires:  "nunca"
   enforce:
