@@ -652,4 +652,127 @@ final class ChanServAkickEnforceSubscriberTest extends TestCase
 
         self::assertSame(2, $kickCount);
     }
+
+    #[Test]
+    public function onSyncCompleteSkipsChannelWhenChannelViewNotFound(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('listAll')->willReturn([$channel]);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(null);
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
+        $channelServiceActions->expects(self::never())->method('kickFromChannel');
+
+        $subscriber = new ChanServAkickEnforceSubscriber(
+            $channelRepo,
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+            $channelLookup,
+            $this->createStub(NetworkUserLookupPort::class),
+            $channelServiceActions,
+            'ChanServ',
+            new NullLogger(),
+        );
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteDoesNothingWhenNoAkicksExist(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('listAll')->willReturn([$channel]);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('listByChannel')->willReturn([]);
+
+        $channelView = new ChannelView('#test', '+nt', null, 1, [['uid' => 'UID1', 'roleLetter' => '']]);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
+        $channelServiceActions->expects(self::never())->method('kickFromChannel');
+
+        $subscriber = new ChanServAkickEnforceSubscriber(
+            $channelRepo,
+            $akickRepo,
+            $channelLookup,
+            $this->createStub(NetworkUserLookupPort::class),
+            $channelServiceActions,
+            'ChanServ',
+            new NullLogger(),
+        );
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteDoesNothingWhenAllAkicksExpired(): void
+    {
+        $expiredAkick1 = ChannelAkick::create(1, 2, '*!*@*.isp.com', 'Spam', new DateTimeImmutable('-1 day'));
+        $expiredAkick2 = ChannelAkick::create(1, 3, '*!*@*.badsite.com', 'Bad', new DateTimeImmutable('-2 hours'));
+
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('listAll')->willReturn([$channel]);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('listByChannel')->willReturn([$expiredAkick1, $expiredAkick2]);
+
+        $userView = new SenderView(
+            'UID1',
+            'User',
+            'user',
+            'user.isp.com',
+            'user.isp.com',
+            '192.168.1.1',
+            false,
+            false,
+            '001',
+            'user.isp.com',
+        );
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($userView);
+
+        $channelView = new ChannelView('#test', '+nt', null, 1, [['uid' => 'UID1', 'roleLetter' => '']]);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
+        $channelServiceActions->expects(self::never())->method('kickFromChannel');
+
+        $subscriber = new ChanServAkickEnforceSubscriber(
+            $channelRepo,
+            $akickRepo,
+            $channelLookup,
+            $userLookup,
+            $channelServiceActions,
+            'ChanServ',
+            new NullLogger(),
+        );
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $subscriber->onSyncComplete($event);
+    }
 }
