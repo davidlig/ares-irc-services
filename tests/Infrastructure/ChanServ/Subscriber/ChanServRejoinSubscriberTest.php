@@ -64,7 +64,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $this->channelRepository->expects(self::never())->method('listAll');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
-        $this->modeSupport->expects(self::never())->method('hasChannelRegisteredMode');
+        $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->logger->expects(self::never())->method('warning');
 
@@ -100,8 +100,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
 
         $view = new ChannelView('#test', '+n', null, 0);
         $this->channelLookup
@@ -136,7 +136,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->method('setChannelModes');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
-        $this->modeSupport->expects(self::never())->method('hasChannelRegisteredMode');
+        $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
         $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
@@ -163,8 +163,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(false);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn(null);
 
         $this->channelServiceActions
             ->expects(self::never())
@@ -186,7 +186,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->method('findByChannelName');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
-        $this->modeSupport->expects(self::never())->method('hasChannelRegisteredMode');
+        $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->logger->expects(self::never())->method('warning');
 
@@ -214,8 +214,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
 
         $view = new ChannelView('#test', '+ntr', null, 0);
         $this->channelLookup
@@ -253,8 +253,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
 
         $this->channelLookup
             ->expects(self::once())
@@ -295,8 +295,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
 
         $this->channelLookup
             ->expects(self::exactly(2))
@@ -331,8 +331,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
 
         $this->channelRepository
             ->expects(self::once())
@@ -361,8 +361,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
 
         $this->channelRepository
             ->expects(self::once())
@@ -400,8 +400,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(false);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn(null);
 
         $this->channelRepository->expects(self::never())->method('listAll');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
@@ -431,8 +431,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
 
         $registeredView = new ChannelView('#registered', '+ntr', null, 1);
         $unregisteredView = new ChannelView('#unregistered', '+ntr', null, 1);
@@ -480,8 +480,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
 
         $view = new ChannelView('#test', '+ntr', null, 1);
 
@@ -514,8 +514,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn($this->modeSupport);
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(false);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn(null);
         $this->channelLookup->expects(self::never())->method('listAll');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->logger->expects(self::never())->method('debug');
@@ -543,8 +543,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $view = new ChannelView('#test', '+nt', null, 1);
 
@@ -591,8 +591,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $view = new ChannelView('#test', '+ntP', null, 1);
 
@@ -633,8 +633,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $registeredView = new ChannelView('#registered', '+ntP', null, 1);
         $unregisteredView = new ChannelView('#unregistered', '+ntP', null, 1);
@@ -682,8 +682,8 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelLookup
             ->expects(self::once())

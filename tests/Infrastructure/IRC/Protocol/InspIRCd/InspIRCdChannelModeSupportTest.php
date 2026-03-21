@@ -27,6 +27,15 @@ final class InspIRCdChannelModeSupportTest extends TestCase
     }
 
     #[Test]
+    public function modeLetterGettersReturnExpectedValues(): void
+    {
+        $support = new InspIRCdChannelModeSupport();
+
+        self::assertSame('r', $support->getChannelRegisteredModeLetter());
+        self::assertSame('P', $support->getPermanentChannelModeLetter());
+    }
+
+    #[Test]
     public function getSupportedPrefixModesReturnsVoAndOp(): void
     {
         $support = new InspIRCdChannelModeSupport();

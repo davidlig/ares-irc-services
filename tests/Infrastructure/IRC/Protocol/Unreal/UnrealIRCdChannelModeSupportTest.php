@@ -27,6 +27,15 @@ final class UnrealIRCdChannelModeSupportTest extends TestCase
     }
 
     #[Test]
+    public function modeLetterGettersReturnExpectedValues(): void
+    {
+        $support = new UnrealIRCdChannelModeSupport();
+
+        self::assertSame('r', $support->getChannelRegisteredModeLetter());
+        self::assertSame('P', $support->getPermanentChannelModeLetter());
+    }
+
+    #[Test]
     public function getSupportedPrefixModesReturnsUnrealOrder(): void
     {
         $support = new UnrealIRCdChannelModeSupport();

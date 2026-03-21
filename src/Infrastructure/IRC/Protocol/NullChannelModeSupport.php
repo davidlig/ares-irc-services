@@ -71,8 +71,18 @@ final readonly class NullChannelModeSupport implements ChannelModeSupportInterfa
         return false;
     }
 
+    public function getChannelRegisteredModeLetter(): ?string
+    {
+        return null;
+    }
+
     public function hasPermanentChannelMode(): bool
     {
         return false;
+    }
+
+    public function getPermanentChannelModeLetter(): ?string
+    {
+        return null;
     }
 }

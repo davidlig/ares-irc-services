@@ -44,7 +44,7 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
 
     /**
      * Set +r on a registered channel when it syncs (first user joins).
-     * Skips if channel already has +r.
+     * Skips if channel already has the registered mode.
      */
     public function onChannelSyncedSetRegistered(ChannelSyncedEvent $event): void
     {
@@ -56,28 +56,31 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
         if (null === $registered) {
             return;
         }
-        if (!$this->modeSupportProvider->getSupport()->hasChannelRegisteredMode()) {
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        $registeredLetter = $modeSupport->getChannelRegisteredModeLetter();
+        if (null === $registeredLetter) {
             return;
         }
         $view = $this->channelLookup->findByChannelName($channelName);
         if (null === $view) {
             return;
         }
-        if (str_contains($view->modes, 'r')) {
+        if (str_contains($view->modes, $registeredLetter)) {
             return;
         }
-        $this->channelServiceActions->setChannelModes($channelName, '+r', []);
-        $this->logger->debug('ChanServ set +r (channel registered) on sync', ['channel' => $channelName]);
+        $this->channelServiceActions->setChannelModes($channelName, '+' . $registeredLetter, []);
+        $this->logger->debug('ChanServ set +' . $registeredLetter . ' (channel registered) on sync', ['channel' => $channelName]);
     }
 
     /**
-     * Reconcile +r (registered) mode: registered channels get +r, unregistered lose it.
+     * Reconcile registered mode: registered channels get it, unregistered lose it.
      * Runs on NetworkSyncCompleteEvent (priority 10).
      */
     public function onSyncCompleteReconcileRegisteredMode(NetworkSyncCompleteEvent $event): void
     {
         $modeSupport = $this->modeSupportProvider->getSupport();
-        if (!$modeSupport->hasChannelRegisteredMode()) {
+        $registeredLetter = $modeSupport->getChannelRegisteredModeLetter();
+        if (null === $registeredLetter) {
             return;
         }
 
@@ -92,30 +95,31 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
             if (null === $view) {
                 continue;
             }
-            if (!str_contains($view->modes, 'r')) {
-                $this->channelServiceActions->setChannelModes($view->name, '+r', []);
-                $this->logger->debug('ChanServ set +r (registered) missing on registered channel', ['channel' => $view->name]);
+            if (!str_contains($view->modes, $registeredLetter)) {
+                $this->channelServiceActions->setChannelModes($view->name, '+' . $registeredLetter, []);
+                $this->logger->debug('ChanServ set +' . $registeredLetter . ' (registered) missing on registered channel', ['channel' => $view->name]);
             }
         }
 
         $allViews = $this->channelLookup->listAll();
         foreach ($allViews as $view) {
             $nameLower = strtolower($view->name);
-            if (!isset($registeredNames[$nameLower]) && str_contains($view->modes, 'r')) {
-                $this->channelServiceActions->setChannelModes($view->name, '-r', []);
-                $this->logger->debug('ChanServ removed -r (registered) from unregistered channel', ['channel' => $view->name]);
+            if (!isset($registeredNames[$nameLower]) && str_contains($view->modes, $registeredLetter)) {
+                $this->channelServiceActions->setChannelModes($view->name, '-' . $registeredLetter, []);
+                $this->logger->debug('ChanServ removed -' . $registeredLetter . ' (registered) from unregistered channel', ['channel' => $view->name]);
             }
         }
     }
 
     /**
-     * Reconcile +P (permanent) mode: registered channels get +P, unregistered lose it.
+     * Reconcile permanent mode: registered channels get it, unregistered lose it.
      * Runs after onSyncCompleteReconcileRegisteredMode (priority 9 vs 10).
      */
     public function onSyncCompleteReconcilePermanentMode(NetworkSyncCompleteEvent $event): void
     {
         $modeSupport = $this->modeSupportProvider->getSupport();
-        if (!$modeSupport->hasPermanentChannelMode()) {
+        $permanentLetter = $modeSupport->getPermanentChannelModeLetter();
+        if (null === $permanentLetter) {
             return;
         }
 
@@ -130,18 +134,18 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
             if (null === $view) {
                 continue;
             }
-            if (!str_contains($view->modes, 'P')) {
-                $this->channelServiceActions->setChannelModes($view->name, '+P', []);
-                $this->logger->debug('ChanServ set +P (permanent) missing on registered channel', ['channel' => $view->name]);
+            if (!str_contains($view->modes, $permanentLetter)) {
+                $this->channelServiceActions->setChannelModes($view->name, '+' . $permanentLetter, []);
+                $this->logger->debug('ChanServ set +' . $permanentLetter . ' (permanent) missing on registered channel', ['channel' => $view->name]);
             }
         }
 
         $allViews = $this->channelLookup->listAll();
         foreach ($allViews as $view) {
             $nameLower = strtolower($view->name);
-            if (!isset($registeredNames[$nameLower]) && str_contains($view->modes, 'P')) {
-                $this->channelServiceActions->setChannelModes($view->name, '-P', []);
-                $this->logger->debug('ChanServ removed -P (permanent) from unregistered channel', ['channel' => $view->name]);
+            if (!isset($registeredNames[$nameLower]) && str_contains($view->modes, $permanentLetter)) {
+                $this->channelServiceActions->setChannelModes($view->name, '-' . $permanentLetter, []);
+                $this->logger->debug('ChanServ removed -' . $permanentLetter . ' (permanent) from unregistered channel', ['channel' => $view->name]);
             }
         }
     }

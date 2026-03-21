@@ -40,7 +40,8 @@ final readonly class ChanServPermanentChannelSubscriber implements EventSubscrib
 
     public function onChannelRegistered(ChannelRegisteredEvent $event): void
     {
-        if (!$this->modeSupportProvider->getSupport()->hasPermanentChannelMode()) {
+        $permanentLetter = $this->modeSupportProvider->getSupport()->getPermanentChannelModeLetter();
+        if (null === $permanentLetter) {
             return;
         }
 
@@ -49,15 +50,16 @@ final readonly class ChanServPermanentChannelSubscriber implements EventSubscrib
             return;
         }
 
-        $this->channelServiceActions->setChannelModes($event->channelName, '+P', []);
-        $this->logger->debug('ChanServ set +P (permanent) on channel registration', [
+        $this->channelServiceActions->setChannelModes($event->channelName, '+' . $permanentLetter, []);
+        $this->logger->debug('ChanServ set +' . $permanentLetter . ' (permanent) on channel registration', [
             'channel' => $event->channelName,
         ]);
     }
 
     public function onChannelDrop(ChannelDropEvent $event): void
     {
-        if (!$this->modeSupportProvider->getSupport()->hasPermanentChannelMode()) {
+        $permanentLetter = $this->modeSupportProvider->getSupport()->getPermanentChannelModeLetter();
+        if (null === $permanentLetter) {
             return;
         }
 
@@ -66,12 +68,12 @@ final readonly class ChanServPermanentChannelSubscriber implements EventSubscrib
             return;
         }
 
-        if (!str_contains($view->modes, 'P')) {
+        if (!str_contains($view->modes, $permanentLetter)) {
             return;
         }
 
-        $this->channelServiceActions->setChannelModes($event->channelName, '-P', []);
-        $this->logger->debug('ChanServ removed -P (permanent) on channel drop', [
+        $this->channelServiceActions->setChannelModes($event->channelName, '-' . $permanentLetter, []);
+        $this->logger->debug('ChanServ removed -' . $permanentLetter . ' (permanent) on channel drop', [
             'channel' => $event->channelName,
             'reason' => $event->reason,
         ]);

@@ -465,8 +465,8 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(['k', 'l']);
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelServiceActions
             ->expects(self::once())
@@ -527,12 +527,12 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(['k', 'l']);
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelServiceActions
             ->expects(self::once())
@@ -1024,12 +1024,12 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(['k', 'l']);
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelServiceActions
             ->expects(self::never())
@@ -1088,8 +1088,8 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(['k', 'l']);
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelServiceActions
             ->expects(self::never())
@@ -1148,8 +1148,8 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(['k', 'l']);
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(false);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn(null);
 
         $this->channelServiceActions
             ->expects(self::once())
@@ -1209,12 +1209,12 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(['k', 'l']);
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(false);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn(null);
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelServiceActions
             ->expects(self::once())
@@ -1268,8 +1268,8 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(['k', 'l']);
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelServiceActions
             ->expects(self::never())
@@ -1329,12 +1329,12 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->willReturn(['k', 'l']);
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasChannelRegisteredMode')
-            ->willReturn(true);
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
         $this->modeSupport
             ->expects(self::atLeastOnce())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelServiceActions
             ->expects(self::once())

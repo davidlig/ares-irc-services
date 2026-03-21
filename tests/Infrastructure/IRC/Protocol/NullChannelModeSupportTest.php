@@ -27,6 +27,15 @@ final class NullChannelModeSupportTest extends TestCase
     }
 
     #[Test]
+    public function modeLetterGettersReturnNull(): void
+    {
+        $support = new NullChannelModeSupport();
+
+        self::assertNull($support->getChannelRegisteredModeLetter());
+        self::assertNull($support->getPermanentChannelModeLetter());
+    }
+
+    #[Test]
     public function getSupportedPrefixModesReturnsEmpty(): void
     {
         $support = new NullChannelModeSupport();

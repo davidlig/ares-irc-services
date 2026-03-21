@@ -55,7 +55,7 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
         $this->modeSupportProvider->expects(self::never())->method('getSupport');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->modeSupport->expects(self::never())->method('hasPermanentChannelMode');
+        $this->modeSupport->expects(self::never())->method('getPermanentChannelModeLetter');
         $this->logger->expects(self::never())->method('debug');
 
         self::assertSame(
@@ -79,8 +79,8 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelLookup
             ->expects(self::once())
@@ -113,8 +113,8 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(false);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn(null);
 
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
@@ -135,8 +135,8 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelLookup
             ->expects(self::once())
@@ -162,8 +162,8 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelLookup
             ->expects(self::once())
@@ -199,8 +199,8 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(false);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn(null);
 
         $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
@@ -221,8 +221,8 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelLookup
             ->expects(self::once())
@@ -248,8 +248,8 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelLookup
             ->expects(self::once())
@@ -275,8 +275,8 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
 
         $this->modeSupport
             ->expects(self::once())
-            ->method('hasPermanentChannelMode')
-            ->willReturn(true);
+            ->method('getPermanentChannelModeLetter')
+            ->willReturn('P');
 
         $this->channelLookup
             ->expects(self::once())

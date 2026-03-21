@@ -99,8 +99,18 @@ final readonly class InspIRCdChannelModeSupport implements ChannelModeSupportInt
         return true;
     }
 
+    public function getChannelRegisteredModeLetter(): ?string
+    {
+        return 'r';
+    }
+
     public function hasPermanentChannelMode(): bool
     {
         return true;
+    }
+
+    public function getPermanentChannelModeLetter(): ?string
+    {
+        return 'P';
     }
 }

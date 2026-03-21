@@ -72,16 +72,25 @@ interface ChannelModeSupportInterface
     public function getChannelSettingModesWithParamOnSet(): array;
 
     /**
-     * Whether this IRCd has the "channel is registered at Services" mode (lowercase +r).
-     * When ChanServ joins a registered channel, we set +r so the channel shows as registered.
-     * Distinct from +R (regonly = only registered users may join).
+     * Whether this IRCd has the "channel is registered at Services" mode.
+     * When ChanServ joins a registered channel, we set this mode so the channel shows as registered.
+     * UnrealIRCd/InspIRCd: +r, distinct from +R (regonly = only registered users may join).
      *
      * @return bool True if the IRCd supports the channel-registered mode
      */
     public function hasChannelRegisteredMode(): bool;
 
     /**
-     * Whether this IRCd has the "permanent channel" mode (uppercase +P).
+     * The mode letter for the "channel is registered at Services" mode.
+     * Null if the IRCd does not support this mode.
+     * UnrealIRCd/InspIRCd: 'r'.
+     *
+     * @return string|null The mode letter (e.g., 'r'), or null if not supported
+     */
+    public function getChannelRegisteredModeLetter(): ?string;
+
+    /**
+     * Whether this IRCd has the "permanent channel" mode.
      * Permanent channels are not destroyed when the last user leaves.
      * UnrealIRCd: +P (chanmodes/permanent, IRCOp-only).
      * InspIRCd: +P (channel mode P, IRCOp-only).
@@ -89,4 +98,13 @@ interface ChannelModeSupportInterface
      * @return bool True if the IRCd supports the permanent channel mode
      */
     public function hasPermanentChannelMode(): bool;
+
+    /**
+     * The mode letter for the "permanent channel" mode.
+     * Null if the IRCd does not support this mode.
+     * UnrealIRCd/InspIRCd: 'P'.
+     *
+     * @return string|null The mode letter (e.g., 'P'), or null if not supported
+     */
+    public function getPermanentChannelModeLetter(): ?string;
 }
