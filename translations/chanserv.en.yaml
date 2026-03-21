@@ -303,11 +303,4 @@ akick:
     entry:          "  #%index% %mask% %reason% (by %nick%, expires: %expiration%)"
     no_reason:      "No reason"
     never_expires:  "never"
-  enforce:
-    syntax:         "AKICK <#channel> ENFORCE <mask>"
-    short:          "Force kick matching users now."
-    help:           "Immediately kicks all users matching the AKICK mask."
-    done:           "\x0303✔\x03 Kicked %count% user(s) matching \x02%mask%\x02."
-    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 not found."
-    expired:        "\x0304✗\x03 AKICK \x02%mask%\x02 has expired."
-    no_match:       "\x0303✔\x03 No users match \x02%mask%\x02."
+

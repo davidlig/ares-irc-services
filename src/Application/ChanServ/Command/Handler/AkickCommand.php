@@ -7,7 +7,7 @@ namespace App\Application\ChanServ\Command\Handler;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
-use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\Port\BurstCompletePort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Entity\ChannelAkick;
@@ -32,12 +32,11 @@ use function strtoupper;
 use function trim;
 
 /**
- * AKICK <#channel> ADD|DEL|LIST|ENFORCE [mask] [reason] [expiry].
+ * AKICK <#channel> ADD|DEL|LIST [mask] [reason] [expiry].
  *
  * ADD: add mask with optional reason and expiry (default permanent).
  * DEL: remove by mask or entry number.
  * LIST: show all AKICK entries.
- * ENFORCE: kick all users currently in channel matching the mask.
  * Requires AKICK level (default 450).
  */
 final readonly class AkickCommand implements ChanServCommandInterface
@@ -49,6 +48,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         private ChannelAccessRepositoryInterface $accessRepository,
         private ChanServAccessHelper $accessHelper,
         private ChannelLookupPort $channelLookup,
+        private ?BurstCompletePort $burstCompletePort = null,
     ) {
     }
 
@@ -93,7 +93,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
             ['name' => 'ADD', 'desc_key' => 'akick.add.short', 'help_key' => 'akick.add.help', 'syntax_key' => 'akick.add.syntax'],
             ['name' => 'DEL', 'desc_key' => 'akick.del.short', 'help_key' => 'akick.del.help', 'syntax_key' => 'akick.del.syntax'],
             ['name' => 'LIST', 'desc_key' => 'akick.list.short', 'help_key' => 'akick.list.help', 'syntax_key' => 'akick.list.syntax'],
-            ['name' => 'ENFORCE', 'desc_key' => 'akick.enforce.short', 'help_key' => 'akick.enforce.help', 'syntax_key' => 'akick.enforce.syntax'],
         ];
     }
 
@@ -139,11 +138,54 @@ final readonly class AkickCommand implements ChanServCommandInterface
             case 'DEL':
                 $this->doDel($context, $channel, $channelName);
                 break;
-            case 'ENFORCE':
-                $this->doEnforce($context, $channel, $channelName);
-                break;
             default:
                 $context->reply('akick.unknown_sub', ['%sub%' => $sub]);
+        }
+    }
+
+    private function applyAkickBansIfBurstComplete(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
+    {
+        // Only apply bans if burst is complete and we have a burst complete port
+        if (!$this->burstCompletePort || !$this->burstCompletePort->isComplete()) {
+            return;
+        }
+
+        $view = $context->getChannelView($channelName);
+        if (null === $view) {
+            return;
+        }
+
+        // Get all AKICK entries for this channel
+        $entries = $this->akickRepository->listByChannel($channel->getId());
+        if ([] === $entries) {
+            return;
+        }
+
+        // Apply bans for each AKICK entry
+        foreach ($entries as $akick) {
+            $this->applyAkickBanToChannelMembers($context, $akick, $view);
+        }
+    }
+
+    private function applyAkickBanToChannelMembers(ChanServContext $context, ChannelAkick $akick, ChannelView $view): void
+    {
+        $notifier = $context->getNotifier();
+        $userLookup = $context->getUserLookup();
+        $reason = $akick->getReason() ?? 'AKICK: ' . $akick->getMask();
+
+        foreach ($view->members as $member) {
+            $uid = $member['uid'];
+            $user = $userLookup->findByUid($uid);
+            if (null === $user) {
+                continue;
+            }
+
+            $userMask = $this->buildUserMask($user->nick, $user->ident, $user->hostname);
+            if ($akick->matches($userMask)) {
+                $notifier->setChannelModes($view->name, '+b', [$akick->getMask()]);
+                // Note: We don't kick users here, we just apply the ban
+                // Kicking would be handled by the IRCd when users try to join/speak
+            }
         }
     }
 
@@ -179,6 +221,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
             ]);
             ++$num;
         }
+
+        // Apply bans for all AKICKs if burst is complete
+        $this->applyAkickBansIfBurstComplete($context, $channel, $channelName);
     }
 
     private function doAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
@@ -280,9 +325,13 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         $this->akickRepository->save($akick);
 
-        $this->setChannelBan($context->getNotifier(), $channelName, $mask);
-
-        $this->enforceOnCurrentMembers($context, $channelName, $mask, $akick);
+        // Apply ban immediately if burst is complete and user is in channel
+        if ($this->burstCompletePort && $this->burstCompletePort->isComplete()) {
+            $view = $context->getChannelView($channelName);
+            if (null !== $view) {
+                $this->applyAkickBanToChannelMembers($context, $akick, $view);
+            }
+        }
 
         $context->reply('akick.add.done', ['%mask%' => $mask]);
 
@@ -332,57 +381,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $context->getNotifier()->sendNoticeToChannel($channelName, $channelNotice);
     }
 
-    private function doEnforce(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
-    {
-        $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK ENFORCE');
-
-        if (count($context->args) < 3) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-            return;
-        }
-
-        $item = trim($context->args[2] ?? '');
-        if ('' === $item) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-            return;
-        }
-
-        $akick = $this->findAkickByItem($channel->getId(), $item);
-
-        if (null === $akick) {
-            $context->reply('akick.enforce.not_found', ['%mask%' => $item]);
-
-            return;
-        }
-
-        if ($akick->isExpired()) {
-            $this->akickRepository->remove($akick);
-            $context->reply('akick.enforce.expired', ['%mask%' => $item]);
-
-            return;
-        }
-
-        $view = $context->getChannelView($channelName);
-        if (null === $view) {
-            $context->reply('error.channel_not_registered');
-
-            return;
-        }
-
-        $kickedCount = $this->kickMatchingMembers($context, $view, $akick);
-
-        if (0 === $kickedCount) {
-            $context->reply('akick.enforce.no_match', ['%mask%' => $akick->getMask()]);
-        } else {
-            $context->reply('akick.enforce.done', [
-                '%count%' => (string) $kickedCount,
-                '%mask%' => $akick->getMask(),
-            ]);
-        }
-    }
-
     private function findAkickByItem(int $channelId, string $item): ?ChannelAkick
     {
         if (ctype_digit($item)) {
@@ -418,45 +416,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
         };
 
         return (new DateTimeImmutable())->add(new DateInterval($intervalSpec));
-    }
-
-    private function setChannelBan(ChanServNotifierInterface $notifier, string $channelName, string $mask): void
-    {
-        $notifier->setChannelModes($channelName, '+b', [$mask]);
-    }
-
-    private function enforceOnCurrentMembers(ChanServContext $context, string $channelName, string $mask, ChannelAkick $akick): void
-    {
-        $view = $context->getChannelView($channelName);
-        if (null === $view) {
-            return;
-        }
-
-        $this->kickMatchingMembers($context, $view, $akick);
-    }
-
-    private function kickMatchingMembers(ChanServContext $context, ChannelView $view, ChannelAkick $akick): int
-    {
-        $kicked = 0;
-        $notifier = $context->getNotifier();
-        $userLookup = $context->getUserLookup();
-        $reason = $akick->getReason() ?? 'AKICK: ' . $akick->getMask();
-
-        foreach ($view->members as $member) {
-            $uid = $member['uid'];
-            $user = $userLookup->findByUid($uid);
-            if (null === $user) {
-                continue;
-            }
-
-            $userMask = $this->buildUserMask($user->nick, $user->ident, $user->hostname);
-            if ($akick->matches($userMask)) {
-                $notifier->kickFromChannel($view->name, $uid, $reason);
-                ++$kicked;
-            }
-        }
-
-        return $kicked;
     }
 
     private function buildUserMask(string $nick, string $ident, string $host): string

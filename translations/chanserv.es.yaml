@@ -303,11 +303,4 @@ akick:
     entry:          "  #%index% %mask% %reason% (por %nick%, expira: %expiration%)"
     no_reason:      "Sin razón"
     never_expires:  "nunca"
-  enforce:
-    syntax:         "AKICK <#canal> ENFORCE <máscara>"
-    short:          "Forzar expulsión de usuarios coincidentes."
-    help:           "Expulsa inmediatamente todos los usuarios que coincidan con la máscara AKICK."
-    done:           "\x0303✔\x03 Expulsados %count% usuario(s) coincidentes con \x02%mask%\x02."
-    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 no encontrado."
-    expired:        "\x0304✗\x03 AKICK \x02%mask%\x02 ha expirado."
-    no_match:       "\x0303✔\x03 No hay usuarios que coincidan con \x02%mask%\x02."
+
