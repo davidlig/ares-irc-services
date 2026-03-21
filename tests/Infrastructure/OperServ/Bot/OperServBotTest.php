@@ -240,4 +240,20 @@ final class OperServBotTest extends TestCase
 
         self::assertInstanceOf(EventSubscriberInterface::class, $bot);
     }
+
+    #[Test]
+    public function getServiceKeyReturnsOperserv(): void
+    {
+        $bot = $this->createBot();
+
+        self::assertSame('operserv', $bot->getServiceKey());
+    }
+
+    #[Test]
+    public function getNicknameReturnsConfiguredNick(): void
+    {
+        $bot = $this->createBot();
+
+        self::assertSame($this->operservNick, $bot->getNickname());
+    }
 }

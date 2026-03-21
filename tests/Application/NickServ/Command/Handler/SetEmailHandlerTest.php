@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\Command\Handler\SetEmailHandler;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingEmailChangeRegistry;
+use App\Application\NickServ\PendingVerificationRegistry;
+use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -40,8 +44,9 @@ final class SetEmailHandlerTest extends TestCase
             'UTC',
             'NOTICE',
             new NickServCommandRegistry([]),
-            new \App\Application\NickServ\PendingVerificationRegistry(),
-            new \App\Application\NickServ\RecoveryTokenRegistry(),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
         );
     }
 
@@ -325,5 +330,71 @@ final class SetEmailHandlerTest extends TestCase
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['error.not_identified'], $messages);
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
     }
 }

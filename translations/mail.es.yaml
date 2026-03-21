@@ -2,7 +2,7 @@
 # Placeholders: %nickname%, %token%, %new_email%
 
 # REGISTER / VERIFY — token de verificación
-register_verification_subject: "NickServ: verifica el registro de tu nickname"
+register_verification_subject: "%bot%: verifica el registro de tu nickname"
 register_verification_body: |
   Hola,
 
@@ -10,13 +10,13 @@ register_verification_body: |
 
   Tu token de verificación es: %token%
 
-  Para completar el registro, envía este comando a NickServ (sustituye <token> por el token anterior):
+  Para completar el registro, envía este comando a %nickserv% (sustituye <token> por el token anterior):
     /msg %bot% VERIFY %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
 
 # RESEND — reenvío del token
-resend_verification_subject: "NickServ: tu token de verificación (reenvío)"
+resend_verification_subject: "%bot%: tu token de verificación (reenvío)"
 resend_verification_body: |
   Hola,
 
@@ -24,27 +24,27 @@ resend_verification_body: |
 
   Tu token de verificación es: %token%
 
-  Para completar el registro, envía a NickServ:
+  Para completar el registro, envía a %nickserv%:
     /msg %bot% VERIFY %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
 
 # SET EMAIL — token de confirmación al email actual
-email_change_token_subject: "NickServ: confirma tu nueva dirección de correo"
+email_change_token_subject: "%bot%: confirma tu nueva dirección de correo"
 email_change_token_body: |
   Hola,
 
-  Solicitaste cambiar la dirección de correo de tu cuenta NickServ a: %new_email%
+  Solicitaste cambiar la dirección de correo de tu cuenta %nickserv% a: %new_email%
 
   Tu token de confirmación es: %token%
 
-  Para confirmar el cambio, envía a NickServ:
+  Para confirmar el cambio, envía a %nickserv%:
     /msg %bot% SET EMAIL %new_email% %token%
 
   El token expira en 1 hora. Si no solicitaste este cambio, ignora este correo.
 
 # RECOVER — token de recuperación de contraseña
-recovery_token_subject: "NickServ: recuperación de contraseña"
+recovery_token_subject: "%bot%: recuperación de contraseña"
 recovery_token_body: |
   Hola,
 
@@ -52,13 +52,13 @@ recovery_token_body: |
 
   Tu token de recuperación es: %token%
 
-  Para restablecer tu contraseña, envía a NickServ:
+  Para restablecer tu contraseña, envía a %nickserv%:
     /msg %bot% RECOVER %nickname% %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
 
 # ChanServ SET FOUNDER — token de cambio de fundador
-founder_change_token_subject: "ChanServ: token de cambio de fundador para %channel%"
+founder_change_token_subject: "%bot%: token de cambio de fundador para %channel%"
 founder_change_token_body: |
   Hola,
 
@@ -66,7 +66,7 @@ founder_change_token_body: |
 
   Tu token de confirmación es: %token%
 
-  Para completar el cambio, envía a ChanServ este comando (puedes copiarlo y pegarlo):
+  Para completar el cambio, envía a %chanserv% este comando (puedes copiarlo y pegarlo):
 
     /msg %bot% %command%
 

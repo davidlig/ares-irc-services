@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
@@ -29,6 +31,77 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(NickServService::class)]
 final class NickServServiceTest extends TestCase
 {
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
     #[Test]
     public function dispatchesToExistingCommandHandler(): void
     {
@@ -125,6 +198,7 @@ final class NickServServiceTest extends TestCase
             $translator,
             $pendingRegistry,
             $recoveryRegistry,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -180,6 +254,7 @@ final class NickServServiceTest extends TestCase
             $translator,
             $pendingRegistry,
             $recoveryRegistry,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -205,6 +280,7 @@ final class NickServServiceTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('   ', $sender);
@@ -302,6 +378,7 @@ final class NickServServiceTest extends TestCase
             $translator,
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -400,6 +477,7 @@ final class NickServServiceTest extends TestCase
             $translator,
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('NEEDID', $sender);
@@ -492,6 +570,7 @@ final class NickServServiceTest extends TestCase
             $translator,
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('TWOARGS onlyone', $sender);
@@ -575,6 +654,7 @@ final class NickServServiceTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
         );
 
         $this->expectException(RuntimeException::class);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\ChanServ;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\ChanServService;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
@@ -30,6 +32,77 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(ChanServService::class)]
 final class ChanServServiceTest extends TestCase
 {
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
     #[Test]
     public function dispatchesToExistingCommandHandler(): void
     {
@@ -120,6 +193,7 @@ final class ChanServServiceTest extends TestCase
             $channelLookup,
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $logger,
@@ -157,6 +231,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $this->createStub(LoggerInterface::class),
@@ -182,6 +257,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('   ', $sender);
@@ -274,6 +350,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -373,6 +450,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('NEEDID', $sender);
@@ -469,6 +547,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('TWOARGS onlyone', $sender);
@@ -561,6 +640,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $logger,
@@ -652,6 +732,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $logger,
@@ -742,6 +823,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $logger,
@@ -832,6 +914,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $logger,

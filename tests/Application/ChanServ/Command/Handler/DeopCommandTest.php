@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\ChanServ\Command\Handler;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
@@ -47,6 +49,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
     }
 
@@ -164,6 +167,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['#test', ''], $notifier, $translator));
 
@@ -187,6 +191,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
@@ -216,6 +221,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['#test', 'Nick'], $notifier, $translator));
 
@@ -248,6 +254,7 @@ final class DeopCommandTest extends TestCase
             $levelRepo,
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'TargetNick'], $notifier, $translator));
@@ -399,6 +406,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame('DEOP', $cmd->getName());
@@ -413,6 +421,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame([], $cmd->getAliases());
@@ -427,6 +436,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame(2, $cmd->getMinArgs());
@@ -441,6 +451,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame('deop.syntax', $cmd->getSyntaxKey());
@@ -455,6 +466,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame('deop.help', $cmd->getHelpKey());
@@ -469,6 +481,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame(21, $cmd->getOrder());
@@ -483,6 +496,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame('deop.short', $cmd->getShortDescKey());
@@ -497,6 +511,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame([], $cmd->getSubCommandHelp());
@@ -511,6 +526,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertFalse($cmd->isOperOnly());
@@ -525,8 +541,75 @@ final class DeopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
 
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
     }
 }

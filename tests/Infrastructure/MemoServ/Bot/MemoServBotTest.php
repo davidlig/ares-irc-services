@@ -212,4 +212,16 @@ final class MemoServBotTest extends TestCase
 
         return $module;
     }
+
+    #[Test]
+    public function getServiceKeyReturnsMemoserv(): void
+    {
+        self::assertSame('memoserv', $this->bot->getServiceKey());
+    }
+
+    #[Test]
+    public function getNicknameReturnsConfiguredNick(): void
+    {
+        self::assertSame('MemoServ', $this->bot->getNickname());
+    }
 }

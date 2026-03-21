@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ;
 
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
@@ -39,6 +40,7 @@ final readonly class NickServService
         private readonly TranslatorInterface $translator,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
         private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
+        private readonly ServiceNicknameRegistry $serviceNicks,
         private readonly string $defaultLanguage = 'en',
         private readonly string $defaultTimezone = 'UTC',
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -92,6 +94,7 @@ final readonly class NickServService
             registry: $this->commandRegistry,
             pendingVerificationRegistry: $this->pendingVerificationRegistry,
             recoveryTokenRegistry: $this->recoveryTokenRegistry,
+            serviceNicks: $this->serviceNicks,
         );
 
         $this->authorizationContext->setCurrentUser($sender);

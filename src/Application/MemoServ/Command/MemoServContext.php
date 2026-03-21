@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\MemoServ\Command;
 
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
@@ -11,10 +12,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Context for MemoServ command execution. Commands reply via reply() / replyRaw().
- */
-readonly class MemoServContext
+final readonly class MemoServContext
 {
     public function __construct(
         public readonly ?SenderView $sender,
@@ -28,6 +26,7 @@ readonly class MemoServContext
         private readonly string $timezone,
         private readonly string $messageType,
         private readonly MemoServCommandRegistry $registry,
+        private readonly ServiceNicknameRegistry $serviceNicks,
     ) {
     }
 
@@ -85,7 +84,7 @@ readonly class MemoServContext
      */
     private function wrapParams(array $params): array
     {
-        $wrapped = ['%bot%' => $this->notifier->getNick()];
+        $wrapped = $this->serviceNicks->getAllPlaceholders($this->notifier->getNick());
         foreach ($params as $key => $value) {
             $wrapped['%' . trim((string) $key, '%') . '%'] = $value;
         }

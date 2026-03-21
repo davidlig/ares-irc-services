@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ;
 
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
@@ -44,6 +45,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private NetworkUserLookupPort $userLookup,
+        private ServiceNicknameRegistry $serviceNicks,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -97,6 +99,7 @@ final readonly class ChanServService implements ChanServDispatchPort
             channelLookup: $this->channelLookup,
             channelModeSupport: $modeSupport,
             userLookup: $this->userLookup,
+            serviceNicks: $this->serviceNicks,
         );
 
         try {

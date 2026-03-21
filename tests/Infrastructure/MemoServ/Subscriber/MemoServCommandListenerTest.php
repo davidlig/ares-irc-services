@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\MemoServ\Subscriber;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
@@ -87,6 +89,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $this->logger,
@@ -175,6 +178,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $this->logger,
@@ -239,6 +243,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $this->logger,
@@ -284,6 +289,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $this->logger,
@@ -338,6 +344,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $this->logger,
@@ -371,6 +378,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $this->logger,
@@ -531,5 +539,76 @@ final class MemoServCommandListenerTest extends TestCase
                 throw $this->exception;
             }
         };
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command;
 
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
@@ -40,6 +41,7 @@ readonly class NickServContext
         private readonly NickServCommandRegistry $registry,
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
         private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
+        private readonly ServiceNicknameRegistry $serviceNicks,
     ) {
     }
 
@@ -138,7 +140,7 @@ readonly class NickServContext
      */
     private function wrapParams(array $params): array
     {
-        $wrapped = ['%bot%' => $this->notifier->getNick()];
+        $wrapped = $this->serviceNicks->getAllPlaceholders($this->notifier->getNick());
         foreach ($params as $key => $value) {
             $wrapped['%' . trim((string) $key, '%') . '%'] = $value;
         }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
@@ -29,6 +31,8 @@ final class NickServContextTest extends TestCase
         ?PendingVerificationRegistry $pendingVerification = null,
         ?RecoveryTokenRegistry $recoveryToken = null,
     ): NickServContext {
+        $serviceNicks = $this->createServiceNicks('NickServ');
+
         return new NickServContext(
             $sender,
             null,
@@ -42,7 +46,74 @@ final class NickServContextTest extends TestCase
             $registry ?? new NickServCommandRegistry([]),
             $pendingVerification ?? new PendingVerificationRegistry(),
             $recoveryToken ?? new RecoveryTokenRegistry(),
+            $serviceNicks,
         );
+    }
+
+    private function createServiceNicks(string $botName): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([$nickservProvider, $chanservProvider, $memoservProvider, $operservProvider]);
     }
 
     #[Test]
@@ -65,6 +136,7 @@ final class NickServContextTest extends TestCase
     public function getRegistryReturnsInjectedRegistry(): void
     {
         $registry = new NickServCommandRegistry([]);
+        $serviceNicks = $this->createServiceNicks('NickServ');
         $context = new NickServContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             null,
@@ -78,6 +150,7 @@ final class NickServContextTest extends TestCase
             $registry,
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
+            $serviceNicks,
         );
 
         self::assertSame($registry, $context->getRegistry());
@@ -89,6 +162,7 @@ final class NickServContextTest extends TestCase
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $pending = new PendingVerificationRegistry();
         $recovery = new RecoveryTokenRegistry();
+        $serviceNicks = $this->createServiceNicks('NickServ');
         $context = new NickServContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             null,
@@ -102,6 +176,7 @@ final class NickServContextTest extends TestCase
             new NickServCommandRegistry([]),
             $pending,
             $recovery,
+            $serviceNicks,
         );
 
         self::assertSame($notifier, $context->getNotifier());

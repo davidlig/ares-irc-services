@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Bot;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\Port\NetworkUserLookupPort;
@@ -21,7 +22,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * NickServ pseudo-client: introduces on burst, implements NickServNotifierInterface.
  * Sending NOTICE/PRIVMSG is delegated to SendNoticePort (implemented by Core).
  */
-final readonly class NickServBot implements NickServNotifierInterface, EventSubscriberInterface
+final readonly class NickServBot implements NickServNotifierInterface, ServiceNicknameProviderInterface, EventSubscriberInterface
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
@@ -192,5 +193,15 @@ final readonly class NickServBot implements NickServNotifierInterface, EventSubs
     public function getUid(): string
     {
         return $this->nickservUid;
+    }
+
+    public function getServiceKey(): string
+    {
+        return 'nickserv';
+    }
+
+    public function getNickname(): string
+    {
+        return $this->nickservNick;
     }
 }

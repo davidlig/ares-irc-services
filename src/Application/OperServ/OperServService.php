@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ;
 
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
@@ -29,6 +30,7 @@ final readonly class OperServService
         private UserMessageTypeResolverInterface $messageTypeResolver,
         private TranslatorInterface $translator,
         private IrcopAccessHelper $accessHelper,
+        private ServiceNicknameRegistry $serviceNicks,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -75,6 +77,7 @@ final readonly class OperServService
             messageType: $messageType,
             registry: $this->commandRegistry,
             accessHelper: $this->accessHelper,
+            serviceNicks: $this->serviceNicks,
         );
 
         if ($handler->isOperOnly() && !$this->isOper($sender, $account)) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\MemoServ\Bot;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
@@ -17,7 +18,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * MemoServ pseudo-client: introduces on burst, implements MemoServNotifierInterface.
  */
-final readonly class MemoServBot implements MemoServNotifierInterface, EventSubscriberInterface
+final readonly class MemoServBot implements MemoServNotifierInterface, ServiceNicknameProviderInterface, EventSubscriberInterface
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
@@ -107,5 +108,15 @@ final readonly class MemoServBot implements MemoServNotifierInterface, EventSubs
     public function getUid(): string
     {
         return $this->memoservUid;
+    }
+
+    public function getServiceKey(): string
+    {
+        return 'memoserv';
+    }
+
+    public function getNickname(): string
+    {
+        return $this->memoservNick;
     }
 }

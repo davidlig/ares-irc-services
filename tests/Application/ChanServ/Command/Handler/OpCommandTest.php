@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\ChanServ\Command\Handler;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
@@ -46,6 +48,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
     }
 
@@ -359,6 +362,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame('OP', $cmd->getName());
     }
@@ -372,6 +376,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame([], $cmd->getAliases());
     }
@@ -385,6 +390,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame(2, $cmd->getMinArgs());
     }
@@ -398,6 +404,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame('op.syntax', $cmd->getSyntaxKey());
     }
@@ -411,6 +418,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame('op.help', $cmd->getHelpKey());
     }
@@ -424,6 +432,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame(20, $cmd->getOrder());
     }
@@ -437,6 +446,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame('op.short', $cmd->getShortDescKey());
     }
@@ -450,6 +460,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame([], $cmd->getSubCommandHelp());
     }
@@ -463,6 +474,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertFalse($cmd->isOperOnly());
     }
@@ -476,7 +488,74 @@ final class OpCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
             $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
         );
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
     }
 }

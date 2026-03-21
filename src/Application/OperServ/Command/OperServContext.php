@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command;
 
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -12,7 +13,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-readonly class OperServContext
+final readonly class OperServContext
 {
     public function __construct(
         public readonly ?SenderView $sender,
@@ -27,6 +28,7 @@ readonly class OperServContext
         private readonly string $messageType,
         private readonly OperServCommandRegistry $registry,
         private readonly IrcopAccessHelper $accessHelper,
+        private readonly ServiceNicknameRegistry $serviceNicks,
     ) {
     }
 
@@ -99,7 +101,7 @@ readonly class OperServContext
     /** @return array<string, mixed> */
     private function wrapParams(array $params): array
     {
-        $wrapped = ['%bot%' => $this->notifier->getNick()];
+        $wrapped = $this->serviceNicks->getAllPlaceholders($this->notifier->getNick());
         foreach ($params as $key => $value) {
             $wrapped['%' . trim((string) $key, '%') . '%'] = $value;
         }

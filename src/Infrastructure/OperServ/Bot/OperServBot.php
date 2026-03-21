@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Bot;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
@@ -14,7 +15,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final readonly class OperServBot implements OperServNotifierInterface, EventSubscriberInterface
+final readonly class OperServBot implements OperServNotifierInterface, ServiceNicknameProviderInterface, EventSubscriberInterface
 {
     public function __construct(
         private ActiveConnectionHolder $connectionHolder,
@@ -83,5 +84,15 @@ final readonly class OperServBot implements OperServNotifierInterface, EventSubs
     public function getUid(): string
     {
         return $this->operservUid;
+    }
+
+    public function getServiceKey(): string
+    {
+        return 'operserv';
+    }
+
+    public function getNickname(): string
+    {
+        return $this->operservNick;
     }
 }

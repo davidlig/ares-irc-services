@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\MemoServ;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
@@ -24,6 +26,77 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(MemoServService::class)]
 final class MemoServServiceTest extends TestCase
 {
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
     #[Test]
     public function dispatchesToExistingCommandHandler(): void
     {
@@ -104,6 +177,7 @@ final class MemoServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($nickRepository),
             $translator,
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $logger,
@@ -136,6 +210,7 @@ final class MemoServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($nickRepository),
             $translator,
+            $this->createServiceNicks(),
             'en',
             'UTC',
             $this->createStub(LoggerInterface::class),
@@ -157,6 +232,7 @@ final class MemoServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $this->createStub(TranslatorInterface::class),
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('   ', $sender);
@@ -244,6 +320,7 @@ final class MemoServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -335,6 +412,7 @@ final class MemoServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($nickRepository),
             $translator,
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('NEEDID', $sender);
@@ -423,6 +501,7 @@ final class MemoServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('TWOARGS onlyone', $sender);
@@ -505,6 +584,7 @@ final class MemoServServiceTest extends TestCase
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
+            $this->createServiceNicks(),
         );
 
         $service->dispatch('DISABLED', $sender);
@@ -592,6 +672,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(MemoServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
             $this->createStub(TranslatorInterface::class),
+            $this->createServiceNicks(),
             'en',
             'UTC',
         );
@@ -681,6 +762,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(MemoServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
             $this->createStub(TranslatorInterface::class),
+            $this->createServiceNicks(),
             'fr',
             'Europe/Paris',
         );
@@ -768,6 +850,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(MemoServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $this->createStub(TranslatorInterface::class),
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,

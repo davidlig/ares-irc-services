@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Command;
 
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
@@ -15,11 +16,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Context for ChanServ command execution. Commands reply via reply() / replyRaw();
- * channel data and actions go through the injected ports and notifier.
- */
-readonly class ChanServContext
+final readonly class ChanServContext
 {
     public function __construct(
         public readonly ?SenderView $sender,
@@ -36,6 +33,7 @@ readonly class ChanServContext
         private readonly ChannelLookupPort $channelLookup,
         private readonly ChannelModeSupportInterface $channelModeSupport,
         private readonly NetworkUserLookupPort $userLookup,
+        private readonly ServiceNicknameRegistry $serviceNicks,
     ) {
     }
 
@@ -122,7 +120,7 @@ readonly class ChanServContext
      */
     private function wrapParams(array $params): array
     {
-        $wrapped = ['%bot%' => $this->notifier->getNick()];
+        $wrapped = $this->serviceNicks->getAllPlaceholders($this->notifier->getNick());
         foreach ($params as $key => $value) {
             $wrapped['%' . trim((string) $key, '%') . '%'] = $value;
         }

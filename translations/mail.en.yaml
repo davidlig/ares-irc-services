@@ -2,7 +2,7 @@
 # Placeholders: %nickname%, %token%, %new_email%
 
 # REGISTER / VERIFY — verification token
-register_verification_subject: "NickServ: verify your nickname registration"
+register_verification_subject: "%bot%: verify your nickname registration"
 register_verification_body: |
   Hello,
 
@@ -10,13 +10,13 @@ register_verification_body: |
 
   Your verification token is: %token%
 
-  To complete registration, send this command to NickServ (replace <token> with the token above):
+  To complete registration, send this command to %nickserv% (replace <token> with the token above):
     /msg %bot% VERIFY %token%
 
   The token expires in 1 hour. If you did not request this, please ignore this email.
 
 # RESEND — same as register, resend of token
-resend_verification_subject: "NickServ: your verification token (resend)"
+resend_verification_subject: "%bot%: your verification token (resend)"
 resend_verification_body: |
   Hello,
 
@@ -24,27 +24,27 @@ resend_verification_body: |
 
   Your verification token is: %token%
 
-  To complete registration, send to NickServ:
+  To complete registration, send to %nickserv%:
     /msg %bot% VERIFY %token%
 
   The token expires in 1 hour. If you did not request this, please ignore this email.
 
 # SET EMAIL — confirmation token sent to current email
-email_change_token_subject: "NickServ: confirm your new email address"
+email_change_token_subject: "%bot%: confirm your new email address"
 email_change_token_body: |
   Hello,
 
-  You requested to change the email address for your NickServ account to: %new_email%
+  You requested to change the email address for your %nickserv% account to: %new_email%
 
   Your confirmation token is: %token%
 
-  To confirm the change, send to NickServ:
+  To confirm the change, send to %nickserv%:
     /msg %bot% SET EMAIL %new_email% %token%
 
   The token expires in 1 hour. If you did not request this change, please ignore this email.
 
 # RECOVER — password recovery token
-recovery_token_subject: "NickServ: password recovery"
+recovery_token_subject: "%bot%: password recovery"
 recovery_token_body: |
   Hello,
 
@@ -52,13 +52,13 @@ recovery_token_body: |
 
   Your recovery token is: %token%
 
-  To reset your password, send to NickServ:
+  To reset your password, send to %nickserv%:
     /msg %bot% RECOVER %nickname% %token%
 
   The token expires in 1 hour. If you did not request this, please ignore this email.
 
 # ChanServ SET FOUNDER — founder change token
-founder_change_token_subject: "ChanServ: founder change token for %channel%"
+founder_change_token_subject: "%bot%: founder change token for %channel%"
 founder_change_token_body: |
   Hello,
 
@@ -66,7 +66,7 @@ founder_change_token_body: |
 
   Your confirmation token is: %token%
 
-  To complete the change, send to ChanServ this command (you can copy and paste it):
+  To complete the change, send to %chanserv% this command (you can copy and paste it):
 
     /msg %bot% %command%
 

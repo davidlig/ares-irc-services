@@ -15,7 +15,7 @@ help:
   syntax:           "HELP [comando [sub-opción]]"
   short:            "Listar comandos o mostrar ayuda de un comando."
   help:             "Sin argumentos lista todos los comandos. Usa \x0303HELP <comando>\x03 para ayuda completa, o \x0303HELP <comando> <opción>\x03 para sub-opciones."
-  header_title:     "OperServ"
+  header_title:     "%bot%"
   intro:            "Servicio de gestión de red para operadores de IRC."
   general_header:   "\x02\x0314Comandos disponibles:\x03\x0F"
   command_line:     "  \x0307%command%\x03%description%"

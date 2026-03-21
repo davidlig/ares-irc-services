@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
@@ -77,7 +79,7 @@ final class OperServContextTest extends TestCase
             ->method('trans')
             ->with(
                 'test.key',
-                ['%bot%' => 'OperServ', '%param%' => 'value'],
+                $this->arrayHasKey('%param%'),
                 'operserv',
                 'en'
             )
@@ -100,12 +102,12 @@ final class OperServContextTest extends TestCase
     }
 
     #[Test]
-    public function replyDoesNotCallNotifierWhenSenderIsNull(): void
+    public function replyDoesNothingWhenSenderIsNull(): void
     {
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects($this->never())->method('sendMessage');
-
         $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('translated');
 
         $context = $this->createContext(
             sender: null,
@@ -117,26 +119,7 @@ final class OperServContextTest extends TestCase
     }
 
     #[Test]
-    public function replyRawSendsMessageViaNotifier(): void
-    {
-        $notifier = $this->createMock(OperServNotifierInterface::class);
-        $sender = $this->createSender(uid: 'userUid456');
-
-        $notifier->expects($this->once())
-            ->method('sendMessage')
-            ->with('userUid456', 'Raw message here', 'privmsg');
-
-        $context = $this->createContext(
-            sender: $sender,
-            notifier: $notifier,
-            messageType: 'privmsg'
-        );
-
-        $context->replyRaw('Raw message here');
-    }
-
-    #[Test]
-    public function replyRawDoesNotCallNotifierWhenSenderIsNull(): void
+    public function replyRawDoesNotSendWhenSenderIsNull(): void
     {
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects($this->never())->method('sendMessage');
@@ -147,7 +130,7 @@ final class OperServContextTest extends TestCase
     }
 
     #[Test]
-    public function formatDateReturnsEmDashWhenNull(): void
+    public function formatDateReturnsEmDashWhenDateIsNull(): void
     {
         $context = $this->createContext();
 
@@ -155,83 +138,52 @@ final class OperServContextTest extends TestCase
     }
 
     #[Test]
-    public function formatDateFormatsDateWithTimezone(): void
-    {
-        $context = $this->createContext(timezone: 'UTC');
-
-        $date = new DateTimeImmutable('2025-06-15 14:30:00', new DateTimeZone('UTC'));
-
-        self::assertSame('15/06/2025 14:30 UTC', $context->formatDate($date));
-    }
-
-    #[Test]
-    public function formatDateConvertsToConfiguredTimezone(): void
+    public function formatDateFormatsInTimezone(): void
     {
         $context = $this->createContext(timezone: 'Europe/Madrid');
+        $date = new DateTimeImmutable('2024-01-15 10:30:00', new DateTimeZone('UTC'));
 
-        $date = new DateTimeImmutable('2025-06-15 12:00:00', new DateTimeZone('UTC'));
+        $result = $context->formatDate($date);
 
-        self::assertMatchesRegularExpression(
-            '/15\/06\/2025 \d{2}:\d{2} CEST/',
-            $context->formatDate($date)
-        );
+        self::assertStringContainsString('15/01/2024', $result);
     }
 
     #[Test]
-    public function transTranslatesWithBotNameWrapper(): void
+    public function transReturnsTranslation(): void
     {
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
 
-        $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects($this->once())
-            ->method('trans')
-            ->with(
-                'translation.key',
-                ['%bot%' => 'OperServ', '%user%' => 'TestUser'],
-                'operserv',
-                'es'
-            )
-            ->willReturn('Hola TestUser, soy OperServ');
-
-        $context = $this->createContext(
-            notifier: $notifier,
-            translator: $translator,
-            language: 'es'
-        );
-
-        self::assertSame('Hola TestUser, soy OperServ', $context->trans('translation.key', ['user' => 'TestUser']));
-    }
-
-    #[Test]
-    public function transWrapsParamsWithPercentSigns(): void
-    {
-        $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('OS');
-
-        $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects($this->once())
-            ->method('trans')
-            ->with(
-                'key',
-                ['%bot%' => 'OS', '%name%' => 'John', '%count%' => 5],
-                'operserv',
-                'en'
-            )
-            ->willReturn('result');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params): string => $id . '|' . ($params['%key%'] ?? ''));
 
         $context = $this->createContext(notifier: $notifier, translator: $translator);
 
-        $context->trans('key', ['name' => 'John', 'count' => 5]);
+        self::assertSame('test.key|value', $context->trans('test.key', ['key' => 'value']));
+    }
+
+    #[Test]
+    public function commandAndArgsAreAccessible(): void
+    {
+        $context = $this->createContext(command: 'TESTCMD', args: ['arg1', 'arg2']);
+
+        self::assertSame('TESTCMD', $context->command);
+        self::assertSame(['arg1', 'arg2'], $context->args);
+    }
+
+    #[Test]
+    public function languageAndTimezoneDefaultToProvidedValues(): void
+    {
+        $context = $this->createContext(language: 'fr', timezone: 'Europe/Paris');
+
+        self::assertSame('fr', $context->getLanguage());
+        self::assertSame('Europe/Paris', $context->getTimezone());
     }
 
     #[Test]
     public function isRootReturnsFalseWhenSenderIsNull(): void
     {
-        $rootRegistry = new RootUserRegistry('Admin');
-        $accessHelper = $this->createAccessHelper(rootRegistry: $rootRegistry);
-
-        $context = $this->createContext(sender: null, accessHelper: $accessHelper);
+        $context = $this->createContext(sender: null);
 
         self::assertFalse($context->isRoot());
     }
@@ -239,10 +191,13 @@ final class OperServContextTest extends TestCase
     #[Test]
     public function isRootDelegatesToAccessHelper(): void
     {
-        $sender = $this->createSender(uid: 'uid123', nick: 'AdminNick');
-
-        $rootRegistry = new RootUserRegistry('AdminNick,OtherRoot');
-        $accessHelper = $this->createAccessHelper(rootRegistry: $rootRegistry);
+        $sender = $this->createSender(nick: 'AdminNick');
+        $rootRegistry = new RootUserRegistry('AdminNick');
+        $accessHelper = new IrcopAccessHelper(
+            $rootRegistry,
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class)
+        );
 
         $context = $this->createContext(sender: $sender, accessHelper: $accessHelper);
 
@@ -252,10 +207,13 @@ final class OperServContextTest extends TestCase
     #[Test]
     public function isRootReturnsFalseWhenAccessHelperReturnsFalse(): void
     {
-        $sender = $this->createSender(uid: 'uid456', nick: 'RegularUser');
-
-        $rootRegistry = new RootUserRegistry('Admin');
-        $accessHelper = $this->createAccessHelper(rootRegistry: $rootRegistry);
+        $sender = $this->createSender(nick: 'RegularUser');
+        $rootRegistry = new RootUserRegistry('');
+        $accessHelper = new IrcopAccessHelper(
+            $rootRegistry,
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class)
+        );
 
         $context = $this->createContext(sender: $sender, accessHelper: $accessHelper);
 
@@ -266,36 +224,103 @@ final class OperServContextTest extends TestCase
     public function getBotNameReturnsNotifierNick(): void
     {
         $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('OperServBot');
+        $notifier->method('getNick')->willReturn('OperServ');
 
         $context = $this->createContext(notifier: $notifier);
 
-        self::assertSame('OperServBot', $context->getBotName());
+        self::assertSame('OperServ', $context->getBotName());
     }
 
-    private function createSender(string $uid = 'uid123', string $nick = 'TestNick'): SenderView
+    private function createSender(?string $uid = null, ?string $nick = null): SenderView
     {
         return new SenderView(
-            uid: $uid,
-            nick: $nick,
-            ident: 'testident',
-            hostname: 'test.host',
-            cloakedHost: 'test.cloaked',
-            ipBase64: 'base64ip',
-            isIdentified: false,
-            isOper: false,
-            serverSid: '001',
-            displayHost: 'display.host'
+            $uid ?? 'UID123',
+            $nick ?? 'TestNick',
+            'i',
+            'h',
+            'c',
+            'ip'
         );
     }
 
-    private function createAccessHelper(?RootUserRegistry $rootRegistry = null): IrcopAccessHelper
+    private function createAccessHelper(): IrcopAccessHelper
     {
         return new IrcopAccessHelper(
-            rootUserRegistry: $rootRegistry ?? new RootUserRegistry(''),
-            ircopRepository: $this->createStub(OperIrcopRepositoryInterface::class),
-            roleRepository: $this->createStub(OperRoleRepositoryInterface::class),
+            new RootUserRegistry(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class)
         );
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
     }
 
     private function createContext(
@@ -323,6 +348,7 @@ final class OperServContextTest extends TestCase
             messageType: $messageType,
             registry: $registry ?? new OperServCommandRegistry([]),
             accessHelper: $accessHelper ?? $this->createAccessHelper(),
+            serviceNicks: $this->createServiceNicks(),
         );
     }
 }

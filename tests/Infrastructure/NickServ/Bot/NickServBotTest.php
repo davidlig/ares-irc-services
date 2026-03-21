@@ -448,4 +448,34 @@ final class NickServBotTest extends TestCase
     {
         self::assertSame(self::NICKSERV_UID, $this->bot->getUid());
     }
+
+    #[Test]
+    public function getServiceKeyReturnsNickserv(): void
+    {
+        self::assertSame('nickserv', $this->bot->getServiceKey());
+    }
+
+    #[Test]
+    public function getNicknameReturnsConfiguredNick(): void
+    {
+        self::assertSame('NickServ', $this->bot->getNickname());
+    }
+
+    #[Test]
+    public function getNicknameReturnsCustomNicknameWhenConfigured(): void
+    {
+        $bot = new NickServBot(
+            $this->connectionHolder,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(SendNoticePort::class),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncInterface::class),
+            self::HOSTNAME,
+            self::NICKSERV_UID,
+            'CustomNS',
+        );
+
+        self::assertSame('CustomNS', $bot->getNickname());
+        self::assertSame('CustomNS', $bot->getNick());
+    }
 }

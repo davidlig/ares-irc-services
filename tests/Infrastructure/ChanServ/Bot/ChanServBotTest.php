@@ -627,4 +627,16 @@ final class ChanServBotTest extends TestCase
 
         $this->bot->kickFromChannel('#channel', '001USER', 'Test reason');
     }
+
+    #[Test]
+    public function getServiceKeyReturnsChanserv(): void
+    {
+        self::assertSame('chanserv', $this->bot->getServiceKey());
+    }
+
+    #[Test]
+    public function getNicknameReturnsConfiguredNick(): void
+    {
+        self::assertSame('ChanServ', $this->bot->getNickname());
+    }
 }

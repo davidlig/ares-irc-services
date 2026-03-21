@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\MemoServ;
 
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
@@ -32,6 +33,7 @@ final readonly class MemoServService
         private MemoServNotifierInterface $notifier,
         private UserMessageTypeResolverInterface $messageTypeResolver,
         private TranslatorInterface $translator,
+        private ServiceNicknameRegistry $serviceNicks,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -81,6 +83,7 @@ final readonly class MemoServService
             timezone: $timezone,
             messageType: $messageType,
             registry: $this->commandRegistry,
+            serviceNicks: $this->serviceNicks,
         );
 
         try {

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -28,6 +30,77 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(OperServService::class)]
 final class OperServServiceTest extends TestCase
 {
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
     private function createAccessHelper(bool $isRoot = false, ?OperIrcop $ircop = null): IrcopAccessHelper
     {
         $rootUsers = $isRoot ? 'TestUser' : '';
@@ -85,6 +158,7 @@ final class OperServServiceTest extends TestCase
             $this->createStub(UserMessageTypeResolverInterface::class),
             $this->createStub(TranslatorInterface::class),
             $this->createAccessHelper(),
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $this->createStub(LoggerInterface::class),
@@ -126,6 +200,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $this->createAccessHelper(),
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $this->createStub(LoggerInterface::class),
@@ -167,6 +242,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -217,6 +293,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -267,6 +344,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -322,6 +400,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -362,6 +441,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -405,6 +485,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -453,6 +534,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -505,6 +587,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -562,6 +645,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -605,6 +689,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -652,6 +737,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -696,6 +782,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,
@@ -738,6 +825,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'es',
             defaultTimezone: 'Europe/Madrid',
             logger: $logger,
@@ -784,6 +872,7 @@ final class OperServServiceTest extends TestCase
             $messageTypeResolver,
             $translator,
             $accessHelper,
+            $this->createServiceNicks(),
             defaultLanguage: 'en',
             defaultTimezone: 'UTC',
             logger: $logger,

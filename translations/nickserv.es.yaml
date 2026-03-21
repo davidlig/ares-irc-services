@@ -70,7 +70,7 @@ recover:
 identify:
   syntax:           "IDENTIFY <nickname> <contraseña>"
   short:            "Acredita tu identidad como dueño de un nickname."
-  help:             "Autentica tu sesión con NickServ indicando tu nickname y contraseña.\nTras identificarte recibirás el modo registrado \x02+r\x02 y, si estabas usando\nun nick de invitado, recuperarás tu nick registrado automáticamente."
+  help:             "Autentica tu sesión con %nickserv% indicando tu nickname y contraseña.\nTras identificarte recibirás el modo registrado \x02+r\x02 y, si estabas usando\nun nick de invitado, recuperarás tu nick registrado automáticamente."
   success:          "\x0303✔\x03 Ahora estás identificado como \x02%nickname%\x02."
   already_identified: "\x0307ℹ\x03 Ya estás identificado como \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
@@ -132,7 +132,7 @@ info:
 set:
   syntax:           "SET <opción> <valor>"
   short:            "Modifica la configuración de tu cuenta."
-  help:             "Modifica la configuración de tu cuenta de NickServ.\nDebes estar identificado para usar este comando."
+  help:             "Modifica la configuración de tu cuenta de %nickserv%.\nDebes estar identificado para usar este comando."
   unknown_option:   "\x0304✗\x03 Opción desconocida \x02%option%\x02. Opciones disponibles: %options%."
 
   password:
@@ -152,14 +152,14 @@ set:
   language:
     syntax:         "SET LANGUAGE <código>"
     short:          "Cambia el idioma en el que los servicios se comunican contigo."
-    help:           "Cambia el idioma en el que NickServ y el resto de servicios se dirigen\na ti. Idiomas disponibles: \x02es\x02 (español), \x02en\x02 (inglés)."
+    help:           "Cambia el idioma en el que %nickserv% y el resto de servicios se dirigen\na ti. Idiomas disponibles: \x02es\x02 (español), \x02en\x02 (inglés)."
     success:        "\x0303✔\x03 Idioma cambiado a \x02%language%\x02."
     invalid:        "\x0304✗\x03 Idioma no soportado. Idiomas disponibles: %languages%."
 
   timezone:
     syntax:         "SET TIMEZONE <zona>"
     short:          "Establece la zona horaria para mostrar fechas."
-    help:           "Establece la zona horaria con la que NickServ muestra las fechas.\nUsa \x02HELP SET TIMEZONE\x02 para el índice de regiones; \x02HELP SET TIMEZONE <región>\x02 (ej. Europe) para las zonas de esa región. Usa \x02OFF\x02 para quitarla."
+    help:           "Establece la zona horaria con la que %nickserv% muestra las fechas.\nUsa \x02HELP SET TIMEZONE\x02 para el índice de regiones; \x02HELP SET TIMEZONE <región>\x02 (ej. Europe) para las zonas de esa región. Usa \x02OFF\x02 para quitarla."
     success:        "\x0303✔\x03 Zona horaria establecida en \x02%timezone%\x02. Las fechas se mostrarán en esta zona."
     cleared:        "\x0303✔\x03 Zona horaria quitada. Las fechas usarán la predeterminada de la red."
     invalid:        "\x0304✗\x03 Zona horaria no válida \x02%timezone%\x02. Usa un identificador válido (ej. UTC, Europe/Madrid)."
@@ -174,7 +174,7 @@ set:
   msg:
     syntax:         "SET MSG {ON|OFF}"
     short:          "Usar PRIVMSG (ON) o NOTICE (OFF) para las respuestas de los servicios."
-    help:           "Controla cómo NickServ y el resto de servicios te envían mensajes.\nCon \x02MSG ON\x02 las respuestas se envían como \x02PRIVMSG\x02 (algunos clientes pueden mostrar notificaciones o respuestas automáticas).\nCon \x02MSG OFF\x02 las respuestas se envían como \x02NOTICE\x02 (por defecto; normalmente sin auto-respuesta)."
+    help:           "Controla cómo %nickserv% y el resto de servicios te envían mensajes.\nCon \x02MSG ON\x02 las respuestas se envían como \x02PRIVMSG\x02 (algunos clientes pueden mostrar notificaciones o respuestas automáticas).\nCon \x02MSG OFF\x02 las respuestas se envían como \x02NOTICE\x02 (por defecto; normalmente sin auto-respuesta)."
     on:             "\x0303✔\x03 Los mensajes de los servicios se enviarán ahora como \x02PRIVMSG\x02."
     off:             "\x0303✔\x03 Los mensajes de los servicios se enviarán ahora como \x02NOTICE\x02."
 
@@ -190,9 +190,9 @@ set:
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [comando]"
-  short:            "Muestra la ayuda de los comandos de NickServ."
-  help:             "Muestra la ayuda general de NickServ o la información detallada\nde un comando concreto."
-  header_title:     "NickServ"
+  short:            "Muestra la ayuda de los comandos de %nickserv%."
+  help:             "Muestra la ayuda general de %nickserv% o la información detallada\nde un comando concreto."
+  header_title:     "%bot%"
   intro:            "Gestión y protección de nicknames en la red IRC."
   intro_expiration: "NOTA: Los nicknames \x0304\x1Fsin uso\x0F durante más de %days% días se eliminan automáticamente."
   general_header:   "\x02\x0314Comandos disponibles:\x03\x0F"

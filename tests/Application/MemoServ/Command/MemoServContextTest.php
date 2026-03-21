@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\MemoServ\Command;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
@@ -18,6 +20,77 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(MemoServContext::class)]
 final class MemoServContextTest extends TestCase
 {
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+
     #[Test]
     public function replyTranslatesAndSendsWhenSenderIsSet(): void
     {
@@ -41,6 +114,7 @@ final class MemoServContextTest extends TestCase
             'Europe/Madrid',
             'NOTICE',
             $registry,
+            $this->createServiceNicks(),
         );
 
         $context->reply('memo.sent', ['name' => 'Bob']);
@@ -73,6 +147,7 @@ final class MemoServContextTest extends TestCase
             'UTC',
             'NOTICE',
             $registry,
+            $this->createServiceNicks(),
         );
 
         $context->reply('some.key');
@@ -102,6 +177,7 @@ final class MemoServContextTest extends TestCase
             'UTC',
             'NOTICE',
             $registry,
+            $this->createServiceNicks(),
         );
 
         $context->replyRaw('Raw line');
@@ -132,6 +208,7 @@ final class MemoServContextTest extends TestCase
             'UTC',
             'NOTICE',
             $registry,
+            $this->createServiceNicks(),
         );
 
         $context->replyRaw('Anything');
@@ -156,6 +233,7 @@ final class MemoServContextTest extends TestCase
             'Europe/Madrid',
             'PRIVMSG',
             $registry,
+            $this->createServiceNicks(),
         );
 
         self::assertSame($notifier, $context->getNotifier());
@@ -201,6 +279,7 @@ final class MemoServContextTest extends TestCase
             'UTC',
             'NOTICE',
             new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
         );
 
         $result = $context->trans('memo.from', ['nick' => 'Alice']);
@@ -221,6 +300,7 @@ final class MemoServContextTest extends TestCase
             $timezone,
             'NOTICE',
             new MemoServCommandRegistry([]),
+            $this->createServiceNicks(),
         );
     }
 }

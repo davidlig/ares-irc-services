@@ -6,7 +6,7 @@ unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/ms
 error:
   syntax:         "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
   oper_only:      "\x0304✗\x03 This command is restricted to IRC Operators."
-  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg NickServ IDENTIFY\x03."
+  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg %nickserv% IDENTIFY\x03."
   invalid_channel: "\x0304✗\x03 Invalid channel name. Use \x02#channel\x02."
   channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
   generic:        "\x0304✗\x03 An error occurred. Please try again."
@@ -17,7 +17,7 @@ error:
 register:
   syntax:           "REGISTER <#channel> <description>"
   short:            "Register a channel."
-  help:             "Register and associate a channel to your nickname. You must be identified with NickServ."
+  help:             "Register and associate a channel to your nickname. You must be identified with %nickserv%."
   success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
   limit_exceeded: "\x0304✗\x03 You have reached the maximum of %max% registered channels."
@@ -45,7 +45,7 @@ help:
   syntax:           "HELP [command [sub-option]]"
   short:            "List commands or show help for a command."
   help:             "Without arguments lists all commands. Use \x0303HELP <command>\x03 for full help, or \x0303HELP <command> <option>\x03 for SET sub-options."
-  header_title:     "ChanServ"
+  header_title:     "%bot%"
   intro:            "Channel registration and management service for the IRC network."
   general_header:   "\x02\x0314Available commands:\x03\x0F"
   command_line:     "  \x0307%command%\x03%description%"

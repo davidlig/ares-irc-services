@@ -6,7 +6,7 @@ unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x030
 error:
   syntax: "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
   oper_only: "\x0304✗\x03 Este comando está restringido a operadores IRC."
-  not_identified: "\x0304✗\x03 No estás identificado. Usa \x0303/msg NickServ IDENTIFY\x03."
+  not_identified: "\x0304✗\x03 No estás identificado. Usa \x0303/msg %nickserv% IDENTIFY\x03."
   channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 en el canal \x02%channel%\x02."
 
@@ -105,7 +105,7 @@ help:
   syntax: "HELP [comando [sub-opción]]"
   short: "Lista comandos o muestra ayuda de un comando."
   help: "Sin argumentos lista todos los comandos. Usa \x0303HELP <comando>\x03 para la ayuda completa."
-  header_title: "MemoServ"
+  header_title: "%bot%"
   intro: "Servicio de mensajes para nicknames y canales."
   general_header: "\x02\x0314Comandos disponibles:\x03\x0F"
   command_line: "  \x0307%command%\x03%description%"
