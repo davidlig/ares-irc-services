@@ -30,10 +30,11 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 1. **Every new class MUST have tests** with `#[CoversClass(ClassName::class)]` attribute
 2. **Every public method MUST have at least one test** covering the happy path
 3. **Every branch/condition MUST be tested** — if-statements, early returns, edge cases, null checks
-4. **Run coverage BEFORE claiming a task is complete**:
+4. **Run coverage check BEFORE claiming a task is complete**:
    ```bash
-   ./vendor/bin/phpunit --coverage-text --coverage-filter=src
+   ./scripts/check-coverage.sh 100
    ```
+   This script runs PHPUnit with coverage and verifies that line coverage meets the minimum percentage (100 by default). For partial coverage checks, pass a lower threshold (e.g., `./scripts/check-coverage.sh 80`).
 5. **Verify these metrics BEFORE committing**:
    - Classes: 100%
    - Methods: 100%
@@ -46,11 +47,11 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
    ```bash
    ./vendor/bin/phpunit --no-coverage --display-all-issues
    ```
-3. **Generate coverage report** and identify uncovered lines:
+3. **Run coverage check** to verify coverage meets requirements:
    ```bash
-   ./vendor/bin/phpunit --coverage-text --coverage-filter=src
+   ./scripts/check-coverage.sh 100
    ```
-4. **Check `var/coverage/clover.xml`** for `<line num="X" type="stmt" count="0"/>` entries
+4. **Check `var/coverage/clover.xml`** for `<line num="X" type="stmt" count="0"/>` entries if coverage fails
 5. **Add tests until ALL branches/lines are covered**
 
 #### Test quality requirements:
