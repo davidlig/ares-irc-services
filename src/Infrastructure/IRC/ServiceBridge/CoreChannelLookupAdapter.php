@@ -56,6 +56,37 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
         );
     }
 
+    /**
+     * @return ChannelView[]
+     */
+    public function listAll(): array
+    {
+        $channels = $this->channelRepository->all();
+        $views = [];
+        foreach ($channels as $channel) {
+            $members = [];
+            foreach ($channel->getMembers() as $member) {
+                $letter = $this->roleToModeLetter($member->role);
+                $members[] = [
+                    'uid' => $member->uid->value,
+                    'roleLetter' => $letter,
+                    'prefixLetters' => $member->prefixLetters,
+                ];
+            }
+            $views[] = new ChannelView(
+                name: $channel->name->value,
+                modes: $channel->getModes(),
+                topic: $channel->getTopic(),
+                memberCount: $channel->getMemberCount(),
+                members: $members,
+                timestamp: $channel->getCreatedAt()->getTimestamp(),
+                modeParams: $channel->getModeParams(),
+            );
+        }
+
+        return $views;
+    }
+
     private function roleToModeLetter(ChannelMemberRole $role): string
     {
         return match ($role) {

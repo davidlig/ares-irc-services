@@ -99,4 +99,9 @@ final readonly class UnrealIRCdChannelModeSupport implements ChannelModeSupportI
     {
         return true;
     }
+
+    public function hasPermanentChannelMode(): bool
+    {
+        return true;
+    }
 }

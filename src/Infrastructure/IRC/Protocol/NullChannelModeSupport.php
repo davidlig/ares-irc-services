@@ -70,4 +70,9 @@ final readonly class NullChannelModeSupport implements ChannelModeSupportInterfa
     {
         return false;
     }
+
+    public function hasPermanentChannelMode(): bool
+    {
+        return false;
+    }
 }

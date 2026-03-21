@@ -98,4 +98,9 @@ final readonly class InspIRCdChannelModeSupport implements ChannelModeSupportInt
     {
         return true;
     }
+
+    public function hasPermanentChannelMode(): bool
+    {
+        return true;
+    }
 }

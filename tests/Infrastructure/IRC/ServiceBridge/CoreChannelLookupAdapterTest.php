@@ -93,4 +93,38 @@ final class CoreChannelLookupAdapterTest extends TestCase
         self::assertContains('q', $letters);
         self::assertContains('', $letters);
     }
+
+    #[Test]
+    public function listAllReturnsEmptyArrayWhenNoChannels(): void
+    {
+        $repo = $this->createMock(ChannelRepositoryInterface::class);
+        $repo->expects(self::once())->method('all')->willReturn([]);
+        $adapter = new CoreChannelLookupAdapter($repo);
+
+        self::assertSame([], $adapter->listAll());
+    }
+
+    #[Test]
+    public function listAllReturnsAllChannelsAsViews(): void
+    {
+        $createdAt1 = new DateTimeImmutable('2020-01-01 12:00:00');
+        $createdAt2 = new DateTimeImmutable('2020-01-02 12:00:00');
+        $channel1 = new Channel(new ChannelName('#test'), '+nt', $createdAt1);
+        $channel1->syncMember(new Uid('001ABC'), ChannelMemberRole::Op);
+        $channel2 = new Channel(new ChannelName('#other'), '+n', $createdAt2);
+
+        $repo = $this->createMock(ChannelRepositoryInterface::class);
+        $repo->expects(self::once())->method('all')->willReturn([$channel1, $channel2]);
+        $adapter = new CoreChannelLookupAdapter($repo);
+
+        $views = $adapter->listAll();
+
+        self::assertCount(2, $views);
+        self::assertSame('#test', $views[0]->name);
+        self::assertSame('+nt', $views[0]->modes);
+        self::assertSame(1, $views[0]->memberCount);
+        self::assertSame('#other', $views[1]->name);
+        self::assertSame('+n', $views[1]->modes);
+        self::assertSame(0, $views[1]->memberCount);
+    }
 }

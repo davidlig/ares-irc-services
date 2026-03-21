@@ -15,6 +15,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -23,6 +24,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RegisterCommand::class)]
@@ -72,7 +74,7 @@ final class RegisterCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['notachannel', 'desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['error.invalid_channel'], $messages);
@@ -99,8 +101,8 @@ final class RegisterCommandTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn(null);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'My desc'], $notifier, $translator, $channelLookup));
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.channel_not_on_network'], $messages);
     }
@@ -124,7 +126,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
         $cmd->execute($this->createContext($sender, null, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['error.not_identified'], $messages);
@@ -153,7 +155,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 3600);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 3600);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.throttled'], $messages);
@@ -182,7 +184,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.limit_exceeded'], $messages);
@@ -223,10 +225,56 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
-        $cmd->execute($this->createContext($sender, $account, ['#test', 'My channel'], $notifier, $translator, $channelLookup));
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'My desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.success'], $messages);
+    }
+
+    #[Test]
+    public function dispatchesChannelRegisteredEventOnSuccess(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('existsByChannelName')->willReturn(false);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
+            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref->setAccessible(true);
+            $ref->setValue($channel, 42);
+        });
+        $levelRepo = $this->createMock(ChannelLevelRepositoryInterface::class);
+        $levelRepo->expects(self::atLeastOnce())->method('save');
+        $throttle = new ChannelRegisterThrottleRegistry();
+        $channelView = new ChannelView('#mychannel', '+n', null, 0);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $dispatchedEvent = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function ($event) use (&$dispatchedEvent): object {
+            $dispatchedEvent = $event;
+
+            return $event;
+        });
+
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $eventDispatcher, 3, 0);
+        $cmd->execute($this->createContext($sender, $account, ['#mychannel', 'My channel description'], $notifier, $translator, $channelLookup));
+
+        self::assertInstanceOf(ChannelRegisteredEvent::class, $dispatchedEvent);
+        /* @var ChannelRegisteredEvent $dispatchedEvent */
+        self::assertSame(42, $dispatchedEvent->channelId);
+        self::assertSame('#mychannel', $dispatchedEvent->channelName);
+        self::assertSame('#mychannel', $dispatchedEvent->channelNameLower);
     }
 
     #[Test]
@@ -246,7 +294,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
 
         $this->expectException(\App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException::class);
 
@@ -281,7 +329,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.success'], $messages);
@@ -305,7 +353,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
 
         $this->expectException(\App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException::class);
 
@@ -340,7 +388,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 3600);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 3600);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.success'], $messages);
@@ -375,7 +423,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertSame(['register.success'], $messages);
@@ -409,7 +457,7 @@ final class RegisterCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, 3, 0);
+        $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventDispatcherInterface::class), 3, 0);
         $cmd->execute($this->createContext($sender, $account, ['#TESTCHAN', 'Desc'], $notifier, $translator, $channelLookup));
 
         self::assertStringContainsString('register.success', $messages[0]);
@@ -422,6 +470,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame('REGISTER', $cmd->getName());
@@ -434,6 +483,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame([], $cmd->getAliases());
@@ -446,6 +496,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame(2, $cmd->getMinArgs());
@@ -458,6 +509,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame('register.syntax', $cmd->getSyntaxKey());
@@ -470,6 +522,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame('register.help', $cmd->getHelpKey());
@@ -482,6 +535,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame(1, $cmd->getOrder());
@@ -494,6 +548,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame('register.short', $cmd->getShortDescKey());
@@ -506,6 +561,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame([], $cmd->getSubCommandHelp());
@@ -518,6 +574,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertFalse($cmd->isOperOnly());
@@ -530,6 +587,7 @@ final class RegisterCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
             new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());

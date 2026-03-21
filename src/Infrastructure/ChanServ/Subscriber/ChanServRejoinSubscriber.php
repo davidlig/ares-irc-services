@@ -36,6 +36,7 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
         return [
             NetworkSyncCompleteEvent::class => [
                 ['onSyncCompleteSetChannelRegistered', 10],
+                ['onSyncCompleteReconcilePermanentMode', 9],
             ],
             ChannelSyncedEvent::class => ['onChannelSyncedSetRegistered', 10],
         ];
@@ -84,6 +85,44 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
             }
             $this->channelServiceActions->setChannelModes($view->name, '+r', []);
             $this->logger->debug('ChanServ set +r (channel registered)', ['channel' => $view->name]);
+        }
+    }
+
+    /**
+     * Reconcile +P (permanent) mode: registered channels get +P, unregistered lose it.
+     * Runs after onSyncCompleteSetChannelRegistered (priority 9 vs 10).
+     */
+    public function onSyncCompleteReconcilePermanentMode(NetworkSyncCompleteEvent $event): void
+    {
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        if (!$modeSupport->hasPermanentChannelMode()) {
+            return;
+        }
+
+        $registeredChannels = $this->channelRepository->listAll();
+        $registeredNames = [];
+        foreach ($registeredChannels as $channel) {
+            $registeredNames[strtolower($channel->getName())] = true;
+        }
+
+        foreach ($registeredChannels as $channel) {
+            $view = $this->channelLookup->findByChannelName($channel->getName());
+            if (null === $view) {
+                continue;
+            }
+            if (!str_contains($view->modes, 'P')) {
+                $this->channelServiceActions->setChannelModes($view->name, '+P', []);
+                $this->logger->debug('ChanServ set +P (permanent) missing on registered channel', ['channel' => $view->name]);
+            }
+        }
+
+        $allViews = $this->channelLookup->listAll();
+        foreach ($allViews as $view) {
+            $nameLower = strtolower($view->name);
+            if (!isset($registeredNames[$nameLower]) && str_contains($view->modes, 'P')) {
+                $this->channelServiceActions->setChannelModes($view->name, '-P', []);
+                $this->logger->debug('ChanServ removed -P (permanent) from unregistered channel', ['channel' => $view->name]);
+            }
         }
     }
 }

@@ -23,6 +23,7 @@ final class UnrealIRCdChannelModeSupportTest extends TestCase
         self::assertTrue($support->hasAdmin());
         self::assertTrue($support->hasOwner());
         self::assertTrue($support->hasChannelRegisteredMode());
+        self::assertTrue($support->hasPermanentChannelMode());
     }
 
     #[Test]

@@ -23,6 +23,7 @@ final class NullChannelModeSupportTest extends TestCase
         self::assertFalse($support->hasAdmin());
         self::assertFalse($support->hasOwner());
         self::assertFalse($support->hasChannelRegisteredMode());
+        self::assertFalse($support->hasPermanentChannelMode());
     }
 
     #[Test]

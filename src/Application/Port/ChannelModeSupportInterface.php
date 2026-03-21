@@ -79,4 +79,14 @@ interface ChannelModeSupportInterface
      * @return bool True if the IRCd supports the channel-registered mode
      */
     public function hasChannelRegisteredMode(): bool;
+
+    /**
+     * Whether this IRCd has the "permanent channel" mode (uppercase +P).
+     * Permanent channels are not destroyed when the last user leaves.
+     * UnrealIRCd: +P (chanmodes/permanent, IRCOp-only).
+     * InspIRCd: +P (channel mode P, IRCOp-only).
+     *
+     * @return bool True if the IRCd supports the permanent channel mode
+     */
+    public function hasPermanentChannelMode(): bool;
 }

@@ -72,6 +72,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             [
                 NetworkSyncCompleteEvent::class => [
                     ['onSyncCompleteSetChannelRegistered', 10],
+                    ['onSyncCompleteReconcilePermanentMode', 9],
                 ],
                 ChannelSyncedEvent::class => ['onChannelSyncedSetRegistered', 10],
             ],
@@ -318,5 +319,202 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncCompleteSetChannelRegistered($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteReconcilePermanentModeDoesNothingWhenModeNotSupported(): void
+    {
+        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(false);
+        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteReconcilePermanentMode($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteReconcilePermanentModeAddsPToRegisteredChannelsMissingIt(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#test');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(true);
+
+        $view = new ChannelView('#test', '+nt', null, 1);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$view]);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelModes')
+            ->with('#test', '+P', []);
+
+        $this->logger
+            ->expects(self::once())
+            ->method('debug');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteReconcilePermanentMode($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteReconcilePermanentModeDoesNotAddPWhenAlreadyPresent(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#test');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(true);
+
+        $view = new ChannelView('#test', '+ntP', null, 1);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$view]);
+
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteReconcilePermanentMode($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteReconcilePermanentModeRemovesPFromUnregisteredChannels(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#registered');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(true);
+
+        $registeredView = new ChannelView('#registered', '+ntP', null, 1);
+        $unregisteredView = new ChannelView('#unregistered', '+ntP', null, 1);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#registered')
+            ->willReturn($registeredView);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registeredView, $unregisteredView]);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelModes')
+            ->with('#unregistered', '-P', []);
+
+        $this->logger
+            ->expects(self::once())
+            ->method('debug');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteReconcilePermanentMode($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteReconcilePermanentModeSkipsRegisteredChannelNotOnNetwork(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#notonnetwork');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(true);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#notonnetwork')
+            ->willReturn(null);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([]);
+
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteReconcilePermanentMode($event);
     }
 }

@@ -12,4 +12,9 @@ namespace App\Application\Port;
 interface ChannelLookupPort
 {
     public function findByChannelName(string $channelName): ?ChannelView;
+
+    /**
+     * @return ChannelView[] All channels currently on the network
+     */
+    public function listAll(): array;
 }

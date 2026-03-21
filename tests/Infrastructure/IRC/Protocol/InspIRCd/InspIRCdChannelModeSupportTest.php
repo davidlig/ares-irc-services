@@ -23,6 +23,7 @@ final class InspIRCdChannelModeSupportTest extends TestCase
         self::assertFalse($support->hasAdmin());
         self::assertFalse($support->hasOwner());
         self::assertTrue($support->hasChannelRegisteredMode());
+        self::assertTrue($support->hasPermanentChannelMode());
     }
 
     #[Test]
