@@ -25,4 +25,10 @@ interface ProtocolModuleInterface
 
     /** Which channel prefix modes (v, h, o, a, q) this IRCd supports. Used by ChanServ. */
     public function getChannelModeSupport(): ChannelModeSupportInterface;
+
+    /**
+     * Nickname reservation for services (SQLINE/QLINE).
+     * Returns null if the protocol does not support reservation.
+     */
+    public function getNickReservation(): ?ServiceNickReservationInterface;
 }

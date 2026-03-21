@@ -199,6 +199,14 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
 
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdModule:
         arguments:
             $handler:                '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler'
@@ -206,6 +214,7 @@ services:
             $introductionFormatter:  '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
             $vhostCommandBuilder:   '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder'
             $channelModeSupport:    '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport'
+            $nickReservation:      '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation'
         tags: ['irc.protocol_module']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule:
@@ -215,6 +224,7 @@ services:
             $introductionFormatter:  '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
             $vhostCommandBuilder:   '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder'
             $channelModeSupport:    '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport'
+            $nickReservation:      '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation'
         tags: ['irc.protocol_module']
 
     App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry:
@@ -260,6 +270,16 @@ services:
             $adapters:
                 unreal: '@App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter'
                 inspircd: '@App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter'
+        tags: ['kernel.event_subscriber']
+
+    # --- Service Nick Reservation: SQLINE/QLINE before bot introduction ---------------------
+
+    App\Infrastructure\IRC\ServiceBridge\ServiceNickReservationSubscriber:
+        arguments:
+            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $serviceListeners: !tagged_iterator service_command_listener
+            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     # --- Service Command Gateway: PRIVMSG → registered service listeners ---

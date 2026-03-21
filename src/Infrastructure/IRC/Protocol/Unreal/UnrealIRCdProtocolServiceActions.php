@@ -88,6 +88,27 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         $this->write(sprintf(':%s KICK %s %s :%s', $prefix, $channelName, $targetUid, $reason));
     }
 
+    /**
+     * UnrealIRCd TKL + G for G-lines.
+     * Format: TKL + G user host set_by expire_timestamp set_at_timestamp :reason
+     * Duration 0 = permanent (no expiry).
+     */
+    public function addGline(string $serverSid, string $userMask, string $hostMask, int $duration, string $reason): void
+    {
+        $setBy = $serverSid;
+        $expireTimestamp = 0 === $duration ? 0 : time() + $duration;
+        $setAtTimestamp = time();
+        $this->write(sprintf(
+            'TKL + G %s %s %s %d %d :%s',
+            $userMask,
+            $hostMask,
+            $setBy,
+            $expireTimestamp,
+            $setAtTimestamp,
+            $reason,
+        ));
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

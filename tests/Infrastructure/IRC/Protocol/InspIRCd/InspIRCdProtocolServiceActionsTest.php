@@ -238,4 +238,26 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
 
         self::assertEmpty($this->written);
     }
+
+    #[Test]
+    public function addGlineSendsGlineCommand(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->addGline('001', 'testuser', 'test.host', 3600, 'Test ban');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 GLINE testuser@test.host 3600 :Test ban', $this->written[0]);
+    }
+
+    #[Test]
+    public function addGlinePermanentBan(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 GLINE *@192.168.* 0 :Permanent ban', $this->written[0]);
+    }
 }

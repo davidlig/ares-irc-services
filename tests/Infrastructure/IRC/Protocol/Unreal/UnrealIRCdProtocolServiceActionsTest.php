@@ -228,4 +228,26 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
 
         self::assertEmpty($this->written);
     }
+
+    #[Test]
+    public function addGlineSendsTklGlineCommand(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->addGline('001', 'testuser', 'test.host', 3600, 'Test ban');
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^TKL \+ G testuser test\.host 001 \d+ \d+ :Test ban$/', $this->written[0]);
+    }
+
+    #[Test]
+    public function addGlinePermanentBan(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^TKL \+ G \* 192\.168\.\* 001 0 \d+ :Permanent ban$/', $this->written[0]);
+    }
 }

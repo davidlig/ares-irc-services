@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\IRC\Protocol\Unreal;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdModule;
+use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter;
@@ -27,6 +28,7 @@ final class UnrealIRCdModuleTest extends TestCase
         $formatter = new UnrealIRCdServiceIntroductionFormatter();
         $vhostBuilder = new UnrealIRCdVhostCommandBuilder();
         $channelModeSupport = new UnrealIRCdChannelModeSupport();
+        $nickReservation = new UnrealIRCdNickReservation(new NullLogger());
 
         return new UnrealIRCdModule(
             $handler,
@@ -34,6 +36,7 @@ final class UnrealIRCdModuleTest extends TestCase
             $formatter,
             $vhostBuilder,
             $channelModeSupport,
+            $nickReservation,
         );
     }
 
@@ -57,6 +60,7 @@ final class UnrealIRCdModuleTest extends TestCase
             new UnrealIRCdServiceIntroductionFormatter(),
             new UnrealIRCdVhostCommandBuilder(),
             new UnrealIRCdChannelModeSupport(),
+            new UnrealIRCdNickReservation(new NullLogger()),
         );
 
         self::assertSame($handler, $module->getHandler());
@@ -92,5 +96,13 @@ final class UnrealIRCdModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(UnrealIRCdChannelModeSupport::class, $module->getChannelModeSupport());
+    }
+
+    #[Test]
+    public function getNickReservationReturnsInjectedReservation(): void
+    {
+        $module = $this->createModule();
+
+        self::assertInstanceOf(UnrealIRCdNickReservation::class, $module->getNickReservation());
     }
 }

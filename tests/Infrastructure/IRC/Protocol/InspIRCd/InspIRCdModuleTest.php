@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\IRC\Protocol\InspIRCd;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter;
@@ -27,6 +28,7 @@ final class InspIRCdModuleTest extends TestCase
         $formatter = new InspIRCdServiceIntroductionFormatter();
         $vhostBuilder = new InspIRCdVhostCommandBuilder();
         $channelModeSupport = new InspIRCdChannelModeSupport();
+        $nickReservation = new InspIRCdNickReservation(new NullLogger());
 
         return new InspIRCdModule(
             $handler,
@@ -34,6 +36,7 @@ final class InspIRCdModuleTest extends TestCase
             $formatter,
             $vhostBuilder,
             $channelModeSupport,
+            $nickReservation,
         );
     }
 
@@ -57,6 +60,7 @@ final class InspIRCdModuleTest extends TestCase
             new InspIRCdServiceIntroductionFormatter(),
             new InspIRCdVhostCommandBuilder(),
             new InspIRCdChannelModeSupport(),
+            new InspIRCdNickReservation(new NullLogger()),
         );
 
         self::assertSame($handler, $module->getHandler());
@@ -71,5 +75,13 @@ final class InspIRCdModuleTest extends TestCase
         self::assertInstanceOf(InspIRCdServiceIntroductionFormatter::class, $module->getIntroductionFormatter());
         self::assertInstanceOf(InspIRCdVhostCommandBuilder::class, $module->getVhostCommandBuilder());
         self::assertInstanceOf(InspIRCdChannelModeSupport::class, $module->getChannelModeSupport());
+    }
+
+    #[Test]
+    public function getNickReservationReturnsInjectedReservation(): void
+    {
+        $module = $this->createModule();
+
+        self::assertInstanceOf(InspIRCdNickReservation::class, $module->getNickReservation());
     }
 }

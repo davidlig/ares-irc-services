@@ -89,6 +89,17 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         $this->write(sprintf(':%s KICK %s %s :%s', $prefix, $channelName, $targetUid, $reason));
     }
 
+    /**
+     * InspIRCd GLINE command.
+     * Format: :serverSid GLINE user@host duration :reason
+     * Duration in seconds, 0 = permanent.
+     */
+    public function addGline(string $serverSid, string $userMask, string $hostMask, int $duration, string $reason): void
+    {
+        $mask = $userMask . '@' . $hostMask;
+        $this->write(sprintf(':%s GLINE %s %d :%s', $serverSid, $mask, $duration, $reason));
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

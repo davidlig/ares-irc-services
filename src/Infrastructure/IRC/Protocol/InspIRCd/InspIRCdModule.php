@@ -8,11 +8,12 @@ use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
+use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 
 /**
- * InspIRCd protocol module: handler, service actions, introduction formatter, vhost builder, channel mode support.
+ * InspIRCd protocol module: handler, service actions, introduction formatter, vhost builder, channel mode support, nick reservation.
  */
 final readonly class InspIRCdModule implements ProtocolModuleInterface
 {
@@ -24,6 +25,7 @@ final readonly class InspIRCdModule implements ProtocolModuleInterface
         private readonly InspIRCdServiceIntroductionFormatter $introductionFormatter,
         private readonly InspIRCdVhostCommandBuilder $vhostCommandBuilder,
         private readonly InspIRCdChannelModeSupport $channelModeSupport,
+        private readonly InspIRCdNickReservation $nickReservation,
     ) {
     }
 
@@ -55,5 +57,10 @@ final readonly class InspIRCdModule implements ProtocolModuleInterface
     public function getChannelModeSupport(): ChannelModeSupportInterface
     {
         return $this->channelModeSupport;
+    }
+
+    public function getNickReservation(): ServiceNickReservationInterface
+    {
+        return $this->nickReservation;
     }
 }

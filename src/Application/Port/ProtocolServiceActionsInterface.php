@@ -57,4 +57,15 @@ interface ProtocolServiceActionsInterface
      * @param string $serviceUid  Optional service UID as source (e.g., ChanServ's UID)
      */
     public function kickFromChannel(string $serverSid, string $channelName, string $targetUid, string $reason, string $serviceUid = ''): void;
+
+    /**
+     * Add a network-wide G-line (user@host ban).
+     *
+     * @param string $serverSid Server SID (source of the TKL/GLINE command)
+     * @param string $userMask  User part of the mask (e.g., "*", "nick")
+     * @param string $hostMask  Host part of the mask (e.g., "*", "192.168.*")
+     * @param int    $duration  Duration in seconds (0 = permanent)
+     * @param string $reason    Reason shown to the user
+     */
+    public function addGline(string $serverSid, string $userMask, string $hostMask, int $duration, string $reason): void;
 }

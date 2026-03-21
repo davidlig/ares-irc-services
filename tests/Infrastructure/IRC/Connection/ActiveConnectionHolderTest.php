@@ -24,10 +24,10 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function getSubscribedEventsReturnsBurstComplete(): void
+    public function getSubscribedEventsReturnsBurstCompleteWithPriority250(): void
     {
         self::assertSame(
-            [NetworkBurstCompleteEvent::class => ['onBurstComplete', 0]],
+            [NetworkBurstCompleteEvent::class => ['onBurstComplete', 250]],
             ActiveConnectionHolder::getSubscribedEvents(),
         );
     }

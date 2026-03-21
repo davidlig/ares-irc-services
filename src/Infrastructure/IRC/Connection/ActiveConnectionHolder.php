@@ -27,7 +27,7 @@ final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, E
     public static function getSubscribedEvents(): array
     {
         return [
-            NetworkBurstCompleteEvent::class => ['onBurstComplete', 0],
+            NetworkBurstCompleteEvent::class => ['onBurstComplete', 250],
         ];
     }
 
