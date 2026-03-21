@@ -71,7 +71,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         self::assertSame(
             [
                 NetworkSyncCompleteEvent::class => [
-                    ['onSyncCompleteSetChannelRegistered', 10],
+                    ['onSyncCompleteReconcileRegisteredMode', 10],
                     ['onSyncCompleteReconcilePermanentMode', 9],
                 ],
                 ChannelSyncedEvent::class => ['onChannelSyncedSetRegistered', 10],
@@ -103,11 +103,17 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->method('hasChannelRegisteredMode')
             ->willReturn(true);
 
+        $view = new ChannelView('#test', '+n', null, 0);
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
         $this->channelServiceActions
             ->expects(self::once())
             ->method('setChannelModes')
             ->with('#test', '+r', []);
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
         $this->logger->expects(self::never())->method('warning');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
@@ -189,6 +195,83 @@ final class ChanServRejoinSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function doesNotSetRegisteredWhenAlreadyHasMode(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+
+        $registered = $this->createStub(RegisteredChannel::class);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasChannelRegisteredMode')
+            ->willReturn(true);
+
+        $view = new ChannelView('#test', '+ntr', null, 0);
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSyncedSetRegistered($event);
+    }
+
+    #[Test]
+    public function doesNotSetRegisteredWhenChannelNotOnNetwork(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+
+        $registered = $this->createStub(RegisteredChannel::class);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasChannelRegisteredMode')
+            ->willReturn(true);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn(null);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSyncedSetRegistered($event);
+    }
+
+    #[Test]
     public function setsRegisteredOnSyncCompleteForAllChannels(): void
     {
         $registered1 = $this->createStub(RegisteredChannel::class);
@@ -223,6 +306,11 @@ final class ChanServRejoinSubscriberTest extends TestCase
                 ['#channel2', $view2],
             ]);
 
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$view1, $view2]);
+
         $this->channelServiceActions
             ->expects(self::exactly(2))
             ->method('setChannelModes');
@@ -230,28 +318,34 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
-        $this->subscriber->onSyncCompleteSetChannelRegistered($event);
+        $this->subscriber->onSyncCompleteReconcileRegisteredMode($event);
     }
 
     #[Test]
     public function doesNothingWhenNoRegisteredChannels(): void
     {
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasChannelRegisteredMode')
+            ->willReturn(true);
+
         $this->channelRepository
             ->expects(self::once())
             ->method('listAll')
             ->willReturn([]);
 
-        $this->modeSupportProvider
-            ->expects(self::never())
-            ->method('getSupport');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->modeSupport->expects(self::never())->method('hasChannelRegisteredMode');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->logger->expects(self::never())->method('warning');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
-        $this->subscriber->onSyncCompleteSetChannelRegistered($event);
+        $this->subscriber->onSyncCompleteReconcileRegisteredMode($event);
     }
 
     #[Test]
@@ -259,6 +353,71 @@ final class ChanServRejoinSubscriberTest extends TestCase
     {
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('getName')->willReturn('#channelnotonnetwork');
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasChannelRegisteredMode')
+            ->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#channelnotonnetwork')
+            ->willReturn(null);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([]);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteReconcileRegisteredMode($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsWhenNoRegisteredMode(): void
+    {
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasChannelRegisteredMode')
+            ->willReturn(false);
+
+        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncCompleteReconcileRegisteredMode($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteReconcileRegisteredModeRemovesRFromUnregisteredChannels(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#registered');
 
         $this->channelRepository
             ->expects(self::once())
@@ -275,24 +434,36 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->method('hasChannelRegisteredMode')
             ->willReturn(true);
 
+        $registeredView = new ChannelView('#registered', '+ntr', null, 1);
+        $unregisteredView = new ChannelView('#unregistered', '+ntr', null, 1);
+
         $this->channelLookup
             ->expects(self::once())
             ->method('findByChannelName')
-            ->with('#channelnotonnetwork')
-            ->willReturn(null);
+            ->with('#registered')
+            ->willReturn($registeredView);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registeredView, $unregisteredView]);
 
         $this->channelServiceActions
-            ->expects(self::never())
-            ->method('setChannelModes');
-        $this->logger->expects(self::never())->method('warning');
+            ->expects(self::once())
+            ->method('setChannelModes')
+            ->with('#unregistered', '-r', []);
+
+        $this->logger
+            ->expects(self::once())
+            ->method('debug');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
-        $this->subscriber->onSyncCompleteSetChannelRegistered($event);
+        $this->subscriber->onSyncCompleteReconcileRegisteredMode($event);
     }
 
     #[Test]
-    public function onSyncCompleteSkipsWhenNoRegisteredMode(): void
+    public function onSyncCompleteReconcileRegisteredModeDoesNotSetRWhenAlreadyPresent(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('getName')->willReturn('#test');
@@ -310,15 +481,27 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $this->modeSupport
             ->expects(self::once())
             ->method('hasChannelRegisteredMode')
-            ->willReturn(false);
+            ->willReturn(true);
 
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $view = new ChannelView('#test', '+ntr', null, 1);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$view]);
+
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
-        $this->subscriber->onSyncCompleteSetChannelRegistered($event);
+        $this->subscriber->onSyncCompleteReconcileRegisteredMode($event);
     }
 
     #[Test]

@@ -15,10 +15,10 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Sets +r (channel is registered at Services) on registered channels when they exist on the network.
- * On sync complete: set +r on each registered channel that has a view (channel already exists).
- * On ChannelSyncedEvent: set +r when a registered channel is created or synced (e.g. first user joined).
- * ChanServ does not join channels; configuration is applied when the channel has at least one user.
+ * Manages +r (registered) and +P (permanent) channel modes for registered channels.
+ * - +r: Set on registered channels, remove from unregistered channels
+ * - +P: Set on registered channels, remove from unregistered channels
+ * Both modes are applied conditionally based on IRCd support.
  */
 final readonly class ChanServRejoinSubscriber implements EventSubscriberInterface
 {
@@ -35,7 +35,7 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
     {
         return [
             NetworkSyncCompleteEvent::class => [
-                ['onSyncCompleteSetChannelRegistered', 10],
+                ['onSyncCompleteReconcileRegisteredMode', 10],
                 ['onSyncCompleteReconcilePermanentMode', 9],
             ],
             ChannelSyncedEvent::class => ['onChannelSyncedSetRegistered', 10],
@@ -43,8 +43,8 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
     }
 
     /**
-     * Runs first (priority 10): set +r so the channel shows as registered.
-     * Only when channel setup is applicable (link or channel was empty and now has users).
+     * Set +r on a registered channel when it syncs (first user joins).
+     * Skips if channel already has +r.
      */
     public function onChannelSyncedSetRegistered(ChannelSyncedEvent $event): void
     {
@@ -59,38 +59,58 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
         if (!$this->modeSupportProvider->getSupport()->hasChannelRegisteredMode()) {
             return;
         }
+        $view = $this->channelLookup->findByChannelName($channelName);
+        if (null === $view) {
+            return;
+        }
+        if (str_contains($view->modes, 'r')) {
+            return;
+        }
         $this->channelServiceActions->setChannelModes($channelName, '+r', []);
         $this->logger->debug('ChanServ set +r (channel registered) on sync', ['channel' => $channelName]);
     }
 
     /**
-     * Runs first (priority 10): set +r (channel is registered) on each registered channel that has a view.
+     * Reconcile +r (registered) mode: registered channels get +r, unregistered lose it.
+     * Runs on NetworkSyncCompleteEvent (priority 10).
      */
-    public function onSyncCompleteSetChannelRegistered(NetworkSyncCompleteEvent $event): void
+    public function onSyncCompleteReconcileRegisteredMode(NetworkSyncCompleteEvent $event): void
     {
-        $channels = $this->channelRepository->listAll();
-        if ([] === $channels) {
-            return;
-        }
-
         $modeSupport = $this->modeSupportProvider->getSupport();
         if (!$modeSupport->hasChannelRegisteredMode()) {
             return;
         }
 
-        foreach ($channels as $channel) {
+        $registeredChannels = $this->channelRepository->listAll();
+        $registeredNames = [];
+        foreach ($registeredChannels as $channel) {
+            $registeredNames[strtolower($channel->getName())] = true;
+        }
+
+        foreach ($registeredChannels as $channel) {
             $view = $this->channelLookup->findByChannelName($channel->getName());
             if (null === $view) {
                 continue;
             }
-            $this->channelServiceActions->setChannelModes($view->name, '+r', []);
-            $this->logger->debug('ChanServ set +r (channel registered)', ['channel' => $view->name]);
+            if (!str_contains($view->modes, 'r')) {
+                $this->channelServiceActions->setChannelModes($view->name, '+r', []);
+                $this->logger->debug('ChanServ set +r (registered) missing on registered channel', ['channel' => $view->name]);
+            }
+        }
+
+        $allViews = $this->channelLookup->listAll();
+        foreach ($allViews as $view) {
+            $nameLower = strtolower($view->name);
+            if (!isset($registeredNames[$nameLower]) && str_contains($view->modes, 'r')) {
+                $this->channelServiceActions->setChannelModes($view->name, '-r', []);
+                $this->logger->debug('ChanServ removed -r (registered) from unregistered channel', ['channel' => $view->name]);
+            }
         }
     }
 
     /**
      * Reconcile +P (permanent) mode: registered channels get +P, unregistered lose it.
-     * Runs after onSyncCompleteSetChannelRegistered (priority 9 vs 10).
+     * Runs after onSyncCompleteReconcileRegisteredMode (priority 9 vs 10).
      */
     public function onSyncCompleteReconcilePermanentMode(NetworkSyncCompleteEvent $event): void
     {
