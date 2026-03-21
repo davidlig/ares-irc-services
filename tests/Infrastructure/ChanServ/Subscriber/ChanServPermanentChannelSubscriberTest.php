@@ -52,7 +52,12 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
     #[Test]
     public function subscribesToCorrectEvents(): void
     {
-        // This is a static test - no instance needed
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->modeSupport->expects(self::never())->method('hasPermanentChannelMode');
+        $this->logger->expects(self::never())->method('debug');
+
         self::assertSame(
             [
                 ChannelRegisteredEvent::class => ['onChannelRegistered', 0],

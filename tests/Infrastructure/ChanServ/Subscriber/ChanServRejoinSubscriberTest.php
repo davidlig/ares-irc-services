@@ -335,6 +335,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn(false);
         $this->channelLookup->expects(self::never())->method('listAll');
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('debug');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
@@ -424,6 +425,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([$view]);
 
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('debug');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
@@ -512,6 +514,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
             ->willReturn([]);
 
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('debug');
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
