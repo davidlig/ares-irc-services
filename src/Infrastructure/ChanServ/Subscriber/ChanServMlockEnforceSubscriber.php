@@ -125,8 +125,9 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         $unsetWithoutParam = $support->getChannelSettingModesUnsetWithoutParam();
         $unsetWithParam = $support->getChannelSettingModesUnsetWithParam();
         $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
+        $preserveLetter = $support->hasPermanentChannelMode() ? 'P' : null;
 
-        $toRemove = $this->calculateModesToRemove($currentLetters, $mlockLetters, $view, $unsetWithoutParam, $unsetWithParam);
+        $toRemove = $this->calculateModesToRemove($currentLetters, $mlockLetters, $view, $unsetWithoutParam, $unsetWithParam, $preserveLetter);
         $toAdd = $this->calculateModesToAdd($mlockLetters, $currentLetters);
 
         if ([] === $toRemove && [] === $toAdd) {
@@ -145,12 +146,12 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
      *
      * @return list<string>
      */
-    private function calculateModesToRemove(array $currentLetters, array $mlockLetters, ChannelView $view, array $unsetWithoutParam, array $unsetWithParam): array
+    private function calculateModesToRemove(array $currentLetters, array $mlockLetters, ChannelView $view, array $unsetWithoutParam, array $unsetWithParam, ?string $preserveLetter): array
     {
         $toRemove = [];
 
         foreach ($currentLetters as $letter) {
-            if (in_array($letter, $mlockLetters, true) || 'r' === $letter) {
+            if (in_array($letter, $mlockLetters, true) || 'r' === $letter || $letter === $preserveLetter) {
                 continue;
             }
             if (in_array($letter, $unsetWithoutParam, true) && !in_array($letter, $toRemove, true)) {

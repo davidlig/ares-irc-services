@@ -463,6 +463,10 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('getChannelSettingModesWithParamOnSet')
             ->willReturn(['k', 'l']);
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(true);
 
         $this->channelServiceActions
             ->expects(self::once())
@@ -1010,10 +1014,135 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->expects(self::atLeastOnce())
             ->method('getChannelSettingModesWithParamOnSet')
             ->willReturn(['k', 'l']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(true);
 
         $this->channelServiceActions
             ->expects(self::never())
             ->method('setChannelModes');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
+
+    #[Test]
+    public function enforceMlockPreservesPermanentModeWhenSupported(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+        $channel->updateModes('+ntP');
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isMlockActive')->willReturn(true);
+        $registered->method('getMlock')->willReturn('nt');
+        $registered->method('getMlockParam')->willReturn(null);
+
+        $view = new ChannelView(name: '#test', modes: '+ntP', topic: null, memberCount: 5);
+
+        $this->burstCompletePort
+            ->expects(self::atLeastOnce())
+            ->method('isComplete')
+            ->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::atLeastOnce())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelLookup
+            ->expects(self::atLeastOnce())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->modeSupportProvider
+            ->expects(self::atLeastOnce())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesUnsetWithoutParam')
+            ->willReturn(['s', 'm', 'i', 'n', 't', 'P']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesUnsetWithParam')
+            ->willReturn(['k']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesWithParamOnSet')
+            ->willReturn(['k', 'l']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(true);
+
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
+
+    #[Test]
+    public function enforceMlockRemovesPermanentModeWhenNotSupported(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+        $channel->updateModes('+ntP');
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isMlockActive')->willReturn(true);
+        $registered->method('getMlock')->willReturn('nt');
+        $registered->method('getMlockParam')->willReturn(null);
+
+        $view = new ChannelView(name: '#test', modes: '+ntP', topic: null, memberCount: 5);
+
+        $this->burstCompletePort
+            ->expects(self::atLeastOnce())
+            ->method('isComplete')
+            ->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::atLeastOnce())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelLookup
+            ->expects(self::atLeastOnce())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->modeSupportProvider
+            ->expects(self::atLeastOnce())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesUnsetWithoutParam')
+            ->willReturn(['s', 'm', 'i', 'n', 't', 'P']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesUnsetWithParam')
+            ->willReturn(['k']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('getChannelSettingModesWithParamOnSet')
+            ->willReturn(['k', 'l']);
+        $this->modeSupport
+            ->expects(self::atLeastOnce())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(false);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelModes')
+            ->with('#test', '-P', []);
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
@@ -1060,6 +1189,10 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->expects(self::once())
             ->method('getChannelSettingModesWithParamOnSet')
             ->willReturn(['k', 'l']);
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('hasPermanentChannelMode')
+            ->willReturn(true);
 
         $this->channelServiceActions
             ->expects(self::never())
