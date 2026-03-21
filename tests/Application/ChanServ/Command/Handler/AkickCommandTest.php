@@ -1192,6 +1192,12 @@ final class AkickCommandTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
+
+        $kicks = [];
+        $notifier->method('kickFromChannel')->willReturnCallback(static function (string $channel, string $uid, string $reason) use (&$kicks): void {
+            $kicks[] = ['channel' => $channel, 'uid' => $uid, 'reason' => $reason];
+        });
+
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
@@ -1228,6 +1234,8 @@ final class AkickCommandTest extends TestCase
         self::assertCount(1, $bans);
         self::assertSame('+b', $bans[0]['modes']);
         self::assertSame(['*!*@*.isp.com'], $bans[0]['params']);
+        self::assertCount(1, $kicks);
+        self::assertSame('UID2', $kicks[0]['uid']);
     }
 
     #[Test]
@@ -1326,7 +1334,7 @@ final class AkickCommandTest extends TestCase
     }
 
     #[Test]
-    public function addAppliesBanToMatchingChannelMembers(): void
+    public function addAppliesBanAndKicksMatchingChannelMembers(): void
     {
         $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
         $account = $this->createStub(RegisteredNick::class);
@@ -1357,6 +1365,11 @@ final class AkickCommandTest extends TestCase
             $bans[] = ['channel' => $channel, 'modes' => $modes, 'params' => $params];
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+
+        $kicks = [];
+        $notifier->method('kickFromChannel')->willReturnCallback(static function (string $channel, string $uid, string $reason) use (&$kicks): void {
+            $kicks[] = ['channel' => $channel, 'uid' => $uid, 'reason' => $reason];
         });
 
         $translator = $this->createStub(TranslatorInterface::class);
@@ -1398,6 +1411,9 @@ final class AkickCommandTest extends TestCase
         self::assertCount(1, $bans);
         self::assertSame('+b', $bans[0]['modes']);
         self::assertSame(['*!*@*.isp.com'], $bans[0]['params']);
+        self::assertCount(1, $kicks);
+        self::assertSame('UID2', $kicks[0]['uid']);
+        self::assertSame('Spam', $kicks[0]['reason']);
         self::assertSame('akick.add.done', $messages[0]);
     }
 

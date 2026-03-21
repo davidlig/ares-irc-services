@@ -183,8 +183,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             $userMask = $this->buildUserMask($user->nick, $user->ident, $user->hostname);
             if ($akick->matches($userMask)) {
                 $notifier->setChannelModes($view->name, '+b', [$akick->getMask()]);
-                // Note: We don't kick users here, we just apply the ban
-                // Kicking would be handled by the IRCd when users try to join/speak
+                $notifier->kickFromChannel($view->name, $uid, $reason);
             }
         }
     }
