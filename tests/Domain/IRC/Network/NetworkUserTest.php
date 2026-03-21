@@ -147,4 +147,26 @@ final class NetworkUserTest extends TestCase
         self::assertSame('not-base64', $data['ip']);
         self::assertNotEmpty($data['connectedAt']);
     }
+
+    #[Test]
+    public function toUserMaskReturnsCorrectMask(): void
+    {
+        $user = new NetworkUser(
+            uid: new Uid('AAA111'),
+            nick: new Nick('TestUser'),
+            ident: new Ident('testident'),
+            hostname: 'testhost.example.com',
+            cloakedHost: 'hidden.example.com',
+            virtualHost: 'vhost.example.com',
+            modes: '+iwx',
+            connectedAt: new DateTimeImmutable('2024-01-01T00:00:00Z'),
+            realName: 'Test User',
+            serverSid: '001',
+            ipBase64: 'abcd',
+        );
+
+        $mask = $user->toUserMask();
+
+        self::assertSame('TestUser!testident@testhost.example.com', $mask->value);
+    }
 }

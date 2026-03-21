@@ -57,4 +57,21 @@ final class SenderViewTest extends TestCase
         self::assertSame('001', $view->serverSid);
         self::assertSame('vhost.example.com', $view->displayHost);
     }
+
+    #[Test]
+    public function toUserMaskReturnsCorrectMask(): void
+    {
+        $view = new SenderView(
+            uid: '001ABC',
+            nick: 'TestNick',
+            ident: 'testident',
+            hostname: 'testhost.example.com',
+            cloakedHost: 'cloak.example.com',
+            ipBase64: 'base64ip',
+        );
+
+        $mask = $view->toUserMask();
+
+        self::assertSame('TestNick!testident@testhost.example.com', $mask->value);
+    }
 }

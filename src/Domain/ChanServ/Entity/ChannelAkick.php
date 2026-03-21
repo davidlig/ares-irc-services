@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\ChanServ\Entity;
 
+use App\Domain\IRC\ValueObject\UserMask;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
@@ -112,12 +113,12 @@ class ChannelAkick
      * Uses fnmatch for wildcard matching (* and ?).
      * Converts both masks to lowercase for case-insensitive comparison.
      *
-     * @param string $userMask Full mask (nick!user@host) to check against
+     * @param string|UserMask $userMask Full mask (nick!user@host) to check against
      */
-    public function matches(string $userMask): bool
+    public function matches(string|UserMask $userMask): bool
     {
         $pattern = strtolower($this->mask);
-        $subject = strtolower($userMask);
+        $subject = strtolower($userMask instanceof UserMask ? $userMask->value : $userMask);
 
         return fnmatch($pattern, $subject);
     }

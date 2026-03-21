@@ -8,6 +8,7 @@ use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use App\Domain\IRC\ValueObject\UserMask;
 use DateTimeImmutable;
 use DateTimeInterface;
 
@@ -151,6 +152,15 @@ class NetworkUser
     public function isIdentified(): bool
     {
         return str_contains($this->modes, 'r');
+    }
+
+    public function toUserMask(): UserMask
+    {
+        return UserMask::fromParts(
+            $this->nick->value,
+            $this->ident->value,
+            $this->hostname,
+        );
     }
 
     /**

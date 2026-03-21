@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Port;
 
+use App\Domain\IRC\ValueObject\UserMask;
+
 /**
  * DTO for "user who sent a command" or "user on network" as seen by Services.
  *
@@ -25,5 +27,10 @@ final readonly class SenderView
         /** Host currently displayed by the IRCd (vhost if set, else cloakedHost). */
         public string $displayHost = '',
     ) {
+    }
+
+    public function toUserMask(): UserMask
+    {
+        return UserMask::fromParts($this->nick, $this->ident, $this->hostname);
     }
 }

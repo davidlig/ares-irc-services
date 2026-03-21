@@ -14,6 +14,7 @@ use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
 use function in_array;
+use function sprintf;
 use function strtoupper;
 
 /**
@@ -185,7 +186,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         $context->reply('levels.list.header');
         foreach ($visibleKeys as $key) {
             $value = $byKey[$key] ?? ChannelLevel::getDefault($key);
-            $context->replyRaw('  ' . $key . ' ' . $value);
+            $context->replyRaw(sprintf('  %s %s', $key, $value));
         }
     }
 

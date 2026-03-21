@@ -63,7 +63,7 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
             return;
         }
 
-        $userMask = $user->nick . '!' . $user->ident . '@' . $user->hostname;
+        $userMask = $user->toUserMask();
 
         $akicks = $this->akickRepository->listByChannel($channel->getId());
 
@@ -72,7 +72,7 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
                 continue;
             }
 
-            if ($akick->matches($userMask)) {
+            if ($akick->matches((string) $userMask)) {
                 $this->enforceAkick($channelName, $akick->getMask(), $uid, $akick->getReason());
                 break;
             }
@@ -122,10 +122,10 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
                 continue;
             }
 
-            $userMask = $user->nick . '!' . $user->ident . '@' . $user->hostname;
+            $userMask = $user->toUserMask();
 
             foreach ($validAkicks as $akick) {
-                if ($akick->matches($userMask)) {
+                if ($akick->matches((string) $userMask)) {
                     $this->enforceAkick($channelName, $akick->getMask(), $uid, $akick->getReason());
                     break;
                 }

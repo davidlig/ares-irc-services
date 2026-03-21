@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Shared\Help;
 
+use function sprintf;
+
 /**
  * Renders unified HELP output (header, command list, options, syntax, footer)
  * for both NickServ and ChanServ. Uses HelpFormatterContextInterface so each
@@ -21,7 +23,7 @@ final readonly class UnifiedHelpFormatter
     {
         $visible = 4 + mb_strlen($title) + 1;
         $dashes = str_repeat('─', max(0, self::HEADER_WIDTH - $visible));
-        $line = "\x02\x0307 ℹ " . $title . " \x0F\x0314" . $dashes . "\x03";
+        $line = sprintf("\x02\x0307 ℹ %s \x0F\x0314%s\x03", $title, $dashes);
         $context->replyRaw($line);
     }
 

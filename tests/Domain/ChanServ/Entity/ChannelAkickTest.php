@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Domain\ChanServ\Entity;
 
 use App\Domain\ChanServ\Entity\ChannelAkick;
+use App\Domain\IRC\ValueObject\UserMask;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -73,6 +74,16 @@ final class ChannelAkickTest extends TestCase
         self::assertTrue($akick->matches('Nick!user@host'));
         self::assertTrue($akick->matches('Nick!any@any'));
         self::assertFalse($akick->matches('Other!user@host'));
+    }
+
+    #[Test]
+    public function matchesWithUserMaskObject(): void
+    {
+        $akick = ChannelAkick::create(1, 2, '*!*@*.isp.com');
+
+        self::assertTrue($akick->matches(UserMask::fromString('Nick!user@host.isp.com')));
+        self::assertTrue($akick->matches(UserMask::fromString('NICK!user@HOST.ISP.COM')));
+        self::assertFalse($akick->matches(UserMask::fromString('Nick!user@other.com')));
     }
 
     #[Test]

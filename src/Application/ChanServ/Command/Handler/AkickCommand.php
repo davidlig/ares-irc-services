@@ -17,6 +17,7 @@ use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\IRC\ValueObject\UserMask;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateInterval;
 use DateTimeImmutable;
@@ -181,7 +182,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             }
 
             $userMask = $this->buildUserMask($user->nick, $user->ident, $user->hostname);
-            if ($akick->matches($userMask)) {
+            if ($akick->matches((string) $userMask)) {
                 $notifier->setChannelModes($view->name, '+b', [$akick->getMask()]);
                 $notifier->kickFromChannel($view->name, $uid, $reason);
             }
@@ -421,9 +422,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return (new DateTimeImmutable())->add(new DateInterval($intervalSpec));
     }
 
-    private function buildUserMask(string $nick, string $ident, string $host): string
+    private function buildUserMask(string $nick, string $ident, string $host): UserMask
     {
-        return $nick . '!' . $ident . '@' . $host;
+        return UserMask::fromParts($nick, $ident, $host);
     }
 
     /**
