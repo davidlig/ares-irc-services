@@ -211,6 +211,7 @@ final class AkickCommandTest extends TestCase
         $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
         $akickRepo->method('countByChannel')->willReturn(1);
         $existingAkick = $this->createStub(ChannelAkick::class);
+        $existingAkick->method('isExpired')->willReturn(false);
         $akickRepo->method('findByChannelAndMask')->willReturn($existingAkick);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
@@ -230,6 +231,60 @@ final class AkickCommandTest extends TestCase
 
         self::assertCount(1, $messages);
         self::assertStringContainsString('akick.add.already_exists', $messages[0]);
+    }
+
+    #[Test]
+    public function addReplacesExpiredAkick(): void
+    {
+        $sender = new SenderView('UID1', 'Founder', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $expiredAkick = $this->createStub(ChannelAkick::class);
+        $expiredAkick->method('isExpired')->willReturn(true);
+        $expiredAkick->method('getMask')->willReturn('*!*@*.isp.com');
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('countByChannel')->willReturn(1);
+        $akickRepo->method('findByChannelAndMask')->willReturn($expiredAkick);
+
+        $removed = false;
+        $akickRepo->method('remove')->willReturnCallback(static function () use (&$removed): void {
+            $removed = true;
+        });
+
+        /** @var ChannelAkick|null $saved */
+        $saved = null;
+        $akickRepo->method('save')->willReturnCallback(static function (ChannelAkick $entity) use (&$saved): void {
+            $saved = $entity;
+        });
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('setChannelModes')->willReturnCallback(static function (): void {
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '*!*@*.isp.com', '0', 'New reason'], $notifier, $translator));
+
+        self::assertTrue($removed, 'Expired AKICK should be removed');
+        self::assertNotNull($saved, 'New AKICK should be saved');
+        self::assertSame('*!*@*.isp.com', $saved->getMask());
+        self::assertSame('New reason', $saved->getReason());
+        self::assertSame(['akick.add.done'], $messages);
     }
 
     #[Test]

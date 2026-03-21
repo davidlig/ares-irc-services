@@ -270,9 +270,13 @@ final readonly class AkickCommand implements ChanServCommandInterface
         }
 
         if (null !== $existing) {
-            $context->reply('akick.add.already_exists', ['%mask%' => $mask]);
+            if ($existing->isExpired()) {
+                $this->akickRepository->remove($existing);
+            } else {
+                $context->reply('akick.add.already_exists', ['%mask%' => $mask]);
 
-            return;
+                return;
+            }
         }
 
         $expiresAt = null;
