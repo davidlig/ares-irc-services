@@ -125,9 +125,10 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         $unsetWithoutParam = $support->getChannelSettingModesUnsetWithoutParam();
         $unsetWithParam = $support->getChannelSettingModesUnsetWithParam();
         $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
-        $preserveLetter = $support->hasPermanentChannelMode() ? 'P' : null;
+        $preserveRegistered = $support->hasChannelRegisteredMode();
+        $preservePermanent = $support->hasPermanentChannelMode();
 
-        $toRemove = $this->calculateModesToRemove($currentLetters, $mlockLetters, $view, $unsetWithoutParam, $unsetWithParam, $preserveLetter);
+        $toRemove = $this->calculateModesToRemove($currentLetters, $mlockLetters, $view, $unsetWithoutParam, $unsetWithParam, $preserveRegistered, $preservePermanent);
         $toAdd = $this->calculateModesToAdd($mlockLetters, $currentLetters);
 
         if ([] === $toRemove && [] === $toAdd) {
@@ -146,12 +147,18 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
      *
      * @return list<string>
      */
-    private function calculateModesToRemove(array $currentLetters, array $mlockLetters, ChannelView $view, array $unsetWithoutParam, array $unsetWithParam, ?string $preserveLetter): array
+    private function calculateModesToRemove(array $currentLetters, array $mlockLetters, ChannelView $view, array $unsetWithoutParam, array $unsetWithParam, bool $preserveRegistered, bool $preservePermanent): array
     {
         $toRemove = [];
 
         foreach ($currentLetters as $letter) {
-            if (in_array($letter, $mlockLetters, true) || 'r' === $letter || $letter === $preserveLetter) {
+            if (in_array($letter, $mlockLetters, true)) {
+                continue;
+            }
+            if ('r' === $letter && $preserveRegistered) {
+                continue;
+            }
+            if ('P' === $letter && $preservePermanent) {
                 continue;
             }
             if (in_array($letter, $unsetWithoutParam, true) && !in_array($letter, $toRemove, true)) {
