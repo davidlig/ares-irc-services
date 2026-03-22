@@ -69,10 +69,10 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
             $this->nickServService->dispatch($text, $sender);
         } catch (NickAlreadyRegisteredException $e) {
             $messageType = $this->messageTypeResolver->resolve($sender);
-            $this->sendNotice->sendMessage($sender->uid, $e->getMessage(), $messageType);
+            $this->sendNotice->sendMessage($this->nickServBot->getUid(), $sender->uid, $e->getMessage(), $messageType);
         } catch (InvalidCredentialsException $e) {
             $messageType = $this->messageTypeResolver->resolve($sender);
-            $this->sendNotice->sendMessage($sender->uid, $e->getMessage(), $messageType);
+            $this->sendNotice->sendMessage($this->nickServBot->getUid(), $sender->uid, $e->getMessage(), $messageType);
         } catch (Throwable $e) {
             $this->logger->error('NickServ dispatch error: ' . $e->getMessage(), [
                 'exception' => $e,

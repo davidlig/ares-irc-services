@@ -39,6 +39,8 @@ final class NickServCommandListenerTest extends TestCase
 {
     private const SENDER_UID = '001ABC';
 
+    private const NICKSERV_UID = '001NS';
+
     private NickServBot $nickServBot;
 
     private NickServService $nickServService;
@@ -216,7 +218,7 @@ final class NickServCommandListenerTest extends TestCase
         $this->sendNotice
             ->expects(self::once())
             ->method('sendMessage')
-            ->with(self::SENDER_UID, 'Nickname "TestNick" is already registered.', 'NOTICE');
+            ->with(self::NICKSERV_UID, self::SENDER_UID, 'Nickname "TestNick" is already registered.', 'NOTICE');
         $this->nickServNotifier->expects(self::never())->method('sendMessage');
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::never())->method('error');
@@ -244,7 +246,7 @@ final class NickServCommandListenerTest extends TestCase
         $this->sendNotice
             ->expects(self::once())
             ->method('sendMessage')
-            ->with(self::SENDER_UID, 'Invalid nickname or password.', 'NOTICE');
+            ->with(self::NICKSERV_UID, self::SENDER_UID, 'Invalid nickname or password.', 'NOTICE');
         $this->nickServNotifier->expects(self::never())->method('sendMessage');
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::never())->method('error');

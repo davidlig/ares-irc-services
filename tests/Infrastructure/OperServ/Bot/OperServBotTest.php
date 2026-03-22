@@ -164,7 +164,7 @@ final class OperServBotTest extends TestCase
         $sendNoticePort
             ->expects(self::once())
             ->method('sendNotice')
-            ->with($targetUidOrNick, $message);
+            ->with($this->operservUid, $targetUidOrNick, $message);
 
         $bot = new OperServBot(
             $this->connectionHolder,
@@ -192,7 +192,7 @@ final class OperServBotTest extends TestCase
         $sendNoticePort
             ->expects(self::once())
             ->method('sendMessage')
-            ->with($targetUidOrNick, $message, $messageType);
+            ->with($this->operservUid, $targetUidOrNick, $message, $messageType);
 
         $bot = new OperServBot(
             $this->connectionHolder,

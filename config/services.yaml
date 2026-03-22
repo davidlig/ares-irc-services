@@ -387,8 +387,31 @@ services:
 
     App\Application\Port\SendNoticePort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter
+
+    # --- CTCP Handler: handles CTCP VERSION requests ---
+
+    App\Application\Port\SendCtcpPort:
+        class: App\Infrastructure\IRC\ServiceBridge\CoreSendCtcpAdapter
+
+    App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder:
         arguments:
-            $senderUid: '%nickserv.uid%'
+            $translator: '@translator'
+            $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
+
+    App\Infrastructure\IRC\ServiceBridge\CtcpHandler:
+        arguments:
+            $sendCtcp: '@App\Application\Port\SendCtcpPort'
+            $sendNotice: '@App\Application\Port\SendNoticePort'
+            $versionResponder: '@App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
+            $serviceUidMap:
+                nickserv: '%nickserv.uid%'
+                chanserv: '%chanserv.uid%'
+                memoserv: '%memoserv.uid%'
+                operserv: '%operserv.uid%'
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
 
     App\Application\Port\ActiveChannelModeSupportProviderInterface:
         class: App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider
@@ -908,8 +931,6 @@ services:
 
     App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter:
         class: App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter
-        arguments:
-            $senderUid: '%operserv.uid%'
 
     App\Infrastructure\OperServ\Bot\OperServBot:
         arguments:

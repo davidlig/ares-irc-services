@@ -1,0 +1,23 @@
+# Common translations — English
+# Domain: common
+#
+# Shared translations used across all IRC services.
+
+ctcp:
+  version:
+    tribute: |
+      \x02For my loyal and eternal friend,\x02
+      
+      Although 2023 was the year we had to say goodbye, time has not erased a single
+      detail of you. I still remember your boundless energy, your noble gaze, and that
+      immense and contagious joy that only you knew how to give.
+      
+      You filled my home with life and my life with unconditional love that I will never
+      forget. Although I no longer hear your footsteps running to greet me or feel your
+      head leaning on me seeking affection, I know your playful spirit still
+      accompanies me.
+      
+      Thank you for every moment, every mischief, and for being the best companion I could
+      have asked for. The space you left by my side is now filled with the happiest
+      memories. You will always be my dear friend and you will always have an immense
+      place in my heart.

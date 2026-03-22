@@ -1,0 +1,23 @@
+# Common translations — Spanish
+# Domain: common
+#
+# Shared translations used across all IRC services.
+
+ctcp:
+  version:
+    tribute: |
+      \x02Para mi leal y eterno amigo,\x02
+      
+      Aunque el 2023 fue el año en que tuvimos que decirnos adiós, el tiempo no ha
+      borrado ni un solo detalle de ti. Sigo recordando tu energía inagotable, tu mirada
+      noble y esa alegría inmensa y contagiosa que solo tú sabías dar.
+      
+      Llenaste mi casa de vida y mi vida de un amor incondicional que nunca olvidaré.
+      Aunque ya no escuche tus pasos corriendo a recibirme ni sienta tu cabeza
+      apoyándose en mí buscando cariño, sé que tu espíritu juguetón sigue
+      acompañándome.
+      
+      Gracias por cada momento, por cada travesura y por haber sido el mejor
+      compañero que podría haber pedido. El espacio que dejaste a mi lado ahora está
+      lleno de los recuerdos más felices. Siempre serás mi gran amigo y siempre tendrás
+      un lugar inmenso en mi corazón.

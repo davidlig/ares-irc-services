@@ -22,4 +22,24 @@ final class MessageReceivedEventTest extends TestCase
         self::assertSame($message, $event->message);
         self::assertNotNull($event->occurredAt);
     }
+
+    #[Test]
+    public function propagationIsNotStoppedByDefault(): void
+    {
+        $message = new IRCMessage('PRIVMSG', null, ['#chan'], 'hi');
+        $event = new MessageReceivedEvent($message);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
+    public function stopPropagationStopsEventPropagation(): void
+    {
+        $message = new IRCMessage('PRIVMSG', null, ['#chan'], 'hi');
+        $event = new MessageReceivedEvent($message);
+
+        $event->stopPropagation();
+
+        self::assertTrue($event->isPropagationStopped());
+    }
 }

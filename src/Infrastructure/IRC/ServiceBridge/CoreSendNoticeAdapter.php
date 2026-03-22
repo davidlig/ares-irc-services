@@ -12,29 +12,28 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * Core implements SendNoticePort: sends NOTICE/PRIVMSG over the active IRC connection
- * using the configured service sender UID (e.g. NickServ). Services use this port
- * to reply to users without depending on Connection or protocol details.
+ * Core implements SendNoticePort: sends NOTICE/PRIVMSG over the active IRC connection.
+ * Services use this port to reply to users without depending on Connection or protocol details.
  */
 final readonly class CoreSendNoticeAdapter implements SendNoticePort
 {
     public function __construct(
         private ActiveConnectionHolder $connectionHolder,
-        private string $senderUid,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
-    public function sendNotice(string $targetUidOrNick, string $message): void
+    public function sendNotice(string $senderUid, string $targetUid, string $message): void
     {
-        $this->sendMessage($targetUidOrNick, $message, 'NOTICE');
+        $this->sendMessage($senderUid, $targetUid, $message, 'NOTICE');
     }
 
-    public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
+    public function sendMessage(string $senderUid, string $targetUid, string $message, string $messageType): void
     {
         if (!$this->connectionHolder->isConnected()) {
             $this->logger->warning('CoreSendNoticeAdapter: cannot send message — no active connection.', [
-                'target' => $targetUidOrNick,
+                'sender' => $senderUid,
+                'target' => $targetUid,
             ]);
 
             return;
@@ -54,8 +53,8 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
             }
             $ircMessage = new IRCMessage(
                 command: $command,
-                prefix: $this->senderUid,
-                params: [$targetUidOrNick],
+                prefix: $senderUid,
+                params: [$targetUid],
                 trailing: $line,
                 direction: MessageDirection::Outgoing,
             );

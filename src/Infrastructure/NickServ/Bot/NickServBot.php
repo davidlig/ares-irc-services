@@ -78,12 +78,12 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
 
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
-        $this->sendNoticePort->sendNotice($targetUidOrNick, $message);
+        $this->sendNoticePort->sendNotice($this->getUid(), $targetUidOrNick, $message);
     }
 
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
     {
-        $this->sendNoticePort->sendMessage($targetUidOrNick, $message, $messageType);
+        $this->sendNoticePort->sendMessage($this->getUid(), $targetUidOrNick, $message, $messageType);
     }
 
     public function setUserAccount(string $targetUid, string $accountName): void

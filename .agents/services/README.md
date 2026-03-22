@@ -211,3 +211,28 @@ Bots register via `ServiceCommandListenerInterface` (tagged service). **Never** 
 - `src/Infrastructure/<ServiceName>/`
 - `src/Infrastructure/IRC/ServiceBridge/ServiceCommandGateway.php`
 - `config/services.yaml` (DI configuration)
+
+## Adding a New Service: Checklist
+
+When adding a new service (e.g., `BotServ`), update these locations:
+
+1. **Environment variables**: Add to `.env`:
+   - `<SERVICE>_UID=<value>` (e.g., `BOTSERV_UID=002GGGGGG`)
+
+2. **Services config** (`config/services.yaml`):
+   - Add `<service>.uid: '%env(<SERVICE>_UID)%'` under parameters
+   - Add service UID to `CtcpHandler` `$serviceUidMap`:
+     ```yaml
+     $serviceUidMap:
+         nickserv: '%nickserv.uid%'
+         chanserv: '%chanserv.uid%'
+         memoserv: '%memoserv.uid%'
+         operserv: '%operserv.uid%'
+         botserv: '%botserv.uid%'  # <-- add new service here
+     ```
+
+3. **Bot class**: Implement `ServiceCommandListenerInterface` with:
+   - `getServiceName(): string` → returns `'BotServ'`
+   - `getServiceUid(): ?string` → returns `$this->botServUid`
+
+4. **Service registration**: Tag the bot with `app.service_command_listener`

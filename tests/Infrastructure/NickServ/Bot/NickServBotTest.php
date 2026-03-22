@@ -120,7 +120,7 @@ final class NickServBotTest extends TestCase
     public function sendNoticeDelegatesToPort(): void
     {
         $sendNoticePort = $this->createMock(SendNoticePort::class);
-        $sendNoticePort->expects(self::once())->method('sendNotice')->with('001USER', 'Hello');
+        $sendNoticePort->expects(self::once())->method('sendNotice')->with(self::NICKSERV_UID, '001USER', 'Hello');
 
         $bot = new NickServBot(
             $this->connectionHolder,
@@ -139,7 +139,7 @@ final class NickServBotTest extends TestCase
     {
         $sendNoticePort = $this->createMock(SendNoticePort::class);
         $sendNoticePort->expects(self::once())->method('sendMessage')
-            ->with('001USER', 'Message', 'NOTICE');
+            ->with(self::NICKSERV_UID, '001USER', 'Message', 'NOTICE');
 
         $bot = new NickServBot(
             $this->connectionHolder,
