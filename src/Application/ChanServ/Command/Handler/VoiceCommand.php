@@ -123,7 +123,7 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         }
 
         if ($channel->isSecure()) {
-            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId());
+            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
             $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOVOICE);
             if ($targetLevel < $minLevelForMode) {
                 $context->reply('secure.requires_min_level', [

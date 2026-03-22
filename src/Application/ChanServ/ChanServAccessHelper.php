@@ -36,8 +36,11 @@ final readonly class ChanServAccessHelper
         return null !== $level ? $level->getValue() : ChannelLevel::getDefault($key);
     }
 
-    public function effectiveAccessLevel(RegisteredChannel $channel, int $nickId): int
+    public function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = true): int
     {
+        if (!$isIdentified) {
+            return ChannelAccess::LEVEL_UNREGISTERED;
+        }
         if ($channel->isFounder($nickId)) {
             return ChannelAccess::FOUNDER_LEVEL;
         }

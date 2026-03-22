@@ -184,6 +184,39 @@ final class LevelsCommandTest extends TestCase
     }
 
     #[Test]
+    public function listShowsNojoinLevel(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(true);
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $levelRepo->method('listByChannel')->willReturn([]);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new LevelsCommand($channelRepo, $levelRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'LIST'], $notifier, $translator));
+
+        $foundNojoin = false;
+        foreach ($messages as $msg) {
+            if (str_contains($msg, 'NOJOIN') && str_contains($msg, '-1')) {
+                $foundNojoin = true;
+                break;
+            }
+        }
+        self::assertTrue($foundNojoin, 'NOJOIN level with default -1 should be displayed');
+    }
+
+    #[Test]
     public function setRepliesSyntaxWhenKeyOrValueMissing(): void
     {
         $channel = $this->createStub(RegisteredChannel::class);

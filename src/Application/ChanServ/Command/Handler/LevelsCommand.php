@@ -53,6 +53,8 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         ChannelLevel::KEY_ACCESSCHANGE,
         ChannelLevel::KEY_MEMOREAD,
         ChannelLevel::KEY_MEMOCHANGE,
+        ChannelLevel::KEY_AKICK,
+        ChannelLevel::KEY_NOJOIN,
     ];
 
     public function __construct(

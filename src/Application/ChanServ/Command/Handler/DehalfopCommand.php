@@ -8,6 +8,7 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -120,7 +121,11 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
         }
         $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->getId());
         $targetAccount = $this->nickRepository->findByNick($targetNick);
-        $targetLevel = null === $targetAccount ? 0 : $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId());
+        if (null === $targetAccount) {
+            $targetLevel = ChannelAccess::LEVEL_UNREGISTERED;
+        } else {
+            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
+        }
         $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
         if (!$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEHALFOP', '%channel%' => $channelName]);

@@ -353,7 +353,7 @@ final class DeadminCommandTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($targetAccount);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $userLookup->method('findByNick')->willReturn(new SenderView('UID2', 'TargetNick', 'i', 'h', 'c', 'ip'));
+        $userLookup->method('findByNick')->willReturn(new SenderView('UID2', 'TargetNick', 'i', 'h', 'c', 'ip', isIdentified: true));
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);

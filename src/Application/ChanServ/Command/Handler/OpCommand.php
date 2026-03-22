@@ -133,7 +133,7 @@ final readonly class OpCommand implements ChanServCommandInterface
         $targetUid = $targetSender->uid;
 
         if ($channel->isSecure()) {
-            $targetLevel = $this->effectiveAccessLevel($channel, $targetAccount->getId());
+            $targetLevel = $this->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
             $minLevelForMode = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOOP);
             if ($targetLevel < $minLevelForMode) {
                 $context->reply('secure.requires_min_level', [
@@ -165,8 +165,11 @@ final readonly class OpCommand implements ChanServCommandInterface
         return null !== $level ? $level->getValue() : ChannelLevel::getDefault($key);
     }
 
-    private function effectiveAccessLevel(RegisteredChannel $channel, int $nickId): int
+    private function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = true): int
     {
+        if (!$isIdentified) {
+            return ChannelAccess::LEVEL_UNREGISTERED;
+        }
         if ($channel->isFounder($nickId)) {
             return ChannelAccess::FOUNDER_LEVEL;
         }

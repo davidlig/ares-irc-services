@@ -55,6 +55,9 @@ class ChannelLevel
     /** ChanServ: manage AKICK list (default 450). */
     public const string KEY_AKICK = 'AKICK';
 
+    /** ChanServ: minimum level to join channel (default -1, disabled). Users below are kicked. */
+    public const string KEY_NOJOIN = 'NOJOIN';
+
     /** Default values per key (used on LEVELS RESET and new channel). */
     public const array DEFAULTS = [
         self::KEY_AUTOADMIN => 400,
@@ -72,6 +75,7 @@ class ChannelLevel
         self::KEY_MEMOREAD => 200,
         self::KEY_MEMOCHANGE => 300,
         self::KEY_AKICK => 450,
+        self::KEY_NOJOIN => -1,
     ];
 
     private int $channelId;

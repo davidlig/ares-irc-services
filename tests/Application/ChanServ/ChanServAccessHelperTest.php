@@ -321,4 +321,67 @@ final class ChanServAccessHelperTest extends TestCase
 
         self::assertSame('', $helper->getDesiredPrefixLetter($channel, 10, $modeSupport));
     }
+
+    #[Test]
+    public function effectiveAccessLevelReturnsUnregisteredLevelWhenNotIdentified(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(400);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame(ChannelAccess::LEVEL_UNREGISTERED, $helper->effectiveAccessLevel($channel, 10, false));
+    }
+
+    #[Test]
+    public function effectiveAccessLevelReturnsUnregisteredLevelWhenNotIdentifiedEvenForFounder(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(true);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame(ChannelAccess::LEVEL_UNREGISTERED, $helper->effectiveAccessLevel($channel, 10, false));
+    }
+
+    #[Test]
+    public function effectiveAccessLevelReturnsAccessLevelWhenIdentified(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $access = $this->createStub(ChannelAccess::class);
+        $access->method('getLevel')->willReturn(400);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn($access);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame(400, $helper->effectiveAccessLevel($channel, 10, true));
+    }
+
+    #[Test]
+    public function effectiveAccessLevelReturnsZeroWhenIdentifiedButNoAccess(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('isFounder')->willReturn(false);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByChannelAndNick')->willReturn(null);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+
+        $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        self::assertSame(0, $helper->effectiveAccessLevel($channel, 99, true));
+    }
 }

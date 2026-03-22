@@ -304,3 +304,10 @@ akick:
     no_reason:      "No reason"
     never_expires:  "never"
 
+# NOJOIN documentation for LEVELS:
+# NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
+# Default: -1 (disabled). Set to 0 to only allow registered users, 50 for level 50+, etc.
+
+nojoin:
+  reason: "NOJOIN level restriction"
+

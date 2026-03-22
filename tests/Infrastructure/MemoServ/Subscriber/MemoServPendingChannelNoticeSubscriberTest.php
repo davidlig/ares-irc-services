@@ -267,6 +267,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
             hostname: 'user.example.com',
             cloakedHost: 'user.example.com',
             ipBase64: '',
+            isIdentified: true,
         );
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
@@ -304,6 +305,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
             hostname: 'user.example.com',
             cloakedHost: 'user.example.com',
             ipBase64: '',
+            isIdentified: true,
         );
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);

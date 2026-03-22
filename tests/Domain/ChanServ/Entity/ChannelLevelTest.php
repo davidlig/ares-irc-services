@@ -105,4 +105,16 @@ final class ChannelLevelTest extends TestCase
     {
         self::assertSame(0, ChannelLevel::getDefault('UNKNOWN'));
     }
+
+    #[Test]
+    public function nojoinDefaultValueIsMinusOne(): void
+    {
+        self::assertSame(-1, ChannelLevel::getDefault(ChannelLevel::KEY_NOJOIN));
+    }
+
+    #[Test]
+    public function nojoinKeyExistsInDefaults(): void
+    {
+        self::assertArrayHasKey(ChannelLevel::KEY_NOJOIN, ChannelLevel::DEFAULTS);
+    }
 }

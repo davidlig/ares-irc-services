@@ -636,6 +636,12 @@ services:
             $chanservNick: '%chanserv.nick%'
             $logger: '@monolog.logger.irc'
 
+    App\Infrastructure\ChanServ\Subscriber\ChanServNojoinEnforceSubscriber:
+        arguments:
+            $chanservNick: '%chanserv.nick%'
+            $defaultLanguage: '%services.default_language%'
+            $logger: '@monolog.logger.irc'
+
     # --- MemoServ Service -------------------------------------------------------
 
     App\Application\MemoServ\MemoServService:

@@ -14,6 +14,8 @@ use function sprintf;
  */
 class ChannelAccess
 {
+    public const int LEVEL_UNREGISTERED = -1;
+
     public const int LEVEL_MIN = 1;
 
     public const int LEVEL_MAX = 499;

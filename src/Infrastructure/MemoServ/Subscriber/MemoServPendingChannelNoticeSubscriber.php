@@ -69,11 +69,11 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
         }
 
         $account = $this->nickRepository->findByNick($sender->nick);
-        if (null === $account) {
+        if (null === $account || !$sender->isIdentified) {
             return;
         }
 
-        $userLevel = $this->accessHelper->effectiveAccessLevel($channel, $account->getId());
+        $userLevel = $this->accessHelper->effectiveAccessLevel($channel, $account->getId(), true);
         $required = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_MEMOREAD);
         if ($userLevel < $required) {
             return;

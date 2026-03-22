@@ -304,3 +304,10 @@ akick:
     no_reason:      "Sin razón"
     never_expires:  "nunca"
 
+# NOJOIN documentación para LEVELS:
+# NOJOIN: Nivel mínimo de acceso para entrar al canal. Usuarios con nivel < NOJOIN son expulsados.
+# Por defecto: -1 (deshabilitado). Pon 0 para permitir solo usuarios registrados, 50 para nivel 50+, etc.
+
+nojoin:
+  reason: "Restricción de nivel NOJOIN"
+

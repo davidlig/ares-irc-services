@@ -117,7 +117,11 @@ final readonly class DeopCommand implements ChanServCommandInterface
             return;
         }
         $targetAccount = $this->nickRepository->findByNick($targetNick);
-        $targetLevel = null === $targetAccount ? 0 : $this->effectiveAccessLevel($channel, $targetAccount->getId());
+        if (null === $targetAccount) {
+            $targetLevel = ChannelAccess::LEVEL_UNREGISTERED;
+        } else {
+            $targetLevel = $this->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
+        }
         $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
         if (!$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEOP', '%channel%' => $channelName]);
@@ -136,8 +140,11 @@ final readonly class DeopCommand implements ChanServCommandInterface
         return null !== $level ? $level->getValue() : ChannelLevel::getDefault($key);
     }
 
-    private function effectiveAccessLevel(RegisteredChannel $channel, int $nickId): int
+    private function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = true): int
     {
+        if (!$isIdentified) {
+            return ChannelAccess::LEVEL_UNREGISTERED;
+        }
         if ($channel->isFounder($nickId)) {
             return ChannelAccess::FOUNDER_LEVEL;
         }
