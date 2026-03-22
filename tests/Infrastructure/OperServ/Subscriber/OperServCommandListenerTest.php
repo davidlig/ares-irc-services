@@ -37,7 +37,7 @@ use Throwable;
 #[CoversClass(OperServCommandListener::class)]
 final class OperServCommandListenerTest extends TestCase
 {
-    private const SENDER_UID = '001ABC';
+    private const string SENDER_UID = '001ABC';
 
     private OperServBot $operServBot;
 

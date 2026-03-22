@@ -37,9 +37,9 @@ use Throwable;
 #[CoversClass(NickServCommandListener::class)]
 final class NickServCommandListenerTest extends TestCase
 {
-    private const SENDER_UID = '001ABC';
+    private const string SENDER_UID = '001ABC';
 
-    private const NICKSERV_UID = '001NS';
+    private const string NICKSERV_UID = '001NS';
 
     private NickServBot $nickServBot;
 

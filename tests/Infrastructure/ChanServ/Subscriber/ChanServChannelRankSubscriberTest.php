@@ -42,11 +42,11 @@ use function sprintf;
 #[CoversClass(ChanServChannelRankSubscriber::class)]
 final class ChanServChannelRankSubscriberTest extends TestCase
 {
-    private const CHANSERV_UID = '001CHAN';
+    private const string CHANSERV_UID = '001CHAN';
 
-    private const CHANNEL_ID = 1;
+    private const int CHANNEL_ID = 1;
 
-    private const NICK_ID = 10;
+    private const int NICK_ID = 10;
 
     private RegisteredChannelRepositoryInterface $channelRepository;
 

@@ -25,7 +25,7 @@ use Throwable;
 #[CoversClass(ConnectCommand::class)]
 final class ConnectCommandTest extends TestCase
 {
-    private const DEFAULTS = [
+    private const array DEFAULTS = [
         'serverName' => 'services.test.local',
         'host' => '127.0.0.1',
         'port' => 7029,

@@ -34,9 +34,9 @@ use Throwable;
 #[CoversClass(MemoServCommandListener::class)]
 final class MemoServCommandListenerTest extends TestCase
 {
-    private const SENDER_UID = '001ABC';
+    private const string SENDER_UID = '001ABC';
 
-    private const MEMOSERV_UID = '001MS';
+    private const string MEMOSERV_UID = '001MS';
 
     private MemoServBot $memoServBot;
 

@@ -15,7 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final readonly class CtcpHandler implements EventSubscriberInterface
 {
-    private const CTCP_PATTERN = '/^\x01([^\x01]+)\x01$/';
+    private const string CTCP_PATTERN = '/^\x01([^\x01]+)\x01$/';
 
     /** @var array<string, string> Map of lowercase service name to UID */
     private readonly array $serviceNameToUid;

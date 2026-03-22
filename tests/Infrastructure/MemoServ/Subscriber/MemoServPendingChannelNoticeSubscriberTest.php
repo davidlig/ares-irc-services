@@ -29,11 +29,11 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(MemoServPendingChannelNoticeSubscriber::class)]
 final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 {
-    private const CHANNEL_ID = 1;
+    private const int CHANNEL_ID = 1;
 
-    private const NICK_ID = 10;
+    private const int NICK_ID = 10;
 
-    private const MEMOSERV_UID = '001MEMO';
+    private const string MEMOSERV_UID = '001MEMO';
 
     private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
 

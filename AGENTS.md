@@ -96,6 +96,7 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 ### 2.3 PHP 8.4 & Symfony 7.4 Practices
 - USE **Constructor Property Promotion** for all injections and data classes.
 - USE **Property Hooks** (`get`, `set`) in Entities where logic is needed (PHP 8.4).
+- USE **Typed Constants**: All constants MUST have explicit type declarations. Use `private const string NAME = 'value';` or `private const int LIMIT = 100;`. Untyped constants are forbidden when targeting PHP 8.4 or higher.
 - USE Attributes: `#[Route]`, `#[AsController]`, `#[AsCommand]`.
 - USE Dependency Injection via `private readonly` properties in services/handlers.
 - USE **Yoda Conditions** (`if (null === $variable)`) to prevent accidental assignments.

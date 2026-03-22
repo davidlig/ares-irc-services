@@ -30,9 +30,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(ChanServCommandListener::class)]
 final class ChanServCommandListenerTest extends TestCase
 {
-    private const CHANSERV_UID = '001CS';
+    private const string CHANSERV_UID = '001CS';
 
-    private const CHANSERV_NICK = 'ChanServ';
+    private const string CHANSERV_NICK = 'ChanServ';
 
     private ChanServBot $chanServBot;
 

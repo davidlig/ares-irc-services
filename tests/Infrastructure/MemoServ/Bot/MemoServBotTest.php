@@ -18,9 +18,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(MemoServBot::class)]
 final class MemoServBotTest extends TestCase
 {
-    private const MEMOSERV_UID = '001MS';
+    private const string MEMOSERV_UID = '001MS';
 
-    private const HOSTNAME = 'services.example.com';
+    private const string HOSTNAME = 'services.example.com';
 
     private ActiveConnectionHolder $connectionHolder;
 

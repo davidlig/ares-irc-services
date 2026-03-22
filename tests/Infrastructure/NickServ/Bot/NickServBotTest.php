@@ -24,9 +24,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(NickServBot::class)]
 final class NickServBotTest extends TestCase
 {
-    private const NICKSERV_UID = '001NS';
+    private const string NICKSERV_UID = '001NS';
 
-    private const HOSTNAME = 'services.example.com';
+    private const string HOSTNAME = 'services.example.com';
 
     private ActiveConnectionHolder $connectionHolder;
 

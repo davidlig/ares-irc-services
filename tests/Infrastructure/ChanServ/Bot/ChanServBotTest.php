@@ -23,9 +23,9 @@ use ReflectionClass;
 #[CoversClass(ChanServBot::class)]
 final class ChanServBotTest extends TestCase
 {
-    private const CHANSERV_UID = '001CS';
+    private const string CHANSERV_UID = '001CS';
 
-    private const HOSTNAME = 'services.example.com';
+    private const string HOSTNAME = 'services.example.com';
 
     private ActiveConnectionHolder $connectionHolder;
 
