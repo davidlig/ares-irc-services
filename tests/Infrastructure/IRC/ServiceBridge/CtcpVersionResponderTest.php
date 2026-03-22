@@ -86,19 +86,19 @@ final class CtcpVersionResponderTest extends TestCase
     }
 
     #[Test]
-    public function getAsciiArtLinesContainsColorCode(): void
+    public function getAsciiArtLinesContainsRedHeartInSignature(): void
     {
         $lines = $this->responder->getAsciiArtLines('en');
 
-        $foundColorCode = false;
+        $foundRedHeart = false;
         foreach ($lines as $line) {
-            if (preg_match('/\x0311,13/', $line)) {
-                $foundColorCode = true;
+            if (str_contains($line, "\x034") && str_contains($line, '❤')) {
+                $foundRedHeart = true;
                 break;
             }
         }
 
-        self::assertTrue($foundColorCode, 'Expected to find color code \\x0311,13 in ASCII art');
+        self::assertTrue($foundRedHeart, 'Expected to find red heart (\\x034❤) in signature');
     }
 
     #[Test]

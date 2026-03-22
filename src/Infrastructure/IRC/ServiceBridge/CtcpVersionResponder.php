@@ -55,7 +55,7 @@ final readonly class CtcpVersionResponder
         '                      .      .     @@@  @                                       ',
     ];
 
-    private const string SIGNATURE = "\x0311,13  Ares 2011-2023  \x03";
+    private const string SIGNATURE = "\x034\u{2764}\x0F Ares 2011-2023 \x034\u{2764}\x0F";
 
     public function __construct(
         private TranslatorInterface $translator,
