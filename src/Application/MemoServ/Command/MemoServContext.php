@@ -6,13 +6,14 @@ namespace App\Application\MemoServ\Command;
 
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-final readonly class MemoServContext
+final readonly class MemoServContext implements IrcopContextInterface
 {
     public function __construct(
         public readonly ?SenderView $sender,
@@ -28,6 +29,16 @@ final readonly class MemoServContext
         private readonly MemoServCommandRegistry $registry,
         private readonly ServiceNicknameRegistry $serviceNicks,
     ) {
+    }
+
+    public function getSender(): ?SenderView
+    {
+        return $this->sender;
+    }
+
+    public function getSenderAccount(): ?RegisteredNick
+    {
+        return $this->senderAccount;
     }
 
     public function reply(string $key, array $params = []): void

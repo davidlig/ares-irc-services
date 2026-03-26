@@ -763,11 +763,19 @@ services:
 
     Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage: ~
 
+    App\Infrastructure\Security\Voter\IdentifiedVoter: ~
+
+    App\Infrastructure\Security\Voter\IrcopPermissionVoter:
+        arguments:
+            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+
     Symfony\Component\Security\Core\Authorization\AccessDecisionManager:
         arguments:
             $voters:
                 - '@App\Infrastructure\NickServ\Security\Voter\NickServIdentifiedOwnerVoter'
-                - '@App\Infrastructure\NickServ\Security\Voter\OperVoter'
+                - '@App\Infrastructure\Security\Voter\IdentifiedVoter'
+                - '@App\Infrastructure\Security\Voter\IrcopPermissionVoter'
 
     Symfony\Component\Security\Core\Authorization\AuthorizationChecker:
         arguments:

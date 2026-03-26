@@ -288,119 +288,20 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
-    public function repliesOperOnlyWhenHandlerIsOperOnlyAndNotGranted(): void
+    public function repliesPermissionDeniedWhenRequiredPermissionNotGranted(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        $operOnlyHandler = new class($contextHolder) implements NickServCommandInterface {
+        $permissionHandler = new class($contextHolder) implements NickServCommandInterface {
             public function __construct(private readonly stdClass $holder)
             {
             }
 
             public function getName(): string
             {
-                return 'OPCMD';
-            }
-
-            public function getAliases(): array
-            {
-                return [];
-            }
-
-            public function getMinArgs(): int
-            {
-                return 0;
-            }
-
-            public function getSyntaxKey(): string
-            {
-                return 'syntax';
-            }
-
-            public function getHelpKey(): string
-            {
-                return 'help';
-            }
-
-            public function getOrder(): int
-            {
-                return 0;
-            }
-
-            public function getShortDescKey(): string
-            {
-                return 'short';
-            }
-
-            public function getSubCommandHelp(): array
-            {
-                return [];
-            }
-
-            public function isOperOnly(): bool
-            {
-                return true;
-            }
-
-            public function getRequiredPermission(): ?string
-            {
-                return null;
-            }
-
-            public function execute(NickServContext $context): void
-            {
-                $this->holder->context = $context;
-            }
-        };
-
-        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorizationChecker->expects(self::once())
-            ->method('isGranted')
-            ->with(NickServPermission::NETWORK_OPER, self::anything())
-            ->willReturn(false);
-
-        $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.oper_only' === $id ? 'Oper only' : $id
-        );
-        $notifier = $this->createMock(NickServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Oper only', 'NOTICE');
-
-        $service = new NickServService(
-            $this->createStub(AuthorizationContextInterface::class),
-            $authorizationChecker,
-            new NickServCommandRegistry([$operOnlyHandler]),
-            $this->createStub(RegisteredNickRepositoryInterface::class),
-            $notifier,
-            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $translator,
-            new PendingVerificationRegistry(),
-            new RecoveryTokenRegistry(),
-            $this->createServiceNicks(),
-        );
-
-        $service->dispatch('OPCMD', $sender);
-
-        self::assertNull($contextHolder->context);
-    }
-
-    #[Test]
-    public function repliesNotIdentifiedWhenRequiredPermissionNotGranted(): void
-    {
-        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
-
-        $identifiedHandler = new class($contextHolder) implements NickServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
-
-            public function getName(): string
-            {
-                return 'NEEDID';
+                return 'NEEDPERM';
             }
 
             public function getAliases(): array
@@ -462,15 +363,15 @@ final class NickServServiceTest extends TestCase
 
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
+            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id
         );
         $notifier = $this->createMock(NickServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Not identified', 'NOTICE');
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Permission denied', 'NOTICE');
 
         $service = new NickServService(
             $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker,
-            new NickServCommandRegistry([$identifiedHandler]),
+            new NickServCommandRegistry([$permissionHandler]),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
@@ -480,7 +381,7 @@ final class NickServServiceTest extends TestCase
             $this->createServiceNicks(),
         );
 
-        $service->dispatch('NEEDID', $sender);
+        $service->dispatch('NEEDPERM', $sender);
 
         self::assertNull($contextHolder->context);
     }

@@ -10,13 +10,14 @@ use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-final readonly class ChanServContext
+final readonly class ChanServContext implements IrcopContextInterface
 {
     public function __construct(
         public readonly ?SenderView $sender,
@@ -35,6 +36,16 @@ final readonly class ChanServContext
         private readonly NetworkUserLookupPort $userLookup,
         private readonly ServiceNicknameRegistry $serviceNicks,
     ) {
+    }
+
+    public function getSender(): ?SenderView
+    {
+        return $this->sender;
+    }
+
+    public function getSenderAccount(): ?RegisteredNick
+    {
+        return $this->senderAccount;
     }
 
     public function reply(string $key, array $params = []): void

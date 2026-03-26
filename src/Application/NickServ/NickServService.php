@@ -10,7 +10,6 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
-use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -100,15 +99,13 @@ final readonly class NickServService
         $this->authorizationContext->setCurrentUser($sender);
 
         try {
-            if ($handler->isOperOnly() && !$this->authorizationChecker->isGranted(NickServPermission::NETWORK_OPER, $context)) {
-                $context->reply('error.oper_only');
-
-                return;
-            }
-
             $requiredPermission = $handler->getRequiredPermission();
             if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
-                $context->reply('error.not_identified');
+                if ('IDENTIFIED' === $requiredPermission) {
+                    $context->reply('error.not_identified');
+                } else {
+                    $context->reply('error.permission_denied');
+                }
 
                 return;
             }

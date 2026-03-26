@@ -7,13 +7,14 @@ namespace App\Application\OperServ\Command;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\Port\SenderView;
+use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-final readonly class OperServContext
+final readonly class OperServContext implements IrcopContextInterface
 {
     public function __construct(
         public readonly ?SenderView $sender,
@@ -30,6 +31,16 @@ final readonly class OperServContext
         private readonly IrcopAccessHelper $accessHelper,
         private readonly ServiceNicknameRegistry $serviceNicks,
     ) {
+    }
+
+    public function getSender(): ?SenderView
+    {
+        return $this->sender;
+    }
+
+    public function getSenderAccount(): ?RegisteredNick
+    {
+        return $this->senderAccount;
     }
 
     public function reply(string $key, array $params = []): void

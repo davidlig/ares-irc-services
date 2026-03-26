@@ -8,6 +8,7 @@ use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -23,7 +24,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  * The timezone set here (user preference or default) applies to all date/time
  * display: use formatDate() whenever showing a date or time to the user.
  */
-readonly class NickServContext
+readonly class NickServContext implements IrcopContextInterface
 {
     public function __construct(
         public readonly ?SenderView $sender,
@@ -43,6 +44,16 @@ readonly class NickServContext
         private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
         private readonly ServiceNicknameRegistry $serviceNicks,
     ) {
+    }
+
+    public function getSender(): ?SenderView
+    {
+        return $this->sender;
+    }
+
+    public function getSenderAccount(): ?RegisteredNick
+    {
+        return $this->senderAccount;
     }
 
     /**

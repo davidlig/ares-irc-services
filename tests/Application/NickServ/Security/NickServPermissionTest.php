@@ -20,12 +20,6 @@ final class NickServPermissionTest extends TestCase
     }
 
     #[Test]
-    public function networkOperConstant(): void
-    {
-        self::assertSame('network_oper', NickServPermission::NETWORK_OPER);
-    }
-
-    #[Test]
     public function constructorCanBeInvokedViaReflectionForCoverage(): void
     {
         $reflection = new ReflectionClass(NickServPermission::class);
