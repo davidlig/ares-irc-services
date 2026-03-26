@@ -1,0 +1,294 @@
+# IRCOP Commands Skill
+
+This document describes the unified permission system for IRCOP commands across all IRC services (NickServ, ChanServ, MemoServ, OperServ).
+
+## Overview
+
+Each IRCOP-only command has a permission string (e.g., `NICKSERV_DROP`, `CHANSERV_SUSPEND`) that is:
+1. Stored centrally in the `oper_permissions` database table
+2. Assigned to roles via `ROLE PERMS <role> ADD <permission>`
+3. Checked by `IrcopPermissionVoter` when commands are executed
+
+## Architecture
+
+### Permission Format
+
+Permissions use the format `<SERVICE>_<COMMAND>` (uppercase with underscore):
+- `NICKSERV_DROP` - Drop registered nicks
+- `CHANSERV_SUSPEND` - Suspend registered channels
+- `MEMOSERV_SEND` - Send memos to any user
+- `operserv.admin.add` - OperServ permissions (lowercase dot notation from legacy)
+
+### Key Components
+
+#### PermissionProviderInterface
+
+Location: `src/Application/Security/PermissionProviderInterface.php`
+
+Interface that each service implements to declare its IRCOP permissions:
+
+```php
+interface PermissionProviderInterface
+{
+    public function getServiceName(): string;
+    public function getPermissions(): array;
+}
+```
+
+#### PermissionRegistry
+
+Location: `src/Application/Security/PermissionRegistry.php`
+
+Service that collects permissions from all providers via tagged_iterator:
+
+```php
+$registry->getAllPermissions();       // All permissions, sorted
+$registry->getPermissionsByService(); // Grouped by service
+```
+
+#### Permission Classes
+
+Each service has an `IrcopPermission` class:
+
+- `NickServIrcopPermission` - `src/Application/NickServ/Security/NickServIrcopPermission.php`
+- `ChanServIrcopPermission` - `src/Application/ChanServ/Security/ChanServIrcopPermission.php`
+- `MemoServIrcopPermission` - `src/Application/MemoServ/Security/MemoServIrcopPermission.php`
+- `OperServIrcopPermission` - `src/Application/OperServ/Security/OperServIrcopPermission.php`
+
+### Authorization Flow
+
+1. Command handler calls `$context->getRequiredPermission()` (returns `NICKSERV_DROP` or similar)
+2. Service calls `$authorizationChecker->isGranted($permission, $context)`
+3. `IrcopPermissionVoter` checks:
+   - User has ROLE_OPER flag from IRCd
+   - If root user → grant immediately
+   - If user has IRCOP account → check role permissions via `IrcopAccessHelper::hasPermission()`
+4. If granted → command executes
+5. If denied → reply with `error.permission_denied`
+
+### Voters
+
+#### IdentifiedVoter
+
+Checks `IDENTIFIED` permission - verifies user has identified (+r mode):
+
+```php
+// In command handler
+public function getRequiredPermission(): ?string
+{
+    return 'IDENTIFIED';
+}
+```
+
+#### IrcopPermissionVoter
+
+Checks IRCOP-specific permissions:
+
+```php
+// In command handler
+public function getRequiredPermission(): ?string
+{
+    return 'NICKSERV_DROP';
+}
+```
+
+## Adding a New IRCOP Permission
+
+### Step 1: Add Permission Constant
+
+In the appropriate service's IrcopPermission class:
+
+```php
+// src/Application/ChanServ/Security/ChanServIrcopPermission.php
+public const string MY_NEW_COMMAND = 'CHANSERV_MYNEWCOMMAND';
+
+public function getPermissions(): array
+{
+    return [
+        self::DROP,
+        self::SUSPEND,
+        // ... existing
+        self::MY_NEW_COMMAND,  // Add here
+    ];
+}
+```
+
+### Step 2: Set Permission in Command Handler
+
+```php
+// src/Application/ChanServ/Command/Handler/MyNewCommand.php
+public function getRequiredPermission(): ?string
+{
+    return ChanServIrcopPermission::MY_NEW_COMMAND;
+}
+```
+
+### Step 3: Use Authorization in Service
+
+The service automatically handles authorization via `AuthorizationChecker`:
+
+```php
+// ChanServService already checks authorization:
+$requiredPermission = $handler->getRequiredPermission();
+if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
+    if ('IDENTIFIED' === $requiredPermission) {
+        $context->reply('error.not_identified');
+    } else {
+        $context->reply('error.permission_denied');
+    }
+    return;
+}
+```
+
+### Step 4: Grant Permission via OperServ
+
+```
+/OPERV ROLE PERMS myrole ADD CHANSERV_MYNEWCOMMAND
+```
+
+## Managing Permissions
+
+### Listing Available Permissions
+
+```
+/OPERV ROLE PERMS <role> LIST
+```
+
+Shows:
+- Assigned permissions (permissions the role has)
+- Available permissions (all defined permissions not assigned)
+
+### Adding Permission to Role
+
+```
+/OPERV ROLE PERMS <role> ADD <permission>
+```
+
+### Removing Permission from Role
+
+```
+/OPERV ROLE PERMS <role> DEL <permission>
+```
+
+## Permission Constants
+
+### NickServ
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `DROP` | `NICKSERV_DROP` | Drop registered nicks |
+
+### ChanServ
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `DROP` | `CHANSERV_DROP` | Drop registered channels |
+| `SUSPEND` | `CHANSERV_SUSPEND` | Suspend channels |
+| `UNSUSPEND` | `CHANSERV_UNSUSPEND` | Unsuspend channels |
+| `CLOSE` | `CHANSERV_CLOSE` | Close channels |
+| `UNCLOSE` | `CHANSERV_UNCLOSE` | Unclose channels |
+
+### MemoServ
+
+| Constant | Value | Description |
+|----------|-------|-------------|
+| `SEND` | `MEMOSERV_SEND` | Send memos to any user |
+| `DISABLE` | `MEMOSERV_DISABLE` | Disable memo service |
+| `ENABLE` | `MEMOSERV_ENABLE` | Enable memo service |
+| `READ` | `MEMOSERV_READ` | Read other users' memos |
+| `DELETE` | `MEMOSERV_DELETE` | Delete other users' memos |
+
+### OperServ
+
+Uses `App\Domain\OperServ\Entity\OperPermission` constants (lowercase dot notation):
+
+| Constant | Value |
+|----------|-------|
+| `ADMIN_ADD` | `operserv.admin.add` |
+| `ADMIN_DEL` | `operserv.admin.del` |
+| `ADMIN_LIST` | `operserv.admin.list` |
+| `ROLE_MANAGE` | `operserv.role.manage` |
+| `PERMISSION_MANAGE` | `operserv.permission.manage` |
+| `KILL_LOCAL` | `operserv.kill.local` |
+| `KILL_GLOBAL` | `operserv.kill.global` |
+| `KLINE_ADD` | `operserv.kline.add` |
+| `KLINE_DEL` | `operserv.kline.del` |
+| `KLINE_LIST` | `operserv.kline.list` |
+| `GLINE_ADD` | `operserv.gline.add` |
+| `GLINE_DEL` | `operserv.gline.del` |
+| `GLINE_LIST` | `operserv.gline.list` |
+| `USERINFO` | `operserv.userinfo` |
+| `CHANNELINFO` | `operserv.channelinfo` |
+| `NETWORK_VIEW` | `operserv.network.view` |
+
+## Root Users
+
+Root users (configured in services config) have all permissions automatically. The `IrcopPermissionVoter` grants access without checking the database:
+
+```php
+if ($this->accessHelper->isRoot(strtolower($sender->nick))) {
+    return true;
+}
+```
+
+## Testing
+
+### Unit Tests
+
+Test permission classes:
+
+```php
+// tests/Application/ChanServ/Security/ChanServIrcopPermissionTest.php
+public function getPermissionsReturnsAllPermissions(): void
+{
+    $permission = new ChanServIrcopPermission();
+    $permissions = $permission->getPermissions();
+    
+    self::assertContains(ChanServIrcopPermission::DROP, $permissions);
+    self::assertContains(ChanServIrcopPermission::SUSPEND, $permissions);
+}
+```
+
+### Integration Tests
+
+Test voter authorization:
+
+```php
+$authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+$authorizationChecker->expects(self::once())
+    ->method('isGranted')
+    ->with('CHANSERV_DROP', self::anything())
+    ->willReturn(true);
+```
+
+## Migration Notes
+
+### From isOperOnly() to getRequiredPermission()
+
+Before (old architecture):
+```php
+public function isOperOnly(): bool
+{
+    return true;
+}
+
+public function getRequiredPermission(): ?string
+{
+    return null;
+}
+```
+
+After (new architecture):
+```php
+public function isOperOnly(): bool
+{
+    return false; // Not used anymore
+}
+
+public function getRequiredPermission(): ?string
+{
+    return 'CHANSERV_DROP';
+}
+```
+
+The `isOperOnly()` method is deprecated. All authorization now goes through `getRequiredPermission()` + `AuthorizationChecker`.
