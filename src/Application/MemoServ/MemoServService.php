@@ -8,6 +8,8 @@ use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
@@ -34,6 +36,8 @@ final readonly class MemoServService
         private UserMessageTypeResolverInterface $messageTypeResolver,
         private TranslatorInterface $translator,
         private ServiceNicknameRegistry $serviceNicks,
+        private AuthorizationContextInterface $authorizationContext,
+        private AuthorizationCheckerInterface $authorizationChecker,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -86,16 +90,16 @@ final readonly class MemoServService
             serviceNicks: $this->serviceNicks,
         );
 
+        $this->authorizationContext->setCurrentUser($sender);
+
         try {
-            if ($handler->isOperOnly()) {
-                $context->reply('error.oper_only');
-
-                return;
-            }
-
             $requiredPermission = $handler->getRequiredPermission();
-            if ('IDENTIFIED' === $requiredPermission && null === $account) {
-                $context->reply('error.not_identified');
+            if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
+                if ('IDENTIFIED' === $requiredPermission) {
+                    $context->reply('error.not_identified');
+                } else {
+                    $context->reply('error.permission_denied');
+                }
 
                 return;
             }
@@ -124,6 +128,8 @@ final readonly class MemoServService
                 'sender' => $sender->uid,
             ]);
             throw $e;
+        } finally {
+            $this->authorizationContext->clear();
         }
     }
 }

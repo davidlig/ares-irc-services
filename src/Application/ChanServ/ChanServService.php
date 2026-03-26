@@ -8,6 +8,8 @@ use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChanServDispatchPort;
@@ -46,6 +48,8 @@ final readonly class ChanServService implements ChanServDispatchPort
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private NetworkUserLookupPort $userLookup,
         private ServiceNicknameRegistry $serviceNicks,
+        private AuthorizationContextInterface $authorizationContext,
+        private AuthorizationCheckerInterface $authorizationChecker,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -102,16 +106,16 @@ final readonly class ChanServService implements ChanServDispatchPort
             serviceNicks: $this->serviceNicks,
         );
 
+        $this->authorizationContext->setCurrentUser($sender);
+
         try {
-            if ($handler->isOperOnly()) {
-                $context->reply('error.oper_only');
-
-                return;
-            }
-
             $requiredPermission = $handler->getRequiredPermission();
-            if ('IDENTIFIED' === $requiredPermission && null === $account) {
-                $context->reply('error.not_identified');
+            if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
+                if ('IDENTIFIED' === $requiredPermission) {
+                    $context->reply('error.not_identified');
+                } else {
+                    $context->reply('error.permission_denied');
+                }
 
                 return;
             }
@@ -140,6 +144,8 @@ final readonly class ChanServService implements ChanServDispatchPort
                 'sender' => $sender->uid,
             ]);
             throw $e;
+        } finally {
+            $this->authorizationContext->clear();
         }
     }
 }

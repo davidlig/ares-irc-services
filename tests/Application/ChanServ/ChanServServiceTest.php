@@ -11,6 +11,8 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
@@ -183,7 +185,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$handler]);
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             $registry,
             $channelRepository,
             $nickRepository,
@@ -221,7 +223,7 @@ final class ChanServServiceTest extends TestCase
             ->willReturn('Unknown command');
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Unknown command', 'NOTICE');
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             new ChanServCommandRegistry([]),
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $nickRepository,
@@ -247,7 +249,7 @@ final class ChanServServiceTest extends TestCase
         $notifier = $this->createMock(ChanServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             new ChanServCommandRegistry([]),
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -265,13 +267,13 @@ final class ChanServServiceTest extends TestCase
     }
 
     #[Test]
-    public function repliesOperOnlyWhenHandlerIsOperOnly(): void
+    public function repliesPermissionDeniedWhenHandlerRequiresPermissionAndUserLacksIt(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        $operOnlyHandler = new class($contextHolder) implements ChanServCommandInterface {
+        $permissionHandler = new class($contextHolder) implements ChanServCommandInterface {
             public function __construct(private readonly stdClass $holder)
             {
             }
@@ -318,12 +320,12 @@ final class ChanServServiceTest extends TestCase
 
             public function isOperOnly(): bool
             {
-                return true;
+                return false;
             }
 
             public function getRequiredPermission(): ?string
             {
-                return null;
+                return 'CHANSERV_OP_TEST';
             }
 
             public function execute(ChanServContext $context): void
@@ -332,15 +334,21 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('CHANSERV_OP_TEST', self::anything())
+            ->willReturn(false);
+
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id, array $params = [], string $domain = '', ?string $locale = null): string => 'error.oper_only' === $id ? 'Oper only' : $id
+            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id
         );
         $notifier = $this->createMock(ChanServNotifierInterface::class);
-        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Oper only', 'NOTICE');
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Permission denied', 'NOTICE');
 
-        $registry = new ChanServCommandRegistry([$operOnlyHandler]);
-        $service = new ChanServService(
+        $registry = new ChanServCommandRegistry([$permissionHandler]);
+        $service = $this->createChanServService(
             $registry,
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -351,6 +359,11 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -440,7 +453,7 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             $registry,
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $nickRepository,
@@ -537,7 +550,7 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             $registry,
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -630,7 +643,7 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             $registry,
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $nickRepository,
@@ -722,7 +735,7 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             $registry,
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $nickRepository,
@@ -813,7 +826,7 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             $registry,
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $nickRepository,
@@ -904,7 +917,7 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
 
-        $service = new ChanServService(
+        $service = $this->createChanServService(
             $registry,
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $nickRepository,
@@ -923,5 +936,44 @@ final class ChanServServiceTest extends TestCase
         $this->expectException(InsufficientAccessException::class);
 
         $service->dispatch('FAIL', $sender);
+    }
+
+    /**
+     * Creates a ChanServService with the required authorization dependencies.
+     */
+    private function createChanServService(
+        ChanServCommandRegistry $registry,
+        RegisteredChannelRepositoryInterface $channelRepository,
+        RegisteredNickRepositoryInterface $nickRepository,
+        ChanServNotifierInterface $notifier,
+        UserMessageTypeResolver $messageTypeResolver,
+        TranslatorInterface $translator,
+        ChannelLookupPort $channelLookup,
+        ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        NetworkUserLookupPort $userLookup,
+        ServiceNicknameRegistry $serviceNicks,
+        string $defaultLanguage = 'en',
+        string $defaultTimezone = 'UTC',
+        ?LoggerInterface $logger = null,
+        ?AuthorizationContextInterface $authorizationContext = null,
+        ?AuthorizationCheckerInterface $authorizationChecker = null,
+    ): ChanServService {
+        return new ChanServService(
+            $registry,
+            $channelRepository,
+            $nickRepository,
+            $notifier,
+            $messageTypeResolver,
+            $translator,
+            $channelLookup,
+            $modeSupportProvider,
+            $userLookup,
+            $serviceNicks,
+            $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
+            $defaultLanguage,
+            $defaultTimezone,
+            $logger ?? $this->createStub(LoggerInterface::class),
+        );
     }
 }

@@ -542,6 +542,8 @@ services:
     App\Application\ChanServ\ChanServService:
         arguments:
             $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
+            $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
+            $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
             $logger: '@monolog.logger.irc'
@@ -647,6 +649,8 @@ services:
     App\Application\MemoServ\MemoServService:
         arguments:
             $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
+            $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
+            $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
             $logger: '@monolog.logger.irc'

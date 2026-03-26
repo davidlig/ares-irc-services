@@ -11,6 +11,8 @@ use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\MemoServ\MemoServService;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
@@ -90,6 +92,8 @@ final class MemoServCommandListenerTest extends TestCase
             $this->messageTypeResolver,
             $this->translator,
             $this->createServiceNicks(),
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -179,6 +183,8 @@ final class MemoServCommandListenerTest extends TestCase
             $this->messageTypeResolver,
             $this->translator,
             $this->createServiceNicks(),
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -244,6 +250,8 @@ final class MemoServCommandListenerTest extends TestCase
             $this->messageTypeResolver,
             $this->translator,
             $this->createServiceNicks(),
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -290,6 +298,8 @@ final class MemoServCommandListenerTest extends TestCase
             $this->messageTypeResolver,
             $this->translator,
             $this->createServiceNicks(),
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -345,6 +355,8 @@ final class MemoServCommandListenerTest extends TestCase
             $this->messageTypeResolver,
             $this->translator,
             $this->createServiceNicks(),
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -379,6 +391,8 @@ final class MemoServCommandListenerTest extends TestCase
             $this->messageTypeResolver,
             $this->translator,
             $this->createServiceNicks(),
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
             'en',
             'UTC',
             $this->logger,
