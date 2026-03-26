@@ -796,6 +796,24 @@ services:
         arguments:
             $authorizationChecker: '@Symfony\Component\Security\Core\Authorization\AuthorizationChecker'
 
+    # --- Permission Registry (IRCOP permissions across all services) ----------------
+
+    App\Application\Security\PermissionRegistry:
+        arguments:
+            $providers: !tagged_iterator permission.provider
+
+    App\Application\NickServ\Security\NickServIrcopPermission:
+        tags: ['permission.provider']
+
+    App\Application\ChanServ\Security\ChanServIrcopPermission:
+        tags: ['permission.provider']
+
+    App\Application\MemoServ\Security\MemoServIrcopPermission:
+        tags: ['permission.provider']
+
+    App\Application\OperServ\Security\OperServIrcopPermission:
+        tags: ['permission.provider']
+
     # --- NickServ registries ----------------------------------------------------
 
     App\Application\NickServ\IdentifiedSessionRegistry:
