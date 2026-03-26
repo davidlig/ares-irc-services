@@ -960,6 +960,8 @@ services:
         tags: ['operserv.command']
 
     App\Application\OperServ\Command\Handler\RoleCommand:
+        arguments:
+            $permissionRegistry: '@App\Application\Security\PermissionRegistry'
         tags: ['operserv.command']
 
     App\Application\OperServ\Command\Handler\HelpCommand:

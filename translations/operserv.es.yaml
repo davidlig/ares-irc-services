@@ -107,6 +107,10 @@ role:
       help:         "Lista todos los permisos asignados a un rol.\nEste comando está restringido a usuarios Root."
       header:        "\x0307---\x03 \x02Permisos de %role%\x02 \x0307---\x03"
       empty:        "El rol \x02%role%\x02 no tiene permisos asignados."
+      assigned:     "\x0310Asignados:\x03"
+      none_assigned: "\x0314No hay permisos asignados.\x03"
+      available:    "\x0310Disponibles:\x03"
+      all_assigned: "\x0314Todos los permisos están asignados a este rol.\x03"
 
     add:
       syntax:       "ROLE PERMS <rol> ADD <permiso>"

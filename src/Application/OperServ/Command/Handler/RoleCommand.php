@@ -7,10 +7,12 @@ namespace App\Application\OperServ\Command\Handler;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 
+use function array_diff;
 use function count;
 use function sprintf;
 use function strtoupper;
@@ -21,6 +23,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         private OperRoleRepositoryInterface $roleRepository,
         private OperPermissionRepositoryInterface $permissionRepository,
         private IrcopAccessHelper $accessHelper,
+        private PermissionRegistry $permissionRegistry,
     ) {
     }
 
@@ -215,9 +218,15 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     private function listPerms(OperServContext $context, OperRole $role): void
     {
-        $permissions = $role->getPermissions();
+        $assignedPermissions = [];
+        foreach ($role->getPermissions() as $permission) {
+            $assignedPermissions[] = $permission->getName();
+        }
 
-        if ($permissions->isEmpty()) {
+        $allPermissions = $this->permissionRegistry->getAllPermissions();
+        $availablePermissions = array_diff($allPermissions, $assignedPermissions);
+
+        if (empty($assignedPermissions) && empty($availablePermissions)) {
             $context->reply('role.perms.list.empty', ['%role%' => $role->getName()]);
 
             return;
@@ -225,8 +234,22 @@ final readonly class RoleCommand implements OperServCommandInterface
 
         $context->reply('role.perms.list.header', ['%role%' => $role->getName()]);
 
-        foreach ($permissions as $permission) {
-            $context->replyRaw(sprintf('  %s', $permission->getName()));
+        if (!empty($assignedPermissions)) {
+            $context->reply('role.perms.list.assigned');
+            foreach ($assignedPermissions as $perm) {
+                $context->replyRaw(sprintf('  %s', $perm));
+            }
+        } else {
+            $context->reply('role.perms.list.none_assigned');
+        }
+
+        if (!empty($availablePermissions)) {
+            $context->reply('role.perms.list.available');
+            foreach ($availablePermissions as $perm) {
+                $context->replyRaw(sprintf('  %s', $perm));
+            }
+        } else {
+            $context->reply('role.perms.list.all_assigned');
         }
     }
 
