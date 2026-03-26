@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Application\OperServ;
 
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -31,6 +32,8 @@ final readonly class OperServService
         private TranslatorInterface $translator,
         private IrcopAccessHelper $accessHelper,
         private ServiceNicknameRegistry $serviceNicks,
+        private AuthorizationContextInterface $authorizationContext,
+        private AuthorizationCheckerInterface $authorizationChecker,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -80,54 +83,38 @@ final readonly class OperServService
             serviceNicks: $this->serviceNicks,
         );
 
-        if ($handler->isOperOnly() && !$this->isOper($sender, $account)) {
-            $context->reply('error.oper_only');
+        $this->authorizationContext->setCurrentUser($sender);
 
-            return;
-        }
-
-        $requiredPermission = $handler->getRequiredPermission();
-        if (null !== $requiredPermission) {
-            if (!$context->isRoot() && !$this->accessHelper->hasPermission(
-                $account?->getId() ?? 0,
-                $sender->nick,
-                $requiredPermission
-            )) {
-                $context->reply('error.permission_denied');
+        try {
+            $requiredPermission = $handler->getRequiredPermission();
+            if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
+                if ('IDENTIFIED' === $requiredPermission) {
+                    $context->reply('error.not_identified');
+                } else {
+                    $context->reply('error.permission_denied');
+                }
 
                 return;
             }
+
+            if (count($args) < $handler->getMinArgs()) {
+                $context->reply('error.syntax', [
+                    '%syntax%' => $context->trans($handler->getSyntaxKey()),
+                ]);
+
+                return;
+            }
+
+            $this->logger->debug(sprintf(
+                'OperServ: %s executed %s [args: %d]',
+                $sender->nick,
+                $cmdName,
+                count($args),
+            ));
+
+            $handler->execute($context);
+        } finally {
+            $this->authorizationContext->clear();
         }
-
-        if (count($args) < $handler->getMinArgs()) {
-            $context->reply('error.syntax', [
-                '%syntax%' => $context->trans($handler->getSyntaxKey()),
-            ]);
-
-            return;
-        }
-
-        $this->logger->debug(sprintf(
-            'OperServ: %s executed %s [args: %d]',
-            $sender->nick,
-            $cmdName,
-            count($args),
-        ));
-
-        $handler->execute($context);
-    }
-
-    private function isOper(SenderView $sender, ?RegisteredNick $account): bool
-    {
-        if ($sender->isOper) {
-            return true;
-        }
-
-        if (null === $account) {
-            return false;
-        }
-
-        return $this->accessHelper->isRoot($sender->nick)
-            || null !== $this->accessHelper->getIrcopByNickId($account->getId());
     }
 }

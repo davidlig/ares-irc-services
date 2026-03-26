@@ -932,6 +932,8 @@ services:
     App\Application\OperServ\OperServService:
         arguments:
             $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
+            $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContext'
+            $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationChecker'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
             $logger: '@monolog.logger.irc'

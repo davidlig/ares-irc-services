@@ -6,6 +6,8 @@ namespace App\Tests\Application\OperServ;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -151,7 +153,7 @@ final class OperServServiceTest extends TestCase
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             new OperServCommandRegistry([]),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $notifier,
@@ -159,9 +161,6 @@ final class OperServServiceTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createAccessHelper(),
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $this->createStub(LoggerInterface::class),
         );
 
         $service->dispatch('   ', $sender);
@@ -193,7 +192,7 @@ final class OperServServiceTest extends TestCase
             ->method('sendMessage')
             ->with($sender->uid, 'Unknown command UNKNOWN', 'NOTICE');
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -201,9 +200,6 @@ final class OperServServiceTest extends TestCase
             $translator,
             $this->createAccessHelper(),
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $this->createStub(LoggerInterface::class),
         );
 
         $service->dispatch('UNKNOWN arg', $sender);
@@ -235,7 +231,7 @@ final class OperServServiceTest extends TestCase
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -243,9 +239,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('TEST arg1 arg2', $sender);
@@ -263,7 +259,7 @@ final class OperServServiceTest extends TestCase
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        $handler = $this->createMockCommandHandler('OPCMD', true, null, 0);
+        $handler = $this->createMockCommandHandler('OPCMD', false, 'OPERSERV_OPCMD', 0);
         $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
         };
@@ -277,16 +273,22 @@ final class OperServServiceTest extends TestCase
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.oper_only' === $id ? 'This command is restricted to IRC Operators.' : $id
+            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied.' : $id
         );
         $accessHelper = $this->createAccessHelper(isRoot: false);
         $logger = $this->createStub(LoggerInterface::class);
 
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('OPERSERV_OPCMD', self::anything())
+            ->willReturn(false);
+
         $notifier->expects(self::once())
             ->method('sendMessage')
-            ->with($sender->uid, 'This command is restricted to IRC Operators.', 'NOTICE');
+            ->with($sender->uid, 'Permission denied.', 'NOTICE');
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -294,9 +296,11 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -311,7 +315,7 @@ final class OperServServiceTest extends TestCase
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        $handler = $this->createMockCommandHandler('ADMINCMD', true, null, 0);
+        $handler = $this->createMockCommandHandler('ADMINCMD', false, 'OPERSERV_ADMINCMD', 0);
         $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
         };
@@ -328,16 +332,22 @@ final class OperServServiceTest extends TestCase
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.oper_only' === $id ? 'This command is restricted to IRC Operators.' : $id
+            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied.' : $id
         );
         $accessHelper = $this->createAccessHelper(isRoot: false);
         $logger = $this->createStub(LoggerInterface::class);
 
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('OPERSERV_ADMINCMD', self::anything())
+            ->willReturn(false);
+
         $notifier->expects(self::once())
             ->method('sendMessage')
-            ->with($sender->uid, 'This command is restricted to IRC Operators.', 'NOTICE');
+            ->with($sender->uid, 'Permission denied.', 'NOTICE');
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -345,9 +355,11 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
         );
 
         $service->dispatch('ADMINCMD', $sender);
@@ -362,7 +374,7 @@ final class OperServServiceTest extends TestCase
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        $handler = $this->createMockCommandHandler('OPCMD', true, null, 0);
+        $handler = $this->createMockCommandHandler('OPCMD', false, 'OPERSERV_OPCMD', 0);
         $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
             $contextHolder->context = $ctx;
         };
@@ -379,7 +391,7 @@ final class OperServServiceTest extends TestCase
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.oper_only' === $id ? 'This command is restricted to IRC Operators.' : $id
+            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied.' : $id
         );
 
         $rootRegistry = new RootUserRegistry('');
@@ -389,11 +401,17 @@ final class OperServServiceTest extends TestCase
         $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
         $logger = $this->createStub(LoggerInterface::class);
 
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('OPERSERV_OPCMD', self::anything())
+            ->willReturn(false);
+
         $notifier->expects(self::once())
             ->method('sendMessage')
-            ->with($sender->uid, 'This command is restricted to IRC Operators.', 'NOTICE');
+            ->with($sender->uid, 'Permission denied.', 'NOTICE');
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -401,9 +419,11 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -434,7 +454,7 @@ final class OperServServiceTest extends TestCase
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -442,9 +462,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -478,7 +498,7 @@ final class OperServServiceTest extends TestCase
         $accessHelper = $this->createAccessHelperForRoot('TestUser');
         $logger = $this->createStub(LoggerInterface::class);
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -486,9 +506,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -527,7 +547,7 @@ final class OperServServiceTest extends TestCase
         $accessHelper = $this->createAccessHelper(isRoot: false, ircop: $ircop);
         $logger = $this->createStub(LoggerInterface::class);
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -535,9 +555,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('OPCMD', $sender);
@@ -580,7 +600,7 @@ final class OperServServiceTest extends TestCase
             ->method('sendMessage')
             ->with($sender->uid, 'Permission denied.', 'NOTICE');
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -588,9 +608,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('PERMCMD', $sender);
@@ -638,7 +658,13 @@ final class OperServServiceTest extends TestCase
         $accessHelper = new IrcopAccessHelper($rootUserRegistry, $ircopRepo, $roleRepo);
         $logger = $this->createStub(LoggerInterface::class);
 
-        $service = new OperServService(
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('operserv.admin', self::anything())
+            ->willReturn(true);
+
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -646,9 +672,11 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
         );
 
         $service->dispatch('PERMCMD', $sender);
@@ -682,7 +710,13 @@ final class OperServServiceTest extends TestCase
         $accessHelper = $this->createAccessHelperForRoot('RootNick');
         $logger = $this->createStub(LoggerInterface::class);
 
-        $service = new OperServService(
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('operserv.admin', self::anything())
+            ->willReturn(true);
+
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -690,9 +724,11 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
         );
 
         $service->dispatch('PERMCMD', $sender);
@@ -730,7 +766,7 @@ final class OperServServiceTest extends TestCase
             ->method('sendMessage')
             ->with($sender->uid, self::stringContains('Syntax:'), 'NOTICE');
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -738,9 +774,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('NEEDARGS onlyone', $sender);
@@ -775,7 +811,7 @@ final class OperServServiceTest extends TestCase
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -783,9 +819,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('TEST', $sender);
@@ -818,7 +854,7 @@ final class OperServServiceTest extends TestCase
         $accessHelper = $this->createAccessHelper();
         $logger = $this->createStub(LoggerInterface::class);
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -826,9 +862,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'es',
-            defaultTimezone: 'Europe/Madrid',
-            logger: $logger,
+            'es',
+            'Europe/Madrid',
+            $logger,
         );
 
         $service->dispatch('TEST', $sender);
@@ -865,7 +901,7 @@ final class OperServServiceTest extends TestCase
             ->method('debug')
             ->with('OperServ: TestNick executed LOGTEST [args: 2]');
 
-        $service = new OperServService(
+        $service = $this->createOperServService(
             $registry,
             $nickRepository,
             $notifier,
@@ -873,9 +909,9 @@ final class OperServServiceTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('LOGTEST arg1 arg2', $sender);
@@ -961,5 +997,38 @@ final class OperServServiceTest extends TestCase
                 }
             }
         };
+    }
+
+    /**
+     * Creates an OperServService with the required authorization dependencies.
+     */
+    private function createOperServService(
+        OperServCommandRegistry $registry,
+        RegisteredNickRepositoryInterface $nickRepository,
+        OperServNotifierInterface $notifier,
+        UserMessageTypeResolverInterface $messageTypeResolver,
+        TranslatorInterface $translator,
+        IrcopAccessHelper $accessHelper,
+        ServiceNicknameRegistry $serviceNicks,
+        string $defaultLanguage = 'en',
+        string $defaultTimezone = 'UTC',
+        ?LoggerInterface $logger = null,
+        ?AuthorizationContextInterface $authorizationContext = null,
+        ?AuthorizationCheckerInterface $authorizationChecker = null,
+    ): OperServService {
+        return new OperServService(
+            $registry,
+            $nickRepository,
+            $notifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            $serviceNicks,
+            $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
+            $defaultLanguage,
+            $defaultTimezone,
+            $logger ?? $this->createStub(LoggerInterface::class),
+        );
     }
 }

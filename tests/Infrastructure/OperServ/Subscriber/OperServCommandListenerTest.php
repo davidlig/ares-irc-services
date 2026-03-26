@@ -6,6 +6,8 @@ namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
+use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -106,6 +108,8 @@ final class OperServCommandListenerTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
             'en',
             'UTC',
         );
@@ -352,6 +356,8 @@ final class OperServCommandListenerTest extends TestCase
             $translator,
             $accessHelper,
             $this->createServiceNicks(),
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
             'en',
             'UTC',
         );
