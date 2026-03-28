@@ -26,6 +26,7 @@ final readonly class SenderView
         public string $serverSid = '',
         /** Host currently displayed by the IRCd (vhost if set, else cloakedHost). */
         public string $displayHost = '',
+        public string $modes = '',
     ) {
     }
 

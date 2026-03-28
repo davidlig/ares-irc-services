@@ -69,6 +69,7 @@ final class RoleCommandTest extends TestCase
             $connectionHolder,
             $ircopRepo,
             $nickRepo,
+            $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
             new NullLogger(),
         );
 
@@ -1237,6 +1238,7 @@ final class RoleCommandTest extends TestCase
             $connectionHolder,
             $ircopRepo,
             $nickRepo,
+            $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
             new NullLogger(),
         );
 
@@ -1306,6 +1308,7 @@ final class RoleCommandTest extends TestCase
             $connectionHolder,
             $ircopRepo,
             $nickRepo,
+            $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
             new NullLogger(),
         );
 
@@ -1385,6 +1388,7 @@ final class RoleCommandTest extends TestCase
             $connectionHolder,
             $ircopRepo,
             $nickRepo,
+            $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
             new NullLogger(),
         );
 

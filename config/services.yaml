@@ -978,6 +978,7 @@ services:
             $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $userLookup: '@App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
 
     App\Application\OperServ\Command\Handler\RoleCommand:

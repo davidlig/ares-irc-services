@@ -5,30 +5,26 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\OperServ\IrcopModeApplier;
+use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
+use App\Application\Port\SenderView;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\OperServ\Subscriber\OperRoleModesSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use ReflectionClass;
 
 #[CoversClass(OperRoleModesSubscriber::class)]
 final class OperRoleModesSubscriberTest extends TestCase
 {
-    private ActiveConnectionHolder $connectionHolder;
-
-    protected function setUp(): void
-    {
-        $this->connectionHolder = new ActiveConnectionHolder();
-    }
-
     #[Test]
     public function getSubscribedEventsReturnsNickIdentifiedEvent(): void
     {
@@ -50,11 +46,11 @@ final class OperRoleModesSubscriberTest extends TestCase
             ->with(42)
             ->willReturn(null);
 
+        $modeApplier = $this->createModeApplier();
+
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
-            new IdentifiedSessionRegistry(),
-            $this->connectionHolder,
-            new NullLogger(),
+            $modeApplier,
         );
 
         $subscriber->onNickIdentified($event);
@@ -78,26 +74,25 @@ final class OperRoleModesSubscriberTest extends TestCase
             ->with(42)
             ->willReturn($ircop);
 
+        $modeApplier = $this->createModeApplier();
+
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
-            new IdentifiedSessionRegistry(),
-            $this->connectionHolder,
-            new NullLogger(),
+            $modeApplier,
         );
 
         $subscriber->onNickIdentified($event);
     }
 
     #[Test]
-    public function onNickIdentifiedWithRoleAndModesAppliesSvsmode(): void
+    public function onNickIdentifiedWithRoleAndModesAppliesModes(): void
     {
         $event = new NickIdentifiedEvent(42, 'TestNick', '001ABCD');
 
-        $role = $this->createStub(OperRole::class);
-        $role->method('getUserModes')->willReturn(['o', 's']);
+        $role = OperRole::create('ADMIN', 'Admin role');
+        $role->setUserModes(['o', 's']);
 
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
+        $ircop = OperIrcop::create(42, $role, null, null);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository
@@ -105,6 +100,9 @@ final class OperRoleModesSubscriberTest extends TestCase
             ->method('findByNickId')
             ->with(42)
             ->willReturn($ircop);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('001ABCD', 'TestNick');
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions
@@ -115,98 +113,54 @@ final class OperRoleModesSubscriberTest extends TestCase
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
 
-        $connectionHolder = new ActiveConnectionHolder();
-        $connectionHolder->setProtocolModule($protocolModule);
-        $this->injectServerSid($connectionHolder, '001');
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
+        $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $subscriber = new OperRoleModesSubscriber(
-            $ircopRepository,
-            new IdentifiedSessionRegistry(),
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn(new SenderView(
+            uid: '001ABCD',
+            nick: 'TestNick',
+            ident: 'test',
+            hostname: 'host.test',
+            cloakedHost: 'hidden.host',
+            ipBase64: 'AAAA',
+            isIdentified: true,
+            isOper: true,
+            serverSid: '001',
+            displayHost: 'host.test',
+            modes: '+i',
+        ));
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+
+        $modeApplier = new IrcopModeApplier(
+            $identifiedRegistry,
             $connectionHolder,
+            $ircopRepo,
+            $nickRepo,
+            $userLookup,
             new NullLogger(),
         );
-
-        $subscriber->onNickIdentified($event);
-    }
-
-    #[Test]
-    public function onNickIdentifiedDispatchesSetUserMode(): void
-    {
-        $event = new NickIdentifiedEvent(123, 'AdminNick', '002XYZ');
-
-        $role = $this->createStub(OperRole::class);
-        $role->method('getUserModes')->willReturn(['o']);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepository
-            ->expects(self::once())
-            ->method('findByNickId')
-            ->with(123)
-            ->willReturn($ircop);
-
-        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
-        $serviceActions
-            ->expects(self::once())
-            ->method('setUserMode')
-            ->with(
-                self::equalTo('003'),
-                self::equalTo('002XYZ'),
-                self::equalTo('+o'),
-            );
-
-        $protocolModule = $this->createStub(ProtocolModuleInterface::class);
-        $protocolModule->method('getServiceActions')->willReturn($serviceActions);
-
-        $connectionHolder = new ActiveConnectionHolder();
-        $connectionHolder->setProtocolModule($protocolModule);
-        $this->injectServerSid($connectionHolder, '003');
 
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
-            new IdentifiedSessionRegistry(),
-            $connectionHolder,
-            new NullLogger(),
+            $modeApplier,
         );
 
         $subscriber->onNickIdentified($event);
     }
 
-    #[Test]
-    public function onNickIdentifiedWithNoProtocolModuleDoesNothing(): void
+    private function createModeApplier(): IrcopModeApplier
     {
-        $event = new NickIdentifiedEvent(42, 'TestNick', '001ABCD');
-
-        $role = $this->createStub(OperRole::class);
-        $role->method('getUserModes')->willReturn(['o']);
-
-        $ircop = $this->createStub(OperIrcop::class);
-        $ircop->method('getRole')->willReturn($role);
-
-        $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepository
-            ->expects(self::once())
-            ->method('findByNickId')
-            ->with(42)
-            ->willReturn($ircop);
-
-        $subscriber = new OperRoleModesSubscriber(
-            $ircopRepository,
+        return new IrcopModeApplier(
             new IdentifiedSessionRegistry(),
-            new ActiveConnectionHolder(),
+            $this->createStub(ActiveConnectionHolderInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
             new NullLogger(),
         );
-
-        $subscriber->onNickIdentified($event);
-    }
-
-    private function injectServerSid(ActiveConnectionHolder $holder, string $sid): void
-    {
-        $reflection = new ReflectionClass($holder);
-        $property = $reflection->getProperty('serverSid');
-        $property->setAccessible(true);
-        $property->setValue($holder, $sid);
     }
 }

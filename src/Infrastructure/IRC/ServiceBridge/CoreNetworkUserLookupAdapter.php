@@ -69,6 +69,7 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
             isOper: $user->isOper(),
             serverSid: $user->serverSid,
             displayHost: $user->getDisplayHost(),
+            modes: $user->getModes(),
         );
     }
 }

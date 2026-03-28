@@ -48,8 +48,9 @@ final class IrcopCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn(null);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $userLookup = $this->createStub(\App\Application\Port\NetworkUserLookupPort::class);
 
-        return new IrcopModeApplier($identifiedRegistry, $connectionHolder, $ircopRepo, $nickRepo, new NullLogger());
+        return new IrcopModeApplier($identifiedRegistry, $connectionHolder, $ircopRepo, $nickRepo, $userLookup, new NullLogger());
     }
 
     private function createContext(
