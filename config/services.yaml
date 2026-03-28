@@ -219,24 +219,34 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
 
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport: ~
+
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdUserModeSupport: ~
+
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdModule:
         arguments:
-            $handler:                '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler'
-            $serviceActions:         '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions'
-            $introductionFormatter:  '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
-            $vhostCommandBuilder:   '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder'
-            $channelModeSupport:    '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport'
-            $nickReservation:      '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation'
+            $handler: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler'
+            $serviceActions: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions'
+            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
+            $vhostCommandBuilder: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder'
+            $channelModeSupport: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport'
+            $userModeSupport: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdUserModeSupport'
+            $nickReservation: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation'
         tags: ['irc.protocol_module']
+
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport: ~
+
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport: ~
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule:
         arguments:
-            $handler:                '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler'
-            $serviceActions:         '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions'
-            $introductionFormatter:  '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
-            $vhostCommandBuilder:   '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder'
-            $channelModeSupport:    '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport'
-            $nickReservation:      '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation'
+            $handler: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler'
+            $serviceActions: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions'
+            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
+            $vhostCommandBuilder: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder'
+            $channelModeSupport: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport'
+            $userModeSupport: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport'
+            $nickReservation: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation'
         tags: ['irc.protocol_module']
 
     App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry:
@@ -485,6 +495,7 @@ services:
             $burstState: '@App\Application\NickServ\BurstState'
             $guestPrefix: '%services.guest_prefix%'
             $defaultLanguage: '%services.default_language%'
+            $eventDispatcher: '@event_dispatcher'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\NickServ\Bot\NickServBot:
@@ -818,6 +829,8 @@ services:
 
     App\Application\NickServ\IdentifiedSessionRegistry:
         class: App\Application\NickServ\IdentifiedSessionRegistry
+        arguments:
+            $logger: '@monolog.logger.irc'
 
     App\Application\NickServ\PendingVerificationRegistry:
         class: App\Application\NickServ\PendingVerificationRegistry
@@ -959,6 +972,14 @@ services:
     App\Application\OperServ\Command\Handler\IrcopCommand:
         tags: ['operserv.command']
 
+    App\Application\OperServ\IrcopModeApplier:
+        arguments:
+            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $logger: '@monolog.logger.irc'
+
     App\Application\OperServ\Command\Handler\RoleCommand:
         arguments:
             $permissionRegistry: '@App\Application\Security\PermissionRegistry'
@@ -990,3 +1011,10 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
+
+    App\Infrastructure\OperServ\Subscriber\OperRoleModesDeidentifiedSubscriber:
+        arguments:
+            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']

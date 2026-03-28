@@ -7,9 +7,11 @@ namespace App\Application\NickServ;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function sprintf;
@@ -31,6 +33,7 @@ final readonly class NickProtectionService
         private readonly IdentifiedSessionRegistry $identifiedRegistry,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly TranslatorInterface $translator,
+        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly string $guestPrefix = 'Guest-',
         private readonly string $defaultLanguage = 'en',
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -78,6 +81,16 @@ final readonly class NickProtectionService
 
         $registeredNick = $this->identifiedRegistry->findNick($uid);
         if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $oldNick)) {
+            // Get account info before removing from registry
+            $account = $this->nickRepository->findByNick($registeredNick);
+            if (null !== $account) {
+                $this->eventDispatcher->dispatch(new UserDeidentifiedEvent(
+                    $uid,
+                    $account->getId(),
+                    $registeredNick,
+                ));
+            }
+
             $this->identifiedRegistry->remove($uid);
             $sender = $this->userLookup->findByUid($uid);
             if (null !== $sender) {
@@ -194,6 +207,9 @@ final readonly class NickProtectionService
         if ($user->isIdentified) {
             $account->markSeen();
             $this->nickRepository->save($account);
+
+            // Register the session so IrcopModeApplier can find it
+            $this->identifiedRegistry->register($user->uid, $account->getNickname());
 
             $this->logger->info(sprintf(
                 'Nick protection: %s [%s] auto-identified (has +r)',

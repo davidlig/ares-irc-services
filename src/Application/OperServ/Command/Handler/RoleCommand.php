@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\IrcopModeApplier;
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_diff;
 use function count;
+use function implode;
 use function sprintf;
 use function strtoupper;
 
@@ -24,6 +29,10 @@ final readonly class RoleCommand implements OperServCommandInterface
         private OperPermissionRepositoryInterface $permissionRepository,
         private IrcopAccessHelper $accessHelper,
         private PermissionRegistry $permissionRegistry,
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private IdentifiedSessionRegistry $identifiedRegistry,
+        private IrcopModeApplier $modeApplier,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -69,6 +78,7 @@ final readonly class RoleCommand implements OperServCommandInterface
             ['name' => 'ADD', 'desc_key' => 'role.add.short', 'help_key' => 'role.add.help', 'syntax_key' => 'role.add.syntax'],
             ['name' => 'DEL', 'desc_key' => 'role.del.short', 'help_key' => 'role.del.help', 'syntax_key' => 'role.del.syntax'],
             ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax'],
+            ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax'],
         ];
     }
 
@@ -104,6 +114,9 @@ final readonly class RoleCommand implements OperServCommandInterface
                 break;
             case 'PERMS':
                 $this->doPerms($context);
+                break;
+            case 'MODES':
+                $this->doModes($context);
                 break;
             default:
                 $context->reply('role.unknown_sub', ['%sub%' => $sub]);
@@ -315,5 +328,102 @@ final readonly class RoleCommand implements OperServCommandInterface
         $this->roleRepository->save($role);
 
         $context->reply('role.perms.del.done', ['%role%' => $role->getName(), '%perm%' => $permName]);
+    }
+
+    private function doModes(OperServContext $context): void
+    {
+        if (count($context->args) < 3) {
+            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.modes.syntax')]);
+
+            return;
+        }
+
+        $roleName = strtoupper($context->args[1]);
+        $action = strtoupper($context->args[2]);
+
+        $role = $this->roleRepository->findByName($roleName);
+        if (null === $role) {
+            $context->reply('role.not_found', ['%role%' => $roleName]);
+
+            return;
+        }
+
+        switch ($action) {
+            case 'VIEW':
+                $this->viewModes($context, $role);
+                break;
+            case 'SET':
+                $this->setModes($context, $role);
+                break;
+            default:
+                $context->reply('role.modes.unknown_action', ['%action%' => $action]);
+        }
+    }
+
+    private function viewModes(OperServContext $context, OperRole $role): void
+    {
+        $modes = $role->getUserModes();
+
+        if (empty($modes)) {
+            $context->reply('role.modes.view.empty', ['%role%' => $role->getName()]);
+
+            return;
+        }
+
+        $context->reply('role.modes.view.header', ['%role%' => $role->getName()]);
+        $modesStr = '+' . implode('', $modes);
+        $context->reply('role.modes.view.line', ['%modes%' => $modesStr]);
+    }
+
+    private function setModes(OperServContext $context, OperRole $role): void
+    {
+        $modesArg = $context->args[3] ?? '';
+
+        $protocolModule = $this->connectionHolder->getProtocolModule();
+        if (null === $protocolModule) {
+            $context->reply('role.modes.set.no_irc_user_modes');
+
+            return;
+        }
+
+        $userModeSupport = $protocolModule->getUserModeSupport();
+        $validModes = $userModeSupport->getIrcOpUserModes();
+
+        $oldModes = $role->getUserModes();
+
+        if ('' === $modesArg) {
+            $role->setUserModes([]);
+            $this->roleRepository->save($role);
+
+            $this->modeApplier->updateModesForRole($role->getId(), $oldModes, []);
+
+            $context->reply('role.modes.set.cleared', ['%role%' => $role->getName()]);
+
+            return;
+        }
+
+        $modesStr = ltrim($modesArg, '+');
+        $modes = str_split($modesStr);
+        $modes = array_unique($modes);
+
+        $invalidModes = array_diff($modes, $validModes);
+        if (!empty($invalidModes)) {
+            $context->reply('role.modes.set.invalid_modes', [
+                '%invalid%' => '+' . implode('', $invalidModes),
+                '%valid%' => '+' . implode('', $validModes),
+            ]);
+
+            return;
+        }
+
+        $role->setUserModes($modes);
+        $this->roleRepository->save($role);
+
+        $this->modeApplier->updateModesForRole($role->getId(), $oldModes, $modes);
+
+        $context->reply('role.modes.set.done', [
+            '%modes%' => '+' . implode('', $modes),
+            '%role%' => $role->getName(),
+        ]);
     }
 }

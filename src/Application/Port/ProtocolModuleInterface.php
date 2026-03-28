@@ -26,6 +26,9 @@ interface ProtocolModuleInterface
     /** Which channel prefix modes (v, h, o, a, q) this IRCd supports. Used by ChanServ. */
     public function getChannelModeSupport(): ChannelModeSupportInterface;
 
+    /** Which IRCOp-only user modes this IRCd supports. Used by OperServ. */
+    public function getUserModeSupport(): UserModeSupportInterface;
+
     /**
      * Nickname reservation for services (SQLINE/QLINE).
      * Returns null if the protocol does not support reservation.

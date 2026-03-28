@@ -9,6 +9,7 @@ use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Application\Port\ServiceNickReservationInterface;
+use App\Application\Port\UserModeSupportInterface;
 use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 
@@ -25,6 +26,7 @@ final readonly class UnrealIRCdModule implements ProtocolModuleInterface
         private readonly UnrealIRCdServiceIntroductionFormatter $introductionFormatter,
         private readonly UnrealIRCdVhostCommandBuilder $vhostCommandBuilder,
         private readonly UnrealIRCdChannelModeSupport $channelModeSupport,
+        private readonly UnrealIRCdUserModeSupport $userModeSupport,
         private readonly UnrealIRCdNickReservation $nickReservation,
     ) {
     }
@@ -62,5 +64,10 @@ final readonly class UnrealIRCdModule implements ProtocolModuleInterface
     public function getNickReservation(): ServiceNickReservationInterface
     {
         return $this->nickReservation;
+    }
+
+    public function getUserModeSupport(): UserModeSupportInterface
+    {
+        return $this->userModeSupport;
     }
 }

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ;
 
+use Psr\Log\LoggerInterface;
+
+use function count;
+
 /**
  * In-memory registry that tracks which registered nickname each connected
  * user (identified by their UID) has authenticated as.
@@ -18,20 +22,36 @@ final class IdentifiedSessionRegistry
     /** @var array<string, string> uid → registered nick */
     private array $sessions;
 
-    public function __construct()
-    {
+    public function __construct(
+        private readonly ?LoggerInterface $logger = null,
+    ) {
         $this->sessions = [];
     }
 
     public function register(string $uid, string $registeredNick): void
     {
         $this->sessions[$uid] = $registeredNick;
+        $this->logger?->debug('IdentifiedSessionRegistry: registered session', ['uid' => $uid, 'nick' => $registeredNick, 'total' => count($this->sessions)]);
     }
 
     /** Returns the registered nick for the UID, or null if not tracked. */
     public function findNick(string $uid): ?string
     {
         return $this->sessions[$uid] ?? null;
+    }
+
+    /** Returns the UID for a registered nick, or null if not identified. */
+    public function findUidByNick(string $registeredNick): ?string
+    {
+        $lowerNick = strtolower($registeredNick);
+        $this->logger?->debug('IdentifiedSessionRegistry: searching for nick', ['search' => $registeredNick, 'sessions' => $this->sessions]);
+        foreach ($this->sessions as $uid => $nick) {
+            if (strtolower($nick) === $lowerNick) {
+                return $uid;
+            }
+        }
+
+        return null;
     }
 
     /** Removes the UID entry (called on quit to free memory). */

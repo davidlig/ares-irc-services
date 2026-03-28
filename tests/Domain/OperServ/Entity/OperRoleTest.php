@@ -241,4 +241,52 @@ final class OperRoleTest extends TestCase
 
         self::assertFalse($role->hasPermission('operserv.other'));
     }
+
+    #[Test]
+    public function getUserModesReturnsEmptyArrayWhenNoModesSet(): void
+    {
+        $role = OperRole::create('Test');
+
+        self::assertSame([], $role->getUserModes());
+    }
+
+    #[Test]
+    public function getUserModesReturnsModesAfterSetUserModes(): void
+    {
+        $role = OperRole::create('Test');
+
+        $role->setUserModes(['H', 'q']);
+
+        self::assertSame(['H', 'q'], $role->getUserModes());
+    }
+
+    #[Test]
+    public function setUserModesEmptyArrayStoresNull(): void
+    {
+        $role = OperRole::create('Test');
+        $role->setUserModes(['H']);
+        $role->setUserModes([]);
+
+        self::assertSame([], $role->getUserModes());
+    }
+
+    #[Test]
+    public function setUserModesDeduplicatesModes(): void
+    {
+        $role = OperRole::create('Test');
+
+        $role->setUserModes(['H', 'q', 'H']);
+
+        self::assertSame(['H', 'q'], $role->getUserModes());
+    }
+
+    #[Test]
+    public function getUserModesPreservesOrder(): void
+    {
+        $role = OperRole::create('Test');
+
+        $role->setUserModes(['z', 'a', 'H', 'q']);
+
+        self::assertSame(['z', 'a', 'H', 'q'], $role->getUserModes());
+    }
 }

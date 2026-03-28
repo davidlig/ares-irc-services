@@ -7,6 +7,8 @@ namespace App\Domain\OperServ\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
+use function is_array;
+
 class OperRole
 {
     private int $id;
@@ -19,6 +21,8 @@ class OperRole
 
     /** @var Collection<int, OperPermission> */
     private Collection $permissions;
+
+    private ?string $userModes = null;
 
     public function __construct()
     {
@@ -87,5 +91,33 @@ class OperRole
     public function removePermission(OperPermission $permission): void
     {
         $this->permissions->removeElement($permission);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getUserModes(): array
+    {
+        if (null === $this->userModes) {
+            return [];
+        }
+
+        $decoded = json_decode($this->userModes, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
+     * @param array<int, string> $modes
+     */
+    public function setUserModes(array $modes): void
+    {
+        if (empty($modes)) {
+            $this->userModes = null;
+
+            return;
+        }
+
+        $this->userModes = json_encode(array_values(array_unique($modes)));
     }
 }

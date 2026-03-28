@@ -17,6 +17,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(NickProtectionService::class)]
 final class NickProtectionServiceTest extends TestCase
@@ -43,6 +45,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $pendingRegistry,
             $translator,
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onUserJoined($user);
@@ -80,6 +83,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $pendingRegistry,
             $translator,
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onUserJoined($user);
@@ -105,6 +109,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -133,6 +138,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -156,6 +162,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'host.example');
@@ -179,6 +186,7 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host');
@@ -206,6 +214,7 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onUserQuit('UID1', 'SomeNick', 'Quit', 'id', 'host');
@@ -237,6 +246,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -271,6 +281,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $pendingRegistry,
             $translator,
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick');
@@ -297,6 +308,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $pendingRegistry,
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'Guest-ABC123');
@@ -331,6 +343,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $pendingRegistry,
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'Guest-XYZ', 'RegNick');
@@ -365,6 +378,7 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick');
@@ -397,6 +411,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick');
@@ -410,12 +425,20 @@ final class NickProtectionServiceTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
         $identifiedRegistry->register('UID1', 'OldIdentified');
 
+        $oldAccount = RegisteredNick::createPending('OldIdentified', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $oldAccount->activate();
+        $this->setNickId($oldAccount, 1);
         $account = RegisteredNick::createPending('RegNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
         $account->activate();
+        $this->setNickId($account, 2);
         $user = new SenderView('UID1', 'RegNick', 'i', 'h', 'c', 'ip', false, false, '001');
 
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $repo->method('findByNick')->willReturn($account);
+        $repo->method('findByNick')->willReturnCallback(static fn (string $nick) => match (strtolower($nick)) {
+            'oldidentified' => $oldAccount,
+            'regnick' => $account,
+            default => null,
+        });
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($user);
@@ -424,6 +447,9 @@ final class NickProtectionServiceTest extends TestCase
         $notifier->expects(self::once())->method('setUserVhost')->with('UID1', '', '001');
         $notifier->expects(self::exactly(2))->method('sendMessage');
         $notifier->expects(self::once())->method('forceNick');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
 
         $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
@@ -436,11 +462,20 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $translator,
+            $eventDispatcher,
         );
 
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
         $service->onNickChanged('UID1', 'OldIdentified', 'RegNick');
         self::assertNull($identifiedRegistry->findNick('UID1'));
+    }
+
+    private function setNickId(RegisteredNick $nick, int $id): void
+    {
+        $reflection = new ReflectionClass($nick);
+        $property = $reflection->getProperty('id');
+        $property->setAccessible(true);
+        $property->setValue($nick, $id);
     }
 
     #[Test]
@@ -461,6 +496,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', '', '', 'host.example');
@@ -485,6 +521,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving now', 'myident', 'host.example');
@@ -508,6 +545,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');
@@ -534,6 +572,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');
@@ -563,6 +602,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');
@@ -595,6 +635,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');

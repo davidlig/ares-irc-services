@@ -38,6 +38,7 @@ ircop:
   unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
   unknown_role:     "\x0304✗\x03 Role \x02%role%\x02 does not exist. Use \x0303/msg %bot% ROLE LIST\x03 to see available roles."
   already_admin:    "\x0304✗\x03 \x02%nick%\x02 is already an IRC operator (role: %role%)."
+  not_admin:       "\x0304✗\x03 \x02%nick%\x02 is not an IRC operator."
   role_changed:     "\x0303✓\x03 Changed role for \x02%nick%\x02 from %old% to %new%."
 
   add:
@@ -52,7 +53,6 @@ ircop:
     short:          "Remove a network IRC operator."
     help:            "Removes a network IRC operator from the list.\nThis command is restricted to Root users."
     done:           "\x0303✓\x03 Removed \x02%nick%\x02 from IRC operators."
-    not_admin:      "\x0304✗\x03 \x02%nick%\x02 is not an IRC operator."
 
   list:
     syntax:         "IRCOP LIST"
@@ -63,11 +63,11 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  syntax:           "ROLE {ADD|DEL|LIST|PERMS} <name> ..."
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES} <name> ..."
   short:            "Manage operator roles."
-  help:             "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."
+  help:             "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role, MODES manages IRCOP modes.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."
 
-  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, or PERMS."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, PERMS, or MODES."
   not_found:        "\x0304✗\x03 Role \x02%role%\x02 does not exist."
   already_exists:   "\x0304✗\x03 Role \x02%role%\x02 already exists."
   protected:        "\x0304✗\x03 Role \x02%role%\x02 is protected and cannot be deleted."
@@ -123,3 +123,27 @@ role:
       short:        "Remove a permission from a role."
       help:         "Removes a permission from a role.\nCannot modify protected roles.\nThis command is restricted to Root users."
       done:         "\x0303✓\x03 Removed permission \x02%perm%\x02 from role \x02%role%\x02."
+
+  modes:
+    syntax:         "ROLE MODES <role> {VIEW|SET} [modes]"
+    short:          "Manage IRCOP user modes for the role."
+    help:            "Manage IRCOP user modes assigned to a role.\nVIEW shows the role's current modes.\nSET sets the IRCOP modes (e.g., oH for +oH).\nUsers with this role will receive these modes on identify.\nAvailable modes per IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nThis command is restricted to Root users."
+    unknown_action:  "\x0304✗\x03 Unknown action \x02%action%\x02. Use VIEW or SET."
+
+    view:
+      syntax:       "ROLE MODES <role> VIEW"
+      short:        "Shows the role's modes."
+      help:          "Shows the IRCOP user modes assigned to a role.\nThis command is restricted to Root users."
+      header:        "\x0307---\x03 \x02Modes for %role%\x02 \x0307---\x03"
+      empty:        "The role \x02%role%\x02 has no modes assigned."
+      line:         "  Modes: \x0303%modes%\x03"
+
+    set:
+      syntax:       "ROLE MODES <role> SET [modes]"
+      short:        "Set IRCOP user modes."
+      help:          "Set the IRCOP user modes for the role.\nWithout arguments, removes all modes from the role.\nOnly valid IRCOP modes for the active IRCD.\nIdentified users with this role will receive the changes.\nThis command is restricted to Root users."
+      done:         "\x0303✓\x03 Set modes \x02%modes%\x02 for role \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Removed all modes from role \x02%role%\x02."
+      invalid_mode: "\x0304✗\x03 The mode \x02%mode%\x02 is not a valid IRCOP mode."
+      invalid_modes: "\x0304✗\x03 Invalid modes: %invalid%. Valid modes: %valid%."
+      no_irc_user_modes: "\x0304✗\x03 The current IRCD has no IRCOP modes configured."

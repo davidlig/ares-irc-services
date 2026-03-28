@@ -7,6 +7,7 @@ namespace App\Application\OperServ\Command\Handler;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\IrcopModeApplier;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -23,6 +24,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
         private OperIrcopRepositoryInterface $ircopRepository,
         private OperRoleRepositoryInterface $roleRepository,
         private IrcopAccessHelper $accessHelper,
+        private IrcopModeApplier $modeApplier,
     ) {
     }
 
@@ -88,24 +90,36 @@ final readonly class IrcopCommand implements OperServCommandInterface
             return;
         }
 
-        $sub = strtoupper($context->args[0] ?? '');
+        $firstArg = strtoupper($context->args[0]);
+
+        if ('LIST' === $firstArg) {
+            $this->doList($context);
+
+            return;
+        }
+
+        if (count($context->args) < 2) {
+            $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.syntax')]);
+
+            return;
+        }
+
+        $nickname = $context->args[0];
+        $sub = strtoupper($context->args[1]);
 
         switch ($sub) {
             case 'ADD':
-                $this->doAdd($context);
+                $this->doAdd($context, $nickname);
                 break;
             case 'DEL':
-                $this->doDel($context);
-                break;
-            case 'LIST':
-                $this->doList($context);
+                $this->doDel($context, $nickname);
                 break;
             default:
                 $context->reply('ircop.unknown_sub', ['%sub%' => $sub]);
         }
     }
 
-    private function doAdd(OperServContext $context): void
+    private function doAdd(OperServContext $context, string $nickname): void
     {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.add.syntax')]);
@@ -113,7 +127,6 @@ final readonly class IrcopCommand implements OperServCommandInterface
             return;
         }
 
-        $nickname = $context->args[1];
         $roleName = strtoupper($context->args[2]);
 
         $targetAccount = $this->nickRepository->findByNick($nickname);
@@ -148,8 +161,13 @@ final readonly class IrcopCommand implements OperServCommandInterface
                 return;
             }
 
+            $oldRole = $existing->getRole();
             $existing->changeRole($role);
             $this->ircopRepository->save($existing);
+
+            $this->modeApplier->removeModesForNick($nickname, $oldRole);
+            $this->modeApplier->applyModesForNick($nickname, $role);
+
             $context->reply('ircop.role_changed', ['%nick%' => $nickname, '%old%' => $oldRoleName, '%new%' => $roleName]);
 
             return;
@@ -163,19 +181,14 @@ final readonly class IrcopCommand implements OperServCommandInterface
         );
 
         $this->ircopRepository->save($ircop);
+
+        $this->modeApplier->applyModesForNick($nickname, $role);
+
         $context->reply('ircop.add.done', ['%nick%' => $nickname, '%role%' => $roleName]);
     }
 
-    private function doDel(OperServContext $context): void
+    private function doDel(OperServContext $context, string $nickname): void
     {
-        if (count($context->args) < 2) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.del.syntax')]);
-
-            return;
-        }
-
-        $nickname = $context->args[1];
-
         $targetAccount = $this->nickRepository->findByNick($nickname);
         if (null === $targetAccount) {
             $context->reply('error.nick_not_registered', ['%nick%' => $nickname]);
@@ -189,6 +202,9 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
             return;
         }
+
+        $role = $ircop->getRole();
+        $this->modeApplier->removeModesForNick($nickname, $role);
 
         $this->ircopRepository->remove($ircop);
         $context->reply('ircop.del.done', ['%nick%' => $nickname]);

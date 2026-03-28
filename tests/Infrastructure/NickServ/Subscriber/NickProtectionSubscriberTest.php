@@ -27,6 +27,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NickProtectionSubscriber::class)]
@@ -60,6 +61,7 @@ final class NickProtectionSubscriberTest extends TestCase
             new IdentifiedSessionRegistry(),
             $pendingRegistry,
             $translator,
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $vhostSync = new IdentifiedUserVhostSyncService(

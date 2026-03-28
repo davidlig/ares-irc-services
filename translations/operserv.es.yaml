@@ -38,6 +38,7 @@ ircop:
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
   unknown_role:     "\x0304✗\x03 El rol \x02%role%\x02 no existe. Usa \x0303/msg %bot% ROLE LIST\x03 para ver los roles disponibles."
   already_admin:   "\x0304✗\x03 \x02%nick%\x02 ya es operador (rol: %role%)."
+  not_admin:       "\x0304✗\x03 \x02%nick%\x02 no es un operador de red."
   role_changed:    "\x0303✓\x03 Cambiado el rol de \x02%nick%\x02 de %old% a %new%."
 
   add:
@@ -52,7 +53,6 @@ ircop:
     short:          "Elimina un operador de red."
     help:            "Elimina un operador de red de la lista.\nEste comando está restringido a usuarios Root."
     done:           "\x0303✓\x03 Eliminado \x02%nick%\x02 de operadores."
-    not_admin:      "\x0304✗\x03 \x02%nick%\x02 no es un operador de red."
 
   list:
     syntax:         "IRCOP LIST"
@@ -63,11 +63,11 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  syntax:           "ROLE {ADD|DEL|LIST|PERMS} <nombre> ..."
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES} <nombre> ..."
   short:            "Gestiona roles de operadores."
-  help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
+  help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
 
-  unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST o PERMS."
+  unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST, PERMS o MODES."
   not_found:        "\x0304✗\x03 El rol \x02%role%\x02 no existe."
   already_exists:   "\x0304✗\x03 El rol \x02%role%\x02 ya existe."
   protected:        "\x0304✗\x03 El rol \x02%role%\x02 está protegido y no puede eliminarse."
@@ -123,3 +123,27 @@ role:
       short:        "Quita un permiso de un rol."
       help:         "Quita un permiso de un rol.\nNo se pueden modificar roles protegidos.\nEste comando está restringido a usuarios Root."
       done:         "\x0303✓\x03 Quitado permiso \x02%perm%\x02 del rol \x02%role%\x02."
+
+  modes:
+    syntax:         "ROLE MODES <rol> {VIEW|SET} [modos]"
+    short:          "Gestiona modos de usuario IRCOP del rol."
+    help:            "Gestiona los modos de usuario IRCOP asignados a un rol.\nVIEW muestra los modos actuales del rol.\nSET establece los modos IRCOP (ej: oH para +oH).\nLos usuarios con este rol recibirán estos modos al identificarse.\nModos disponibles según IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nEste comando está restringido a usuarios Root."
+    unknown_action:  "\x0304✗\x03 Acción desconocida \x02%action%\x02. Usa VIEW o SET."
+
+    view:
+      syntax:       "ROLE MODES <rol> VIEW"
+      short:        "Muestra los modos del rol."
+      help:          "Muestra los modos de usuario IRCOP asignados a un rol.\nEste comando está restringido a usuarios Root."
+      header:        "\x0307---\x03 \x02Modos de %role%\x02 \x0307---\x03"
+      empty:        "El rol \x02%role%\x02 no tiene modos asignados."
+      line:         "  Modos: \x0303%modes%\x03"
+
+    set:
+      syntax:       "ROLE MODES <rol> SET [modos]"
+      short:        "Establece modos de usuario IRCOP."
+      help:          "Establece los modos de usuario IRCOP para el rol.\nSin argumentos, elimina todos los modos del rol.\nSolo modos IRCOP válidos según el IRCD activo.\nLos usuarios identificados con este rol recibirán los cambios.\nEste comando está restringido a usuarios Root."
+      done:         "\x0303✓\x03 Establecidos modos \x02%modes%\x02 para el rol \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Eliminados los modos del rol \x02%role%\x02."
+      invalid_mode: "\x0304✗\x03 El modo \x02%mode%\x02 no es un modo IRCOP válido."
+      invalid_modes: "\x0304✗\x03 Modos inválidos: %invalid%. Modos válidos: %valid%."
+      no_irc_user_modes: "\x0304✗\x03 El IRCD actual no tiene modos IRCOP configurados."

@@ -6,22 +6,32 @@ namespace App\Tests\Application\OperServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\Command\Handler\RoleCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserModeSupportInterface;
 use App\Application\Security\PermissionProviderInterface;
 use App\Application\Security\PermissionRegistry;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
+use ReflectionClass;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RoleCommand::class)]
@@ -31,10 +41,47 @@ final class RoleCommandTest extends TestCase
     {
         $rootUsers = $isRoot ? 'TestUser' : '';
         $rootRegistry = new RootUserRegistry($rootUsers);
-        $adminRepo = $this->createStub(\App\Domain\OperServ\Repository\OperIrcopRepositoryInterface::class);
+        $adminRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
 
         return new IrcopAccessHelper($rootRegistry, $adminRepo, $roleRepo);
+    }
+
+    private function createCmd(
+        OperRoleRepositoryInterface $roleRepo,
+        OperPermissionRepositoryInterface $permRepo,
+        IrcopAccessHelper $accessHelper,
+        PermissionRegistry $permissionRegistry,
+    ): RoleCommand {
+        $userModeSupport = $this->createStub(UserModeSupportInterface::class);
+        $userModeSupport->method('getIrcOpUserModes')->willReturn(['o', 'a', 'N', 'O']);
+
+        $protocolModule = $this->createStub(ProtocolModuleInterface::class);
+        $protocolModule->method('getUserModeSupport')->willReturn($userModeSupport);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $modeApplier = new IrcopModeApplier(
+            new IdentifiedSessionRegistry(),
+            $connectionHolder,
+            $ircopRepo,
+            $nickRepo,
+            new NullLogger(),
+        );
+
+        return new RoleCommand(
+            $roleRepo,
+            $permRepo,
+            $accessHelper,
+            $permissionRegistry,
+            $connectionHolder,
+            new IdentifiedSessionRegistry(),
+            $modeApplier,
+            $this->createStub(EventDispatcherInterface::class),
+        );
     }
 
     private function createContext(
@@ -78,7 +125,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.root_only', $messages);
@@ -101,7 +148,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['INVALID'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.unknown_sub', $messages);
@@ -124,7 +171,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['DEL'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -147,7 +194,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['ADD'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -173,7 +220,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.already_exists', $messages);
@@ -197,7 +244,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['DEL', 'UNKNOWN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.not_found', $messages);
@@ -221,7 +268,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.list.empty', $messages);
@@ -247,7 +294,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'ADMIN', 'INVALID'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.unknown_action', $messages);
@@ -270,7 +317,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -294,7 +341,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'UNKNOWN', 'LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.not_found', $messages);
@@ -307,7 +354,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertSame('ROLE', $cmd->getName());
     }
 
@@ -318,7 +365,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertSame('role.syntax', $cmd->getSyntaxKey());
     }
 
@@ -329,7 +376,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertSame('role.help', $cmd->getHelpKey());
     }
 
@@ -340,7 +387,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertSame(2, $cmd->getOrder());
     }
 
@@ -351,7 +398,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertSame('role.short', $cmd->getShortDescKey());
     }
 
@@ -362,7 +409,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertNull($cmd->getRequiredPermission());
     }
 
@@ -373,7 +420,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertSame([], $cmd->getAliases());
     }
 
@@ -384,7 +431,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertSame(1, $cmd->getMinArgs());
     }
 
@@ -395,7 +442,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         self::assertTrue($cmd->isOperOnly());
     }
 
@@ -406,14 +453,15 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $subs = $cmd->getSubCommandHelp();
 
-        self::assertCount(4, $subs);
+        self::assertCount(5, $subs);
         self::assertSame('LIST', $subs[0]['name']);
         self::assertSame('ADD', $subs[1]['name']);
         self::assertSame('DEL', $subs[2]['name']);
         self::assertSame('PERMS', $subs[3]['name']);
+        self::assertSame('MODES', $subs[4]['name']);
     }
 
     #[Test]
@@ -439,7 +487,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['ADD', 'TESTROLE'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.add.done', $messages);
@@ -472,7 +520,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['ADD', 'CUSTOM', 'My custom role description'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.add.done', $messages);
@@ -505,7 +553,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['DEL', 'CUSTOM'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.del.done', $messages);
@@ -534,7 +582,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['DEL', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.protected', $messages);
@@ -562,7 +610,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.list.header', $messages);
@@ -598,7 +646,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'ADMIN', 'LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.list.header', $messages);
@@ -627,7 +675,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'ADMIN', 'LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.list.empty', $messages);
@@ -674,7 +722,7 @@ final class RoleCommandTest extends TestCase
             },
         ]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
         $cmd->execute($this->createContext($sender, ['PERMS', 'NEWROLE', 'LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.list.header', $messages);
@@ -727,7 +775,7 @@ final class RoleCommandTest extends TestCase
             },
         ]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
         $cmd->execute($this->createContext($sender, ['PERMS', 'FULLROLE', 'LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.list.header', $messages);
@@ -763,7 +811,7 @@ final class RoleCommandTest extends TestCase
         $permRepo->method('findByName')->willReturn($perm);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'ADD', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.add.done', $messages);
@@ -792,7 +840,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'ADMIN', 'ADD'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -821,7 +869,7 @@ final class RoleCommandTest extends TestCase
         $permRepo->method('findByName')->willReturn(null);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'ADD', 'nonexistent.perm'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.not_found', $messages);
@@ -852,7 +900,7 @@ final class RoleCommandTest extends TestCase
         $permRepo->method('findByName')->willReturn($perm);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'ADMIN', 'ADD', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.already_has', $messages);
@@ -886,7 +934,7 @@ final class RoleCommandTest extends TestCase
         $permRepo->method('findByName')->willReturn($perm);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'DEL', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.del.done', $messages);
@@ -915,7 +963,7 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'ADMIN', 'DEL'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -944,7 +992,7 @@ final class RoleCommandTest extends TestCase
         $permRepo->method('findByName')->willReturn(null);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'DEL', 'nonexistent.perm'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.not_found', $messages);
@@ -974,7 +1022,7 @@ final class RoleCommandTest extends TestCase
         $permRepo->method('findByName')->willReturn($perm);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'CUSTOM', 'DEL', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.does_not_have', $messages);
@@ -1005,10 +1053,354 @@ final class RoleCommandTest extends TestCase
         $permRepo->method('findByName')->willReturn($perm);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
         $cmd->execute($this->createContext($sender, ['PERMS', 'ADMIN', 'DEL', 'operserv.admin.add'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.protected', $messages);
+    }
+
+    #[Test]
+    public function modesWithMissingArgsGetsSyntaxError(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd->execute($this->createContext($sender, ['MODES'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function modesWithNonExistentRoleGetsNotFoundError(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn(null);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd->execute($this->createContext($sender, ['MODES', 'UNKNOWN', 'VIEW'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.not_found', $messages);
+    }
+
+    #[Test]
+    public function modesWithUnknownActionGetsUnknownActionError(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'INVALID'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.modes.unknown_action', $messages);
+    }
+
+    #[Test]
+    public function modesViewEmptyReturnsModesViewEmpty(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('NEWROLE', 'New role', false);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd->execute($this->createContext($sender, ['MODES', 'NEWROLE', 'VIEW'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.modes.view.empty', $messages);
+    }
+
+    #[Test]
+    public function modesViewSuccessShowsModes(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $role->setUserModes(['o', 'a']);
+
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'VIEW'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.modes.view.header', $messages);
+        self::assertContains('role.modes.view.line', $messages);
+    }
+
+    #[Test]
+    public function modesSetClearsModesWhenEmptyArg(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $savedRoles = [];
+        $role = OperRole::create('CUSTOM', 'Custom role', false);
+        $role->setUserModes(['o', 'a']);
+
+        $roleRefl = new ReflectionClass($role);
+        $roleIdProp = $roleRefl->getProperty('id');
+        $roleIdProp->setAccessible(true);
+        $roleIdProp->setValue($role, 1);
+
+        $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $roleRepo->expects(self::once())->method('save')->willReturnCallback(static function (OperRole $r) use (&$savedRoles): void {
+            $savedRoles[] = $r;
+        });
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $userModeSupport = $this->createStub(UserModeSupportInterface::class);
+        $userModeSupport->method('getIrcOpUserModes')->willReturn(['o', 'a', 'N', 'O']);
+
+        $protocolModule = $this->createStub(ProtocolModuleInterface::class);
+        $protocolModule->method('getUserModeSupport')->willReturn($userModeSupport);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
+
+        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
+        $ircopRepo->expects(self::once())->method('findByRoleId')->with(1)->willReturn([]);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $modeApplier = new IrcopModeApplier(
+            new IdentifiedSessionRegistry(),
+            $connectionHolder,
+            $ircopRepo,
+            $nickRepo,
+            new NullLogger(),
+        );
+
+        $cmd = new RoleCommand(
+            $roleRepo,
+            $permRepo,
+            $accessHelper,
+            new PermissionRegistry([]),
+            $connectionHolder,
+            new IdentifiedSessionRegistry(),
+            $modeApplier,
+            $this->createStub(EventDispatcherInterface::class),
+        );
+        $cmd->execute($this->createContext($sender, ['MODES', 'CUSTOM', 'SET'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.modes.set.cleared', $messages);
+        self::assertCount(1, $savedRoles);
+        self::assertSame([], $savedRoles[0]->getUserModes());
+    }
+
+    #[Test]
+    public function modesSetSuccessSetsValidModes(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $savedRoles = [];
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+
+        $roleRefl = new ReflectionClass($role);
+        $roleIdProp = $roleRefl->getProperty('id');
+        $roleIdProp->setAccessible(true);
+        $roleIdProp->setValue($role, 1);
+
+        $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $roleRepo->expects(self::once())->method('save')->willReturnCallback(static function (OperRole $r) use (&$savedRoles): void {
+            $savedRoles[] = $r;
+        });
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $userModeSupport = $this->createStub(UserModeSupportInterface::class);
+        $userModeSupport->method('getIrcOpUserModes')->willReturn(['o', 'a', 'N', 'O']);
+
+        $protocolModule = $this->createStub(ProtocolModuleInterface::class);
+        $protocolModule->method('getUserModeSupport')->willReturn($userModeSupport);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
+
+        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
+        $ircopRepo->expects(self::once())->method('findByRoleId')->with(1)->willReturn([]);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $modeApplier = new IrcopModeApplier(
+            new IdentifiedSessionRegistry(),
+            $connectionHolder,
+            $ircopRepo,
+            $nickRepo,
+            new NullLogger(),
+        );
+
+        $cmd = new RoleCommand(
+            $roleRepo,
+            $permRepo,
+            $accessHelper,
+            new PermissionRegistry([]),
+            $connectionHolder,
+            new IdentifiedSessionRegistry(),
+            $modeApplier,
+            $this->createStub(EventDispatcherInterface::class),
+        );
+        $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+oaN'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.modes.set.done', $messages);
+        self::assertCount(1, $savedRoles);
+        self::assertSame(['o', 'a', 'N'], $savedRoles[0]->getUserModes());
+    }
+
+    #[Test]
+    public function modesSetWithInvalidModesReturnsError(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+
+        $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $roleRepo->expects(self::never())->method('save');
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+xyz'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.modes.set.invalid_modes', $messages);
+    }
+
+    #[Test]
+    public function modesSetWithNoProtocolModuleReturnsError(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn(null);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $modeApplier = new IrcopModeApplier(
+            new IdentifiedSessionRegistry(),
+            $connectionHolder,
+            $ircopRepo,
+            $nickRepo,
+            new NullLogger(),
+        );
+
+        $cmd = new RoleCommand(
+            $roleRepo,
+            $permRepo,
+            $accessHelper,
+            new PermissionRegistry([]),
+            $connectionHolder,
+            new IdentifiedSessionRegistry(),
+            $modeApplier,
+            $this->createStub(EventDispatcherInterface::class),
+        );
+        $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+o'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.modes.set.no_irc_user_modes', $messages);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

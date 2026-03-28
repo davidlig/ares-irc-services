@@ -60,4 +60,62 @@ final class IdentifiedSessionRegistryTest extends TestCase
         $removed = $registry->pruneSessionsNotIn(['001A']);
         self::assertSame(0, $removed);
     }
+
+    #[Test]
+    public function findUidByNickReturnsNullWhenEmpty(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+
+        self::assertNull($registry->findUidByNick('TestNick'));
+    }
+
+    #[Test]
+    public function findUidByNickReturnsUidWhenRegistered(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+        $registry->register('UID123', 'TestNick');
+
+        self::assertSame('UID123', $registry->findUidByNick('TestNick'));
+    }
+
+    #[Test]
+    public function findUidByNickIsCaseInsensitive(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+        $registry->register('UID123', 'TestNick');
+
+        self::assertSame('UID123', $registry->findUidByNick('testnick'));
+        self::assertSame('UID123', $registry->findUidByNick('TESTNICK'));
+        self::assertSame('UID123', $registry->findUidByNick('TestNick'));
+    }
+
+    #[Test]
+    public function findUidByNickReturnsNullWhenNickNotFound(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+        $registry->register('UID123', 'TestNick');
+
+        self::assertNull($registry->findUidByNick('OtherNick'));
+    }
+
+    #[Test]
+    public function findUidByNickReturnsUidWhenMultipleSessionsSameNick(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+        $registry->register('UID1', 'TestNick');
+        $registry->register('UID2', 'OtherNick');
+
+        self::assertSame('UID1', $registry->findUidByNick('TestNick'));
+        self::assertSame('UID2', $registry->findUidByNick('OtherNick'));
+    }
+
+    #[Test]
+    public function findUidByNickReturnsNullAfterRemove(): void
+    {
+        $registry = new IdentifiedSessionRegistry();
+        $registry->register('UID123', 'TestNick');
+        $registry->remove('UID123');
+
+        self::assertNull($registry->findUidByNick('TestNick'));
+    }
 }

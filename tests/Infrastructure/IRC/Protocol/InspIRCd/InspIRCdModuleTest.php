@@ -11,6 +11,7 @@ use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,6 +29,7 @@ final class InspIRCdModuleTest extends TestCase
         $formatter = new InspIRCdServiceIntroductionFormatter();
         $vhostBuilder = new InspIRCdVhostCommandBuilder();
         $channelModeSupport = new InspIRCdChannelModeSupport();
+        $userModeSupport = new InspIRCdUserModeSupport();
         $nickReservation = new InspIRCdNickReservation(new NullLogger());
 
         return new InspIRCdModule(
@@ -36,6 +38,7 @@ final class InspIRCdModuleTest extends TestCase
             $formatter,
             $vhostBuilder,
             $channelModeSupport,
+            $userModeSupport,
             $nickReservation,
         );
     }
@@ -60,6 +63,7 @@ final class InspIRCdModuleTest extends TestCase
             new InspIRCdServiceIntroductionFormatter(),
             new InspIRCdVhostCommandBuilder(),
             new InspIRCdChannelModeSupport(),
+            new InspIRCdUserModeSupport(),
             new InspIRCdNickReservation(new NullLogger()),
         );
 
@@ -83,5 +87,13 @@ final class InspIRCdModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(InspIRCdNickReservation::class, $module->getNickReservation());
+    }
+
+    #[Test]
+    public function getUserModeSupportReturnsInjectedSupport(): void
+    {
+        $module = $this->createModule();
+
+        self::assertInstanceOf(InspIRCdUserModeSupport::class, $module->getUserModeSupport());
     }
 }
