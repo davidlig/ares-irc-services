@@ -864,7 +864,7 @@ final class AkickCommandTest extends TestCase
     }
 
     #[Test]
-    public function listWithUnknownCreatorShowsNumericId(): void
+    public function listWithUnknownCreatorShowsUnknown(): void
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $account = $this->createStub(RegisteredNick::class);
@@ -899,7 +899,45 @@ final class AkickCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertCount(2, $messages);
-        self::assertStringContainsString('999', $messages[1]);
+        self::assertStringContainsString('akick.list.unknown_creator', $messages[1]);
+    }
+
+    #[Test]
+    public function listWithNullCreatorNickIdShowsUnknown(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $channelRepo = $this->createChannelMock(1, 1);
+
+        $akick = $this->createStub(ChannelAkick::class);
+        $akick->method('getMask')->willReturn('*!*@test.com');
+        $akick->method('getReason')->willReturn('Test');
+        $akick->method('getCreatorNickId')->willReturn(null);
+        $akick->method('getExpiresAt')->willReturn(null);
+
+        $akickRepo = $this->createStub(ChannelAkickRepositoryInterface::class);
+        $akickRepo->method('listByChannel')->willReturn([$akick]);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
+
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
+
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
+
+        self::assertCount(2, $messages);
+        self::assertStringContainsString('akick.list.unknown_creator', $messages[1]);
     }
 
     #[Test]

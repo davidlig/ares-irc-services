@@ -303,6 +303,7 @@ akick:
     entry:          "  #%index% %mask% %reason% (por %nick%, expira: %expiration%)"
     no_reason:      "Sin razón"
     never_expires:  "nunca"
+    unknown_creator: "desconocido"
 
 # NOJOIN documentación para LEVELS:
 # NOJOIN: Nivel mínimo de acceso para entrar al canal. Usuarios con nivel < NOJOIN son expulsados.

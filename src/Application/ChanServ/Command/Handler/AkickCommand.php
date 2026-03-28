@@ -205,8 +205,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         $num = 1;
         foreach ($entries as $akick) {
-            $creator = $this->nickRepository->findById($akick->getCreatorNickId());
-            $creatorName = null !== $creator ? $creator->getNickname() : (string) $akick->getCreatorNickId();
+            $creatorName = $this->resolveCreatorName($akick->getCreatorNickId(), $context);
             $reason = $akick->getReason() ?? $context->trans('akick.list.no_reason');
             $expires = null !== $akick->getExpiresAt()
                 ? $context->formatDate($akick->getExpiresAt())
@@ -490,5 +489,20 @@ final readonly class AkickCommand implements ChanServCommandInterface
         }
 
         return $nicks;
+    }
+
+    /**
+     * Resolve creator nickname for AKICK display.
+     * Returns the nickname if found, or 'unknown' translation if creator was dropped.
+     */
+    private function resolveCreatorName(?int $creatorNickId, ChanServContext $context): string
+    {
+        if (null === $creatorNickId) {
+            return $context->trans('akick.list.unknown_creator');
+        }
+
+        $creator = $this->nickRepository->findById($creatorNickId);
+
+        return null !== $creator ? $creator->getNickname() : $context->trans('akick.list.unknown_creator');
     }
 }

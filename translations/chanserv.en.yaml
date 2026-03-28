@@ -303,6 +303,7 @@ akick:
     entry:          "  #%index% %mask% %reason% (by %nick%, expires: %expiration%)"
     no_reason:      "No reason"
     never_expires:  "never"
+    unknown_creator: "unknown"
 
 # NOJOIN documentation for LEVELS:
 # NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
