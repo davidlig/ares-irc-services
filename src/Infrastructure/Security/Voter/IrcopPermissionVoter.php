@@ -16,12 +16,15 @@ use function in_array;
 /**
  * Grants access when the user is an IRCOP with a specific permission.
  *
- * This voter handles IRCOP-level permissions like NICKSERV_DROP, CHANSERV_SUSPEND, etc.
+ * This voter handles IRCOP-level permissions like operserv.kill, nickserv.drop, etc.
+ *
+ * Permission format: service.command or service.subcommand.action (lowercase with dots)
+ * Examples: operserv.kill, nickserv.drop, chanserv.mode.lock
  *
  * Checks:
- * 1. User has ROLE_OPER (is an IRC operator)
- * 2. User's role has the required permission (via IrcopAccessHelper)
- * 3. Root users have all permissions automatically
+ * 1. Root users identified have all permissions automatically (bypass +o requirement)
+ * 2. User has ROLE_OPER (is an IRC operator)
+ * 3. User's role has the required permission (via IrcopAccessHelper)
  */
 final class IrcopPermissionVoter extends Voter
 {
@@ -33,10 +36,13 @@ final class IrcopPermissionVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        // Support permission constants that match the pattern BOT_COMMAND (uppercase with underscore)
+        // Support IRCOP permission strings in format: service.command or service.subcommand.action
+        // Examples: operserv.kill, nickserv.drop, chanserv.mode.lock
         // Must have a context to get user info
-        return 1 === preg_match('/^[A-Z]+_[A-Z_]+$/', $attribute)
+        $supports = 1 === preg_match('/^[a-z]+\.[a-z._]+$/', $attribute)
             && $subject instanceof IrcopContextInterface;
+
+        return $supports;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
@@ -48,15 +54,16 @@ final class IrcopPermissionVoter extends Voter
         }
 
         $sender = $user->getSenderView();
+        $nickLower = strtolower($sender->nick);
+
+        // Root users identified have all permissions automatically (bypass +o requirement)
+        if ($sender->isIdentified && $this->accessHelper->isRoot($nickLower)) {
+            return true;
+        }
 
         // Must have ROLE_OPER (be an IRC operator)
         if (!in_array(IrcServiceUser::ROLE_OPER, $user->getRoles(), true)) {
             return false;
-        }
-
-        // Root users have all permissions automatically
-        if ($this->accessHelper->isRoot(strtolower($sender->nick))) {
-            return true;
         }
 
         // Need account to check permissions
@@ -67,7 +74,7 @@ final class IrcopPermissionVoter extends Voter
 
         return $this->accessHelper->hasPermission(
             $account->getId(),
-            strtolower($sender->nick),
+            $nickLower,
             $attribute
         );
     }

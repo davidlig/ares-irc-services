@@ -26,23 +26,25 @@ use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 final class IrcopPermissionVoterTest extends TestCase
 {
     #[Test]
-    public function supportsPermissionInBotCommandFormat(): void
+    public function supportsPermissionInDotNotation(): void
     {
         $voter = $this->createVoterWithoutRoots();
         $context = $this->createStub(IrcopContextInterface::class);
 
-        self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['NICKSERV_DROP']));
-        self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['CHANSERV_SUSPEND']));
-        self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['OPERSERV_ADMIN']));
+        self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['operserv.kill']));
+        self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['nickserv.drop']));
+        self::assertTrue(VoterInterface::ACCESS_ABSTAIN !== $voter->vote($this->createTokenWithOperUser(false), $context, ['chanserv.mode.lock']));
     }
 
     #[Test]
-    public function abstainsForLowercasePermission(): void
+    public function abstainsForUppercaseFormat(): void
     {
         $voter = $this->createVoterWithoutRoots();
         $context = $this->createStub(IrcopContextInterface::class);
 
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($this->createTokenWithOperUser(false), $context, ['nickserv_drop']));
+        // Uppercase format is NOT supported
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($this->createTokenWithOperUser(false), $context, ['NICKSERV_DROP']));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($this->createTokenWithOperUser(false), $context, ['CHANSERV_SUSPEND']));
     }
 
     #[Test]
@@ -50,7 +52,7 @@ final class IrcopPermissionVoterTest extends TestCase
     {
         $voter = $this->createVoterWithoutRoots();
 
-        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($this->createTokenWithOperUser(false), new stdClass(), ['NICKSERV_DROP']));
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $voter->vote($this->createTokenWithOperUser(false), new stdClass(), ['operserv.kill']));
     }
 
     #[Test]
@@ -61,7 +63,7 @@ final class IrcopPermissionVoterTest extends TestCase
         $token = $this->createStub(TokenInterface::class);
         $token->method('getUser')->willReturn(null);
 
-        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['NICKSERV_DROP']));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['operserv.kill']));
     }
 
     #[Test]
@@ -71,11 +73,11 @@ final class IrcopPermissionVoterTest extends TestCase
         $context = $this->createStub(IrcopContextInterface::class);
         $token = $this->createTokenWithOperUser(false);
 
-        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['NICKSERV_DROP']));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['operserv.kill']));
     }
 
     #[Test]
-    public function grantsAccessForRootUser(): void
+    public function grantsAccessForRootUserIdentified(): void
     {
         $rootRegistry = new RootUserRegistry('testnick');
         $accessHelper = new IrcopAccessHelper(
@@ -90,9 +92,53 @@ final class IrcopPermissionVoterTest extends TestCase
         );
 
         $context = $this->createStub(IrcopContextInterface::class);
-        $token = $this->createTokenWithOperUser(true, 'testnick');
+        $token = $this->createTokenWithIdentifiedUser(true, 'testnick');
 
-        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, $context, ['NICKSERV_DROP']));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, $context, ['operserv.kill']));
+    }
+
+    #[Test]
+    public function grantsAccessForRootUserIdentifiedWithoutOper(): void
+    {
+        $rootRegistry = new RootUserRegistry('testnick');
+        $accessHelper = new IrcopAccessHelper(
+            $rootRegistry,
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class)
+        );
+
+        $voter = new IrcopPermissionVoter(
+            $accessHelper,
+            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+        );
+
+        $context = $this->createStub(IrcopContextInterface::class);
+        // Root user identified but WITHOUT +o mode - should still be granted
+        $token = $this->createTokenWithIdentifiedUser(false, 'testnick');
+
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, $context, ['operserv.kill']));
+    }
+
+    #[Test]
+    public function deniesAccessForRootUserNotIdentified(): void
+    {
+        $rootRegistry = new RootUserRegistry('testnick');
+        $accessHelper = new IrcopAccessHelper(
+            $rootRegistry,
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class)
+        );
+
+        $voter = new IrcopPermissionVoter(
+            $accessHelper,
+            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+        );
+
+        $context = $this->createStub(IrcopContextInterface::class);
+        // Root user NOT identified, WITHOUT +o mode - should be denied
+        $token = $this->createTokenWithUser(false, false, 'testnick');
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['operserv.kill']));
     }
 
     #[Test]
@@ -107,10 +153,10 @@ final class IrcopPermissionVoterTest extends TestCase
         $operIrcopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $operIrcopRepo->method('findByNickId')->willReturn($operIrcop);
 
-        // Mock roleRepository to return true for NICKSERV_DROP permission
+        // Mock roleRepository to return true for operserv.kill permission
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $roleRepo->method('hasPermission')->willReturnMap([
-            [5, 'NICKSERV_DROP', true],
+            [5, 'operserv.kill', true],
         ]);
 
         $accessHelper = new IrcopAccessHelper($rootRegistry, $operIrcopRepo, $roleRepo);
@@ -126,9 +172,9 @@ final class IrcopPermissionVoterTest extends TestCase
         $context = $this->createStub(IrcopContextInterface::class);
         $context->method('getSenderAccount')->willReturn($account);
 
-        $token = $this->createTokenWithOperUser(true, 'testnick');
+        $token = $this->createTokenWithIdentifiedUser(true, 'testnick');
 
-        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, $context, ['NICKSERV_DROP']));
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, $context, ['operserv.kill']));
     }
 
     #[Test]
@@ -143,10 +189,10 @@ final class IrcopPermissionVoterTest extends TestCase
         $operIrcopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $operIrcopRepo->method('findByNickId')->willReturn($operIrcop);
 
-        // Mock roleRepository to return false for NICKSERV_DROP permission
+        // Mock roleRepository to return false for operserv.kill permission
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $roleRepo->method('hasPermission')->willReturnMap([
-            [5, 'NICKSERV_DROP', false],
+            [5, 'operserv.kill', false],
         ]);
 
         $accessHelper = new IrcopAccessHelper($rootRegistry, $operIrcopRepo, $roleRepo);
@@ -164,7 +210,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $token = $this->createTokenWithOperUser(true, 'testnick');
 
-        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['NICKSERV_DROP']));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['operserv.kill']));
     }
 
     #[Test]
@@ -187,7 +233,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $token = $this->createTokenWithOperUser(true, 'testnick');
 
-        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['NICKSERV_DROP']));
+        self::assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, $context, ['operserv.kill']));
     }
 
     private function createVoterWithoutRoots(): IrcopPermissionVoter
@@ -207,6 +253,17 @@ final class IrcopPermissionVoterTest extends TestCase
 
     private function createTokenWithOperUser(bool $isOper, string $nick = 'testnick'): TokenInterface
     {
+        // Oper users are always identified
+        return $this->createTokenWithUser($isOper, true, $nick);
+    }
+
+    private function createTokenWithIdentifiedUser(bool $isOper, string $nick = 'testnick'): TokenInterface
+    {
+        return $this->createTokenWithUser($isOper, true, $nick);
+    }
+
+    private function createTokenWithUser(bool $isOper, bool $isIdentified, string $nick = 'testnick'): TokenInterface
+    {
         $senderView = new SenderView(
             uid: 'UID123',
             nick: $nick,
@@ -214,7 +271,7 @@ final class IrcopPermissionVoterTest extends TestCase
             hostname: 'test.host',
             cloakedHost: 'test.cloak',
             ipBase64: 'dGVzdA==',
-            isIdentified: true,
+            isIdentified: $isIdentified,
             isOper: $isOper,
         );
 

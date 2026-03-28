@@ -87,14 +87,24 @@ final readonly class OperServService
 
         try {
             $requiredPermission = $handler->getRequiredPermission();
-            if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
-                if ('IDENTIFIED' === $requiredPermission) {
-                    $context->reply('error.not_identified');
-                } else {
-                    $context->reply('error.permission_denied');
-                }
+            if (null !== $requiredPermission) {
+                $isGranted = $this->authorizationChecker->isGranted($requiredPermission, $context);
+                $this->logger->debug('OperServ authorization check', [
+                    'nick' => $sender->nick,
+                    'isIdentified' => $sender->isIdentified,
+                    'isOper' => $sender->isOper,
+                    'permission' => $requiredPermission,
+                    'isGranted' => $isGranted,
+                ]);
+                if (!$isGranted) {
+                    if ('IDENTIFIED' === $requiredPermission) {
+                        $context->reply('error.not_identified');
+                    } else {
+                        $context->reply('error.permission_denied');
+                    }
 
-                return;
+                    return;
+                }
             }
 
             if (count($args) < $handler->getMinArgs()) {

@@ -13,11 +13,11 @@ Each IRCOP-only command has a permission string (e.g., `NICKSERV_DROP`, `CHANSER
 
 ### Permission Format
 
-Permissions use the format `<SERVICE>_<COMMAND>` (uppercase with underscore):
-- `NICKSERV_DROP` - Drop registered nicks
-- `CHANSERV_SUSPEND` - Suspend registered channels
-- `MEMOSERV_SEND` - Send memos to any user
-- `operserv.admin.add` - OperServ permissions (lowercase dot notation from legacy)
+Permissions use lowercase dot notation format `<service>.<command>`:
+- `operserv.kill` - KILL command
+- `nickserv.drop` - Drop registered nicks
+- `chanserv.suspend` - Suspend registered channels
+- `operserv.admin.add` - OperServ admin commands (nested)
 
 ### Key Components
 
@@ -182,13 +182,48 @@ Shows:
 
 ## Root Users
 
-Root users (configured in services config) have all permissions automatically. The `IrcopPermissionVoter` grants access without checking the database:
+Root users (configured in `OPERSERV_ROOT_USERS` environment variable) have special privileges:
+
+### Requirements
+- **Must be identified** (`/NICKSERV IDENTIFY`) to use IRCOP commands
+- **Do NOT need** IRC operator status (mode `+o`) from the IRCd
+
+### Permissions
+- Bypass all permission checks
+- Access to all IRCOP commands across all services (NickServ, ChanServ, MemoServ, OperServ)
+- No need for role assignments in OperServ
+
+### Implementation
+
+The `IrcopPermissionVoter` checks root users BEFORE requiring `ROLE_OPER`:
 
 ```php
-if ($this->accessHelper->isRoot(strtolower($sender->nick))) {
+// Root users identified have all permissions automatically (bypass +o requirement)
+if ($sender->isIdentified && $this->accessHelper->isRoot(strtolower($sender->nick))) {
     return true;
 }
+
+// Must have ROLE_OPER (be an IRC operator) - only for non-root users
+if (!in_array(IrcServiceUser::ROLE_OPER, $user->getRoles(), true)) {
+    return false;
+}
 ```
+
+### Configuration
+
+In `.env`:
+```
+OPERSERV_ROOT_USERS=ares,nick1,nick2
+```
+
+### Security Model
+
+| User Type | Requires +o | Requires IDENTIFY | Permission Check |
+|-----------|-------------|-------------------|------------------|
+| ROOT user | ❌ No | ✅ Yes | Bypass all |
+| IRCOP with role | ✅ Yes | ✅ Yes | Role permissions |
+| IRCOP without role | ✅ Yes | ✅ Yes | Denied |
+| Regular user | ✅ Yes | ✅ Yes | Denied |
 
 ## Testing
 
