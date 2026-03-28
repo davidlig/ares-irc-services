@@ -172,32 +172,7 @@ Shows:
 
 ## Permission Constants
 
-### NickServ, ChanServ, MemoServ
-
-**Note:** Permission definitions for NickServ, ChanServ, and MemoServ are not yet implemented. Permissions will be added as IRCOP-only commands are developed for these services.
-
-### OperServ
-
-Uses `App\Domain\OperServ\Entity\OperPermission` constants (lowercase dot notation):
-
-| Constant | Value |
-|----------|-------|
-| `ADMIN_ADD` | `operserv.admin.add` |
-| `ADMIN_DEL` | `operserv.admin.del` |
-| `ADMIN_LIST` | `operserv.admin.list` |
-| `ROLE_MANAGE` | `operserv.role.manage` |
-| `PERMISSION_MANAGE` | `operserv.permission.manage` |
-| `KILL_LOCAL` | `operserv.kill.local` |
-| `KILL_GLOBAL` | `operserv.kill.global` |
-| `KLINE_ADD` | `operserv.kline.add` |
-| `KLINE_DEL` | `operserv.kline.del` |
-| `KLINE_LIST` | `operserv.kline.list` |
-| `GLINE_ADD` | `operserv.gline.add` |
-| `GLINE_DEL` | `operserv.gline.del` |
-| `GLINE_LIST` | `operserv.gline.list` |
-| `USERINFO` | `operserv.userinfo` |
-| `CHANNELINFO` | `operserv.channelinfo` |
-| `NETWORK_VIEW` | `operserv.network.view` |
+**Note:** Permission definitions for all services (NickServ, ChanServ, MemoServ, OperServ) are not yet implemented. Permissions will be added as IRCOP-only commands are developed.
 
 ## Root Users
 
