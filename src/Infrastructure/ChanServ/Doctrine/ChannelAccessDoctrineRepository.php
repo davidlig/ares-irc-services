@@ -61,4 +61,14 @@ class ChannelAccessDoctrineRepository implements ChannelAccessRepositoryInterfac
             ->getRepository(ChannelAccess::class)
             ->findBy(['nickId' => $nickId], ['level' => 'DESC']);
     }
+
+    public function deleteByNickId(int $nickId): void
+    {
+        $this->em
+            ->createQuery(
+                'DELETE FROM App\Domain\ChanServ\Entity\ChannelAccess a WHERE a.nickId = :nickId'
+            )
+            ->setParameter('nickId', $nickId)
+            ->execute();
+    }
 }

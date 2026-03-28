@@ -719,6 +719,12 @@ services:
     App\Infrastructure\MemoServ\Subscriber\MemoServChannelDropCleanupSubscriber:
         tags: ['kernel.event_subscriber']
 
+    App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
+        tags: ['kernel.event_subscriber']
+
+    App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber:
+        tags: ['kernel.event_subscriber']
+
     # --- NickServ Command Registry — auto-collects all tagged commands ----------
 
     App\Application\NickServ\Command\NickServCommandRegistry:

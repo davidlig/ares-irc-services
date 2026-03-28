@@ -132,4 +132,32 @@ final class ChannelAccessDoctrineRepositoryTest extends DoctrineIntegrationTestC
 
         self::assertNull($this->repository->findByChannelAndNick(1, 100));
     }
+
+    #[Test]
+    public function deleteByNickIdRemovesAllAccessForNick(): void
+    {
+        $access1 = new ChannelAccess(channelId: 1, nickId: 100, level: 50);
+        $access2 = new ChannelAccess(channelId: 2, nickId: 100, level: 100);
+        $access3 = new ChannelAccess(channelId: 1, nickId: 101, level: 200);
+
+        $this->repository->save($access1);
+        $this->repository->save($access2);
+        $this->repository->save($access3);
+        $this->flushAndClear();
+
+        $this->repository->deleteByNickId(100);
+        $this->flushAndClear();
+
+        self::assertSame([], $this->repository->findByNick(100));
+        self::assertCount(1, $this->repository->findByNick(101));
+    }
+
+    #[Test]
+    public function deleteByNickIdDoesNothingWhenNoAccess(): void
+    {
+        $this->repository->deleteByNickId(999);
+        $this->flushAndClear();
+
+        self::assertSame([], $this->repository->findByNick(999));
+    }
 }

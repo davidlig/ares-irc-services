@@ -91,4 +91,14 @@ class ChannelAkickDoctrineRepository implements ChannelAkickRepositoryInterface
 
         return array_filter($result, static fn ($row): bool => $row instanceof ChannelAkick);
     }
+
+    public function clearCreatorNickId(int $nickId): void
+    {
+        $this->em
+            ->createQuery(
+                'UPDATE App\Domain\ChanServ\Entity\ChannelAkick a SET a.creatorNickId = NULL WHERE a.creatorNickId = :nickId'
+            )
+            ->setParameter('nickId', $nickId)
+            ->execute();
+    }
 }

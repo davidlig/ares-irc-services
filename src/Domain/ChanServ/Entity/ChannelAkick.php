@@ -32,7 +32,7 @@ class ChannelAkick
 
     private int $channelId;
 
-    private int $creatorNickId;
+    private ?int $creatorNickId = null;
 
     private string $mask;
 
@@ -77,7 +77,7 @@ class ChannelAkick
         return $this->channelId;
     }
 
-    public function getCreatorNickId(): int
+    public function getCreatorNickId(): ?int
     {
         return $this->creatorNickId;
     }

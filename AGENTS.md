@@ -141,6 +141,46 @@ Each skill has a `README.md` with conventions, rules, and code references. For s
 
 **Testing**: PHPUnit 13. Use `createStub()` for unverified mocks, `createMock()` only with `expects()`. Zero warnings/deprecations.
 
+### 3.2 Data Integrity Rules
+
+**Ref Cleanup on Drop (CRITICAL)**: When storing references to registered entities (nicks, channels), you MUST define cleanup behavior when those entities are dropped. This applies to:
+
+**NickDropEvent cleanup required for:**
+- `nickId` references → Subscribe to `NickDropEvent`, decide strategy:
+  - **CASCADE DELETE**: Remove all referencing entries (e.g., MemoServ ignores, ChanServ ACCESS, OperServ IRCOP)
+  - **SET NULL**: Keep entry, null the foreign key (e.g., AKICK creator)
+  - **TRANSFER**: Reassign ownership (e.g., channel founder → successor)
+
+**ChannelDropEvent cleanup required for:**
+- `channelId` references → Subscribe to `ChannelDropEvent`, typically CASCADE DELETE
+
+**Implementation checklist for new features:**
+1. ✅ Does this feature store a `nickId`? → Implement NickDropEvent subscriber
+2. ✅ Does this feature store a `channelId`? → Implement ChannelDropEvent subscriber
+3. ✅ Add cleanup method to repository interface
+4. ✅ Implement in Doctrine repository
+5. ✅ Create subscriber implementing `EventSubscriberInterface`
+6. ✅ Register in `config/services.yaml` with `kernel.event_subscriber` tag
+7. ✅ Write unit tests for subscriber
+8. ✅ Write integration tests for repository cleanup method
+
+**When implementing DROP commands (manual drops):**
+- NickServ DROP → MUST emit `NickDropEvent` with `reason: 'manual'`
+- ChanServ DROP → MUST emit `ChannelDropEvent` with `reason: 'manual'`
+- Services MUST NOT delete entities directly without emitting the corresponding DropEvent
+
+**Testing subscribers:**
+- Create event instance: `new NickDropEvent(nickId: 123, nickname: 'Test', nicknameLower: 'test', reason: 'manual')`
+- Mock repository interfaces with `$this->createMock()` and `expects(self::once())->method('deleteByNickId')->with(123)`
+- Verify `getSubscribedEvents()` returns correct event mapping
+- Test edge cases: empty results, multiple cascades, null values
+
+**Existing patterns:**
+- `MemoServNickDropCleanupSubscriber` → CASCADE DELETE all related data
+- `MemoServChannelDropCleanupSubscriber` → CASCADE DELETE all related data
+- `ChanServNickDropCleanupSubscriber` → Mixed strategies (DELETE + SET NULL + TRANSFER)
+- `OperServNickDropCleanupSubscriber` → CASCADE DELETE IRCOP entry
+
 ---
 
 ## Engram Persistent Memory — Protocol

@@ -55,4 +55,14 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
             ->setParameter('roleId', $roleId)
             ->getSingleScalarResult();
     }
+
+    public function deleteByNickId(int $nickId): void
+    {
+        $this->em
+            ->createQuery(
+                'DELETE FROM App\Domain\OperServ\Entity\OperIrcop i WHERE i.nickId = :nickId'
+            )
+            ->setParameter('nickId', $nickId)
+            ->execute();
+    }
 }

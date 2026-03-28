@@ -198,6 +198,39 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertSame(0, $this->repository->countByRoleId(999999));
     }
 
+    #[Test]
+    public function deleteByNickIdRemovesIrcopEntry(): void
+    {
+        $role = $this->createOperRole('Admin');
+        $ircop1 = OperIrcop::create(nickId: 100, role: $role);
+        $ircop2 = OperIrcop::create(nickId: 200, role: $role);
+
+        $this->repository->save($ircop1);
+        $this->repository->save($ircop2);
+        $this->flushAndClear();
+
+        $this->repository->deleteByNickId(100);
+        $this->flushAndClear();
+
+        self::assertNull($this->repository->findByNickId(100));
+        self::assertNotNull($this->repository->findByNickId(200));
+    }
+
+    #[Test]
+    public function deleteByNickIdDoesNothingWhenNoMatch(): void
+    {
+        $role = $this->createOperRole('Admin');
+        $ircop = OperIrcop::create(nickId: 100, role: $role);
+
+        $this->repository->save($ircop);
+        $this->flushAndClear();
+
+        $this->repository->deleteByNickId(999);
+        $this->flushAndClear();
+
+        self::assertNotNull($this->repository->findByNickId(100));
+    }
+
     private function createOperRole(string $name): OperRole
     {
         $role = OperRole::create(name: $name, description: $name . ' role');

@@ -23,4 +23,9 @@ interface OperIrcopRepositoryInterface
     public function remove(OperIrcop $ircop): void;
 
     public function countByRoleId(int $roleId): int;
+
+    /**
+     * Delete IRCOP entry for a nick (used when nick is dropped).
+     */
+    public function deleteByNickId(int $nickId): void;
 }

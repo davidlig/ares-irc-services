@@ -234,4 +234,54 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
 
         self::assertSame([], $inactive);
     }
+
+    #[Test]
+    public function clearSuccessorNickIdSetsSuccessorToNull(): void
+    {
+        $channel1 = RegisteredChannel::register('#alpha', 1, 'Alpha');
+        $channel1->assignSuccessor(100);
+
+        $channel2 = RegisteredChannel::register('#beta', 2, 'Beta');
+        $channel2->assignSuccessor(100);
+
+        $channel3 = RegisteredChannel::register('#gamma', 3, 'Gamma');
+        $channel3->assignSuccessor(200);
+
+        $this->repository->save($channel1);
+        $this->repository->save($channel2);
+        $this->repository->save($channel3);
+        $this->flushAndClear();
+
+        $this->repository->clearSuccessorNickId(100);
+        $this->flushAndClear();
+
+        $found1 = $this->repository->findByChannelName('#alpha');
+        $found2 = $this->repository->findByChannelName('#beta');
+        $found3 = $this->repository->findByChannelName('#gamma');
+
+        self::assertNotNull($found1);
+        self::assertNotNull($found2);
+        self::assertNotNull($found3);
+
+        self::assertNull($found1->getSuccessorNickId());
+        self::assertNull($found2->getSuccessorNickId());
+        self::assertSame(200, $found3->getSuccessorNickId());
+    }
+
+    #[Test]
+    public function clearSuccessorNickIdDoesNothingWhenNoMatch(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->assignSuccessor(100);
+
+        $this->repository->save($channel);
+        $this->flushAndClear();
+
+        $this->repository->clearSuccessorNickId(999);
+        $this->flushAndClear();
+
+        $found = $this->repository->findByChannelName('#test');
+        self::assertNotNull($found);
+        self::assertSame(100, $found->getSuccessorNickId());
+    }
 }

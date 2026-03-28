@@ -372,4 +372,47 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
 
         self::assertCount(3, $result);
     }
+
+    #[Test]
+    public function clearCreatorNickIdSetsCreatorToNull(): void
+    {
+        $akick1 = ChannelAkick::create(channelId: 1, creatorNickId: 100, mask: '*!*@test1.com');
+        $akick2 = ChannelAkick::create(channelId: 2, creatorNickId: 100, mask: '*!*@test2.com');
+        $akick3 = ChannelAkick::create(channelId: 1, creatorNickId: 200, mask: '*!*@test3.com');
+
+        $this->repository->save($akick1);
+        $this->repository->save($akick2);
+        $this->repository->save($akick3);
+        $this->flushAndClear();
+
+        $this->repository->clearCreatorNickId(100);
+        $this->flushAndClear();
+
+        $found1 = $this->repository->findById($akick1->getId());
+        $found2 = $this->repository->findById($akick2->getId());
+        $found3 = $this->repository->findById($akick3->getId());
+
+        self::assertNotNull($found1);
+        self::assertNotNull($found2);
+        self::assertNotNull($found3);
+
+        self::assertNull($found1->getCreatorNickId());
+        self::assertNull($found2->getCreatorNickId());
+        self::assertSame(200, $found3->getCreatorNickId());
+    }
+
+    #[Test]
+    public function clearCreatorNickIdDoesNothingWhenNoMatch(): void
+    {
+        $akick = ChannelAkick::create(channelId: 1, creatorNickId: 100, mask: '*!*@test.com');
+        $this->repository->save($akick);
+        $this->flushAndClear();
+
+        $this->repository->clearCreatorNickId(999);
+        $this->flushAndClear();
+
+        $found = $this->repository->findById($akick->getId());
+        self::assertNotNull($found);
+        self::assertSame(100, $found->getCreatorNickId());
+    }
 }

@@ -25,4 +25,9 @@ interface ChannelAccessRepositoryInterface
      * @return ChannelAccess[] All access entries for a nick
      */
     public function findByNick(int $nickId): array;
+
+    /**
+     * Delete all access entries for a nick (used when nick is dropped).
+     */
+    public function deleteByNickId(int $nickId): void;
 }

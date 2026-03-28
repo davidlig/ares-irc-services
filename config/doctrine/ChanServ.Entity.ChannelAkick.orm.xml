@@ -12,7 +12,7 @@
             <generator strategy="IDENTITY"/>
         </id>
         <field name="channelId" type="integer" column="channel_id"/>
-        <field name="creatorNickId" type="integer" column="creator_nick_id"/>
+        <field name="creatorNickId" type="integer" column="creator_nick_id" nullable="true"/>
         <field name="mask" type="string" column="mask" length="255"/>
         <field name="reason" type="string" column="reason" length="255" nullable="true"/>
         <field name="createdAt" type="datetime_immutable" column="created_at"/>

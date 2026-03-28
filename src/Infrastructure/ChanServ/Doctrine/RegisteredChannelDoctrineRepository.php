@@ -98,4 +98,14 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
 
         return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
     }
+
+    public function clearSuccessorNickId(int $successorNickId): void
+    {
+        $this->em
+            ->createQuery(
+                'UPDATE App\Domain\ChanServ\Entity\RegisteredChannel c SET c.successorNickId = NULL WHERE c.successorNickId = :successorNickId'
+            )
+            ->setParameter('successorNickId', $successorNickId)
+            ->execute();
+    }
 }

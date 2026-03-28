@@ -32,4 +32,10 @@ interface ChannelAkickRepositoryInterface
      * @return ChannelAkick[] All AKICK entries for channels belonging to a nick (for cleanup on nick drop)
      */
     public function findByChannelIds(array $channelIds): array;
+
+    /**
+     * Clear creator reference on all AKICK entries created by a nick (SET creator_nick_id = NULL).
+     * Used when a nick is dropped to preserve AKICK entries but remove orphaned references.
+     */
+    public function clearCreatorNickId(int $nickId): void;
 }

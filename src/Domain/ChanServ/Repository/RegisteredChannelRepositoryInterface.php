@@ -25,6 +25,12 @@ interface RegisteredChannelRepositoryInterface
      */
     public function findBySuccessorNickId(int $successorNickId): array;
 
+    /**
+     * Clear successor reference on all channels where the given nick is successor.
+     * Used when a nick is dropped.
+     */
+    public function clearSuccessorNickId(int $successorNickId): void;
+
     /** @return RegisteredChannel[] All registered channels (e.g. for ChanServ rejoin on burst). */
     public function listAll(): array;
 
