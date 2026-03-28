@@ -312,3 +312,7 @@ akick:
 nojoin:
   reason: "NOJOIN level restriction"
 
+# --- DEBUG CHANNEL -----------------------------------------------------------
+debug_channel:
+  kick_reason: "You are not authorized to join this channel."
+

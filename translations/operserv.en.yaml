@@ -147,3 +147,19 @@ role:
       invalid_mode: "\x0304✗\x03 The mode \x02%mode%\x02 is not a valid IRCOP mode."
       invalid_modes: "\x0304✗\x03 Invalid modes: %invalid%. Valid modes: %valid%."
       no_irc_user_modes: "\x0304✗\x03 The current IRCD has no IRCOP modes configured."
+
+# --- KILL --------------------------------------------------------------------
+kill:
+  syntax:           "KILL <nickname> <reason>"
+  short:            "Forcefully disconnect a user from the network."
+  help:             "Disconnects a user from the IRC network.\nIRCops and Root users cannot be killed.\nThis command requires the operserv.kill permission.\n\nSyntax: KILL <nickname> <reason>\nExample: KILL BadUser Flooding channels"
+  user_not_online:  "\x0304✗\x03 Nick \x02%nick%\x02 is not connected."
+  protected_root:   "\x0304✗\x03 Cannot kill Root user \x02%nick%\x02."
+  protected_ircop:  "\x0304✗\x03 Cannot kill IRC operator \x02%nick%\x02."
+  done:             "\x0303✓\x03 User \x02%nick%\x02 has been killed (%reason%)."
+  permission_denied: "\x0304✗\x03 Permission denied. You need operserv.kill permission."
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message:   "%operator% executes command %command% on %target%. Reason: %reason%"
+  action_info:      "Nick: %nick% | Host: %host% | IP: %ip%"

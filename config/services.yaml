@@ -19,6 +19,10 @@ parameters:
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
     services.vhost_suffix:     '%env(default::NICKSERV_VHOST_SUFFIX)%'
 
+    # IRCops debug channel (shared by all services)
+    ircops.debug_channel_default: null
+    ircops.debug_channel: '%env(string:default:ircops.debug_channel_default:IRCOPS_DEBUG_CHANNEL)%'
+
     # Maintenance scheduler
     maintenance.interval: '%env(int:MAINTENANCE_INTERVAL)%'
     maintenance.purge_expired_akick_interval: '%env(int:MAINTENANCE_INTERVAL)%'
@@ -1025,4 +1029,51 @@ services:
             $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
             $userLookup: '@App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
+    # --- OperServ Debug Action -------------------------------------------------
+
+    App\Application\Port\DebugActionPort: '@App\Infrastructure\OperServ\Service\OperServDebugAction'
+
+    App\Infrastructure\OperServ\Service\OperServDebugAction:
+        arguments:
+            $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $notifier: '@App\Application\OperServ\Command\OperServNotifierInterface'
+            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $translator: '@translator'
+            $defaultLanguage: '%services.default_language%'
+            $debugChannel: '%ircops.debug_channel%'
+            $logger: '@monolog.logger.ircops'
+
+    App\Application\OperServ\Command\Handler\KillCommand:
+        arguments:
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $debug: '@App\Application\Port\DebugActionPort'
+            $logger: '@monolog.logger.ircops'
+        tags: ['operserv.command']
+
+    # --- IRCops Debug Channel Protection ----------------------------------------
+
+    App\Infrastructure\IRC\Subscriber\IrcopsDebugChannelProtectionSubscriber:
+        arguments:
+            $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $translator: '@translator'
+            $defaultLanguage: '%services.default_language%'
+            $chanservNick: '%chanserv.nick%'
+            $debugChannel: '%ircops.debug_channel%'
+            $logger: '@monolog.logger.ircops'
         tags: ['kernel.event_subscriber']

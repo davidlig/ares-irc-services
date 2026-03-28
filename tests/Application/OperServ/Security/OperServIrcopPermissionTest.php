@@ -30,10 +30,10 @@ final class OperServIrcopPermissionTest extends TestCase
     }
 
     #[Test]
-    public function getPermissionsReturnsEmptyArrayUntilCommandsAreImplemented(): void
+    public function getPermissionsReturnsOperServPermissions(): void
     {
         $permission = new OperServIrcopPermission();
 
-        self::assertSame([], $permission->getPermissions());
+        self::assertSame(['operserv.kill'], $permission->getPermissions());
     }
 }

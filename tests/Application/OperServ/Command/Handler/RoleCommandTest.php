@@ -638,7 +638,7 @@ final class RoleCommandTest extends TestCase
 
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $perm1 = OperPermission::create('operserv.admin.add', 'Admin add');
-        $perm2 = OperPermission::create('operserv.kill.local', 'Kill local');
+        $perm2 = OperPermission::create('operserv.kill', 'Kill users');
         $role->addPermission($perm1);
         $role->addPermission($perm2);
 
@@ -652,7 +652,7 @@ final class RoleCommandTest extends TestCase
 
         self::assertContains('role.perms.list.header', $messages);
         self::assertContains('  operserv.admin.add', $messages);
-        self::assertContains('  operserv.kill.local', $messages);
+        self::assertContains('  operserv.kill', $messages);
     }
 
     #[Test]

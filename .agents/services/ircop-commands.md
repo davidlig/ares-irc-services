@@ -172,7 +172,13 @@ Shows:
 
 ## Permission Constants
 
-**Note:** Permission definitions for all services (NickServ, ChanServ, MemoServ, OperServ) are not yet implemented. Permissions will be added as IRCOP-only commands are developed.
+### OperServ Permissions
+
+- `operserv.kill` - KILL command (forcibly disconnect a user from the network)
+
+### NickServ, ChanServ, MemoServ Permissions
+
+**Note:** Permission definitions for these services are not yet implemented. Permissions will be added as IRCOP-only commands are developed.
 
 ## Root Users
 

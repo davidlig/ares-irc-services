@@ -42,9 +42,9 @@ final class OperPermissionTest extends TestCase
     #[Test]
     public function getDescriptionReturnsDescription(): void
     {
-        $permission = OperPermission::create('operserv.kill.local', 'Kill local users');
+        $permission = OperPermission::create('operserv.kill', 'Kill users');
 
-        self::assertSame('Kill local users', $permission->getDescription());
+        self::assertSame('Kill users', $permission->getDescription());
     }
 
     #[Test]

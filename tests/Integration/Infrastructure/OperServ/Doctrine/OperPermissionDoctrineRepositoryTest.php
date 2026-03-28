@@ -48,16 +48,16 @@ final class OperPermissionDoctrineRepositoryTest extends DoctrineIntegrationTest
     #[Test]
     public function findByNameReturnsPermissionByName(): void
     {
-        $permission = OperPermission::create('operserv.kill.local', 'Can kill local users');
+        $permission = OperPermission::create('operserv.kill', 'Can kill users');
 
         $this->repository->save($permission);
         $this->flushAndClear();
 
-        $found = $this->repository->findByName('operserv.kill.local');
+        $found = $this->repository->findByName('operserv.kill');
 
         self::assertNotNull($found);
-        self::assertSame('operserv.kill.local', $found->getName());
-        self::assertSame('Can kill local users', $found->getDescription());
+        self::assertSame('operserv.kill', $found->getName());
+        self::assertSame('Can kill users', $found->getDescription());
     }
 
     #[Test]
@@ -71,7 +71,7 @@ final class OperPermissionDoctrineRepositoryTest extends DoctrineIntegrationTest
     {
         $permission1 = OperPermission::create('operserv.zline.list', 'ZLine list permission');
         $permission2 = OperPermission::create('operserv.admin.add', 'Admin add permission');
-        $permission3 = OperPermission::create('operserv.kill.global', 'Global kill permission');
+        $permission3 = OperPermission::create('operserv.kill', 'Kill permission');
 
         $this->repository->save($permission1);
         $this->repository->save($permission2);
@@ -82,7 +82,7 @@ final class OperPermissionDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         self::assertCount(3, $all);
         self::assertSame('operserv.admin.add', $all[0]->getName());
-        self::assertSame('operserv.kill.global', $all[1]->getName());
+        self::assertSame('operserv.kill', $all[1]->getName());
         self::assertSame('operserv.zline.list', $all[2]->getName());
     }
 

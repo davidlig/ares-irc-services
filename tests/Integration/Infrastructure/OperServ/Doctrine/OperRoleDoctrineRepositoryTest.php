@@ -169,26 +169,26 @@ final class OperRoleDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function hasPermissionReturnsTrueWhenPermissionExists(): void
     {
         $role = $this->createRole('Admin', 'Admin role');
-        $permission = $this->createPermission(OperPermission::ADMIN_ADD, 'Add admin');
+        $permission = $this->createPermission(OperPermission::KILL, 'Kill users');
         $this->entityManager->persist($permission);
         $role->addPermission($permission);
         $this->repository->save($role);
         $this->flushAndClear();
 
-        self::assertTrue($this->repository->hasPermission($role->getId(), OperPermission::ADMIN_ADD));
+        self::assertTrue($this->repository->hasPermission($role->getId(), OperPermission::KILL));
     }
 
     #[Test]
     public function hasPermissionReturnsFalseWhenPermissionDoesNotExist(): void
     {
         $role = $this->createRole('Admin', 'Admin role');
-        $permission = $this->createPermission(OperPermission::ADMIN_ADD, 'Add admin');
+        $permission = $this->createPermission(OperPermission::KILL, 'Kill users');
         $this->entityManager->persist($permission);
         $role->addPermission($permission);
         $this->repository->save($role);
         $this->flushAndClear();
 
-        self::assertFalse($this->repository->hasPermission($role->getId(), OperPermission::KILL_LOCAL));
+        self::assertFalse($this->repository->hasPermission($role->getId(), 'operserv.admin.add'));
     }
 
     #[Test]
@@ -198,6 +198,6 @@ final class OperRoleDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->repository->save($role);
         $this->flushAndClear();
 
-        self::assertFalse($this->repository->hasPermission($role->getId(), OperPermission::ADMIN_ADD));
+        self::assertFalse($this->repository->hasPermission($role->getId(), 'operserv.kill'));
     }
 }

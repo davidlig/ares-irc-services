@@ -15,6 +15,8 @@ final readonly class OperServIrcopPermission implements PermissionProviderInterf
 
     public function getPermissions(): array
     {
-        return [];
+        return [
+            OperServPermission::KILL,
+        ];
     }
 }

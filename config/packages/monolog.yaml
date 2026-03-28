@@ -3,6 +3,7 @@ monolog:
         - irc          # All IRC protocol traffic and link lifecycle events
         - maintenance  # Maintenance cycles and task execution (purge expired, etc.)
         - deprecation  # Symfony deprecation notices
+        - ircops       # IRCop commands across all services (KILL, GLINE, etc.)
 
     handlers:
         # -----------------------------------------------------------------------
@@ -49,6 +50,17 @@ monolog:
             level:     error
             max_files: 30
             channels:  ['!event']
+
+        # -----------------------------------------------------------------------
+        # IRCops channel — IRCop commands across all services.
+        # Weekly rotation, 26 weeks retention (~6 months).
+        # -----------------------------------------------------------------------
+        ircops_rotating:
+            type:      rotating_file
+            path:      '%kernel.logs_dir%/ircops.log'
+            level:     info
+            max_files: 26
+            channels:  [ircops]
 
 when@dev:
     monolog:

@@ -178,7 +178,7 @@ final class OperRoleTest extends TestCase
         $role = OperRole::create('Test');
         $perm1 = OperPermission::create('operserv.admin.add', 'Add admin');
         $perm2 = OperPermission::create('operserv.admin.del', 'Delete admin');
-        $perm3 = OperPermission::create('operserv.kill.local', 'Local kill');
+        $perm3 = OperPermission::create('operserv.kill', 'Kill users');
 
         $role->addPermission($perm1);
         $role->addPermission($perm2);
@@ -187,8 +187,8 @@ final class OperRoleTest extends TestCase
         self::assertCount(3, $role->getPermissions());
         self::assertTrue($role->hasPermission('operserv.admin.add'));
         self::assertTrue($role->hasPermission('operserv.admin.del'));
-        self::assertTrue($role->hasPermission('operserv.kill.local'));
-        self::assertFalse($role->hasPermission('operserv.kill.global'));
+        self::assertTrue($role->hasPermission('operserv.kill'));
+        self::assertFalse($role->hasPermission('operserv.gline.add'));
     }
 
     #[Test]
