@@ -126,6 +126,7 @@ For specialized tasks, consult the corresponding skill file:
 | **Memory** | `.agents/memory/` | Long-running daemons, memory leaks, Doctrine clear |
 | **Protocol** | `.agents/protocol/` | IRCd modules, wire format, adding new IRCd |
 | **Services** | `.agents/services/` | Core vs Services, Ports, Bots, new service implementation |
+| **Commands** | `.agents/services/commands.md` | Creating new IRC service commands ( NickServ, ChanServ, etc.) |
 
 Each skill has a `README.md` with conventions, rules, and code references. For step-by-step checklists (adding a new IRCd, adding a new service), see the additional `.md` files in each skill directory.
 
