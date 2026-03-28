@@ -55,6 +55,14 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
         return array_map(static fn (NetworkUser $u) => $u->uid->value, $users);
     }
 
+    public function applyModeChange(string $uid, string $modeDelta): void
+    {
+        $user = $this->networkUserRepository->findByUid(new Uid($uid));
+        if (null !== $user) {
+            $user->applyModeChange($modeDelta);
+        }
+    }
+
     /** Used by Infrastructure when converting event payloads (NetworkUser) to SenderView. */
     public function fromNetworkUser(NetworkUser $user): SenderView
     {

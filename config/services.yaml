@@ -1017,5 +1017,6 @@ services:
         arguments:
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $userLookup: '@App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']

@@ -82,6 +82,8 @@ final readonly class IrcopModeApplier
         $this->logger->info('IrcopModeApplier: applying modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modesStr]);
         $serviceActions->setUserMode($serverSid, $uid, $modesStr);
 
+        $this->userLookup->applyModeChange($uid, $modesStr);
+
         return true;
     }
 
@@ -127,6 +129,8 @@ final readonly class IrcopModeApplier
         $modesStr = '-' . implode('', $toRemove);
         $this->logger->info('IrcopModeApplier: removing modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modesStr]);
         $serviceActions->setUserMode($serverSid, $uid, $modesStr);
+
+        $this->userLookup->applyModeChange($uid, $modesStr);
 
         return true;
     }
@@ -183,6 +187,7 @@ final readonly class IrcopModeApplier
                     'modes' => $modesStr,
                 ]);
                 $serviceActions->setUserMode($serverSid, $uid, $modesStr);
+                $this->userLookup->applyModeChange($uid, $modesStr);
             }
 
             $modesToAdd = array_diff($toAdd, $currentModes);
@@ -194,6 +199,7 @@ final readonly class IrcopModeApplier
                     'modes' => $modesStr,
                 ]);
                 $serviceActions->setUserMode($serverSid, $uid, $modesStr);
+                $this->userLookup->applyModeChange($uid, $modesStr);
             }
         }
     }

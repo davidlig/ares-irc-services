@@ -198,6 +198,69 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
         self::assertFalse($result->isOper);
     }
 
+    #[Test]
+    public function applyModeChangeUpdatesUserModes(): void
+    {
+        $user = $this->createNetworkUser('001ABCD', 'TestUser', 'test', 'test.local', 'test.local', '+ir');
+
+        $this->repository
+            ->expects(self::exactly(2))
+            ->method('findByUid')
+            ->with(new Uid('001ABCD'))
+            ->willReturn($user);
+
+        $this->adapter->applyModeChange('001ABCD', '+o');
+
+        $result = $this->adapter->findByUid('001ABCD');
+        self::assertNotNull($result);
+        self::assertSame('+iro', $result->modes);
+    }
+
+    #[Test]
+    public function applyModeChangeRemovesMode(): void
+    {
+        $user = $this->createNetworkUser('001ABCD', 'TestUser', 'test', 'test.local', 'test.local', '+ior');
+
+        $this->repository
+            ->expects(self::exactly(2))
+            ->method('findByUid')
+            ->with(new Uid('001ABCD'))
+            ->willReturn($user);
+
+        $this->adapter->applyModeChange('001ABCD', '-o');
+
+        $result = $this->adapter->findByUid('001ABCD');
+        self::assertNotNull($result);
+        self::assertSame('+ir', $result->modes);
+    }
+
+    #[Test]
+    public function applyModeChangeDoesNothingWhenUserNotFound(): void
+    {
+        $this->repository
+            ->expects(self::once())
+            ->method('findByUid')
+            ->with(new Uid('999UNKNOWN'))
+            ->willReturn(null);
+
+        $this->adapter->applyModeChange('999UNKNOWN', '+o');
+
+        $this->repository->expects(self::never())->method('all');
+    }
+
+    #[Test]
+    public function fromNetworkUserModesExposed(): void
+    {
+        $this->repository->expects(self::never())->method('findByUid');
+        $this->repository->expects(self::never())->method('findByNick');
+        $this->repository->expects(self::never())->method('all');
+        $user = $this->createNetworkUser('001ABCD', 'TestUser', 'testid', 'real.host.com', 'cloaked.host.com', '+iroH');
+
+        $result = $this->adapter->fromNetworkUser($user);
+
+        self::assertSame('+iroH', $result->modes);
+    }
+
     private function createNetworkUser(
         string $uid,
         string $nick,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Subscriber;
 
+use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
@@ -18,6 +19,7 @@ final readonly class OperRoleModesDeidentifiedSubscriber implements EventSubscri
     public function __construct(
         private OperIrcopRepositoryInterface $ircopRepository,
         private ActiveConnectionHolder $connectionHolder,
+        private NetworkUserLookupPort $userLookup,
         private LoggerInterface $logger,
     ) {
     }
@@ -60,5 +62,7 @@ final readonly class OperRoleModesDeidentifiedSubscriber implements EventSubscri
             'modes' => $modesStr,
         ]);
         $serviceActions->setUserMode($serverSid, $event->uid, $modesStr);
+
+        $this->userLookup->applyModeChange($event->uid, $modesStr);
     }
 }

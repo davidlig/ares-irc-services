@@ -17,4 +17,10 @@ interface NetworkUserLookupPort
 
     /** @return string[] UIDs of all users currently on the network (for maintenance/pruning). */
     public function listConnectedUids(): array;
+
+    /**
+     * Apply a mode change to a user (e.g. "+r", "-oHq").
+     * Updates the local NetworkUser state after sending SVSMODE.
+     */
+    public function applyModeChange(string $uid, string $modeDelta): void;
 }

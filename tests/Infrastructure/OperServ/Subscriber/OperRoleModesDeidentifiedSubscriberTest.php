@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
@@ -49,9 +50,13 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
             ->with(42)
             ->willReturn(null);
 
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::never())->method('applyModeChange');
+
         $subscriber = new OperRoleModesDeidentifiedSubscriber(
             $ircopRepository,
             $this->connectionHolder,
+            $userLookup,
             new NullLogger(),
         );
 
@@ -76,9 +81,13 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
             ->with(42)
             ->willReturn($ircop);
 
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::never())->method('applyModeChange');
+
         $subscriber = new OperRoleModesDeidentifiedSubscriber(
             $ircopRepository,
             $this->connectionHolder,
+            $userLookup,
             new NullLogger(),
         );
 
@@ -103,9 +112,13 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
             ->with(42)
             ->willReturn($ircop);
 
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::never())->method('applyModeChange');
+
         $subscriber = new OperRoleModesDeidentifiedSubscriber(
             $ircopRepository,
             $this->connectionHolder,
+            $userLookup,
             new NullLogger(),
         );
 
@@ -143,9 +156,16 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
         $connectionHolder->setProtocolModule($module);
         $this->injectServerSid($connectionHolder, '001');
 
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup
+            ->expects(self::once())
+            ->method('applyModeChange')
+            ->with('001ABC', '-Hq');
+
         $subscriber = new OperRoleModesDeidentifiedSubscriber(
             $ircopRepository,
             $connectionHolder,
+            $userLookup,
             new NullLogger(),
         );
 
