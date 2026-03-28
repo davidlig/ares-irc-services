@@ -10,6 +10,7 @@ use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -302,5 +303,66 @@ final class MemoServContextTest extends TestCase
             new MemoServCommandRegistry([]),
             $this->createServiceNicks(),
         );
+    }
+
+    #[Test]
+    public function getSenderReturnsSenderView(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $serviceNicks = $this->createServiceNicks();
+
+        $context = new MemoServContext(
+            $sender,
+            $account,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $serviceNicks,
+        );
+
+        self::assertSame($sender, $context->getSender());
+    }
+
+    #[Test]
+    public function getSenderAccountReturnsAccount(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $serviceNicks = $this->createServiceNicks();
+
+        $context = new MemoServContext(
+            $sender,
+            $account,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new MemoServCommandRegistry([]),
+            $serviceNicks,
+        );
+
+        self::assertSame($account, $context->getSenderAccount());
+    }
+
+    #[Test]
+    public function getSenderReturnsNullWhenSenderIsNull(): void
+    {
+        $context = $this->createMinimalContext();
+
+        self::assertNull($context->getSender());
+        self::assertNull($context->getSenderAccount());
     }
 }

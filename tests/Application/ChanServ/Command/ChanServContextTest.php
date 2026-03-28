@@ -14,6 +14,7 @@ use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use DateTime;
 use DateTimeZone;
@@ -549,5 +550,103 @@ final class ChanServContextTest extends TestCase
         );
 
         self::assertSame($userLookup, $context->getUserLookup());
+    }
+
+    #[Test]
+    public function getSenderReturnsSenderView(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $registry = new ChanServCommandRegistry([]);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $serviceNicks = $this->createServiceNicks();
+
+        $context = new ChanServContext(
+            $sender,
+            $account,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $channelLookup,
+            $modeSupport,
+            $userLookup,
+            $serviceNicks,
+        );
+
+        self::assertSame($sender, $context->getSender());
+    }
+
+    #[Test]
+    public function getSenderAccountReturnsAccount(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $registry = new ChanServCommandRegistry([]);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $serviceNicks = $this->createServiceNicks();
+
+        $context = new ChanServContext(
+            $sender,
+            $account,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $channelLookup,
+            $modeSupport,
+            $userLookup,
+            $serviceNicks,
+        );
+
+        self::assertSame($account, $context->getSenderAccount());
+    }
+
+    #[Test]
+    public function getSenderReturnsNullWhenSenderIsNull(): void
+    {
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $registry = new ChanServCommandRegistry([]);
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $serviceNicks = $this->createServiceNicks();
+
+        $context = new ChanServContext(
+            null,
+            null,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $channelLookup,
+            $modeSupport,
+            $userLookup,
+            $serviceNicks,
+        );
+
+        self::assertNull($context->getSender());
+        self::assertNull($context->getSenderAccount());
     }
 }

@@ -351,4 +351,32 @@ final class OperServContextTest extends TestCase
             serviceNicks: $this->createServiceNicks(),
         );
     }
+
+    #[Test]
+    public function getSenderReturnsSenderView(): void
+    {
+        $sender = $this->createSender(uid: 'UID123', nick: 'TestNick');
+        $context = $this->createContext(sender: $sender);
+
+        self::assertSame($sender, $context->getSender());
+    }
+
+    #[Test]
+    public function getSenderAccountReturnsAccount(): void
+    {
+        $sender = $this->createSender(uid: 'UID123', nick: 'TestNick');
+        $account = $this->createStub(RegisteredNick::class);
+        $context = $this->createContext(sender: $sender, senderAccount: $account);
+
+        self::assertSame($account, $context->getSenderAccount());
+    }
+
+    #[Test]
+    public function getSenderReturnsNullWhenSenderIsNull(): void
+    {
+        $context = $this->createContext(sender: null, senderAccount: null);
+
+        self::assertNull($context->getSender());
+        self::assertNull($context->getSenderAccount());
+    }
 }

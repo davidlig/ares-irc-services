@@ -12,6 +12,7 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -329,5 +330,87 @@ final class NickServContextTest extends TestCase
         );
 
         $context->reply('key', ['%nick%' => 'User']);
+    }
+
+    #[Test]
+    public function getSenderReturnsSenderView(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $serviceNicks = $this->createServiceNicks('NickServ');
+
+        $context = new NickServContext(
+            $sender,
+            null,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $serviceNicks,
+        );
+
+        self::assertSame($sender, $context->getSender());
+    }
+
+    #[Test]
+    public function getSenderAccountReturnsAccount(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $serviceNicks = $this->createServiceNicks('NickServ');
+
+        $context = new NickServContext(
+            $sender,
+            $account,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $serviceNicks,
+        );
+
+        self::assertSame($account, $context->getSenderAccount());
+    }
+
+    #[Test]
+    public function getSenderReturnsNullWhenSenderIsNull(): void
+    {
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $serviceNicks = $this->createServiceNicks('NickServ');
+
+        $context = new NickServContext(
+            null,
+            null,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $serviceNicks,
+        );
+
+        self::assertNull($context->getSender());
+        self::assertNull($context->getSenderAccount());
     }
 }
