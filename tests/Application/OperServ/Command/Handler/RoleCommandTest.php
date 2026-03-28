@@ -13,6 +13,7 @@ use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Security\PermissionProviderInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
@@ -630,6 +631,109 @@ final class RoleCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, ['PERMS', 'ADMIN', 'LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.perms.list.empty', $messages);
+    }
+
+    #[Test]
+    public function permsListShowsAvailablePermissionsWhenNoneAssigned(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('NEWROLE', 'New role', false);
+
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $permissionRegistry = new PermissionRegistry([
+            new readonly class('TestService', ['PERM_ONE', 'PERM_TWO']) implements PermissionProviderInterface {
+                public function __construct(
+                    private string $serviceName,
+                    private array $permissions,
+                ) {
+                }
+
+                public function getServiceName(): string
+                {
+                    return $this->serviceName;
+                }
+
+                public function getPermissions(): array
+                {
+                    return $this->permissions;
+                }
+            },
+        ]);
+
+        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
+        $cmd->execute($this->createContext($sender, ['PERMS', 'NEWROLE', 'LIST'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.perms.list.header', $messages);
+        self::assertContains('role.perms.list.none_assigned', $messages);
+        self::assertContains('role.perms.list.available', $messages);
+        self::assertContains('  PERM_ONE', $messages);
+        self::assertContains('  PERM_TWO', $messages);
+    }
+
+    #[Test]
+    public function permsListShowsAllAssignedWhenRoleHasAllPermissions(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('FULLROLE', 'Full role', false);
+        $perm1 = OperPermission::create('PERM_ONE', 'Permission one');
+        $role->addPermission($perm1);
+
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $permissionRegistry = new PermissionRegistry([
+            new readonly class('TestService', ['PERM_ONE']) implements PermissionProviderInterface {
+                public function __construct(
+                    private string $serviceName,
+                    private array $permissions,
+                ) {
+                }
+
+                public function getServiceName(): string
+                {
+                    return $this->serviceName;
+                }
+
+                public function getPermissions(): array
+                {
+                    return $this->permissions;
+                }
+            },
+        ]);
+
+        $cmd = new RoleCommand($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
+        $cmd->execute($this->createContext($sender, ['PERMS', 'FULLROLE', 'LIST'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.perms.list.header', $messages);
+        self::assertContains('role.perms.list.assigned', $messages);
+        self::assertContains('  PERM_ONE', $messages);
+        self::assertContains('role.perms.list.all_assigned', $messages);
     }
 
     #[Test]

@@ -387,6 +387,105 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
+    public function repliesNotIdentifiedWhenRequiredPermissionIdentifiedAndUserNotIdentified(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $identifiedHandler = new class($contextHolder) implements NickServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'NEEDID';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'IDENTIFIED';
+            }
+
+            public function execute(NickServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('IDENTIFIED', self::anything())
+            ->willReturn(false);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
+            static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
+        );
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, 'Not identified', 'NOTICE');
+
+        $service = new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            new NickServCommandRegistry([$identifiedHandler]),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $notifier,
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $translator,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+
+        $service->dispatch('NEEDID', $sender);
+
+        self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
     public function repliesSyntaxWhenArgsBelowMinArgs(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');

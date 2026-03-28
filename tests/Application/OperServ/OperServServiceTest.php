@@ -737,6 +737,62 @@ final class OperServServiceTest extends TestCase
     }
 
     #[Test]
+    public function repliesNotIdentifiedWhenRequiredPermissionIdentifiedAndUserNotIdentified(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = $this->createMockCommandHandler('NEEDID', false, 'IDENTIFIED', 0);
+        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+            $contextHolder->context = $ctx;
+        };
+
+        $registry = new OperServCommandRegistry([$handler]);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn(null);
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('OperServ');
+        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
+        );
+        $accessHelper = $this->createAccessHelper();
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('IDENTIFIED', self::anything())
+            ->willReturn(false);
+
+        $notifier->expects(self::once())
+            ->method('sendMessage')
+            ->with($sender->uid, 'Not identified', 'NOTICE');
+
+        $service = $this->createOperServService(
+            $registry,
+            $nickRepository,
+            $notifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            $logger,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+        );
+
+        $service->dispatch('NEEDID', $sender);
+
+        self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
     public function minimumArgsCheckRejectsWhenNotEnoughArgs(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
