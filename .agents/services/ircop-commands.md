@@ -143,7 +143,7 @@ if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($req
 ### Step 4: Grant Permission via OperServ
 
 ```
-/OPERV ROLE PERMS myrole ADD CHANSERV_MYNEWCOMMAND
+/OPERV ROLE PERMS myrole ADD operserv.admin.add
 ```
 
 ## Managing Permissions
@@ -172,31 +172,9 @@ Shows:
 
 ## Permission Constants
 
-### NickServ
+### NickServ, ChanServ, MemoServ
 
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `DROP` | `NICKSERV_DROP` | Drop registered nicks |
-
-### ChanServ
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `DROP` | `CHANSERV_DROP` | Drop registered channels |
-| `SUSPEND` | `CHANSERV_SUSPEND` | Suspend channels |
-| `UNSUSPEND` | `CHANSERV_UNSUSPEND` | Unsuspend channels |
-| `CLOSE` | `CHANSERV_CLOSE` | Close channels |
-| `UNCLOSE` | `CHANSERV_UNCLOSE` | Unclose channels |
-
-### MemoServ
-
-| Constant | Value | Description |
-|----------|-------|-------------|
-| `SEND` | `MEMOSERV_SEND` | Send memos to any user |
-| `DISABLE` | `MEMOSERV_DISABLE` | Disable memo service |
-| `ENABLE` | `MEMOSERV_ENABLE` | Enable memo service |
-| `READ` | `MEMOSERV_READ` | Read other users' memos |
-| `DELETE` | `MEMOSERV_DELETE` | Delete other users' memos |
+**Note:** Permission definitions for NickServ, ChanServ, and MemoServ are not yet implemented. Permissions will be added as IRCOP-only commands are developed for these services.
 
 ### OperServ
 

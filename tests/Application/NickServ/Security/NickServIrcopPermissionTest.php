@@ -34,14 +34,6 @@ final class NickServIrcopPermissionTest extends TestCase
     {
         $permission = new NickServIrcopPermission();
 
-        $permissions = $permission->getPermissions();
-
-        self::assertSame([], $permissions);
-    }
-
-    #[Test]
-    public function dropConstantHasCorrectValue(): void
-    {
-        self::assertSame('NICKSERV_DROP', NickServIrcopPermission::DROP);
+        self::assertSame([], $permission->getPermissions());
     }
 }

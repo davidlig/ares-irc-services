@@ -8,16 +8,6 @@ use App\Application\Security\PermissionProviderInterface;
 
 final readonly class MemoServIrcopPermission implements PermissionProviderInterface
 {
-    public const string SEND = 'MEMOSERV_SEND';
-
-    public const string DISABLE = 'MEMOSERV_DISABLE';
-
-    public const string ENABLE = 'MEMOSERV_ENABLE';
-
-    public const string READ = 'MEMOSERV_READ';
-
-    public const string DELETE = 'MEMOSERV_DELETE';
-
     public function getServiceName(): string
     {
         return 'MemoServ';

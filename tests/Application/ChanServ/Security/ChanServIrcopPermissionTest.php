@@ -34,18 +34,6 @@ final class ChanServIrcopPermissionTest extends TestCase
     {
         $permission = new ChanServIrcopPermission();
 
-        $permissions = $permission->getPermissions();
-
-        self::assertSame([], $permissions);
-    }
-
-    #[Test]
-    public function constantsHaveCorrectValues(): void
-    {
-        self::assertSame('CHANSERV_DROP', ChanServIrcopPermission::DROP);
-        self::assertSame('CHANSERV_SUSPEND', ChanServIrcopPermission::SUSPEND);
-        self::assertSame('CHANSERV_UNSUSPEND', ChanServIrcopPermission::UNSUSPEND);
-        self::assertSame('CHANSERV_CLOSE', ChanServIrcopPermission::CLOSE);
-        self::assertSame('CHANSERV_UNCLOSE', ChanServIrcopPermission::UNCLOSE);
+        self::assertSame([], $permission->getPermissions());
     }
 }

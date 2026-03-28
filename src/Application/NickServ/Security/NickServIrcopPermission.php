@@ -8,8 +8,6 @@ use App\Application\Security\PermissionProviderInterface;
 
 final readonly class NickServIrcopPermission implements PermissionProviderInterface
 {
-    public const string DROP = 'NICKSERV_DROP';
-
     public function getServiceName(): string
     {
         return 'NickServ';

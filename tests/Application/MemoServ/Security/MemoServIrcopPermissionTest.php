@@ -34,18 +34,6 @@ final class MemoServIrcopPermissionTest extends TestCase
     {
         $permission = new MemoServIrcopPermission();
 
-        $permissions = $permission->getPermissions();
-
-        self::assertSame([], $permissions);
-    }
-
-    #[Test]
-    public function constantsHaveCorrectValues(): void
-    {
-        self::assertSame('MEMOSERV_SEND', MemoServIrcopPermission::SEND);
-        self::assertSame('MEMOSERV_DISABLE', MemoServIrcopPermission::DISABLE);
-        self::assertSame('MEMOSERV_ENABLE', MemoServIrcopPermission::ENABLE);
-        self::assertSame('MEMOSERV_READ', MemoServIrcopPermission::READ);
-        self::assertSame('MEMOSERV_DELETE', MemoServIrcopPermission::DELETE);
+        self::assertSame([], $permission->getPermissions());
     }
 }
