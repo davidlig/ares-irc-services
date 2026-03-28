@@ -25,12 +25,6 @@ final readonly class ChanServIrcopPermission implements PermissionProviderInterf
 
     public function getPermissions(): array
     {
-        return [
-            self::DROP,
-            self::SUSPEND,
-            self::UNSUSPEND,
-            self::CLOSE,
-            self::UNCLOSE,
-        ];
+        return [];
     }
 }

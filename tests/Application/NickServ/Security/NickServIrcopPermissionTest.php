@@ -30,28 +30,18 @@ final class NickServIrcopPermissionTest extends TestCase
     }
 
     #[Test]
-    public function getPermissionsReturnsDropPermission(): void
+    public function getPermissionsReturnsEmptyArrayUntilCommandsAreImplemented(): void
     {
         $permission = new NickServIrcopPermission();
 
         $permissions = $permission->getPermissions();
 
-        self::assertContains(NickServIrcopPermission::DROP, $permissions);
+        self::assertSame([], $permissions);
     }
 
     #[Test]
     public function dropConstantHasCorrectValue(): void
     {
         self::assertSame('NICKSERV_DROP', NickServIrcopPermission::DROP);
-    }
-
-    #[Test]
-    public function allPermissionsAreUppercaseWithUnderscore(): void
-    {
-        $permission = new NickServIrcopPermission();
-
-        foreach ($permission->getPermissions() as $perm) {
-            self::assertMatchesRegularExpression('/^[A-Z_]+$/', $perm);
-        }
     }
 }

@@ -30,17 +30,13 @@ final class ChanServIrcopPermissionTest extends TestCase
     }
 
     #[Test]
-    public function getPermissionsReturnsAllPermissions(): void
+    public function getPermissionsReturnsEmptyArrayUntilCommandsAreImplemented(): void
     {
         $permission = new ChanServIrcopPermission();
 
         $permissions = $permission->getPermissions();
 
-        self::assertContains(ChanServIrcopPermission::DROP, $permissions);
-        self::assertContains(ChanServIrcopPermission::SUSPEND, $permissions);
-        self::assertContains(ChanServIrcopPermission::UNSUSPEND, $permissions);
-        self::assertContains(ChanServIrcopPermission::CLOSE, $permissions);
-        self::assertContains(ChanServIrcopPermission::UNCLOSE, $permissions);
+        self::assertSame([], $permissions);
     }
 
     #[Test]
@@ -51,15 +47,5 @@ final class ChanServIrcopPermissionTest extends TestCase
         self::assertSame('CHANSERV_UNSUSPEND', ChanServIrcopPermission::UNSUSPEND);
         self::assertSame('CHANSERV_CLOSE', ChanServIrcopPermission::CLOSE);
         self::assertSame('CHANSERV_UNCLOSE', ChanServIrcopPermission::UNCLOSE);
-    }
-
-    #[Test]
-    public function allPermissionsAreUppercaseWithUnderscore(): void
-    {
-        $permission = new ChanServIrcopPermission();
-
-        foreach ($permission->getPermissions() as $perm) {
-            self::assertMatchesRegularExpression('/^[A-Z_]+$/', $perm);
-        }
     }
 }

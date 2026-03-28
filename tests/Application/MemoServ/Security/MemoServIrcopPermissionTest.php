@@ -30,17 +30,13 @@ final class MemoServIrcopPermissionTest extends TestCase
     }
 
     #[Test]
-    public function getPermissionsReturnsAllPermissions(): void
+    public function getPermissionsReturnsEmptyArrayUntilCommandsAreImplemented(): void
     {
         $permission = new MemoServIrcopPermission();
 
         $permissions = $permission->getPermissions();
 
-        self::assertContains(MemoServIrcopPermission::SEND, $permissions);
-        self::assertContains(MemoServIrcopPermission::DISABLE, $permissions);
-        self::assertContains(MemoServIrcopPermission::ENABLE, $permissions);
-        self::assertContains(MemoServIrcopPermission::READ, $permissions);
-        self::assertContains(MemoServIrcopPermission::DELETE, $permissions);
+        self::assertSame([], $permissions);
     }
 
     #[Test]
@@ -51,15 +47,5 @@ final class MemoServIrcopPermissionTest extends TestCase
         self::assertSame('MEMOSERV_ENABLE', MemoServIrcopPermission::ENABLE);
         self::assertSame('MEMOSERV_READ', MemoServIrcopPermission::READ);
         self::assertSame('MEMOSERV_DELETE', MemoServIrcopPermission::DELETE);
-    }
-
-    #[Test]
-    public function allPermissionsAreUppercaseWithUnderscore(): void
-    {
-        $permission = new MemoServIrcopPermission();
-
-        foreach ($permission->getPermissions() as $perm) {
-            self::assertMatchesRegularExpression('/^[A-Z_]+$/', $perm);
-        }
     }
 }

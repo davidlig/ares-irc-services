@@ -25,12 +25,6 @@ final readonly class MemoServIrcopPermission implements PermissionProviderInterf
 
     public function getPermissions(): array
     {
-        return [
-            self::SEND,
-            self::DISABLE,
-            self::ENABLE,
-            self::READ,
-            self::DELETE,
-        ];
+        return [];
     }
 }
