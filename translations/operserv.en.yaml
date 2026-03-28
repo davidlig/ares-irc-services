@@ -163,3 +163,7 @@ kill:
 debug:
   action_message:   "%operator% executes command %command% on %target%. Reason: %reason%"
   action_info:      "Nick: %nick% | Host: %host% | IP: %ip%"
+
+# --- PERMISSIONS --------------------------------------------------------------
+permissions:
+  operserv.kill:    "Disconnect a user from the network (KILL)"

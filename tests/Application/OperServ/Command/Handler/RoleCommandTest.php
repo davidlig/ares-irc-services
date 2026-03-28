@@ -734,6 +734,68 @@ final class RoleCommandTest extends TestCase
     }
 
     #[Test]
+    public function permsListShowsPermissionsWithDescriptions(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'operserv', string $locale = 'en'): string {
+            if ('permissions.operserv.kill' === $id) {
+                return 'Disconnect a user from the network';
+            }
+            if ('permissions.operserv.other' === $id) {
+                return 'Other permission description';
+            }
+
+            return $id;
+        });
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('TESTROLE', 'Test role', false);
+        $perm = OperPermission::create('operserv.kill', 'Kill users');
+        $role->addPermission($perm);
+
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $permissionRegistry = new PermissionRegistry([
+            new readonly class('OperServ', ['operserv.kill', 'operserv.other']) implements PermissionProviderInterface {
+                public function __construct(
+                    private string $serviceName,
+                    private array $permissions,
+                ) {
+                }
+
+                public function getServiceName(): string
+                {
+                    return $this->serviceName;
+                }
+
+                public function getPermissions(): array
+                {
+                    return $this->permissions;
+                }
+            },
+        ]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
+        $cmd->execute($this->createContext($sender, ['PERMS', 'TESTROLE', 'LIST'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.perms.list.header', $messages);
+        self::assertContains('role.perms.list.assigned', $messages);
+        self::assertContains('  operserv.kill - Disconnect a user from the network', $messages);
+        self::assertContains('role.perms.list.available', $messages);
+        self::assertContains('  operserv.other - Other permission description', $messages);
+    }
+
+    #[Test]
     public function permsListShowsAllAssignedWhenRoleHasAllPermissions(): void
     {
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');

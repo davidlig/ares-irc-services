@@ -250,7 +250,12 @@ final readonly class RoleCommand implements OperServCommandInterface
         if (!empty($assignedPermissions)) {
             $context->reply('role.perms.list.assigned');
             foreach ($assignedPermissions as $perm) {
-                $context->replyRaw(sprintf('  %s', $perm));
+                $description = $context->trans('permissions.' . $perm, [], 'operserv');
+                if (str_starts_with($description, 'permissions.')) {
+                    $context->replyRaw(sprintf('  %s', $perm));
+                } else {
+                    $context->replyRaw(sprintf('  %s - %s', $perm, $description));
+                }
             }
         } else {
             $context->reply('role.perms.list.none_assigned');
@@ -259,7 +264,12 @@ final readonly class RoleCommand implements OperServCommandInterface
         if (!empty($availablePermissions)) {
             $context->reply('role.perms.list.available');
             foreach ($availablePermissions as $perm) {
-                $context->replyRaw(sprintf('  %s', $perm));
+                $description = $context->trans('permissions.' . $perm, [], 'operserv');
+                if (str_starts_with($description, 'permissions.')) {
+                    $context->replyRaw(sprintf('  %s', $perm));
+                } else {
+                    $context->replyRaw(sprintf('  %s - %s', $perm, $description));
+                }
             }
         } else {
             $context->reply('role.perms.list.all_assigned');
