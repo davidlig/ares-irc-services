@@ -124,11 +124,20 @@ final class NickProtectionServiceTest extends TestCase
         $account = RegisteredNick::createPending('MyNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
         $account->activate();
 
+        // Set ID via reflection since it's set by Doctrine on persistence
+        $reflection = new ReflectionClass($account);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($account, 1);
+
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects(self::atLeastOnce())->method('findByNick')->with('MyNick')->willReturn($account);
         $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('forceNick');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
 
         $service = new NickProtectionService(
             $repo,
@@ -138,7 +147,7 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $eventDispatcher,
         );
 
         $service->enforceProtection($user);

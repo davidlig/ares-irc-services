@@ -7,6 +7,7 @@ namespace App\Application\NickServ;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -214,6 +215,13 @@ final readonly class NickProtectionService
             $this->logger->info(sprintf(
                 'Nick protection: %s [%s] auto-identified (has +r)',
                 $nick,
+                $user->uid,
+            ));
+
+            // Dispatch event so subscribers (like OperRoleModesSubscriber) can react
+            $this->eventDispatcher->dispatch(new NickIdentifiedEvent(
+                $account->getId(),
+                $account->getNickname(),
                 $user->uid,
             ));
 
