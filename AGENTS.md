@@ -124,11 +124,16 @@ For specialized tasks, consult the corresponding skill file:
 |------|------|-------------|
 | **Testing** | `.agents/testing/` | Tests, coverage, PHPUnit, deprecations |
 | **Memory** | `.agents/memory/` | Long-running daemons, memory leaks, Doctrine clear |
-| **Protocol** | `.agents/protocol/` | IRCd modules, wire format, adding new IRCd |
-| **Services** | `.agents/services/` | Core vs Services, Ports, Bots, new service implementation |
-| **Commands** | `.agents/services/commands.md` | Creating new IRC service commands ( NickServ, ChanServ, etc.) |
+| **Protocol** | `.agents/protocol/` | IRCd modules, wire format |
+| ├─ Adding IRCd | `.agents/protocol/adding-new-ircd.md` | Checklist for new IRCd support |
+| **Services** | `.agents/services/` | Core vs Services, Ports, Bots |
+| ├─ Commands | `.agents/services/commands.md` | Creating new IRC service commands |
+| ├─ IRCop Permissions | `.agents/services/ircop-commands.md` | IRCop permission system |
+| ├─ Debug Actions | `.agents/services/debug-actions.md` | Debug logging for IRCop commands |
+| ├─ HELP Design | `.agents/services/help-design.md` | Unified HELP output format |
+| └─ New Bot/Service | `.agents/services/adding-new-bot.md` | Checklist for new service |
 
-Each skill has a `README.md` with conventions, rules, and code references. For step-by-step checklists (adding a new IRCd, adding a new service), see the additional `.md` files in each skill directory.
+Each skill has a `README.md` with conventions, rules, and code references.
 
 ### 3.1 Quick Reference
 
