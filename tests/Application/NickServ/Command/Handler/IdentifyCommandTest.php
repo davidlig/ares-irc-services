@@ -20,6 +20,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -74,6 +75,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -109,6 +111,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -145,6 +148,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -188,6 +192,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -225,6 +230,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -264,6 +270,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -306,6 +313,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -347,6 +355,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -390,6 +399,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -442,6 +452,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -500,6 +511,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -555,6 +567,7 @@ final class IdentifyCommandTest extends TestCase
             $failedAttempt,
             $clientKeyResolver,
             $vhostResolver,
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             5,
             300,
@@ -575,6 +588,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -593,6 +607,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -611,6 +626,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -629,6 +645,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -647,6 +664,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -665,6 +683,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -683,6 +702,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -701,6 +721,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -719,6 +740,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -737,6 +759,7 @@ final class IdentifyCommandTest extends TestCase
             new IdentifyFailedAttemptRegistry(),
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             5,
             300,
@@ -809,5 +832,150 @@ final class IdentifyCommandTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+    }
+
+    #[Test]
+    public function identifyDoesNotApplyVhostWhenIrcopHasForcedVhost(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('verifyPassword')->willReturn(true);
+        $account->method('getNickname')->willReturn('Admin');
+        $account->method('getId')->willReturn(1);
+        $account->method('getVhost')->willReturn('personal.vhost');
+        $account->method('getLanguage')->willReturn('en');
+        $account->expects(self::once())->method('markSeen');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->with('Admin')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role', true);
+        $role->setForcedVhostPattern('admin.network');
+        $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(1, $role);
+
+        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->with(1)->willReturn($ircop);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserAccount');
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $ircopRepo,
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+
+        $sender = new SenderView('UID1', 'Admin', 'i', 'h', 'c', 'ip');
+        $cmd->execute($this->createContext($sender, ['Admin', 'password'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function identifyAppliesVhostWhenIrcopHasNoForcedVhost(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('verifyPassword')->willReturn(true);
+        $account->method('getNickname')->willReturn('Admin');
+        $account->method('getId')->willReturn(1);
+        $account->method('getVhost')->willReturn('personal.vhost');
+        $account->method('getLanguage')->willReturn('en');
+        $account->expects(self::once())->method('markSeen');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->with('Admin')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role', true);
+        $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(1, $role);
+
+        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->with(1)->willReturn($ircop);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserAccount');
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID1', 'personal.vhost', 'SID');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $ircopRepo,
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+
+        $sender = new SenderView('UID1', 'Admin', 'i', 'h', 'c', 'ip', false, false, 'SID');
+        $cmd->execute($this->createContext($sender, ['Admin', 'password'], $notifier, $translator));
+    }
+
+    #[Test]
+    public function identifyAppliesVhostWhenNotIrcop(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('verifyPassword')->willReturn(true);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getId')->willReturn(1);
+        $account->method('getVhost')->willReturn('user.vhost');
+        $account->method('getLanguage')->willReturn('en');
+        $account->expects(self::once())->method('markSeen');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->with('User')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->with(1)->willReturn(null);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserAccount');
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID1', 'user.vhost', 'SID');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $ircopRepo,
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false, 'SID');
+        $cmd->execute($this->createContext($sender, ['User', 'password'], $notifier, $translator));
     }
 }

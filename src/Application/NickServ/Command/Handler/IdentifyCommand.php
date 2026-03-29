@@ -15,6 +15,8 @@ use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\ValueObject\ForcedVhost;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -32,6 +34,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly IdentifyFailedAttemptRegistry $failedAttemptRegistry,
         private readonly NickServClientKeyResolver $clientKeyResolver,
         private readonly VhostDisplayResolver $vhostDisplayResolver,
+        private readonly OperIrcopRepositoryInterface $ircopRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly int $identifyMaxFailedAttempts,
         private readonly int $identifyFailedWindowSeconds,
@@ -249,6 +252,10 @@ final readonly class IdentifyCommand implements NickServCommandInterface
     /**
      * Restores the registered nick (if the user is on a guest nick) and sets
      * the +r (identified) mode via SVS2MODE.
+     *
+     * For IRCops with forced vhost, personal vhost is NOT applied here.
+     * The OperRoleForcedVhostSubscriber (listening to NickIdentifiedEvent) will
+     * apply the forced vhost instead.
      */
     private function applyIrcSession(
         NickServContext $context,
@@ -262,7 +269,23 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
         $context->getNotifier()->setUserAccount($sender->uid, $account->getNickname());
 
+        if ($this->hasForcedVhost($account->getId())) {
+            return;
+        }
+
         $displayVhost = $this->vhostDisplayResolver->getDisplayVhost($account->getVhost());
         $context->getNotifier()->setUserVhost($sender->uid, $displayVhost, $sender->serverSid);
+    }
+
+    private function hasForcedVhost(int $nickId): bool
+    {
+        $ircop = $this->ircopRepository->findByNickId($nickId);
+        if (null === $ircop) {
+            return false;
+        }
+
+        $pattern = $ircop->getRole()->getForcedVhostPattern();
+
+        return null !== $pattern && '' !== $pattern && ForcedVhost::isValidPattern($pattern);
     }
 }
