@@ -63,6 +63,11 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
         }
     }
 
+    public function updateVhost(string $uid, string $vhost): void
+    {
+        $this->networkUserRepository->updateVirtualHost(new Uid($uid), $vhost);
+    }
+
     /** Used by Infrastructure when converting event payloads (NetworkUser) to SenderView. */
     public function fromNetworkUser(NetworkUser $user): SenderView
     {

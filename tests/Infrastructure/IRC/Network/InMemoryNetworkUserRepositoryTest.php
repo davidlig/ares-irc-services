@@ -160,4 +160,25 @@ final class InMemoryNetworkUserRepositoryTest extends TestCase
         self::assertSame($user2, $this->repository->findByUid(new Uid('001ABCD')));
         self::assertSame(1, $this->repository->count());
     }
+
+    #[Test]
+    public function updateVirtualHostUpdatesUserVhost(): void
+    {
+        $user = $this->createUser('001ABCD', 'TestUser');
+        $this->repository->add($user);
+
+        self::assertSame('vhost', $user->getVirtualHost());
+
+        $this->repository->updateVirtualHost(new Uid('001ABCD'), 'new.vhost.com');
+
+        self::assertSame('new.vhost.com', $user->getVirtualHost());
+    }
+
+    #[Test]
+    public function updateVirtualHostDoesNothingWhenUserNotFound(): void
+    {
+        $this->repository->updateVirtualHost(new Uid('NONEXISTENT'), 'new.vhost.com');
+
+        self::assertNull($this->repository->findByUid(new Uid('NONEXISTENT')));
+    }
 }

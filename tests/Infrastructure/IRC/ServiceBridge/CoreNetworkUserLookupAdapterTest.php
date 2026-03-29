@@ -249,6 +249,19 @@ final class CoreNetworkUserLookupAdapterTest extends TestCase
     }
 
     #[Test]
+    public function updateVhostUpdatesUserVirtualHost(): void
+    {
+        $user = $this->createNetworkUser('001ABCD', 'TestUser', 'test', 'test.local', 'test.local', '+ir');
+
+        $this->repository
+            ->expects(self::once())
+            ->method('updateVirtualHost')
+            ->with(new Uid('001ABCD'), 'new.vhost.com');
+
+        $this->adapter->updateVhost('001ABCD', 'new.vhost.com');
+    }
+
+    #[Test]
     public function fromNetworkUserModesExposed(): void
     {
         $this->repository->expects(self::never())->method('findByUid');

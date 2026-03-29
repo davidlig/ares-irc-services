@@ -134,10 +134,6 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
                     return;
                 }
             }
-            // When clearing (vhost === ''), do NOT skip based on displayHost === cloakedHost.
-            // Our displayHost comes from NetworkUser state, updated only on SETHOST; if the
-            // IRCd never echoed SETHOST after we set vhost, we would wrongly skip and the
-            // vhost would not be removed on de-identify (e.g. nick change stripping +r).
         }
 
         $module = $this->connectionHolder->getProtocolModule();
@@ -150,6 +146,9 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
             ? $vhostBuilder->getSetVhostLine($sid, $targetUid, $vhost)
             : $vhostBuilder->getClearVhostLine($sid, $targetUid);
         $this->write($line);
+
+        // Update local NetworkUser state to keep displayHost in sync
+        $this->userLookup->updateVhost($targetUid, $vhost);
     }
 
     private function getServerSid(): string

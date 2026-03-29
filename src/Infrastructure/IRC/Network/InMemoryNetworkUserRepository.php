@@ -68,4 +68,12 @@ class InMemoryNetworkUserRepository implements NetworkUserRepositoryInterface
     {
         return count($this->users);
     }
+
+    public function updateVirtualHost(Uid $uid, string $vhost): void
+    {
+        $user = $this->users[$uid->value] ?? null;
+        if (null !== $user) {
+            $user->updateVirtualHost($vhost);
+        }
+    }
 }

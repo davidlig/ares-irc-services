@@ -29,4 +29,9 @@ interface NetworkUserRepositoryInterface
     public function all(): array;
 
     public function count(): int;
+
+    /**
+     * Updates the virtual host for a user (called after sending CHGHOST).
+     */
+    public function updateVirtualHost(Uid $uid, string $vhost): void;
 }

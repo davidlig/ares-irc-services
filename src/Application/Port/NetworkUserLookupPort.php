@@ -23,4 +23,10 @@ interface NetworkUserLookupPort
      * Updates the local NetworkUser state after sending SVSMODE.
      */
     public function applyModeChange(string $uid, string $modeDelta): void;
+
+    /**
+     * Update the virtual host for a user after sending CHGHOST.
+     * Updates the local NetworkUser state to keep displayHost in sync.
+     */
+    public function updateVhost(string $uid, string $vhost): void;
 }
