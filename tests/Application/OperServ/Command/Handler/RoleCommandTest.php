@@ -8,6 +8,7 @@ use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
 use App\Application\OperServ\Command\Handler\RoleCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
@@ -85,6 +86,7 @@ final class RoleCommandTest extends TestCase
             $notifier,
             $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -1421,6 +1423,7 @@ final class RoleCommandTest extends TestCase
             $nsNotifier,
             $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 

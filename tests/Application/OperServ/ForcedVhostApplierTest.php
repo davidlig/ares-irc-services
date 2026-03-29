@@ -6,6 +6,7 @@ namespace App\Tests\Application\OperServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use ReflectionClass;
 
 #[CoversClass(ForcedVhostApplier::class)]
 final class ForcedVhostApplierTest extends TestCase
@@ -41,6 +43,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -71,6 +74,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -105,6 +109,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -139,6 +144,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -168,6 +174,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -211,6 +218,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -253,6 +261,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -290,6 +299,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -321,6 +331,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -365,6 +376,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             $logger,
         );
 
@@ -401,6 +413,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -441,6 +454,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -493,6 +507,7 @@ final class ForcedVhostApplierTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             $logger,
         );
 
@@ -500,5 +515,72 @@ final class ForcedVhostApplierTest extends TestCase
 
         self::assertCount(1, $logger->warnings);
         self::assertSame('ForcedVhostApplier: invalid pattern for role update', $logger->warnings[0]['message']);
+    }
+
+    #[Test]
+    public function updateVhostForRoleRestoresPersonalVhostWhenPatternRemoved(): void
+    {
+        $roleRefl = new ReflectionClass(OperRole::class);
+        $roleIdProp = $roleRefl->getProperty('id');
+        $roleIdProp->setAccessible(true);
+
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+        $roleIdProp->setValue($role, 1);
+        $role->setForcedVhostPattern('admin.network');
+        $ircop = OperIrcop::create(123, $role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
+
+        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick->method('getId')->willReturn(123);
+        $nick->method('getNickname')->willReturn('davidlig');
+        $nick->method('getVhost')->willReturn('personal.vhost');
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($nick);
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'davidlig');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('setUserVhost')
+            ->with('UID1', 'personal.vhost', '001');
+
+        $user = new SenderView('UID1', 'davidlig', 'i', 'h', 'c', 'ip');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $logger = new class extends \Psr\Log\AbstractLogger {
+            public array $infos = [];
+
+            public function log($level, $message, array $context = []): void
+            {
+                if ('info' === $level) {
+                    $this->infos[] = ['message' => $message, 'context' => $context];
+                }
+            }
+        };
+
+        $applier = new ForcedVhostApplier(
+            $ircopRepo,
+            $nickRepo,
+            $identifiedRegistry,
+            $notifier,
+            $userLookup,
+            $connectionHolder,
+            new VhostDisplayResolver(),
+            $logger,
+        );
+
+        $applier->updateVhostForRole(1, null);
+
+        self::assertCount(1, $logger->infos);
+        self::assertSame('ForcedVhostApplier: restored personal vhost (role pattern removed)', $logger->infos[0]['message']);
+        self::assertSame('personal.vhost', $logger->infos[0]['context']['personalVhost']);
     }
 }

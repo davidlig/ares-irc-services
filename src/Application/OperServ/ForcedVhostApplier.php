@@ -6,6 +6,7 @@ namespace App\Application\OperServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -22,6 +23,7 @@ final readonly class ForcedVhostApplier
         private NickServNotifierInterface $notifier,
         private NetworkUserLookupPort $userLookup,
         private ActiveConnectionHolderInterface $connectionHolder,
+        private VhostDisplayResolver $vhostDisplayResolver,
         private LoggerInterface $logger,
     ) {
     }
@@ -94,12 +96,14 @@ final readonly class ForcedVhostApplier
             }
 
             if (null === $newPattern || '' === $newPattern) {
+                $personalVhost = $this->vhostDisplayResolver->getDisplayVhost($nick->getVhost());
                 $serverSid = $this->connectionHolder->getServerSid();
-                $this->notifier->setUserVhost($uid, '', $serverSid);
-                $this->logger->info('ForcedVhostApplier: cleared forced vhost (role pattern removed)', [
+                $this->notifier->setUserVhost($uid, $personalVhost, $serverSid);
+                $this->logger->info('ForcedVhostApplier: restored personal vhost (role pattern removed)', [
                     'nickId' => $nickId,
                     'uid' => $uid,
                     'roleId' => $roleId,
+                    'personalVhost' => $personalVhost,
                 ]);
 
                 continue;

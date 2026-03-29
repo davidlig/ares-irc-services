@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
@@ -70,6 +71,7 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
@@ -100,6 +102,7 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
             $notifier,
             $userLookup,
             $connectionHolder,
+            new VhostDisplayResolver(),
             new NullLogger(),
         );
 
