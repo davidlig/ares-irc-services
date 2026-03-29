@@ -63,11 +63,11 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES} <nombre> ..."
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nombre> ..."
   short:            "Gestiona roles de operadores."
-  help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
+  help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP,\nVHOST gestiona el patrón de vhost forzado de un rol.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
 
-  unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST, PERMS o MODES."
+  unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST, PERMS, MODES o VHOST."
   not_found:        "\x0304✗\x03 El rol \x02%role%\x02 no existe."
   already_exists:   "\x0304✗\x03 El rol \x02%role%\x02 ya existe."
   protected:        "\x0304✗\x03 El rol \x02%role%\x02 está protegido y no puede eliminarse."
@@ -147,6 +147,29 @@ role:
       invalid_mode: "\x0304✗\x03 El modo \x02%mode%\x02 no es un modo IRCOP válido."
       invalid_modes: "\x0304✗\x03 Modos inválidos: %invalid%. Modos válidos: %valid%."
       no_irc_user_modes: "\x0304✗\x03 El IRCD actual no tiene modos IRCOP configurados."
+
+  vhost:
+    syntax:         "ROLE VHOST <rol> {VIEW|SET} [patrón]"
+    short:          "Gestiona el patrón de vhost forzado del rol."
+    help:           "Gestiona el vhost forzado asignado a un rol.\nVIEW muestra el patrón de vhost forzado actual.\nSET asigna un patrón de vhost forzado (los usuarios con este rol\nrecibirán este vhost al identificarse, sobrescribiendo el vhost personal).\nEl patrón se añade después del nickname limpio, ej:\n  Nick: _davidlig_ → Patrón: admin.ares → VHost: davidlig.admin.ares\nCaracteres válidos: a-z, A-Z, 0-9, guion (-) y punto (.).\nDebe tener al menos un punto, no puede empezar/terminar con - o . o tener ..\nUsa OFF para eliminar el patrón de vhost forzado.\nEste comando está restringido a usuarios Root."
+    unknown_action:  "\x0304✗\x03 Acción desconocida \x02%action%\x02. Usa VIEW o SET."
+
+    view:
+      syntax:       "ROLE VHOST <rol> VIEW"
+      short:         "Muestra el patrón de vhost forzado del rol."
+      help:          "Muestra el patrón de vhost forzado asignado a un rol.\nEste comando está restringido a usuarios Root."
+      header:        "\x0307---\x03 \x02VHost forzado de %role%\x02 \x0307---\x03"
+      empty:        "El rol \x02%role%\x02 no tiene patrón de vhost forzado configurado."
+      line:         "  Patrón: \x0303%pattern%\x03"
+      example:      "  Ejemplo: \x02nickname\x02.%pattern%"
+
+    set:
+      syntax:       "ROLE VHOST <rol> SET <patrón>"
+      short:         "Establece el patrón de vhost forzado del rol."
+      help:          "Establece el patrón de vhost forzado para el rol.\nLos usuarios que se identifiquen con este rol recibirán el vhost forzado,\nque tiene prioridad sobre el vhost personal.\nEl patrón se añade después del nickname limpio.\nUsa OFF u omite el argumento para eliminar el vhost forzado.\nEste comando está restringido a usuarios Root."
+      done:         "\x0303✓\x03 Establecido patrón de vhost forzado para el rol \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Eliminado el patrón de vhost forzado del rol \x02%role%\x02."
+      invalid:      "\x0304✗\x03 Patrón de vhost inválido. Caracteres válidos: a-z, A-Z, 0-9, - y .. Debe tener al menos un punto, no puede empezar/terminar con - o . o tener .."
 
 # --- KILL --------------------------------------------------------------------
 kill:

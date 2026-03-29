@@ -14,6 +14,7 @@
         <field name="description" type="string" length="255" column="description"/>
         <field name="protected" type="boolean" column="protected"/>
         <field name="userModes" type="text" column="user_modes" nullable="true"/>
+        <field name="forcedVhostPattern" type="string" length="255" column="forced_vhost_pattern" nullable="true"/>
         <many-to-many field="permissions" target-entity="App\Domain\OperServ\Entity\OperPermission">
             <join-table name="oper_role_permissions">
                 <join-columns>

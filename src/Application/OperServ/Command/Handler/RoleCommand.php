@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Application\OperServ\Command\Handler;
 
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\NickServ\VhostValidator;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
+use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
@@ -14,13 +16,16 @@ use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
+use App\Domain\OperServ\ValueObject\ForcedVhost;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_diff;
 use function count;
 use function implode;
+use function in_array;
 use function sprintf;
 use function strtoupper;
+use function trim;
 
 final readonly class RoleCommand implements OperServCommandInterface
 {
@@ -32,6 +37,8 @@ final readonly class RoleCommand implements OperServCommandInterface
         private ActiveConnectionHolderInterface $connectionHolder,
         private IdentifiedSessionRegistry $identifiedRegistry,
         private IrcopModeApplier $modeApplier,
+        private ForcedVhostApplier $vhostApplier,
+        private VhostValidator $vhostValidator,
         private EventDispatcherInterface $eventDispatcher,
     ) {
     }
@@ -79,6 +86,7 @@ final readonly class RoleCommand implements OperServCommandInterface
             ['name' => 'DEL', 'desc_key' => 'role.del.short', 'help_key' => 'role.del.help', 'syntax_key' => 'role.del.syntax'],
             ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax'],
             ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax'],
+            ['name' => 'VHOST', 'desc_key' => 'role.vhost.short', 'help_key' => 'role.vhost.help', 'syntax_key' => 'role.vhost.syntax'],
         ];
     }
 
@@ -117,6 +125,9 @@ final readonly class RoleCommand implements OperServCommandInterface
                 break;
             case 'MODES':
                 $this->doModes($context);
+                break;
+            case 'VHOST':
+                $this->doVhost($context);
                 break;
             default:
                 $context->reply('role.unknown_sub', ['%sub%' => $sub]);
@@ -435,5 +446,88 @@ final readonly class RoleCommand implements OperServCommandInterface
             '%modes%' => '+' . implode('', $modes),
             '%role%' => $role->getName(),
         ]);
+    }
+
+    private function doVhost(OperServContext $context): void
+    {
+        if (count($context->args) < 3) {
+            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.vhost.syntax')]);
+
+            return;
+        }
+
+        $roleName = strtoupper($context->args[1]);
+        $action = strtoupper($context->args[2]);
+
+        $role = $this->roleRepository->findByName($roleName);
+        if (null === $role) {
+            $context->reply('role.not_found', ['%role%' => $roleName]);
+
+            return;
+        }
+
+        switch ($action) {
+            case 'VIEW':
+                $this->viewVhost($context, $role);
+                break;
+            case 'SET':
+                $this->setVhost($context, $role);
+                break;
+            default:
+                $context->reply('role.vhost.unknown_action', ['%action%' => $action]);
+        }
+    }
+
+    private function viewVhost(OperServContext $context, OperRole $role): void
+    {
+        $pattern = $role->getForcedVhostPattern();
+
+        if (null === $pattern || '' === $pattern) {
+            $context->reply('role.vhost.view.empty', ['%role%' => $role->getName()]);
+
+            return;
+        }
+
+        $context->reply('role.vhost.view.header', ['%role%' => $role->getName()]);
+        $context->reply('role.vhost.view.line', ['%pattern%' => $pattern]);
+        $context->reply('role.vhost.view.example', ['%pattern%' => $pattern]);
+    }
+
+    private function setVhost(OperServContext $context, OperRole $role): void
+    {
+        $patternArg = $context->args[3] ?? '';
+
+        $normalized = trim($patternArg);
+        $clearKeywords = ['OFF', ''];
+
+        if ('' === $normalized || in_array(strtoupper($normalized), $clearKeywords, true)) {
+            $role->setForcedVhostPattern(null);
+            $this->roleRepository->save($role);
+
+            $this->vhostApplier->updateVhostForRole($role->getId(), null);
+
+            $context->reply('role.vhost.set.cleared', ['%role%' => $role->getName()]);
+
+            return;
+        }
+
+        if (!$this->vhostValidator->isValid($normalized)) {
+            $context->reply('role.vhost.set.invalid');
+
+            return;
+        }
+
+        if (!ForcedVhost::isValidPattern($normalized)) {
+            $context->reply('role.vhost.set.invalid');
+
+            return;
+        }
+
+        $role->setForcedVhostPattern($normalized);
+        $this->roleRepository->save($role);
+
+        $this->vhostApplier->updateVhostForRole($role->getId(), $normalized);
+
+        $context->reply('role.vhost.set.done', ['%role%' => $role->getName()]);
     }
 }

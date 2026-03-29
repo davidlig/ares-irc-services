@@ -24,6 +24,8 @@ class OperRole
 
     private ?string $userModes = null;
 
+    private ?string $forcedVhostPattern = null;
+
     public function __construct()
     {
         $this->permissions = new ArrayCollection();
@@ -119,5 +121,15 @@ class OperRole
         }
 
         $this->userModes = json_encode(array_values(array_unique($modes)));
+    }
+
+    public function getForcedVhostPattern(): ?string
+    {
+        return $this->forcedVhostPattern;
+    }
+
+    public function setForcedVhostPattern(?string $pattern): void
+    {
+        $this->forcedVhostPattern = $pattern;
     }
 }

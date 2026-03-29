@@ -63,11 +63,11 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES} <name> ..."
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
   short:            "Manage operator roles."
-  help:             "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role, MODES manages IRCOP modes.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."
+  help:             "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role, MODES manages IRCOP modes,\nVHOST manages forced vhost pattern for a role.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."
 
-  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, PERMS, or MODES."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, PERMS, MODES, or VHOST."
   not_found:        "\x0304✗\x03 Role \x02%role%\x02 does not exist."
   already_exists:   "\x0304✗\x03 Role \x02%role%\x02 already exists."
   protected:        "\x0304✗\x03 Role \x02%role%\x02 is protected and cannot be deleted."
@@ -147,6 +147,29 @@ role:
       invalid_mode: "\x0304✗\x03 The mode \x02%mode%\x02 is not a valid IRCOP mode."
       invalid_modes: "\x0304✗\x03 Invalid modes: %invalid%. Valid modes: %valid%."
       no_irc_user_modes: "\x0304✗\x03 The current IRCD has no IRCOP modes configured."
+
+  vhost:
+    syntax:         "ROLE VHOST <role> {VIEW|SET} [pattern]"
+    short:          "Manage forced vhost pattern for a role."
+    help:           "Manage forced vhost assigned to a role.\nVIEW shows the current forced vhost pattern.\nSET assigns a forced vhost pattern (users with this role will\nreceive this vhost on identify, overriding personal vhost).\nThe pattern is appended after the cleaned nickname, e.g.:\n  Nick: _davidlig_ → Pattern: admin.ares → VHost: davidlig.admin.ares\nValid characters: a-z, A-Z, 0-9, hyphen (-), and dot (.).\nMust have at least one dot, cannot start/end with - or . or have ..\nUse OFF to clear the forced vhost pattern.\nThis command is restricted to Root users."
+    unknown_action:  "\x0304✗\x03 Unknown action \x02%action%\x02. Use VIEW or SET."
+
+    view:
+      syntax:       "ROLE VHOST <role> VIEW"
+      short:         "Shows the role's forced vhost pattern."
+      help:          "Shows the forced vhost pattern assigned to a role.\nThis command is restricted to Root users."
+      header:        "\x0307---\x03 \x02Forced vhost for %role%\x02 \x0307---\x03"
+      empty:        "The role \x02%role%\x02 has no forced vhost pattern set."
+      line:         "  Pattern: \x0303%pattern%\x03"
+      example:      "  Example: \x02nickname\x02.%pattern%"
+
+    set:
+      syntax:       "ROLE VHOST <role> SET <pattern>"
+      short:         "Set the forced vhost pattern for the role."
+      help:          "Sets the forced vhost pattern for the role.\nUsers identifying with this role will receive the forced vhost,\nwhich takes priority over personal vhost.\nThe pattern is appended after the cleaned nickname.\nUse OFF or omit argument to clear the forced vhost.\nThis command is restricted to Root users."
+      done:         "\x0303✓\x03 Set forced vhost pattern for role \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Removed forced vhost pattern from role \x02%role%\x02."
+      invalid:      "\x0304✗\x03 Invalid vhost pattern. Valid characters: a-z, A-Z, 0-9, - and .. Must have at least one dot, cannot start/end with - or . or have .."
 
 # --- KILL --------------------------------------------------------------------
 kill:

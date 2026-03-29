@@ -97,6 +97,22 @@ final class ConnectCommandTest extends TestCase
     }
 
     #[Test]
+    public function configureDefinesAllOptions(): void
+    {
+        $command = $this->createCommand();
+        $command->getDefinition();
+
+        self::assertTrue($command->getDefinition()->hasArgument('server-name'));
+        self::assertTrue($command->getDefinition()->hasArgument('host'));
+        self::assertTrue($command->getDefinition()->hasArgument('port'));
+        self::assertTrue($command->getDefinition()->hasArgument('password'));
+        self::assertTrue($command->getDefinition()->hasArgument('description'));
+        self::assertTrue($command->getDefinition()->hasOption('protocol'));
+        self::assertTrue($command->getDefinition()->hasOption('tls'));
+        self::assertTrue($command->getDefinition()->hasOption('no-consumer'));
+    }
+
+    #[Test]
     public function executeSuccessPassesArgumentsAndOptionsToHandler(): void
     {
         $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);

@@ -289,4 +289,43 @@ final class OperRoleTest extends TestCase
 
         self::assertSame(['z', 'a', 'H', 'q'], $role->getUserModes());
     }
+
+    #[Test]
+    public function getForcedVhostPatternReturnsNullInitially(): void
+    {
+        $role = OperRole::create('Test');
+
+        self::assertNull($role->getForcedVhostPattern());
+    }
+
+    #[Test]
+    public function setForcedVhostPatternSetsValue(): void
+    {
+        $role = OperRole::create('Test');
+
+        $role->setForcedVhostPattern('admin.ares');
+
+        self::assertSame('admin.ares', $role->getForcedVhostPattern());
+    }
+
+    #[Test]
+    public function setForcedVhostPatternWithNullClearsValue(): void
+    {
+        $role = OperRole::create('Test');
+        $role->setForcedVhostPattern('admin.ares');
+
+        $role->setForcedVhostPattern(null);
+
+        self::assertNull($role->getForcedVhostPattern());
+    }
+
+    #[Test]
+    public function setForcedVhostPatternWithEmptyStringAllowed(): void
+    {
+        $role = OperRole::create('Test');
+
+        $role->setForcedVhostPattern('');
+
+        self::assertSame('', $role->getForcedVhostPattern());
+    }
 }
