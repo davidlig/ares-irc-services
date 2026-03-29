@@ -849,7 +849,7 @@ final class IdentifyCommandTest extends TestCase
         $account->expects(self::once())->method('markSeen');
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->with('Admin')->willReturn($account);
+        $nickRepo->expects(self::once())->method('findByNick')->with('Admin')->willReturn($account);
         $nickRepo->expects(self::once())->method('save')->with($account);
 
         $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role', true);
@@ -857,7 +857,7 @@ final class IdentifyCommandTest extends TestCase
         $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(1, $role);
 
         $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->with(1)->willReturn($ircop);
+        $ircopRepo->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())->method('setUserAccount');
@@ -899,14 +899,14 @@ final class IdentifyCommandTest extends TestCase
         $account->expects(self::once())->method('markSeen');
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->with('Admin')->willReturn($account);
+        $nickRepo->expects(self::once())->method('findByNick')->with('Admin')->willReturn($account);
         $nickRepo->expects(self::once())->method('save')->with($account);
 
         $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role', true);
         $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(1, $role);
 
         $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->with(1)->willReturn($ircop);
+        $ircopRepo->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())->method('setUserAccount');
@@ -948,11 +948,11 @@ final class IdentifyCommandTest extends TestCase
         $account->expects(self::once())->method('markSeen');
 
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->method('findByNick')->with('User')->willReturn($account);
+        $nickRepo->expects(self::once())->method('findByNick')->with('User')->willReturn($account);
         $nickRepo->expects(self::once())->method('save')->with($account);
 
         $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->with(1)->willReturn(null);
+        $ircopRepo->expects(self::once())->method('findByNickId')->with(1)->willReturn(null);
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())->method('setUserAccount');
