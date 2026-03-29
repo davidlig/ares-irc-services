@@ -491,6 +491,7 @@ services:
         arguments:
             $notifier:        '@App\Application\NickServ\Command\NickServNotifierInterface'
             $displayResolver: '@App\Application\NickServ\VhostDisplayResolver'
+            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $logger:          '@monolog.logger.irc'
 
     App\Application\NickServ\NickProtectionService:

@@ -22,6 +22,7 @@ use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -64,10 +65,13 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
         );
 
+        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+
         $vhostSync = new IdentifiedUserVhostSyncService(
             $nickRepository,
             $this->notifier,
             new VhostDisplayResolver(),
+            $ircopRepository,
         );
 
         $this->subscriber = new NickProtectionSubscriber(
