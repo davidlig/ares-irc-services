@@ -109,6 +109,20 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         ));
     }
 
+    /**
+     * UnrealIRCd TKL - G for removing G-lines.
+     * Format: TKL - G user host set_by.
+     */
+    public function removeGline(string $serverSid, string $userMask, string $hostMask): void
+    {
+        $this->write(sprintf(
+            'TKL - G %s %s %s',
+            $userMask,
+            $hostMask,
+            $serverSid,
+        ));
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

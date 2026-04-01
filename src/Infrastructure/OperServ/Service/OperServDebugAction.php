@@ -64,7 +64,7 @@ final readonly class OperServDebugAction implements DebugActionPort
         $this->logToFile($operator, $command, $target, $targetHost, $targetIp, $reason, $extra);
 
         if ($this->isConfigured()) {
-            $this->logToChannel($operator, $command, $target, $targetHost, $targetIp, $reason);
+            $this->logToChannel($operator, $command, $target, $targetHost, $targetIp, $reason, $extra);
         }
     }
 
@@ -109,6 +109,7 @@ final readonly class OperServDebugAction implements DebugActionPort
         ?string $targetHost,
         ?string $targetIp,
         ?string $reason,
+        array $extra,
     ): void {
         $this->ensureChannelJoined();
 
@@ -120,39 +121,18 @@ final readonly class OperServDebugAction implements DebugActionPort
             '%operator%' => $coloredOperator,
             '%command%' => $coloredCommand,
             '%target%' => $coloredTarget,
+            '%duration%' => $extra['duration'] ?? '',
+            '%reason%' => $reason ?? '',
         ];
 
-        if (null !== $reason) {
-            $messageParams['%reason%'] = $reason;
-        } else {
-            $messageParams['%reason%'] = '';
-        }
-
-        $message1 = $this->translator->trans(
+        $message = $this->translator->trans(
             'debug.action_message',
             $messageParams,
             'operserv',
             $this->defaultLanguage,
         );
 
-        $this->notifier->sendMessage($this->debugChannel, $message1, 'NOTICE');
-
-        if (null !== $targetHost || null !== $targetIp) {
-            $infoParams = [
-                '%nick%' => $target,
-                '%host%' => $targetHost ?? 'N/A',
-                '%ip%' => $targetIp ?? 'N/A',
-            ];
-
-            $message2 = $this->translator->trans(
-                'debug.action_info',
-                $infoParams,
-                'operserv',
-                $this->defaultLanguage,
-            );
-
-            $this->notifier->sendMessage($this->debugChannel, $message2, 'NOTICE');
-        }
+        $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
     }
 
     public function isIrcopOrRoot(string $nick, bool $isIdentified): bool

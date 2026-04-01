@@ -26,6 +26,7 @@ parameters:
     # Maintenance scheduler
     maintenance.interval: '%env(int:MAINTENANCE_INTERVAL)%'
     maintenance.purge_expired_akick_interval: '%env(int:MAINTENANCE_INTERVAL)%'
+    maintenance.purge_expired_glines_interval: '%env(int:MAINTENANCE_INTERVAL)%'
 
     # NickServ pseudo-client
     nickserv.nick:     '%env(NICKSERV_NICK)%'
@@ -104,6 +105,8 @@ parameters:
     operserv.realname: '%env(string:default:operserv.realname_default:OPERSERV_REALNAME)%'
     operserv.root_users_default: ''
     operserv.root_users: '%env(string:default:operserv.root_users_default:OPERSERV_ROOT_USERS)%'
+    operserv.max_glines_default: 1000
+    operserv.max_glines: '%env(int:default:operserv.max_glines_default:OPERSERV_MAX_GLINES)%'
 
     # Mailer (verification and email-change emails)
     mailer.from: '%env(MAILER_FROM)%'
@@ -728,6 +731,9 @@ services:
         tags: ['kernel.event_subscriber']
 
     App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber:
+        arguments:
+            $operIrcopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
         tags: ['kernel.event_subscriber']
 
     # --- NickServ Command Registry — auto-collects all tagged commands ----------
@@ -959,6 +965,9 @@ services:
     App\Domain\OperServ\Repository\OperPermissionRepositoryInterface:
         class: App\Infrastructure\OperServ\Doctrine\OperPermissionDoctrineRepository
 
+    App\Domain\OperServ\Repository\GlineRepositoryInterface:
+        class: App\Infrastructure\OperServ\Doctrine\GlineDoctrineRepository
+
     # --- OperServ Application ---------------------------------------------------
 
     App\Application\OperServ\RootUserRegistry:
@@ -1062,6 +1071,34 @@ services:
             $logger: '@monolog.logger.ircops'
         tags: ['operserv.command']
 
+    App\Application\OperServ\Command\Handler\GlineCommand:
+        arguments:
+            $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $debug: '@App\Application\Port\DebugActionPort'
+            $logger: '@monolog.logger.ircops'
+            $maxGlines: '%operserv.max_glines%'
+        tags: ['operserv.command']
+
+    App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
+        arguments:
+            $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
+    App\Application\OperServ\Maintenance\PurgeExpiredGlinesTask:
+        arguments:
+            $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
+            $logger: '@monolog.logger.maintenance'
+            $intervalSeconds: '%maintenance.purge_expired_glines_interval%'
+        tags: ['maintenance.task']
+
     # --- IRCops Debug Channel Protection ----------------------------------------
 
     App\Infrastructure\IRC\Subscriber\IrcopsDebugChannelProtectionSubscriber:
@@ -1077,4 +1114,11 @@ services:
             $chanservNick: '%chanserv.nick%'
             $debugChannel: '%ircops.debug_channel%'
             $logger: '@monolog.logger.ircops'
+        tags: ['kernel.event_subscriber']
+
+    # --- Debug Channel Join on Startup -----------------------------------------
+
+    App\Infrastructure\IRC\Subscriber\DebugChannelJoinSubscriber:
+        arguments:
+            $debugAction: '@App\Application\Port\DebugActionPort'
         tags: ['kernel.event_subscriber']

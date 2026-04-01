@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\OperServ\Entity\Gline" table="gline">
+        <unique-constraints>
+            <unique-constraint name="uniq_gline_mask" columns="mask"/>
+        </unique-constraints>
+        <indexes>
+            <index name="idx_gline_expires_at" columns="expires_at"/>
+            <index name="idx_gline_creator_nick_id" columns="creator_nick_id"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="mask" type="string" length="255" column="mask"/>
+        <field name="creatorNickId" type="integer" column="creator_nick_id" nullable="true"/>
+        <field name="reason" type="string" length="255" column="reason" nullable="true"/>
+        <field name="createdAt" type="datetime_immutable" column="created_at"/>
+        <field name="expiresAt" type="datetime_immutable" column="expires_at" nullable="true"/>
+    </entity>
+</doctrine-mapping>

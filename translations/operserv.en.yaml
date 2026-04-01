@@ -182,11 +182,51 @@ kill:
   done:             "\x0303✓\x03 User \x02%nick%\x02 has been killed (%reason%)."
   permission_denied: "\x0304✗\x03 Permission denied. You need operserv.kill permission."
 
+# --- GLINE --------------------------------------------------------------------
+gline:
+  syntax:           "GLINE <ADD|DEL|LIST> [mask] [expiry] [reason]"
+  short:            "Manage network-wide G-lines."
+  help:             "Manage network-wide G-lines (global bans).\nADD adds a new G-line with mask, expiry and reason.\nDEL removes a G-line by mask or entry number.\nLIST shows all G-lines, optionally filtered by mask.\n\nExpiry format: 0=permanent, or use d, h, m suffix (e.g., 7d, 12h, 30m).\nGLINEs matching Root or IRCop users are rejected.\nThis command requires the operserv.gline permission."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
+  invalid_mask:     "\x0304✗\x03 Invalid mask format. Must be in format user@host (e.g., *@192.168.*)."
+  global_mask:      "\x0304✗\x03 G-line mask \x02%mask%\x02 is too broad. Global masks are not allowed."
+  dangerous_mask:   "\x0304✗\x03 G-line mask \x02%mask%\x02 is too broad. Host part needs at least 4 alphanumeric characters."
+  protected_user:   "\x0304✗\x03 Cannot G-line protected user \x02%nick%\x02."
+  invalid_expiry:   "\x0304✗\x03 Invalid expiry format. Use 0 for permanent, or a value like 7d, 12h, 30m."
+  already_exists:   "\x0304✗\x03 G-line for \x02%mask%\x02 already exists."
+  max_entries:      "\x0304✗\x03 Maximum number of G-lines (%max%) reached."
+  not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 not found."
+  user_not_found:   "\x0304✗\x03 User \x02%nick%\x02 is not online."
+  permanent:        "permanent"
+
+  add:
+    syntax:         "GLINE ADD <mask> <expiry> <reason>"
+    short:          "Add a network-wide G-line."
+    help:           "Adds a network-wide G-line (global ban).\nThe mask must be in format user@host.\nExpiry: 0=permanent, or use d, h, m suffix (e.g., 7d, 12h, 30m).\nGLINEs matching Root or IRCop users are rejected.\nThis command requires the operserv.gline permission."
+    done:           "\x0303✓\x03 G-line added: \x02%mask%\x02 (%duration%) - %reason%"
+
+  del:
+    syntax:         "GLINE DEL <mask|number>"
+    short:          "Remove a G-line."
+    help:           "Removes a G-line from the list.\nYou can specify the mask or the entry number from LIST.\nThis command requires the operserv.gline permission."
+    done:           "\x0303✓\x03 G-line \x02%mask%\x02 removed."
+
+  list:
+    syntax:         "GLINE LIST [mask]"
+    short:          "List all G-lines."
+    help:           "Lists all G-lines. Optionally filter by mask pattern.\nThis command requires the operserv.gline permission."
+    header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
+    empty:          "There are no G-lines."
+    no_reason:      "No reason"
+    never_expires:  "Permanent"
+    unknown_creator: "unknown"
+    entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nick%\x03, expires: %expiration%)"
+
 # --- DEBUG -------------------------------------------------------------------
 debug:
-  action_message:   "%operator% executes command %command% on %target%. Reason: %reason%"
-  action_info:      "Nick: %nick% | Host: %host% | IP: %ip%"
+  action_message:   "%operator% executes command %command% on %target%. Duration: %duration%. Reason: %reason%"
 
 # --- PERMISSIONS --------------------------------------------------------------
 permissions:
   operserv.kill:    "Disconnect a user from the network (KILL)"
+  operserv.gline:   "Manage network-wide G-lines (GLINE)"

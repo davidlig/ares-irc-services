@@ -260,4 +260,26 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertSame(':001 GLINE *@192.168.* 0 :Permanent ban', $this->written[0]);
     }
+
+    #[Test]
+    public function removeGlineSendsGlineRemoveCommand(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->removeGline('001', 'testuser', 'test.host');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 GLINE testuser@test.host !*', $this->written[0]);
+    }
+
+    #[Test]
+    public function removeGlineWithWildcards(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->removeGline('001', '*', '192.168.*');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 GLINE *@192.168.* !*', $this->written[0]);
+    }
 }

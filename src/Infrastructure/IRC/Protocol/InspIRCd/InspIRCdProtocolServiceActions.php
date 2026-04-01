@@ -100,6 +100,16 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         $this->write(sprintf(':%s GLINE %s %d :%s', $serverSid, $mask, $duration, $reason));
     }
 
+    /**
+     * InspIRCd GLINE removal.
+     * Format: :serverSid GLINE user@host !duration (negative duration to remove).
+     */
+    public function removeGline(string $serverSid, string $userMask, string $hostMask): void
+    {
+        $mask = $userMask . '@' . $hostMask;
+        $this->write(sprintf(':%s GLINE %s !*', $serverSid, $mask));
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

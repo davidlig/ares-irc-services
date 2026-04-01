@@ -250,4 +250,26 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertMatchesRegularExpression('/^TKL \+ G \* 192\.168\.\* 001 0 \d+ :Permanent ban$/', $this->written[0]);
     }
+
+    #[Test]
+    public function removeGlineSendsTklRemoveCommand(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->removeGline('001', 'testuser', 'test.host');
+
+        self::assertCount(1, $this->written);
+        self::assertSame('TKL - G testuser test.host 001', $this->written[0]);
+    }
+
+    #[Test]
+    public function removeGlineWithWildcards(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->removeGline('001', '*', '192.168.*');
+
+        self::assertCount(1, $this->written);
+        self::assertSame('TKL - G * 192.168.* 001', $this->written[0]);
+    }
 }

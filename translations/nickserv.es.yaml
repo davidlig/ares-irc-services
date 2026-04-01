@@ -58,7 +58,7 @@ recover:
   email_sent:       "\x0307→\x03 Se ha enviado un token de recuperación a \x02%email_hint%\x02. Revisa tu bandeja (y la de spam)."
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email."
-  suspended:        "\x0304✗\x03 El nickname \x02%nickname%\x02 está suspendido. Motivo: %reason%"
+  suspended:        "\x0304✗\x03 El nickname \x02%nickname%\x02 está suspendido. Razón: %reason%"
   forbidden:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no puede usarse en esta red."
   no_email:         "\x0304✗\x03 No hay email configurado para el nickname \x02%nickname%\x02. La recuperación no está disponible."
   throttled:        "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro correo de recuperación."
@@ -79,7 +79,7 @@ identify:
   ghost_released:   "\x0307⚡\x03 La sesión fantasma que ocupaba \x02%nickname%\x02 ha sido desconectada."
   kill_reason:      "Nick %nickname% reclamado por %source% (el propietario registrado se ha identificado)"
   pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email.\n  Ejecuta \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
-  suspended:        "\x0304✗\x03 El nickname \x02%nickname%\x02 está suspendido. Motivo: %reason%"
+  suspended:        "\x0304✗\x03 El nickname \x02%nickname%\x02 está suspendido. Razón: %reason%"
   forbidden:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no puede ser utilizado en esta red."
 
 # --- STATUS -----------------------------------------------------------------
@@ -97,9 +97,9 @@ status:
   not_identified:   "  Estado          : \x0307No identificado\x03"
   identified:       "  Estado          : \x0303Identificado\x03"
   suspended:        "  Estado          : \x0304Suspendido\x03"
-  suspended_reason: "  Motivo          : %reason%"
+  suspended_reason: "  Razón           : %reason%"
   forbidden:        "  Estado          : \x0304Prohibido\x03"
-  forbidden_reason: "  Motivo          : %reason%"
+  forbidden_reason: "  Razón           : %reason%"
   footer:           "\x0314─────────────────────────────\x03"
 
 # --- INFO -------------------------------------------------------------------
@@ -114,7 +114,7 @@ info:
   status_registered:  "\x0303Registrado\x03"
   status_suspended:   "\x0304Suspendido\x03"
   status_forbidden:   "\x0304Prohibido\x03"
-  reason:            "  \x0314Motivo\x03          : %reason%"
+  reason:            "  \x0314Razón\x03          : %reason%"
   registered_at:    "  \x0314Fecha registro\x03  : %date%"
   last_seen_online: "  \x0314Última conexión\x03 : \x0303● CONECTADO AHORA\x03"
   last_seen_at:     "  \x0314Última conexión\x03 : %date%"

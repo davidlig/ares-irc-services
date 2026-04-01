@@ -68,4 +68,13 @@ interface ProtocolServiceActionsInterface
      * @param string $reason    Reason shown to the user
      */
     public function addGline(string $serverSid, string $userMask, string $hostMask, int $duration, string $reason): void;
+
+    /**
+     * Remove a network-wide G-line.
+     *
+     * @param string $serverSid Server SID (source of the TKL/GLINE command)
+     * @param string $userMask  User part of the mask (e.g., "*", "nick")
+     * @param string $hostMask  Host part of the mask (e.g., "*", "192.168.*")
+     */
+    public function removeGline(string $serverSid, string $userMask, string $hostMask): void;
 }

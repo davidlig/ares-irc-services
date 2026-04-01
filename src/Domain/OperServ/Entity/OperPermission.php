@@ -8,6 +8,8 @@ class OperPermission
 {
     public const string KILL = 'operserv.kill';
 
+    public const string GLINE = 'operserv.gline';
+
     private int $id;
 
     private string $name;

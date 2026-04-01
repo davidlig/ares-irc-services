@@ -173,20 +173,60 @@ role:
 
 # --- KILL --------------------------------------------------------------------
 kill:
-  syntax:           "KILL <nickname> <motivo>"
+  syntax:           "KILL <nickname> <razón>"
   short:            "Desconecta forzosamente a un usuario de la red."
-  help:             "Desconecta a un usuario de la red IRC.\nLos IRCops y usuarios Root no pueden ser killeados.\nEste comando requiere el permiso operserv.kill.\n\nSintaxis: KILL <nickname> <motivo>\nEjemplo: KILL BadUser Flooding en canales"
+  help:             "Desconecta a un usuario de la red IRC.\nLos IRCops y usuarios Root no pueden ser killeados.\nEste comando requiere el permiso operserv.kill.\n\nSintaxis: KILL <nickname> <razón>\nEjemplo: KILL BadUser Flooding en canales"
   user_not_online:  "\x0304✗\x03 El nick \x02%nick%\x02 no está conectado."
   protected_root:   "\x0304✗\x03 No se puede hacer KILL al usuario Root \x02%nick%\x02."
   protected_ircop:  "\x0304✗\x03 No se puede hacer KILL al IRC operator \x02%nick%\x02."
   done:             "\x0303✓\x03 Usuario \x02%nick%\x02 desconectado (%reason%)."
   permission_denied: "\x0304✗\x03 Permiso denegado. Necesitas el permiso operserv.kill."
 
+# --- GLINE --------------------------------------------------------------------
+gline:
+  syntax:           "GLINE <ADD|DEL|LIST> [máscara] [expiración] [razón]"
+  short:            "Gestiona G-lines de red."
+  help:             "Gestiona G-lines (bans globales) de red.\nADD añade un nuevo G-line con máscara, expiración y razón.\nDEL elimina un G-line por máscara o número de entrada.\nLIST muestra todos los G-lines, filtrable por máscara.\n\nFormato de expiración: 0=permanente, o usa sufijo d, h, m (ej: 7d, 12h, 30m).\nLos GLINEs que coincidan con usuarios Root o IRCop son rechazados.\nEste comando requiere el permiso operserv.gline."
+  unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
+  invalid_mask:     "\x0304✗\x03 Formato de máscara inválido. Debe ser usuario@host (ej: *@192.168.*)."
+  global_mask:      "\x0304✗\x03 La máscara G-line \x02%mask%\x02 es demasiado amplia. No se permiten máscaras globales."
+  dangerous_mask:   "\x0304✗\x03 La máscara G-line \x02%mask%\x02 es demasiado amplia. La parte del host necesita al menos 4 caracteres alfanuméricos."
+  protected_user:   "\x0304✗\x03 No se puede aplicar GLINE al usuario protegido \x02%nick%\x02."
+  invalid_expiry:   "\x0304✗\x03 Formato de expiración inválido. Usa 0 para permanente, o un valor como 7d, 12h, 30m."
+  already_exists:   "\x0304✗\x03 Ya existe un G-line para \x02%mask%\x02."
+  max_entries:      "\x0304✗\x03 Se alcanzó el máximo de G-lines (%max%)."
+  not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 no encontrado."
+  user_not_found:   "\x0304✗\x03 El usuario \x02%nick%\x02 no está conectado."
+  permanent:        "permanente"
+
+  add:
+    syntax:         "GLINE ADD <máscara> <expiración> <razón>"
+    short:          "Añade un G-line de red."
+    help:           "Añade un G-line (ban global) de red.\nLa máscara debe tener formato usuario@host.\nExpiración: 0=permanente, o usa sufijo d, h, m (ej: 7d, 12h, 30m).\nLos GLINEs que coincidan con usuarios Root o IRCop son rechazados.\nEste comando requiere el permiso operserv.gline."
+    done:           "\x0303✓\x03 G-line añadido: \x02%mask%\x02 (%duration%) - %reason%"
+
+  del:
+    syntax:         "GLINE DEL <máscara|número>"
+    short:          "Elimina un G-line."
+    help:           "Elimina un G-line de la lista.\nPuedes especificar la máscara o el número de entrada de LIST.\nEste comando requiere el permiso operserv.gline."
+    done:           "\x0303✓\x03 G-line \x02%mask%\x02 eliminado."
+
+  list:
+    syntax:         "GLINE LIST [máscara]"
+    short:          "Lista todos los G-lines."
+    help:           "Lista todos los G-lines. Opcionalmente filtra por patrón de máscara.\nEste comando requiere el permiso operserv.gline."
+    header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
+    empty:          "No hay G-lines."
+    no_reason:      "Sin razón"
+    never_expires:  "Permanente"
+    unknown_creator: "desconocido"
+    entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nick%\x03, expira: %expiration%)"
+
 # --- DEBUG -------------------------------------------------------------------
 debug:
-  action_message:   "%operator% ejecuta el comando %command% sobre %target%. Motivo: %reason%"
-  action_info:      "Nick: %nick% | Host: %host% | IP: %ip%"
+  action_message:   "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. Razón: %reason%"
 
 # --- PERMISOS ----------------------------------------------------------------
 permissions:
   operserv.kill:    "Desconecta a un usuario de la red (KILL)"
+  operserv.gline:   "Gestiona G-lines de red (GLINE)"

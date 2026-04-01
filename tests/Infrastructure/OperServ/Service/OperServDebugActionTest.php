@@ -105,7 +105,7 @@ final class OperServDebugActionTest extends TestCase
         $logger->expects(self::once())->method('info');
 
         $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->expects(self::exactly(2))->method('sendMessage');
+        $notifier->expects(self::once())->method('sendMessage');
 
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::once())->method('joinChannelAsService');
@@ -131,13 +131,13 @@ final class OperServDebugActionTest extends TestCase
         $logger->expects(self::once())->method('info');
 
         $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->expects(self::exactly(2))->method('sendMessage');
+        $notifier->expects(self::once())->method('sendMessage');
 
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::once())->method('joinChannelAsService');
 
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::exactly(2))->method('trans')
+        $translator->expects(self::once())->method('trans')
             ->willReturnCallback(static fn (string $id, array $params) => $id);
 
         $debug = $this->createDebugAction(
