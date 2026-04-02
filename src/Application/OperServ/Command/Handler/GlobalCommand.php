@@ -109,6 +109,42 @@ final readonly class GlobalCommand implements OperServCommandInterface
             return;
         }
 
+        // Check if this is a service nickname (just nickname, no mask)
+        $serviceUid = $this->serviceUidRegistry->getUidByNickname($maskArg);
+
+        if (null !== $serviceUid) {
+            // Service nickname - use existing service UID
+            $this->sendFromService($context, $maskArg, $serviceUid, $typeArg, $message);
+        } else {
+            // Not a service - must provide full mask nick!ident@vhost
+            $this->sendFromPseudoClient($context, $maskArg, $typeArg, $message);
+        }
+    }
+
+    private function sendFromService(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message): void
+    {
+        $sender = $context->getSender();
+        if (null === $sender) {
+            return;
+        }
+
+        $this->logger->info('GLOBAL: using existing service', [
+            'nickname' => $nickname,
+            'uid' => $uid,
+            'sender' => $sender->nick,
+            'type' => $typeArg,
+        ]);
+
+        $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, false);
+    }
+
+    private function sendFromPseudoClient(OperServContext $context, string $maskArg, string $typeArg, string $message): void
+    {
+        $sender = $context->getSender();
+        if (null === $sender) {
+            return;
+        }
+
         try {
             $mask = GlobalMessageMask::fromString($maskArg);
         } catch (ValueError $e) {
@@ -120,30 +156,31 @@ final readonly class GlobalCommand implements OperServCommandInterface
         $nickname = $mask->nickname;
         $nicknameLower = strtolower($nickname);
 
-        // Check if this is a service nickname - if so, use the existing service UID
-        $serviceUid = $this->serviceUidRegistry->getUidByNickname($nickname);
-        $isService = null !== $serviceUid;
+        // Validate nickname is not connected or registered
+        $connectedUser = $this->userLookup->findByNick($nickname);
+        if (null !== $connectedUser) {
+            $context->reply('global.nick_connected', ['%nick%' => $nickname]);
 
-        if (!$isService) {
-            // Not a service - validate nickname is not connected or registered
-            $connectedUser = $this->userLookup->findByNick($nickname);
-            if (null !== $connectedUser) {
-                $context->reply('global.nick_connected', ['%nick%' => $nickname]);
+            return;
+        }
 
-                return;
-            }
+        $registeredNick = $this->nickRepository->findByNick($nicknameLower);
+        if (null !== $registeredNick) {
+            $context->reply('global.nick_registered', ['%nick%' => $nickname]);
 
-            $registeredNick = $this->nickRepository->findByNick($nicknameLower);
-            if (null !== $registeredNick) {
-                $context->reply('global.nick_registered', ['%nick%' => $nickname]);
-
-                return;
-            }
+            return;
         }
 
         $module = $this->connectionHolder->getProtocolModule();
         if (null === $module) {
             $this->logger->error('GLOBAL: no active protocol module');
+
+            return;
+        }
+
+        $nickReservation = $module->getNickReservation();
+        if (null === $nickReservation) {
+            $this->logger->error('GLOBAL: protocol does not support nick reservation');
 
             return;
         }
@@ -155,51 +192,37 @@ final readonly class GlobalCommand implements OperServCommandInterface
             return;
         }
 
-        if ($isService) {
-            // Use existing service UID - no pseudo-client needed
-            $uid = $serviceUid;
-            $this->logger->info('GLOBAL: using existing service', [
-                'nickname' => $nickname,
-                'uid' => $uid,
-                'sender' => $sender->nick,
-                'type' => $typeArg,
-            ]);
-        } else {
-            // Create pseudo-client
-            $nickReservation = $module->getNickReservation();
-            if (null === $nickReservation) {
-                $this->logger->error('GLOBAL: protocol does not support nick reservation');
+        $connection = $this->connectionHolder->getConnection();
+        if (null === $connection) {
+            $this->logger->error('GLOBAL: no connection');
 
-                return;
-            }
-
-            $connection = $this->connectionHolder->getConnection();
-            if (null === $connection) {
-                $this->logger->error('GLOBAL: no connection');
-
-                return;
-            }
-
-            $uid = $this->uidGenerator->generate();
-            if (null === $uid) {
-                $this->logger->error('GLOBAL: could not generate UID');
-
-                return;
-            }
-
-            $reason = sprintf('Global message pseudo-client (sender: %s)', $sender->nick);
-
-            $nickReservation->reserveNickWithDuration($connection, $serverSid, $nickname, self::DURATION_SECONDS, $reason);
-            $module->getServiceActions()->introducePseudoClient($serverSid, $mask->nickname, $mask->ident, $mask->vhost, $uid, $mask->nickname);
-
-            $this->logger->info('GLOBAL: pseudo-client introduced', [
-                'nickname' => $nickname,
-                'uid' => $uid,
-                'sender' => $sender->nick,
-                'type' => $typeArg,
-            ]);
+            return;
         }
 
+        $uid = $this->uidGenerator->generate();
+        if (null === $uid) {
+            $this->logger->error('GLOBAL: could not generate UID');
+
+            return;
+        }
+
+        $reason = sprintf('Global message pseudo-client (sender: %s)', $sender->nick);
+
+        $nickReservation->reserveNickWithDuration($connection, $serverSid, $nickname, self::DURATION_SECONDS, $reason);
+        $module->getServiceActions()->introducePseudoClient($serverSid, $mask->nickname, $mask->ident, $mask->vhost, $uid, $mask->nickname);
+
+        $this->logger->info('GLOBAL: pseudo-client introduced', [
+            'nickname' => $nickname,
+            'uid' => $uid,
+            'sender' => $sender->nick,
+            'type' => $typeArg,
+        ]);
+
+        $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, true);
+    }
+
+    private function broadcastAndReply(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message, bool $isPseudoClient): void
+    {
         $uids = $this->userLookup->listConnectedUids();
         $count = 0;
 
@@ -208,18 +231,23 @@ final readonly class GlobalCommand implements OperServCommandInterface
             ++$count;
         }
 
-        if (!$isService) {
-            // Disconnect pseudo-client after sending
-            $module->getServiceActions()->quitPseudoClient($serverSid, $uid, 'Global message completed');
+        if ($isPseudoClient) {
+            $module = $this->connectionHolder->getProtocolModule();
+            $serverSid = $this->connectionHolder->getServerSid();
+            if (null !== $module && null !== $serverSid) {
+                $module->getServiceActions()->quitPseudoClient($serverSid, $uid, 'Global message completed');
+            }
         }
 
         $context->reply('global.done', ['%nick%' => $nickname, '%count%' => (string) $count]);
 
+        $sender = $context->getSender();
         $this->logger->info('GLOBAL: message sent', [
             'nickname' => $nickname,
             'uid' => $uid,
             'recipients' => $count,
             'type' => $typeArg,
+            'sender' => $sender?->nick ?? 'unknown',
         ]);
     }
 }

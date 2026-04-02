@@ -224,9 +224,9 @@ gline:
 
 # --- GLOBAL -------------------------------------------------------------------
 global:
-  syntax:           "GLOBAL <nick!ident@vhost> {PRIVMSG|NOTICE} <mensaje>"
+  syntax:           "GLOBAL <servicio|nick!ident@vhost> {PRIVMSG|NOTICE} <mensaje>"
   short:            "Envía un mensaje global a todos los usuarios conectados."
-  help:             "Envía un mensaje a todos los usuarios conectados mediante un pseudo-cliente temporal.\nEl pseudo-cliente será introducido con la máscara especificada y\npermanecerá conectado durante 24 horas (el nick será bloqueado durante\neste tiempo mediante SQLINE/QLINE).\n\nLa máscara debe tener el formato: nick!ident@vhost\n- nick: nickname IRC válido (letras, []{}|\\`, dígitos, empieza por letra)\n- ident: alfanumérico con . _ ~ -\n- vhost: hostname válido\n\nEl nickname no puede ser:\n- Un nickname de servicio (NickServ, ChanServ, etc.)\n- Estar actualmente conectado\n- Estar registrado\n\nPRIVMSG envía como mensaje privado, NOTICE envía como aviso.\nEste comando requiere el permiso operserv.global."
+  help:             "Envía un mensaje a todos los usuarios conectados.\n\nSi el primer argumento es un nombre de servicio (NickServ, ChanServ,\nMemoServ, OperServ), el mensaje se enviará usando ese servicio existente.\n\nSi no es un servicio, se creará un pseudo-cliente temporal con la máscara\nespecificada. La máscara debe tener el formato: nick!ident@vhost\n- nick: nickname IRC válido (letras, []{}|\\`, dígitos, empieza por letra)\n- ident: alfanumérico con . _ ~ -\n- vhost: hostname válido\n\nPara pseudo-clientes, el nickname no puede estar conectado ni registrado.\nEl pseudo-cliente permanecerá conectado durante el envío y se desconectará\nautomáticamente (el nick será bloqueado 24h mediante SQLINE/QLINE).\n\nPRIVMSG envía como mensaje privado, NOTICE envía como aviso.\nEste comando requiere el permiso operserv.global."
   mask_invalid:    "\x0304✗\x03 Formato de máscara inválido: %error%"
   nick_service:    "\x0304✗\x03 No se puede usar un nickname de servicio."
   nick_connected: "\x0304✗\x03 El nickname \x02%nick%\x02 está conectado actualmente."

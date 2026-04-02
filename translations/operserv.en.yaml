@@ -224,9 +224,9 @@ gline:
 
 # --- GLOBAL -------------------------------------------------------------------
 global:
-  syntax:           "GLOBAL <nick!ident@vhost> {PRIVMSG|NOTICE} <message>"
+  syntax:           "GLOBAL <service|nick!ident@vhost> {PRIVMSG|NOTICE} <message>"
   short:            "Send a global message to all connected users."
-  help:             "Sends a message to all connected users via a temporary pseudo-client.\nThe pseudo-client will be introduced with the specified mask and\nwill remain connected for 24 hours (the nick will be blocked for\nthis duration via SQLINE/QLINE).\n\nThe mask must be in format: nick!ident@vhost\n- nick: IRC valid nickname (letters, []{}|\\`, digits, starts with letter)\n- ident: alphanumeric with . _ ~ -\n- vhost: valid hostname\n\nThe nickname cannot be:\n- A service nickname (NickServ, ChanServ, etc.)\n- Currently connected\n- Registered\n\nPRIVMSG sends as private message, NOTICE sends as notice.\nThis command requires the operserv.global permission."
+  help:             "Sends a message to all connected users.\n\nIf the first argument is a service name (NickServ, ChanServ,\nMemoServ, OperServ), the message will be sent using that existing service.\n\nIf not a service, a temporary pseudo-client will be created with the\nspecified mask. The mask must be in format: nick!ident@vhost\n- nick: IRC valid nickname (letters, []{}|\\`, digits, starts with letter)\n- ident: alphanumeric with . _ ~ -\n- vhost: valid hostname\n\nFor pseudo-clients, the nickname cannot be connected or registered.\nThe pseudo-client will remain connected during the send and disconnect\nautomatically (the nick will be blocked for 24h via SQLINE/QLINE).\n\nPRIVMSG sends as private message, NOTICE sends as notice.\nThis command requires the operserv.global permission."
   mask_invalid:    "\x0304✗\x03 Invalid mask format: %error%"
   nick_service:    "\x0304✗\x03 Cannot use a service nickname."
   nick_connected: "\x0304✗\x03 Nickname \x02%nick%\x02 is currently connected."

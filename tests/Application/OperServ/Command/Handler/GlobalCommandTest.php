@@ -507,7 +507,7 @@ final class GlobalCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $context = $this->createContext($sender, ['NickServ!services@host', 'PRIVMSG', 'Test message'], $notifier, $translator);
+        $context = $this->createContext($sender, ['NickServ', 'PRIVMSG', 'Test message'], $notifier, $translator);
         $command = $this->createCommand(
             userLookup: $userLookup,
             nickRepository: $nickRepository,
