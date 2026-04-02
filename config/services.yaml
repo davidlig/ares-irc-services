@@ -1093,7 +1093,6 @@ services:
         arguments:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
             $uidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $sendNoticePort: '@App\Application\Port\SendNoticePort'
