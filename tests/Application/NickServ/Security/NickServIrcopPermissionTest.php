@@ -34,6 +34,6 @@ final class NickServIrcopPermissionTest extends TestCase
     {
         $permission = new NickServIrcopPermission();
 
-        self::assertSame(['nickserv.userip'], $permission->getPermissions());
+        self::assertSame(['nickserv.userip', 'nickserv.suspend'], $permission->getPermissions());
     }
 }

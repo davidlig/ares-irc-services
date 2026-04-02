@@ -20,6 +20,7 @@
         <field name="registeredAt" type="datetime_immutable" nullable="true" column="registered_at"/>
         <field name="expiresAt" type="datetime_immutable" nullable="true" column="expires_at"/>
         <field name="reason" type="string" length="512" nullable="true" column="reason"/>
+        <field name="suspendedUntil" type="datetime_immutable" nullable="true" column="suspended_until"/>
         <field name="lastSeenAt" type="datetime_immutable" nullable="true" column="last_seen_at"/>
         <field name="lastQuitMessage" type="string" length="512" nullable="true" column="last_quit_message"/>
         <field name="private" type="boolean" column="private"/>

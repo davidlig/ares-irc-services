@@ -209,6 +209,14 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.reason', ['reason' => $account->getReason()]);
         }
 
+        if ($account->isSuspended()) {
+            if (null !== $account->getSuspendedUntil()) {
+                $context->reply('info.suspended_until', ['date' => $context->formatDate($account->getSuspendedUntil())]);
+            } else {
+                $context->reply('info.suspended_permanent');
+            }
+        }
+
         $context->reply('info.registered_at', [
             'date' => $context->formatDate($account->getRegisteredAt()),
         ]);

@@ -289,6 +289,67 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         self::assertNotNull($this->repository->findByNick('Pending'));
     }
 
+    #[Test]
+    public function findExpiredSuspensionsReturnsOnlyExpiredSuspensions(): void
+    {
+        $expired = $this->createRegisteredNick('ExpiredSus', 'expired@example.com');
+        $expired->suspend('Test reason', new DateTimeImmutable('-1 hour'));
+        $this->repository->save($expired);
+
+        $active = $this->createRegisteredNick('ActiveSus', 'active@example.com');
+        $active->suspend('Test reason', new DateTimeImmutable('+7 days'));
+        $this->repository->save($active);
+
+        $permanent = $this->createRegisteredNick('PermanentSus', 'permanent@example.com');
+        $permanent->suspend('Permanent reason', null);
+        $this->repository->save($permanent);
+
+        $registered = $this->createRegisteredNick('Regular', 'regular@example.com');
+        $this->repository->save($registered);
+
+        $this->flushAndClear();
+
+        $result = $this->repository->findExpiredSuspensions();
+
+        self::assertCount(1, $result);
+        self::assertSame('ExpiredSus', $result[0]->getNickname());
+    }
+
+    #[Test]
+    public function findExpiredSuspensionsReturnsEmptyWhenNoneExpired(): void
+    {
+        $active = $this->createRegisteredNick('ActiveSus', 'active@example.com');
+        $active->suspend('Test reason', new DateTimeImmutable('+7 days'));
+        $this->repository->save($active);
+
+        $this->flushAndClear();
+
+        $result = $this->repository->findExpiredSuspensions();
+
+        self::assertEmpty($result);
+    }
+
+    #[Test]
+    public function findExpiredSuspensionsReturnsMultipleExpired(): void
+    {
+        $expired1 = $this->createRegisteredNick('Expired1', 'exp1@example.com');
+        $expired1->suspend('Reason 1', new DateTimeImmutable('-1 hour'));
+        $this->repository->save($expired1);
+
+        $expired2 = $this->createRegisteredNick('Expired2', 'exp2@example.com');
+        $expired2->suspend('Reason 2', new DateTimeImmutable('-1 day'));
+        $this->repository->save($expired2);
+
+        $this->flushAndClear();
+
+        $result = $this->repository->findExpiredSuspensions();
+
+        self::assertCount(2, $result);
+        $nicknames = array_map(static fn ($n) => $n->getNickname(), $result);
+        self::assertContains('Expired1', $nicknames);
+        self::assertContains('Expired2', $nicknames);
+    }
+
     private function createRegisteredNick(string $nickname, string $email): RegisteredNick
     {
         $nick = RegisteredNick::createPending(

@@ -96,7 +96,7 @@ final readonly class StatusCommand implements NickServCommandInterface
         match ($account->getStatus()) {
             NickStatus::Pending => $this->replyPending($context, $account->getExpiresAt()),
             NickStatus::Registered => $this->replyRegistered($context, $targetNick),
-            NickStatus::Suspended => $this->replySuspended($context, $account->getReason()),
+            NickStatus::Suspended => $this->replySuspended($context, $account->getReason(), $account->getSuspendedUntil()),
             NickStatus::Forbidden => $this->replyForbidden($context, $account->getReason()),
         };
 
@@ -138,12 +138,18 @@ final readonly class StatusCommand implements NickServCommandInterface
         }
     }
 
-    private function replySuspended(NickServContext $context, ?string $reason): void
+    private function replySuspended(NickServContext $context, ?string $reason, ?DateTimeImmutable $until): void
     {
         $context->replyRaw($context->trans('status.suspended'));
 
         if (null !== $reason) {
             $context->replyRaw($context->trans('status.suspended_reason', ['reason' => $reason]));
+        }
+
+        if (null !== $until) {
+            $context->replyRaw($context->trans('status.suspended_until', ['date' => $context->formatDate($until)]));
+        } else {
+            $context->replyRaw($context->trans('status.suspended_permanent'));
         }
     }
 

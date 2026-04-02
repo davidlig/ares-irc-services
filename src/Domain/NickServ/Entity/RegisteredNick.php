@@ -75,6 +75,9 @@ class RegisteredNick
     /** Human-readable reason for SUSPENDED or FORBIDDEN status. */
     private ?string $reason = null;
 
+    /** Expiration date for temporary suspensions. Null = permanent suspension. */
+    private ?DateTimeImmutable $suspendedUntil = null;
+
     private ?DateTimeImmutable $lastSeenAt = null;
 
     private ?string $lastQuitMessage = null;
@@ -145,12 +148,16 @@ class RegisteredNick
     }
 
     /**
-     * Suspends the account with an optional reason.
+     * Suspends the account with a reason and optional expiration date.
+     *
+     * @param string             $reason Reason for suspension
+     * @param ?DateTimeImmutable $until  Expiration date (null = permanent)
      */
-    public function suspend(string $reason): void
+    public function suspend(string $reason, ?DateTimeImmutable $until = null): void
     {
         $this->status = NickStatus::Suspended;
         $this->reason = $reason;
+        $this->suspendedUntil = $until;
     }
 
     /**
@@ -160,6 +167,7 @@ class RegisteredNick
     {
         $this->status = NickStatus::Registered;
         $this->reason = null;
+        $this->suspendedUntil = null;
     }
 
     public function isPending(): bool
@@ -175,6 +183,24 @@ class RegisteredNick
     public function isSuspended(): bool
     {
         return NickStatus::Suspended === $this->status;
+    }
+
+    /**
+     * Checks if the account is currently suspended and the suspension has not expired.
+     * A permanent suspension (suspendedUntil = null) returns true.
+     * A temporary suspension returns true only if suspendedUntil > now.
+     */
+    public function isCurrentlySuspended(): bool
+    {
+        if (!$this->isSuspended()) {
+            return false;
+        }
+
+        if (null === $this->suspendedUntil) {
+            return true;
+        }
+
+        return new DateTimeImmutable() < $this->suspendedUntil;
     }
 
     public function isForbidden(): bool
@@ -237,6 +263,11 @@ class RegisteredNick
     public function getReason(): ?string
     {
         return $this->reason;
+    }
+
+    public function getSuspendedUntil(): ?DateTimeImmutable
+    {
+        return $this->suspendedUntil;
     }
 
     public function getLastSeenAt(): ?DateTimeImmutable

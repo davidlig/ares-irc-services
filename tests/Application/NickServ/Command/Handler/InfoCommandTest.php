@@ -380,6 +380,7 @@ final class InfoCommandTest extends TestCase
         $account->method('getStatus')->willReturn(NickStatus::Suspended);
         $account->method('isSuspended')->willReturn(true);
         $account->method('getReason')->willReturn('Spamming');
+        $account->method('getSuspendedUntil')->willReturn(null);
         $account->method('getRegisteredAt')->willReturn(new DateTimeImmutable());
         $account->method('getLastSeenAt')->willReturn(null);
         $account->method('getLastQuitMessage')->willReturn(null);
@@ -410,6 +411,58 @@ final class InfoCommandTest extends TestCase
 
         self::assertContains('info.status', $messages);
         self::assertContains('info.reason', $messages);
+    }
+
+    #[Test]
+    public function showSuspendedWithUntilDate(): void
+    {
+        $until = new DateTimeImmutable('+7 days');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('isPrivate')->willReturn(false);
+        $account->method('getNickname')->willReturn('SuspendedUser');
+        $account->method('getStatus')->willReturn(NickStatus::Suspended);
+        $account->method('isSuspended')->willReturn(true);
+        $account->method('getReason')->willReturn('Spamming');
+        $account->method('getSuspendedUntil')->willReturn($until);
+        $account->method('getRegisteredAt')->willReturn(new DateTimeImmutable());
+        $account->method('getLastSeenAt')->willReturn(null);
+        $account->method('getLastQuitMessage')->willReturn(null);
+        $account->method('getEmail')->willReturn(null);
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getId')->willReturn(1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+        $vhostResolver = new VhostDisplayResolver('');
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByNick')->willReturn([]);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('findBySuccessorNickId')->willReturn([]);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
+            if (isset($params['date'])) {
+                return $params['date'];
+            }
+
+            return $id;
+        });
+
+        $cmd = new InfoCommand($nickRepo, $userLookup, $vhostResolver, $accessRepo, $channelRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'Caller', 'i', 'h', 'c', 'ip'), ['SuspendedUser'], $notifier, $translator));
+
+        self::assertContains('info.status', $messages);
+        self::assertContains('info.reason', $messages);
+        self::assertContains('info.suspended_until', $messages);
     }
 
     #[Test]

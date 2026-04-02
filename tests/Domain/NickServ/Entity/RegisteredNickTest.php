@@ -120,6 +120,134 @@ final class RegisteredNickTest extends TestCase
     }
 
     #[Test]
+    public function suspendWithExpiration(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->activate();
+        $expiresAt = new DateTimeImmutable('+7 days');
+        $nick->suspend('Abuse', $expiresAt);
+
+        self::assertTrue($nick->isSuspended());
+        self::assertSame('Abuse', $nick->getReason());
+        self::assertSame($expiresAt->getTimestamp(), $nick->getSuspendedUntil()?->getTimestamp());
+    }
+
+    #[Test]
+    public function suspendPermanent(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->activate();
+        $nick->suspend('Permanent ban', null);
+
+        self::assertTrue($nick->isSuspended());
+        self::assertSame('Permanent ban', $nick->getReason());
+        self::assertNull($nick->getSuspendedUntil());
+    }
+
+    #[Test]
+    public function unsuspendClearsSuspendedUntil(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->activate();
+        $nick->suspend('Abuse', new DateTimeImmutable('+7 days'));
+        self::assertNotNull($nick->getSuspendedUntil());
+
+        $nick->unsuspend();
+
+        self::assertSame(NickStatus::Registered, $nick->getStatus());
+        self::assertNull($nick->getReason());
+        self::assertNull($nick->getSuspendedUntil());
+    }
+
+    #[Test]
+    public function isCurrentlySuspendedReturnsFalseWhenNotSuspended(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->activate();
+
+        self::assertFalse($nick->isCurrentlySuspended());
+    }
+
+    #[Test]
+    public function isCurrentlySuspendedReturnsTrueWhenPermanent(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->activate();
+        $nick->suspend('Permanent ban', null);
+
+        self::assertTrue($nick->isCurrentlySuspended());
+    }
+
+    #[Test]
+    public function isCurrentlySuspendedReturnsTrueWhenNotExpired(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->activate();
+        $nick->suspend('Temporary ban', new DateTimeImmutable('+7 days'));
+
+        self::assertTrue($nick->isCurrentlySuspended());
+    }
+
+    #[Test]
+    public function isCurrentlySuspendedReturnsFalseWhenExpired(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->activate();
+        $nick->suspend('Expired ban', new DateTimeImmutable('-1 second'));
+
+        self::assertFalse($nick->isCurrentlySuspended());
+    }
+
+    #[Test]
     public function changeLanguageRejectsUnsupportedLanguage(): void
     {
         $nick = RegisteredNick::createPending(

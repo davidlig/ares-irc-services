@@ -150,6 +150,7 @@ final class StatusCommandTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getStatus')->willReturn(NickStatus::Suspended);
         $account->method('getReason')->willReturn('Abuse');
+        $account->method('getSuspendedUntil')->willReturn(null);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -167,6 +168,7 @@ final class StatusCommandTest extends TestCase
 
         self::assertContains('status.suspended', $messages);
         self::assertContains('status.suspended_reason', $messages);
+        self::assertContains('status.suspended_permanent', $messages);
     }
 
     #[Test]
@@ -273,6 +275,7 @@ final class StatusCommandTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getStatus')->willReturn(NickStatus::Suspended);
         $account->method('getReason')->willReturn(null);
+        $account->method('getSuspendedUntil')->willReturn(null);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -290,6 +293,41 @@ final class StatusCommandTest extends TestCase
 
         self::assertContains('status.suspended', $messages);
         self::assertNotContains('status.suspended_reason', $messages);
+        self::assertContains('status.suspended_permanent', $messages);
+    }
+
+    #[Test]
+    public function suspendedWithExpiryShowsUntilDate(): void
+    {
+        $until = (new DateTimeImmutable())->modify('+7 days');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::Suspended);
+        $account->method('getReason')->willReturn('Abuse');
+        $account->method('getSuspendedUntil')->willReturn($until);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
+            if (isset($params['date'])) {
+                return $params['date'];
+            }
+
+            return $id;
+        });
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($this->createContext(['Nick'], $notifier, $translator));
+
+        self::assertContains('status.suspended', $messages);
+        self::assertContains('status.suspended_reason', $messages);
+        self::assertContains('status.suspended_until', $messages);
     }
 
     #[Test]

@@ -98,6 +98,8 @@ status:
   identified:       "  Status          : \x0303Identified\x03"
   suspended:        "  Status          : \x0304Suspended\x03"
   suspended_reason: "  Reason          : %reason%"
+  suspended_until:  "  Suspended until : %date%"
+  suspended_permanent: "  Suspended until : Permanent"
   forbidden:        "  Status          : \x0304Forbidden\x03"
   forbidden_reason: "  Reason          : %reason%"
   footer:           "\x0314─────────────────────────────\x03"
@@ -115,6 +117,8 @@ info:
   status_suspended:   "\x0304Suspended\x03"
   status_forbidden:   "\x0304Forbidden\x03"
   reason:            "  \x0314Reason\x03          : %reason%"
+  suspended_until:   "  \x0314Suspended until\x03 : %date%"
+  suspended_permanent: "  \x0314Suspended until\x03 : Permanent"
   registered_at:    "  \x0314Registered\x03      : %date%"
   last_seen_online: "  \x0314Last seen\x03      : \x0303● NOW ONLINE\x03"
   last_seen_at:     "  \x0314Last seen\x03      : %date%"
@@ -235,3 +239,44 @@ userip:
 
 permissions:
   nickserv.userip:  "View the real IP/Host of a user (IRCop only)"
+  nickserv.suspend: "Suspend/unsuspend a nickname (IRCop only)"
+
+# --- SUSPEND (IRCop) ---------------------------------------------------------
+suspend:
+  syntax:           "SUSPEND <nickname> <duration> <reason>"
+  short:            "Suspend a nickname (IRCop only)."
+  help:             |
+    Suspends a nickname, preventing the owner from identifying.
+    The suspension can be temporary or permanent.
+    
+    Duration formats: \x0303%d\x03 (days), \x0303%h\x03 (hours), \x0303%m\x03 (minutes), or \x03030\x03 (permanent).
+    
+    Suspended users cannot identify to their nickname.
+    IRC operators and root users cannot be suspended.
+    
+    Syntax: SUSPEND <nickname> <duration> <reason>
+    Examples:
+      SUSPEND BadUser 7d Spamming in #help
+      SUSPEND Abuser 30d Repeated flood
+      SUSPEND ProblemUser 0 Permaban evasion
+  success:            "\x0303✔\x03 Nickname \x02%nickname%\x02 has been suspended until \x02%duration%\x02."
+  already_suspended:  "\x0304✗\x03 Nickname \x02%nickname%\x02 is already suspended."
+  not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  forbidden:          "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden and cannot be suspended."
+  cannot_suspend_oper: "\x0304✗\x03 Cannot suspend IRC operator \x02%nickname%\x02."
+  cannot_suspend_root: "\x0304✗\x03 Cannot suspend root user \x02%nickname%\x02."
+  invalid_duration:   "\x0304✗\x03 Invalid duration. Use: \x0303<d><h><m>\x03 (e.g., 7d, 12h, 30m) or \x03030\x03 for permanent."
+  permanent:          "permanent"
+
+# --- UNSUSPEND (IRCop) -------------------------------------------------------
+unsuspend:
+  syntax:           "UNSUSPEND <nickname>"
+  short:            "Remove suspension from a nickname (IRCop only)."
+  help:             |
+    Removes an active suspension from a nickname, allowing the owner to identify again.
+    
+    Syntax: UNSUSPEND <nickname>
+    Example: UNSUSPEND SomeUser
+  success:          "\x0303✔\x03 Suspension has been lifted from \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  not_suspended:    "\x0304✗\x03 Nickname \x02%nickname%\x02 is not suspended."

@@ -16,6 +16,9 @@ final readonly class NickServPermission
     /** IRCop permission to view the real IP/Host of a user. */
     public const string USERIP = 'nickserv.userip';
 
+    /** IRCop permission to suspend a nickname. */
+    public const string SUSPEND = 'nickserv.suspend';
+
     private function __construct()
     {
     }

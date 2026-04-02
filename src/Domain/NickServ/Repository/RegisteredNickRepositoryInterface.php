@@ -40,6 +40,14 @@ interface RegisteredNickRepositoryInterface
      */
     public function deleteExpiredPending(): int;
 
+    /**
+     * Returns SUSPENDED nicks whose suspendedUntil is in the past.
+     * Used for temporary suspension expiry; excludes permanent suspensions (suspendedUntil = null).
+     *
+     * @return RegisteredNick[]
+     */
+    public function findExpiredSuspensions(): array;
+
     /** @return RegisteredNick[] */
     public function findByStatus(NickStatus $status): array;
 

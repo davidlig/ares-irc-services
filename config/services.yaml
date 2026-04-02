@@ -512,6 +512,14 @@ services:
             $eventDispatcher: '@event_dispatcher'
             $logger: '@monolog.logger.irc'
 
+    App\Application\NickServ\Service\NickSuspensionService:
+        arguments:
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $guestPrefix: '%services.guest_prefix%'
+            $logger: '@monolog.logger.irc'
+
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
             $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
@@ -805,6 +813,19 @@ services:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
         tags: ['nickserv.command']
 
+    App\Application\NickServ\Command\Handler\SuspendCommand:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $suspensionService: '@App\Application\NickServ\Service\NickSuspensionService'
+        tags: ['nickserv.command']
+
+    App\Application\NickServ\Command\Handler\UnsuspendCommand:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+        tags: ['nickserv.command']
+
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---
 
     Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage: ~
@@ -905,6 +926,13 @@ services:
         arguments:
             $intervalSeconds: '%maintenance.interval%'
             $logger:          '@monolog.logger.maintenance'
+        tags: ['maintenance.task']
+
+    App\Application\NickServ\Maintenance\UnsuspendExpiredSuspensionsTask:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $logger: '@monolog.logger.maintenance'
+            $intervalSeconds: '%maintenance.interval%'
         tags: ['maintenance.task']
 
     App\Application\NickServ\Maintenance\PurgeInactiveNicknamesTask:
