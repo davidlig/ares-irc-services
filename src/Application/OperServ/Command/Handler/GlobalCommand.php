@@ -266,7 +266,8 @@ final readonly class GlobalCommand implements OperServCommandInterface
             operator: $sender?->nick ?? 'unknown',
             command: 'GLOBAL',
             target: $nickname,
-            reason: sprintf('Mensaje: %s', $message),
+            reason: $message,
+            extra: ['reasonType' => 'message'],
         );
     }
 }

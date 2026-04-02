@@ -238,6 +238,8 @@ global:
 debug:
   action_message:   "%operator% executes command %command% on %target%. %reason%"
   actionWithDuration: "%operator% executes command %command% on %target%. Duration: %duration%. %reason%"
+  prefix_reason:    "Reason: %reason%"
+  prefix_message:   "Message: %reason%"
 
 # --- PERMISSIONS --------------------------------------------------------------
 permissions:

@@ -147,7 +147,7 @@ final readonly class KillCommand implements OperServCommandInterface
             target: $targetNick,
             targetHost: $target->ident . '@' . $target->hostname,
             targetIp: $target->ipBase64,
-            reason: sprintf('Reason: %s', $reason),
+            reason: $reason,
         );
 
         $context->reply('kill.done', [

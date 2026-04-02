@@ -118,11 +118,25 @@ final readonly class OperServDebugAction implements DebugActionPort
         $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
 
         $duration = $extra['duration'] ?? null;
+
+        // Format reason with appropriate prefix (reason, message, or empty)
+        $formattedReason = '';
+        if (null !== $reason && '' !== $reason) {
+            $reasonType = $extra['reasonType'] ?? 'reason';
+            $prefixKey = 'reason' === $reasonType ? 'debug.prefix_reason' : 'debug.prefix_message';
+            $formattedReason = $this->translator->trans(
+                $prefixKey,
+                ['%reason%' => $reason],
+                'operserv',
+                $this->defaultLanguage,
+            );
+        }
+
         $messageParams = [
             '%operator%' => $coloredOperator,
             '%command%' => $coloredCommand,
             '%target%' => $coloredTarget,
-            '%reason%' => $reason ?? '',
+            '%reason%' => $formattedReason,
         ];
 
         // Use different translation key depending on whether duration is present

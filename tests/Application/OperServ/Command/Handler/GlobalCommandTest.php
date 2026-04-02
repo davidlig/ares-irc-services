@@ -395,7 +395,8 @@ final class GlobalCommandTest extends TestCase
                 'TestBot',
                 null,
                 null,
-                self::stringContains('Mensaje:'),
+                'Hello World',
+                ['reasonType' => 'message'],
             );
 
         $module = $this->createStub(ProtocolModuleInterface::class);
