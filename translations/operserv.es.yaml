@@ -222,6 +222,18 @@ gline:
     unknown_creator: "desconocido"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nick%\x03, expira: %expiration%)"
 
+# --- GLOBAL -------------------------------------------------------------------
+global:
+  syntax:           "GLOBAL <nick!ident@vhost> {PRIVMSG|NOTICE} <mensaje>"
+  short:            "Envía un mensaje global a todos los usuarios conectados."
+  help:             "Envía un mensaje a todos los usuarios conectados mediante un pseudo-cliente temporal.\nEl pseudo-cliente será introducido con la máscara especificada y\npermanecerá conectado durante 24 horas (el nick será bloqueado durante\neste tiempo mediante SQLINE/QLINE).\n\nLa máscara debe tener el formato: nick!ident@vhost\n- nick: nickname IRC válido (letras, []{}|\\`, dígitos, empieza por letra)\n- ident: alfanumérico con . _ ~ -\n- vhost: hostname válido\n\nEl nickname no puede ser:\n- Un nickname de servicio (NickServ, ChanServ, etc.)\n- Estar actualmente conectado\n- Estar registrado\n\nPRIVMSG envía como mensaje privado, NOTICE envía como aviso.\nEste comando requiere el permiso operserv.global."
+  mask_invalid:    "\x0304✗\x03 Formato de máscara inválido: %error%"
+  nick_service:    "\x0304✗\x03 No se puede usar un nickname de servicio."
+  nick_connected: "\x0304✗\x03 El nickname \x02%nick%\x02 está conectado actualmente."
+  nick_registered: "\x0304✗\x03 El nickname \x02%nick%\x02 está registrado."
+  type_invalid:    "\x0304✗\x03 El tipo de mensaje debe ser PRIVMSG o NOTICE."
+  done:            "\x0303✓\x03 Mensaje global enviado desde \x02%nick%\x02 a %count% usuarios."
+
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message:   "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. Razón: %reason%"
@@ -230,3 +242,4 @@ debug:
 permissions:
   operserv.kill:    "Desconecta a un usuario de la red (KILL)"
   operserv.gline:   "Gestiona G-lines de red (GLINE)"
+  operserv.global:  "Envía mensajes globales a todos los usuarios (GLOBAL)"

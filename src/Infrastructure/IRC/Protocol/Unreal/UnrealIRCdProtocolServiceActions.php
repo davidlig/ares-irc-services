@@ -123,6 +123,28 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         ));
     }
 
+    /**
+     * UnrealIRCd: introduce a temporary pseudo-client with UID.
+     * Format: :serverSid UID nick hopcount timestamp ident vhost uid servicestamp umodes * * * :realname
+     * Umodes: +B (bot only, not a full service like NickServ).
+     */
+    public function introducePseudoClient(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname): void
+    {
+        $ts = time();
+        $line = sprintf(
+            ':%s UID %s 1 %d %s %s %s 0 +B %s * * * :%s',
+            $serverSid,
+            $nick,
+            $ts,
+            $ident,
+            $vhost,
+            $uid,
+            $vhost,
+            $realname,
+        );
+        $this->write($line);
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

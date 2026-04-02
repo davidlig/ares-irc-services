@@ -272,4 +272,26 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertSame('TKL - G * 192.168.* 001', $this->written[0]);
     }
+
+    #[Test]
+    public function introducePseudoClientSendsUidCommand(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->introducePseudoClient('001', 'GlobalBot', 'global', 'services.red', '001Z00001', 'Global Message Bot');
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:001 UID GlobalBot 1 \d+ global services\.red 001Z00001 0 \+B services\.red \* \* \* :Global Message Bot$/', $this->written[0]);
+    }
+
+    #[Test]
+    public function introducePseudoClientWithDifferentParams(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->introducePseudoClient('002', 'Announce', 'announce', 'irc.example.net', '002Z00005', 'Network Announcements');
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:002 UID Announce 1 \d+ announce irc\.example\.net 002Z00005 0 \+B irc\.example\.net \* \* \* :Network Announcements$/', $this->written[0]);
+    }
 }

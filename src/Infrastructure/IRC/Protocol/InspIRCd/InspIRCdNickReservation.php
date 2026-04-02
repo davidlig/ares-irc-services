@@ -36,4 +36,16 @@ final readonly class InspIRCdNickReservation implements ServiceNickReservationIn
         $connection->writeLine($line);
         $this->logger->info('Reserved service nick via QLINE', ['nick' => $nick, 'serverSid' => $serverSid]);
     }
+
+    public function reserveNickWithDuration(ConnectionInterface $connection, string $serverSid, string $nick, int $durationSeconds, string $reason): void
+    {
+        $line = sprintf(':%s QLINE %s %d :%s', $serverSid, $nick, $durationSeconds, $reason);
+
+        $connection->writeLine($line);
+        $this->logger->info('Reserved service nick via QLINE with duration', [
+            'nick' => $nick,
+            'serverSid' => $serverSid,
+            'duration' => $durationSeconds,
+        ]);
+    }
 }

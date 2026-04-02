@@ -77,4 +77,19 @@ interface ProtocolServiceActionsInterface
      * @param string $hostMask  Host part of the mask (e.g., "*", "192.168.*")
      */
     public function removeGline(string $serverSid, string $userMask, string $hostMask): void;
+
+    /**
+     * Introduce a temporary pseudo-client to the network.
+     *
+     * Used for GLOBAL messages where a temporary client is needed to send messages.
+     * The client is introduced with mode +B (bot) to mark it as a bot.
+     *
+     * @param string $serverSid Server SID (source of the UID command)
+     * @param string $nick      Nickname for the pseudo-client
+     * @param string $ident     Username/ident for the pseudo-client
+     * @param string $vhost     Virtual hostname (displayed host)
+     * @param string $uid       UID for the pseudo-client
+     * @param string $realname  Real name (GECOS) for the pseudo-client
+     */
+    public function introducePseudoClient(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname): void;
 }

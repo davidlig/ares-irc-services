@@ -1085,6 +1085,21 @@ services:
             $maxGlines: '%operserv.max_glines%'
         tags: ['operserv.command']
 
+    App\Application\OperServ\Service\PseudoClientUidGenerator:
+        arguments:
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+
+    App\Application\OperServ\Command\Handler\GlobalCommand:
+        arguments:
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
+            $uidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $sendNoticePort: '@App\Application\Port\SendNoticePort'
+            $logger: '@monolog.logger.ircops'
+        tags: ['operserv.command']
+
     App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
         arguments:
             $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'

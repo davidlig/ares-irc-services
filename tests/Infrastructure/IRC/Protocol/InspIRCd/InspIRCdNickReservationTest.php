@@ -50,4 +50,36 @@ final class InspIRCdNickReservationTest extends TestCase
         self::assertSame(':001 QLINE ChanServ 0 :Reserved for network services', $this->written[1]);
         self::assertSame(':001 QLINE MemoServ 0 :Reserved for network services', $this->written[2]);
     }
+
+    #[Test]
+    public function reserveNickWithDurationSendsQlineWithTimestamp(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $reservation = new InspIRCdNickReservation();
+
+        $reservation->reserveNickWithDuration($connection, '001', 'GlobalBot', 86400, 'Temporary pseudo-client');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 QLINE GlobalBot 86400 :Temporary pseudo-client', $this->written[0]);
+    }
+
+    #[Test]
+    public function reserveNickWithDurationZeroSendsPermanent(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $reservation = new InspIRCdNickReservation();
+
+        $reservation->reserveNickWithDuration($connection, '001', 'GlobalBot', 0, 'Permanent block');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 QLINE GlobalBot 0 :Permanent block', $this->written[0]);
+    }
 }

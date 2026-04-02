@@ -10,6 +10,8 @@ final class OperServPermission
 
     public const string GLINE = 'operserv.gline';
 
+    public const string GLOBAL = 'operserv.global';
+
     private function __construct()
     {
     }

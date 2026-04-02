@@ -222,6 +222,18 @@ gline:
     unknown_creator: "unknown"
     entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nick%\x03, expires: %expiration%)"
 
+# --- GLOBAL -------------------------------------------------------------------
+global:
+  syntax:           "GLOBAL <nick!ident@vhost> {PRIVMSG|NOTICE} <message>"
+  short:            "Send a global message to all connected users."
+  help:             "Sends a message to all connected users via a temporary pseudo-client.\nThe pseudo-client will be introduced with the specified mask and\nwill remain connected for 24 hours (the nick will be blocked for\nthis duration via SQLINE/QLINE).\n\nThe mask must be in format: nick!ident@vhost\n- nick: IRC valid nickname (letters, []{}|\\`, digits, starts with letter)\n- ident: alphanumeric with . _ ~ -\n- vhost: valid hostname\n\nThe nickname cannot be:\n- A service nickname (NickServ, ChanServ, etc.)\n- Currently connected\n- Registered\n\nPRIVMSG sends as private message, NOTICE sends as notice.\nThis command requires the operserv.global permission."
+  mask_invalid:    "\x0304✗\x03 Invalid mask format: %error%"
+  nick_service:    "\x0304✗\x03 Cannot use a service nickname."
+  nick_connected: "\x0304✗\x03 Nickname \x02%nick%\x02 is currently connected."
+  nick_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is registered."
+  type_invalid:    "\x0304✗\x03 Message type must be PRIVMSG or NOTICE."
+  done:            "\x0303✓\x03 Global message sent from \x02%nick%\x02 to %count% users."
+
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message:   "%operator% executes command %command% on %target%. Duration: %duration%. Reason: %reason%"
@@ -230,3 +242,4 @@ debug:
 permissions:
   operserv.kill:    "Disconnect a user from the network (KILL)"
   operserv.gline:   "Manage network-wide G-lines (GLINE)"
+  operserv.global:  "Send global messages to all users (GLOBAL)"

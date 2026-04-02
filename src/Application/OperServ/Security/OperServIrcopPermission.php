@@ -17,6 +17,7 @@ final readonly class OperServIrcopPermission implements PermissionProviderInterf
     {
         return [
             OperServPermission::KILL,
+            OperServPermission::GLOBAL,
         ];
     }
 }

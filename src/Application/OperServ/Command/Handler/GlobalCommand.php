@@ -1,0 +1,206 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Application\OperServ\Command\Handler;
+
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\OperServ\Command\OperServCommandInterface;
+use App\Application\OperServ\Command\OperServContext;
+use App\Application\OperServ\Security\OperServPermission;
+use App\Application\OperServ\Service\PseudoClientUidGenerator;
+use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SendNoticePort;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\OperServ\ValueObject\GlobalMessageMask;
+use Psr\Log\LoggerInterface;
+use ValueError;
+
+use function array_slice;
+use function implode;
+use function sprintf;
+use function strtoupper;
+
+final readonly class GlobalCommand implements OperServCommandInterface
+{
+    private const int DURATION_SECONDS = 86400; // 1 day
+
+    private const string PRIVMSG = 'PRIVMSG';
+
+    private const string NOTICE = 'NOTICE';
+
+    public function __construct(
+        private NetworkUserLookupPort $userLookup,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private ServiceNicknameRegistry $serviceNicks,
+        private PseudoClientUidGenerator $uidGenerator,
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private SendNoticePort $sendNoticePort,
+        private LoggerInterface $logger,
+    ) {
+    }
+
+    public function getName(): string
+    {
+        return 'GLOBAL';
+    }
+
+    public function getAliases(): array
+    {
+        return [];
+    }
+
+    public function getMinArgs(): int
+    {
+        return 3;
+    }
+
+    public function getSyntaxKey(): string
+    {
+        return 'global.syntax';
+    }
+
+    public function getHelpKey(): string
+    {
+        return 'global.help';
+    }
+
+    public function getOrder(): int
+    {
+        return 50;
+    }
+
+    public function getShortDescKey(): string
+    {
+        return 'global.short';
+    }
+
+    public function getSubCommandHelp(): array
+    {
+        return [];
+    }
+
+    public function isOperOnly(): bool
+    {
+        return false;
+    }
+
+    public function getRequiredPermission(): ?string
+    {
+        return OperServPermission::GLOBAL;
+    }
+
+    public function execute(OperServContext $context): void
+    {
+        $sender = $context->getSender();
+        if (null === $sender) {
+            return;
+        }
+
+        $maskArg = $context->args[0];
+        $typeArg = strtoupper($context->args[1]);
+        $message = implode(' ', array_slice($context->args, 2));
+
+        if (self::PRIVMSG !== $typeArg && self::NOTICE !== $typeArg) {
+            $context->reply('global.type_invalid');
+
+            return;
+        }
+
+        try {
+            $mask = GlobalMessageMask::fromString($maskArg);
+        } catch (ValueError $e) {
+            $context->reply('global.mask_invalid', ['%error%' => $e->getMessage()]);
+
+            return;
+        }
+
+        $nickname = $mask->nickname;
+        $nicknameLower = strtolower($nickname);
+
+        if ($this->serviceNicks->has($nicknameLower)) {
+            $context->reply('global.nick_service', ['%nick%' => $nickname]);
+
+            return;
+        }
+
+        $connectedUser = $this->userLookup->findByNick($nickname);
+        if (null !== $connectedUser) {
+            $context->reply('global.nick_connected', ['%nick%' => $nickname]);
+
+            return;
+        }
+
+        $registeredNick = $this->nickRepository->findByNick($nicknameLower);
+        if (null !== $registeredNick) {
+            $context->reply('global.nick_registered', ['%nick%' => $nickname]);
+
+            return;
+        }
+
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            $this->logger->error('GLOBAL: no active protocol module');
+
+            return;
+        }
+
+        $nickReservation = $module->getNickReservation();
+        if (null === $nickReservation) {
+            $this->logger->error('GLOBAL: protocol does not support nick reservation');
+
+            return;
+        }
+
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            $this->logger->error('GLOBAL: no server SID');
+
+            return;
+        }
+
+        $connection = $this->connectionHolder->getConnection();
+        if (null === $connection) {
+            $this->logger->error('GLOBAL: no connection');
+
+            return;
+        }
+
+        $uid = $this->uidGenerator->generate();
+        if (null === $uid) {
+            $this->logger->error('GLOBAL: could not generate UID');
+
+            return;
+        }
+
+        $reason = sprintf('Global message pseudo-client (sender: %s)', $sender->nick);
+
+        $nickReservation->reserveNickWithDuration($connection, $serverSid, $nickname, self::DURATION_SECONDS, $reason);
+        $module->getServiceActions()->introducePseudoClient($serverSid, $mask->nickname, $mask->ident, $mask->vhost, $uid, $mask->nickname);
+
+        $this->logger->info('GLOBAL: pseudo-client introduced', [
+            'nickname' => $nickname,
+            'uid' => $uid,
+            'sender' => $sender->nick,
+            'type' => $typeArg,
+        ]);
+
+        $uids = $this->userLookup->listConnectedUids();
+        $count = 0;
+
+        foreach ($uids as $targetUid) {
+            $this->sendNoticePort->sendMessage($uid, $targetUid, $message, $typeArg);
+            ++$count;
+        }
+
+        $context->reply('global.done', ['%nick%' => $nickname, '%count%' => (string) $count]);
+
+        $this->logger->info('GLOBAL: message sent', [
+            'nickname' => $nickname,
+            'uid' => $uid,
+            'recipients' => $count,
+            'type' => $typeArg,
+        ]);
+    }
+}

@@ -50,4 +50,36 @@ final class UnrealIRCdNickReservationTest extends TestCase
         self::assertSame(':001 SQLINE ChanServ :Reserved for network services', $this->written[1]);
         self::assertSame(':001 SQLINE MemoServ :Reserved for network services', $this->written[2]);
     }
+
+    #[Test]
+    public function reserveNickWithDurationSendsSqlineWithTimestamp(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $reservation = new UnrealIRCdNickReservation();
+
+        $reservation->reserveNickWithDuration($connection, '001', 'GlobalBot', 86400, 'Temporary pseudo-client');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 SQLINE GlobalBot 86400 :Temporary pseudo-client', $this->written[0]);
+    }
+
+    #[Test]
+    public function reserveNickWithDurationZeroSendsPermanent(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $reservation = new UnrealIRCdNickReservation();
+
+        $reservation->reserveNickWithDuration($connection, '001', 'GlobalBot', 0, 'Permanent block');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 SQLINE GlobalBot 0 :Permanent block', $this->written[0]);
+    }
 }

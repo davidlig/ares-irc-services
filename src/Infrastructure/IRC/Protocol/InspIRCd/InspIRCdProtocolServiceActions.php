@@ -110,6 +110,30 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         $this->write(sprintf(':%s GLINE %s !*', $serverSid, $mask));
     }
 
+    /**
+     * InspIRCd: introduce a temporary pseudo-client with UID.
+     * Format (1206+): :serverSid UID uuid ts nick real_host displayed_host real_user displayed_user ip connect_time modes :realname
+     * Umodes: +B (bot only, not a full service like NickServ).
+     */
+    public function introducePseudoClient(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname): void
+    {
+        $ts = time();
+        $line = sprintf(
+            ':%s UID %s %d %s %s %s %s %s * %d +B :%s',
+            $serverSid,
+            $uid,
+            $ts,
+            $nick,
+            $vhost,
+            $vhost,
+            $ident,
+            $ident,
+            $ts,
+            $realname,
+        );
+        $this->write($line);
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

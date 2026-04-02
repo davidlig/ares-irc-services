@@ -24,4 +24,17 @@ interface ServiceNickReservationInterface
      * @param string              $reason     The reason shown to users who try to use it
      */
     public function reserveNick(ConnectionInterface $connection, string $serverSid, string $nick, string $reason): void;
+
+    /**
+     * Reserve a nickname for a limited duration.
+     *
+     * Used for temporary pseudo-clients that need a nick reservation that expires.
+     *
+     * @param ConnectionInterface $connection      The active IRC connection
+     * @param string              $serverSid       The SID of the services server
+     * @param string              $nick            The nickname to reserve
+     * @param int                 $durationSeconds Duration in seconds (0 = permanent)
+     * @param string              $reason          The reason shown to users who try to use it
+     */
+    public function reserveNickWithDuration(ConnectionInterface $connection, string $serverSid, string $nick, int $durationSeconds, string $reason): void;
 }

@@ -282,4 +282,26 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertSame(':001 GLINE *@192.168.* !*', $this->written[0]);
     }
+
+    #[Test]
+    public function introducePseudoClientSendsUidCommand(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->introducePseudoClient('001', 'GlobalBot', 'global', 'services.red', '001Z00001', 'Global Message Bot');
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:001 UID 001Z00001 \d+ GlobalBot services\.red services\.red global global \* \d+ \+B :Global Message Bot$/', $this->written[0]);
+    }
+
+    #[Test]
+    public function introducePseudoClientWithDifferentParams(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->introducePseudoClient('002', 'Announce', 'announce', 'irc.example.net', '002Z00005', 'Network Announcements');
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:002 UID 002Z00005 \d+ Announce irc\.example\.net irc\.example\.net announce announce \* \d+ \+B :Network Announcements$/', $this->written[0]);
+    }
 }
