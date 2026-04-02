@@ -478,6 +478,71 @@ final class KillCommandTest extends TestCase
         $cmd->execute($this->createContext(null, ['BadUser', 'Flooding'], $notifier, $translator, $registry, $accessHelper));
     }
 
+    #[Test]
+    public function getAuditDataReturnsNullBeforeExecute(): void
+    {
+        $cmd = $this->createCommand();
+        $context = $this->createContext(
+            null,
+            ['BadUser', 'Flooding'],
+            $this->createStub(OperServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new OperServCommandRegistry([]),
+            $this->createAccessHelper(false),
+        );
+
+        self::assertNull($cmd->getAuditData($context));
+    }
+
+    #[Test]
+    public function getAuditDataReturnsDataAfterKill(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $target = new SenderView('UID2', 'BadUser', 'myident', 'myhost.com', 'c', 'dGVzdA==', false, false, 'SID1', 'c', 'i', '');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn($target);
+
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('killUser');
+
+        $protocolModule = $this->createStub(ProtocolModuleInterface::class);
+        $protocolModule->method('getServiceActions')->willReturn($serviceActions);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $cmd = new KillCommand(
+            $userLookup,
+            new RootUserRegistry(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $accessHelper,
+            $connectionHolder,
+            new NullLogger(),
+        );
+
+        $registry = new OperServCommandRegistry([]);
+        $cmd->execute($this->createContext($sender, ['BadUser', 'Flooding', 'channels'], $notifier, $translator, $registry, $accessHelper));
+
+        $auditData = $cmd->getAuditData($this->createContext($sender, ['BadUser', 'Flooding'], $notifier, $translator, $registry, $accessHelper));
+        self::assertNotNull($auditData);
+        self::assertSame('BadUser', $auditData->target);
+        self::assertSame('myident@myhost.com', $auditData->targetHost);
+        self::assertSame('dGVzdA==', $auditData->targetIp);
+        self::assertSame('Flooding channels', $auditData->reason);
+    }
+
     private function createCommand(): KillCommand
     {
         $userLookup = $this->createStub(NetworkUserLookupPort::class);

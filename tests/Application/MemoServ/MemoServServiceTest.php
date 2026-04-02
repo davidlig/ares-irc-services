@@ -6,6 +6,8 @@ namespace App\Tests\Application\MemoServ;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
@@ -14,6 +16,7 @@ use App\Application\MemoServ\MemoServService;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\SenderView;
+use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
@@ -873,6 +876,231 @@ final class MemoServServiceTest extends TestCase
         $service->dispatch('THROW', $sender);
     }
 
+    #[Test]
+    public function dispatchesIrcopCommandExecutedEventWhenHandlerIsAuditableAndHasPermission(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $auditableHandler = new class($contextHolder) implements MemoServCommandInterface, AuditableCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            private ?IrcopAuditData $auditData = null;
+
+            public function getName(): string
+            {
+                return 'AUDITCMD';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'MEMOSERV_ADMIN';
+            }
+
+            public function execute(MemoServContext $context): void
+            {
+                $this->auditData = new IrcopAuditData(
+                    target: 'TargetNick',
+                    reason: 'test reason',
+                );
+                $this->holder->context = $context;
+            }
+
+            public function getAuditData(object $context): ?IrcopAuditData
+            {
+                return $this->auditData;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('MEMOSERV_ADMIN', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+                && 'AUDITCMD' === $event->commandName
+                && 'MEMOSERV_ADMIN' === $event->permission
+                && 'TargetNick' === $event->target
+                && 'test reason' === $event->reason));
+
+        $registry = new MemoServCommandRegistry([$auditableHandler]);
+
+        $service = $this->createMemoServService(
+            $registry,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MemoServNotifierInterface::class),
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('AUDITCMD', $sender);
+
+        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
+    public function dispatchesIrcopCommandExecutedEventWithNullAuditDataWhenNotAuditable(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        // Handler implements MemoServCommandInterface but NOT AuditableCommandInterface
+        $nonAuditableHandler = new class($contextHolder) implements MemoServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'NONAUDIT';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'MEMOSERV_ADMIN';
+            }
+
+            public function execute(MemoServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('MEMOSERV_ADMIN', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+                && 'NONAUDIT' === $event->commandName
+                && 'MEMOSERV_ADMIN' === $event->permission
+                && null === $event->target
+                && null === $event->targetHost
+                && null === $event->targetIp
+                && null === $event->reason
+                && [] === $event->extra));
+
+        $registry = new MemoServCommandRegistry([$nonAuditableHandler]);
+
+        $service = $this->createMemoServService(
+            $registry,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MemoServNotifierInterface::class),
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('NONAUDIT', $sender);
+
+        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
+    }
+
     /**
      * Creates a MemoServService with the required authorization dependencies.
      */
@@ -888,6 +1116,7 @@ final class MemoServServiceTest extends TestCase
         ?LoggerInterface $logger = null,
         ?AuthorizationContextInterface $authorizationContext = null,
         ?AuthorizationCheckerInterface $authorizationChecker = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
     ): MemoServService {
         return new MemoServService(
             $registry,
@@ -898,7 +1127,7 @@ final class MemoServServiceTest extends TestCase
             $serviceNicks,
             $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $eventDispatcher ?? $this->createStub(EventDispatcherInterface::class),
             $defaultLanguage,
             $defaultTimezone,
             $logger ?? $this->createStub(LoggerInterface::class),

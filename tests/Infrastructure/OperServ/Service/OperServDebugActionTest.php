@@ -312,6 +312,72 @@ final class OperServDebugActionTest extends TestCase
         self::assertNull($debug->getDebugChannel());
     }
 
+    #[Test]
+    public function logWithDurationInMessage(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
+
+        $channelActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelActions->expects(self::once())->method('joinChannelAsService');
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::atLeastOnce())->method('trans')
+            ->willReturnCallback(static function (string $key, array $params = []): string {
+                if ('debug.actionWithDuration' === $key) {
+                    self::assertArrayHasKey('%duration%', $params);
+
+                    return 'GLINE added with duration ' . $params['%duration%'];
+                }
+
+                return $key;
+            });
+
+        $debug = $this->createDebugAction(
+            logger: $logger,
+            notifier: $notifier,
+            channelActions: $channelActions,
+            translator: $translator,
+            debugChannel: '#ircops',
+        );
+
+        $debug->log('Admin', 'GLINE', 'user@host', null, null, 'Spam', ['duration' => '1d']);
+    }
+
+    #[Test]
+    public function logWithEmptyReasonDoesNotFormat(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
+
+        $channelActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelActions->expects(self::once())->method('joinChannelAsService');
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::atLeastOnce())->method('trans')
+            ->willReturnCallback(static function (string $key, array $params = []): string {
+                // When reason is null/empty, we don't use prefix translation
+                return 'Debug message';
+            });
+
+        $debug = $this->createDebugAction(
+            logger: $logger,
+            notifier: $notifier,
+            channelActions: $channelActions,
+            translator: $translator,
+            debugChannel: '#ircops',
+        );
+
+        // Just test that it works with empty reason
+        $debug->log('Admin', 'KILL', 'BadUser', 'user@host', '127.0.0.1', null, []);
+    }
+
     private function createDebugAction(
         ?ChannelServiceActionsPort $channelActions = null,
         ?NetworkUserLookupPort $userLookup = null,

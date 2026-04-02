@@ -574,4 +574,79 @@ final class GlobalCommandTest extends TestCase
         self::assertSame('Hello from service mask', $sendMessages[0]['message']);
         self::assertSame('NOTICE', $sendMessages[0]['type']);
     }
+
+    #[Test]
+    public function getAuditDataReturnsNullBeforeExecute(): void
+    {
+        $cmd = $this->createCommand();
+        $context = $this->createContext(
+            new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', ''),
+            ['TestBot!bot@test.com', 'PRIVMSG', 'Hello'],
+            $this->createStub(OperServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+        );
+
+        self::assertNull($cmd->getAuditData($context));
+    }
+
+    #[Test]
+    public function getAuditDataReturnsDataAfterBroadcast(): void
+    {
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+        $userLookup->method('listConnectedUids')->willReturn(['UID2', 'UID3']);
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn(null);
+
+        $sendMessages = [];
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::exactly(2))
+            ->method('sendMessage')
+            ->willReturnCallback(static function (string $fromUid, string $toUid, string $message, string $type) use (&$sendMessages): void {
+                $sendMessages[] = ['from' => $fromUid, 'to' => $toUid, 'message' => $message, 'type' => $type];
+            });
+
+        $nickReservation = $this->createMock(ServiceNickReservationInterface::class);
+        $nickReservation->expects(self::once())->method('reserveNickWithDuration');
+
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('introducePseudoClient');
+        $serviceActions->expects(self::once())->method('quitPseudoClient');
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getNickReservation')->willReturn($nickReservation);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+        $connectionHolder->method('getConnection')->willReturn($connection);
+
+        $cmd = $this->createCommand(
+            userLookup: $userLookup,
+            nickRepository: $nickRepository,
+            connectionHolder: $connectionHolder,
+            sendNoticePort: $sendNoticePort,
+        );
+
+        $context = $this->createContext($sender, ['TestBot!bot@test.com', 'PRIVMSG', 'Hello World'], $notifier, $translator);
+        $cmd->execute($context);
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertNotNull($auditData);
+        self::assertSame('TestBot', $auditData->target);
+        self::assertSame('Hello World', $auditData->reason);
+        self::assertSame('PRIVMSG', $auditData->extra['type']);
+        self::assertSame('2', $auditData->extra['count']);
+    }
 }

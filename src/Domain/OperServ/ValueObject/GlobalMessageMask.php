@@ -45,10 +45,6 @@ final readonly class GlobalMessageMask
 
     private static function validateNickname(string $nickname): void
     {
-        if ('' === $nickname) {
-            throw new ValueError('Nickname cannot be empty');
-        }
-
         if (30 < mb_strlen($nickname)) {
             throw new ValueError('Nickname cannot exceed 30 characters');
         }
@@ -62,10 +58,6 @@ final readonly class GlobalMessageMask
 
     private static function validateIdent(string $ident): void
     {
-        if ('' === $ident) {
-            throw new ValueError('Ident cannot be empty');
-        }
-
         if (20 < mb_strlen($ident)) {
             throw new ValueError('Ident cannot exceed 20 characters');
         }
@@ -79,10 +71,6 @@ final readonly class GlobalMessageMask
 
     private static function validateVhost(string $vhost): void
     {
-        if ('' === $vhost) {
-            throw new ValueError('Vhost cannot be empty');
-        }
-
         if (63 < mb_strlen($vhost)) {
             throw new ValueError('Vhost cannot exceed 63 characters');
         }

@@ -6,6 +6,8 @@ namespace App\Tests\Application\OperServ;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\OperServ\Command\OperServCommandInterface;
@@ -17,6 +19,7 @@ use App\Application\OperServ\OperServService;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
@@ -976,6 +979,129 @@ final class OperServServiceTest extends TestCase
         self::assertInstanceOf(OperServContext::class, $contextHolder->context);
     }
 
+    #[Test]
+    public function dispatchesIrcopCommandExecutedEventWhenHandlerIsAuditableAndHasPermission(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $auditableHandler = new class($contextHolder) implements OperServCommandInterface, AuditableCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            private ?IrcopAuditData $auditData = null;
+
+            public function getName(): string
+            {
+                return 'AUDITCMD';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'OPERSERV_ADMIN';
+            }
+
+            public function execute(OperServContext $context): void
+            {
+                $this->auditData = new IrcopAuditData(
+                    target: 'TargetNick',
+                    targetHost: 'user@host',
+                    targetIp: '127.0.0.1',
+                    reason: 'test reason',
+                );
+                $this->holder->context = $context;
+            }
+
+            public function getAuditData(object $context): ?IrcopAuditData
+            {
+                return $this->auditData;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('OPERSERV_ADMIN', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+                && 'AUDITCMD' === $event->commandName
+                && 'OPERSERV_ADMIN' === $event->permission
+                && 'TargetNick' === $event->target
+                && 'user@host' === $event->targetHost
+                && '127.0.0.1' === $event->targetIp
+                && 'test reason' === $event->reason));
+
+        $registry = new OperServCommandRegistry([$auditableHandler]);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn(null);
+
+        $service = $this->createOperServService(
+            $registry,
+            $nickRepository,
+            $this->createStub(OperServNotifierInterface::class),
+            $this->createStub(UserMessageTypeResolverInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createAccessHelper(),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('AUDITCMD', $sender);
+
+        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+    }
+
     private function createMockCommandHandler(
         string $name,
         bool $isOperOnly,
@@ -1072,6 +1198,7 @@ final class OperServServiceTest extends TestCase
         ?LoggerInterface $logger = null,
         ?AuthorizationContextInterface $authorizationContext = null,
         ?AuthorizationCheckerInterface $authorizationChecker = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
     ): OperServService {
         return new OperServService(
             $registry,
@@ -1083,7 +1210,7 @@ final class OperServServiceTest extends TestCase
             $serviceNicks,
             $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $eventDispatcher ?? $this->createStub(EventDispatcherInterface::class),
             $defaultLanguage,
             $defaultTimezone,
             $logger ?? $this->createStub(LoggerInterface::class),

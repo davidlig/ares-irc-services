@@ -6,6 +6,8 @@ namespace App\Tests\Application\NickServ;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
@@ -17,6 +19,7 @@ use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
+use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
@@ -668,5 +671,246 @@ final class NickServServiceTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Handler error');
         $service->dispatch('CRASH', $sender);
+    }
+
+    #[Test]
+    public function dispatchesIrcopCommandExecutedEventWhenHandlerIsAuditableAndHasPermission(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $auditableHandler = new class($contextHolder) implements NickServCommandInterface, AuditableCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            private ?IrcopAuditData $auditData = null;
+
+            public function getName(): string
+            {
+                return 'AUDITCMD';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'NICKSERV_ADMIN';
+            }
+
+            public function execute(NickServContext $context): void
+            {
+                $this->auditData = new IrcopAuditData(
+                    target: 'TargetNick',
+                    reason: 'test reason',
+                );
+                $this->holder->context = $context;
+            }
+
+            public function getAuditData(object $context): ?IrcopAuditData
+            {
+                return $this->auditData;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('NICKSERV_ADMIN', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+                && 'AUDITCMD' === $event->commandName
+                && 'NICKSERV_ADMIN' === $event->permission
+                && 'TargetNick' === $event->target
+                && 'test reason' === $event->reason));
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $registry = new NickServCommandRegistry([$auditableHandler]);
+
+        $service = new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $registry,
+            $nickRepository,
+            $this->createStub(NickServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+            $eventDispatcher,
+            'en',
+            'UTC',
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $service->dispatch('AUDITCMD', $sender);
+
+        self::assertInstanceOf(NickServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
+    public function dispatchesIrcopCommandExecutedEventWithNullAuditDataWhenNotAuditable(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        // Handler implements NickServCommandInterface but NOT AuditableCommandInterface
+        $nonAuditableHandler = new class($contextHolder) implements NickServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'NONAUDIT';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'NICKSERV_ADMIN';
+            }
+
+            public function execute(NickServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('NICKSERV_ADMIN', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+                && 'NONAUDIT' === $event->commandName
+                && 'NICKSERV_ADMIN' === $event->permission
+                && null === $event->target
+                && null === $event->targetHost
+                && null === $event->targetIp
+                && null === $event->reason
+                && [] === $event->extra));
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $registry = new NickServCommandRegistry([$nonAuditableHandler]);
+
+        $service = new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $registry,
+            $nickRepository,
+            $this->createStub(NickServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+            $eventDispatcher,
+            'en',
+            'UTC',
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $service->dispatch('NONAUDIT', $sender);
+
+        self::assertInstanceOf(NickServContext::class, $contextHolder->context);
     }
 }

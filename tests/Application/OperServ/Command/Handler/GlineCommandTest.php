@@ -1317,6 +1317,86 @@ final class GlineCommandTest extends TestCase
         self::assertStringContainsString('gline.add.done', $messages[0] ?? '');
     }
 
+    #[Test]
+    public function getAuditDataReturnsNullBeforeExecute(): void
+    {
+        $cmd = $this->createCommand();
+        $context = $this->createContext($this->createSender(), ['LIST'], $this->createStub(OperServNotifierInterface::class), $this->createStub(TranslatorInterface::class), new OperServCommandRegistry([]), $this->createAccessHelper(false));
+
+        self::assertNull($cmd->getAuditData($context));
+    }
+
+    #[Test]
+    public function getAuditDataReturnsDataAfterAdd(): void
+    {
+        $sender = $this->createSender();
+        $messages = [];
+        $notifier = $this->createNotifier($messages);
+        $translator = $this->createTranslator();
+        $accessHelper = $this->createAccessHelper(true);
+        $registry = new OperServCommandRegistry([]);
+
+        $glineRepo = $this->createMock(GlineRepositoryInterface::class);
+        $glineRepo->method('findByMask')->willReturn(null);
+        $glineRepo->method('countAll')->willReturn(0);
+        $glineRepo->expects(self::once())->method('save');
+
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('addGline');
+
+        $protocolModule = $this->createStub(ProtocolModuleInterface::class);
+        $protocolModule->method('getServiceActions')->willReturn($serviceActions);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
+        $context = $this->createContext($sender, ['ADD', '*@host1234.com', '1d', 'Test reason'], $notifier, $translator, $registry, $accessHelper);
+        $cmd->execute($context);
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertNotNull($auditData);
+        self::assertSame('*@host1234.com', $auditData->target);
+        self::assertSame('Test reason', $auditData->reason);
+        self::assertSame(['duration' => '1d'], $auditData->extra);
+    }
+
+    #[Test]
+    public function getAuditDataReturnsDataAfterDel(): void
+    {
+        $sender = $this->createSender();
+        $messages = [];
+        $notifier = $this->createNotifier($messages);
+        $translator = $this->createTranslator();
+        $accessHelper = $this->createAccessHelper(true);
+        $registry = new OperServCommandRegistry([]);
+
+        $gline = Gline::create('*@host1234.com', 1, 'Test reason');
+        $glineRepo = $this->createMock(GlineRepositoryInterface::class);
+        $glineRepo->method('findByMask')->willReturn($gline);
+        $glineRepo->expects(self::once())->method('remove');
+
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('removeGline');
+
+        $protocolModule = $this->createStub(ProtocolModuleInterface::class);
+        $protocolModule->method('getServiceActions')->willReturn($serviceActions);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
+        $context = $this->createContext($sender, ['DEL', '*@host1234.com'], $notifier, $translator, $registry, $accessHelper);
+        $cmd->execute($context);
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertNotNull($auditData);
+        self::assertSame('*@host1234.com', $auditData->target);
+        self::assertNull($auditData->reason);
+    }
+
     private function createCommand(): GlineCommand
     {
         $glineRepo = $this->createStub(GlineRepositoryInterface::class);

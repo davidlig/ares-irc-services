@@ -133,9 +133,6 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
     private function sendFromService(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message): void
     {
         $sender = $context->getSender();
-        if (null === $sender) {
-            return;
-        }
 
         $this->logger->info('GLOBAL: using existing service', [
             'nickname' => $nickname,
@@ -150,9 +147,6 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
     private function sendFromPseudoClient(OperServContext $context, string $maskArg, string $typeArg, string $message): void
     {
         $sender = $context->getSender();
-        if (null === $sender) {
-            return;
-        }
 
         try {
             $mask = GlobalMessageMask::fromString($maskArg);
@@ -197,32 +191,9 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
         }
 
         $nickReservation = $module->getNickReservation();
-        if (null === $nickReservation) {
-            $this->logger->error('GLOBAL: protocol does not support nick reservation');
-
-            return;
-        }
-
         $serverSid = $this->connectionHolder->getServerSid();
-        if (null === $serverSid) {
-            $this->logger->error('GLOBAL: no server SID');
-
-            return;
-        }
-
         $connection = $this->connectionHolder->getConnection();
-        if (null === $connection) {
-            $this->logger->error('GLOBAL: no connection');
-
-            return;
-        }
-
         $uid = $this->uidGenerator->generate();
-        if (null === $uid) {
-            $this->logger->error('GLOBAL: could not generate UID');
-
-            return;
-        }
 
         $reason = sprintf('Global message pseudo-client (sender: %s)', $sender->nick);
 

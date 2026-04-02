@@ -105,4 +105,34 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
         self::assertGreaterThanOrEqual(1, $removed);
         self::assertLessThanOrEqual(2, $removed);
     }
+
+    #[Test]
+    public function pruneExpiredCooldownsRemovesEntryWhoseCooldownExpired(): void
+    {
+        $registry = new ChannelRegisterThrottleRegistry();
+        $registry->recordRegistration(1);
+
+        // Need to wait at least 1 second for the 1-second cooldown to expire
+        // Use 2 seconds to ensure it's definitely expired
+        sleep(2);
+
+        $removed = $registry->pruneExpiredCooldowns(1);
+
+        // The entry should be removed since cooldown (1 second) has expired
+        self::assertSame(1, $removed);
+        self::assertNull($registry->getLastRegistrationAt(1));
+    }
+
+    #[Test]
+    public function pruneExpiredCooldownsKeepsEntryWhoseCooldownNotExpired(): void
+    {
+        $registry = new ChannelRegisterThrottleRegistry();
+        $registry->recordRegistration(1);
+
+        $removed = $registry->pruneExpiredCooldowns(3600);
+
+        // The entry should NOT be removed since cooldown (1 hour) has NOT expired
+        self::assertSame(0, $removed);
+        self::assertNotNull($registry->getLastRegistrationAt(1));
+    }
 }

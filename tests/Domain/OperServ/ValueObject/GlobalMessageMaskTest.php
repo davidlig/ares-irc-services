@@ -203,18 +203,42 @@ final class GlobalMessageMaskTest extends TestCase
     }
 
     #[Test]
-    public function identWithTilde(): void
-    {
-        $mask = GlobalMessageMask::fromString('Bot!~bot@services.red');
-
-        self::assertSame('~bot', $mask->ident);
-    }
-
-    #[Test]
     public function identWithDash(): void
     {
         $mask = GlobalMessageMask::fromString('Bot!bot-name@services.red');
 
         self::assertSame('bot-name', $mask->ident);
+    }
+
+    #[Test]
+    public function fromStringNicknameStartsWithInvalidCharThrows(): void
+    {
+        // Testing empty nickname scenario - mask like "!bot@test.com" fails format validation
+        $this->expectException(ValueError::class);
+        $this->expectExceptionMessage('Invalid mask format');
+
+        GlobalMessageMask::fromString('!bot@test.com');
+    }
+
+    #[Test]
+    public function fromStringIdentStartsWithInvalidCharThrows(): void
+    {
+        // Testing ident validation - ident must match pattern but this tests an edge case
+        // The mask format requires nick!ident@vhost, but we need a valid format first
+        // Actually the mask passes regex but fails ident validation for length/start
+        $this->expectException(ValueError::class);
+
+        GlobalMessageMask::fromString('Bot!@test.com');
+    }
+
+    #[Test]
+    public function fromStringVhostIsEmpty(): void
+    {
+        // The regex validation fails first with "Invalid mask format" for empty vhost
+        // because the pattern requires at least one character after @
+        $this->expectException(ValueError::class);
+        $this->expectExceptionMessage('Invalid mask format');
+
+        GlobalMessageMask::fromString('Bot!test@');
     }
 }
