@@ -236,7 +236,8 @@ global:
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
-  action_message:   "%operator% executes command %command% on %target%. Duration: %duration%. Reason: %reason%"
+  action_message:   "%operator% executes command %command% on %target%. Reason: %reason%"
+  actionWithDuration: "%operator% executes command %command% on %target%. Duration: %duration%. Reason: %reason%"
 
 # --- PERMISSIONS --------------------------------------------------------------
 permissions:

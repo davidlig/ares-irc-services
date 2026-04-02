@@ -117,16 +117,25 @@ final readonly class OperServDebugAction implements DebugActionPort
         $coloredCommand = self::COLOR_RED . $command . self::COLOR_RESET;
         $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
 
+        $duration = $extra['duration'] ?? null;
         $messageParams = [
             '%operator%' => $coloredOperator,
             '%command%' => $coloredCommand,
             '%target%' => $coloredTarget,
-            '%duration%' => $extra['duration'] ?? '',
             '%reason%' => $reason ?? '',
         ];
 
+        // Use different translation key depending on whether duration is present
+        $translationKey = null !== $duration && '' !== $duration
+            ? 'debug.actionWithDuration'
+            : 'debug.action_message';
+
+        if (null !== $duration && '' !== $duration) {
+            $messageParams['%duration%'] = $duration;
+        }
+
         $message = $this->translator->trans(
-            'debug.action_message',
+            $translationKey,
             $messageParams,
             'operserv',
             $this->defaultLanguage,
