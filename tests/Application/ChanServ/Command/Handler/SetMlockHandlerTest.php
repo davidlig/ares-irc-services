@@ -136,6 +136,7 @@ final class SetMlockHandlerTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n', 't']);
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnArgument(0);
         $resolver = new MlockStateFromChannelResolver();

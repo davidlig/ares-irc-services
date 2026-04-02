@@ -21,8 +21,8 @@ final readonly class MlockStateFromChannelResolver
 {
     /**
      * Returns [modeString, params] for MLOCK from the channel's current modes.
-     * Excludes only lowercase +r (channel registered at services). Only includes
-     * channel-setting modes allowed by support. Case is preserved (e.g. +M, +R stay as-is).
+     * Excludes +r (channel registered) and +P (permanent channel), both are service-controlled.
+     * Only includes channel-setting modes allowed by support. Case is preserved (e.g. +M, +R).
      *
      * @return array{0: string, 1: array<string, string>}
      */
@@ -36,6 +36,7 @@ final readonly class MlockStateFromChannelResolver
         $unsetWith = $support->getChannelSettingModesUnsetWithParam();
         $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
         $allowedLetters = array_flip(array_merge($unsetWithout, $unsetWith, $withParamOnSet));
+        $permanentLetter = $support->getPermanentChannelModeLetter();
 
         $letters = [];
         $params = [];
@@ -43,8 +44,8 @@ final readonly class MlockStateFromChannelResolver
             if ('+' === $c || '-' === $c) {
                 continue;
             }
-            // Only skip lowercase r (channel registered); do not skip +R (regonly) or alter case
-            if ('r' === $c) {
+            // Skip +r (channel registered) and +P (permanent) - both are service-controlled
+            if ('r' === $c || $c === $permanentLetter) {
                 continue;
             }
             if (!isset($allowedLetters[$c])) {

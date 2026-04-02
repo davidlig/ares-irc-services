@@ -22,6 +22,7 @@ final class MlockStateFromChannelResolverTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn([]);
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
 
         $resolver = new MlockStateFromChannelResolver();
         [$modeString, $params] = $resolver->resolve($view, $support);
@@ -38,6 +39,58 @@ final class MlockStateFromChannelResolverTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n', 't', 'r']);
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
+
+        $resolver = new MlockStateFromChannelResolver();
+        [$modeString, $params] = $resolver->resolve($view, $support);
+
+        self::assertSame('+nt', $modeString);
+        self::assertSame([], $params);
+    }
+
+    #[Test]
+    public function resolveExcludesPermanentMode(): void
+    {
+        $view = new ChannelView('#test', '+Pnt', null, 0);
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n', 't', 'P']);
+        $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
+
+        $resolver = new MlockStateFromChannelResolver();
+        [$modeString, $params] = $resolver->resolve($view, $support);
+
+        self::assertSame('+nt', $modeString);
+        self::assertSame([], $params);
+    }
+
+    #[Test]
+    public function resolveExcludesBothRegisteredAndPermanentMode(): void
+    {
+        $view = new ChannelView('#test', '+rPnt', null, 0);
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n', 't', 'r', 'P']);
+        $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
+
+        $resolver = new MlockStateFromChannelResolver();
+        [$modeString, $params] = $resolver->resolve($view, $support);
+
+        self::assertSame('+nt', $modeString);
+        self::assertSame([], $params);
+    }
+
+    #[Test]
+    public function resolveSkipsPermanentWhenNotSupported(): void
+    {
+        $view = new ChannelView('#test', '+nt', null, 0);
+        $support = $this->createStub(ChannelModeSupportInterface::class);
+        $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n', 't']);
+        $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
+        $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $support->method('getPermanentChannelModeLetter')->willReturn(null);
 
         $resolver = new MlockStateFromChannelResolver();
         [$modeString, $params] = $resolver->resolve($view, $support);
@@ -54,6 +107,7 @@ final class MlockStateFromChannelResolverTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn([]);
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn(['k']);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['k']);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
 
         $resolver = new MlockStateFromChannelResolver();
         [$modeString, $params] = $resolver->resolve($view, $support);
@@ -70,6 +124,7 @@ final class MlockStateFromChannelResolverTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n', 't']);
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
 
         $resolver = new MlockStateFromChannelResolver();
         [$modeString, $params] = $resolver->resolve($view, $support);
@@ -86,6 +141,7 @@ final class MlockStateFromChannelResolverTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn([]);
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn(['k']);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn(['k']);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
 
         $resolver = new MlockStateFromChannelResolver();
         [$modeString, $params] = $resolver->resolve($view, $support);
@@ -102,6 +158,7 @@ final class MlockStateFromChannelResolverTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['n']);
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
+        $support->method('getPermanentChannelModeLetter')->willReturn('P');
 
         $resolver = new MlockStateFromChannelResolver();
         [$modeString, $params] = $resolver->resolve($view, $support);
