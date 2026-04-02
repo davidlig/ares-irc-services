@@ -524,4 +524,63 @@ final class GlobalCommandTest extends TestCase
         self::assertSame('Test message', $sendMessages[0]['message']);
         self::assertSame('PRIVMSG', $sendMessages[0]['type']);
     }
+
+    #[Test]
+    public function executeWithServiceNicknameInMaskUsesExistingServiceUid(): void
+    {
+        // When passing "NickServ!ident@host", it should detect NickServ is a service
+        // and use its existing UID instead of creating a pseudo-client
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('listConnectedUids')->willReturn(['UID1', 'UID2']);
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $nickservUid = '002NICKSV';
+        $uidRegistry = $this->createUidRegistry($nickservUid);
+
+        $sendMessages = [];
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::exactly(2))
+            ->method('sendMessage')
+            ->willReturnCallback(static function (string $fromUid, string $toUid, string $message, string $type) use (&$sendMessages): void {
+                $sendMessages[] = ['from' => $fromUid, 'to' => $toUid, 'message' => $message, 'type' => $type];
+            });
+
+        // NO introducePseudoClient, NO quitPseudoClient for service nicks
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('introducePseudoClient');
+        $serviceActions->expects(self::never())->method('quitPseudoClient');
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        // Pass mask format but with service nickname
+        $context = $this->createContext($sender, ['NickServ!services@host', 'NOTICE', 'Hello from service mask'], $notifier, $translator);
+        $command = $this->createCommand(
+            userLookup: $userLookup,
+            nickRepository: $nickRepository,
+            uidRegistry: $uidRegistry,
+            connectionHolder: $connectionHolder,
+            sendNoticePort: $sendNoticePort,
+        );
+
+        $command->execute($context);
+
+        // Should use service UID, not create pseudo-client
+        self::assertCount(2, $sendMessages);
+        self::assertSame($nickservUid, $sendMessages[0]['from']);
+        self::assertSame('Hello from service mask', $sendMessages[0]['message']);
+        self::assertSame('NOTICE', $sendMessages[0]['type']);
+    }
 }

@@ -156,6 +156,15 @@ final readonly class GlobalCommand implements OperServCommandInterface
         $nickname = $mask->nickname;
         $nicknameLower = strtolower($nickname);
 
+        // Check if the nickname extracted from mask is a service
+        $serviceUid = $this->serviceUidRegistry->getUidByNickname($nickname);
+        if (null !== $serviceUid) {
+            // Use the existing service instead of creating pseudo-client
+            $this->sendFromService($context, $nickname, $serviceUid, $typeArg, $message);
+
+            return;
+        }
+
         // Validate nickname is not connected or registered
         $connectedUser = $this->userLookup->findByNick($nickname);
         if (null !== $connectedUser) {

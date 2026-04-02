@@ -224,7 +224,7 @@ gline:
 
 # --- GLOBAL -------------------------------------------------------------------
 global:
-  syntax:           "GLOBAL <service|nick!ident@vhost> {PRIVMSG|NOTICE} <message>"
+  syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <message>"
   short:            "Send a global message to all connected users."
   help:             "Sends a message to all connected users.\n\nIf the first argument is a service name (NickServ, ChanServ,\nMemoServ, OperServ), the message will be sent using that existing service.\n\nIf not a service, a temporary pseudo-client will be created with the\nspecified mask. The mask must be in format: nick!ident@vhost\n- nick: IRC valid nickname (letters, []{}|\\`, digits, starts with letter)\n- ident: alphanumeric with . _ ~ -\n- vhost: valid hostname\n\nFor pseudo-clients, the nickname cannot be connected or registered.\nThe pseudo-client will remain connected during the send and disconnect\nautomatically (the nick will be blocked for 24h via SQLINE/QLINE).\n\nPRIVMSG sends as private message, NOTICE sends as notice.\nThis command requires the operserv.global permission."
   mask_invalid:    "\x0304✗\x03 Invalid mask format: %error%"
