@@ -13,7 +13,12 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
+use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Security\PermissionRegistry;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,6 +27,22 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(HelpFormatterContextAdapter::class)]
 final class HelpFormatterContextAdapterTest extends TestCase
 {
+    private function createAdapter(NickServContext $context): HelpFormatterContextAdapter
+    {
+        $rootRegistry = new RootUserRegistry('');
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $permissionRegistry = new PermissionRegistry([]);
+
+        return new HelpFormatterContextAdapter(
+            $context,
+            $accessHelper,
+            $rootRegistry,
+            $permissionRegistry,
+        );
+    }
+
     private function createContext(
         ?SenderView $sender,
         NickServNotifierInterface $notifier,
@@ -127,7 +148,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $translator,
             new NickServCommandRegistry([]),
         );
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
 
         $adapter->reply('test.key', ['%param%' => 'value']);
 
@@ -149,7 +170,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $translator,
             new NickServCommandRegistry([]),
         );
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
 
         $adapter->replyRaw('Raw message');
 
@@ -167,7 +188,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $translator,
             new NickServCommandRegistry([]),
         );
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
 
         self::assertSame('help.key', $adapter->trans('help.key'));
     }
@@ -183,7 +204,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $registry,
         );
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
 
         $commands = iterator_to_array($adapter->getCommandsForGeneralHelp());
 
@@ -201,7 +222,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             new NickServCommandRegistry([]),
         );
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
 
         self::assertFalse($adapter->shouldShowCommandInGeneralHelp($command));
     }
@@ -216,7 +237,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             new NickServCommandRegistry([]),
         );
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
 
         self::assertTrue($adapter->shouldShowCommandInGeneralHelp($command));
     }
@@ -231,7 +252,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             new NickServCommandRegistry([]),
         );
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
 
         self::assertTrue($adapter->shouldShowCommandInGeneralHelp($command));
     }
