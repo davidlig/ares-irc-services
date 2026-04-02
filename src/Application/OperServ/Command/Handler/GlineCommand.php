@@ -224,7 +224,7 @@ final readonly class GlineCommand implements OperServCommandInterface
             target: $mask,
             targetHost: '',
             targetIp: '',
-            reason: $reason,
+            reason: sprintf('Reason: %s', $reason),
             extra: ['duration' => $duration],
         );
 

@@ -395,7 +395,7 @@ final class GlobalCommandTest extends TestCase
                 'TestBot',
                 null,
                 null,
-                self::stringContains('PRIVMSG to 3 users'),
+                self::stringContains('Mensaje:'),
             );
 
         $module = $this->createStub(ProtocolModuleInterface::class);
