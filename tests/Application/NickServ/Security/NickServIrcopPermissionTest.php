@@ -30,10 +30,10 @@ final class NickServIrcopPermissionTest extends TestCase
     }
 
     #[Test]
-    public function getPermissionsReturnsEmptyArrayUntilCommandsAreImplemented(): void
+    public function getPermissionsReturnsConfiguredPermissions(): void
     {
         $permission = new NickServIrcopPermission();
 
-        self::assertSame([], $permission->getPermissions());
+        self::assertSame(['nickserv.userip'], $permission->getPermissions());
     }
 }

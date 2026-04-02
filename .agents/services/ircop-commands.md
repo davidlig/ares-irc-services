@@ -453,3 +453,101 @@ public function getRequiredPermission(): ?string
 ```
 
 The `isOperOnly()` method is deprecated. All authorization now goes through `getRequiredPermission()` + `AuthorizationChecker`.
+
+## Displaying IRCop Commands in HELP
+
+All services (NickServ, ChanServ, MemoServ, OperServ) must show IRCop commands in HELP
+based on the user's permissions:
+
+### Implementation Pattern
+
+Each service's `HelpFormatterContextAdapter` must implement:
+- `getIrcopCommands()`: Returns commands the user has permission for
+- `hasIrcopAccess()`: Returns true if user is root or IRCop with permissions
+
+### Permission Detection
+
+Use `IrcopPermissionDetector::isIrcopPermission(string $permission): bool` to detect
+if a permission string is an IRCop permission (format: `service.command`).
+
+Then verify with `IrcopAccessHelper::hasPermission()` for non-root users.
+
+### Display Format
+
+When a user has IRCop permissions, show a separated section:
+
+```
+─────────────────────────────────────
+
+Los siguientes comandos están disponibles para IRCOPS:
+  USERIP    Obtiene la dirección IP/Host real del usuario.
+─────────────────────────────────────
+```
+
+### Root User Special Case
+
+Root users (configured in `OPERSERV_ROOT_USERS`) see ALL IRCop commands automatically
+without needing explicit role assignments.
+
+### Code Example: NickServ HelpFormatterContextAdapter
+
+```php
+public function getIrcopCommands(): iterable
+{
+    $sender = $this->context->sender;
+    $account = $this->context->senderAccount;
+    
+    // Must be identified to have IRCop permissions
+    if (null === $sender || null === $account) {
+        return [];
+    }
+    
+    $nickLower = strtolower($sender->nick);
+    
+    // Root users see all IRCop commands
+    if ($this->rootRegistry->isRoot($nickLower)) {
+        return $this->filterIrcopCommands($this->context->getRegistry()->all());
+    }
+    
+    // Must be IRCop and have permissions
+    if (!$sender->isOper) {
+        return [];
+    }
+    
+    // Filter by permissions
+    return $this->filterByPermission(
+        $this->context->getRegistry()->all(),
+        $account->getId(),
+        $nickLower
+    );
+}
+
+public function hasIrcopAccess(): bool
+{
+    $sender = $this->context->sender;
+    $account = $this->context->senderAccount;
+    
+    if (null === $sender || null === $account) {
+        return false;
+    }
+    
+    $nickLower = strtolower($sender->nick);
+    
+    // Root users always have IRCop access
+    if ($this->rootRegistry->isRoot($nickLower)) {
+        return true;
+    }
+    
+    // IRCops with at least one permission
+    if ($sender->isOper) {
+        $servicePermissions = $this->permissionRegistry->getPermissionsByService()['NickServ'] ?? [];
+        foreach ($servicePermissions as $permission) {
+            if ($this->accessHelper->hasPermission($account->getId(), $nickLower, $permission)) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
+```

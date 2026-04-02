@@ -793,8 +793,16 @@ services:
 
     App\Application\NickServ\Command\Handler\HelpCommand:
         arguments:
-            $timezoneHelpProvider:   '@App\Application\NickServ\TimezoneHelpProvider'
-            $inactivityExpiryDays:  '%nickserv.inactivity_expiry_days%'
+            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $permissionRegistry: '@App\Application\Security\PermissionRegistry'
+            $timezoneHelpProvider: '@App\Application\NickServ\TimezoneHelpProvider'
+            $inactivityExpiryDays: '%nickserv.inactivity_expiry_days%'
+        tags: ['nickserv.command']
+
+    App\Application\NickServ\Command\Handler\UseripCommand:
+        arguments:
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
         tags: ['nickserv.command']
 
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---

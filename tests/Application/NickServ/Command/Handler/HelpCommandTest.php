@@ -14,8 +14,13 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\TimezoneHelpProvider;
+use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +29,24 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
+    private function createHelpCommand(int $inactivityExpiryDays = 0): HelpCommand
+    {
+        $rootRegistry = new RootUserRegistry('');
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $permissionRegistry = new PermissionRegistry([]);
+
+        return new HelpCommand(
+            new UnifiedHelpFormatter(),
+            new TimezoneHelpProvider(),
+            $accessHelper,
+            $rootRegistry,
+            $permissionRegistry,
+            $inactivityExpiryDays,
+        );
+    }
+
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -56,7 +79,7 @@ final class HelpCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $registry = new NickServCommandRegistry([]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext(null, [], $notifier, $translator, $registry));
     }
 
@@ -129,7 +152,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['UNKNOWNCMD'], $notifier, $translator, $registry));
 
         self::assertContains('help.unknown_command', $messages);
@@ -204,7 +227,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, [], $notifier, $translator, $registry));
 
         self::assertContains('help.footer', $messages);
@@ -279,7 +302,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 30);
+        $cmd = $this->createHelpCommand(30);
         $cmd->execute($this->createContext($sender, [], $notifier, $translator, $registry));
 
         self::assertContains('help.intro_expiration', $messages);
@@ -354,7 +377,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$operOnlyHandler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['OPER'], $notifier, $translator, $registry));
 
         self::assertContains('help.unknown_command', $messages);
@@ -429,7 +452,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['REGISTER'], $notifier, $translator, $registry));
 
         self::assertNotEmpty($messages);
@@ -511,7 +534,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['SET', 'PASSWORD'], $notifier, $translator, $registry));
 
         self::assertNotEmpty($messages);
@@ -593,7 +616,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['SET', 'TIMEZONE', 'Europe'], $notifier, $translator, $registry));
 
         self::assertNotEmpty($messages);
@@ -675,7 +698,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['SET', 'TIMEZONE', 'UnknownRegion'], $notifier, $translator, $registry));
 
         self::assertContains('help.set_timezone.region_unknown', $messages);
@@ -757,7 +780,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['SET', 'TIMEZONE'], $notifier, $translator, $registry));
 
         self::assertContains('help.set_timezone.index_label', $messages);
@@ -839,7 +862,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new NickServCommandRegistry([$handlerWithSub]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         $cmd->execute($this->createContext($sender, ['SET', 'UNKNOWN'], $notifier, $translator, $registry));
 
         self::assertNotEmpty($messages);
@@ -848,70 +871,70 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function getAliasesReturnsArray(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertSame(['?'], $cmd->getAliases());
     }
 
     #[Test]
     public function getMinArgsReturnsZero(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertSame(0, $cmd->getMinArgs());
     }
 
     #[Test]
     public function getSyntaxKeyReturnsString(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertSame('help.syntax', $cmd->getSyntaxKey());
     }
 
     #[Test]
     public function getHelpKeyReturnsString(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertSame('help.help', $cmd->getHelpKey());
     }
 
     #[Test]
     public function getOrderReturnsInt(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertSame(99, $cmd->getOrder());
     }
 
     #[Test]
     public function getShortDescKeyReturnsString(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertSame('help.short', $cmd->getShortDescKey());
     }
 
     #[Test]
     public function getSubCommandHelpReturnsEmptyArray(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertSame([], $cmd->getSubCommandHelp());
     }
 
     #[Test]
     public function isOperOnlyReturnsFalse(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertFalse($cmd->isOperOnly());
     }
 
     #[Test]
     public function getRequiredPermissionReturnsNull(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertNull($cmd->getRequiredPermission());
     }
 
     #[Test]
     public function getNameReturnsHelp(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), new TimezoneHelpProvider(), 0);
+        $cmd = $this->createHelpCommand(0);
         self::assertSame('HELP', $cmd->getName());
     }
 

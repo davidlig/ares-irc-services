@@ -116,3 +116,109 @@ Methods:
 - [ ] Footer separator at end
 - [ ] Translation keys follow `{service}.help.*` pattern
 - [ ] Alternatives use `{A|B|C}` notation in help text
+
+## IRCop Commands Section
+
+When a user has IRCop permissions, show a separated section after normal commands.
+
+### Format
+
+1. **Blank line** after normal commands section
+2. **Header**: `help.ircop_header` (e.g., "Los siguientes comandos están disponibles para IRCOPS:")
+3. **Commands**: List only commands the user has permission for
+4. **Footer**: Standard separator
+
+### IRCop Header Translation
+
+```yaml
+help:
+  ircop_header: "Los siguientes comandos están disponibles para \x0304\x02IRCOPS\x02\x03:"
+```
+
+The `\x0304\x02IRCOPS\x02\x03` renders as **red bold "IRCOPS"**.
+
+### Implementation in HelpFormatterContextAdapter
+
+Each service must implement the interface methods:
+
+```php
+public function getIrcopCommands(): iterable
+{
+    $sender = $this->context->sender;
+    $account = $this->context->senderAccount;
+    
+    // Must be identified to have IRCop permissions
+    if (null === $sender || null === $account) {
+        return [];
+    }
+    
+    $nickLower = strtolower($sender->nick);
+    
+    // Root users see all IRCop commands
+    if ($this->rootRegistry->isRoot($nickLower)) {
+        return $this->filterIrcopCommands(...);
+    }
+    
+    // Must be IRCop and have permissions
+    if (!$sender->isOper) {
+        return [];
+    }
+    
+    // Filter by actual permissions
+    return $this->filterByPermission(...);
+}
+
+public function hasIrcopAccess(): bool
+{
+    $sender = $this->context->sender;
+    $account = $this->context->senderAccount;
+    
+    if (null === $sender || null === $account) {
+        return false;
+    }
+    
+    $nickLower = strtolower($sender->nick);
+    
+    // Root users always have IRCop access
+    if ($this->rootRegistry->isRoot($nickLower)) {
+        return true;
+    }
+    
+    // IRCops with at least one permission
+    if ($sender->isOper) {
+        // Check if user has any IRCop permission
+        return $this->hasAnyPermission($account->getId(), $nickLower);
+    }
+    
+    return false;
+}
+```
+
+### Service-Specific Implementations
+
+| Service | File | Commands |
+|---------|------|----------|
+| NickServ | HelpFormatterContextAdapter.php | USERIP |
+| ChanServ | HelpFormatterContextAdapter.php | (none yet) |
+| MemoServ | HelpFormatterContextAdapter.php | (none yet) |
+| OperServ | OperServHelpFormatterContextAdapter.php | Uses different logic (root/oper) |
+
+### Translations
+
+Add to `translations/{service}.en.yaml` and `translations/{service}.es.yaml`:
+
+```yaml
+# English
+help:
+  ircop_header: "The following commands are available for \x0304\x02IRCOPS\x02\x03:"
+
+permissions:
+  nickserv.userip: "View the real IP/Host of a user (IRCop only)"
+
+# Spanish
+help:
+  ircop_header: "Los siguientes comandos están disponibles para \x0304\x02IRCOPS\x02\x03:"
+
+permissions:
+  nickserv.userip: "Ver la dirección IP/Host real de un usuario (solo IRCop)"
+```

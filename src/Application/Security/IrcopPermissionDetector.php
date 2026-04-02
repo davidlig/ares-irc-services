@@ -6,7 +6,7 @@ namespace App\Application\Security;
 
 final class IrcopPermissionDetector
 {
-    public function isIrcopPermission(string $permission): bool
+    public static function isIrcopPermission(string $permission): bool
     {
         if ('IDENTIFIED' === $permission) {
             return false;

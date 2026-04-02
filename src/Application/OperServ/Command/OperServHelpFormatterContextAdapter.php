@@ -41,4 +41,17 @@ final readonly class OperServHelpFormatterContextAdapter implements HelpFormatte
 
         return true;
     }
+
+    public function getIrcopCommands(): iterable
+    {
+        // OperServ shows all commands based on isRoot/isOper status
+        // No separate IRCop section needed
+        return [];
+    }
+
+    public function hasIrcopAccess(): bool
+    {
+        // OperServ uses different logic (root/oper checks)
+        return false;
+    }
 }

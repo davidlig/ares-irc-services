@@ -40,4 +40,16 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     {
         return !$command->isOperOnly();
     }
+
+    public function getIrcopCommands(): iterable
+    {
+        // MemoServ does not have IRCop commands yet
+        return [];
+    }
+
+    public function hasIrcopAccess(): bool
+    {
+        // MemoServ does not have IRCop commands yet
+        return false;
+    }
 }

@@ -60,4 +60,16 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         return true;
     }
+
+    public function getIrcopCommands(): iterable
+    {
+        // ChanServ does not have IRCop commands yet
+        return [];
+    }
+
+    public function hasIrcopAccess(): bool
+    {
+        // ChanServ does not have IRCop commands yet
+        return false;
+    }
 }

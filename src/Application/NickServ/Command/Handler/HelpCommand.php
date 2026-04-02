@@ -8,6 +8,9 @@ use App\Application\NickServ\Command\HelpFormatterContextAdapter;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\TimezoneHelpProvider;
+use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\RootUserRegistry;
+use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
 
 use function strlen;
@@ -30,6 +33,9 @@ final readonly class HelpCommand implements NickServCommandInterface
     public function __construct(
         private readonly UnifiedHelpFormatter $formatter,
         private readonly TimezoneHelpProvider $timezoneHelpProvider,
+        private readonly IrcopAccessHelper $accessHelper,
+        private readonly RootUserRegistry $rootRegistry,
+        private readonly PermissionRegistry $permissionRegistry,
         private readonly int $inactivityExpiryDays = 0,
     ) {
     }
@@ -122,20 +128,20 @@ final readonly class HelpCommand implements NickServCommandInterface
                     return;
                 }
 
-                $adapter = new HelpFormatterContextAdapter($context);
+                $adapter = $this->createAdapter($context);
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return;
             }
         }
 
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
         $this->formatter->showCommandHelp($adapter, $handler);
     }
 
     private function showGeneralHelp(NickServContext $context): void
     {
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
         $this->formatter->showGeneralHelp($adapter);
         if ($this->inactivityExpiryDays > 0) {
             $context->replyRaw(' ');
@@ -144,9 +150,19 @@ final readonly class HelpCommand implements NickServCommandInterface
         $context->reply('help.footer');
     }
 
+    private function createAdapter(NickServContext $context): HelpFormatterContextAdapter
+    {
+        return new HelpFormatterContextAdapter(
+            $context,
+            $this->accessHelper,
+            $this->rootRegistry,
+            $this->permissionRegistry,
+        );
+    }
+
     private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
     {
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
         $this->formatter->sendHeader($adapter, $parentName . ' ' . $sub['name']);
         $context->reply($sub['help_key']);
         $context->replyRaw(' ');
@@ -190,7 +206,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         $region = $this->timezoneHelpProvider->resolveRegion($regionArg)
             ?? $this->timezoneHelpProvider->getRegionForTimezone($regionArg);
 
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = $this->createAdapter($context);
 
         if (null === $region) {
             $this->formatter->sendHeader($adapter, 'SET TIMEZONE ' . $regionArg);

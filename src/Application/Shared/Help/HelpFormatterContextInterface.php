@@ -25,4 +25,18 @@ interface HelpFormatterContextInterface
     public function getCommandsForGeneralHelp(): iterable;
 
     public function shouldShowCommandInGeneralHelp(object $command): bool;
+
+    /**
+     * Returns IRCop commands that the current user has permission for.
+     * Used to show a separated section in HELP for IRCop-only commands.
+     *
+     * @return iterable<object>
+     */
+    public function getIrcopCommands(): iterable;
+
+    /**
+     * Returns true if the user is a root user or an IRCop with at least one permission.
+     * Used to decide whether to show the IRCop commands section.
+     */
+    public function hasIrcopAccess(): bool;
 }

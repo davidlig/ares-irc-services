@@ -15,6 +15,8 @@ final readonly class NickServIrcopPermission implements PermissionProviderInterf
 
     public function getPermissions(): array
     {
-        return [];
+        return [
+            NickServPermission::USERIP,
+        ];
     }
 }

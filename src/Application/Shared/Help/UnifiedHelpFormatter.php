@@ -55,6 +55,33 @@ final readonly class UnifiedHelpFormatter
         $context->replyRaw(' ');
         $context->reply('help.general_footer');
         // Caller sends help.footer (allows e.g. NickServ to add intro_expiration before it).
+
+        // Show IRCop commands section if user has IRCop access
+        if ($context->hasIrcopAccess()) {
+            $ircopCommands = iterator_to_array($context->getIrcopCommands());
+            if ([] !== $ircopCommands) {
+                usort($ircopCommands, static fn (object $a, object $b): int => $a->getOrder() <=> $b->getOrder());
+                $this->showIrcopCommandsSection($context, $ircopCommands);
+            }
+        }
+    }
+
+    /**
+     * @param array<object> $commands
+     */
+    private function showIrcopCommandsSection(HelpFormatterContextInterface $context, array $commands): void
+    {
+        $context->replyRaw(' ');
+        $context->reply('help.ircop_header');
+
+        foreach ($commands as $command) {
+            $context->reply('help.command_line', [
+                'command' => str_pad($command->getName(), self::CMD_PAD),
+                'description' => $context->trans($command->getShortDescKey()),
+            ]);
+        }
+
+        $context->reply('help.footer');
     }
 
     public function showCommandHelp(HelpFormatterContextInterface $context, object $handler): void

@@ -205,6 +205,7 @@ help:
   syntax_label:     "\x0307Sintaxis:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 No hay ayuda disponible para \x02%command%\x02."
+  ircop_header:     "Los siguientes comandos están disponibles para \x0304\x02IRCOPS\x02\x03:"
 
   set_timezone:
     index_label:    "\x0314Regiones\x03 (usa \x02HELP SET TIMEZONE <región>\x02 para listar):"
@@ -215,3 +216,22 @@ help:
 protection:
   nick_in_use:      "\x0304⚠\x03 El nick \x02%nickname%\x02 está registrado. Serás renombrado si no te identificas."
   renamed_to:       "\x0307→\x03 Has sido renombrado a \x02%guest_nick%\x02. Para recuperar tu nick:\n\x0303/msg %bot% IDENTIFY %nickname% <contraseña>\x03"
+
+# --- IRCop Commands ---------------------------------------------------------
+userip:
+  syntax:           "USERIP <nickname>"
+  short:            "Obtiene la dirección IP/Host real del usuario."
+  help:             |
+    Muestra la dirección IP real y el hostname del usuario especificado.
+    Solo disponible para IRCops con permiso 'nickserv.userip'.
+    
+    Este comando muestra información sensible del usuario.
+    Úsalo con responsabilidad.
+    
+    Sintaxis: USERIP <nickname>
+    Ejemplo: USERIP SomeUser
+  not_online:       "\x0304✗\x03 El usuario \x02%nick%\x02 no está conectado."
+  result:           "\x0307ℹ\x03 Usuario: \x02%nick%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+
+permissions:
+  nickserv.userip:  "Ver la dirección IP/Host real de un usuario (solo IRCop)"
