@@ -12,7 +12,6 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
@@ -294,10 +293,7 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
-        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder, $debug);
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['ADD', '*@host1234.com', '1d', 'Test reason'], $notifier, $translator, $registry, $accessHelper);
         $cmd->execute($context);
 
@@ -335,9 +331,6 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
         $cmd = new GlineCommand(
             $glineRepo,
             $userLookup,
@@ -346,7 +339,6 @@ final class GlineCommandTest extends TestCase
             new RootUserRegistry(''),
             $accessHelper,
             $connectionHolder,
-            $debug,
             new NullLogger(),
             1000,
         );
@@ -378,7 +370,6 @@ final class GlineCommandTest extends TestCase
             new RootUserRegistry(''),
             $accessHelper,
             $this->createStub(ActiveConnectionHolderInterface::class),
-            $this->createStub(DebugActionPort::class),
             new NullLogger(),
             1000,
         );
@@ -452,10 +443,7 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
-        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder, $debug);
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['DEL', '*@host1234.com'], $notifier, $translator, $registry, $accessHelper);
         $cmd->execute($context);
 
@@ -551,10 +539,7 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
-        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder, $debug);
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['ADD', '*@host1234.com', '0', 'Test reason'], $notifier, $translator, $registry, $accessHelper);
         $cmd->execute($context);
 
@@ -586,10 +571,7 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
-        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder, $debug);
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['ADD', '*@host1234.com', '2h', 'Test reason'], $notifier, $translator, $registry, $accessHelper);
         $cmd->execute($context);
 
@@ -621,10 +603,7 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
-        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder, $debug);
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['ADD', '*@host1234.com', '30m', 'Test reason'], $notifier, $translator, $registry, $accessHelper);
         $cmd->execute($context);
 
@@ -658,10 +637,7 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
-        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder, $debug);
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['ADD', '*@host1234.com', '1d', 'New reason'], $notifier, $translator, $registry, $accessHelper);
         $cmd->execute($context);
 
@@ -894,7 +870,6 @@ final class GlineCommandTest extends TestCase
             $rootRegistry,
             $accessHelper,
             $this->createStub(ActiveConnectionHolderInterface::class),
-            $this->createStub(DebugActionPort::class),
             new NullLogger(),
             1000,
         );
@@ -937,9 +912,6 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
         $rootRegistry = new RootUserRegistry('TestUser');
 
         $cmd = new GlineCommand(
@@ -950,7 +922,6 @@ final class GlineCommandTest extends TestCase
             $rootRegistry,
             $accessHelper,
             $connectionHolder,
-            $debug,
             new NullLogger(),
             1000,
         );
@@ -999,7 +970,6 @@ final class GlineCommandTest extends TestCase
             new RootUserRegistry(''),
             $accessHelper,
             $this->createStub(ActiveConnectionHolderInterface::class),
-            $this->createStub(DebugActionPort::class),
             new NullLogger(),
             1000,
         );
@@ -1047,7 +1017,6 @@ final class GlineCommandTest extends TestCase
             new RootUserRegistry(''),
             $accessHelper,
             $this->createStub(ActiveConnectionHolderInterface::class),
-            $this->createStub(DebugActionPort::class),
             new NullLogger(),
             1000,
         );
@@ -1085,10 +1054,7 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
-        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder, $debug);
+        $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['DEL', '1'], $notifier, $translator, $registry, $accessHelper);
         $cmd->execute($context);
 
@@ -1189,7 +1155,6 @@ final class GlineCommandTest extends TestCase
             new RootUserRegistry(''),
             $accessHelper,
             $this->createStub(ActiveConnectionHolderInterface::class),
-            $this->createStub(DebugActionPort::class),
             new NullLogger(),
             1000,
         );
@@ -1230,7 +1195,6 @@ final class GlineCommandTest extends TestCase
             new RootUserRegistry(''),
             $accessHelper,
             $this->createStub(ActiveConnectionHolderInterface::class),
-            $this->createStub(DebugActionPort::class),
             new NullLogger(),
             1000,
         );
@@ -1276,9 +1240,6 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
         $cmd = new GlineCommand(
             $glineRepo,
             $this->createStub(NetworkUserLookupPort::class),
@@ -1287,7 +1248,6 @@ final class GlineCommandTest extends TestCase
             new RootUserRegistry(''),
             $accessHelper,
             $connectionHolder,
-            $debug,
             new NullLogger(),
             1000,
         );
@@ -1339,9 +1299,6 @@ final class GlineCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
         $cmd = new GlineCommand(
             $glineRepo,
             $userLookup,
@@ -1350,7 +1307,6 @@ final class GlineCommandTest extends TestCase
             new RootUserRegistry(''),
             $accessHelper,
             $connectionHolder,
-            $debug,
             new NullLogger(),
             1000,
         );
@@ -1370,7 +1326,6 @@ final class GlineCommandTest extends TestCase
         $rootRegistry = new RootUserRegistry('');
         $accessHelper = $this->createAccessHelper(false);
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
-        $debug = $this->createStub(DebugActionPort::class);
 
         return new GlineCommand(
             $glineRepo,
@@ -1380,7 +1335,6 @@ final class GlineCommandTest extends TestCase
             $rootRegistry,
             $accessHelper,
             $connectionHolder,
-            $debug,
             new NullLogger(),
             1000,
         );
@@ -1390,7 +1344,6 @@ final class GlineCommandTest extends TestCase
         GlineRepositoryInterface $glineRepo,
         int $maxGlines = 1000,
         ?ActiveConnectionHolderInterface $connectionHolder = null,
-        ?DebugActionPort $debug = null,
     ): GlineCommand {
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
@@ -1398,7 +1351,6 @@ final class GlineCommandTest extends TestCase
         $rootRegistry = new RootUserRegistry('');
         $accessHelper = $this->createAccessHelper(false);
         $connHolder = $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class);
-        $debugPort = $debug ?? $this->createStub(DebugActionPort::class);
 
         return new GlineCommand(
             $glineRepo,
@@ -1408,7 +1360,6 @@ final class GlineCommandTest extends TestCase
             $rootRegistry,
             $accessHelper,
             $connHolder,
-            $debugPort,
             new NullLogger(),
             $maxGlines,
         );

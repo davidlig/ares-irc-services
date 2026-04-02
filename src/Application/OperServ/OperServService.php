@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\OperServ;
 
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Command\AuditableCommandInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\OperServ\Command\OperServCommandRegistry;
@@ -12,9 +13,11 @@ use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function count;
@@ -34,6 +37,7 @@ final readonly class OperServService
         private ServiceNicknameRegistry $serviceNicks,
         private AuthorizationContextInterface $authorizationContext,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private EventDispatcherInterface $eventDispatcher,
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
@@ -123,6 +127,23 @@ final readonly class OperServService
             ));
 
             $handler->execute($context);
+
+            if (null !== $requiredPermission) {
+                $auditData = $handler instanceof AuditableCommandInterface
+                    ? $handler->getAuditData($context)
+                    : null;
+
+                $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                    operatorNick: $sender->nick,
+                    commandName: $cmdName,
+                    permission: $requiredPermission,
+                    target: $auditData?->target,
+                    targetHost: $auditData?->targetHost,
+                    targetIp: $auditData?->targetIp,
+                    reason: $auditData?->reason,
+                    extra: $auditData?->extra ?? [],
+                ));
+            }
         } finally {
             $this->authorizationContext->clear();
         }

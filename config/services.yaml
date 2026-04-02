@@ -1073,7 +1073,6 @@ services:
             $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
-            $debug: '@App\Application\Port\DebugActionPort'
             $logger: '@monolog.logger.ircops'
         tags: ['operserv.command']
 
@@ -1086,7 +1085,6 @@ services:
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
-            $debug: '@App\Application\Port\DebugActionPort'
             $logger: '@monolog.logger.ircops'
             $maxGlines: '%operserv.max_glines%'
         tags: ['operserv.command']
@@ -1103,7 +1101,6 @@ services:
             $uidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $sendNoticePort: '@App\Application\Port\SendNoticePort'
-            $debug: '@App\Infrastructure\OperServ\Service\OperServDebugAction'
             $logger: '@monolog.logger.ircops'
         tags: ['operserv.command']
 
@@ -1144,3 +1141,13 @@ services:
         arguments:
             $debugAction: '@App\Application\Port\DebugActionPort'
         tags: ['kernel.event_subscriber']
+
+    # --- IRCop Command Audit ----------------------------------------------------
+
+    App\Infrastructure\IRC\Subscriber\IrcopCommandAuditSubscriber:
+        arguments:
+            $debug: '@App\Application\Port\DebugActionPort'
+            $detector: '@App\Application\Security\IrcopPermissionDetector'
+        tags: ['kernel.event_subscriber']
+
+    App\Application\Security\IrcopPermissionDetector: ~

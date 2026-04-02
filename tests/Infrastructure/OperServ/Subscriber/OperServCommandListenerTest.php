@@ -33,6 +33,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -110,6 +111,7 @@ final class OperServCommandListenerTest extends TestCase
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             'en',
             'UTC',
         );
@@ -358,6 +360,7 @@ final class OperServCommandListenerTest extends TestCase
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             'en',
             'UTC',
         );

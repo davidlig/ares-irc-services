@@ -8,6 +8,7 @@ use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\Command\AuditableCommandInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
@@ -20,9 +21,11 @@ use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -38,21 +41,22 @@ use const PREG_SPLIT_NO_EMPTY;
 final readonly class ChanServService implements ChanServDispatchPort
 {
     public function __construct(
-        private ChanServCommandRegistry $commandRegistry,
-        private RegisteredChannelRepositoryInterface $channelRepository,
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private ChanServNotifierInterface $notifier,
-        private UserMessageTypeResolverInterface $messageTypeResolver,
-        private TranslatorInterface $translator,
-        private ChannelLookupPort $channelLookup,
-        private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
-        private NetworkUserLookupPort $userLookup,
-        private ServiceNicknameRegistry $serviceNicks,
-        private AuthorizationContextInterface $authorizationContext,
-        private AuthorizationCheckerInterface $authorizationChecker,
-        private string $defaultLanguage = 'en',
-        private string $defaultTimezone = 'UTC',
-        private LoggerInterface $logger = new NullLogger(),
+        private readonly ChanServCommandRegistry $commandRegistry,
+        private readonly RegisteredChannelRepositoryInterface $channelRepository,
+        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly ChanServNotifierInterface $notifier,
+        private readonly UserMessageTypeResolverInterface $messageTypeResolver,
+        private readonly TranslatorInterface $translator,
+        private readonly ChannelLookupPort $channelLookup,
+        private readonly ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        private readonly NetworkUserLookupPort $userLookup,
+        private readonly ServiceNicknameRegistry $serviceNicks,
+        private readonly AuthorizationContextInterface $authorizationContext,
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly string $defaultLanguage = 'en',
+        private readonly string $defaultTimezone = 'UTC',
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -136,6 +140,23 @@ final readonly class ChanServService implements ChanServDispatchPort
             ));
 
             $handler->execute($context);
+
+            if (null !== $requiredPermission) {
+                $auditData = $handler instanceof AuditableCommandInterface
+                    ? $handler->getAuditData($context)
+                    : null;
+
+                $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                    operatorNick: $sender->nick,
+                    commandName: $cmdName,
+                    permission: $requiredPermission,
+                    target: $auditData?->target,
+                    targetHost: $auditData?->targetHost,
+                    targetIp: $auditData?->targetIp,
+                    reason: $auditData?->reason,
+                    extra: $auditData?->extra ?? [],
+                ));
+            }
         } catch (ChannelNotRegisteredException|ChannelAlreadyRegisteredException|InsufficientAccessException $e) {
             throw $e;
         } catch (Throwable $e) {

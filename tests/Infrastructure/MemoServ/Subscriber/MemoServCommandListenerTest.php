@@ -30,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -94,6 +95,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -185,6 +187,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -252,6 +255,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -300,6 +304,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -357,6 +362,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -393,6 +399,7 @@ final class MemoServCommandListenerTest extends TestCase
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             'en',
             'UTC',
             $this->logger,

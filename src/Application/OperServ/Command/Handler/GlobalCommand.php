@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Application\OperServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceUidRegistry;
+use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -24,23 +25,24 @@ use function sprintf;
 use function strtolower;
 use function strtoupper;
 
-final readonly class GlobalCommand implements OperServCommandInterface
+final class GlobalCommand implements OperServCommandInterface, AuditableCommandInterface
 {
-    private const int DURATION_SECONDS = 86400; // 1 day
+    private const int DURATION_SECONDS = 86400;
 
     private const string PRIVMSG = 'PRIVMSG';
 
     private const string NOTICE = 'NOTICE';
 
+    private ?IrcopAuditData $auditData = null;
+
     public function __construct(
-        private NetworkUserLookupPort $userLookup,
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private ServiceUidRegistry $serviceUidRegistry,
-        private PseudoClientUidGenerator $uidGenerator,
-        private ActiveConnectionHolderInterface $connectionHolder,
-        private SendNoticePort $sendNoticePort,
-        private DebugActionPort $debug,
-        private LoggerInterface $logger,
+        private readonly NetworkUserLookupPort $userLookup,
+        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly ServiceUidRegistry $serviceUidRegistry,
+        private readonly PseudoClientUidGenerator $uidGenerator,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly SendNoticePort $sendNoticePort,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -92,6 +94,11 @@ final readonly class GlobalCommand implements OperServCommandInterface
     public function getRequiredPermission(): ?string
     {
         return OperServPermission::GLOBAL;
+    }
+
+    public function getAuditData(object $context): ?IrcopAuditData
+    {
+        return $this->auditData;
     }
 
     public function execute(OperServContext $context): void
@@ -261,10 +268,7 @@ final readonly class GlobalCommand implements OperServCommandInterface
             'sender' => $sender?->nick ?? 'unknown',
         ]);
 
-        // Log debug action for IRCop audit
-        $this->debug->log(
-            operator: $sender?->nick ?? 'unknown',
-            command: 'GLOBAL',
+        $this->auditData = new IrcopAuditData(
             target: $nickname,
             reason: $message,
             extra: ['type' => $typeArg, 'count' => (string) $count, 'reasonType' => 'message'],

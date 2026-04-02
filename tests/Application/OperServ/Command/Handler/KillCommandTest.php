@@ -13,7 +13,6 @@ use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
@@ -309,13 +308,9 @@ final class KillCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
         $cmd = $this->createCommandWithMockedDeps(
             userLookup: $userLookup,
             connectionHolder: $connectionHolder,
-            debug: $debug,
         );
         $registry = new OperServCommandRegistry([]);
         $cmd->execute($this->createContext($sender, ['OperUser', 'Flooding'], $notifier, $translator, $registry, $accessHelper));
@@ -354,14 +349,10 @@ final class KillCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
         $cmd = $this->createCommandWithMockedDeps(
             userLookup: $userLookup,
             nickRepo: $nickRepo,
             connectionHolder: $connectionHolder,
-            debug: $debug,
         );
         $registry = new OperServCommandRegistry([]);
         $cmd->execute($this->createContext($sender, ['OperUser', 'Flooding'], $notifier, $translator, $registry, $accessHelper));
@@ -370,7 +361,7 @@ final class KillCommandTest extends TestCase
     }
 
     #[Test]
-    public function successKillExecutesKillAndLogs(): void
+    public function successKillExecutesKill(): void
     {
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
         $target = new SenderView('UID2', 'BadUser', 'i', 'h', 'c', 'c29saWFkZWQh', false, false, 'SID1', 'c', 'i', '');
@@ -397,13 +388,9 @@ final class KillCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
-
         $cmd = $this->createCommandWithMockedDeps(
             userLookup: $userLookup,
             connectionHolder: $connectionHolder,
-            debug: $debug,
         );
         $registry = new OperServCommandRegistry([]);
         $cmd->execute($this->createContext($sender, ['BadUser', 'Flooding', 'channels'], $notifier, $translator, $registry, $accessHelper));
@@ -499,7 +486,6 @@ final class KillCommandTest extends TestCase
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(false);
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
-        $debug = $this->createStub(DebugActionPort::class);
         $logger = new NullLogger();
 
         return new KillCommand(
@@ -509,7 +495,6 @@ final class KillCommandTest extends TestCase
             $nickRepo,
             $accessHelper,
             $connectionHolder,
-            $debug,
             $logger,
         );
     }
@@ -520,7 +505,6 @@ final class KillCommandTest extends TestCase
         ?OperIrcopRepositoryInterface $ircopRepo = null,
         ?RegisteredNickRepositoryInterface $nickRepo = null,
         ?ActiveConnectionHolderInterface $connectionHolder = null,
-        ?DebugActionPort $debug = null,
     ): KillCommand {
         return new KillCommand(
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
@@ -529,7 +513,6 @@ final class KillCommandTest extends TestCase
             $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createAccessHelper(false),
             $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class),
-            $debug ?? $this->createStub(DebugActionPort::class),
             new NullLogger(),
         );
     }

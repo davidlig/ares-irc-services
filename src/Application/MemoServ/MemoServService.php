@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\MemoServ;
 
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Command\AuditableCommandInterface;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
@@ -12,10 +13,12 @@ use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -30,17 +33,18 @@ use const PREG_SPLIT_NO_EMPTY;
 final readonly class MemoServService
 {
     public function __construct(
-        private MemoServCommandRegistry $commandRegistry,
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private MemoServNotifierInterface $notifier,
-        private UserMessageTypeResolverInterface $messageTypeResolver,
-        private TranslatorInterface $translator,
-        private ServiceNicknameRegistry $serviceNicks,
-        private AuthorizationContextInterface $authorizationContext,
-        private AuthorizationCheckerInterface $authorizationChecker,
-        private string $defaultLanguage = 'en',
-        private string $defaultTimezone = 'UTC',
-        private LoggerInterface $logger = new NullLogger(),
+        private readonly MemoServCommandRegistry $commandRegistry,
+        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly MemoServNotifierInterface $notifier,
+        private readonly UserMessageTypeResolverInterface $messageTypeResolver,
+        private readonly TranslatorInterface $translator,
+        private readonly ServiceNicknameRegistry $serviceNicks,
+        private readonly AuthorizationContextInterface $authorizationContext,
+        private readonly AuthorizationCheckerInterface $authorizationChecker,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly string $defaultLanguage = 'en',
+        private readonly string $defaultTimezone = 'UTC',
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -120,6 +124,23 @@ final readonly class MemoServService
             ));
 
             $handler->execute($context);
+
+            if (null !== $requiredPermission) {
+                $auditData = $handler instanceof AuditableCommandInterface
+                    ? $handler->getAuditData($context)
+                    : null;
+
+                $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                    operatorNick: $sender->nick,
+                    commandName: $cmdName,
+                    permission: $requiredPermission,
+                    target: $auditData?->target,
+                    targetHost: $auditData?->targetHost,
+                    targetIp: $auditData?->targetIp,
+                    reason: $auditData?->reason,
+                    extra: $auditData?->extra ?? [],
+                ));
+            }
         } catch (MemoDisabledException $e) {
             $context->reply('send.service_disabled_for_target', ['target' => $e->target]);
         } catch (Throwable $e) {

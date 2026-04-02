@@ -92,6 +92,173 @@ public function getRequiredPermission(): ?string
 }
 ```
 
+## Automatic Audit Logging (NEW)
+
+### Overview
+
+IRCOP command executions are automatically logged for audit purposes. The system uses an event-driven architecture:
+
+1. **Command executes** and `getRequiredPermission()` returns an IRCOP permission
+2. **Service emits** `IrcopCommandExecutedEvent` with audit data
+3. **Subscriber filters** by permission type (only IRCOP permissions are logged)
+4. **DebugActionPort logs** to channel and file
+
+### Components
+
+#### IrcopCommandExecutedEvent
+
+Location: `src/Domain/IRC/Event/IrcopCommandExecutedEvent.php`
+
+Event emitted after any command with a `getRequiredPermission()`:
+
+```php
+new IrcopCommandExecutedEvent(
+    operatorNick: 'AdminUser',
+    commandName: 'KILL',
+    permission: 'operserv.kill',
+    target: 'BadUser',
+    targetHost: 'user@host.com',
+    targetIp: '10.0.0.1',
+    reason: 'Flooding',
+    extra: ['duration' => '1h'],
+);
+```
+
+#### AuditableCommandInterface
+
+Location: `src/Application/Command/AuditableCommandInterface.php`
+
+Interface for commands that need to provide audit data:
+
+```php
+interface AuditableCommandInterface
+{
+    public function getAuditData(object $context): ?IrcopAuditData;
+}
+```
+
+#### IrcopAuditData
+
+Location: `src/Application/Command/IrcopAuditData.php`
+
+DTO for audit data:
+
+```php
+new IrcopAuditData(
+    target: 'BadUser',
+    targetHost: 'user@host.com',
+    targetIp: '10.0.0.1',
+    reason: 'Flooding',
+    extra: ['duration' => '1h'],
+);
+```
+
+#### IrcopPermissionDetector
+
+Location: `src/Application/Security/IrcopPermissionDetector.php`
+
+Detects if a permission is IRCOP-level:
+
+```php
+$detector->isIrcopPermission('operserv.kill');     // true
+$detector->isIrcopPermission('IDENTIFIED');         // false
+$detector->isIrcopPermission('nickserv.drop');      // true
+```
+
+#### IrcopCommandAuditSubscriber
+
+Location: `src/Infrastructure/IRC/Subscriber/IrcopCommandAuditSubscriber.php`
+
+Listens to `IrcopCommandExecutedEvent` and calls `DebugActionPort->log()`.
+
+### How It Works
+
+#### For Services (Automatic)
+
+In each `*Service::dispatch()` method, after command execution:
+
+```php
+$requiredPermission = $handler->getRequiredPermission();
+if (null !== $requiredPermission) {
+    $auditData = $handler instanceof AuditableCommandInterface
+        ? $handler->getAuditData($context)
+        : null;
+    
+    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+        operatorNick: $sender->nick,
+        commandName: $cmdName,
+        permission: $requiredPermission,
+        target: $auditData?->target,
+        targetHost: $auditData?->targetHost,
+        targetIp: $auditData?->targetIp,
+        reason: $auditData?->reason,
+        extra: $auditData?->extra ?? [],
+    ));
+}
+```
+
+#### For Commands (Optional)
+
+Commands that need to log specific audit data implement `AuditableCommandInterface`:
+
+```php
+final class KillCommand implements OperServCommandInterface, AuditableCommandInterface
+{
+    private ?IrcopAuditData $auditData = null;
+    
+    public function getAuditData(object $context): ?IrcopAuditData
+    {
+        return $this->auditData;
+    }
+    
+    public function execute(OperServContext $context): void
+    {
+        // ... execute logic ...
+        
+        // Set audit data before return
+        $this->auditData = new IrcopAuditData(
+            target: $targetNick,
+            targetHost: $target->ident . '@' . $target->hostname,
+            targetIp: $target->ipBase64,
+            reason: $reason,
+        );
+    }
+}
+```
+
+Commands that don't implement the interface will still be logged, but with empty target/reason fields.
+
+### What Gets Logged
+
+| Permission | Logged? | Why |
+|------------|---------|-----|
+| `operserv.kill` | ✅ Yes | IRCOP permission |
+| `operserv.gline` | ✅ Yes | IRCOP permission |
+| `nickserv.drop` | ✅ Yes | IRCOP permission |
+| `IDENTIFIED` | ❌ No | User permission, not IRCOP |
+| `null` | ❌ No | No permission required |
+
+### Migration from Manual Logging
+
+**Before (old way - manual):**
+
+```php
+// In KillCommand::execute()
+$this->debug->log(
+    operator: $operatorNick,
+    command: 'KILL',
+    target: $targetNick,
+    // ...
+);
+```
+
+**After (new way - automatic):**
+
+```php
+// No manual logging needed - the subscriber handles it
+// Just implement AuditableCommandInterface if you need specific audit data
+```
+
 ## Adding a New IRCOP Permission
 
 ### Step 1: Add Permission Constant

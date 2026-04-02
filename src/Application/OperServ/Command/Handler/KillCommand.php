@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -21,17 +22,18 @@ use function implode;
 use function sprintf;
 use function strtolower;
 
-final readonly class KillCommand implements OperServCommandInterface
+final class KillCommand implements OperServCommandInterface, AuditableCommandInterface
 {
+    private ?IrcopAuditData $auditData = null;
+
     public function __construct(
-        private NetworkUserLookupPort $userLookup,
-        private RootUserRegistry $rootRegistry,
-        private OperIrcopRepositoryInterface $ircopRepo,
-        private RegisteredNickRepositoryInterface $nickRepo,
-        private IrcopAccessHelper $accessHelper,
-        private ActiveConnectionHolderInterface $connectionHolder,
-        private DebugActionPort $debug,
-        private LoggerInterface $logger,
+        private readonly NetworkUserLookupPort $userLookup,
+        private readonly RootUserRegistry $rootRegistry,
+        private readonly OperIrcopRepositoryInterface $ircopRepo,
+        private readonly RegisteredNickRepositoryInterface $nickRepo,
+        private readonly IrcopAccessHelper $accessHelper,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -83,6 +85,11 @@ final readonly class KillCommand implements OperServCommandInterface
     public function getRequiredPermission(): ?string
     {
         return OperServPermission::KILL;
+    }
+
+    public function getAuditData(object $context): ?IrcopAuditData
+    {
+        return $this->auditData;
     }
 
     public function execute(OperServContext $context): void
@@ -141,9 +148,7 @@ final readonly class KillCommand implements OperServCommandInterface
 
         $module->getServiceActions()->killUser($serverSid, $target->uid, $killReason);
 
-        $this->debug->log(
-            operator: $operatorNick,
-            command: 'KILL',
+        $this->auditData = new IrcopAuditData(
             target: $targetNick,
             targetHost: $target->ident . '@' . $target->hostname,
             targetIp: $target->ipBase64,

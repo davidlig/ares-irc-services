@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
+use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Gline;
@@ -31,19 +32,20 @@ use function strtolower;
 use function strtoupper;
 use function trim;
 
-final readonly class GlineCommand implements OperServCommandInterface
+final class GlineCommand implements OperServCommandInterface, AuditableCommandInterface
 {
+    private ?IrcopAuditData $auditData = null;
+
     public function __construct(
-        private GlineRepositoryInterface $glineRepository,
-        private NetworkUserLookupPort $userLookup,
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private OperIrcopRepositoryInterface $ircopRepo,
-        private RootUserRegistry $rootRegistry,
-        private IrcopAccessHelper $accessHelper,
-        private ActiveConnectionHolderInterface $connectionHolder,
-        private DebugActionPort $debug,
-        private LoggerInterface $logger,
-        private int $maxGlines = 1000,
+        private readonly GlineRepositoryInterface $glineRepository,
+        private readonly NetworkUserLookupPort $userLookup,
+        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly OperIrcopRepositoryInterface $ircopRepo,
+        private readonly RootUserRegistry $rootRegistry,
+        private readonly IrcopAccessHelper $accessHelper,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly LoggerInterface $logger,
+        private readonly int $maxGlines = 1000,
     ) {
     }
 
@@ -99,6 +101,11 @@ final readonly class GlineCommand implements OperServCommandInterface
     public function getRequiredPermission(): ?string
     {
         return OperServPermission::GLINE;
+    }
+
+    public function getAuditData(object $context): ?IrcopAuditData
+    {
+        return $this->auditData;
     }
 
     public function execute(OperServContext $context): void
@@ -218,12 +225,8 @@ final readonly class GlineCommand implements OperServCommandInterface
             ? $context->trans('gline.permanent')
             : $expiryStr;
 
-        $this->debug->log(
-            operator: $context->sender->nick,
-            command: 'GLINE ADD',
+        $this->auditData = new IrcopAuditData(
             target: $mask,
-            targetHost: '',
-            targetIp: '',
             reason: $reason,
             extra: ['duration' => $duration],
         );
@@ -263,13 +266,8 @@ final readonly class GlineCommand implements OperServCommandInterface
 
         $this->removeGlineFromIrcd($mask);
 
-        $this->debug->log(
-            operator: $context->sender->nick,
-            command: 'GLINE DEL',
+        $this->auditData = new IrcopAuditData(
             target: $mask,
-            targetHost: '',
-            targetIp: '',
-            reason: '',
         );
 
         $context->reply('gline.del.done', ['%mask%' => $mask]);

@@ -26,6 +26,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NickServService::class)]
@@ -199,9 +200,10 @@ final class NickServServiceTest extends TestCase
             $pendingRegistry,
             $recoveryRegistry,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            $this->createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('FOO arg1', $sender);
@@ -255,9 +257,10 @@ final class NickServServiceTest extends TestCase
             $pendingRegistry,
             $recoveryRegistry,
             $this->createServiceNicks(),
-            defaultLanguage: 'en',
-            defaultTimezone: 'UTC',
-            logger: $logger,
+            $this->createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+            $logger,
         );
 
         $service->dispatch('UNKNOWN arg', $sender);
@@ -281,6 +284,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->dispatch('   ', $sender);
@@ -379,6 +383,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->dispatch('NEEDPERM', $sender);
@@ -478,6 +483,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->dispatch('NEEDID', $sender);
@@ -571,6 +577,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $service->dispatch('TWOARGS onlyone', $sender);
@@ -655,6 +662,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
+            $this->createStub(EventDispatcherInterface::class),
         );
 
         $this->expectException(RuntimeException::class);
