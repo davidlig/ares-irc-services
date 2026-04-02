@@ -14,11 +14,11 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * Applies +P (permanent channel mode) when channels are registered,
- * and removes -P when channels are dropped or expire.
+ * Applies +r (registered) and +P (permanent) channel modes when channels are registered,
+ * and removes them when channels are dropped or expire.
  *
- * The permanent mode prevents the channel from being destroyed when
- * the last user leaves. This is supported by UnrealIRCd (+P) and InspIRCd (+P).
+ * - +r: Shows channel as registered at services ( UnrealIRCd/InspIRCd)
+ * - +P: Prevents channel destruction when last user leaves (UnrealIRCd/InspIRCd)
  */
 final readonly class ChanServPermanentChannelSubscriber implements EventSubscriberInterface
 {
@@ -40,41 +40,65 @@ final readonly class ChanServPermanentChannelSubscriber implements EventSubscrib
 
     public function onChannelRegistered(ChannelRegisteredEvent $event): void
     {
-        $permanentLetter = $this->modeSupportProvider->getSupport()->getPermanentChannelModeLetter();
-        if (null === $permanentLetter) {
-            return;
-        }
-
         $view = $this->channelLookup->findByChannelName($event->channelName);
         if (null === $view) {
             return;
         }
 
-        $this->channelServiceActions->setChannelModes($event->channelName, '+' . $permanentLetter, []);
-        $this->logger->debug('ChanServ set +' . $permanentLetter . ' (permanent) on channel registration', [
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        $modesToSet = [];
+
+        $registeredLetter = $modeSupport->getChannelRegisteredModeLetter();
+        if (null !== $registeredLetter && !str_contains($view->modes, $registeredLetter)) {
+            $modesToSet[] = $registeredLetter;
+        }
+
+        $permanentLetter = $modeSupport->getPermanentChannelModeLetter();
+        if (null !== $permanentLetter && !str_contains($view->modes, $permanentLetter)) {
+            $modesToSet[] = $permanentLetter;
+        }
+
+        if ([] === $modesToSet) {
+            return;
+        }
+
+        $modeStr = '+' . implode('', $modesToSet);
+        $this->channelServiceActions->setChannelModes($event->channelName, $modeStr, []);
+        $this->logger->debug('ChanServ set modes on channel registration', [
             'channel' => $event->channelName,
+            'modes' => $modeStr,
         ]);
     }
 
     public function onChannelDrop(ChannelDropEvent $event): void
     {
-        $permanentLetter = $this->modeSupportProvider->getSupport()->getPermanentChannelModeLetter();
-        if (null === $permanentLetter) {
-            return;
-        }
-
         $view = $this->channelLookup->findByChannelName($event->channelName);
         if (null === $view) {
             return;
         }
 
-        if (!str_contains($view->modes, $permanentLetter)) {
+        $modeSupport = $this->modeSupportProvider->getSupport();
+        $modesToRemove = [];
+
+        $registeredLetter = $modeSupport->getChannelRegisteredModeLetter();
+        if (null !== $registeredLetter && str_contains($view->modes, $registeredLetter)) {
+            $modesToRemove[] = $registeredLetter;
+        }
+
+        $permanentLetter = $modeSupport->getPermanentChannelModeLetter();
+        if (null !== $permanentLetter && str_contains($view->modes, $permanentLetter)) {
+            $modesToRemove[] = $permanentLetter;
+        }
+
+        if ([] === $modesToRemove) {
             return;
         }
 
-        $this->channelServiceActions->setChannelModes($event->channelName, '-' . $permanentLetter, []);
-        $this->logger->debug('ChanServ removed -' . $permanentLetter . ' (permanent) on channel drop', [
+        $modeStr = '-' . implode('', $modesToRemove);
+        $this->channelServiceActions->setChannelModes($event->channelName, $modeStr, []);
+        $this->logger->debug('ChanServ removed modes on channel drop', [
             'channel' => $event->channelName,
+            'modes' => $modeStr,
             'reason' => $event->reason,
         ]);
     }

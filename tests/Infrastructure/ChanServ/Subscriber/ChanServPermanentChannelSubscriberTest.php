@@ -14,50 +14,14 @@ use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
 use App\Infrastructure\ChanServ\Subscriber\ChanServPermanentChannelSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 #[CoversClass(ChanServPermanentChannelSubscriber::class)]
 final class ChanServPermanentChannelSubscriberTest extends TestCase
 {
-    private ActiveChannelModeSupportProviderInterface&MockObject $modeSupportProvider;
-
-    private ChannelLookupPort&MockObject $channelLookup;
-
-    private ChannelServiceActionsPort&MockObject $channelServiceActions;
-
-    private ChannelModeSupportInterface&MockObject $modeSupport;
-
-    private LoggerInterface&MockObject $logger;
-
-    private ChanServPermanentChannelSubscriber $subscriber;
-
-    protected function setUp(): void
-    {
-        $this->modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
-        $this->channelLookup = $this->createMock(ChannelLookupPort::class);
-        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
-        $this->modeSupport = $this->createMock(ChannelModeSupportInterface::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-
-        $this->subscriber = new ChanServPermanentChannelSubscriber(
-            $this->modeSupportProvider,
-            $this->channelLookup,
-            $this->channelServiceActions,
-            $this->logger,
-        );
-    }
-
     #[Test]
     public function subscribesToCorrectEvents(): void
     {
-        $this->modeSupportProvider->expects(self::never())->method('getSupport');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->modeSupport->expects(self::never())->method('getPermanentChannelModeLetter');
-        $this->logger->expects(self::never())->method('debug');
-
         self::assertSame(
             [
                 ChannelRegisteredEvent::class => ['onChannelRegistered', 0],
@@ -68,231 +32,230 @@ final class ChanServPermanentChannelSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onChannelRegisteredSetsPermanentModeWhenSupported(): void
+    public function onChannelRegisteredSetsBothRegisteredAndPermanentModes(): void
     {
-        $event = new ChannelRegisteredEvent(42, '#test', '#test');
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn('P');
 
-        $this->modeSupportProvider
-            ->expects(self::once())
-            ->method('getSupport')
-            ->willReturn($this->modeSupport);
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
 
-        $this->modeSupport
-            ->expects(self::once())
-            ->method('getPermanentChannelModeLetter')
-            ->willReturn('P');
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+nt', null, 1));
 
-        $this->channelLookup
-            ->expects(self::once())
-            ->method('findByChannelName')
-            ->with('#test')
-            ->willReturn(new ChannelView('#test', '+nt', null, 1));
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+rP', []);
 
-        $this->channelServiceActions
-            ->expects(self::once())
-            ->method('setChannelModes')
-            ->with('#test', '+P', []);
-
-        $this->logger
-            ->expects(self::once())
-            ->method('debug')
-            ->with('ChanServ set +P (permanent) on channel registration', ['channel' => '#test']);
-
-        $this->subscriber->onChannelRegistered($event);
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
     #[Test]
-    public function onChannelRegisteredDoesNothingWhenModeNotSupported(): void
+    public function onChannelRegisteredSetsOnlyRegisteredModeWhenPermanentNotSupported(): void
     {
-        $event = new ChannelRegisteredEvent(42, '#test', '#test');
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn(null);
 
-        $this->modeSupportProvider
-            ->expects(self::once())
-            ->method('getSupport')
-            ->willReturn($this->modeSupport);
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
 
-        $this->modeSupport
-            ->expects(self::once())
-            ->method('getPermanentChannelModeLetter')
-            ->willReturn(null);
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+nt', null, 1));
 
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->logger->expects(self::never())->method('debug');
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+r', []);
 
-        $this->subscriber->onChannelRegistered($event);
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
+    }
+
+    #[Test]
+    public function onChannelRegisteredSetsOnlyPermanentModeWhenRegisteredNotSupported(): void
+    {
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn(null);
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn('P');
+
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
+
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+nt', null, 1));
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+P', []);
+
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
+    }
+
+    #[Test]
+    public function onChannelRegisteredDoesNothingWhenBothModesNotSupported(): void
+    {
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn(null);
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn(null);
+
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
+
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+nt', null, 1));
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
+
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
     #[Test]
     public function onChannelRegisteredDoesNothingWhenChannelNotOnNetwork(): void
     {
-        $event = new ChannelRegisteredEvent(42, '#test', '#test');
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(null);
 
-        $this->modeSupportProvider
-            ->expects(self::once())
-            ->method('getSupport')
-            ->willReturn($this->modeSupport);
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $this->modeSupport
-            ->expects(self::once())
-            ->method('getPermanentChannelModeLetter')
-            ->willReturn('P');
-
-        $this->channelLookup
-            ->expects(self::once())
-            ->method('findByChannelName')
-            ->with('#test')
-            ->willReturn(null);
-
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->logger->expects(self::never())->method('debug');
-
-        $this->subscriber->onChannelRegistered($event);
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
     #[Test]
-    public function onChannelDropRemovesPermanentModeWhenPresent(): void
+    public function onChannelRegisteredSkipsModesAlreadyPresent(): void
     {
-        $event = new ChannelDropEvent(42, '#test', '#test', 'inactivity');
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn('P');
 
-        $this->modeSupportProvider
-            ->expects(self::once())
-            ->method('getSupport')
-            ->willReturn($this->modeSupport);
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
 
-        $this->modeSupport
-            ->expects(self::once())
-            ->method('getPermanentChannelModeLetter')
-            ->willReturn('P');
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+ntr', null, 1));
 
-        $this->channelLookup
-            ->expects(self::once())
-            ->method('findByChannelName')
-            ->with('#test')
-            ->willReturn(new ChannelView('#test', '+ntP', null, 1));
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+P', []);
 
-        $this->channelServiceActions
-            ->expects(self::once())
-            ->method('setChannelModes')
-            ->with('#test', '-P', []);
-
-        $this->logger
-            ->expects(self::once())
-            ->method('debug')
-            ->with('ChanServ removed -P (permanent) on channel drop', [
-                'channel' => '#test',
-                'reason' => 'inactivity',
-            ]);
-
-        $this->subscriber->onChannelDrop($event);
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
     }
 
     #[Test]
-    public function onChannelDropDoesNothingWhenModeNotSupported(): void
+    public function onChannelRegisteredDoesNothingWhenAllModesAlreadyPresent(): void
     {
-        $event = new ChannelDropEvent(42, '#test', '#test', 'manual');
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn('P');
 
-        $this->modeSupportProvider
-            ->expects(self::once())
-            ->method('getSupport')
-            ->willReturn($this->modeSupport);
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
 
-        $this->modeSupport
-            ->expects(self::once())
-            ->method('getPermanentChannelModeLetter')
-            ->willReturn(null);
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+ntrP', null, 1));
 
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->logger->expects(self::never())->method('debug');
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $this->subscriber->onChannelDrop($event);
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelRegistered(new ChannelRegisteredEvent(42, '#test', '#test'));
+    }
+
+    #[Test]
+    public function onChannelDropRemovesBothRegisteredAndPermanentModes(): void
+    {
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn('P');
+
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
+
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+ntrP', null, 1));
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '-rP', []);
+
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'inactivity'));
+    }
+
+    #[Test]
+    public function onChannelDropRemovesOnlyModesPresent(): void
+    {
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn('P');
+
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
+
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+ntP', null, 1));
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '-P', []);
+
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual'));
+    }
+
+    #[Test]
+    public function onChannelDropDoesNothingWhenBothModesNotSupported(): void
+    {
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn(null);
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn(null);
+
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
+
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+nt', null, 1));
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
+
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual'));
     }
 
     #[Test]
     public function onChannelDropDoesNothingWhenChannelNotOnNetwork(): void
     {
-        $event = new ChannelDropEvent(42, '#test', '#test', 'manual');
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(null);
 
-        $this->modeSupportProvider
-            ->expects(self::once())
-            ->method('getSupport')
-            ->willReturn($this->modeSupport);
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $this->modeSupport
-            ->expects(self::once())
-            ->method('getPermanentChannelModeLetter')
-            ->willReturn('P');
-
-        $this->channelLookup
-            ->expects(self::once())
-            ->method('findByChannelName')
-            ->with('#test')
-            ->willReturn(null);
-
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->logger->expects(self::never())->method('debug');
-
-        $this->subscriber->onChannelDrop($event);
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual'));
     }
 
     #[Test]
-    public function onChannelDropDoesNothingWhenChannelDoesNotHavePermanentMode(): void
+    public function onChannelDropDoesNothingWhenNoModesPresent(): void
     {
-        $event = new ChannelDropEvent(42, '#test', '#test', 'manual');
+        $modeSupport = $this->createMock(ChannelModeSupportInterface::class);
+        $modeSupport->expects(self::once())->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $modeSupport->expects(self::once())->method('getPermanentChannelModeLetter')->willReturn('P');
 
-        $this->modeSupportProvider
-            ->expects(self::once())
-            ->method('getSupport')
-            ->willReturn($this->modeSupport);
+        $modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->expects(self::once())->method('getSupport')->willReturn($modeSupport);
 
-        $this->modeSupport
-            ->expects(self::once())
-            ->method('getPermanentChannelModeLetter')
-            ->willReturn('P');
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+nt', null, 1));
 
-        $this->channelLookup
-            ->expects(self::once())
-            ->method('findByChannelName')
-            ->with('#test')
-            ->willReturn(new ChannelView('#test', '+nt', null, 1));
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->logger->expects(self::never())->method('debug');
-
-        $this->subscriber->onChannelDrop($event);
-    }
-
-    #[Test]
-    public function onChannelDropRemovesModeWhenLowercasePInModes(): void
-    {
-        $event = new ChannelDropEvent(42, '#Test', '#test', 'manual');
-
-        $this->modeSupportProvider
-            ->expects(self::once())
-            ->method('getSupport')
-            ->willReturn($this->modeSupport);
-
-        $this->modeSupport
-            ->expects(self::once())
-            ->method('getPermanentChannelModeLetter')
-            ->willReturn('P');
-
-        $this->channelLookup
-            ->expects(self::once())
-            ->method('findByChannelName')
-            ->with('#Test')
-            ->willReturn(new ChannelView('#Test', '+ntP', null, 1));
-
-        $this->channelServiceActions
-            ->expects(self::once())
-            ->method('setChannelModes')
-            ->with('#Test', '-P', []);
-
-        $this->logger
-            ->expects(self::once())
-            ->method('debug');
-
-        $this->subscriber->onChannelDrop($event);
+        $subscriber = new ChanServPermanentChannelSubscriber($modeSupportProvider, $channelLookup, $channelServiceActions);
+        $subscriber->onChannelDrop(new ChannelDropEvent(42, '#test', '#test', 'manual'));
     }
 }
