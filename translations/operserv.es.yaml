@@ -238,6 +238,7 @@ global:
 debug:
   action_message:   "%operator% ejecuta el comando %command% sobre %target%. %reason%"
   actionWithDuration: "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. %reason%"
+  action_global:    "%operator% ejecuta el comando GLOBAL con el nickname %target% mediante %type% a %count% usuarios. Mensaje: %message%"
   prefix_reason:    "Razón: %reason%"
   prefix_message:   "Mensaje: %reason%"
 

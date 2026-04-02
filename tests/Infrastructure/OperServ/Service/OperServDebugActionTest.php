@@ -171,6 +171,36 @@ final class OperServDebugActionTest extends TestCase
     }
 
     #[Test]
+    public function logForGlobalCommandUsesSpecialFormat(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
+
+        $channelActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelActions->expects(self::once())->method('joinChannelAsService');
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')
+            ->with('debug.action_global', self::callback(static fn (array $params) => isset($params['%type%'])
+                && 'PRIVMSG' === $params['%type%']
+                && '4' === $params['%count%']
+                && 'test message' === $params['%message%']));
+
+        $debug = $this->createDebugAction(
+            logger: $logger,
+            notifier: $notifier,
+            channelActions: $channelActions,
+            translator: $translator,
+            debugChannel: '#ircops',
+        );
+
+        $debug->log('Admin', 'GLOBAL', 'ChanServ', null, null, 'test message', ['type' => 'PRIVMSG', 'count' => '4']);
+    }
+
+    #[Test]
     public function isIrcopOrRootReturnsTrueForRoot(): void
     {
         $rootRegistry = new RootUserRegistry('RootUser');

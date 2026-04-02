@@ -267,7 +267,7 @@ final readonly class GlobalCommand implements OperServCommandInterface
             command: 'GLOBAL',
             target: $nickname,
             reason: $message,
-            extra: ['reasonType' => 'message'],
+            extra: ['type' => $typeArg, 'count' => (string) $count, 'reasonType' => 'message'],
         );
     }
 }

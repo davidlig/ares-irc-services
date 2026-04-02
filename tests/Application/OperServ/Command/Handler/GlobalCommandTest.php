@@ -396,7 +396,7 @@ final class GlobalCommandTest extends TestCase
                 null,
                 null,
                 'Hello World',
-                ['reasonType' => 'message'],
+                ['type' => 'PRIVMSG', 'count' => '3', 'reasonType' => 'message'],
             );
 
         $module = $this->createStub(ProtocolModuleInterface::class);
@@ -459,7 +459,17 @@ final class GlobalCommandTest extends TestCase
         $serviceActions->expects(self::once())->method('quitPseudoClient');
 
         $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
+        $debug->expects(self::once())
+            ->method('log')
+            ->with(
+                'Operator',
+                'GLOBAL',
+                'TestBot',
+                null,
+                null,
+                'Hello',
+                ['type' => 'NOTICE', 'count' => '2', 'reasonType' => 'message'],
+            );
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getNickReservation')->willReturn($nickReservation);
@@ -522,7 +532,17 @@ final class GlobalCommandTest extends TestCase
         $serviceActions->expects(self::never())->method('quitPseudoClient');
 
         $debug = $this->createMock(DebugActionPort::class);
-        $debug->expects(self::once())->method('log');
+        $debug->expects(self::once())
+            ->method('log')
+            ->with(
+                'Operator',
+                'GLOBAL',
+                'NickServ',
+                null,
+                null,
+                'Test message',
+                ['type' => 'PRIVMSG', 'count' => '3', 'reasonType' => 'message'],
+            );
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
