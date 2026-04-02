@@ -294,4 +294,15 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertMatchesRegularExpression('/^:002 UID Announce 1 \d+ announce irc\.example\.net 002Z00005 0 \+B irc\.example\.net \* \* \* :Network Announcements$/', $this->written[0]);
     }
+
+    #[Test]
+    public function quitPseudoClientSendsQuitCommand(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->quitPseudoClient('001', '001Z00001', 'Global message completed');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001Z00001 QUIT :Global message completed', $this->written[0]);
+    }
 }

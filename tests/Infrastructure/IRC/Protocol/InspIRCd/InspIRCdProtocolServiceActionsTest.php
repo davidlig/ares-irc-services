@@ -304,4 +304,15 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertMatchesRegularExpression('/^:002 UID 002Z00005 \d+ Announce irc\.example\.net irc\.example\.net announce announce \* \d+ \+B :Network Announcements$/', $this->written[0]);
     }
+
+    #[Test]
+    public function quitPseudoClientSendsQuitCommand(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->quitPseudoClient('001', '001Z00001', 'Global message completed');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001Z00001 QUIT :Global message completed', $this->written[0]);
+    }
 }

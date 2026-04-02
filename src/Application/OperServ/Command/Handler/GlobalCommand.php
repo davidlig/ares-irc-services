@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Security\OperServPermission;
@@ -33,7 +32,6 @@ final readonly class GlobalCommand implements OperServCommandInterface
     public function __construct(
         private NetworkUserLookupPort $userLookup,
         private RegisteredNickRepositoryInterface $nickRepository,
-        private ServiceNicknameRegistry $serviceNicks,
         private PseudoClientUidGenerator $uidGenerator,
         private ActiveConnectionHolderInterface $connectionHolder,
         private SendNoticePort $sendNoticePort,
@@ -119,12 +117,6 @@ final readonly class GlobalCommand implements OperServCommandInterface
         $nickname = $mask->nickname;
         $nicknameLower = strtolower($nickname);
 
-        if ($this->serviceNicks->has($nicknameLower)) {
-            $context->reply('global.nick_service', ['%nick%' => $nickname]);
-
-            return;
-        }
-
         $connectedUser = $this->userLookup->findByNick($nickname);
         if (null !== $connectedUser) {
             $context->reply('global.nick_connected', ['%nick%' => $nickname]);
@@ -193,6 +185,8 @@ final readonly class GlobalCommand implements OperServCommandInterface
             $this->sendNoticePort->sendMessage($uid, $targetUid, $message, $typeArg);
             ++$count;
         }
+
+        $module->getServiceActions()->quitPseudoClient($serverSid, $uid, 'Global message completed');
 
         $context->reply('global.done', ['%nick%' => $nickname, '%count%' => (string) $count]);
 

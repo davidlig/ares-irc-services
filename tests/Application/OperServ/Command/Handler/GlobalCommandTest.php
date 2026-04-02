@@ -49,7 +49,6 @@ final class GlobalCommandTest extends TestCase
         array $args,
         OperServNotifierInterface $notifier,
         TranslatorInterface $translator,
-        ?ServiceNicknameRegistry $serviceNicks = null,
     ): OperServContext {
         $registry = new OperServCommandRegistry([]);
 
@@ -65,7 +64,7 @@ final class GlobalCommandTest extends TestCase
             'NOTICE',
             $registry,
             $this->createAccessHelper(),
-            $serviceNicks ?? $this->createServiceNicks(),
+            $this->createServiceNicks(),
         );
     }
 
@@ -93,7 +92,6 @@ final class GlobalCommandTest extends TestCase
     private function createCommand(
         ?NetworkUserLookupPort $userLookup = null,
         ?RegisteredNickRepositoryInterface $nickRepository = null,
-        ?ServiceNicknameRegistry $serviceNicks = null,
         ?ActiveConnectionHolderInterface $connectionHolder = null,
         ?SendNoticePort $sendNoticePort = null,
     ): GlobalCommand {
@@ -102,7 +100,6 @@ final class GlobalCommandTest extends TestCase
         return new GlobalCommand(
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $nickRepository ?? $this->createStub(RegisteredNickRepositoryInterface::class),
-            $serviceNicks ?? $this->createServiceNicks(),
             $uidGenerator,
             $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class),
             $sendNoticePort ?? $this->createStub(SendNoticePort::class),
@@ -235,41 +232,6 @@ final class GlobalCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeWithServiceNicknameRepliesError(): void
-    {
-        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
-        $messages = [];
-        $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$messages): void {
-            $messages[] = $msg;
-        });
-
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
-
-        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function getServiceKey(): string
-            {
-                return 'nickserv';
-            }
-
-            public function getNickname(): string
-            {
-                return 'NickServ';
-            }
-        };
-        $serviceNicks = new ServiceNicknameRegistry([$nickservProvider]);
-
-        $context = $this->createContext($sender, ['NickServ!bot@test.com', 'PRIVMSG', 'Hello'], $notifier, $translator, $serviceNicks);
-        $command = $this->createCommand(serviceNicks: $serviceNicks);
-
-        $command->execute($context);
-
-        self::assertCount(1, $messages);
-        self::assertStringContainsString('global.nick_service', $messages[0]);
-    }
-
-    #[Test]
     public function executeWithConnectedNicknameRepliesError(): void
     {
         $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
@@ -385,6 +347,7 @@ final class GlobalCommandTest extends TestCase
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('introducePseudoClient');
+        $serviceActions->expects(self::once())->method('quitPseudoClient');
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getNickReservation')->willReturn($nickReservation);
@@ -442,6 +405,7 @@ final class GlobalCommandTest extends TestCase
 
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('introducePseudoClient');
+        $serviceActions->expects(self::once())->method('quitPseudoClient');
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getNickReservation')->willReturn($nickReservation);

@@ -134,6 +134,15 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         $this->write($line);
     }
 
+    /**
+     * InspIRCd: disconnect a pseudo-client.
+     * Format: :uid QUIT :reason.
+     */
+    public function quitPseudoClient(string $serverSid, string $uid, string $reason): void
+    {
+        $this->write(sprintf(':%s QUIT :%s', $uid, $reason));
+    }
+
     private function write(string $line): void
     {
         if (!$this->connectionHolder->isConnected()) {

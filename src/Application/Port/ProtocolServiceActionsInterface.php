@@ -92,4 +92,15 @@ interface ProtocolServiceActionsInterface
      * @param string $realname  Real name (GECOS) for the pseudo-client
      */
     public function introducePseudoClient(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname): void;
+
+    /**
+     * Disconnect a pseudo-client from the network.
+     *
+     * Used after GLOBAL messages to remove the temporary pseudo-client.
+     *
+     * @param string $serverSid Server SID (source of the QUIT command)
+     * @param string $uid       UID of the pseudo-client to disconnect
+     * @param string $reason    Quit reason shown to users
+     */
+    public function quitPseudoClient(string $serverSid, string $uid, string $reason): void;
 }
