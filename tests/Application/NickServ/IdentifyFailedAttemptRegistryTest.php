@@ -198,7 +198,7 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         for ($i = 0; $i < 3; ++$i) {
             $registry->recordFailedAttempt('key', 1);
         }
-        sleep(2);
+        sleep(3);
         self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 1, 1));
     }
 
