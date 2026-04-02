@@ -6,6 +6,8 @@ namespace App\Tests\Application\OperServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\ApplicationPort\ServiceUidProviderInterface;
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\OperServ\Command\Handler\GlobalCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -89,9 +91,40 @@ final class GlobalCommandTest extends TestCase
         return new ServiceNicknameRegistry([$provider]);
     }
 
+    private function createUidRegistry(?string $nickservUid = null): ServiceUidRegistry
+    {
+        $providers = [];
+
+        if (null !== $nickservUid) {
+            $providers['nickserv'] = new class($nickservUid) implements ServiceUidProviderInterface {
+                public function __construct(private string $uid)
+                {
+                }
+
+                public function getServiceKey(): string
+                {
+                    return 'nickserv';
+                }
+
+                public function getNickname(): string
+                {
+                    return 'NickServ';
+                }
+
+                public function getUid(): string
+                {
+                    return $this->uid;
+                }
+            };
+        }
+
+        return ServiceUidRegistry::fromIterable($providers);
+    }
+
     private function createCommand(
         ?NetworkUserLookupPort $userLookup = null,
         ?RegisteredNickRepositoryInterface $nickRepository = null,
+        ?ServiceUidRegistry $uidRegistry = null,
         ?ActiveConnectionHolderInterface $connectionHolder = null,
         ?SendNoticePort $sendNoticePort = null,
     ): GlobalCommand {
@@ -100,6 +133,7 @@ final class GlobalCommandTest extends TestCase
         return new GlobalCommand(
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $nickRepository ?? $this->createStub(RegisteredNickRepositoryInterface::class),
+            $uidRegistry ?? $this->createUidRegistry(),
             $uidGenerator,
             $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class),
             $sendNoticePort ?? $this->createStub(SendNoticePort::class),
@@ -433,5 +467,61 @@ final class GlobalCommandTest extends TestCase
         self::assertSame('UID2', $sendMessages[1]['to']);
         self::assertSame('NOTICE', $sendMessages[0]['type']);
         self::assertSame('NOTICE', $sendMessages[1]['type']);
+    }
+
+    #[Test]
+    public function executeWithServiceNicknameUsesExistingServiceUid(): void
+    {
+        $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('listConnectedUids')->willReturn(['UID1', 'UID2', 'UID3']);
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $nickservUid = '002NICKSV';  // NickServ UID
+        $uidRegistry = $this->createUidRegistry($nickservUid);
+
+        $sendMessages = [];
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::exactly(3))
+            ->method('sendMessage')
+            ->willReturnCallback(static function (string $fromUid, string $toUid, string $message, string $type) use (&$sendMessages): void {
+                $sendMessages[] = ['from' => $fromUid, 'to' => $toUid, 'message' => $message, 'type' => $type];
+            });
+
+        // NO introducePseudoClient, NO quitPseudoClient for service nicks
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('introducePseudoClient');
+        $serviceActions->expects(self::never())->method('quitPseudoClient');
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+        $connectionHolder->method('getServerSid')->willReturn('001');
+
+        $context = $this->createContext($sender, ['NickServ!services@host', 'PRIVMSG', 'Test message'], $notifier, $translator);
+        $command = $this->createCommand(
+            userLookup: $userLookup,
+            nickRepository: $nickRepository,
+            uidRegistry: $uidRegistry,
+            connectionHolder: $connectionHolder,
+            sendNoticePort: $sendNoticePort,
+        );
+
+        $command->execute($context);
+
+        self::assertCount(3, $sendMessages);
+        // Messages come FROM the service UID
+        self::assertSame($nickservUid, $sendMessages[0]['from']);
+        self::assertSame('Test message', $sendMessages[0]['message']);
+        self::assertSame('PRIVMSG', $sendMessages[0]['type']);
     }
 }

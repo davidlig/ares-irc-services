@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\ChanServ\Bot;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
@@ -24,7 +25,7 @@ use function in_array;
  * ChanServ pseudo-client: introduces on burst, implements ChanServNotifierInterface
  * and ChannelServiceActionsPort. Delegates channel actions to the active protocol module.
  */
-final readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceActionsPort, ServiceNicknameProviderInterface, EventSubscriberInterface
+final readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceActionsPort, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
 {
     /** Preferred order of prefix modes (highest first). */
     private const array PREFIX_ORDER = ['q', 'a', 'o', 'h', 'v'];

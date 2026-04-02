@@ -153,6 +153,12 @@ services:
         arguments:
             $providers: !tagged_iterator app.service_nickname_provider
 
+    # --- Service UID Registry (resolve service nick to UID) -------------------------
+
+    App\Application\ApplicationPort\ServiceUidRegistry:
+        factory: ['App\Application\ApplicationPort\ServiceUidRegistry', 'fromIterable']
+        arguments: [!tagged_iterator app.service_uid_provider]
+
     # --- Application services — inject the irc Monolog channel ---------------
 
     App\Application\IRC\IRCClientFactoryInterface: '@App\Application\IRC\IRCClientFactory'
@@ -515,7 +521,7 @@ services:
             $nickservIdent:      '%nickserv.ident%'
             $nickservRealname:   '%nickserv.realname%'
             $logger:             '@monolog.logger.irc'
-        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }]
+        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
 
     App\Application\NickServ\Command\NickServNotifierInterface:
         alias: App\Infrastructure\NickServ\Bot\NickServBot
@@ -530,7 +536,7 @@ services:
             $chanservIdent:     '%chanserv.ident%'
             $chanservRealname:  '%chanserv.realname%'
             $logger:            '@monolog.logger.irc'
-        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }]
+        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
 
     App\Application\ChanServ\Command\ChanServNotifierInterface:
         alias: App\Infrastructure\ChanServ\Bot\ChanServBot
@@ -548,7 +554,7 @@ services:
             $memoservIdent: '%memoserv.ident%'
             $memoservRealname: '%memoserv.realname%'
             $logger: '@monolog.logger.irc'
-        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }]
+        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
 
     App\Application\MemoServ\Command\MemoServNotifierInterface:
         alias: App\Infrastructure\MemoServ\Bot\MemoServBot
@@ -1023,7 +1029,7 @@ services:
             $operservRealname: '%operserv.realname%'
             $logger: '@monolog.logger.irc'
             $sendNoticePort: '@App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter'
-        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }]
+        tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
 
     App\Application\OperServ\Command\OperServNotifierInterface:
         alias: App\Infrastructure\OperServ\Bot\OperServBot
@@ -1093,6 +1099,7 @@ services:
         arguments:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $serviceUidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
             $uidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $sendNoticePort: '@App\Application\Port\SendNoticePort'
