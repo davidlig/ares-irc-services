@@ -26,12 +26,9 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use App\Infrastructure\OperServ\Bot\OperServBot;
 use App\Infrastructure\OperServ\Subscriber\OperServCommandListener;
-use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -41,22 +38,6 @@ use Throwable;
 final class OperServCommandListenerTest extends TestCase
 {
     private const string SENDER_UID = '001ABC';
-
-    private OperServBot $operServBot;
-
-    private OperServService $operServService;
-
-    private NetworkUserLookupPort&MockObject $userLookup;
-
-    private SendNoticePort&MockObject $sendNotice;
-
-    private UserMessageTypeResolverInterface $messageTypeResolver;
-
-    private OperServNotifierInterface&MockObject $operServNotifier;
-
-    private LoggerInterface&MockObject $logger;
-
-    private OperServCommandListener $listener;
 
     private static function senderView(): SenderView
     {
@@ -73,300 +54,16 @@ final class OperServCommandListenerTest extends TestCase
         );
     }
 
-    private function createAccessHelper(): IrcopAccessHelper
+    private static function createAccessHelper(): IrcopAccessHelper
     {
         $rootRegistry = new RootUserRegistry('');
-        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $ircopRepo = self::createStub(OperIrcopRepositoryInterface::class);
+        $roleRepo = self::createStub(OperRoleRepositoryInterface::class);
 
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
-    protected function setUp(): void
-    {
-        $this->operServBot = new OperServBot(
-            new ActiveConnectionHolder(),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(SendNoticePort::class),
-            'services.example.com',
-            '001OS',
-            'OperServ',
-        );
-
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $this->operServNotifier = $this->createMock(OperServNotifierInterface::class);
-        $this->messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $this->messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
-        $accessHelper = $this->createAccessHelper();
-
-        $this->operServService = new OperServService(
-            new OperServCommandRegistry([]),
-            $nickRepository,
-            $this->operServNotifier,
-            $this->messageTypeResolver,
-            $translator,
-            $accessHelper,
-            $this->createServiceNicks(),
-            $this->createStub(AuthorizationContextInterface::class),
-            $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
-            'en',
-            'UTC',
-        );
-
-        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $this->sendNotice = $this->createMock(SendNoticePort::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-
-        $this->listener = new OperServCommandListener(
-            $this->operServBot,
-            $this->operServService,
-            $this->userLookup,
-            $this->sendNotice,
-            $userMessageTypeResolver,
-            $this->logger,
-        );
-    }
-
-    #[Test]
-    public function getServiceNameReturnsBotNick(): void
-    {
-        $this->userLookup->expects(self::never())->method('findByUid');
-        $this->sendNotice->expects(self::never())->method('sendMessage');
-        $this->operServNotifier->expects(self::never())->method('sendMessage');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::never())->method('debug');
-        $this->logger->expects(self::never())->method('error');
-
-        self::assertSame('OperServ', $this->listener->getServiceName());
-    }
-
-    #[Test]
-    public function getServiceUidReturnsBotUid(): void
-    {
-        $this->userLookup->expects(self::never())->method('findByUid');
-        $this->sendNotice->expects(self::never())->method('sendMessage');
-        $this->operServNotifier->expects(self::never())->method('sendMessage');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::never())->method('debug');
-        $this->logger->expects(self::never())->method('error');
-
-        self::assertSame('001OS', $this->listener->getServiceUid());
-    }
-
-    #[Test]
-    public function onCommandDoesNothingWhenTextIsEmpty(): void
-    {
-        $this->userLookup->expects(self::never())->method('findByUid');
-        $this->sendNotice->expects(self::never())->method('sendMessage');
-        $this->operServNotifier->expects(self::never())->method('sendMessage');
-        $this->logger->expects(self::never())->method('warning');
-        $this->logger->expects(self::never())->method('debug');
-        $this->logger->expects(self::never())->method('error');
-
-        $this->listener->onCommand(self::SENDER_UID, '');
-    }
-
-    #[Test]
-    public function onCommandLogsWarningAndReturnsWhenSenderNotFound(): void
-    {
-        $this->userLookup
-            ->expects(self::once())
-            ->method('findByUid')
-            ->with(self::SENDER_UID)
-            ->willReturn(null);
-
-        $this->logger
-            ->expects(self::once())
-            ->method('warning')
-            ->with('OperServ: could not resolve sender UID: ' . self::SENDER_UID);
-
-        $this->operServNotifier->expects(self::never())->method('sendMessage');
-        $this->sendNotice->expects(self::never())->method('sendMessage');
-
-        $this->listener->onCommand(self::SENDER_UID, 'HELP');
-    }
-
-    #[Test]
-    public function onCommandDispatchesToOperServServiceWhenSenderFound(): void
-    {
-        $sender = self::senderView();
-        $this->userLookup
-            ->expects(self::once())
-            ->method('findByUid')
-            ->with(self::SENDER_UID)
-            ->willReturn($sender);
-
-        $this->operServNotifier
-            ->expects(self::once())
-            ->method('sendMessage')
-            ->with(self::SENDER_UID, self::anything(), 'NOTICE');
-        $this->sendNotice->expects(self::never())->method('sendMessage');
-        $this->logger->expects(self::atLeastOnce())->method('debug');
-
-        $this->listener->onCommand(self::SENDER_UID, 'HELP');
-    }
-
-    #[Test]
-    #[AllowMockObjectsWithoutExpectations]
-    public function onCommandLogsCommandAtDebugLevel(): void
-    {
-        $sender = self::senderView();
-        $this->userLookup
-            ->expects(self::once())
-            ->method('findByUid')
-            ->with(self::SENDER_UID)
-            ->willReturn($sender);
-
-        $this->logger
-            ->expects(self::once())
-            ->method('debug')
-            ->with(
-                'OperServ: command from {nick} [{uid}]: {text}',
-                self::callback(static fn (array $context): bool => isset(
-                    $context['nick'],
-                    $context['uid'],
-                    $context['text']
-                ) && 'TestOper' === $context['nick'] && self::SENDER_UID === $context['uid'])
-            );
-
-        $this->operServNotifier->expects(self::once())->method('sendMessage');
-
-        $this->listener->onCommand(self::SENDER_UID, 'HELP');
-    }
-
-    #[Test]
-    public function onCommandCatchesExceptionAndLogsError(): void
-    {
-        $sender = self::senderView();
-        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
-
-        $throwCommand = $this->createThrowCommand('TEST', new RuntimeException('Test error.'));
-        $operServService = $this->createOperServServiceWithCommands([$throwCommand]);
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-
-        $this->listener = new OperServCommandListener(
-            $this->operServBot,
-            $operServService,
-            $this->userLookup,
-            $this->sendNotice,
-            $userMessageTypeResolver,
-            $this->logger,
-        );
-
-        $this->sendNotice->expects(self::never())->method('sendMessage');
-        $this->operServNotifier->expects(self::never())->method('sendMessage');
-
-        $this->logger
-            ->expects(self::once())
-            ->method('error')
-            ->with(
-                self::stringContains('OperServ dispatch error:'),
-                self::callback(static fn (array $context): bool => isset($context['exception'], $context['sender'], $context['text'])),
-            );
-
-        $this->listener->onCommand(self::SENDER_UID, 'TEST');
-    }
-
-    private function createThrowCommand(string $name, Throwable $e): OperServCommandInterface
-    {
-        return new class($name, $e) implements OperServCommandInterface {
-            public function __construct(
-                private readonly string $commandName,
-                private readonly Throwable $exception,
-            ) {
-            }
-
-            public function getName(): string
-            {
-                return $this->commandName;
-            }
-
-            public function getAliases(): array
-            {
-                return [];
-            }
-
-            public function getMinArgs(): int
-            {
-                return 0;
-            }
-
-            public function getSyntaxKey(): string
-            {
-                return 'dummy.syntax';
-            }
-
-            public function getHelpKey(): string
-            {
-                return 'dummy.help';
-            }
-
-            public function getOrder(): int
-            {
-                return 0;
-            }
-
-            public function getShortDescKey(): string
-            {
-                return 'dummy.short';
-            }
-
-            public function getSubCommandHelp(): array
-            {
-                return [];
-            }
-
-            public function isOperOnly(): bool
-            {
-                return false;
-            }
-
-            public function getRequiredPermission(): ?string
-            {
-                return null;
-            }
-
-            public function execute(OperServContext $context): void
-            {
-                throw $this->exception;
-            }
-        };
-    }
-
-    private function createOperServServiceWithCommands(array $commands): OperServService
-    {
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $accessHelper = $this->createAccessHelper();
-
-        return new OperServService(
-            new OperServCommandRegistry($commands),
-            $nickRepository,
-            $notifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            $this->createServiceNicks(),
-            $this->createStub(AuthorizationContextInterface::class),
-            $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
-            'en',
-            'UTC',
-        );
-    }
-
-    private function createServiceNicks(): ServiceNicknameRegistry
+    private static function createServiceNicks(): ServiceNicknameRegistry
     {
         $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
             public function __construct(private string $key, private string $nick)
@@ -435,5 +132,475 @@ final class OperServCommandListenerTest extends TestCase
             $memoservProvider,
             $operservProvider,
         ]);
+    }
+
+    private static function createThrowCommand(string $name, Throwable $e): OperServCommandInterface
+    {
+        return new class($name, $e) implements OperServCommandInterface {
+            public function __construct(
+                private readonly string $commandName,
+                private readonly Throwable $exception,
+            ) {
+            }
+
+            public function getName(): string
+            {
+                return $this->commandName;
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'dummy.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'dummy.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'dummy.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function execute(OperServContext $context): void
+            {
+                throw $this->exception;
+            }
+        };
+    }
+
+    #[Test]
+    public function getServiceNameReturnsBotNick(): void
+    {
+        $operServBot = new OperServBot(
+            new ActiveConnectionHolder(),
+            self::createStub(NetworkUserLookupPort::class),
+            self::createStub(SendNoticePort::class),
+            'services.example.com',
+            '001OS',
+            'OperServ',
+        );
+
+        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
+        $operServNotifier = self::createStub(OperServNotifierInterface::class);
+        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = self::createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+        $accessHelper = self::createAccessHelper();
+
+        $operServService = new OperServService(
+            new OperServCommandRegistry([]),
+            $nickRepository,
+            $operServNotifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            self::createServiceNicks(),
+            self::createStub(AuthorizationContextInterface::class),
+            self::createStub(AuthorizationCheckerInterface::class),
+            self::createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $userLookup = self::createStub(NetworkUserLookupPort::class);
+        $sendNotice = self::createStub(SendNoticePort::class);
+        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $logger = self::createStub(\Psr\Log\LoggerInterface::class);
+
+        $listener = new OperServCommandListener(
+            $operServBot,
+            $operServService,
+            $userLookup,
+            $sendNotice,
+            $userMessageTypeResolver,
+            $logger,
+        );
+
+        self::assertSame('OperServ', $listener->getServiceName());
+    }
+
+    #[Test]
+    public function getServiceUidReturnsBotUid(): void
+    {
+        $operServBot = new OperServBot(
+            new ActiveConnectionHolder(),
+            self::createStub(NetworkUserLookupPort::class),
+            self::createStub(SendNoticePort::class),
+            'services.example.com',
+            '001OS',
+            'OperServ',
+        );
+
+        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
+        $operServNotifier = self::createStub(OperServNotifierInterface::class);
+        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = self::createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+        $accessHelper = self::createAccessHelper();
+
+        $operServService = new OperServService(
+            new OperServCommandRegistry([]),
+            $nickRepository,
+            $operServNotifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            self::createServiceNicks(),
+            self::createStub(AuthorizationContextInterface::class),
+            self::createStub(AuthorizationCheckerInterface::class),
+            self::createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $userLookup = self::createStub(NetworkUserLookupPort::class);
+        $sendNotice = self::createStub(SendNoticePort::class);
+        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $logger = self::createStub(\Psr\Log\LoggerInterface::class);
+
+        $listener = new OperServCommandListener(
+            $operServBot,
+            $operServService,
+            $userLookup,
+            $sendNotice,
+            $userMessageTypeResolver,
+            $logger,
+        );
+
+        self::assertSame('001OS', $listener->getServiceUid());
+    }
+
+    #[Test]
+    public function onCommandDoesNothingWhenTextIsEmpty(): void
+    {
+        $operServBot = new OperServBot(
+            new ActiveConnectionHolder(),
+            self::createStub(NetworkUserLookupPort::class),
+            self::createStub(SendNoticePort::class),
+            'services.example.com',
+            '001OS',
+            'OperServ',
+        );
+
+        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
+        $operServNotifier = $this->createMock(OperServNotifierInterface::class);
+        $operServNotifier->expects(self::never())->method('sendMessage');
+
+        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = self::createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+        $accessHelper = self::createAccessHelper();
+
+        $operServService = new OperServService(
+            new OperServCommandRegistry([]),
+            $nickRepository,
+            $operServNotifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            self::createServiceNicks(),
+            self::createStub(AuthorizationContextInterface::class),
+            self::createStub(AuthorizationCheckerInterface::class),
+            self::createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::never())->method('findByUid');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::never())->method('sendMessage');
+
+        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects(self::never())->method('warning');
+        $logger->expects(self::never())->method('error');
+
+        $listener = new OperServCommandListener(
+            $operServBot,
+            $operServService,
+            $userLookup,
+            $sendNotice,
+            $userMessageTypeResolver,
+            $logger,
+        );
+
+        $listener->onCommand(self::SENDER_UID, '');
+    }
+
+    #[Test]
+    public function onCommandLogsWarningAndReturnsWhenSenderNotFound(): void
+    {
+        $operServBot = new OperServBot(
+            new ActiveConnectionHolder(),
+            self::createStub(NetworkUserLookupPort::class),
+            self::createStub(SendNoticePort::class),
+            'services.example.com',
+            '001OS',
+            'OperServ',
+        );
+
+        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
+        $operServNotifier = self::createStub(OperServNotifierInterface::class);
+        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = self::createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+        $accessHelper = self::createAccessHelper();
+
+        $operServService = new OperServService(
+            new OperServCommandRegistry([]),
+            $nickRepository,
+            $operServNotifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            self::createServiceNicks(),
+            self::createStub(AuthorizationContextInterface::class),
+            self::createStub(AuthorizationCheckerInterface::class),
+            self::createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn(null);
+
+        $sendNotice = self::createStub(SendNoticePort::class);
+        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects(self::once())->method('warning')->with('OperServ: could not resolve sender UID: ' . self::SENDER_UID);
+
+        $listener = new OperServCommandListener(
+            $operServBot,
+            $operServService,
+            $userLookup,
+            $sendNotice,
+            $userMessageTypeResolver,
+            $logger,
+        );
+
+        $listener->onCommand(self::SENDER_UID, 'HELP');
+    }
+
+    #[Test]
+    public function onCommandDispatchesToOperServServiceWhenSenderFound(): void
+    {
+        $sender = self::senderView();
+
+        $operServBot = new OperServBot(
+            new ActiveConnectionHolder(),
+            self::createStub(NetworkUserLookupPort::class),
+            self::createStub(SendNoticePort::class),
+            'services.example.com',
+            '001OS',
+            'OperServ',
+        );
+
+        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
+        $operServNotifier = $this->createMock(OperServNotifierInterface::class);
+        $operServNotifier->expects(self::once())->method('sendMessage')->with(self::SENDER_UID, self::anything(), 'NOTICE');
+
+        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = self::createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+        $accessHelper = self::createAccessHelper();
+
+        $operServService = new OperServService(
+            new OperServCommandRegistry([]),
+            $nickRepository,
+            $operServNotifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            self::createServiceNicks(),
+            self::createStub(AuthorizationContextInterface::class),
+            self::createStub(AuthorizationCheckerInterface::class),
+            self::createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+
+        $sendNotice = self::createStub(SendNoticePort::class);
+        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $logger = self::createStub(\Psr\Log\LoggerInterface::class);
+
+        $listener = new OperServCommandListener(
+            $operServBot,
+            $operServService,
+            $userLookup,
+            $sendNotice,
+            $userMessageTypeResolver,
+            $logger,
+        );
+
+        $listener->onCommand(self::SENDER_UID, 'HELP');
+    }
+
+    #[Test]
+    public function onCommandLogsCommandAtDebugLevel(): void
+    {
+        $sender = self::senderView();
+
+        $operServBot = new OperServBot(
+            new ActiveConnectionHolder(),
+            self::createStub(NetworkUserLookupPort::class),
+            self::createStub(SendNoticePort::class),
+            'services.example.com',
+            '001OS',
+            'OperServ',
+        );
+
+        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
+        $operServNotifier = $this->createMock(OperServNotifierInterface::class);
+        $operServNotifier->expects(self::once())->method('sendMessage');
+
+        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = self::createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+        $accessHelper = self::createAccessHelper();
+
+        $operServService = new OperServService(
+            new OperServCommandRegistry([]),
+            $nickRepository,
+            $operServNotifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            self::createServiceNicks(),
+            self::createStub(AuthorizationContextInterface::class),
+            self::createStub(AuthorizationCheckerInterface::class),
+            self::createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+
+        $sendNotice = self::createStub(SendNoticePort::class);
+        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects(self::once())->method('debug')->with(
+            'OperServ: command from {nick} [{uid}]: {text}',
+            self::callback(static fn (array $context): bool => isset(
+                $context['nick'],
+                $context['uid'],
+                $context['text']
+            ) && 'TestOper' === $context['nick'] && self::SENDER_UID === $context['uid'])
+        );
+
+        $listener = new OperServCommandListener(
+            $operServBot,
+            $operServService,
+            $userLookup,
+            $sendNotice,
+            $userMessageTypeResolver,
+            $logger,
+        );
+
+        $listener->onCommand(self::SENDER_UID, 'HELP');
+    }
+
+    #[Test]
+    public function onCommandCatchesExceptionAndLogsError(): void
+    {
+        $sender = self::senderView();
+
+        $operServBot = new OperServBot(
+            new ActiveConnectionHolder(),
+            self::createStub(NetworkUserLookupPort::class),
+            self::createStub(SendNoticePort::class),
+            'services.example.com',
+            '001OS',
+            'OperServ',
+        );
+
+        $throwCommand = self::createThrowCommand('TEST', new RuntimeException('Test error.'));
+        $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
+        $operServNotifier = self::createStub(OperServNotifierInterface::class);
+        $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = self::createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = self::createAccessHelper();
+
+        $operServService = new OperServService(
+            new OperServCommandRegistry([$throwCommand]),
+            $nickRepository,
+            $operServNotifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            self::createServiceNicks(),
+            self::createStub(AuthorizationContextInterface::class),
+            self::createStub(AuthorizationCheckerInterface::class),
+            self::createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+
+        $sendNotice = self::createStub(SendNoticePort::class);
+        $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            self::stringContains('OperServ dispatch error:'),
+            self::callback(static fn (array $context): bool => isset($context['exception'], $context['sender'], $context['text']))
+        );
+
+        $listener = new OperServCommandListener(
+            $operServBot,
+            $operServService,
+            $userLookup,
+            $sendNotice,
+            $userMessageTypeResolver,
+            $logger,
+        );
+
+        $listener->onCommand(self::SENDER_UID, 'TEST');
     }
 }
