@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
+use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
@@ -12,10 +14,12 @@ use App\Application\Port\NetworkUserLookupPort;
 use function sprintf;
 use function strlen;
 
-final readonly class UseripCommand implements NickServCommandInterface
+final class UseripCommand implements NickServCommandInterface, AuditableCommandInterface
 {
+    private ?IrcopAuditData $auditData = null;
+
     public function __construct(
-        private NetworkUserLookupPort $userLookup,
+        private readonly NetworkUserLookupPort $userLookup,
     ) {
     }
 
@@ -87,11 +91,22 @@ final readonly class UseripCommand implements NickServCommandInterface
         $ip = $this->decodeIp($target->ipBase64);
         $host = $target->hostname;
 
+        $this->auditData = new IrcopAuditData(
+            target: $targetNick,
+            targetHost: $host,
+            targetIp: $ip,
+        );
+
         $context->reply('userip.result', [
             '%nick%' => $targetNick,
             '%ip%' => $ip,
             '%host%' => $host,
         ]);
+    }
+
+    public function getAuditData(object $context): ?IrcopAuditData
+    {
+        return $this->auditData;
     }
 
     private function decodeIp(string $ipBase64): string
