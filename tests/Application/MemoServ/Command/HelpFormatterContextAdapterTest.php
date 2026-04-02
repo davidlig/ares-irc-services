@@ -153,6 +153,22 @@ final class HelpFormatterContextAdapterTest extends TestCase
         self::assertFalse($adapter->shouldShowCommandInGeneralHelp($command));
     }
 
+    #[Test]
+    public function getIrcopCommandsReturnsEmpty(): void
+    {
+        $adapter = new HelpFormatterContextAdapter($this->createMinimalContext());
+
+        self::assertSame([], iterator_to_array($adapter->getIrcopCommands()));
+    }
+
+    #[Test]
+    public function hasIrcopAccessReturnsFalse(): void
+    {
+        $adapter = new HelpFormatterContextAdapter($this->createMinimalContext());
+
+        self::assertFalse($adapter->hasIrcopAccess());
+    }
+
     private function createMinimalContext(): MemoServContext
     {
         return new MemoServContext(

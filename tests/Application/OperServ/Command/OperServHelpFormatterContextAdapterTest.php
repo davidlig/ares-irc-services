@@ -336,4 +336,22 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
 
         self::assertFalse($result);
     }
+
+    #[Test]
+    public function getIrcopCommandsReturnsEmpty(): void
+    {
+        $context = $this->createContext(false);
+        $adapter = new OperServHelpFormatterContextAdapter($context);
+
+        self::assertSame([], iterator_to_array($adapter->getIrcopCommands()));
+    }
+
+    #[Test]
+    public function hasIrcopAccessReturnsFalse(): void
+    {
+        $context = $this->createContext(false);
+        $adapter = new OperServHelpFormatterContextAdapter($context);
+
+        self::assertFalse($adapter->hasIrcopAccess());
+    }
 }

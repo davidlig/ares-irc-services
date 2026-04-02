@@ -268,4 +268,59 @@ final class UseripCommandTest extends TestCase
 
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
     }
+
+    #[Test]
+    public function getAuditDataReturnsNullBeforeExecute(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
+    }
+
+    #[Test]
+    public function getAuditDataReturnsDataAfterSuccessfulExecute(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'hostname.example.com', 'targetc', 'targetip', false, false, 'SID1', 'my.vhost.example.com', 'i', '');
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn($target);
+        $registry = new NickServCommandRegistry([]);
+
+        $cmd = new UseripCommand($userLookup);
+        $context = $this->createContext($sender, ['TargetUser'], $notifier, $translator, $registry);
+
+        $cmd->execute($context);
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertNotNull($auditData);
+        self::assertSame('TargetUser', $auditData->target);
+        self::assertSame('hostname.example.com', $auditData->targetHost);
+        self::assertSame('targetip', $auditData->targetIp);
+    }
+
+    #[Test]
+    public function getAuditDataReturnsNullWhenUserNotOnline(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+        $registry = new NickServCommandRegistry([]);
+
+        $cmd = new UseripCommand($userLookup);
+        $context = $this->createContext($sender, ['UnknownUser'], $notifier, $translator, $registry);
+
+        $cmd->execute($context);
+
+        self::assertNull($cmd->getAuditData($context));
+    }
 }

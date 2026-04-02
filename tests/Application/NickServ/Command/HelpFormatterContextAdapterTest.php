@@ -257,6 +257,102 @@ final class HelpFormatterContextAdapterTest extends TestCase
         self::assertTrue($adapter->shouldShowCommandInGeneralHelp($command));
     }
 
+    #[Test]
+    public function getIrcopCommandsReturnsEmptyWhenSenderNull(): void
+    {
+        $cmd = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
+        $registry = new NickServCommandRegistry([$cmd]);
+        $context = new NickServContext(
+            null,
+            null,
+            'HELP',
+            [],
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+        $adapter = $this->createAdapter($context);
+
+        $commands = iterator_to_array($adapter->getIrcopCommands());
+
+        self::assertSame([], $commands);
+    }
+
+    #[Test]
+    public function getIrcopCommandsReturnsEmptyWhenAccountNull(): void
+    {
+        $cmd = $this->createIrcopCommandStub('USERIP', 'nickserv.userip');
+        $registry = new NickServCommandRegistry([$cmd]);
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false),
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $registry,
+        );
+        $adapter = $this->createAdapter($context);
+
+        $commands = iterator_to_array($adapter->getIrcopCommands());
+
+        self::assertSame([], $commands);
+    }
+
+    #[Test]
+    public function hasIrcopAccessReturnsFalseWhenSenderNull(): void
+    {
+        $context = new NickServContext(
+            null,
+            null,
+            'HELP',
+            [],
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+        $adapter = $this->createAdapter($context);
+
+        self::assertFalse($adapter->hasIrcopAccess());
+    }
+
+    #[Test]
+    public function hasIrcopAccessReturnsFalseWhenAccountNull(): void
+    {
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false),
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new NickServCommandRegistry([]),
+        );
+        $adapter = $this->createAdapter($context);
+
+        self::assertFalse($adapter->hasIrcopAccess());
+    }
+
+    #[Test]
+    public function hasIrcopAccessReturnsFalseWhenNotOper(): void
+    {
+        $context = $this->createContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, false),
+            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new NickServCommandRegistry([]),
+        );
+        $adapter = $this->createAdapter($context);
+
+        self::assertFalse($adapter->hasIrcopAccess());
+    }
+
     private function createCommandStub(string $name, bool $operOnly = false): NickServCommandInterface
     {
         return new class($name, $operOnly) implements NickServCommandInterface {
@@ -314,6 +410,71 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function execute(NickServContext $context): void
+            {
+            }
+        };
+    }
+
+    private function createIrcopCommandStub(string $name, string $permission): NickServCommandInterface
+    {
+        return new class($name, $permission) implements NickServCommandInterface {
+            public function __construct(
+                private readonly string $name,
+                private readonly string $permission,
+            ) {
+            }
+
+            public function getName(): string
+            {
+                return $this->name;
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return '';
+            }
+
+            public function getHelpKey(): string
+            {
+                return '';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return '';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return $this->permission;
             }
 
             public function execute(NickServContext $context): void

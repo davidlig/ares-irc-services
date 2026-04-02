@@ -513,4 +513,30 @@ final class HelpFormatterContextAdapterTest extends TestCase
 
         self::assertFalse($adapter->shouldShowCommandInGeneralHelp($cmd));
     }
+
+    #[Test]
+    public function getIrcopCommandsReturnsEmpty(): void
+    {
+        $context = $this->createContext(
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new ChanServCommandRegistry([]),
+        );
+        $adapter = new HelpFormatterContextAdapter($context);
+
+        self::assertSame([], iterator_to_array($adapter->getIrcopCommands()));
+    }
+
+    #[Test]
+    public function hasIrcopAccessReturnsFalse(): void
+    {
+        $context = $this->createContext(
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            new ChanServCommandRegistry([]),
+        );
+        $adapter = new HelpFormatterContextAdapter($context);
+
+        self::assertFalse($adapter->hasIrcopAccess());
+    }
 }
