@@ -10,6 +10,7 @@ use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -38,6 +39,7 @@ final readonly class GlobalCommand implements OperServCommandInterface
         private PseudoClientUidGenerator $uidGenerator,
         private ActiveConnectionHolderInterface $connectionHolder,
         private SendNoticePort $sendNoticePort,
+        private DebugActionPort $debug,
         private LoggerInterface $logger,
     ) {
     }
@@ -258,5 +260,13 @@ final readonly class GlobalCommand implements OperServCommandInterface
             'type' => $typeArg,
             'sender' => $sender?->nick ?? 'unknown',
         ]);
+
+        // Log debug action for IRCop audit
+        $this->debug->log(
+            operator: $sender?->nick ?? 'unknown',
+            command: 'GLOBAL',
+            target: $nickname,
+            reason: sprintf('%s to %d users: %s', $typeArg, $count, $message),
+        );
     }
 }

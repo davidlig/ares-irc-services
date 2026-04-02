@@ -1103,6 +1103,7 @@ services:
             $uidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $sendNoticePort: '@App\Application\Port\SendNoticePort'
+            $debug: '@App\Infrastructure\OperServ\Service\OperServDebugAction'
             $logger: '@monolog.logger.ircops'
         tags: ['operserv.command']
 

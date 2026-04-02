@@ -17,6 +17,7 @@ use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
@@ -127,6 +128,7 @@ final class GlobalCommandTest extends TestCase
         ?ServiceUidRegistry $uidRegistry = null,
         ?ActiveConnectionHolderInterface $connectionHolder = null,
         ?SendNoticePort $sendNoticePort = null,
+        ?DebugActionPort $debug = null,
     ): GlobalCommand {
         $uidGenerator = new PseudoClientUidGenerator($connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class));
 
@@ -137,6 +139,7 @@ final class GlobalCommandTest extends TestCase
             $uidGenerator,
             $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class),
             $sendNoticePort ?? $this->createStub(SendNoticePort::class),
+            $debug ?? $this->createStub(DebugActionPort::class),
             new NullLogger(),
         );
     }
@@ -383,6 +386,18 @@ final class GlobalCommandTest extends TestCase
         $serviceActions->expects(self::once())->method('introducePseudoClient');
         $serviceActions->expects(self::once())->method('quitPseudoClient');
 
+        $debug = $this->createMock(DebugActionPort::class);
+        $debug->expects(self::once())
+            ->method('log')
+            ->with(
+                'Operator',
+                'GLOBAL',
+                'TestBot',
+                null,
+                null,
+                self::stringContains('PRIVMSG to 3 users'),
+            );
+
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getNickReservation')->willReturn($nickReservation);
         $module->method('getServiceActions')->willReturn($serviceActions);
@@ -400,6 +415,7 @@ final class GlobalCommandTest extends TestCase
             nickRepository: $nickRepository,
             connectionHolder: $connectionHolder,
             sendNoticePort: $sendNoticePort,
+            debug: $debug,
         );
 
         $command->execute($context);
@@ -441,6 +457,9 @@ final class GlobalCommandTest extends TestCase
         $serviceActions->expects(self::once())->method('introducePseudoClient');
         $serviceActions->expects(self::once())->method('quitPseudoClient');
 
+        $debug = $this->createMock(DebugActionPort::class);
+        $debug->expects(self::once())->method('log');
+
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getNickReservation')->willReturn($nickReservation);
         $module->method('getServiceActions')->willReturn($serviceActions);
@@ -458,6 +477,7 @@ final class GlobalCommandTest extends TestCase
             nickRepository: $nickRepository,
             connectionHolder: $connectionHolder,
             sendNoticePort: $sendNoticePort,
+            debug: $debug,
         );
 
         $command->execute($context);
@@ -500,6 +520,9 @@ final class GlobalCommandTest extends TestCase
         $serviceActions->expects(self::never())->method('introducePseudoClient');
         $serviceActions->expects(self::never())->method('quitPseudoClient');
 
+        $debug = $this->createMock(DebugActionPort::class);
+        $debug->expects(self::once())->method('log');
+
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
@@ -514,6 +537,7 @@ final class GlobalCommandTest extends TestCase
             uidRegistry: $uidRegistry,
             connectionHolder: $connectionHolder,
             sendNoticePort: $sendNoticePort,
+            debug: $debug,
         );
 
         $command->execute($context);
@@ -558,6 +582,9 @@ final class GlobalCommandTest extends TestCase
         $serviceActions->expects(self::never())->method('introducePseudoClient');
         $serviceActions->expects(self::never())->method('quitPseudoClient');
 
+        $debug = $this->createMock(DebugActionPort::class);
+        $debug->expects(self::once())->method('log');
+
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
@@ -573,6 +600,7 @@ final class GlobalCommandTest extends TestCase
             uidRegistry: $uidRegistry,
             connectionHolder: $connectionHolder,
             sendNoticePort: $sendNoticePort,
+            debug: $debug,
         );
 
         $command->execute($context);
