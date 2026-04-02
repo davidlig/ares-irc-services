@@ -501,4 +501,65 @@ final class UnifiedHelpFormatterTest extends TestCase
             'options_key' => 'options.access.add',
         ]);
     }
+
+    #[Test]
+    public function showGeneralHelpShowsIrcopCommandsWhenUserHasIrcopAccess(): void
+    {
+        $cmd = new class {
+            public function getName(): string
+            {
+                return 'USERIP';
+            }
+
+            public function getOrder(): int
+            {
+                return 60;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'userip.short';
+            }
+        };
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([]);
+        $context->expects(self::atLeastOnce())->method('hasIrcopAccess')->willReturn(true);
+        $context->expects(self::atLeastOnce())->method('getIrcopCommands')->willReturn([$cmd]);
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('USERIP');
+        $context->expects(self::exactly(6))->method('reply');
+        $context->expects(self::exactly(4))->method('replyRaw');
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showGeneralHelp($context);
+    }
+
+    #[Test]
+    public function showGeneralHelpWithoutIrcopAccessDoesNotShowSection(): void
+    {
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([]);
+        $context->expects(self::atLeastOnce())->method('hasIrcopAccess')->willReturn(false);
+        $context->expects(self::never())->method('getIrcopCommands');
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
+        $context->expects(self::exactly(3))->method('reply');
+        $context->expects(self::exactly(3))->method('replyRaw');
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showGeneralHelp($context);
+    }
+
+    #[Test]
+    public function showGeneralHelpWithIrcopAccessButNoCommandsDoesNotShowSection(): void
+    {
+        $context = $this->createMock(HelpFormatterContextInterface::class);
+        $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([]);
+        $context->expects(self::atLeastOnce())->method('hasIrcopAccess')->willReturn(true);
+        $context->expects(self::atLeastOnce())->method('getIrcopCommands')->willReturn([]);
+        $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
+        $context->expects(self::exactly(3))->method('reply');
+        $context->expects(self::exactly(3))->method('replyRaw');
+
+        $formatter = new UnifiedHelpFormatter();
+        $formatter->showGeneralHelp($context);
+    }
 }

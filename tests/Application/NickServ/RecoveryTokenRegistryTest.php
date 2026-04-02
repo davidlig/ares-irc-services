@@ -77,9 +77,9 @@ final class RecoveryTokenRegistryTest extends TestCase
         $registry = new RecoveryTokenRegistry();
         $registry->store('Active', 'token', new DateTimeImmutable('+1 hour'));
         $registry->recordRecover('OldNick');
-        sleep(1);
+        sleep(2);
 
-        $removed = $registry->pruneExpired(0);
+        $removed = $registry->pruneExpired(1);
 
         self::assertGreaterThanOrEqual(1, $removed);
         self::assertNull($registry->getLastRecoverAt('OldNick'));
