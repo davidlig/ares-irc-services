@@ -11,6 +11,7 @@
 /.php-cs-fixer.cache
 /.vscode/
 /docs/
+/backups/
 
 ###> friendsofphp/php-cs-fixer ###
 /.php-cs-fixer.php

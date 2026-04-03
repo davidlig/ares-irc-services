@@ -34,3 +34,6 @@ vendor/
 # Documentation
 *.md
 !README.md
+
+# Backups
+backups/
