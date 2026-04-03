@@ -314,8 +314,13 @@ final class RegisterCommandTest extends TestCase
             return new Envelope($m);
         });
 
+        $translatorCalls = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'nickserv', string $locale = 'en') use (&$translatorCalls): string {
+            $translatorCalls[] = ['id' => $id, 'params' => $params, 'domain' => $domain, 'locale' => $locale];
+
+            return $id;
+        });
         $logger = $this->createStub(LoggerInterface::class);
 
         $messages = [];
@@ -323,6 +328,7 @@ final class RegisterCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $notifier->method('getNick')->willReturn('NickServ');
 
         $cmd = new RegisterCommand(
             $nickRepo,
@@ -341,6 +347,14 @@ final class RegisterCommandTest extends TestCase
         self::assertSame(['register.pending'], $messages);
         self::assertCount(1, $dispatched);
         self::assertInstanceOf(\App\Application\Mail\Message\SendEmail::class, $dispatched[0]);
+
+        $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'register_verification_subject' === $c['id']);
+        self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');
+        $subjectCall = reset($emailSubjectCalls);
+        self::assertSame('register_verification_subject', $subjectCall['id']);
+        self::assertSame('mail', $subjectCall['domain']);
+        self::assertArrayHasKey('%bot%', $subjectCall['params']);
+        self::assertSame('NickServ', $subjectCall['params']['%bot%']);
     }
 
     #[Test]

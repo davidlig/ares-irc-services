@@ -153,8 +153,14 @@ final class ResendCommandTest extends TestCase
 
             return new Envelope($m);
         });
+
+        $translatorCalls = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'nickserv', string $locale = 'en') use (&$translatorCalls): string {
+            $translatorCalls[] = ['id' => $id, 'params' => $params, 'domain' => $domain, 'locale' => $locale];
+
+            return $id;
+        });
         $logger = $this->createStub(LoggerInterface::class);
         $pending = new PendingVerificationRegistry();
 
@@ -163,6 +169,7 @@ final class ResendCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $notifier->method('getNick')->willReturn('NickServ');
 
         $cmd = new ResendCommand($nickRepo, $messageBus, $translator, $logger, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), [], $notifier, $translator, $pending));
@@ -170,6 +177,14 @@ final class ResendCommandTest extends TestCase
         self::assertSame(['resend.success'], $messages);
         self::assertCount(1, $dispatched);
         self::assertInstanceOf(\App\Application\Mail\Message\SendEmail::class, $dispatched[0]);
+
+        $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'resend_verification_subject' === $c['id']);
+        self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');
+        $subjectCall = reset($emailSubjectCalls);
+        self::assertSame('resend_verification_subject', $subjectCall['id']);
+        self::assertSame('mail', $subjectCall['domain']);
+        self::assertArrayHasKey('%bot%', $subjectCall['params']);
+        self::assertSame('NickServ', $subjectCall['params']['%bot%']);
     }
 
     #[Test]

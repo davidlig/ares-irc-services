@@ -137,8 +137,14 @@ final class SetEmailHandlerTest extends TestCase
 
             return new Envelope($m);
         });
+
+        $translatorCalls = [];
         $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'nickserv', string $locale = 'en') use (&$translatorCalls): string {
+            $translatorCalls[] = ['id' => $id, 'params' => $params, 'domain' => $domain, 'locale' => $locale];
+
+            return $id;
+        });
         $logger = $this->createStub(LoggerInterface::class);
 
         $messages = [];
@@ -146,12 +152,21 @@ final class SetEmailHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
+        $notifier->method('getNick')->willReturn('NickServ');
 
         $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['set.email.pending_sent'], $messages);
         self::assertCount(1, $dispatched);
+
+        $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'email_change_token_subject' === $c['id']);
+        self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');
+        $subjectCall = reset($emailSubjectCalls);
+        self::assertSame('email_change_token_subject', $subjectCall['id']);
+        self::assertSame('mail', $subjectCall['domain']);
+        self::assertArrayHasKey('%bot%', $subjectCall['params']);
+        self::assertSame('NickServ', $subjectCall['params']['%bot%']);
     }
 
     #[Test]

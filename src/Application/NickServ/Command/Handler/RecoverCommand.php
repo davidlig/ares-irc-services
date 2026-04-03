@@ -170,7 +170,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
 
         try {
             $locale = $account->getLanguage();
-            $subject = $this->translator->trans('recovery_token_subject', [], 'mail', $locale);
+            $subject = $this->translator->trans('recovery_token_subject', ['%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
             $body = $this->translator->trans('recovery_token_body', [
                 '%nickname%' => $targetNick,
                 '%token%' => $token,

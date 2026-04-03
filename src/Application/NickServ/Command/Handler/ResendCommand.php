@@ -130,7 +130,7 @@ final readonly class ResendCommand implements NickServCommandInterface
         if ('' !== $recipientEmail) {
             try {
                 $locale = $context->getLanguage();
-                $subject = $this->translator->trans('resend_verification_subject', [], 'mail', $locale);
+                $subject = $this->translator->trans('resend_verification_subject', ['%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
                 $body = $this->translator->trans('resend_verification_body', ['%nickname%' => $nick, '%token%' => $token, '%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
                 $this->messageBus->dispatch(new SendEmail($recipientEmail, $subject, $body));
             } catch (Throwable $e) {
