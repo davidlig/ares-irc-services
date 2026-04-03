@@ -8,8 +8,8 @@ use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
-use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -17,8 +17,6 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
 use function strtolower;
-use function substr;
-use function uniqid;
 
 final class RenameCommand implements NickServCommandInterface, AuditableCommandInterface
 {
@@ -26,7 +24,7 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
 
     public function __construct(
         private readonly NetworkUserLookupPort $userLookup,
-        private readonly NickServNotifierInterface $notifier,
+        private readonly NickForceService $forceService,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
         private readonly RootUserRegistry $rootRegistry,
@@ -126,9 +124,7 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
             }
         }
 
-        $guestNick = $this->guestPrefix . strtoupper(substr(uniqid(), -7));
-
-        $this->notifier->forceNick($onlineUser->uid, $guestNick);
+        $this->forceService->forceGuestNick($onlineUser->uid, null, 'ircop-rename');
 
         $this->auditData = new IrcopAuditData(
             target: $targetNick,
@@ -140,12 +136,11 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
             'operator' => $context->sender->nick,
             'target_nick' => $targetNick,
             'target_uid' => $onlineUser->uid,
-            'new_nick' => $guestNick,
         ]);
 
         $context->reply('rename.success', [
             '%nickname%' => $targetNick,
-            '%new_nick%' => $guestNick,
+            '%new_nick%' => $this->guestPrefix . 'XXXXXXX',
         ]);
     }
 

@@ -512,11 +512,21 @@ services:
             $eventDispatcher: '@event_dispatcher'
             $logger: '@monolog.logger.irc'
 
+    App\Application\NickServ\Service\NickForceService:
+        arguments:
+            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $pendingRegistry: '@App\Application\NickServ\PendingNickRestoreRegistryInterface'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $eventDispatcher: '@event_dispatcher'
+            $logger: '@monolog.logger.irc'
+            $guestPrefix: '%services.guest_prefix%'
+
     App\Application\NickServ\Service\NickSuspensionService:
         arguments:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
-            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
-            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $forceService: '@App\Application\NickServ\Service\NickForceService'
             $guestPrefix: '%services.guest_prefix%'
             $logger: '@monolog.logger.irc'
 
@@ -829,7 +839,7 @@ services:
     App\Application\NickServ\Command\Handler\RenameCommand:
         arguments:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
-            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $forceService: '@App\Application\NickServ\Service\NickForceService'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'

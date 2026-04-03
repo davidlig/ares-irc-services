@@ -14,6 +14,7 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
@@ -29,8 +30,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
-
-use function strlen;
 
 #[CoversClass(RenameCommand::class)]
 final class RenameCommandTest extends TestCase
@@ -120,7 +119,7 @@ final class RenameCommandTest extends TestCase
     {
         $cmd = new RenameCommand(
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(NickForceService::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(OperIrcopRepositoryInterface::class),
             new RootUserRegistry(''),
@@ -140,28 +139,6 @@ final class RenameCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeWithNullSenderReturnsEarly(): void
-    {
-        $messages = [];
-
-        $context = $this->createContext(null, ['TestNick'], $messages);
-
-        $cmd = new RenameCommand(
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            new RootUserRegistry(''),
-            $this->createStub(LoggerInterface::class),
-        );
-
-        $cmd->execute($context);
-
-        self::assertEmpty($messages);
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function executeWithNonexistentNickRepliesNotOnline(): void
     {
         $sender = $this->createSender();
@@ -174,7 +151,7 @@ final class RenameCommandTest extends TestCase
 
         $cmd = new RenameCommand(
             $userLookup,
-            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(NickForceService::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(OperIrcopRepositoryInterface::class),
             new RootUserRegistry(''),
@@ -205,7 +182,7 @@ final class RenameCommandTest extends TestCase
 
         $cmd = new RenameCommand(
             $userLookup,
-            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(NickForceService::class),
             $nickRepository,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $rootRegistry,
@@ -243,7 +220,7 @@ final class RenameCommandTest extends TestCase
 
         $cmd = new RenameCommand(
             $userLookup,
-            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(NickForceService::class),
             $nickRepository,
             $ircopRepository,
             new RootUserRegistry(''),
@@ -256,7 +233,7 @@ final class RenameCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeWithUnregisteredOnlineUserRenamesSuccessfully(): void
+    public function executeWithUnregisteredOnlineUserCallsForceService(): void
     {
         $sender = $this->createSender();
         $messages = [];
@@ -269,18 +246,15 @@ final class RenameCommandTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
 
-        $notifier = $this->createMock(NickServNotifierInterface::class);
-        $notifier->expects(self::once())
-            ->method('forceNick')
-            ->with('UID2', self::callback(static fn (string $guestNick): bool => str_starts_with($guestNick, 'Guest-') && strlen($guestNick) > 6));
+        $forceService = $this->createStub(NickForceService::class);
 
         $logger = $this->createStub(LoggerInterface::class);
 
-        $context = $this->createContext($sender, ['BadUser'], $messages, userLookup: $userLookup, nickRepository: $nickRepository, notifier: $notifier);
+        $context = $this->createContext($sender, ['BadUser'], $messages, userLookup: $userLookup, nickRepository: $nickRepository, forceService: $forceService);
 
         $cmd = new RenameCommand(
             $userLookup,
-            $notifier,
+            $forceService,
             $nickRepository,
             $this->createStub(OperIrcopRepositoryInterface::class),
             new RootUserRegistry(''),
@@ -293,7 +267,7 @@ final class RenameCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeWithRegisteredOnlineUserRenamesSuccessfully(): void
+    public function executeWithRegisteredOnlineUserCallsForceService(): void
     {
         $sender = $this->createSender();
         $messages = [];
@@ -311,18 +285,15 @@ final class RenameCommandTest extends TestCase
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepository->method('findByNickId')->willReturn(null);
 
-        $notifier = $this->createMock(NickServNotifierInterface::class);
-        $notifier->expects(self::once())
-            ->method('forceNick')
-            ->with('UID2', self::callback(static fn (string $guestNick): bool => str_starts_with($guestNick, 'Guest-') && strlen($guestNick) > 6));
+        $forceService = $this->createStub(NickForceService::class);
 
         $logger = $this->createStub(LoggerInterface::class);
 
-        $context = $this->createContext($sender, ['Troublemaker'], $messages, userLookup: $userLookup, nickRepository: $nickRepository, ircopRepository: $ircopRepository, notifier: $notifier);
+        $context = $this->createContext($sender, ['Troublemaker'], $messages, userLookup: $userLookup, nickRepository: $nickRepository, ircopRepository: $ircopRepository, forceService: $forceService);
 
         $cmd = new RenameCommand(
             $userLookup,
-            $notifier,
+            $forceService,
             $nickRepository,
             $ircopRepository,
             new RootUserRegistry(''),
@@ -348,13 +319,13 @@ final class RenameCommandTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
 
-        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $forceService = $this->createStub(NickForceService::class);
 
-        $context = $this->createContext($sender, ['BadUser'], $messages, userLookup: $userLookup, nickRepository: $nickRepository, notifier: $notifier);
+        $context = $this->createContext($sender, ['BadUser'], $messages, userLookup: $userLookup, nickRepository: $nickRepository, forceService: $forceService);
 
         $cmd = new RenameCommand(
             $userLookup,
-            $notifier,
+            $forceService,
             $nickRepository,
             $this->createStub(OperIrcopRepositoryInterface::class),
             new RootUserRegistry(''),
@@ -371,46 +342,32 @@ final class RenameCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeWithCustomGuestPrefixUsesCustomPrefix(): void
+    public function executeWithNullSenderReturnsEarly(): void
     {
-        $sender = $this->createSender();
         $messages = [];
 
-        $targetUser = new SenderView('UID2', 'TestUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i', '');
-
-        $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $userLookup->method('findByNick')->willReturn($targetUser);
-
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn(null);
-
-        $notifier = $this->createMock(NickServNotifierInterface::class);
-        $notifier->expects(self::once())
-            ->method('forceNick')
-            ->with('UID2', self::callback(static fn (string $guestNick): bool => str_starts_with($guestNick, 'Renamed-') && strlen($guestNick) > 8));
-
-        $context = $this->createContext($sender, ['TestUser'], $messages, userLookup: $userLookup, nickRepository: $nickRepository, notifier: $notifier);
+        $context = $this->createContext(null, ['TestNick'], $messages);
 
         $cmd = new RenameCommand(
-            $userLookup,
-            $notifier,
-            $nickRepository,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickForceService::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(OperIrcopRepositoryInterface::class),
             new RootUserRegistry(''),
             $this->createStub(LoggerInterface::class),
-            'Renamed-',
         );
 
         $cmd->execute($context);
 
-        self::assertContains('rename.success', $messages);
+        self::assertEmpty($messages);
+        self::assertNull($cmd->getAuditData($context));
     }
 
     private function createCommand(): RenameCommand
     {
         return new RenameCommand(
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(NickServNotifierInterface::class),
+            $this->createStub(NickForceService::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(OperIrcopRepositoryInterface::class),
             new RootUserRegistry(''),
@@ -443,9 +400,9 @@ final class RenameCommandTest extends TestCase
         ?NetworkUserLookupPort $userLookup = null,
         ?RegisteredNickRepositoryInterface $nickRepository = null,
         ?OperIrcopRepositoryInterface $ircopRepository = null,
-        ?NickServNotifierInterface $notifier = null,
+        ?NickForceService $forceService = null,
     ): NickServContext {
-        $notifierMock = $notifier ?? $this->createStub(NickServNotifierInterface::class);
+        $notifierMock = $this->createStub(NickServNotifierInterface::class);
         $notifierMock->method('sendMessage')->willReturnCallback(static function (string $type, string $message) use (&$messages): void {
             $messages[] = $message;
         });

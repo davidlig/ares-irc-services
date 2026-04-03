@@ -4,24 +4,18 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Service;
 
-use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 use function sprintf;
-use function strtoupper;
-use function substr;
-use function uniqid;
 
 readonly class NickSuspensionService
 {
     public function __construct(
         private NetworkUserLookupPort $userLookup,
-        private NickServNotifierInterface $notifier,
-        private IdentifiedSessionRegistry $identifiedRegistry,
+        private NickForceService $forceService,
         private string $guestPrefix = 'Guest-',
         private LoggerInterface $logger = new NullLogger(),
     ) {
@@ -46,21 +40,12 @@ readonly class NickSuspensionService
             return;
         }
 
-        $uid = $onlineUser->uid;
-
-        $guestNick = $this->guestPrefix . strtoupper(substr(uniqid(), -7));
-
         $this->logger->info(sprintf(
-            'NickSuspension: %s [%s] is connected, renaming to %s and de-identifying',
+            'NickSuspension: %s [%s] is connected, forcing rename',
             $nickname,
-            $uid,
-            $guestNick,
+            $onlineUser->uid,
         ));
 
-        $this->identifiedRegistry->remove($uid);
-
-        $this->notifier->setUserAccount($uid, '0');
-
-        $this->notifier->forceNick($uid, $guestNick);
+        $this->forceService->forceGuestNick($onlineUser->uid, null, 'suspension');
     }
 }
