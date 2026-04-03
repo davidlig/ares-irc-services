@@ -30,7 +30,7 @@ final class OperServBotTest extends TestCase
 
     private LoggerInterface $logger;
 
-    private string $servicesHostname = 'services.example.com';
+    private string $servicesVhost = 'services.example.com';
 
     private string $operservUid = '123456789ABC';
 
@@ -54,7 +54,7 @@ final class OperServBotTest extends TestCase
             $this->connectionHolder,
             $this->userLookup,
             $this->sendNoticePort,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
@@ -95,7 +95,7 @@ final class OperServBotTest extends TestCase
                 $serverSid,
                 $this->operservNick,
                 $this->operservIdent,
-                $this->servicesHostname,
+                $this->servicesVhost,
                 $this->operservUid,
                 $this->operservRealname,
             )
@@ -113,7 +113,7 @@ final class OperServBotTest extends TestCase
             $this->connectionHolder,
             $this->userLookup,
             $this->sendNoticePort,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
@@ -141,7 +141,7 @@ final class OperServBotTest extends TestCase
             $this->connectionHolder,
             $this->userLookup,
             $this->sendNoticePort,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
@@ -170,7 +170,7 @@ final class OperServBotTest extends TestCase
             $this->connectionHolder,
             $this->userLookup,
             $sendNoticePort,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
@@ -198,7 +198,7 @@ final class OperServBotTest extends TestCase
             $this->connectionHolder,
             $this->userLookup,
             $sendNoticePort,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->operservUid,
             $this->operservNick,
             $this->operservIdent,

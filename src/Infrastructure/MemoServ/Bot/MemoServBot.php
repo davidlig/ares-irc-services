@@ -23,7 +23,7 @@ final readonly class MemoServBot implements MemoServNotifierInterface, ServiceNi
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly string $servicesHostname,
+        private readonly string $servicesVhost,
         private readonly string $memoservUid,
         private readonly string $memoservNick = 'MemoServ',
         private readonly string $memoservIdent = 'MemoServ',
@@ -55,7 +55,7 @@ final readonly class MemoServBot implements MemoServNotifierInterface, ServiceNi
             $serverSid,
             $this->memoservNick,
             $this->memoservIdent,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->memoservUid,
             $this->memoservRealname,
         );

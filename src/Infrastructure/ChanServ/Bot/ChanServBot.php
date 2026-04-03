@@ -34,7 +34,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ApplyOutgoingChannelModesPort $applyOutgoingChannelModes,
-        private readonly string $servicesHostname,
+        private readonly string $servicesVhost,
         private readonly string $chanservUid,
         private readonly string $chanservNick = 'ChanServ',
         private readonly string $chanservIdent = 'ChanServ',
@@ -66,7 +66,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
             $serverSid,
             $this->chanservNick,
             $this->chanservIdent,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->chanservUid,
             $this->chanservRealname,
         );

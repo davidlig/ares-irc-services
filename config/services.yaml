@@ -12,7 +12,7 @@ parameters:
     irc.server_sid:    '%env(IRC_SERVER_SID)%'
 
     # Services global settings
-    services.hostname:         '%env(IRC_SERVICES_HOST)%'
+    services.vhost:         '%env(IRC_SERVICES_VHOST)%'
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
     services.default_timezone_fallback: 'UTC'
     services.default_timezone: '%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%'
@@ -543,7 +543,7 @@ services:
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
             $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
-            $servicesHostname:   '%services.hostname%'
+            $servicesVhost:   '%services.vhost%'
             $nickservUid:        '%nickserv.uid%'
             $nickservNick:       '%nickserv.nick%'
             $nickservIdent:      '%nickserv.ident%'
@@ -558,7 +558,7 @@ services:
 
     App\Infrastructure\ChanServ\Bot\ChanServBot:
         arguments:
-            $servicesHostname:   '%services.hostname%'
+            $servicesVhost:   '%services.vhost%'
             $chanservUid:        '%chanserv.uid%'
             $chanservNick:      '%chanserv.nick%'
             $chanservIdent:     '%chanserv.ident%'
@@ -576,7 +576,7 @@ services:
 
     App\Infrastructure\MemoServ\Bot\MemoServBot:
         arguments:
-            $servicesHostname: '%services.hostname%'
+            $servicesVhost: '%services.vhost%'
             $memoservUid: '%memoserv.uid%'
             $memoservNick: '%memoserv.nick%'
             $memoservIdent: '%memoserv.ident%'
@@ -1101,7 +1101,7 @@ services:
 
     App\Infrastructure\OperServ\Bot\OperServBot:
         arguments:
-            $servicesHostname: '%services.hostname%'
+            $servicesVhost: '%services.vhost%'
             $operservUid: '%operserv.uid%'
             $operservNick: '%operserv.nick%'
             $operservIdent: '%operserv.ident%'

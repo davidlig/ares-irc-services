@@ -22,7 +22,7 @@ final readonly class OperServBot implements OperServNotifierInterface, ServiceNi
         private ActiveConnectionHolder $connectionHolder,
         private NetworkUserLookupPort $userLookup,
         private SendNoticePort $sendNoticePort,
-        private string $servicesHostname,
+        private string $servicesVhost,
         private string $operservUid,
         private string $operservNick = 'OperServ',
         private string $operservIdent = 'OperServ',
@@ -54,7 +54,7 @@ final readonly class OperServBot implements OperServNotifierInterface, ServiceNi
             $serverSid,
             $this->operservNick,
             $this->operservIdent,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->operservUid,
             $this->operservRealname,
         );

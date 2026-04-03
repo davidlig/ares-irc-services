@@ -320,7 +320,7 @@ final readonly class HostServBot implements
         private readonly NetworkUserLookupPort $userLookup,
         private readonly SendNoticePort $sendNoticePort,
         private readonly HostServService $service,
-        private readonly string $servicesHostname,
+        private readonly string $servicesVhost,
         private readonly string $hostservUid,
         private readonly string $hostservNick = 'HostServ',
         private readonly string $hostservIdent = 'HostServ',
@@ -356,7 +356,7 @@ final readonly class HostServBot implements
             $event->serverSid,
             $this->hostservNick,
             $this->hostservIdent,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->hostservUid,
             $this->hostservRealname,
         );
@@ -422,7 +422,7 @@ App\Domain\HostServ\Repository\HostRequestRepositoryInterface:
 
 App\Infrastructure\HostServ\Bot\HostServBot:
     arguments:
-        $servicesHostname: '%services.hostname%'
+        $servicesVhost: '%services.vhost%'
         $hostservUid: '%hostserv.uid%'
         $hostservNick: '%hostserv.nick%'
         $hostservIdent: '%hostserv.ident%'
@@ -452,7 +452,7 @@ App\Application\HostServ\HostServService:
 ```yaml
 parameters:
     # Service configuration
-    services.hostname: '%env(SERVICES_HOSTNAME)%'
+    services.vhost: '%env(IRC_SERVICES_VHOST)%'
     services.default_language: 'en'
     
     # HostServ pseudo-client

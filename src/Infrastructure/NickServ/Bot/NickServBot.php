@@ -31,7 +31,7 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
         private readonly SendNoticePort $sendNoticePort,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly LocalUserModeSyncInterface $localUserModeSync,
-        private readonly string $servicesHostname,
+        private readonly string $servicesVhost,
         private readonly string $nickservUid,
         private readonly string $nickservNick = 'NickServ',
         private readonly string $nickservIdent = 'NickServ',
@@ -63,7 +63,7 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
             $serverSid,
             $this->nickservNick,
             $this->nickservIdent,
-            $this->servicesHostname,
+            $this->servicesVhost,
             $this->nickservUid,
             $this->nickservRealname,
         );
@@ -73,7 +73,7 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
         $this->logger->info('NickServ introduced to network.', [
             'uid' => $this->nickservUid,
             'nick' => $this->nickservNick,
-            'host' => $this->servicesHostname,
+            'host' => $this->servicesVhost,
         ]);
     }
 
