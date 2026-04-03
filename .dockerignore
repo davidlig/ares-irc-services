@@ -1,0 +1,36 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+
+# Docker (keep docker/ directory for entrypoint.sh)
+.docker/
+Dockerfile
+docker-compose.yml
+docker-compose.override.yml
+
+# Tests
+tests/
+phpunit.xml
+.phpunit.cache/
+.php-cs-fixer.*
+
+# Build artifacts
+var/
+vendor/
+
+# Environment (will be bind-mounted)
+.env.local
+.env.*.local
+
+# Logs and database (will be bind-mounted)
+*.log
+*.db
+*.sqlite
+
+# Documentation
+*.md
+!README.md

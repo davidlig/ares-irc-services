@@ -158,6 +158,337 @@ When the connection is established and the initial network burst completes, the 
 > UnrealIRCd to accept the link. Omitting `EAUTH`/`SID` causes the
 > `LINK_OLD_PROTOCOL` rejection.
 
+---
+
+## Docker Deployment
+
+### Quick Start
+
+```bash
+# 1. Build the image
+make build
+
+# 2. Initialize environment (creates .env.local if missing)
+make up
+# The 'make up' command automatically runs scripts/init-env.sh and rebuilds the image
+
+# 3. Edit .env.local and configure your IRCD connection
+# See "Configuration" section below for required variables
+
+# 4. Restart with your configuration
+make restart
+
+# 5. Check logs
+make logs
+```
+
+**Note:** `make up` always rebuilds the Docker image to ensure you have the latest code. This means:
+- After `git pull`, running `make up` will automatically include new code changes
+- First start takes longer because it builds the image
+- Subsequent starts are faster due to Docker layer caching
+
+### Available Make Commands
+
+Run `make help` or `make` to see all available commands:
+
+| Command | Description |
+|---------|-------------|
+| `make build` | Build Docker image |
+| `make build-no-cache` | Build without cache |
+| `make up` | Start services in background |
+| `make down` | Stop services |
+| `make restart` | Restart services |
+| `make logs` | Follow logs in real-time |
+| `make logs-tail` | Show last 100 lines of logs |
+| `make shell` | Open shell inside container |
+| `make health` | Check container health |
+| `make db-backup` | Backup database to `backups/` |
+| `make db-restore FILE=path` | Restore database from backup |
+| `make clean` | Remove containers and clean artifacts |
+
+### Multi-Architecture Support
+
+The Docker image supports both **amd64** (x86_64) and **arm64** (ARM) architectures:
+
+```bash
+# Build for current platform
+make build
+
+# Build for multiple platforms (requires docker buildx)
+make build-multiarch
+```
+
+All Docker-related files are organized in the `docker/` directory:
+- `docker/Dockerfile` - Multi-arch PHP 8.4 CLI Alpine image
+- `docker/docker-compose.yml` - Service orchestration
+- `docker/entrypoint.sh` - Initialization script
+- `docker/.dockerignore` - Build optimization
+- `docker/docker-buildx.sh` - Multi-arch builder
+
+### Configuration
+
+#### Environment Variables
+
+Container initialization will automatically create `.env.local` from `.env` template on first run, generating a secure `APP_SECRET`.
+
+**Automatic configuration sync:** On every container start, the entrypoint automatically syncs new configuration keys from `.env` to `.env.local` for the following blocks:
+- `###> ares/irc-link ###` - IRC connection settings
+- `###> ares/services ###` - Services configuration
+
+**Automatic variable detection:** The sync process detects variables automatically:
+- Regular variables: `VARIABLE_NAME=value`
+- Optional/commented variables: `# VARIABLE_NAME=value` (synced as-is, remains commented)
+- Only adds missing variables (never overwrites existing configurations)
+- Future-proof: works with any new variables added to .env blocks
+
+**First-time setup:**
+
+1. Run `make up` (creates `.env.local` automatically)
+2. Edit `.env.local` and configure IRCD connection
+3. Run `make restart` to apply changes
+
+**Required variables** (set in `.env.local`):
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `IRC_IRCD_HOST` | IRCD hostname or IP | See connection methods below |
+| `IRC_IRCD_PORT` | IRCD server-link port | `7000` |
+| `IRC_LINK_PASSWORD` | Link password from IRCD config | `your-secret-password` |
+| `IRC_SERVER_NAME` | FQDN Ares presents to IRCD | `services.example.com` |
+| `IRC_PROTOCOL` | Protocol driver | `unreal` or `inspircd` |
+
+#### Connection Methods
+
+**Docker Desktop (macOS/Windows):**
+
+The `docker-compose.yml` includes `extra_hosts` to map `host.docker.internal`:
+
+```env
+IRC_IRCD_HOST=host.docker.internal
+```
+
+**Linux (Docker bridge):**
+
+Use the Docker bridge gateway IP (usually `172.17.0.1`):
+
+```env
+IRC_IRCD_HOST=172.17.0.1
+```
+
+**Linux (host network mode):**
+
+Edit `docker-compose.yml` and replace the `network_mode` and `extra_hosts` configuration:
+
+```yaml
+services:
+  ares:
+    network_mode: host
+    # Remove extra_hosts when using host network mode
+```
+
+Then set in `.env.local`:
+
+```env
+IRC_IRCD_HOST=127.0.0.1
+```
+
+**Remote IRCD server:**
+
+```env
+IRC_IRCD_HOST=irc.yournetwork.net
+IRC_IRCD_PORT=7000
+```
+
+### Data Persistence
+
+The following directories are persisted via bind mounts:
+
+| Host Path | Container Path | Purpose |
+|-----------|---------------|---------|
+| `./var/data/` | `/app/var/data/` | SQLite database (`ares.db`) |
+| `./var/log/` | `/app/var/log/` | IRC service logs |
+| `.env.local` | `/app/.env.local` | Configuration (writable for APP_SECRET generation) |
+
+### Container Initialization
+
+On startup, the container executes:
+
+1. **Check `.env.local`** – If missing, copy from `.env` template
+2. **Generate `APP_SECRET`** – If missing or contains `changeme`, generate random 32-char hex string
+3. **Sync configuration** – Add new keys from `.env` to `.env.local` (ares/irc-link and ares/services blocks)
+4. **Install dependencies** – `composer install -n --no-dev --optimize-autoloader --classmap-authoritative`
+5. **Run migrations** – `doctrine:migrations:migrate -n`
+6. **Start services** – `php bin/console irc:connect`
+
+**Note:** The `.env.local` file must be writable by the container to generate `APP_SECRET` automatically. This is safe because:
+- `.env.local` is listed in `.gitignore` (won't be committed)
+- Contains only local configuration (no secrets in production)
+- Automatically syncs new configuration keys from `.env` when new features are added
+
+### Health Check
+
+The container includes a health check that verifies the PHP process is running:
+
+```bash
+# Check container health
+docker-compose ps
+# STATUS: "healthy" or "unhealthy"
+
+# Manual health check
+make health
+# Output: "✅ Healthy" or "❌ Unhealthy"
+```
+
+Health check configuration:
+- **Interval**: every 30 seconds
+- **Timeout**: 3 seconds to respond
+- **Start period**: 10 seconds grace period at startup
+- **Retries**: 3 attempts before marking unhealthy
+
+### Logs and Debugging
+
+```bash
+# Follow logs in real-time
+make logs
+
+# Show last 100 lines
+make logs-tail
+
+# Open shell in container
+make shell
+
+# Check current configuration
+make config-show
+
+# Inspect container status
+docker-compose ps
+docker inspect ares-irc-services
+```
+
+### Database Operations
+
+```bash
+# Create backup (stored in backups/ directory)
+make db-backup
+# Output: ✅ Backup created: backups/ares-20260403-123456.db
+
+# List available backups
+ls -lh backups/
+
+# Restore from backup
+make db-restore FILE=backups/ares-20260403-123456.db
+
+# Open SQLite CLI (for debugging)
+make db-shell
+```
+
+Backups are stored in the `backups/` directory on the host with timestamp format: `ares-YYYYMMDD-HHMMSS.db`.
+
+### Updating
+
+```bash
+# Pull latest code
+git pull origin main
+
+# Start services (automatically rebuilds image with new code)
+make up
+```
+
+**What happens on `make up`:**
+
+1. Runs `scripts/init-env.sh` (creates `.env.local` if missing)
+2. Rebuilds Docker image with latest code
+3. Starts container
+4. Container entrypoint runs:
+   - `composer install` (installs/updates dependencies)
+   - `doctrine:migrations:migrate` (applies new migrations)
+   - Starts IRC services
+
+**Note:** `make up` always rebuilds the image, ensuring code changes from `git pull` are included. This is safer than manual `make build && make restart` because you won't forget to rebuild.
+
+### Troubleshooting
+
+#### .env.local: permission denied / mount error
+
+The bind mount requires `.env.local` to exist before starting the container. The `make up` command handles this automatically, but if you see this error:
+
+```
+Error: .env.local: no such file or directory
+```
+
+Run the initialization script manually:
+
+```bash
+./scripts/init-env.sh
+```
+
+#### Container exits immediately
+
+```bash
+# Check logs for errors
+docker-compose logs ares
+
+# Verify .env.local exists and has correct values
+cat .env.local | grep IRC_
+
+# Check container status
+docker-compose ps
+```
+
+#### Cannot connect to IRCD
+
+```bash
+# Verify network connectivity from container
+docker-compose exec ares nc -v $IRC_IRCD_HOST $IRC_IRCD_PORT
+
+# Check IRCD logs for connection attempts
+# Ensure IRC_SERVER_NAME matches your IRCD link block
+# Ensure IRC_LINK_PASSWORD matches your IRCD configuration
+```
+
+#### Database locked errors
+
+```bash
+# Ensure only one container instance is running
+docker-compose ps
+docker-compose down
+docker-compose up -d
+```
+
+#### Permission denied errors
+
+```bash
+# Check file ownership
+ls -la var/data var/log
+
+# Fix permissions (run on host)
+sudo chown -R 1000:1000 var/data var/log
+```
+
+### Docker Compose Override (Development)
+
+For development with code hot-reload, create `docker-compose.override.yml`:
+
+```yaml
+services:
+  ares:
+    volumes:
+      - ./:/app:cached
+    environment:
+      - APP_ENV=dev
+      - PHP_OPCACHE_VALIDATE_TIMESTAMPS=1
+```
+
+Then run:
+
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+```
+
+This mount the entire source code for hot-reloading during development.
+
+---
+
 ## Architecture
 
 The project follows **Clean Architecture** with strict layer separation:
