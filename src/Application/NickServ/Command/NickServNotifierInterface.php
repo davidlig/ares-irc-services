@@ -21,7 +21,11 @@ interface NickServNotifierInterface
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void;
 
     /**
-     * Set the registered (+r) status for a user (identified to the given account).
+     * Associate a user with their services account (login).
+     *
+     * UnrealIRCd: Sends SVSLOGIN (account) + SVS2MODE (+r).
+     * InspIRCd: Sends SVS2MODE +r (different mechanism).
+     *
      * To log out a user pass '0' (zero string) as $accountName.
      */
     public function setUserAccount(string $targetUid, string $accountName): void;

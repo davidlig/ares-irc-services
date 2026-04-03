@@ -12,7 +12,11 @@ use Psr\Log\NullLogger;
 use function sprintf;
 
 /**
- * UnrealIRCd: SVS2MODE (+r account), SVSMODE, SVSNICK, KILL.
+ * UnrealIRCd: SVSLOGIN (account) + SVS2MODE (+r), SVSMODE, SVSNICK, KILL.
+ *
+ * setUserAccount sends both SVSLOGIN and SVS2MODE:
+ * - SVSLOGIN associates the user with the account (required for +R channels, WHOIS)
+ * - SVS2MODE sets +r mode and notifies the user's client.
  *
  * Service join: send JOIN with UID as source (RFC 2813 / client-style join on S2S link).
  * Then set member mode (+q/+o etc) so the bot gets the desired privilege.
@@ -27,6 +31,10 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
     {
+        // Step 1: SVSLOGIN associates the user with the account (for +R channels, WHOIS "is logged in as").
+        // Step 2: SVS2MODE sets/unsets +r mode and notifies the user's client.
+        // Both commands are required: SVSLOGIN alone does NOT set +r mode.
+        $this->write(sprintf(':%s SVSLOGIN * %s %s', $serverSid, $targetUid, $accountName));
         $modeDelta = ('0' === $accountName) ? '-r' : '+r';
         $this->write(sprintf(':%s SVS2MODE %s %s', $serverSid, $targetUid, $modeDelta));
     }

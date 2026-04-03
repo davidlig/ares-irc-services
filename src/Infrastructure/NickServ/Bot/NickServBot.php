@@ -93,9 +93,14 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
         if (null === $module) {
             return;
         }
-        $modeDelta = ('0' === $accountName) ? '-r' : '+r';
         $module->getServiceActions()->setUserAccount($this->getServerSid(), $targetUid, $accountName);
-        $this->localUserModeSync->apply(new Uid($targetUid), $modeDelta);
+
+        // Only sync local state for +r (login). For logout (-r), the caller (e.g. NickProtectionService)
+        // or NetworkEventEnricher has already dispatched UserModeChangedEvent('-r').
+        // Dispatching it again would trigger duplicate vhost clears.
+        if ('0' !== $accountName) {
+            $this->localUserModeSync->apply(new Uid($targetUid), '+r');
+        }
     }
 
     public function setUserMode(string $targetUid, string $modes): void

@@ -453,6 +453,7 @@ final class NickProtectionServiceTest extends TestCase
         $userLookup->method('findByUid')->willReturn($user);
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserAccount')->with('UID1', '0');
         $notifier->expects(self::once())->method('setUserVhost')->with('UID1', '', '001');
         $notifier->expects(self::exactly(2))->method('sendMessage');
         $notifier->expects(self::once())->method('forceNick');

@@ -37,25 +37,27 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function setUserAccountSetsRegisteredMode(): void
+    public function setUserAccountSendsSvsloginAndSvs2modeForLogin(): void
     {
         $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 SVS2MODE 001ABCD +r', $this->written[0]);
+        self::assertCount(2, $this->written);
+        self::assertSame(':001 SVSLOGIN * 001ABCD TestAccount', $this->written[0]);
+        self::assertSame(':001 SVS2MODE 001ABCD +r', $this->written[1]);
     }
 
     #[Test]
-    public function setUserAccountClearsAccountWhenZero(): void
+    public function setUserAccountSendsSvsloginAndSvs2modeForLogout(): void
     {
         $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->setUserAccount('001', '001ABCD', '0');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 SVS2MODE 001ABCD -r', $this->written[0]);
+        self::assertCount(2, $this->written);
+        self::assertSame(':001 SVSLOGIN * 001ABCD 0', $this->written[0]);
+        self::assertSame(':001 SVS2MODE 001ABCD -r', $this->written[1]);
     }
 
     #[Test]

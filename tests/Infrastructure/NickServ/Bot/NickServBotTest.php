@@ -183,6 +183,36 @@ final class NickServBotTest extends TestCase
     }
 
     #[Test]
+    public function setUserAccountLogoutDoesNotApplyLocalMode(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('setUserAccount')
+            ->with(self::anything(), '001USER', '0');
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $this->connectionHolder->setProtocolModule($module);
+
+        // On logout, local mode sync is NOT called because NetworkEventEnricher
+        // already dispatched UserModeChangedEvent('-r') on nick change.
+        $localUserModeSync = $this->createMock(LocalUserModeSyncInterface::class);
+        $localUserModeSync->expects(self::never())->method('apply');
+
+        $bot = new NickServBot(
+            $this->connectionHolder,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(SendNoticePort::class),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $localUserModeSync,
+            self::HOSTNAME,
+            self::NICKSERV_UID,
+        );
+
+        $bot->setUserAccount('001USER', '0');
+    }
+
+    #[Test]
     public function setUserAccountDoesNothingWhenModuleNull(): void
     {
         self::assertNull($this->connectionHolder->getProtocolModule());
