@@ -6,8 +6,10 @@ namespace App\Infrastructure\IRC\Subscriber;
 
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -21,6 +23,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
 {
     public function __construct(
         private ChannelServiceActionsPort $channelActions,
+        private ChannelLookupPort $channelLookup,
         private NetworkUserLookupPort $userLookup,
         private IdentifiedSessionRegistry $identifiedRegistry,
         private OperIrcopRepositoryInterface $ircopRepo,
@@ -38,6 +41,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
     {
         return [
             UserJoinedChannelEvent::class => ['onUserJoined', 15],
+            NetworkSyncCompleteEvent::class => ['onSyncComplete', 15],
         ];
     }
 
@@ -61,15 +65,46 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
             return;
         }
 
-        if ($user->nick === $this->chanservNick) {
+        $this->kickIfUnauthorized($uid, $user->nick, $user->isIdentified);
+    }
+
+    public function onSyncComplete(NetworkSyncCompleteEvent $event): void
+    {
+        if (null === $this->debugChannel || '' === $this->debugChannel) {
             return;
         }
 
-        if ($this->isIrcopOrRoot($user->nick, $user->isIdentified)) {
+        $channelView = $this->channelLookup->findByChannelName($this->debugChannel);
+        if (null === $channelView) {
             return;
         }
 
-        $registeredNick = $this->nickRepo->findByNick($user->nick);
+        foreach ($channelView->members as $member) {
+            $uid = $member['uid'] ?? '';
+            if ('' === $uid) {
+                continue;
+            }
+
+            $user = $this->userLookup->findByUid($uid);
+            if (null === $user) {
+                continue;
+            }
+
+            $this->kickIfUnauthorized($uid, $user->nick, $user->isIdentified);
+        }
+    }
+
+    private function kickIfUnauthorized(string $uid, string $nick, bool $isIdentified): void
+    {
+        if ($nick === $this->chanservNick) {
+            return;
+        }
+
+        if ($this->isIrcopOrRoot($nick, $isIdentified)) {
+            return;
+        }
+
+        $registeredNick = $this->nickRepo->findByNick($nick);
         $language = null !== $registeredNick
             ? $registeredNick->getLanguage()
             : $this->defaultLanguage;
@@ -86,7 +121,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         $this->logger->info('IRCops debug channel: kicked non-IRCop user', [
             'channel' => $this->debugChannel,
             'uid' => $uid,
-            'nick' => $user->nick,
+            'nick' => $nick,
         ]);
     }
 

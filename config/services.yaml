@@ -1159,6 +1159,7 @@ services:
     App\Infrastructure\IRC\Subscriber\IrcopsDebugChannelProtectionSubscriber:
         arguments:
             $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
             $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
