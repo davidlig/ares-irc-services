@@ -2,7 +2,105 @@
 
 Checklist for implementing a new IRC service (e.g., OperServ, HostServ, BotServ).
 
-## Architecture Overview
+---
+
+## Parallel Implementation for New Services (CRITICAL — PERFORMANCE)
+
+**Execute these tasks IN PARALLEL whenever possible to speed up implementation.**
+
+### Phase 1: Exploration (Parallel - ONE MESSAGE)
+
+Launch ALL these reads in ONE message:
+
+- [ ] `glob "src/Domain/*/Entity/*.php"` → Check entity patterns
+- [ ] `glob "src/Application/*/Service.php"` → See service structure
+- [ ] `glob "src/Infrastructure/*/Bot/*Bot.php"` → Check bot patterns
+- [ ] `read config/services.yaml` → Check service registration
+- [ ] `read .env` → Check environment variable pattern
+
+### Phase 2: Domain Layer (Parallel Writes - ONE MESSAGE)
+
+Write ALL Domain files in ONE message:
+
+```php
+write src/Domain/NewService/Entity/MainEntity.php
+write src/Domain/NewService/Repository/MainRepositoryInterface.php
+write src/Domain/NewService/ValueObject/Status.php  // if needed
+write src/Domain/NewService/Event/EntityEvent.php     // if needed
+```
+
+### Phase 3: Application Layer (Parallel Writes - ONE MESSAGE)
+
+Write ALL Application files in ONE message:
+
+```php
+write src/Application/NewService/NewServiceService.php
+write src/Application/NewService/Command/NewServiceContext.php
+write src/Application/NewService/Command/NewServiceCommandInterface.php
+write src/Application/NewService/Command/NewServiceCommandRegistry.php
+write src/Application/NewService/Command/NewServiceNotifierInterface.php
+```
+
+### Phase 4: Infrastructure Layer (Parallel Writes - ONE MESSAGE)
+
+Write ALL Infrastructure files in ONE message:
+
+```php
+write src/Infrastructure/NewService/Bot/NewServiceBot.php
+write src/Infrastructure/NewService/Persistence/MainRepository.php
+write config/doctrine/NewService.orm.xml  // Doctrine mapping
+```
+
+### Phase 5: Configuration (Sequential - MUST WAIT)
+
+After Phase 4, SEQUENTIALLY:
+
+1. [ ] Add to `.env` (service UID, nick, etc.)
+2. [ ] Add to `config/services.yaml` (service definitions and tags)
+3. [ ] Run `php bin/console doctrine:schema:update --dump-sql` (if Doctrine entities)
+
+### Phase 6: Tests (Parallel with Implementation)
+
+Write tests in PARALLEL with Phase 2-4:
+
+```php
+// Domain tests (parallel with Domain layer creation)
+write tests/Domain/NewService/Entity/MainEntityTest.php
+
+// Application tests (parallel with Application layer creation)
+write tests/Application/NewService/NewServiceServiceTest.php
+write tests/Application/NewService/Command/NewServiceCommandRegistryTest.php
+
+// Infrastructure tests (parallel with Infrastructure layer creation)
+write tests/Infrastructure/NewService/Bot/NewServiceBotTest.php
+write tests/Infrastructure/NewService/Persistence/MainRepositoryTest.php
+```
+
+### Phase 7: Verification (Parallel - ONE MESSAGE)
+
+Run ALL verifications in parallel:
+
+```bash
+./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
+./vendor/bin/phpunit tests/Domain/NewService tests/Application/NewService tests/Infrastructure/NewService --no-coverage --display-all-issues && \
+./scripts/check-coverage.sh 100
+```
+
+### Time Estimate
+
+| Phase | Sequential | Parallel |
+|-------|------------|----------|
+| Exploration | 5 min | 1 min |
+| Domain | 10 min | 3 min |
+| Application | 15 min | 5 min |
+| Infrastructure | 10 min | 3 min |
+| Configuration | 5 min | 5 min |
+| Tests | 20 min | 8 min |
+| **Total** | **65 min** | **25 min** |
+
+Speedup: **~3x faster**.
+
+---
 
 Each service follows Clean Architecture with three layers:
 

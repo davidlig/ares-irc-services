@@ -64,6 +64,62 @@ When creating a new command, complete ALL these steps:
 
 ---
 
+## Parallel Implementation Checklist (CRITICAL — PERFORMANCE)
+
+**Execute these tasks IN PARALLEL whenever possible to speed up implementation.**
+
+### Phase 1: Exploration (Parallel Reads - SINGLE MESSAGE)
+
+Launch ALL these reads in ONE message:
+
+- [ ] `grep "CommandInterface" src/Application/` → Find existing command patterns
+- [ ] `glob "src/Application/*/Command/Handler/*Command.php"` → See command structure
+- [ ] `glob "translations/*.yaml"` → Check translation file locations
+- [ ] `glob "tests/Application/**/*Test.php"` → Check test patterns
+- [ ] `read config/services.yaml` → Check service tag patterns
+
+### Phase 2: Creation (Parallel Writes - SINGLE MESSAGE)
+
+Write ALL files in ONE message after Phase 1 completes:
+
+```php
+// Message with 5-6 parallel writes:
+write src/Domain/Service/Entity/NewEntity.php           // If needed
+write src/Application/Service/Command/Handler/NewCommand.php
+write tests/Application/Service/Command/Handler/NewCommandTest.php
+edit translations/service.en.yaml   // append translations
+edit translations/service.es.yaml   // append translations
+```
+
+### Phase 3: Configuration (Sequential - MUST WAIT)
+
+After Phase 2, SEQUENTIALLY:
+
+1. [ ] Add service tag to `config/services.yaml`
+2. [ ] Add permission constant (if IRCop command) in `src/Application/Service/Security/ServiceIrcopPermission.php`
+3. [ ] Add permission to IrcopPermission class (if IRCop command)
+
+### Phase 4: Verification (Parallel - SINGLE MESSAGE)
+
+Run ALL in parallel:
+
+```bash
+./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
+./vendor/bin/phpunit tests/Application/Service --no-coverage --display-all-issues && \
+./scripts/check-coverage.sh 100
+```
+
+### Parallelization Speedup
+
+| Approach | Time |
+|----------|------|
+| Sequential (old) | ~15-20 min |
+| Parallel (new) | ~5-8 min |
+
+Speedup: **3-4x faster** for new commands.
+
+---
+
 ## Step 1: Create the Command Handler
 
 ### Location

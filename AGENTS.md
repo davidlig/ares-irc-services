@@ -77,6 +77,98 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 
 ---
 
+### 1.4 Parallel Execution Workflow (CRITICAL — PERFORMANCE)
+
+**When implementing new features, EXECUTE TASKS IN PARALLEL whenever possible.**
+
+#### Phase 1: Parallel Exploration (LAUNCH TOGETHER)
+
+Launch multiple tool calls in a SINGLE message to explore simultaneously:
+
+| Agent | Task | Tools |
+|-------|------|-------|
+| **A** | Find similar commands/handlers | `grep` pattern matching |
+| **B** | Find repository interfaces | `glob` + `read` Domain/ |
+| **C** | Find translation patterns | `glob` translations/*.yaml |
+| **D** | Find test patterns | `glob` tests/**/*Test.php |
+
+```
+// Example: Launch 4 parallel searches in ONE message
+grep "implements.*CommandInterface" src/  // Agent A
+glob "src/Domain/*/Repository/*Interface.php" // Agent B  
+glob "translations/*.yaml" // Agent C
+glob "tests/Application/**/*Test.php" // Agent D
+```
+
+#### Phase 2: Parallel Implementation (AFTER EXPLORATION)
+
+For new commands/services, use Task agents for independent work:
+
+| Task | Parallel? | Reason |
+|------|-----------|--------|
+| Create Domain entity | ✅ Yes | Independent of other files |
+| Create Repository interface | ✅ Yes | Independent |
+| Create Command Handler | ✅ Yes | After Phase 1 patterns found |
+| Create Test file | ✅ Yes | Can write tests in parallel with implementation |
+| Add translations (en + es) | ✅ Yes | Independent files |
+| Update services.yaml | ❌ No | Depends on class names created |
+
+**Pattern:** Write implementation and tests simultaneously using multiple tool calls:
+
+```
+Single message with:
+├── write src/Domain/.../NewEntity.php
+├── write src/Application/.../NewHandler.php
+├── write tests/Domain/.../NewEntityTest.php
+└── write tests/Application/.../NewHandlerTest.php
+```
+
+#### Phase 3: Parallel Verification (AFTER IMPLEMENTATION)
+
+Run ALL verifications together in ONE bash command:
+
+```bash
+./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
+./vendor/bin/phpunit --no-coverage --display-all-issues && \
+./scripts/check-coverage.sh 100
+```
+
+#### Parallelization Rules
+
+| Type | Rule |
+|------|------|
+| **Independent reads** | ALWAYS parallel (multiple tool calls in one message) |
+| **Independent writes** | CAN parallel (if no file overlap) |
+| **Dependent tasks** | MUST sequential (create → configure → test) |
+| **Context preservation** | Each Task agent MUST report findings before proceeding |
+
+#### When NOT to Parallelize
+
+- Files modifying same location (merge conflicts)
+- Order-dependent tasks (create entity → create repository → configure DI)
+- Debugging sessions needing mental context
+- Bug reports requiring sequential log review (see section 1.2)
+
+#### Task Agent Pattern
+
+When launching parallel Task agents, structure prompts like:
+
+```
+Task A: Find similar command handlers for REGISTER
+- Search: grep "RegisterCommand" src/
+- Return: List of files found, patterns identified
+- DO NOT modify files
+
+Task B: Find translations for REGISTER
+- Search: glob translations/*.yaml + grep "register"
+- Return: Translation keys found
+- DO NOT modify files
+```
+
+After all Tasks complete, THEN proceed with implementation in main agent.
+
+---
+
 ## PART 2: ARCHITECTURE & CODING STANDARDS
 
 ### 2.1 Immutability & Readonly (CRITICAL)

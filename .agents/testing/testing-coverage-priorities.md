@@ -164,26 +164,65 @@ The prioritisation below is based on code structure and which parts already have
 
 ---
 
-## 4. Division by Agents
+## 4. Division by Agents (Parallel Execution)
 
-To run coverage by area in parallel (each Agent runs only its tests and its `src/`):
+**For AI agents:** Run each agent's tests in PARALLEL using background jobs (`&` + `wait`).
 
-| Agent | Scope | PHPUnit commands (with coverage) |
-|-------|--------|----------------------------------|
-| **1 ChanServ** | Application + Infrastructure ChanServ | `tests/Application/ChanServ` + `tests/Infrastructure/ChanServ` with `--coverage-filter=src/Application/ChanServ` and `src/Infrastructure/ChanServ` |
-| **2 NickServ** | Application + Infrastructure NickServ | `tests/Application/NickServ` + `tests/Infrastructure/NickServ` with filters to their `src/` |
-| **3 MemoServ** | Application + Infrastructure MemoServ | `tests/Application/MemoServ` + `tests/Infrastructure/MemoServ` with filters to their `src/` |
-| **4 IRC Core** | Infrastructure IRC (adapters, enricher, sync) | `tests/Infrastructure/IRC` with `--coverage-filter=src/Infrastructure/IRC` |
-| **5 Shared/CLI/Mail/Messenger** | UI/CLI, Mail, Messenger, optional Maintenance | `tests/UI/CLI` + `tests/Infrastructure/Mail` + `tests/Infrastructure/Messenger` (+ optional `tests/Application/Maintenance`) with filters to `src/UI`, `src/Infrastructure/Mail`, `src/Infrastructure/Messenger`, `src/Application/Maintenance` |
+### Command Pattern
 
-**Agent 5 — Concrete commands:**
+```bash
+# Launch all agents in parallel (single message with multiple parallel calls)
+./vendor/bin/phpunit tests/Application/ChanServ tests/Infrastructure/ChanServ --coverage-text --coverage-filter=src/Application/ChanServ --coverage-filter=src/Infrastructure/ChanServ --display-all-issues &
 
-./vendor/bin/phpunit tests/UI/CLI --coverage-text --coverage-filter=src/UI
-./vendor/bin/phpunit tests/Infrastructure/Mail --coverage-text --coverage-filter=src/Infrastructure/Mail
-./vendor/bin/phpunit tests/Infrastructure/Messenger --coverage-text --coverage-filter=src/Infrastructure/Messenger
-./vendor/bin/phpunit tests/Application/Maintenance --coverage-text --coverage-filter=src/Application/Maintenance
+./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-text --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ --display-all-issues &
 
-Each agent must use `--display-all-issues`. For specific gaps, check `<line count="0">` in `var/coverage/clover.xml` for their files.
+./vendor/bin/phpunit tests/Application/MemoServ tests/Infrastructure/MemoServ --coverage-text --coverage-filter=src/Application/MemoServ --coverage-filter=src/Infrastructure/MemoServ --display-all-issues &
+
+./vendor/bin/phpunit tests/Infrastructure/IRC --coverage-text --coverage-filter=src/Infrastructure/IRC --display-all-issues &
+
+./vendor/bin/phpunit tests/UI/CLI tests/Infrastructure/Mail tests/Infrastructure/Messenger --coverage-text --coverage-filter=src/UI --coverage-filter=src/Infrastructure/Mail --coverage-filter=src/Infrastructure/Messenger --display-all-issues &
+
+wait  # Wait for all agents to complete
+```
+
+### Agent Assignments
+
+| Agent | Scope | Source Coverage | Tests Path |
+|-------|-------|----------------|------------|
+| **ChanServ Agent** | Application + Infrastructure | `src/Application/ChanServ`, `src/Infrastructure/ChanServ` | `tests/Application/ChanServ`, `tests/Infrastructure/ChanServ` |
+| **NickServ Agent** | Application + Infrastructure | `src/Application/NickServ`, `src/Infrastructure/NickServ` | `tests/Application/NickServ`, `tests/Infrastructure/NickServ` |
+| **MemoServ Agent** | Application + Infrastructure | `src/Application/MemoServ`, `src/Infrastructure/MemoServ` | `tests/Application/MemoServ`, `tests/Infrastructure/MemoServ` |
+| **IRC Core Agent** | Infrastructure IRC | `src/Infrastructure/IRC` | `tests/Infrastructure/IRC` |
+| **Shared Agent** | UI, Mail, Messenger, Maintenance | `src/UI`, `src/Infrastructure/Mail`, `src/Infrastructure/Messenger`, `src/Application/Maintenance` | `tests/UI/CLI`, `tests/Infrastructure/Mail`, `tests/Infrastructure/Messenger`, `tests/Application/Maintenance` |
+
+### Parallel Verification Workflow
+
+When implementing a new command/service in a specific module:
+
+1. **Identify which agent** owns that module (table above)
+2. **Run that agent's tests** with coverage:
+   ```bash
+   # Example: New NickServ command
+   ./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-text --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ --display-all-issues
+   ```
+3. **After pass**, check for coverage gaps:
+   ```bash
+   grep 'count="0"' var/coverage/clover.xml
+   ```
+4. **Fix gaps**, then run ALL agents in parallel before commit
+
+### Before Commit: Full Suite Parallel Check
+
+```bash
+# Run CS Fixer + All Tests + Coverage in parallel
+./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
+(./vendor/bin/phpunit tests/Application/ChanServ tests/Infrastructure/ChanServ --coverage-text --coverage-filter=src/Application/ChanServ --coverage-filter=src/Infrastructure/ChanServ & \
+ ./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-text --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ & \
+ ./vendor/bin/phpunit tests/Application/MemoServ tests/Infrastructure/MemoServ --coverage-text --coverage-filter=src/Application/MemoServ --coverage-filter=src/Infrastructure/MemoServ & \
+ ./vendor/bin/phpunit tests/Domain --no-coverage & \
+ ./vendor/bin/phpunit tests/UI tests/Infrastructure/Mail tests/Infrastructure/Messenger --no-coverage &) && \
+wait && ./scripts/check-coverage.sh 100
+```
 
 ### Agent 1 (ChanServ) — Current status
 

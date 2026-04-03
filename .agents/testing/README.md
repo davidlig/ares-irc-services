@@ -234,3 +234,48 @@ $repo->method('find')->willReturn($result);  // OK when no other expects()
 ## Maintenance
 
 When adding or changing tests: update the test count in the project **README.md** (Testing section) and, if relevant, the "Covered" / "Uncovered" sections in [testing-coverage-priorities.md](testing-coverage-priorities.md).
+
+---
+
+## Parallel Test Execution
+
+### Running Tests in Parallel by Area
+
+Use the agent division from testing-coverage-priorities.md section 4:
+
+```bash
+# Run all 5 agents in parallel (background jobs)
+./vendor/bin/phpunit tests/Application/ChanServ tests/Infrastructure/ChanServ --coverage-filter=src/Application/ChanServ --coverage-filter=src/Infrastructure/ChanServ &
+./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ &
+./vendor/bin/phpunit tests/Application/MemoServ tests/Infrastructure/MemoServ --coverage-filter=src/Application/MemoServ --coverage-filter=src/Infrastructure/MemoServ &
+./vendor/bin/phpunit tests/Infrastructure/IRC --coverage-filter=src/Infrastructure/IRC &
+./vendor/bin/phpunit tests/UI/CLI tests/Infrastructure/Mail tests/Infrastructure/Messenger --coverage-filter=src/UI --coverage-filter=src/Infrastructure/Mail --coverage-filter=src/Infrastructure/Messenger &
+
+wait  # Wait for all background jobs
+```
+
+### For AI Agents
+
+When writing tests, create test file in PARALLEL with implementation:
+
+```
+Single message:
+├── read src/Application/NickServ/Command/Handler/RegisterCommand.php
+├── read tests/Application/NickServ/Command/Handler/RegisterCommandTest.php (if exists)
+├── write tests/Application/NickServ/Command/Handler/NewCommandTest.php (new test)
+└── edit src/Application/NickServ/Command/Handler/NewCommand.php (implementation)
+```
+
+### Test Creation Pattern
+
+1. **Read** existing similar tests (parallel with implementation read)
+2. **Copy** structure from similar command test
+3. **Modify** for new command
+4. **Run** in parallel with CS Fixer
+
+```bash
+# After writing test, run both:
+./scripts/check-coverage.sh 100 &  # Check coverage
+./vendor/bin/phpunit --no-coverage --display-all-issues &  # Check for warnings
+wait
+```
