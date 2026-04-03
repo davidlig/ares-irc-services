@@ -1078,4 +1078,20 @@ final class SetCommandTest extends TestCase
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
         self::assertSame(NickServPermission::IDENTIFIED_OWNER, $cmd->getRequiredPermission());
     }
+
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        self::assertSame([], $cmd->getHelpParams());
+    }
 }

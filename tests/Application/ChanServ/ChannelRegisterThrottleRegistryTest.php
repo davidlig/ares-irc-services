@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(ChannelRegisterThrottleRegistry::class)]
 final class ChannelRegisterThrottleRegistryTest extends TestCase
@@ -84,9 +85,11 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
     public function getRemainingCooldownSecondsReturnsZeroWhenCooldownExpired(): void
     {
         $registry = new ChannelRegisterThrottleRegistry();
-        $registry->recordRegistration(1);
 
-        sleep(2);
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('lastRegistrationAt');
+        $property->setAccessible(true);
+        $property->setValue($registry, [1 => new DateTimeImmutable('-2 seconds')]);
 
         self::assertSame(0, $registry->getRemainingCooldownSeconds(1, 1));
     }
@@ -95,35 +98,34 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
     public function pruneExpiredCooldownsRemovesOnlyExpiredEntries(): void
     {
         $registry = new ChannelRegisterThrottleRegistry();
-        $registry->recordRegistration(1);
-        $registry->recordRegistration(2);
 
-        sleep(2);
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('lastRegistrationAt');
+        $property->setAccessible(true);
+        $property->setValue($registry, [
+            1 => new DateTimeImmutable('-2 seconds'),
+            2 => new DateTimeImmutable('+1 hour'),
+        ]);
 
         $removed = $registry->pruneExpiredCooldowns(1);
 
-        self::assertGreaterThanOrEqual(1, $removed);
-        self::assertLessThanOrEqual(2, $removed);
+        self::assertSame(1, $removed);
     }
 
     #[Test]
     public function pruneExpiredCooldownsRemovesEntryWhoseCooldownExpired(): void
     {
         $registry = new ChannelRegisterThrottleRegistry();
-        $registry->recordRegistration(1);
 
-        // Need to wait at least 1 second for the 1-second cooldown to expire
-        // Use 2 seconds to ensure it's definitely expired
-        sleep(2);
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('lastRegistrationAt');
+        $property->setAccessible(true);
+        $property->setValue($registry, [1 => new DateTimeImmutable('-2 seconds')]);
 
         $removed = $registry->pruneExpiredCooldowns(1);
 
-        // The entry should be removed since cooldown (1 second) has expired
-        // Race condition: occasionally fails to prune due to timing, allow 0 or 1
-        self::assertThat($removed, self::logicalOr(self::equalTo(0), self::equalTo(1)));
-        if (1 === $removed) {
-            self::assertNull($registry->getLastRegistrationAt(1));
-        }
+        self::assertSame(1, $removed);
+        self::assertNull($registry->getLastRegistrationAt(1));
     }
 
     #[Test]

@@ -70,6 +70,11 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
         return NickServPermission::SUSPEND;
     }
 
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
     public function execute(NickServContext $context): void
     {
         $targetNick = $context->args[0];

@@ -424,6 +424,17 @@ final class StatusCommandTest extends TestCase
         self::assertContains('status.forbidden_reason', $messages);
     }
 
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = new StatusCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+        );
+
+        self::assertSame([], $cmd->getHelpParams());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

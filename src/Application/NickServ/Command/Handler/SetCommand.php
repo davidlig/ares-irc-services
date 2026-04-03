@@ -148,6 +148,11 @@ final readonly class SetCommand implements NickServCommandInterface
         return NickServPermission::IDENTIFIED_OWNER;
     }
 
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
     public function execute(NickServContext $context): void
     {
         if (null === $context->sender) {

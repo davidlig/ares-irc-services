@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(RegisterThrottleRegistry::class)]
 final class RegisterThrottleRegistryTest extends TestCase
@@ -133,12 +134,19 @@ final class RegisterThrottleRegistryTest extends TestCase
     public function pruneExpiredCooldownsRemovesMultipleExpiredEntries(): void
     {
         $registry = new RegisterThrottleRegistry();
-        $registry->recordAttempt('old1');
-        $registry->recordAttempt('old2');
-        $registry->recordAttempt('old3');
-        sleep(3);
+
+        $oldDatetime = new DateTimeImmutable('-3600 seconds');
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('lastAttemptAt');
+        $property->setAccessible(true);
+        $property->setValue($registry, [
+            'old1' => $oldDatetime,
+            'old2' => $oldDatetime,
+            'old3' => $oldDatetime,
+        ]);
+
         $removed = $registry->pruneExpiredCooldowns(1);
-        self::assertGreaterThanOrEqual(3, $removed, 'All 3 entries should be pruned after 3 seconds with 1 second cooldown');
+        self::assertSame(3, $removed, 'All 3 entries should be pruned after 3 seconds with 1 second cooldown');
     }
 
     #[Test]
@@ -178,8 +186,13 @@ final class RegisterThrottleRegistryTest extends TestCase
     public function getRemainingCooldownSecondsReturnsZeroAfterSleepExpiry(): void
     {
         $registry = new RegisterThrottleRegistry();
-        $registry->recordAttempt('client1');
-        sleep(2);
+
+        $oldDatetime = new DateTimeImmutable('-10 seconds');
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('lastAttemptAt');
+        $property->setAccessible(true);
+        $property->setValue($registry, ['client1' => $oldDatetime]);
+
         self::assertSame(0, $registry->getRemainingCooldownSeconds('client1', 1));
     }
 }

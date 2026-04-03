@@ -82,6 +82,11 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         return NickServPermission::SUSPEND;
     }
 
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
     public function execute(NickServContext $context): void
     {
         $targetNick = $context->args[0];

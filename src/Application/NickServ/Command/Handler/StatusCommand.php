@@ -79,6 +79,11 @@ final readonly class StatusCommand implements NickServCommandInterface
         return null;
     }
 
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
     public function execute(NickServContext $context): void
     {
         $targetNick = $context->args[0];

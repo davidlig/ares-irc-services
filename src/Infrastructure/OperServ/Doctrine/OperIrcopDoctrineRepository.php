@@ -26,12 +26,12 @@ final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryI
 
     public function findAll(): array
     {
-        return $this->em->getRepository(OperIrcop::class)->findBy([], ['addedAt' => 'DESC']);
+        return $this->em->getRepository(OperIrcop::class)->findBy([], ['addedAt' => 'DESC', 'id' => 'DESC']);
     }
 
     public function findByRoleId(int $roleId): array
     {
-        return $this->em->getRepository(OperIrcop::class)->findBy(['role' => $roleId], ['addedAt' => 'DESC']);
+        return $this->em->getRepository(OperIrcop::class)->findBy(['role' => $roleId], ['addedAt' => 'DESC', 'id' => 'DESC']);
     }
 
     public function save(OperIrcop $ircop): void

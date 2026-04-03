@@ -470,6 +470,14 @@ final class SuspendCommandTest extends TestCase
         self::assertSame(['duration' => '7d'], $auditData->extra);
     }
 
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame([], $cmd->getHelpParams());
+    }
+
     private function createCommand(): SuspendCommand
     {
         return new SuspendCommand(

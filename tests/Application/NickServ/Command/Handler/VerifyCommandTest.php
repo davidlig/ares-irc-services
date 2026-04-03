@@ -366,4 +366,15 @@ final class VerifyCommandTest extends TestCase
 
         self::assertSame('Nick', $identified->findNick('UID1'));
     }
+
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = new VerifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            new IdentifiedSessionRegistry(),
+        );
+
+        self::assertSame([], $cmd->getHelpParams());
+    }
 }

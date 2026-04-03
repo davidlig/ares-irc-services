@@ -240,6 +240,7 @@ userip:
 permissions:
   nickserv.userip:  "Ver la dirección IP/Host real de un usuario (solo IRCop)"
   nickserv.suspend: "Suspender/reactivar un nickname (solo IRCop)"
+  nickserv.rename:  "Forzar cambio de nick de un usuario conectado a uno aleatorio (solo IRCop)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -280,3 +281,22 @@ unsuspend:
   success:          "\x0303✔\x03 Se ha levantado la suspensión de \x02%nickname%\x02."
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   not_suspended:    "\x0304✗\x03 El nickname \x02%nickname%\x02 no está suspendido."
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax:           "RENAME <nickname>"
+  short:            "Fuerza el cambio de nick de un usuario conectado a uno aleatorio."
+  help:             |
+    Fuerza a un usuario conectado a cambiar su nickname a uno generado aleatoriamente.
+    Útil para hacer cumplir las políticas de la red sin desconectar al usuario.
+    
+    El formato del nuevo nickname usa el prefijo configurado (%prefix%).
+    
+    Este comando requiere permiso de IRCop: nickserv.rename
+    
+    Sintaxis: RENAME <nickname>
+    Ejemplo: RENAME Problematico
+  not_online:        "\x0304✗\x03 El usuario \x02%nickname%\x02 no está conectado."
+  cannot_rename_root: "\x0304✗\x03 No se puede renombrar al usuario root \x02%nickname%\x02."
+  cannot_rename_oper: "\x0304✗\x03 No se puede renombrar al IRC operator \x02%nickname%\x02."
+  success:           "\x0303✓\x03 El usuario \x02%nickname%\x02 ha sido renombrado a \x02%new_nick%\x02."

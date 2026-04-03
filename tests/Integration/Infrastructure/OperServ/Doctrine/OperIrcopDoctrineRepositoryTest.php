@@ -128,8 +128,8 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         self::assertCount(2, $admins);
         self::assertCount(1, $opers);
-        self::assertSame(100, $admins[0]->getNickId());
-        self::assertSame(101, $admins[1]->getNickId());
+        self::assertSame(101, $admins[0]->getNickId());
+        self::assertSame(100, $admins[1]->getNickId());
     }
 
     #[Test]

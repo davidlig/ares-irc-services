@@ -146,6 +146,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $c): void
             {
             }
@@ -219,6 +224,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $c): void
@@ -296,6 +306,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $c): void
             {
             }
@@ -371,6 +386,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $c): void
             {
             }
@@ -444,6 +464,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $c): void
@@ -528,6 +553,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $c): void
             {
             }
@@ -608,6 +638,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $c): void
@@ -692,6 +727,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $c): void
             {
             }
@@ -772,6 +812,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $c): void
@@ -856,6 +901,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $c): void
             {
             }
@@ -936,6 +986,14 @@ final class HelpCommandTest extends TestCase
     {
         $cmd = $this->createHelpCommand(0);
         self::assertSame('HELP', $cmd->getName());
+    }
+
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = $this->createHelpCommand(0);
+
+        self::assertSame([], $cmd->getHelpParams());
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

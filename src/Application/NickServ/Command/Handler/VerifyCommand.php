@@ -74,6 +74,11 @@ final readonly class VerifyCommand implements NickServCommandInterface
         return null;
     }
 
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;

@@ -89,6 +89,11 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
                 return $this->permission;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $context): void
             {
             }

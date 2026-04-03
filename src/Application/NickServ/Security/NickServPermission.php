@@ -19,6 +19,9 @@ final readonly class NickServPermission
     /** IRCop permission to suspend a nickname. */
     public const string SUSPEND = 'nickserv.suspend';
 
+    /** IRCop permission to force rename a connected user to a random nickname. */
+    public const string RENAME = 'nickserv.rename';
+
     private function __construct()
     {
     }

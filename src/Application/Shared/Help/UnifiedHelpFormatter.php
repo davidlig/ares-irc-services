@@ -87,7 +87,9 @@ final readonly class UnifiedHelpFormatter
     public function showCommandHelp(HelpFormatterContextInterface $context, object $handler): void
     {
         $this->sendHeader($context, $handler->getName());
-        $context->reply($handler->getHelpKey());
+
+        $params = method_exists($handler, 'getHelpParams') ? $handler->getHelpParams() : [];
+        $context->reply($handler->getHelpKey(), $params);
 
         $subCmds = $handler->getSubCommandHelp();
 

@@ -768,6 +768,26 @@ final class IdentifyCommandTest extends TestCase
         self::assertNull($cmd->getRequiredPermission());
     }
 
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = new IdentifyCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            5,
+            300,
+            900,
+        );
+
+        self::assertSame([], $cmd->getHelpParams());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

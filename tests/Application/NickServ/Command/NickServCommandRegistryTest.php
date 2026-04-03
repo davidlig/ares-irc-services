@@ -113,6 +113,11 @@ final class NickServCommandRegistryTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $context): void
             {
             }

@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(MemoServSendThrottleRegistry::class)]
 final class MemoServSendThrottleRegistryTest extends TestCase
@@ -56,12 +57,16 @@ final class MemoServSendThrottleRegistryTest extends TestCase
     }
 
     #[Test]
-    public function getRemainingCooldownSecondsReturnsZeroAfterCooldownExpired(): void
+    public function getRemainingCooldownSecondsReturnsZeroAfterCooldownExpires(): void
     {
         $registry = new MemoServSendThrottleRegistry();
-        $registry->recordSend('UID1');
 
-        sleep(2);
+        $oldDatetime = new DateTimeImmutable('-10 seconds');
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('lastSendAt');
+        $property->setAccessible(true);
+        $property->setValue($registry, ['UID1' => $oldDatetime]);
+
         $remaining = $registry->getRemainingCooldownSeconds('UID1', 1);
 
         self::assertSame(0, $remaining);

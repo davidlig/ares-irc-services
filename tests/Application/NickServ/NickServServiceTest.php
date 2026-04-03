@@ -179,6 +179,11 @@ final class NickServServiceTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $context): void
             {
                 $this->contextHolder->context = $context;
@@ -356,6 +361,11 @@ final class NickServServiceTest extends TestCase
                 return NickServPermission::IDENTIFIED_OWNER;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $context): void
             {
                 $this->holder->context = $context;
@@ -454,6 +464,11 @@ final class NickServServiceTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return 'IDENTIFIED';
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $context): void
@@ -556,6 +571,11 @@ final class NickServServiceTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $context): void
             {
                 $this->holder->context = $context;
@@ -642,6 +662,11 @@ final class NickServServiceTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $context): void
@@ -735,6 +760,11 @@ final class NickServServiceTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return 'NICKSERV_ADMIN';
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $context): void
@@ -858,6 +888,11 @@ final class NickServServiceTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return 'NICKSERV_ADMIN';
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $context): void

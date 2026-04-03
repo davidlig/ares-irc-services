@@ -232,6 +232,14 @@ final class UnsuspendCommandTest extends TestCase
         self::assertSame([], $auditData->extra);
     }
 
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame([], $cmd->getHelpParams());
+    }
+
     private function createCommand(): UnsuspendCommand
     {
         return new UnsuspendCommand(

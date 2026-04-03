@@ -404,4 +404,12 @@ final class UseripCommandTest extends TestCase
 
         self::assertNull($cmd->getAuditData($context));
     }
+
+    #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame([], $cmd->getHelpParams());
+    }
 }

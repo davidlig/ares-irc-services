@@ -412,6 +412,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
 
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
             public function execute(NickServContext $context): void
             {
             }
@@ -475,6 +480,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return $this->permission;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
             }
 
             public function execute(NickServContext $context): void

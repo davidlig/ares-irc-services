@@ -73,6 +73,11 @@ final class UseripCommand implements NickServCommandInterface, AuditableCommandI
         return NickServPermission::USERIP;
     }
 
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
     public function execute(NickServContext $context): void
     {
         if (null === $context->sender) {

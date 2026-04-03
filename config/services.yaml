@@ -826,6 +826,17 @@ services:
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
         tags: ['nickserv.command']
 
+    App\Application\NickServ\Command\Handler\RenameCommand:
+        arguments:
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $logger: '@monolog.logger.irc'
+            $guestPrefix: '%services.guest_prefix%'
+        tags: ['nickserv.command']
+
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---
 
     Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage: ~

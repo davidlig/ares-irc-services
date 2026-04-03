@@ -86,6 +86,11 @@ final readonly class ResendCommand implements NickServCommandInterface
         return null;
     }
 
+    public function getHelpParams(): array
+    {
+        return [];
+    }
+
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;

@@ -8,6 +8,7 @@ use App\Application\NickServ\IdentifyFailedAttemptRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(IdentifyFailedAttemptRegistry::class)]
 final class IdentifyFailedAttemptRegistryTest extends TestCase
@@ -126,12 +127,19 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
     public function pruneStaleRemovesMultipleStaleEntries(): void
     {
         $registry = new IdentifyFailedAttemptRegistry();
-        $registry->recordFailedAttempt('key1', 1);
-        $registry->recordFailedAttempt('key2', 1);
-        $registry->recordFailedAttempt('key3', 1);
-        sleep(2);
+
+        $oldTimestamp = time() - 3600;
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('failuresByKey');
+        $property->setAccessible(true);
+        $property->setValue($registry, [
+            'key1' => [$oldTimestamp],
+            'key2' => [$oldTimestamp],
+            'key3' => [$oldTimestamp],
+        ]);
+
         $removed = $registry->pruneStale(0);
-        self::assertGreaterThanOrEqual(3, $removed);
+        self::assertSame(3, $removed);
     }
 
     #[Test]
@@ -195,10 +203,13 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
     public function getRemainingLockoutSecondsReturnsZeroWhenLockoutExpired(): void
     {
         $registry = new IdentifyFailedAttemptRegistry();
-        for ($i = 0; $i < 3; ++$i) {
-            $registry->recordFailedAttempt('key', 1);
-        }
-        sleep(3);
+
+        $oldTimestamp = time() - 10;
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('failuresByKey');
+        $property->setAccessible(true);
+        $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
+
         self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 1, 1));
     }
 
@@ -217,13 +228,14 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
     public function getRemainingLockoutSecondsReturnsZeroWhenNowExceedsLockoutUntil(): void
     {
         $registry = new IdentifyFailedAttemptRegistry();
-        for ($i = 0; $i < 3; ++$i) {
-            $registry->recordFailedAttempt('key', 1);
-        }
-        sleep(2);
-        $remaining = $registry->getRemainingLockoutSeconds('key', 3, 1, 1);
-        // Race condition: sometimes returns 0 or 1 due to timing
-        self::assertLessThanOrEqual(1, $remaining);
+
+        $oldTimestamp = time() - 10;
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('failuresByKey');
+        $property->setAccessible(true);
+        $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
+
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 1, 1));
     }
 
     #[Test]
@@ -247,12 +259,13 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
     public function getRemainingLockoutSecondsReturnsZeroWhenLockoutExpiresWhileTimestampsRemainInWindow(): void
     {
         $registry = new IdentifyFailedAttemptRegistry();
-        for ($i = 0; $i < 3; ++$i) {
-            $registry->recordFailedAttempt('key', 100);
-        }
-        sleep(2);
-        $remaining = $registry->getRemainingLockoutSeconds('key', 3, 100, 1);
-        // Race condition: sometimes returns 0 or 1 due to timing
-        self::assertLessThanOrEqual(1, $remaining);
+
+        $oldTimestamp = time() - 10;
+        $reflection = new ReflectionClass($registry);
+        $property = $reflection->getProperty('failuresByKey');
+        $property->setAccessible(true);
+        $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
+
+        self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 100, 1));
     }
 }

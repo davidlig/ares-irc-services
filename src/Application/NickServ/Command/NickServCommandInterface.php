@@ -79,6 +79,14 @@ interface NickServCommandInterface
      */
     public function getRequiredPermission(): ?string;
 
+    /**
+     * Parameters to inject into the help translation.
+     * Override this method if the help text needs dynamic values (e.g. configurable prefixes).
+     *
+     * @return array<string, mixed>
+     */
+    public function getHelpParams(): array;
+
     /** Execute the command. All communication is done via $context->reply(). */
     public function execute(NickServContext $context): void;
 }
