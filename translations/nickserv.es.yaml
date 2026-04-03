@@ -116,8 +116,8 @@ info:
   status_registered:  "\x0303Registrado\x03"
   status_suspended:   "\x0304Suspendido\x03"
   status_forbidden:   "\x0304Prohibido\x03"
-  reason:            "  \x0314Razón\x03          : %reason%"
-  suspended_until:   "  \x0314Fecha fin\x03      : %date%"
+  reason:            "  \x0314Razón\x03           : %reason%"
+  suspended_until:   "  \x0314Fecha fin\x03       : %date%"
   suspended_permanent: "  \x0314Fecha fin\x03      : Permanente"
   registered_at:    "  \x0314Fecha registro\x03  : %date%"
   last_seen_online: "  \x0314Última conexión\x03 : \x0303● CONECTADO AHORA\x03"
@@ -228,10 +228,10 @@ userip:
   help:             |
     Muestra la dirección IP real y el hostname del usuario especificado.
     Solo disponible para IRCops con permiso 'nickserv.userip'.
-    
+
     Este comando muestra información sensible del usuario.
     Úsalo con responsabilidad.
-    
+
     Sintaxis: USERIP <nickname>
     Ejemplo: USERIP SomeUser
   not_online:       "\x0304✗\x03 El usuario \x02%nick%\x02 no está conectado."
@@ -248,12 +248,12 @@ suspend:
   help:             |
     Suspende un nickname, impidiendo que el propietario se identifique.
     La suspensión puede ser temporal o permanente.
-    
+
     Formatos de duración: \x0303%d\x03 (días), \x0303%h\x03 (horas), \x0303%m\x03 (minutos) o \x03030\x03 (permanente).
-    
+
     Los usuarios suspendidos no pueden identificarse con su nickname.
     Los operadores IRC y usuarios root no pueden ser suspendidos.
-    
+
     Sintaxis: SUSPEND <nickname> <duración> <razón>
     Ejemplos:
       SUSPEND MalUsuario 7d Spam en #ayuda
@@ -274,7 +274,7 @@ unsuspend:
   short:            "Quita la suspensión de un nickname (solo IRCop)."
   help:             |
     Quita una suspensión activa de un nickname, permitiendo que el propietario se identifique de nuevo.
-    
+
     Sintaxis: UNSUSPEND <nickname>
     Ejemplo: UNSUSPEND AlgunUsuario
   success:          "\x0303✔\x03 Se ha levantado la suspensión de \x02%nickname%\x02."
