@@ -10,7 +10,7 @@ register_verification_body: |
 
   Tu token de verificación es: %token%
 
-  Para completar el registro, envía este comando a %nickserv% (sustituye <token> por el token anterior):
+  Para completar el registro, envía este comando a %bot% (sustituye <token> por el token anterior):
     /msg %bot% VERIFY %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
@@ -24,7 +24,7 @@ resend_verification_body: |
 
   Tu token de verificación es: %token%
 
-  Para completar el registro, envía a %nickserv%:
+  Para completar el registro, envía a %bot%:
     /msg %bot% VERIFY %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
@@ -34,11 +34,11 @@ email_change_token_subject: "%bot%: confirma tu nueva dirección de correo"
 email_change_token_body: |
   Hola,
 
-  Solicitaste cambiar la dirección de correo de tu cuenta %nickserv% a: %new_email%
+  Solicitaste cambiar la dirección de correo de tu cuenta %bot% a: %new_email%
 
   Tu token de confirmación es: %token%
 
-  Para confirmar el cambio, envía a %nickserv%:
+  Para confirmar el cambio, envía a %bot%:
     /msg %bot% SET EMAIL %new_email% %token%
 
   El token expira en 1 hora. Si no solicitaste este cambio, ignora este correo.
@@ -52,7 +52,7 @@ recovery_token_body: |
 
   Tu token de recuperación es: %token%
 
-  Para restablecer tu contraseña, envía a %nickserv%:
+  Para restablecer tu contraseña, envía a %bot%:
     /msg %bot% RECOVER %nickname% %token%
 
   El token expira en 1 hora. Si no solicitaste esto, ignora este correo.
@@ -66,7 +66,7 @@ founder_change_token_body: |
 
   Tu token de confirmación es: %token%
 
-  Para completar el cambio, envía a %chanserv% este comando (puedes copiarlo y pegarlo):
+  Para completar el cambio, envía a %bot% este comando (puedes copiarlo y pegarlo):
 
     /msg %bot% %command%
 
