@@ -241,11 +241,12 @@ permissions:
   nickserv.userip:  "View the real IP/Host of a user (IRCop only)"
   nickserv.suspend: "Suspend/unsuspend a nickname (IRCop only)"
   nickserv.rename:  "Force rename a connected user to a random nickname (IRCop only)"
+  nickserv.drop:    "Drop a registered nickname (IRCop only)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
   syntax:           "SUSPEND <nickname> <duration> <reason>"
-  short:            "Suspend a nickname (IRCop only)."
+  short:            "Suspend a nickname."
   help:             |
     Suspends a nickname, preventing the owner from identifying.
     The suspension can be temporary or permanent.
@@ -272,7 +273,7 @@ suspend:
 # --- UNSUSPEND (IRCop) -------------------------------------------------------
 unsuspend:
   syntax:           "UNSUSPEND <nickname>"
-  short:            "Remove suspension from a nickname (IRCop only)."
+  short:            "Remove suspension from a nickname."
   help:             |
     Removes an active suspension from a nickname, allowing the owner to identify again.
     
@@ -300,3 +301,28 @@ rename:
   cannot_rename_root: "\x0304✗\x03 Cannot rename root user \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Cannot rename IRC operator \x02%nickname%\x02."
   success:           "\x0303✓\x03 User \x02%nickname%\x02 has been renamed to \x02%new_nick%\x02."
+
+# --- DROP (IRCop) --------------------------------------------------------------
+drop:
+  syntax:           "DROP <nickname>"
+  short:            "Drop a registered nickname."
+  help:             |
+    Drops a registered nickname from the database.
+    This action cannot be undone.
+    
+    If the user is online, they will be renamed to a Guest- nickname.
+    Root users and IRC operators cannot be dropped.
+    You cannot drop your own nickname.
+    
+    This command requires IRCop permission: nickserv.drop
+    
+    Syntax: DROP <nickname>
+    Example: DROP OldAccount
+  not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  pending:           "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending verification."
+  suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Unsuspend first."
+  forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden."
+  cannot_drop_root:   "\x0304✗\x03 Cannot drop root user \x02%nickname%\x02."
+  cannot_drop_oper:   "\x0304✗\x03 Cannot drop IRC operator \x02%nickname%\x02."
+  cannot_drop_self:    "\x0304✗\x03 You cannot drop your own nickname."
+  success:            "\x0303✓\x03 Nickname \x02%nickname%\x02 has been dropped."

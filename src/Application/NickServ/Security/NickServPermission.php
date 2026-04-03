@@ -22,6 +22,9 @@ final readonly class NickServPermission
     /** IRCop permission to force rename a connected user to a random nickname. */
     public const string RENAME = 'nickserv.rename';
 
+    /** IRCop permission to drop a registered nickname. */
+    public const string DROP = 'nickserv.drop';
+
     private function __construct()
     {
     }

@@ -530,6 +530,16 @@ services:
             $guestPrefix: '%services.guest_prefix%'
             $logger: '@monolog.logger.irc'
 
+    App\Application\NickServ\Service\NickDropService:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $forceService: '@App\Application\NickServ\Service\NickForceService'
+            $eventDispatcher: '@event_dispatcher'
+            $debug: '@App\Application\Port\DebugActionPort'
+            $logger: '@monolog.logger.irc'
+            $guestPrefix: '%services.guest_prefix%'
+
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
             $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
@@ -847,6 +857,19 @@ services:
             $guestPrefix: '%services.guest_prefix%'
         tags: ['nickserv.command']
 
+    App\Application\NickServ\Command\Handler\DropCommand:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $forceService: '@App\Application\NickServ\Service\NickForceService'
+            $eventDispatcher: '@Symfony\Contracts\EventDispatcher\EventDispatcherInterface'
+            $debug: '@App\Application\Port\DebugActionPort'
+            $logger: '@monolog.logger.irc'
+            $guestPrefix: '%services.guest_prefix%'
+        tags: ['nickserv.command']
+
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---
 
     Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage: ~
@@ -958,11 +981,10 @@ services:
 
     App\Application\NickServ\Maintenance\PurgeInactiveNicknamesTask:
         arguments:
-            $nickRepository:         '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $eventDispatcher:       '@event_dispatcher'
-            $logger:                '@monolog.logger.maintenance'
-            $intervalSeconds:       '%maintenance.interval%'
-            $inactivityExpiryDays:  '%nickserv.inactivity_expiry_days%'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $dropService: '@App\Application\NickServ\Service\NickDropService'
+            $intervalSeconds: '%maintenance.interval%'
+            $inactivityExpiryDays: '%nickserv.inactivity_expiry_days%'
         tags: ['maintenance.task']
 
     App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask:

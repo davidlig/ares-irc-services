@@ -5,18 +5,16 @@ declare(strict_types=1);
 namespace App\Application\NickServ\Maintenance;
 
 use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Application\NickServ\Service\NickDropService;
 use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
-use Psr\Log\LoggerInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 
 /**
  * Removes REGISTERED nicknames that have been inactive for more than the configured days.
- * Dispatches NickDropEvent before each deletion so other services (ChanServ, MemoServ) can clean up.
+ * Uses NickDropService for proper cleanup (event dispatch, force rename if online, etc).
  *
  * Order 200: NickServ account expiry range.
  */
@@ -24,8 +22,7 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly LoggerInterface $logger,
+        private readonly NickDropService $dropService,
         private readonly int $intervalSeconds,
         private readonly int $inactivityExpiryDays,
     ) {
@@ -60,30 +57,7 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
                 continue;
             }
 
-            $nickId = $nick->getId();
-            $nickname = $nick->getNickname();
-            $nicknameLower = $nick->getNicknameLower();
-            $lastActivity = $nick->getLastSeenAt() ?? $nick->getRegisteredAt();
-            $lastActivityStr = null !== $lastActivity ? $lastActivity->format('Y-m-d H:i:s') : 'n/a';
-
-            $this->eventDispatcher->dispatch(new NickDropEvent(
-                $nickId,
-                $nickname,
-                $nicknameLower,
-                'inactivity',
-            ));
-
-            $this->nickRepository->delete($nick);
-
-            $this->logger->info(
-                sprintf(
-                    'Maintenance [%s]: deleted nickname %s (id %d) due to inactivity (last activity: %s).',
-                    $this->getName(),
-                    $nickname,
-                    $nickId,
-                    $lastActivityStr,
-                ),
-            );
+            $this->dropService->dropNick($nick, 'inactivity', null);
         }
     }
 }
