@@ -1101,7 +1101,7 @@ final class SetCommandTest extends TestCase
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
-        self::assertSame(NickServPermission::SET, $cmd->getRequiredPermission());
+        self::assertNull($cmd->getRequiredPermission());
     }
 
     #[Test]

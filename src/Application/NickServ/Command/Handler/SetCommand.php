@@ -166,7 +166,7 @@ final class SetCommand implements NickServCommandInterface, AuditableCommandInte
 
     public function getRequiredPermission(): ?string
     {
-        return NickServPermission::SET;
+        return null;
     }
 
     public function getHelpParams(): array
