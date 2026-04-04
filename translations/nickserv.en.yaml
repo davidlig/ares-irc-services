@@ -29,7 +29,7 @@ register:
   already_pending:  "\x0304✗\x03 Nickname \x02%nickname%\x02 already has a pending verification.\n  Use \x0303/msg %bot% VERIFY <token>\x03 or \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be registered on this network."
   invalid_email:    "\x0304✗\x03 The email address provided is not valid."
-  email_already_used: "\x0304✗\x03 The email \x02%email%\x02 is already in use by another account. Use a different address."
+  email_already_used: "\x0304✗\x03 The email \x02%email%\x02 is already in use by another nickname. Use a different address."
   throttled:          "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before trying to register again."
   guest_prefix_forbidden: "\x0304✗\x03 You cannot register a nick starting with \x02%prefix%\x02."
 
@@ -186,11 +186,11 @@ set:
   vhost:
     syntax:         "SET VHOST <vhost>"
     short:          "Set or clear your custom virtual host (displayed hostname)."
-    help:           "Sets a custom hostname that others see when you are identified.\nUse \x02SET VHOST OFF\x02 to clear it. Only letters (a-z, A-Z), digits, hyphen and dot;\nno hyphen or dot at start/end of any block; max 48 characters. Unique per account."
+    help:           "Sets a custom hostname that others see when you are identified.\nUse \x02SET VHOST OFF\x02 to clear it. Only letters (a-z, A-Z), digits, hyphen and dot;\nno hyphen or dot at start/end of any block; max 48 characters. Unique per nickname."
     success:        "\x0303✔\x03 Your virtual host has been set to \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Your virtual host has been cleared."
     invalid:        "\x0304✗\x03 Invalid vhost. Only letters, digits, hyphen and dot (not at start/end of block); max 48 characters."
-    taken:          "\x0304✗\x03 That vhost is already in use by another account."
+    taken:          "\x0304✗\x03 That vhost is already in use by another nickname."
     forced:         "\x0304✗\x03 Your vhost is configured automatically and cannot be changed with SET VHOST."
 
   # --- IRCop SET mode ---------------------------------------------------------

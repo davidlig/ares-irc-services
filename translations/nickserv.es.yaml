@@ -29,7 +29,7 @@ register:
   already_pending:  "\x0304✗\x03 El nickname \x02%nickname%\x02 ya tiene un registro pendiente de verificación.\n  Usa \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no puede ser registrado en esta red."
   invalid_email:    "\x0304✗\x03 La dirección de correo electrónico no es válida."
-  email_already_used: "\x0304✗\x03 El correo \x02%email%\x02 ya está en uso por otra cuenta. Usa otra dirección."
+  email_already_used: "\x0304✗\x03 El correo \x02%email%\x02 ya está en uso por otro nickname. Usa otra dirección."
   throttled:          "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de intentar registrar de nuevo."
   guest_prefix_forbidden: "\x0304✗\x03 No puedes registrar un nick que empiece por \x02%prefix%\x02."
 
@@ -55,7 +55,7 @@ resend:
 recover:
   syntax:           "RECOVER <nickname> [token]"
   short:            "Recupera tu nickname si has perdido la contraseña."
-  help:             "Recupera el acceso a un nickname registrado cuando has perdido la contraseña.\n1) \x0303RECOVER <nickname>\x03 — se envía un token al correo de la cuenta.\n2) \x0303RECOVER <nickname> <token>\x03 — introduce el token del correo para restablecer la contraseña.\nRecibirás una contraseña temporal y el comando para cambiarla."
+  help:             "Recupera el acceso a un nickname registrado cuando has perdido la contraseña.\n1) \x0303RECOVER <nickname>\x03 — se envía un token al correo del nickname.\n2) \x0303RECOVER <nickname> <token>\x03 — introduce el token del correo para restablecer la contraseña.\nRecibirás una contraseña temporal y el comando para cambiarla."
   email_sent:       "\x0307→\x03 Se ha enviado un token de recuperación a \x02%email_hint%\x02. Revisa tu bandeja (y la de spam)."
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email."
@@ -186,11 +186,11 @@ set:
   vhost:
     syntax:         "SET VHOST <vhost>"
     short:          "Establece o quita tu host virtual (hostname visible)."
-    help:           "Establece un hostname personalizado que otros ven cuando estás identificado.\nUsa \x02SET VHOST OFF\x02 para quitarlo. Solo letras (a-z, A-Z), dígitos, guión y punto;\nni guión ni punto al inicio/final de cada bloque; máximo 48 caracteres. Es único por cuenta."
+    help:           "Establece un hostname personalizado que otros ven cuando estás identificado.\nUsa \x02SET VHOST OFF\x02 para quitarlo. Solo letras (a-z, A-Z), dígitos, guión y punto;\nni guión ni punto al inicio/final de cada bloque; máximo 48 caracteres. Es único por nickname."
     success:        "\x0303✔\x03 Tu host virtual se ha establecido a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 Tu host virtual ha sido eliminado."
     invalid:        "\x0304✗\x03 Vhost no válido. Solo letras, dígitos, guión y punto (no al inicio/fin de bloque); máx. 48 caracteres."
-    taken:          "\x0304✗\x03 Ese vhost ya está en uso por otra cuenta."
+    taken:          "\x0304✗\x03 Ese vhost ya está en uso por otro nickname."
     forced:         "\x0304✗\x03 Tu vhost está configurado automáticamente y no puede cambiarse con SET VHOST."
 
   # --- IRCop SET mode ---------------------------------------------------------
