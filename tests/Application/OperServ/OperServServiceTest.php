@@ -1050,6 +1050,7 @@ final class OperServServiceTest extends TestCase
                     targetHost: 'user@host',
                     targetIp: '127.0.0.1',
                     reason: 'test reason',
+                    extra: ['key' => 'value'],
                 );
                 $this->holder->context = $context;
             }
@@ -1075,7 +1076,8 @@ final class OperServServiceTest extends TestCase
                 && 'TargetNick' === $event->target
                 && 'user@host' === $event->targetHost
                 && '127.0.0.1' === $event->targetIp
-                && 'test reason' === $event->reason));
+                && 'test reason' === $event->reason
+                && ['key' => 'value'] === $event->extra));
 
         $registry = new OperServCommandRegistry([$auditableHandler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);

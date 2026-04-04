@@ -1010,7 +1010,10 @@ final class ChanServServiceTest extends TestCase
             {
                 $this->auditData = new IrcopAuditData(
                     target: '#test',
+                    targetHost: 'user@host',
+                    targetIp: '127.0.0.1',
                     reason: 'test reason',
+                    extra: ['key' => 'value'],
                 );
                 $this->holder->context = $context;
             }
@@ -1034,7 +1037,10 @@ final class ChanServServiceTest extends TestCase
                 && 'AUDITCMD' === $event->commandName
                 && 'CHANSPORT_FOUNDER' === $event->permission
                 && '#test' === $event->target
-                && 'test reason' === $event->reason));
+                && 'user@host' === $event->targetHost
+                && '127.0.0.1' === $event->targetIp
+                && 'test reason' === $event->reason
+                && ['key' => 'value'] === $event->extra));
 
         $registry = new ChanServCommandRegistry([$auditableHandler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);

@@ -944,7 +944,10 @@ final class MemoServServiceTest extends TestCase
             {
                 $this->auditData = new IrcopAuditData(
                     target: 'TargetNick',
+                    targetHost: 'user@host',
+                    targetIp: '127.0.0.1',
                     reason: 'test reason',
+                    extra: ['key' => 'value'],
                 );
                 $this->holder->context = $context;
             }
@@ -968,7 +971,10 @@ final class MemoServServiceTest extends TestCase
                 && 'AUDITCMD' === $event->commandName
                 && 'MEMOSERV_ADMIN' === $event->permission
                 && 'TargetNick' === $event->target
-                && 'test reason' === $event->reason));
+                && 'user@host' === $event->targetHost
+                && '127.0.0.1' === $event->targetIp
+                && 'test reason' === $event->reason
+                && ['key' => 'value'] === $event->extra));
 
         $registry = new MemoServCommandRegistry([$auditableHandler]);
 
