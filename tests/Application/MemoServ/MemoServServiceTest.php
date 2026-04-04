@@ -999,6 +999,106 @@ final class MemoServServiceTest extends TestCase
     }
 
     #[Test]
+    public function doesNotDispatchIrcopCommandEventWhenHandlerIsNotAuditable(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $nonAuditableHandler = new class($contextHolder) implements MemoServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'NONAUDIT';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'MEMOSERV_OP';
+            }
+
+            public function execute(MemoServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('MEMOSERV_OP', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
+
+        $registry = new MemoServCommandRegistry([$nonAuditableHandler]);
+
+        $service = $this->createMemoServService(
+            $registry,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(MemoServNotifierInterface::class),
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('NONAUDIT', $sender);
+
+        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
     public function doesNotDispatchIrcopCommandEventWhenAuditDataIsNull(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');

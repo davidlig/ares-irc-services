@@ -1071,6 +1071,112 @@ final class ChanServServiceTest extends TestCase
     }
 
     #[Test]
+    public function doesNotDispatchIrcopCommandEventWhenHandlerIsNotAuditable(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $nonAuditableHandler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'NONAUDIT';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'CHANSERV_OP';
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('CHANSERV_OP', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
+
+        $registry = new ChanServCommandRegistry([$nonAuditableHandler]);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = $this->createChanServService(
+            $registry,
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(ChanServNotifierInterface::class),
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('NONAUDIT', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
     public function doesNotDispatchIrcopCommandEventWhenAuditDataIsNull(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');

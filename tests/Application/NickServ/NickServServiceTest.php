@@ -834,6 +834,119 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
+    public function doesNotDispatchIrcopCommandEventWhenHandlerIsNotAuditable(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $nonAuditableHandler = new class($contextHolder) implements NickServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'NONAUDIT';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'NICKSERV_OP';
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
+            public function execute(NickServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('NICKSERV_OP', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $registry = new NickServCommandRegistry([$nonAuditableHandler]);
+
+        $service = new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $registry,
+            $nickRepository,
+            $this->createStub(NickServNotifierInterface::class),
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+            $eventDispatcher,
+            'en',
+            'UTC',
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $service->dispatch('NONAUDIT', $sender);
+
+        self::assertInstanceOf(NickServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
     public function doesNotDispatchIrcopCommandEventWhenAuditDataIsNull(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
