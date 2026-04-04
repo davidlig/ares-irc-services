@@ -507,6 +507,7 @@ services:
         arguments:
             $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
             $burstState: '@App\Application\NickServ\BurstState'
+            $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
             $guestPrefix: '%services.guest_prefix%'
             $defaultLanguage: '%services.default_language%'
             $eventDispatcher: '@event_dispatcher'

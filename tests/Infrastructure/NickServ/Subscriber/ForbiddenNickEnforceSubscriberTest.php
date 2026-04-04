@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\NickServ\Subscriber;
 
-use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
-use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
@@ -31,9 +29,7 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
         $events = ForbiddenNickEnforceSubscriber::getSubscribedEvents();
 
         self::assertArrayHasKey(UserNickChangedEvent::class, $events);
-        self::assertArrayHasKey(UserJoinedNetworkAppEvent::class, $events);
         self::assertSame(['onNickChanged', 10], $events[UserNickChangedEvent::class]);
-        self::assertSame(['onUserJoined', 10], $events[UserJoinedNetworkAppEvent::class]);
     }
 
     #[Test]
@@ -113,21 +109,38 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onUserJoinedSkipsDuringBurst(): void
+    public function onNickChangedDoesNothingWhenNotForbidden(): void
     {
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::once())->method('findByNick')->with('GoodNick')->willReturn(null);
+
         $burstState = $this->createMock(BurstState::class);
-        $burstState->expects(self::once())->method('isComplete')->willReturn(false);
+        $burstState->expects(self::once())->method('isComplete')->willReturn(true);
 
-        $subscriber = $this->createSubscriber(burstState: $burstState);
+        $pendingRegistry = $this->createMock(PendingNickRestoreRegistryInterface::class);
+        $pendingRegistry->expects(self::once())->method('peek')->with('UID123')->willReturn(false);
 
-        $user = $this->createUserDTO('UID123', 'BadNick');
-        $event = new UserJoinedNetworkAppEvent($user);
+        $forbiddenService = $this->createMock(ForbiddenNickService::class);
+        $forbiddenService->expects(self::never())->method('notifyAndForceGuest');
 
-        $subscriber->onUserJoined($event);
+        $subscriber = $this->createSubscriber(
+            nickRepository: $nickRepository,
+            burstState: $burstState,
+            pendingRegistry: $pendingRegistry,
+            forbiddenService: $forbiddenService,
+        );
+
+        $event = new UserNickChangedEvent(
+            new Uid('UID123'),
+            new Nick('OldNick'),
+            new Nick('GoodNick'),
+        );
+
+        $subscriber->onNickChanged($event);
     }
 
     #[Test]
-    public function onUserJoinedForcesGuestWhenForbidden(): void
+    public function onNickChangedDoesNothingWhenUserNotFound(): void
     {
         $nick = RegisteredNick::createForbidden('BadNick', 'Spam');
 
@@ -137,57 +150,11 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
         $burstState = $this->createMock(BurstState::class);
         $burstState->expects(self::once())->method('isComplete')->willReturn(true);
 
-        $userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $userLookup->expects(self::once())->method('findByUid')->with('UID123')->willReturn(
-            $this->createSenderView('UID123', 'BadNick')
-        );
-
-        $forbiddenService = $this->createMock(ForbiddenNickService::class);
-        $forbiddenService->expects(self::once())->method('notifyAndForceGuest')->with('UID123', 'Spam', 'BadNick');
-
-        $subscriber = $this->createSubscriber(
-            nickRepository: $nickRepository,
-            burstState: $burstState,
-            userLookup: $userLookup,
-            forbiddenService: $forbiddenService,
-        );
-
-        $user = $this->createUserDTO('UID123', 'BadNick');
-        $event = new UserJoinedNetworkAppEvent($user);
-
-        $subscriber->onUserJoined($event);
-    }
-
-    #[Test]
-    public function onUserJoinedDoesNothingWhenNotForbidden(): void
-    {
-        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepository->expects(self::once())->method('findByNick')->with('GoodNick')->willReturn(null);
-
-        $burstState = $this->createMock(BurstState::class);
-        $burstState->expects(self::once())->method('isComplete')->willReturn(true);
-
-        $subscriber = $this->createSubscriber(nickRepository: $nickRepository, burstState: $burstState);
-
-        $user = $this->createUserDTO('UID123', 'GoodNick');
-        $event = new UserJoinedNetworkAppEvent($user);
-
-        $subscriber->onUserJoined($event);
-    }
-
-    #[Test]
-    public function onUserJoinedDoesNothingWhenUserNotFound(): void
-    {
-        $nick = RegisteredNick::createForbidden('ForbiddenNick', 'Banned');
-
-        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepository->expects(self::once())->method('findByNick')->with('ForbiddenNick')->willReturn($nick);
-
-        $burstState = $this->createMock(BurstState::class);
-        $burstState->expects(self::once())->method('isComplete')->willReturn(true);
+        $pendingRegistry = $this->createMock(PendingNickRestoreRegistryInterface::class);
+        $pendingRegistry->expects(self::once())->method('peek')->with('UID123')->willReturn(false);
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
-        $userLookup->expects(self::once())->method('findByUid')->with('UID999')->willReturn(null);
+        $userLookup->expects(self::once())->method('findByUid')->with('UID123')->willReturn(null);
 
         $forbiddenService = $this->createMock(ForbiddenNickService::class);
         $forbiddenService->expects(self::never())->method('notifyAndForceGuest');
@@ -195,14 +162,18 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
         $subscriber = $this->createSubscriber(
             nickRepository: $nickRepository,
             burstState: $burstState,
+            pendingRegistry: $pendingRegistry,
             userLookup: $userLookup,
             forbiddenService: $forbiddenService,
         );
 
-        $user = $this->createUserDTO('UID999', 'ForbiddenNick');
-        $event = new UserJoinedNetworkAppEvent($user);
+        $event = new UserNickChangedEvent(
+            new Uid('UID123'),
+            new Nick('OldNick'),
+            new Nick('BadNick'),
+        );
 
-        $subscriber->onUserJoined($event);
+        $subscriber->onNickChanged($event);
     }
 
     private function createSubscriber(
@@ -219,22 +190,6 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
             $pendingRegistry ?? $this->createStub(PendingNickRestoreRegistryInterface::class),
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(LoggerInterface::class),
-        );
-    }
-
-    private function createUserDTO(string $uid, string $nick): UserJoinedNetworkDTO
-    {
-        return new UserJoinedNetworkDTO(
-            uid: $uid,
-            nick: $nick,
-            ident: 'i',
-            hostname: 'h',
-            cloakedHost: 'h',
-            ipBase64: 'aBcD',
-            displayHost: 'h',
-            isIdentified: false,
-            isOper: false,
-            serverSid: 'SID1',
         );
     }
 

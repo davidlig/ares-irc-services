@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\NickServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
+use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
@@ -35,6 +36,7 @@ final readonly class NickProtectionService
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly ForbiddenNickService $forbiddenService,
         private readonly string $guestPrefix = 'Guest-',
         private readonly string $defaultLanguage = 'en',
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -202,7 +204,18 @@ final readonly class NickProtectionService
         $nick = $user->nick;
         $account = $this->nickRepository->findByNick($nick);
 
-        if (null === $account || !$account->isRegistered()) {
+        if (null === $account) {
+            return;
+        }
+
+        if ($account->isForbidden()) {
+            $reason = $account->getReason() ?? '';
+            $this->forbiddenService->notifyAndForceGuest($user->uid, $reason, $nick);
+
+            return;
+        }
+
+        if (!$account->isRegistered()) {
             return;
         }
 

@@ -11,6 +11,7 @@ use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
+use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
@@ -63,6 +64,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $pendingRegistry,
             $translator,
             $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ForbiddenNickService::class),
         );
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);

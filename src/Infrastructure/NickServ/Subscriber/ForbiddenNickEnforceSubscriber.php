@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Subscriber;
 
-use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
@@ -32,7 +31,6 @@ final readonly class ForbiddenNickEnforceSubscriber implements EventSubscriberIn
     {
         return [
             UserNickChangedEvent::class => ['onNickChanged', 10],
-            UserJoinedNetworkAppEvent::class => ['onUserJoined', 10],
         ];
     }
 
@@ -52,15 +50,6 @@ final readonly class ForbiddenNickEnforceSubscriber implements EventSubscriberIn
         }
 
         $this->enforceForbidden($event->newNick->value, $event->uid->value);
-    }
-
-    public function onUserJoined(UserJoinedNetworkAppEvent $event): void
-    {
-        if (!$this->burstState->isComplete()) {
-            return;
-        }
-
-        $this->enforceForbidden($event->user->nick, $event->user->uid);
     }
 
     private function enforceForbidden(string $nick, string $uid): void
