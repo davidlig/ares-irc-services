@@ -136,7 +136,7 @@ final class ForbidCommand implements NickServCommandInterface, AuditableCommandI
 
         $this->auditData = new IrcopAuditData(
             target: $targetNick,
-            extra: ['reason' => $reason],
+            reason: $reason,
         );
 
         $this->logger->info('Nickname forbidden via FORBID command', [

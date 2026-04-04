@@ -306,7 +306,7 @@ final class ForbidCommandTest extends TestCase
         $auditData = $cmd->getAuditData($context);
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('BadNick', $auditData->target);
-        self::assertSame(['reason' => 'Test reason'], $auditData->extra);
+        self::assertSame('Test reason', $auditData->reason);
     }
 
     #[Test]
