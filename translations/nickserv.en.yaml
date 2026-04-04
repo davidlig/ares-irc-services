@@ -320,7 +320,6 @@ drop:
     Syntax: DROP <nickname>
     Example: DROP OldAccount
   not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
-  pending:           "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending verification."
   suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Unsuspend first."
   forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden."
   cannot_drop_root:   "\x0304✗\x03 Cannot drop root user \x02%nickname%\x02."

@@ -110,12 +110,6 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
             return;
         }
 
-        if ($account->isPending()) {
-            $context->reply('drop.pending', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
         if ($account->isSuspended()) {
             $context->reply('drop.suspended', ['%nickname%' => $targetNick]);
 

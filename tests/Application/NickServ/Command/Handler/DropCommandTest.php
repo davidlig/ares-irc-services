@@ -188,32 +188,82 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeWithPendingNickRepliesPending(): void
+    public function executeWithPendingNickDropsSuccessfully(): void
     {
-        $sender = $this->createSender();
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+
+        // Create a pending nick (not activated) with ID
+        $nick = RegisteredNick::createPending('PendingNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $reflection = new ReflectionClass(RegisteredNick::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($nick, 42);
+
+        // Verify it's pending (not activated)
+        self::assertTrue($nick->isPending());
 
         $messages = [];
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('delete')->with($nick);
 
-        $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
+        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepository->method('findByNickId')->willReturn(null);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+
+        $forceService = $this->createMock(NickForceService::class);
+        $forceService->expects(self::never())->method('forceGuestNick');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (NickDropEvent $event): bool => 42 === $event->nickId
+                && 'PendingNick' === $event->nickname
+                && 'manual' === $event->reason));
+
+        $debug = $this->createMock(DebugActionPort::class);
+        $debug->expects(self::once())->method('log')->with(
+            'OperUser',
+            'DROP',
+            'PendingNick',
+            null,
+            null,
+            'manual drop',
+        );
+
+        $context = $this->createContext(
+            $sender,
+            ['PendingNick'],
+            $messages,
+            nickRepository: $nickRepository,
+            ircopRepository: $ircopRepository,
+            userLookup: $userLookup,
+            forceService: $forceService,
+            eventDispatcher: $eventDispatcher,
+            debug: $debug,
+        );
 
         $cmd = new DropCommand(
             $nickRepository,
-            $this->createStub(OperIrcopRepositoryInterface::class),
+            $ircopRepository,
             new RootUserRegistry(''),
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(NickForceService::class),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(DebugActionPort::class),
+            $userLookup,
+            $forceService,
+            $eventDispatcher,
+            $debug,
             $this->createStub(LoggerInterface::class),
             'Guest-',
         );
 
         $cmd->execute($context);
 
-        self::assertContains('drop.pending', $messages);
+        self::assertContains('drop.success', $messages);
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('PendingNick', $auditData->target);
+        self::assertSame('manual drop', $auditData->reason);
+        self::assertSame(['was_online' => false], $auditData->extra);
     }
 
     #[Test]
