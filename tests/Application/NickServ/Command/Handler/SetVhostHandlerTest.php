@@ -140,6 +140,140 @@ final class SetVhostHandlerTest extends TestCase
     }
 
     #[Test]
+    public function ircopModeClearsVhostWhenTargetOnline(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->expects(self::once())->method('changeVhost')->with(null);
+        $account->method('getNickname')->willReturn('TargetUser');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $targetUser = new SenderView('UID2', 'TargetUser', 'i', 'h', 'cloak', 'b64', false, false, 'SID1');
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByNick')->with('TargetUser')->willReturn($targetUser);
+
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('');
+
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID2', '', 'SID1');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup);
+        $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'OFF'), $account, 'OFF', true);
+
+        self::assertSame(['set.vhost.cleared'], $messages);
+    }
+
+    #[Test]
+    public function ircopModeSetsVhostWhenTargetOnline(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->expects(self::once())->method('changeVhost')->with('test');
+        $account->method('getId')->willReturn(1);
+        $account->method('getNickname')->willReturn('TargetUser');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByVhost')->willReturn(null);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $targetUser = new SenderView('UID2', 'TargetUser', 'i', 'h', 'cloak', 'b64', false, false, 'SID1');
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByNick')->with('TargetUser')->willReturn($targetUser);
+
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('');
+
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID2', 'test', 'SID1');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup);
+        $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'test'), $account, 'test', true);
+
+        self::assertSame(['set.vhost.success'], $messages);
+    }
+
+    #[Test]
+    public function ircopModeClearsVhostWhenTargetOffline(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->expects(self::once())->method('changeVhost')->with(null);
+        $account->method('getNickname')->willReturn('TargetUser');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByNick')->with('TargetUser')->willReturn(null);
+
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('');
+
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup);
+        $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'OFF'), $account, 'OFF', true);
+
+        self::assertSame(['set.vhost.cleared'], $messages);
+    }
+
+    #[Test]
+    public function ircopModeSetsVhostWhenTargetOffline(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->expects(self::once())->method('changeVhost')->with('test');
+        $account->method('getId')->willReturn(1);
+        $account->method('getNickname')->willReturn('TargetUser');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByVhost')->willReturn(null);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByNick')->with('TargetUser')->willReturn(null);
+
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('');
+
+        $messages = [];
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup);
+        $handler->handle($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'test'), $account, 'test', true);
+
+        self::assertSame(['set.vhost.success'], $messages);
+    }
+
+    #[Test]
     public function invalidVhostRepliesInvalid(): void
     {
         $account = $this->createStub(RegisteredNick::class);
