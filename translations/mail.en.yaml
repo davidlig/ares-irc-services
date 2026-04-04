@@ -34,7 +34,7 @@ email_change_token_subject: "%bot%: confirm your new email address"
 email_change_token_body: |
   Hello,
 
-  You requested to change the email address for your %bot% account to: %new_email%
+  You requested to change the email address for your %bot% nickname to: %new_email%
 
   Your confirmation token is: %token%
 

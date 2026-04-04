@@ -36,7 +36,7 @@ register:
 # --- VERIFY -----------------------------------------------------------------
 verify:
   syntax:           "VERIFY <token>"
-  short:            "Confirma tu dirección de email y activa tu cuenta."
+  short:            "Confirma tu dirección de email y activa tu nickname."
   help:             "Completa el registro verificando el token enviado a tu correo.\nEl token tiene una validez de 1 hora desde el momento del registro."
   success:          "\x0303✔\x03 El nickname \x02%nickname%\x02 ha sido registrado y ya estás identificado."
   invalid_token:    "\x0304✗\x03 El token no es válido o ha expirado. Usa \x0303/msg %bot% REGISTER\x03 para iniciar el proceso de nuevo."
@@ -54,8 +54,8 @@ resend:
 # --- RECOVER -----------------------------------------------------------------
 recover:
   syntax:           "RECOVER <nickname> [token]"
-  short:            "Recupera tu cuenta si has perdido la contraseña."
-  help:             "Recupera el acceso a una cuenta registrada cuando has perdido la contraseña.\n1) \x0303RECOVER <nickname>\x03 — se envía un token al correo de la cuenta.\n2) \x0303RECOVER <nickname> <token>\x03 — introduce el token del correo para restablecer la contraseña.\nRecibirás una contraseña temporal y el comando para cambiarla."
+  short:            "Recupera tu nickname si has perdido la contraseña."
+  help:             "Recupera el acceso a un nickname registrado cuando has perdido la contraseña.\n1) \x0303RECOVER <nickname>\x03 — se envía un token al correo de la cuenta.\n2) \x0303RECOVER <nickname> <token>\x03 — introduce el token del correo para restablecer la contraseña.\nRecibirás una contraseña temporal y el comando para cambiarla."
   email_sent:       "\x0307→\x03 Se ha enviado un token de recuperación a \x02%email_hint%\x02. Revisa tu bandeja (y la de spam)."
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   pending:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está pendiente de verificación de email."
@@ -136,19 +136,19 @@ info:
 # --- SET --------------------------------------------------------------------
 set:
   syntax:           "SET <opción> <valor>"
-  short:            "Modifica la configuración de tu cuenta."
-  help:             "Modifica la configuración de tu cuenta de %nickserv%.\nDebes estar identificado para usar este comando."
+  short:            "Modifica la configuración de tu nickname."
+  help:             "Modifica la configuración de tu nickname de %nickserv%.\nDebes estar identificado para usar este comando."
   unknown_option:   "\x0304✗\x03 Opción desconocida \x02%option%\x02. Opciones disponibles: %options%."
 
   password:
     syntax:         "SET PASSWORD <nueva_contraseña>"
-    short:          "Cambia la contraseña de tu cuenta."
-    help:           "Cambia la contraseña de acceso a tu cuenta. La nueva contraseña entra en\nvigor de inmediato. Elige una contraseña segura de al menos 6 caracteres\nque no uses en otros servicios."
+    short:          "Cambia la contraseña de tu nickname."
+    help:           "Cambia la contraseña de acceso a tu nickname. La nueva contraseña entra en\nvigor de inmediato. Elige una contraseña segura de al menos 6 caracteres\nque no uses en otros servicios."
     success:        "\x0303✔\x03 Tu contraseña ha sido actualizada correctamente."
 
   email:
     syntax:         "SET EMAIL <nuevo_email> [token]"
-    short:          "Cambia el correo electrónico de tu cuenta (confirmación en dos pasos)."
+    short:          "Cambia el correo electrónico de tu nickname (confirmación en dos pasos)."
     help:           "Cambio de correo en dos pasos por seguridad.\n1) \x0303SET EMAIL <nuevo_email>\x03 — se envía un token a tu correo actual.\n2) \x0303SET EMAIL <nuevo_email> <token>\x03 — confirmas con el token recibido.\nEl token expira en 1 hora."
     success:        "\x0303✔\x03 Tu correo ha sido actualizado a \x02%email%\x02."
     pending_sent:   "\x0307→\x03 Se ha enviado un token de confirmación a \x02%current_email%\x02.\n  Para confirmar el cambio a \x02%new_email%\x02 ejecuta:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  El token expira en 1 hora."
@@ -173,8 +173,8 @@ set:
     syntax:         "SET PRIVATE {ON|OFF}"
     short:          "Activa o desactiva la privacidad de tu información."
     help:           "Controla la visibilidad de tu información en el comando INFO.\nCon \x02PRIVATE ON\x02 solo tú y los Operadores IRC podrán ver tus datos.\nCon \x02PRIVATE OFF\x02 la información es pública para todos."
-    on:             "\x0303✔\x03 La información de tu cuenta es ahora \x02privada\x02."
-    off:            "\x0303✔\x03 La información de tu cuenta es ahora \x02pública\x02."
+    on:             "\x0303✔\x03 La información de tu nickname es ahora \x02privada\x02."
+    off:            "\x0303✔\x03 La información de tu nickname es ahora \x02pública\x02."
 
   msg:
     syntax:         "SET MSG {ON|OFF}"
