@@ -7,6 +7,7 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
@@ -20,6 +21,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly VhostValidator $vhostValidator,
         private readonly VhostDisplayResolver $displayResolver,
+        private readonly NetworkUserLookupPort $userLookup,
     ) {
     }
 
@@ -30,7 +32,14 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         if ('' === $normalized || in_array(strtoupper($normalized), $clearKeywords, true)) {
             $account->changeVhost(null);
             $this->nickRepository->save($account);
-            if (null !== $context->sender) {
+
+            // In IRCop mode, the target user may be different from the sender
+            if ($isIrcopMode) {
+                $targetUser = $this->userLookup->findByNick($account->getNickname());
+                if (null !== $targetUser) {
+                    $context->getNotifier()->setUserVhost($targetUser->uid, '', $targetUser->serverSid);
+                }
+            } elseif (null !== $context->sender) {
                 $context->getNotifier()->setUserVhost($context->sender->uid, '', $context->sender->serverSid);
             }
             $context->reply('set.vhost.cleared');
@@ -56,7 +65,14 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         $this->nickRepository->save($account);
 
         $displayVhost = $this->displayResolver->getDisplayVhost($normalized);
-        if (null !== $context->sender && '' !== $displayVhost) {
+
+        // In IRCop mode, the target user may be different from the sender
+        if ($isIrcopMode) {
+            $targetUser = $this->userLookup->findByNick($account->getNickname());
+            if (null !== $targetUser && '' !== $displayVhost) {
+                $context->getNotifier()->setUserVhost($targetUser->uid, $displayVhost, $targetUser->serverSid);
+            }
+        } elseif (null !== $context->sender && '' !== $displayVhost) {
             $context->getNotifier()->setUserVhost($context->sender->uid, $displayVhost, $context->sender->serverSid);
         }
         $context->reply('set.vhost.success', ['vhost' => $displayVhost]);
