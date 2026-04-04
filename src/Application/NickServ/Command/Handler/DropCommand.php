@@ -163,7 +163,6 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
             operator: $context->sender->nick,
             command: 'DROP',
             target: $targetNick,
-            reason: 'manual drop',
         );
 
         $this->logger->info('Nickname dropped via DROP command', [
@@ -174,7 +173,6 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
 
         $this->auditData = new IrcopAuditData(
             target: $targetNick,
-            reason: 'manual drop',
             extra: ['was_online' => null !== $onlineUser],
         );
 

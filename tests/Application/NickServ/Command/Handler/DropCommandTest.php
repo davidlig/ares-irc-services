@@ -226,9 +226,6 @@ final class DropCommandTest extends TestCase
             'OperUser',
             'DROP',
             'PendingNick',
-            null,
-            null,
-            'manual drop',
         );
 
         $context = $this->createContext(
@@ -262,7 +259,7 @@ final class DropCommandTest extends TestCase
         $auditData = $cmd->getAuditData($context);
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('PendingNick', $auditData->target);
-        self::assertSame('manual drop', $auditData->reason);
+        self::assertNull($auditData->reason);
         self::assertSame(['was_online' => false], $auditData->extra);
     }
 
@@ -455,9 +452,6 @@ final class DropCommandTest extends TestCase
             'OperUser',
             'DROP',
             'TargetNick',
-            null,
-            null,
-            'manual drop',
         );
 
         $context = $this->createContext(
@@ -491,7 +485,7 @@ final class DropCommandTest extends TestCase
         $auditData = $cmd->getAuditData($context);
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TargetNick', $auditData->target);
-        self::assertSame('manual drop', $auditData->reason);
+        self::assertNull($auditData->reason);
         self::assertSame(['was_online' => true], $auditData->extra);
     }
 
