@@ -46,4 +46,12 @@ final readonly class UnrealIRCdNickReservation implements ServiceNickReservation
             'duration' => $durationSeconds,
         ]);
     }
+
+    public function releaseNick(ConnectionInterface $connection, string $serverSid, string $nick): void
+    {
+        $line = sprintf(':%s UNSQLINE %s', $serverSid, $nick);
+
+        $connection->writeLine($line);
+        $this->logger->info('Released service nick via UNSQLINE', ['nick' => $nick, 'serverSid' => $serverSid]);
+    }
 }

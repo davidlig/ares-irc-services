@@ -895,6 +895,7 @@ services:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
             $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $logger: '@monolog.logger.irc'
             $defaultLanguage: '%services.default_language%'
 

@@ -82,4 +82,40 @@ final class UnrealIRCdNickReservationTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertSame(':001 SQLINE GlobalBot 0 :Permanent block', $this->written[0]);
     }
+
+    #[Test]
+    public function releaseNickSendsUnsqlineCommand(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $reservation = new UnrealIRCdNickReservation();
+
+        $reservation->releaseNick($connection, '001', 'NickServ');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 UNSQLINE NickServ', $this->written[0]);
+    }
+
+    #[Test]
+    public function releaseNickWorksForMultipleNicks(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $reservation = new UnrealIRCdNickReservation();
+
+        $reservation->releaseNick($connection, '001', 'NickServ');
+        $reservation->releaseNick($connection, '001', 'ChanServ');
+        $reservation->releaseNick($connection, '001', 'MemoServ');
+
+        self::assertCount(3, $this->written);
+        self::assertSame(':001 UNSQLINE NickServ', $this->written[0]);
+        self::assertSame(':001 UNSQLINE ChanServ', $this->written[1]);
+        self::assertSame(':001 UNSQLINE MemoServ', $this->written[2]);
+    }
 }

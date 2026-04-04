@@ -37,4 +37,15 @@ interface ServiceNickReservationInterface
      * @param string              $reason          The reason shown to users who try to use it
      */
     public function reserveNickWithDuration(ConnectionInterface $connection, string $serverSid, string $nick, int $durationSeconds, string $reason): void;
+
+    /**
+     * Release a previously reserved nickname.
+     *
+     * Removes the SQLINE/QLINE reservation, allowing regular users to use the nick.
+     *
+     * @param ConnectionInterface $connection The active IRC connection
+     * @param string              $serverSid  The SID of the services server
+     * @param string              $nick       The nickname to release
+     */
+    public function releaseNick(ConnectionInterface $connection, string $serverSid, string $nick): void;
 }
