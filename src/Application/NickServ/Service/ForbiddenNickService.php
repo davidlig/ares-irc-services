@@ -52,7 +52,7 @@ readonly class ForbiddenNickService
         $onlineUser = $this->userLookup->findByNick($nickname);
 
         if (null !== $onlineUser) {
-            $this->notifyAndForceGuest($onlineUser->uid, $reason);
+            $this->notifyAndForceGuest($onlineUser->uid, $reason, $nickname);
         }
 
         return $forbidden;
@@ -60,13 +60,14 @@ readonly class ForbiddenNickService
 
     public function updateReason(RegisteredNick $forbidden, string $newReason): void
     {
+        $nickname = $forbidden->getNickname();
         $forbidden->updateForbiddenReason($newReason);
         $this->nickRepository->save($forbidden);
 
-        $onlineUser = $this->userLookup->findByNick($forbidden->getNickname());
+        $onlineUser = $this->userLookup->findByNick($nickname);
 
         if (null !== $onlineUser) {
-            $this->notifyAndForceGuest($onlineUser->uid, $newReason);
+            $this->notifyAndForceGuest($onlineUser->uid, $newReason, $nickname);
         }
     }
 
@@ -88,11 +89,16 @@ readonly class ForbiddenNickService
         return true;
     }
 
-    public function notifyAndForceGuest(string $uid, string $reason): void
+    public function notifyAndForceGuest(string $uid, string $reason, ?string $nickname = null): void
     {
+        if (null === $nickname) {
+            $user = $this->userLookup->findByUid($uid);
+            $nickname = $user?->nick ?? 'Unknown';
+        }
+
         $message = $this->translator->trans(
             'protection.nick_forbidden',
-            ['%reason%' => $reason],
+            ['%nickname%' => $nickname, '%reason%' => $reason],
             'nickserv',
             $this->defaultLanguage,
         );

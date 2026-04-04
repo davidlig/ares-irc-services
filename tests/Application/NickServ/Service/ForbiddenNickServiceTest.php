@@ -176,6 +176,74 @@ final class ForbiddenNickServiceTest extends TestCase
         self::assertFalse($result);
     }
 
+    #[Test]
+    public function notifyAndForceGuestFetchesNicknameFromUserLookupWhenNull(): void
+    {
+        $onlineUser = new SenderView('UID123', 'BadNick', 'i', 'h', 'c', 'aBcD', false, false, 'SID1', 'h', 'o', '');
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with('UID123')->willReturn($onlineUser);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->with(
+            'protection.nick_forbidden',
+            ['%nickname%' => 'BadNick', '%reason%' => 'Spam reason'],
+            'nickserv',
+            'en',
+        )->willReturn('Nickname BadNick is forbidden: Spam reason');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with('UID123', 'Nickname BadNick is forbidden: Spam reason', 'NOTICE');
+
+        $forceService = $this->createMock(NickForceService::class);
+        $forceService->expects(self::once())->method('forceGuestNick')->with('UID123', null, 'forbidden-nick');
+
+        $forbiddenService = new ForbiddenNickService(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $forceService,
+            $userLookup,
+            $notifier,
+            $translator,
+            $this->createStub(LoggerInterface::class),
+            'en',
+        );
+
+        $forbiddenService->notifyAndForceGuest('UID123', 'Spam reason', null);
+    }
+
+    #[Test]
+    public function notifyAndForceGuestUsesUnknownWhenUserNotFound(): void
+    {
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn(null);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->with(
+            'protection.nick_forbidden',
+            ['%nickname%' => 'Unknown', '%reason%' => 'Spam reason'],
+            'nickserv',
+            'en',
+        )->willReturn('Nickname Unknown is forbidden: Spam reason');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')->with('UID123', 'Nickname Unknown is forbidden: Spam reason', 'NOTICE');
+
+        $forceService = $this->createMock(NickForceService::class);
+        $forceService->expects(self::once())->method('forceGuestNick');
+
+        $forbiddenService = new ForbiddenNickService(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $forceService,
+            $userLookup,
+            $notifier,
+            $translator,
+            $this->createStub(LoggerInterface::class),
+            'en',
+        );
+
+        $forbiddenService->notifyAndForceGuest('UID123', 'Spam reason', null);
+    }
+
     private function createService(
         ?RegisteredNickRepositoryInterface $nickRepository = null,
         ?NickForceService $forceService = null,

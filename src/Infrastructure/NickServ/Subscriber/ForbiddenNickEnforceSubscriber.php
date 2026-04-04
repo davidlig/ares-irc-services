@@ -86,6 +86,6 @@ final readonly class ForbiddenNickEnforceSubscriber implements EventSubscriberIn
             $nick,
         ));
 
-        $this->forbiddenService->notifyAndForceGuest($uid, $reason);
+        $this->forbiddenService->notifyAndForceGuest($uid, $reason, $nick);
     }
 }

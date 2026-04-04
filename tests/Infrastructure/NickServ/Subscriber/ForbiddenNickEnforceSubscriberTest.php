@@ -93,7 +93,7 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
         );
 
         $forbiddenService = $this->createMock(ForbiddenNickService::class);
-        $forbiddenService->expects(self::once())->method('notifyAndForceGuest')->with('UID123', 'Spam');
+        $forbiddenService->expects(self::once())->method('notifyAndForceGuest')->with('UID123', 'Spam', 'BadNick');
 
         $subscriber = $this->createSubscriber(
             nickRepository: $nickRepository,
@@ -143,7 +143,7 @@ final class ForbiddenNickEnforceSubscriberTest extends TestCase
         );
 
         $forbiddenService = $this->createMock(ForbiddenNickService::class);
-        $forbiddenService->expects(self::once())->method('notifyAndForceGuest')->with('UID123', 'Spam');
+        $forbiddenService->expects(self::once())->method('notifyAndForceGuest')->with('UID123', 'Spam', 'BadNick');
 
         $subscriber = $this->createSubscriber(
             nickRepository: $nickRepository,
