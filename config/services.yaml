@@ -837,8 +837,7 @@ services:
     App\Application\NickServ\Command\Handler\SuspendCommand:
         arguments:
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
             $suspensionService: '@App\Application\NickServ\Service\NickSuspensionService'
         tags: ['nickserv.command']
 
@@ -851,9 +850,7 @@ services:
         arguments:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $forceService: '@App\Application\NickServ\Service\NickForceService'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
             $logger: '@monolog.logger.irc'
             $guestPrefix: '%services.guest_prefix%'
         tags: ['nickserv.command']
@@ -861,15 +858,44 @@ services:
     App\Application\NickServ\Command\Handler\DropCommand:
         arguments:
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
-            $forceService: '@App\Application\NickServ\Service\NickForceService'
-            $eventDispatcher: '@Symfony\Contracts\EventDispatcher\EventDispatcherInterface'
-            $debug: '@App\Application\Port\DebugActionPort'
+            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
+            $dropService: '@App\Application\NickServ\Service\NickDropService'
             $logger: '@monolog.logger.irc'
-            $guestPrefix: '%services.guest_prefix%'
         tags: ['nickserv.command']
+
+    App\Application\NickServ\Command\Handler\ForbidCommand:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
+            $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
+            $dropService: '@App\Application\NickServ\Service\NickDropService'
+            $logger: '@monolog.logger.irc'
+        tags: ['nickserv.command']
+
+    App\Application\NickServ\Command\Handler\UnforbidCommand:
+        arguments:
+            $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
+            $logger: '@monolog.logger.irc'
+        tags: ['nickserv.command']
+
+    # --- NickServ Services -------------------------------------------------------
+
+    App\Application\NickServ\Service\NickTargetValidator:
+        arguments:
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $serviceUidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+
+    App\Application\NickServ\Service\ForbiddenNickService:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $forceService: '@App\Application\NickServ\Service\NickForceService'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $logger: '@monolog.logger.irc'
+            $defaultLanguage: '%services.default_language%'
 
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---
 
@@ -958,6 +984,16 @@ services:
             $identifiedUserVhostSync:   '@App\Application\NickServ\IdentifiedUserVhostSyncService'
             $burstState:                '@App\Application\NickServ\BurstState'
             $networkUserLookup:        '@App\Application\Port\NetworkUserLookupPort'
+        tags: ['kernel.event_subscriber']
+
+    App\Infrastructure\NickServ\Subscriber\ForbiddenNickEnforceSubscriber:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
+            $burstState: '@App\Application\NickServ\BurstState'
+            $pendingRegistry: '@App\Application\NickServ\PendingNickRestoreRegistryInterface'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
     # --- Maintenance system -----------------------------------------------------

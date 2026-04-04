@@ -268,6 +268,7 @@ suspend:
   forbidden:          "\x0304✗\x03 El nickname \x02%nickname%\x02 está prohibido y no puede suspenderse."
   cannot_suspend_oper: "\x0304✗\x03 No se puede suspender al operador IRC \x02%nickname%\x02."
   cannot_suspend_root: "\x0304✗\x03 No se puede suspender al usuario root \x02%nickname%\x02."
+  cannot_suspend_service: "\x0304✗\x03 No se puede suspender el nickname de servicio \x02%nickname%\x02."
   invalid_duration:   "\x0304✗\x03 Duración inválida. Usa: \x0303<d><h><m>\x03 (ej: 7d, 12h, 30m) o \x03030\x03 para permanente."
   permanent:          "permanente"
 
@@ -301,6 +302,7 @@ rename:
   not_online:        "\x0304✗\x03 El usuario \x02%nickname%\x02 no está conectado."
   cannot_rename_root: "\x0304✗\x03 No se puede renombrar al usuario root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 No se puede renombrar al IRC operator \x02%nickname%\x02."
+  cannot_rename_service: "\x0304✗\x03 No se puede renombrar el nickname de servicio \x02%nickname%\x02."
   success:           "\x0303✓\x03 El usuario \x02%nickname%\x02 ha sido renombrado a \x02%new_nick%\x02."
 
 # --- DROP (IRCop) --------------------------------------------------------------
@@ -326,3 +328,48 @@ drop:
   cannot_drop_oper:   "\x0304✗\x03 No se puede eliminar al IRC operator \x02%nickname%\x02."
   cannot_drop_self:    "\x0304✗\x03 No puedes eliminar tu propio nickname."
   success:            "\x0303✓\x03 El nickname \x02%nickname%\x02 ha sido eliminado."
+  cannot_drop_service: "\x0304✗\x03 No se puede eliminar el nickname de servicio \x02%nickname%\x02."
+
+# --- FORBID (IRCop) --------------------------------------------------------------
+forbid:
+  syntax:           "FORBID <nickname> <razón>"
+  short:            "Prohíbe permanentemente el uso de un nickname."
+  help:             |
+    Prohíbe el uso de un nickname en la red.
+    El nickname no podrá ser registrado ni usado por nadie.
+    
+    Si el nickname está registrado, será eliminado primero.
+    Si alguien lo está usando, será forzado a cambiar a un nick Guest-.
+    
+    Los usuarios root, operadores IRC y nicknames de servicio no pueden ser prohibidos.
+    
+    Este comando requiere permiso de IRCop: nickserv.forbid
+    
+    Sintaxis: FORBID <nickname> <razón>
+    Ejemplo: FORBID MalUsuario Violaciones repetidas de política
+  success:            "\x0303✔\x03 El nickname \x02%nickname%\x02 ha sido prohibido."
+  updated:            "\x0303✔\x03 Se ha actualizado la razón de prohibición para \x02%nickname%\x02."
+  reason_required:    "\x0304✗\x03 Debes proporcionar una razón para la prohibición."
+  cannot_forbid_root:  "\x0304✗\x03 No se puede prohibir al usuario root \x02%nickname%\x02."
+  cannot_forbid_oper:  "\x0304✗\x03 No se puede prohibir al IRC operator \x02%nickname%\x02."
+  cannot_forbid_service: "\x0304✗\x03 No se puede prohibir el nickname de servicio \x02%nickname%\x02."
+
+# --- UNFORBID (IRCop) ------------------------------------------------------------
+unforbid:
+  syntax:           "UNFORBID <nickname>"
+  short:            "Elimina la prohibición de un nickname."
+  help:             |
+    Elimina la prohibición de un nickname, permitiendo que pueda usarse nuevamente.
+    
+    Este comando requiere permiso de IRCop: nickserv.forbid
+    
+    Sintaxis: UNFORBID <nickname>
+    Ejemplo: UNFORBID AlgunNick
+  success:          "\x0303✔\x03 El nickname \x02%nickname%\x02 ya no está prohibido."
+  not_forbidden:    "\x0304✗\x03 El nickname \x02%nickname%\x02 no está prohibido."
+
+# --- Nick Protection (Forbidden) ------------------------------------------------
+protection:
+  nick_in_use:      "\x0304⚠\x03 El nick \x02%nickname%\x02 está registrado. Se te cambiará el nick si no te identificas."
+  renamed_to:       "\x0307→\x03 Se te ha cambiado el nick a \x02%guest_nick%\x02. Para recuperarlo:\n\x0303/msg %bot% IDENTIFY %nickname% <password>\x03"
+  nick_forbidden:   "\x0304✗\x03 El nickname \x02%nickname%\x02 está prohibido: %reason%"

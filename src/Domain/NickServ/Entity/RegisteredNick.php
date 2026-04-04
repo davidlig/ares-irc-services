@@ -10,6 +10,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
 use InvalidArgumentException;
+use LogicException;
 
 use function in_array;
 use function sprintf;
@@ -206,6 +207,18 @@ class RegisteredNick
     public function isForbidden(): bool
     {
         return NickStatus::Forbidden === $this->status;
+    }
+
+    /**
+     * Updates the reason for a forbidden nick.
+     * Only valid when status is FORBIDDEN.
+     */
+    public function updateForbiddenReason(string $reason): void
+    {
+        if (!$this->isForbidden()) {
+            throw new LogicException('Cannot update forbidden reason on a non-forbidden account.');
+        }
+        $this->reason = $reason;
     }
 
     public function isExpired(): bool

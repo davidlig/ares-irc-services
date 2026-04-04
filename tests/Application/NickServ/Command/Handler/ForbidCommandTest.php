@@ -7,13 +7,14 @@ namespace App\Tests\Application\NickServ\Command\Handler;
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Command\IrcopAuditData;
-use App\Application\NickServ\Command\Handler\DropCommand;
+use App\Application\NickServ\Command\Handler\ForbidCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\NickServ\Service\NickDropService;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickTargetValidator;
@@ -28,15 +29,15 @@ use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[CoversClass(DropCommand::class)]
-final class DropCommandTest extends TestCase
+#[CoversClass(ForbidCommand::class)]
+final class ForbidCommandTest extends TestCase
 {
     #[Test]
-    public function getNameReturnsDrop(): void
+    public function getNameReturnsForbid(): void
     {
         $cmd = $this->createCommand();
 
-        self::assertSame('DROP', $cmd->getName());
+        self::assertSame('FORBID', $cmd->getName());
     }
 
     #[Test]
@@ -48,11 +49,11 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
-    public function getMinArgsReturnsOne(): void
+    public function getMinArgsReturnsTwo(): void
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(1, $cmd->getMinArgs());
+        self::assertSame(2, $cmd->getMinArgs());
     }
 
     #[Test]
@@ -60,7 +61,7 @@ final class DropCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame('drop.syntax', $cmd->getSyntaxKey());
+        self::assertSame('forbid.syntax', $cmd->getSyntaxKey());
     }
 
     #[Test]
@@ -68,15 +69,15 @@ final class DropCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame('drop.help', $cmd->getHelpKey());
+        self::assertSame('forbid.help', $cmd->getHelpKey());
     }
 
     #[Test]
-    public function getOrderReturnsSeventyFive(): void
+    public function getOrderReturnsSeventyTwo(): void
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(75, $cmd->getOrder());
+        self::assertSame(72, $cmd->getOrder());
     }
 
     #[Test]
@@ -84,7 +85,7 @@ final class DropCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame('drop.short', $cmd->getShortDescKey());
+        self::assertSame('forbid.short', $cmd->getShortDescKey());
     }
 
     #[Test]
@@ -96,11 +97,11 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
-    public function getRequiredPermissionReturnsDropPermission(): void
+    public function getRequiredPermissionReturnsForbidPermission(): void
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(NickServPermission::DROP, $cmd->getRequiredPermission());
+        self::assertSame(NickServPermission::FORBID, $cmd->getRequiredPermission());
     }
 
     #[Test]
@@ -133,15 +134,16 @@ final class DropCommandTest extends TestCase
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->expects(self::never())->method('findByNick');
 
-        $cmd = new DropCommand(
+        $cmd = new ForbidCommand(
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
+            $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
         );
 
         $messages = [];
-        $context = $this->createContext(null, ['TestNick'], $messages, nickRepository: $nickRepository);
+        $context = $this->createContext(null, ['TestNick', 'Test reason'], $messages);
 
         $cmd->execute($context);
 
@@ -149,221 +151,204 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeWithSelfDropRepliesCannotDropSelf(): void
+    public function executeWithoutReasonRepliesReasonRequired(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
-        $nick = $this->createNickWithId('OperUser', 1);
-
+        $sender = $this->createSender();
         $messages = [];
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn($nick);
 
-        $context = $this->createContext($sender, ['OperUser'], $messages, nickRepository: $nickRepository);
+        $context = $this->createContext($sender, ['TestNick'], $messages);
 
-        $cmd = new DropCommand(
-            $nickRepository,
+        $cmd = new ForbidCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickTargetValidator::class),
+            $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
         );
 
         $cmd->execute($context);
 
-        self::assertContains('drop.cannot_drop_self', $messages);
+        self::assertContains('forbid.reason_required', $messages);
     }
 
     #[Test]
-    public function executeWithNonexistentNickRepliesNotRegistered(): void
+    public function executeWithRootNickRepliesCannotForbidRoot(): void
     {
         $sender = $this->createSender();
-
         $messages = [];
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn(null);
-
-        $context = $this->createContext($sender, ['UnknownNick'], $messages, nickRepository: $nickRepository);
-
-        $cmd = new DropCommand(
-            $nickRepository,
-            $this->createStub(NickTargetValidator::class),
-            $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
-        );
-
-        $cmd->execute($context);
-
-        self::assertContains('drop.not_registered', $messages);
-    }
-
-    #[Test]
-    public function executeWithSuspendedNickRepliesSuspended(): void
-    {
-        $sender = $this->createSender();
-        $nick = $this->createActivatedNick('TestNick');
-        $nick->suspend('Previous reason');
-
-        $messages = [];
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn($nick);
-
-        $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
-
-        $cmd = new DropCommand(
-            $nickRepository,
-            $this->createStub(NickTargetValidator::class),
-            $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
-        );
-
-        $cmd->execute($context);
-
-        self::assertContains('drop.suspended', $messages);
-    }
-
-    #[Test]
-    public function executeWithForbiddenNickRepliesForbidden(): void
-    {
-        $sender = $this->createSender();
-        $nick = RegisteredNick::createForbidden('BadNick', 'Forbidden for spam');
-
-        $messages = [];
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn($nick);
-
-        $context = $this->createContext($sender, ['BadNick'], $messages, nickRepository: $nickRepository);
-
-        $cmd = new DropCommand(
-            $nickRepository,
-            $this->createStub(NickTargetValidator::class),
-            $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
-        );
-
-        $cmd->execute($context);
-
-        self::assertContains('drop.forbidden', $messages);
-    }
-
-    #[Test]
-    public function executeWithRootNickRepliesCannotDropRoot(): void
-    {
-        $sender = $this->createSender();
-        $nick = $this->createActivatedNick('RootUser');
-
-        $messages = [];
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn($nick);
 
         $validator = $this->createStub(NickTargetValidator::class);
         $validator->method('validate')->willReturn(NickProtectabilityResult::root('RootUser'));
 
-        $context = $this->createContext($sender, ['RootUser'], $messages, nickRepository: $nickRepository);
+        $context = $this->createContext($sender, ['RootUser', 'Test reason'], $messages);
 
-        $cmd = new DropCommand(
-            $nickRepository,
+        $cmd = new ForbidCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $validator,
+            $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
         );
 
         $cmd->execute($context);
 
-        self::assertContains('drop.cannot_drop_root', $messages);
+        self::assertContains('forbid.cannot_forbid_root', $messages);
     }
 
     #[Test]
-    public function executeWithIrcopNickRepliesCannotDropOper(): void
+    public function executeWithIrcopNickRepliesCannotForbidOper(): void
     {
-        $sender = new SenderView('UID1', 'AdminUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
-        $nick = $this->createNickWithId('OperUser', 1);
-
+        $sender = $this->createSender();
         $messages = [];
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn($nick);
 
         $validator = $this->createStub(NickTargetValidator::class);
         $validator->method('validate')->willReturn(NickProtectabilityResult::ircop('OperUser'));
 
-        $context = $this->createContext($sender, ['OperUser'], $messages, nickRepository: $nickRepository);
+        $context = $this->createContext($sender, ['OperUser', 'Test reason'], $messages);
 
-        $cmd = new DropCommand(
-            $nickRepository,
+        $cmd = new ForbidCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $validator,
+            $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
         );
 
         $cmd->execute($context);
 
-        self::assertContains('drop.cannot_drop_oper', $messages);
+        self::assertContains('forbid.cannot_forbid_oper', $messages);
     }
 
     #[Test]
-    public function executeWithAllowedNickDropsSuccessfully(): void
+    public function executeWithServiceNickRepliesCannotForbidService(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
-        $nick = $this->createNickWithId('TargetNick', 42);
-
+        $sender = $this->createSender();
         $messages = [];
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::service('NickServ'));
+
+        $context = $this->createContext($sender, ['NickServ', 'Test reason'], $messages);
+
+        $cmd = new ForbidCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $validator,
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(NickDropService::class),
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('forbid.cannot_forbid_service', $messages);
+    }
+
+    #[Test]
+    public function executeWithExistingForbiddenUpdatesReason(): void
+    {
+        $sender = $this->createSender();
+        $nick = RegisteredNick::createForbidden('BadNick', 'Old reason');
+        $messages = [];
+
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
         $validator = $this->createStub(NickTargetValidator::class);
-        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetNick', $nick));
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('BadNick', $nick));
 
-        $dropService = $this->createMock(NickDropService::class);
-        $dropService->expects(self::once())->method('dropNick')->with($nick, 'manual', 'OperUser');
+        $forbiddenService = $this->createMock(ForbiddenNickService::class);
+        $forbiddenService->expects(self::once())->method('updateReason')->with($nick, 'New reason');
 
-        $context = $this->createContext($sender, ['TargetNick'], $messages, nickRepository: $nickRepository);
+        $context = $this->createContext($sender, ['BadNick', 'New reason'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new DropCommand(
+        $cmd = new ForbidCommand(
             $nickRepository,
             $validator,
+            $forbiddenService,
+            $this->createStub(NickDropService::class),
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('forbid.updated', $messages);
+    }
+
+    #[Test]
+    public function executeWithUnregisteredNickCreatesForbidden(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $messages = [];
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn(null);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('BadNick', null));
+
+        $forbiddenService = $this->createMock(ForbiddenNickService::class);
+        $forbiddenService->expects(self::once())->method('forbid')->with('BadNick', 'Test reason', 'OperUser');
+
+        $context = $this->createContext($sender, ['BadNick', 'Test reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = new ForbidCommand(
+            $nickRepository,
+            $validator,
+            $forbiddenService,
+            $this->createStub(NickDropService::class),
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('forbid.success', $messages);
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('BadNick', $auditData->target);
+        self::assertSame(['reason' => 'Test reason'], $auditData->extra);
+    }
+
+    #[Test]
+    public function executeWithRegisteredNickDropsThenCreatesForbidden(): void
+    {
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $nick = $this->createActivatedNick('BadUser');
+        $messages = [];
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('BadUser', $nick));
+
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::once())->method('dropNick')->with($nick, 'forbid', 'OperUser');
+
+        $forbiddenService = $this->createMock(ForbiddenNickService::class);
+        $forbiddenService->expects(self::once())->method('forbid')->with('BadUser', 'Test reason', 'OperUser');
+
+        $context = $this->createContext($sender, ['BadUser', 'Test reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = new ForbidCommand(
+            $nickRepository,
+            $validator,
+            $forbiddenService,
             $dropService,
             $this->createStub(LoggerInterface::class),
         );
 
         $cmd->execute($context);
 
-        self::assertContains('drop.success', $messages);
-
-        $auditData = $cmd->getAuditData($context);
-        self::assertInstanceOf(IrcopAuditData::class, $auditData);
-        self::assertSame('TargetNick', $auditData->target);
+        self::assertContains('forbid.success', $messages);
     }
 
-    #[Test]
-    public function executeWithServiceNickRepliesCannotDropService(): void
+    private function createCommand(): ForbidCommand
     {
-        $sender = $this->createSender();
-        $nick = $this->createActivatedNick('NickServ');
-
-        $messages = [];
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn($nick);
-
-        $validator = $this->createStub(NickTargetValidator::class);
-        $validator->method('validate')->willReturn(NickProtectabilityResult::service('NickServ'));
-
-        $context = $this->createContext($sender, ['NickServ'], $messages, nickRepository: $nickRepository);
-
-        $cmd = new DropCommand(
-            $nickRepository,
-            $validator,
-            $this->createStub(NickDropService::class),
-            $this->createStub(LoggerInterface::class),
-        );
-
-        $cmd->execute($context);
-
-        self::assertContains('drop.cannot_drop_service', $messages);
-    }
-
-    private function createCommand(): DropCommand
-    {
-        return new DropCommand(
+        return new ForbidCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickTargetValidator::class),
+            $this->createStub(ForbiddenNickService::class),
             $this->createStub(NickDropService::class),
             $this->createStub(LoggerInterface::class),
         );
@@ -379,18 +364,10 @@ final class DropCommandTest extends TestCase
         $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
         $nick->activate();
 
-        return $nick;
-    }
-
-    private function createNickWithId(string $nickname, int $id): RegisteredNick
-    {
-        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
-        $nick->activate();
-
         $reflection = new ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
         $idProp->setAccessible(true);
-        $idProp->setValue($nick, $id);
+        $idProp->setValue($nick, 1);
 
         return $nick;
     }
@@ -412,7 +389,7 @@ final class DropCommandTest extends TestCase
         return new NickServContext(
             $sender,
             null,
-            'DROP',
+            'FORBID',
             $args,
             $notifier,
             $translator,

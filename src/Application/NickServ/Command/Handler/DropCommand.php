@@ -9,15 +9,12 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
-use App\Application\NickServ\Service\NickForceService;
-use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\DebugActionPort;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Application\NickServ\Service\NickDropService;
+use App\Application\NickServ\Service\NickProtectabilityResult;
+use App\Application\NickServ\Service\NickProtectabilityStatus;
+use App\Application\NickServ\Service\NickTargetValidator;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function strtolower;
 
@@ -27,14 +24,9 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly RootUserRegistry $rootRegistry,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly NickForceService $forceService,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly DebugActionPort $debug,
+        private readonly NickTargetValidator $targetValidator,
+        private readonly NickDropService $dropService,
         private readonly LoggerInterface $logger,
-        private readonly string $guestPrefix = 'Guest-',
     ) {
     }
 
@@ -90,7 +82,7 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
 
     public function getHelpParams(): array
     {
-        return ['%prefix%' => $this->guestPrefix];
+        return [];
     }
 
     public function execute(NickServContext $context): void
@@ -101,6 +93,13 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
 
         $targetNick = $context->args[0];
         $targetNickLower = strtolower($targetNick);
+        $senderNickLower = strtolower($context->sender->nick);
+
+        if ($targetNickLower === $senderNickLower) {
+            $context->reply('drop.cannot_drop_self');
+
+            return;
+        }
 
         $account = $this->nickRepository->findByNick($targetNick);
 
@@ -122,61 +121,30 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
             return;
         }
 
-        if ($this->rootRegistry->isRoot($targetNickLower)) {
-            $context->reply('drop.cannot_drop_root', ['%nickname%' => $targetNick]);
+        $protectability = $this->targetValidator->validate($targetNick);
+
+        if (!$protectability->isAllowed()) {
+            $this->replyProtectabilityError($context, $protectability);
 
             return;
         }
 
-        $ircop = $this->ircopRepository->findByNickId($account->getId());
+        $this->dropService->dropNick($account, 'manual', $context->sender->nick);
 
-        if (null !== $ircop) {
-            $context->reply('drop.cannot_drop_oper', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        $senderNickLower = strtolower($context->sender->nick);
-
-        if ($targetNickLower === $senderNickLower) {
-            $context->reply('drop.cannot_drop_self');
-
-            return;
-        }
-
-        $onlineUser = $this->userLookup->findByNick($targetNick);
-
-        if (null !== $onlineUser) {
-            $this->forceService->forceGuestNick($onlineUser->uid, null, 'ircop-drop');
-        }
-
-        $this->eventDispatcher->dispatch(new NickDropEvent(
-            $account->getId(),
-            $account->getNickname(),
-            $account->getNicknameLower(),
-            'manual',
-        ));
-
-        $this->nickRepository->delete($account);
-
-        $this->debug->log(
-            operator: $context->sender->nick,
-            command: 'DROP',
-            target: $targetNick,
-        );
-
-        $this->logger->info('Nickname dropped via DROP command', [
-            'operator' => $context->sender->nick,
-            'nickname' => $targetNick,
-            'was_online' => null !== $onlineUser,
-        ]);
-
-        $this->auditData = new IrcopAuditData(
-            target: $targetNick,
-            extra: ['was_online' => null !== $onlineUser],
-        );
+        $this->auditData = new IrcopAuditData(target: $targetNick);
 
         $context->reply('drop.success', ['%nickname%' => $targetNick]);
+    }
+
+    private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
+    {
+        $nickname = $result->nickname;
+
+        match ($result->status) {
+            NickProtectabilityStatus::IsRoot => $context->reply('drop.cannot_drop_root', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsIrcop => $context->reply('drop.cannot_drop_oper', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsService => $context->reply('drop.cannot_drop_service', ['%nickname%' => $nickname]),
+        };
     }
 
     public function getAuditData(object $context): ?IrcopAuditData

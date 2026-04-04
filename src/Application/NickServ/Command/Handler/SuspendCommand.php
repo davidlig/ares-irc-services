@@ -9,10 +9,11 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Application\NickServ\Service\NickProtectabilityResult;
+use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickSuspensionService;
-use App\Application\OperServ\RootUserRegistry;
+use App\Application\NickServ\Service\NickTargetValidator;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use DateInterval;
 use DateTimeImmutable;
 
@@ -26,8 +27,7 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly RootUserRegistry $rootRegistry,
+        private readonly NickTargetValidator $targetValidator,
         private readonly NickSuspensionService $suspensionService,
     ) {
     }
@@ -120,18 +120,10 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
             return;
         }
 
-        $targetNickLower = strtolower($targetNick);
+        $protectability = $this->targetValidator->validate($targetNick);
 
-        if ($this->rootRegistry->isRoot($targetNickLower)) {
-            $context->reply('suspend.cannot_suspend_root', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        $ircop = $this->ircopRepository->findByNickId($account->getId());
-
-        if (null !== $ircop) {
-            $context->reply('suspend.cannot_suspend_oper', ['%nickname%' => $targetNick]);
+        if (!$protectability->isAllowed()) {
+            $this->replyProtectabilityError($context, $protectability);
 
             return;
         }
@@ -163,6 +155,17 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
             '%nickname%' => $targetNick,
             '%duration%' => $durationDisplay,
         ]);
+    }
+
+    private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
+    {
+        $nickname = $result->nickname;
+
+        match ($result->status) {
+            NickProtectabilityStatus::IsRoot => $context->reply('suspend.cannot_suspend_root', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsIrcop => $context->reply('suspend.cannot_suspend_oper', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsService => $context->reply('suspend.cannot_suspend_service', ['%nickname%' => $nickname]),
+        };
     }
 
     public function getAuditData(object $context): ?IrcopAuditData

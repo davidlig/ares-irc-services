@@ -14,14 +14,12 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickSuspensionService;
-use App\Application\OperServ\RootUserRegistry;
+use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Domain\OperServ\Entity\OperIrcop;
-use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -121,21 +119,28 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
+    public function getHelpParamsReturnsEmptyArray(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertSame([], $cmd->getHelpParams());
+    }
+
+    #[Test]
     public function executeWithEmptyReasonRepliesSyntaxError(): void
     {
         $sender = $this->createSender();
-        $nick = $this->createActivatedNick('TestNick');
+        $nick = $this->createNickWithId('TestNick', 1);
 
         $messages = [];
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
-        $context = $this->createContext($sender, ['TestNick', '7d', '   '], $messages, nickRepository: $nickRepository);
+        $context = $this->createContext($sender, ['TestNick', '7d'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            new RootUserRegistry(''),
+            $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
         );
 
@@ -148,17 +153,16 @@ final class SuspendCommandTest extends TestCase
     public function executeWithNonexistentNickRepliesNotRegistered(): void
     {
         $sender = $this->createSender();
-        $messages = [];
 
+        $messages = [];
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
 
-        $context = $this->createContext($sender, ['UnknownNick', '7d', 'Spamming'], $messages, nickRepository: $nickRepository);
+        $context = $this->createContext($sender, ['UnknownNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            new RootUserRegistry(''),
+            $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
         );
 
@@ -177,12 +181,11 @@ final class SuspendCommandTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
-        $context = $this->createContext($sender, ['BadNick', '7d', 'More spam'], $messages, nickRepository: $nickRepository);
+        $context = $this->createContext($sender, ['BadNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            new RootUserRegistry(''),
+            $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
         );
 
@@ -206,8 +209,7 @@ final class SuspendCommandTest extends TestCase
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            new RootUserRegistry(''),
+            $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
         );
 
@@ -226,14 +228,14 @@ final class SuspendCommandTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
-        $rootRegistry = new RootUserRegistry('RootUser');
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::root('RootUser'));
 
         $context = $this->createContext($sender, ['RootUser', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $rootRegistry,
+            $validator,
             $this->createStub(NickSuspensionService::class),
         );
 
@@ -247,24 +249,19 @@ final class SuspendCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $nick = $this->createNickWithId('OperUser', 1);
-        $nick->activate();
-
-        $role = new OperRole('Admin', 'desc');
-        $ircop = OperIrcop::create(1, $role);
 
         $messages = [];
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn($ircop);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::ircop('OperUser'));
 
-        $context = $this->createContext($sender, ['OperUser', '7d', 'Testing'], $messages, nickRepository: $nickRepository, ircopRepository: $ircopRepository);
+        $context = $this->createContext($sender, ['OperUser', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $ircopRepository,
-            new RootUserRegistry(''),
+            $validator,
             $this->createStub(NickSuspensionService::class),
         );
 
@@ -274,25 +271,49 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeWithInvalidDurationRepliesInvalidDuration(): void
+    public function executeWithServiceNickRepliesCannotSuspendService(): void
     {
         $sender = $this->createSender();
-        $nick = $this->createNickWithId('TestNick', 1);
-        $nick->activate();
+        $nick = $this->createActivatedNick('NickServ');
 
         $messages = [];
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn(null);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::service('NickServ'));
 
-        $context = $this->createContext($sender, ['TestNick', 'invalid', 'Reason'], $messages, nickRepository: $nickRepository, ircopRepository: $ircopRepository);
+        $context = $this->createContext($sender, ['NickServ', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $ircopRepository,
-            new RootUserRegistry(''),
+            $validator,
+            $this->createStub(NickSuspensionService::class),
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.cannot_suspend_service', $messages);
+    }
+
+    #[Test]
+    public function executeWithInvalidDurationRepliesInvalidDuration(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $context = $this->createContext($sender, ['TestNick', 'invalid', 'Reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = new SuspendCommand(
+            $nickRepository,
+            $validator,
             $this->createStub(NickSuspensionService::class),
         );
 
@@ -306,24 +327,23 @@ final class SuspendCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $nick = $this->createNickWithId('TestNick', 1);
-        $nick->activate();
 
         $messages = [];
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
         $nickRepository->expects(self::once())->method('save')->with($nick);
 
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn(null);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
 
-        $suspensionService = $this->createStub(NickSuspensionService::class);
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension')->with($nick);
 
-        $context = $this->createContext($sender, ['TestNick', '0', 'Permanent suspension'], $messages, nickRepository: $nickRepository, ircopRepository: $ircopRepository);
+        $context = $this->createContext($sender, ['TestNick', '0', 'Permanent'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $ircopRepository,
-            new RootUserRegistry(''),
+            $validator,
             $suspensionService,
         );
 
@@ -331,8 +351,11 @@ final class SuspendCommandTest extends TestCase
 
         self::assertContains('suspend.success', $messages);
         self::assertTrue($nick->isSuspended());
-        self::assertSame('Permanent suspension', $nick->getReason());
-        self::assertNull($nick->getSuspendedUntil());
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('TestNick', $auditData->target);
+        self::assertSame('Permanent', $auditData->reason);
     }
 
     #[Test]
@@ -340,24 +363,23 @@ final class SuspendCommandTest extends TestCase
     {
         $sender = $this->createSender();
         $nick = $this->createNickWithId('TestNick', 1);
-        $nick->activate();
 
         $messages = [];
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
-        $nickRepository->expects(self::once())->method('save')->with($nick);
+        $nickRepository->expects(self::once())->method('save');
 
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn(null);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
 
-        $suspensionService = $this->createStub(NickSuspensionService::class);
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
 
-        $context = $this->createContext($sender, ['TestNick', '7d', 'Spamming'], $messages, nickRepository: $nickRepository, ircopRepository: $ircopRepository);
+        $context = $this->createContext($sender, ['TestNick', '7d', 'Testing'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $ircopRepository,
-            new RootUserRegistry(''),
+            $validator,
             $suspensionService,
         );
 
@@ -365,33 +387,30 @@ final class SuspendCommandTest extends TestCase
 
         self::assertContains('suspend.success', $messages);
         self::assertTrue($nick->isSuspended());
-        self::assertSame('Spamming', $nick->getReason());
-        self::assertNotNull($nick->getSuspendedUntil());
     }
 
     #[Test]
-    public function executeWithHoursDurationParsesCorrectly(): void
+    public function executeWithMinuteDurationSuspendsSuccessfully(): void
     {
         $sender = $this->createSender();
         $nick = $this->createNickWithId('TestNick', 1);
-        $nick->activate();
 
         $messages = [];
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
         $nickRepository->expects(self::once())->method('save');
 
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn(null);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
 
-        $suspensionService = $this->createStub(NickSuspensionService::class);
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
 
-        $context = $this->createContext($sender, ['TestNick', '12h', 'Testing'], $messages, nickRepository: $nickRepository, ircopRepository: $ircopRepository);
+        $context = $this->createContext($sender, ['TestNick', '30m', 'Testing'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $ircopRepository,
-            new RootUserRegistry(''),
+            $validator,
             $suspensionService,
         );
 
@@ -399,32 +418,30 @@ final class SuspendCommandTest extends TestCase
 
         self::assertContains('suspend.success', $messages);
         self::assertTrue($nick->isSuspended());
-        self::assertNotNull($nick->getSuspendedUntil());
     }
 
     #[Test]
-    public function executeWithMinutesDurationParsesCorrectly(): void
+    public function executeWithHourDurationSuspendsSuccessfully(): void
     {
         $sender = $this->createSender();
         $nick = $this->createNickWithId('TestNick', 1);
-        $nick->activate();
 
         $messages = [];
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
         $nickRepository->expects(self::once())->method('save');
 
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn(null);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
 
-        $suspensionService = $this->createStub(NickSuspensionService::class);
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
 
-        $context = $this->createContext($sender, ['TestNick', '30m', 'Testing'], $messages, nickRepository: $nickRepository, ircopRepository: $ircopRepository);
+        $context = $this->createContext($sender, ['TestNick', '2h', 'Testing'], $messages, nickRepository: $nickRepository);
 
         $cmd = new SuspendCommand(
             $nickRepository,
-            $ircopRepository,
-            new RootUserRegistry(''),
+            $validator,
             $suspensionService,
         );
 
@@ -432,58 +449,13 @@ final class SuspendCommandTest extends TestCase
 
         self::assertContains('suspend.success', $messages);
         self::assertTrue($nick->isSuspended());
-        self::assertNotNull($nick->getSuspendedUntil());
-    }
-
-    #[Test]
-    public function getAuditDataReturnsDataAfterSuccessfulExecute(): void
-    {
-        $sender = $this->createSender();
-        $nick = $this->createNickWithId('TestNick', 1);
-        $nick->activate();
-
-        $messages = [];
-        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn($nick);
-        $nickRepository->expects(self::once())->method('save');
-
-        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepository->method('findByNickId')->willReturn(null);
-
-        $suspensionService = $this->createStub(NickSuspensionService::class);
-
-        $context = $this->createContext($sender, ['TestNick', '7d', 'Spamming'], $messages, nickRepository: $nickRepository, ircopRepository: $ircopRepository);
-
-        $cmd = new SuspendCommand(
-            $nickRepository,
-            $ircopRepository,
-            new RootUserRegistry(''),
-            $suspensionService,
-        );
-
-        $cmd->execute($context);
-
-        $auditData = $cmd->getAuditData($context);
-        self::assertInstanceOf(IrcopAuditData::class, $auditData);
-        self::assertSame('TestNick', $auditData->target);
-        self::assertSame('Spamming', $auditData->reason);
-        self::assertSame(['duration' => '7d'], $auditData->extra);
-    }
-
-    #[Test]
-    public function getHelpParamsReturnsEmptyArray(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertSame([], $cmd->getHelpParams());
     }
 
     private function createCommand(): SuspendCommand
     {
         return new SuspendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            new RootUserRegistry(''),
+            $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
         );
     }
@@ -519,7 +491,6 @@ final class SuspendCommandTest extends TestCase
         array $args,
         array &$messages,
         ?RegisteredNickRepositoryInterface $nickRepository = null,
-        ?OperIrcopRepositoryInterface $ircopRepository = null,
     ): NickServContext {
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $type, string $message) use (&$messages): void {

@@ -10,13 +10,11 @@ use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickForceService;
-use App\Application\OperServ\RootUserRegistry;
+use App\Application\NickServ\Service\NickProtectabilityResult;
+use App\Application\NickServ\Service\NickProtectabilityStatus;
+use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\Port\NetworkUserLookupPort;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use Psr\Log\LoggerInterface;
-
-use function strtolower;
 
 final class RenameCommand implements NickServCommandInterface, AuditableCommandInterface
 {
@@ -25,9 +23,7 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
     public function __construct(
         private readonly NetworkUserLookupPort $userLookup,
         private readonly NickForceService $forceService,
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly RootUserRegistry $rootRegistry,
+        private readonly NickTargetValidator $targetValidator,
         private readonly LoggerInterface $logger,
         private readonly string $guestPrefix = 'Guest-',
     ) {
@@ -104,24 +100,12 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
             return;
         }
 
-        $targetNickLower = strtolower($targetNick);
+        $protectability = $this->targetValidator->validate($targetNick);
 
-        if ($this->rootRegistry->isRoot($targetNickLower)) {
-            $context->reply('rename.cannot_rename_root', ['%nickname%' => $targetNick]);
+        if (!$protectability->isAllowed()) {
+            $this->replyProtectabilityError($context, $protectability);
 
             return;
-        }
-
-        $account = $this->nickRepository->findByNick($targetNick);
-
-        if (null !== $account) {
-            $ircop = $this->ircopRepository->findByNickId($account->getId());
-
-            if (null !== $ircop) {
-                $context->reply('rename.cannot_rename_oper', ['%nickname%' => $targetNick]);
-
-                return;
-            }
         }
 
         $this->forceService->forceGuestNick($onlineUser->uid, null, 'ircop-rename');
@@ -142,6 +126,17 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
             '%nickname%' => $targetNick,
             '%new_nick%' => $this->guestPrefix . 'XXXXXXX',
         ]);
+    }
+
+    private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
+    {
+        $nickname = $result->nickname;
+
+        match ($result->status) {
+            NickProtectabilityStatus::IsRoot => $context->reply('rename.cannot_rename_root', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsIrcop => $context->reply('rename.cannot_rename_oper', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsService => $context->reply('rename.cannot_rename_service', ['%nickname%' => $nickname]),
+        };
     }
 
     public function getAuditData(object $context): ?IrcopAuditData

@@ -25,6 +25,9 @@ final readonly class NickServPermission
     /** IRCop permission to drop a registered nickname. */
     public const string DROP = 'nickserv.drop';
 
+    /** IRCop permission to forbid and unforbid nicknames. */
+    public const string FORBID = 'nickserv.forbid';
+
     private function __construct()
     {
     }
