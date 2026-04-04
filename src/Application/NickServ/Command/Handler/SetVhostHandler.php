@@ -10,6 +10,8 @@ use App\Application\NickServ\VhostValidator;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\ValueObject\ForcedVhost;
 
 use function in_array;
 use function strtoupper;
@@ -22,11 +24,19 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         private readonly VhostValidator $vhostValidator,
         private readonly VhostDisplayResolver $displayResolver,
         private readonly NetworkUserLookupPort $userLookup,
+        private readonly OperIrcopRepositoryInterface $ircopRepository,
     ) {
     }
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
+        // Check if user has forced vhost from IRCop role - they cannot change it
+        if ($this->hasForcedVhost($account->getId())) {
+            $context->reply('set.vhost.forced');
+
+            return;
+        }
+
         $normalized = trim($value);
         $clearKeywords = ['OFF', ''];
         if ('' === $normalized || in_array(strtoupper($normalized), $clearKeywords, true)) {
@@ -76,5 +86,17 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
             $context->getNotifier()->setUserVhost($context->sender->uid, $displayVhost, $context->sender->serverSid);
         }
         $context->reply('set.vhost.success', ['vhost' => $displayVhost]);
+    }
+
+    private function hasForcedVhost(int $nickId): bool
+    {
+        $ircop = $this->ircopRepository->findByNickId($nickId);
+        if (null === $ircop) {
+            return false;
+        }
+
+        $pattern = $ircop->getRole()->getForcedVhostPattern();
+
+        return null !== $pattern && '' !== $pattern && ForcedVhost::isValidPattern($pattern);
     }
 }

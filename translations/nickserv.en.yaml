@@ -191,6 +191,7 @@ set:
     cleared:        "\x0303✔\x03 Your virtual host has been cleared."
     invalid:        "\x0304✗\x03 Invalid vhost. Only letters, digits, hyphen and dot (not at start/end of block); max 48 characters."
     taken:          "\x0304✗\x03 That vhost is already in use by another account."
+    forced:         "\x0304✗\x03 Your vhost is configured automatically and cannot be changed with SET VHOST."
 
   # --- IRCop SET mode ---------------------------------------------------------
   ircop:
