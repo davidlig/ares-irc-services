@@ -130,16 +130,18 @@ final readonly class MemoServService
                     ? $handler->getAuditData($context)
                     : null;
 
-                $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
-                    operatorNick: $sender->nick,
-                    commandName: $cmdName,
-                    permission: $requiredPermission,
-                    target: $auditData?->target,
-                    targetHost: $auditData?->targetHost,
-                    targetIp: $auditData?->targetIp,
-                    reason: $auditData?->reason,
-                    extra: $auditData?->extra ?? [],
-                ));
+                if (null !== $auditData) {
+                    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                        operatorNick: $sender->nick,
+                        commandName: $cmdName,
+                        permission: $requiredPermission,
+                        target: $auditData->target,
+                        targetHost: $auditData->targetHost,
+                        targetIp: $auditData->targetIp,
+                        reason: $auditData->reason,
+                        extra: $auditData->extra,
+                    ));
+                }
             }
         } catch (MemoDisabledException $e) {
             $context->reply('send.service_disabled_for_target', ['target' => $e->target]);

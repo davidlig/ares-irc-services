@@ -993,21 +993,21 @@ final class MemoServServiceTest extends TestCase
     }
 
     #[Test]
-    public function dispatchesIrcopCommandExecutedEventWithNullAuditDataWhenNotAuditable(): void
+    public function doesNotDispatchIrcopCommandEventWhenAuditDataIsNull(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        // Handler implements MemoServCommandInterface but NOT AuditableCommandInterface
-        $nonAuditableHandler = new class($contextHolder) implements MemoServCommandInterface {
+        // Handler implements AuditableCommandInterface but getAuditData returns null (command failed)
+        $auditableHandler = new class($contextHolder) implements MemoServCommandInterface, AuditableCommandInterface {
             public function __construct(private readonly stdClass $holder)
             {
             }
 
             public function getName(): string
             {
-                return 'NONAUDIT';
+                return 'FAILCMD';
             }
 
             public function getAliases(): array
@@ -1059,6 +1059,11 @@ final class MemoServServiceTest extends TestCase
             {
                 $this->holder->context = $context;
             }
+
+            public function getAuditData(object $context): ?IrcopAuditData
+            {
+                return null; // Command failed, no audit data
+            }
         };
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
@@ -1067,19 +1072,12 @@ final class MemoServServiceTest extends TestCase
             ->with('MEMOSERV_ADMIN', self::anything())
             ->willReturn(true);
 
+        // Event should NOT be dispatched when auditData is null
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
-                && 'NONAUDIT' === $event->commandName
-                && 'MEMOSERV_ADMIN' === $event->permission
-                && null === $event->target
-                && null === $event->targetHost
-                && null === $event->targetIp
-                && null === $event->reason
-                && [] === $event->extra));
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
 
-        $registry = new MemoServCommandRegistry([$nonAuditableHandler]);
+        $registry = new MemoServCommandRegistry([$auditableHandler]);
 
         $service = $this->createMemoServService(
             $registry,
@@ -1096,7 +1094,7 @@ final class MemoServServiceTest extends TestCase
             $eventDispatcher,
         );
 
-        $service->dispatch('NONAUDIT', $sender);
+        $service->dispatch('FAILCMD', $sender);
 
         self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
     }

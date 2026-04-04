@@ -828,21 +828,21 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
-    public function dispatchesIrcopCommandExecutedEventWithNullAuditDataWhenNotAuditable(): void
+    public function doesNotDispatchIrcopCommandEventWhenAuditDataIsNull(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        // Handler implements NickServCommandInterface but NOT AuditableCommandInterface
-        $nonAuditableHandler = new class($contextHolder) implements NickServCommandInterface {
+        // Handler implements AuditableCommandInterface but getAuditData returns null (command failed)
+        $auditableHandler = new class($contextHolder) implements NickServCommandInterface, AuditableCommandInterface {
             public function __construct(private readonly stdClass $holder)
             {
             }
 
             public function getName(): string
             {
-                return 'NONAUDIT';
+                return 'FAILCMD';
             }
 
             public function getAliases(): array
@@ -899,6 +899,11 @@ final class NickServServiceTest extends TestCase
             {
                 $this->holder->context = $context;
             }
+
+            public function getAuditData(object $context): ?IrcopAuditData
+            {
+                return null; // Command failed, no audit data
+            }
         };
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
@@ -907,17 +912,10 @@ final class NickServServiceTest extends TestCase
             ->with('NICKSERV_ADMIN', self::anything())
             ->willReturn(true);
 
+        // Event should NOT be dispatched when auditData is null
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::once())
-            ->method('dispatch')
-            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
-                && 'NONAUDIT' === $event->commandName
-                && 'NICKSERV_ADMIN' === $event->permission
-                && null === $event->target
-                && null === $event->targetHost
-                && null === $event->targetIp
-                && null === $event->reason
-                && [] === $event->extra));
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('en');
@@ -925,7 +923,7 @@ final class NickServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($account);
 
-        $registry = new NickServCommandRegistry([$nonAuditableHandler]);
+        $registry = new NickServCommandRegistry([$auditableHandler]);
 
         $service = new NickServService(
             $this->createStub(AuthorizationContextInterface::class),
@@ -944,7 +942,7 @@ final class NickServServiceTest extends TestCase
             $this->createStub(LoggerInterface::class),
         );
 
-        $service->dispatch('NONAUDIT', $sender);
+        $service->dispatch('FAILCMD', $sender);
 
         self::assertInstanceOf(NickServContext::class, $contextHolder->context);
     }

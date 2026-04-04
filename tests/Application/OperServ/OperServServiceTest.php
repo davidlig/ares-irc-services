@@ -1102,6 +1102,118 @@ final class OperServServiceTest extends TestCase
         self::assertInstanceOf(OperServContext::class, $contextHolder->context);
     }
 
+    #[Test]
+    public function doesNotDispatchIrcopCommandEventWhenAuditDataIsNull(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        // Handler implements AuditableCommandInterface but getAuditData returns null (command failed)
+        $auditableHandler = new class($contextHolder) implements OperServCommandInterface, AuditableCommandInterface {
+            private ?IrcopAuditData $auditData = null;
+
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'FAILCMD';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'OPERSERV_ADMIN';
+            }
+
+            public function execute(OperServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+
+            public function getAuditData(object $context): ?IrcopAuditData
+            {
+                return null; // Command failed, no audit data
+            }
+        };
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('OPERSERV_ADMIN', self::anything())
+            ->willReturn(true);
+
+        // Event should NOT be dispatched when auditData is null
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
+
+        $registry = new OperServCommandRegistry([$auditableHandler]);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn(null);
+
+        $service = $this->createOperServService(
+            $registry,
+            $nickRepository,
+            $this->createStub(OperServNotifierInterface::class),
+            $this->createStub(UserMessageTypeResolverInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createAccessHelper(),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('FAILCMD', $sender);
+
+        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+    }
+
     private function createMockCommandHandler(
         string $name,
         bool $isOperOnly,

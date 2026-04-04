@@ -133,16 +133,18 @@ final readonly class OperServService
                     ? $handler->getAuditData($context)
                     : null;
 
-                $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
-                    operatorNick: $sender->nick,
-                    commandName: $cmdName,
-                    permission: $requiredPermission,
-                    target: $auditData?->target,
-                    targetHost: $auditData?->targetHost,
-                    targetIp: $auditData?->targetIp,
-                    reason: $auditData?->reason,
-                    extra: $auditData?->extra ?? [],
-                ));
+                if (null !== $auditData) {
+                    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                        operatorNick: $sender->nick,
+                        commandName: $cmdName,
+                        permission: $requiredPermission,
+                        target: $auditData->target,
+                        targetHost: $auditData->targetHost,
+                        targetIp: $auditData->targetIp,
+                        reason: $auditData->reason,
+                        extra: $auditData->extra,
+                    ));
+                }
             }
         } finally {
             $this->authorizationContext->clear();
