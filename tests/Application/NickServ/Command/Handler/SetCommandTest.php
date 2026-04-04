@@ -21,7 +21,6 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
-use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\NickServ\VhostDisplayResolver;

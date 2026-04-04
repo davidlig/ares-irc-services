@@ -80,8 +80,6 @@ final readonly class UnifiedHelpFormatter
                 'description' => $context->trans($command->getShortDescKey()),
             ]);
         }
-
-        $context->reply('help.footer');
     }
 
     public function showCommandHelp(HelpFormatterContextInterface $context, object $handler): void

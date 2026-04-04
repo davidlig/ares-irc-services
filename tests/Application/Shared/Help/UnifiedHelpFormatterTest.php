@@ -526,7 +526,7 @@ final class UnifiedHelpFormatterTest extends TestCase
         $context->expects(self::atLeastOnce())->method('hasIrcopAccess')->willReturn(true);
         $context->expects(self::atLeastOnce())->method('getIrcopCommands')->willReturn([$cmd]);
         $context->expects(self::atLeastOnce())->method('trans')->willReturn('USERIP');
-        $context->expects(self::exactly(6))->method('reply');
+        $context->expects(self::exactly(5))->method('reply');
         $context->expects(self::exactly(4))->method('replyRaw');
 
         $formatter = new UnifiedHelpFormatter();

@@ -8,7 +8,6 @@ use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
-use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickTargetValidator;
