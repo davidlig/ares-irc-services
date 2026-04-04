@@ -21,6 +21,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function sprintf;
+use function str_starts_with;
 
 use const FILTER_VALIDATE_EMAIL;
 
@@ -44,6 +45,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
         private readonly int $registerMinIntervalSeconds,
+        private readonly string $guestPrefix = 'Guest-',
     ) {
     }
 
@@ -127,6 +129,12 @@ final readonly class RegisterCommand implements NickServCommandInterface
         $nick = $sender->nick;
         $password = $context->args[0];
         $email = $context->args[1];
+
+        if (str_starts_with($nick, $this->guestPrefix)) {
+            $context->reply('register.guest_prefix_forbidden', ['prefix' => $this->guestPrefix]);
+
+            return;
+        }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $context->reply('register.invalid_email');

@@ -55,6 +55,80 @@ final class RegisterCommandTest extends TestCase
     }
 
     #[Test]
+    public function replyForbiddenWhenNickStartsWithGuestPrefix(): void
+    {
+        $sender = new SenderView('UID1', 'Guest-User', 'i', 'h', 'c', 'ip');
+        $throttle = new RegisterThrottleRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $passwordHasher,
+            $throttle,
+            $clientKeyResolver,
+            $messageBus,
+            $translator,
+            $logger,
+            0,
+            'Guest-',
+        );
+
+        $context = $this->createContext($sender, ['password', 'user@example.com'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertSame(['register.guest_prefix_forbidden'], $messages);
+    }
+
+    #[Test]
+    public function replyForbiddenWhenNickStartsWithCustomGuestPrefix(): void
+    {
+        $sender = new SenderView('UID1', 'Renamed-ABC123', 'i', 'h', 'c', 'ip');
+        $throttle = new RegisterThrottleRegistry();
+        $clientKeyResolver = new NickServClientKeyResolver();
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $passwordHasher = $this->createStub(PasswordHasherInterface::class);
+        $messageBus = $this->createStub(MessageBusInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $passwordHasher,
+            $throttle,
+            $clientKeyResolver,
+            $messageBus,
+            $translator,
+            $logger,
+            0,
+            'Renamed-',
+        );
+
+        $context = $this->createContext($sender, ['password', 'user@example.com'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertSame(['register.guest_prefix_forbidden'], $messages);
+    }
+
+    #[Test]
     public function replyThrottledWhenCooldownRemaining(): void
     {
         $sender = new SenderView('UID1', 'User', 'ident', 'host', 'cloak', 'ip', false, false, '', '');

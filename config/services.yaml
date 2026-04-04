@@ -785,6 +785,7 @@ services:
     App\Application\NickServ\Command\Handler\RegisterCommand:
         arguments:
             $registerMinIntervalSeconds: '%nickserv.register_min_interval%'
+            $guestPrefix: '%services.guest_prefix%'
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\VerifyCommand:

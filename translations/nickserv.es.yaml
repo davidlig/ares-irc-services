@@ -31,6 +31,7 @@ register:
   invalid_email:    "\x0304✗\x03 La dirección de correo electrónico no es válida."
   email_already_used: "\x0304✗\x03 El correo \x02%email%\x02 ya está en uso por otra cuenta. Usa otra dirección."
   throttled:          "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de intentar registrar de nuevo."
+  guest_prefix_forbidden: "\x0304✗\x03 No puedes registrar un nick que empiece por \x02%prefix%\x02."
 
 # --- VERIFY -----------------------------------------------------------------
 verify:
