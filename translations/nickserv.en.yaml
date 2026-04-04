@@ -221,6 +221,7 @@ help:
 protection:
   nick_in_use:      "\x0304⚠\x03 Nick \x02%nickname%\x02 is registered. You will be renamed if you do not identify."
   renamed_to:       "\x0307→\x03 You have been renamed to \x02%guest_nick%\x02. To reclaim your nick:\n\x0303/msg %bot% IDENTIFY %nickname% <password>\x03"
+  nick_forbidden:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden: %reason%"
 
 # --- IRCop Commands ---------------------------------------------------------
 userip:
@@ -367,9 +368,3 @@ unforbid:
     Example: UNFORBID SomeNick
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 is no longer forbidden."
   not_forbidden:    "\x0304✗\x03 Nickname \x02%nickname%\x02 is not forbidden."
-
-# --- Nick Protection (Forbidden) ------------------------------------------------
-protection:
-  nick_in_use:      "\x0304⚠\x03 Nick \x02%nickname%\x02 is registered. You will be renamed if you do not identify."
-  renamed_to:       "\x0307→\x03 You have been renamed to \x02%guest_nick%\x02. To reclaim your nick:\n\x0303/msg %bot% IDENTIFY %nickname% <password>\x03"
-  nick_forbidden:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden: %reason%"
