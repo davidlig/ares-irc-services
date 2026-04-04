@@ -28,7 +28,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
     ) {
     }
 
-    public function handle(NickServContext $context, RegisteredNick $account, string $value): void
+    public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
         $parts = explode(' ', $value, 2);
         $newEmail = trim($parts[0] ?? '');
@@ -48,6 +48,12 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
 
         if (null === $account->getEmail()) {
             $context->reply('error.not_identified');
+
+            return;
+        }
+
+        if ($isIrcopMode) {
+            $this->changeEmailDirectly($context, $account, $newEmail);
 
             return;
         }
@@ -112,6 +118,20 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             return;
         }
 
+        $existingByEmail = $this->nickRepository->findByEmail($newEmail);
+        if (null !== $existingByEmail && $existingByEmail->getId() !== $account->getId()) {
+            $context->reply('register.email_already_used', ['email' => $newEmail]);
+
+            return;
+        }
+
+        $account->changeEmail($newEmail);
+        $this->nickRepository->save($account);
+        $context->reply('set.email.success', ['email' => $newEmail]);
+    }
+
+    private function changeEmailDirectly(NickServContext $context, RegisteredNick $account, string $newEmail): void
+    {
         $existingByEmail = $this->nickRepository->findByEmail($newEmail);
         if (null !== $existingByEmail && $existingByEmail->getId() !== $account->getId()) {
             $context->reply('register.email_already_used', ['email' => $newEmail]);

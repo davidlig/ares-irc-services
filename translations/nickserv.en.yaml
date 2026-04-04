@@ -192,58 +192,25 @@ set:
     invalid:        "\x0304✗\x03 Invalid vhost. Only letters, digits, hyphen and dot (not at start/end of block); max 48 characters."
     taken:          "\x0304✗\x03 That vhost is already in use by another account."
 
-# --- HELP -------------------------------------------------------------------
-help:
-  syntax:           "HELP [command]"
-  short:            "Display help for %nickserv% commands."
-  help:             "Displays general %nickserv% help or detailed information\nfor a specific command."
-  header_title:     "%bot%"
-  intro:            "Nickname registration and protection service for the IRC network."
-  intro_expiration: "NOTE: Nicknames \x0304\x1Funused\x0F for more than %days% days are automatically removed."
-  general_header:   "\x02\x0314Available commands:\x03\x0F"
-  command_line:     "  \x0307%command%\x03%description%"
-  subcommand_line:  "  \x0307%command%\x03%description%"
-  options_header:   "\x02\x0314Options:\x03\x0F"
-  general_footer:   "Use \x0303/msg %bot% HELP <command>\x03 for more information."
-  set_sub_footer:   "Use \x0303/msg %bot% HELP %command% <option>\x03 for more information."
-  command_header:   "\x02Help for %command%:\x02"
-  syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
-  footer:           "\x0314─────────────────────────────\x03"
-  unknown_command:  "\x0304✗\x03 No help available for \x02%command%\x02."
-  ircop_header:     "The following commands are available for \x0304\x02IRCOPS\x02\x03:"
-
-  set_timezone:
-    index_label:    "\x0314Regions\x03 (use \x02HELP SET TIMEZONE <region>\x02 for list):"
-    region_header:  "\x0314Timezones for %region%:\x03"
-    region_unknown: "\x0304✗\x03 Unknown region. Use \x02HELP SET TIMEZONE\x02 for the index."
-
-# --- Nick Protection --------------------------------------------------------
-protection:
-  nick_in_use:      "\x0304⚠\x03 Nick \x02%nickname%\x02 is registered. You will be renamed if you do not identify."
-  renamed_to:       "\x0307→\x03 You have been renamed to \x02%guest_nick%\x02. To reclaim your nick:\n\x0303/msg %bot% IDENTIFY %nickname% <password>\x03"
-  nick_forbidden:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden: %reason%"
-
-# --- IRCop Commands ---------------------------------------------------------
-userip:
-  syntax:           "USERIP <nickname>"
-  short:            "Get the user's real IP address and hostname."
-  help:             |
-    Shows the real IP address and hostname of the specified user.
-    Only available to IRCops with 'nickserv.userip' permission.
-    
-    This command displays sensitive user information.
-    Use responsibly.
-    
-    Syntax: USERIP <nickname>
-    Example: USERIP SomeUser
-  not_online:       "\x0304✗\x03 User \x02%nick%\x02 is not connected."
-  result:           "\x0307ℹ\x03 User: \x02%nick%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
-
-permissions:
-  nickserv.userip:  "View the real IP/Host of a user (IRCop only)"
-  nickserv.suspend: "Suspend/unsuspend a nickname (IRCop only)"
-  nickserv.rename:  "Force rename a connected user to a random nickname (IRCop only)"
-  nickserv.drop:    "Drop a registered nickname (IRCop only)"
+  # --- IRCop SET mode ---------------------------------------------------------
+  ircop:
+    syntax:         "SET <nickname> <option> <value>"
+    short:          "Modify a nickname's configuration."
+    help:           |
+      Allows an IRCop to modify a registered nickname's settings.
+      The target nickname cannot be a Root user or an IRCop.
+      
+      Available options: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+      
+      SET PASSWORD: Changes the password directly.
+      SET EMAIL: Changes the email directly without token validation.
+      
+      This command requires IRCop permission: nickserv.set
+      
+      Syntax: SET <nickname> <option> <value>
+      Example: SET User PASSWORD newpass
+  not_registered_ircop: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  cannot_modify_oper:    "\x0304✗\x03 Cannot modify an IRC operator nickname."
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

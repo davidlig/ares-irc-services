@@ -17,7 +17,7 @@ final readonly class SetMsgHandler implements SetOptionHandlerInterface
     ) {
     }
 
-    public function handle(NickServContext $context, RegisteredNick $account, string $value): void
+    public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
         $flag = strtoupper($value);
 

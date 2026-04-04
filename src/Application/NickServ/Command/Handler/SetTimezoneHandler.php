@@ -16,7 +16,7 @@ final readonly class SetTimezoneHandler implements SetOptionHandlerInterface
     ) {
     }
 
-    public function handle(NickServContext $context, RegisteredNick $account, string $value): void
+    public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
         $value = trim($value);
 

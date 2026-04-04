@@ -23,7 +23,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
     ) {
     }
 
-    public function handle(NickServContext $context, RegisteredNick $account, string $value): void
+    public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
         $normalized = trim($value);
         $clearKeywords = ['OFF', ''];

@@ -6,6 +6,7 @@ namespace App\Tests\Application\NickServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\Handler\SetCommand;
 use App\Application\NickServ\Command\Handler\SetEmailHandler;
 use App\Application\NickServ\Command\Handler\SetLanguageHandler;
@@ -21,6 +22,8 @@ use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Application\NickServ\Service\NickProtectabilityResult;
+use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
 use App\Application\Port\SenderView;
@@ -145,7 +148,7 @@ final class SetCommandTest extends TestCase
         $notifier->expects(self::never())->method('sendMessage');
         $translator = $this->createStub(TranslatorInterface::class);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(null, null, ['PASSWORD', 'newpass'], $notifier, $translator));
     }
 
@@ -154,13 +157,7 @@ final class SetCommandTest extends TestCase
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler(
-            $nickRepo,
-            new PendingEmailChangeRegistry(),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
-            $this->createStub(LoggerInterface::class),
-        );
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -175,7 +172,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), null, ['PASSWORD', 'x'], $notifier, $translator));
 
         self::assertSame(['error.not_identified'], $messages);
@@ -202,8 +199,35 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['UNKNOWN', 'value'], $notifier, $translator));
+
+        self::assertSame(['set.unknown_option'], $messages);
+    }
+
+    #[Test]
+    public function emptyArgsReturnsError(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, [], $notifier, $translator));
 
         self::assertSame(['set.unknown_option'], $messages);
     }
@@ -232,7 +256,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['LANGUAGE', 'es'], $notifier, $translator));
 
         self::assertSame(['set.language.success'], $messages);
@@ -263,7 +287,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PASSWORD', 'newpass123'], $notifier, $translator));
 
         self::assertSame(['set.password.success'], $messages);
@@ -304,7 +328,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['EMAIL', 'new@example.com'], $notifier, $translator));
 
         self::assertStringStartsWith('set.email.', $messages[0]);
@@ -333,7 +357,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PRIVATE', 'ON'], $notifier, $translator));
 
         self::assertSame(['set.private.on'], $messages);
@@ -362,7 +386,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['MSG', 'ON'], $notifier, $translator));
 
         self::assertSame(['set.msg.on'], $messages);
@@ -391,7 +415,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', 'America/New_York'], $notifier, $translator));
 
         self::assertSame(['set.timezone.success'], $messages);
@@ -420,7 +444,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['VHOST', 'vhost.example.com'], $notifier, $translator));
 
         self::assertStringStartsWith('set.vhost.', $messages[0]);
@@ -450,7 +474,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['language', 'es'], $notifier, $translator));
 
         self::assertSame(['set.language.success'], $messages);
@@ -477,7 +501,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PASSWORD', ''], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
@@ -504,7 +528,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['EMAIL', ''], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
@@ -532,7 +556,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['EMAIL', 'not-an-email'], $notifier, $translator));
 
         self::assertSame(['register.invalid_email'], $messages);
@@ -564,7 +588,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['EMAIL', 'used@example.com'], $notifier, $translator));
 
         self::assertSame(['register.email_already_used'], $messages);
@@ -591,7 +615,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['LANGUAGE', ''], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
@@ -620,7 +644,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['LANGUAGE', 'invalid-lang'], $notifier, $translator));
 
         self::assertSame(['set.language.invalid'], $messages);
@@ -647,7 +671,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PRIVATE', 'MAYBE'], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
@@ -674,7 +698,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['MSG', 'YES'], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
@@ -701,7 +725,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', ''], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
@@ -730,7 +754,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', 'Not/A/Timezone'], $notifier, $translator));
 
         self::assertSame(['set.timezone.invalid'], $messages);
@@ -757,7 +781,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['VHOST', '**invalid**'], $notifier, $translator));
 
         self::assertSame(['set.vhost.invalid'], $messages);
@@ -788,7 +812,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['VHOST', 'taken.vhost'], $notifier, $translator));
 
         self::assertSame(['set.vhost.taken'], $messages);
@@ -817,7 +841,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['PRIVATE', 'OFF'], $notifier, $translator));
 
         self::assertSame(['set.private.off'], $messages);
@@ -846,7 +870,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['MSG', 'OFF'], $notifier, $translator));
 
         self::assertSame(['set.msg.off'], $messages);
@@ -875,7 +899,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['TIMEZONE', 'OFF'], $notifier, $translator));
 
         self::assertSame(['set.timezone.cleared'], $messages);
@@ -904,7 +928,7 @@ final class SetCommandTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['VHOST', 'OFF'], $notifier, $translator));
 
         self::assertSame(['set.vhost.cleared'], $messages);
@@ -922,7 +946,7 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertSame('SET', $cmd->getName());
     }
 
@@ -938,7 +962,7 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertSame([], $cmd->getAliases());
     }
 
@@ -954,7 +978,7 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertSame(1, $cmd->getMinArgs());
     }
 
@@ -970,7 +994,7 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertSame('set.syntax', $cmd->getSyntaxKey());
     }
 
@@ -986,7 +1010,7 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertSame('set.help', $cmd->getHelpKey());
     }
 
@@ -1002,7 +1026,7 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertSame(4, $cmd->getOrder());
     }
 
@@ -1018,7 +1042,7 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertSame('set.short', $cmd->getShortDescKey());
     }
 
@@ -1034,7 +1058,7 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         $subCommands = $cmd->getSubCommandHelp();
 
         self::assertCount(7, $subCommands);
@@ -1059,12 +1083,12 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertFalse($cmd->isOperOnly());
     }
 
     #[Test]
-    public function getRequiredPermissionReturnsIdentifiedOwner(): void
+    public function getRequiredPermissionReturnsSetPermission(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
@@ -1075,8 +1099,8 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
-        self::assertSame(NickServPermission::IDENTIFIED_OWNER, $cmd->getRequiredPermission());
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
+        self::assertSame(NickServPermission::SET, $cmd->getRequiredPermission());
     }
 
     #[Test]
@@ -1091,7 +1115,265 @@ final class SetCommandTest extends TestCase
         $setTimezone = new SetTimezoneHandler($nickRepo);
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
 
-        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost);
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
         self::assertSame([], $cmd->getHelpParams());
+    }
+
+    #[Test]
+    public function executeIrcopModeAllowsIrcopToModifyRegularUser(): void
+    {
+        $targetAccount = $this->createMock(RegisteredNick::class);
+        $targetAccount->expects(self::once())->method('changeLanguage')->with('es');
+        $targetAccount->method('getLanguage')->willReturn('es');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($targetAccount);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetUser', $targetAccount));
+
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $validator);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['TargetUser', 'LANGUAGE', 'es'], $notifier, $translator));
+
+        self::assertSame(['set.language.success'], $messages);
+    }
+
+    #[Test]
+    public function executeIrcopModeRejectsRootTarget(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::root('RootUser'));
+
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params ? json_encode($params) : ''));
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $validator);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['RootUser', 'PASSWORD', 'newpass'], $notifier, $translator));
+
+        self::assertStringContainsString('set.cannot_modify_oper', $messages[0]);
+    }
+
+    #[Test]
+    public function executeIrcopModeRejectsIrcopTarget(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::ircop('OperUser'));
+
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params ? json_encode($params) : ''));
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $validator);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['OperUser', 'PASSWORD', 'newpass'], $notifier, $translator));
+
+        self::assertStringContainsString('set.cannot_modify_oper', $messages[0]);
+    }
+
+    #[Test]
+    public function executeIrcopModeRejectsServiceNick(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::service('NickServ'));
+
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params ? json_encode($params) : ''));
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $validator);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['NickServ', 'PASSWORD', 'newpass'], $notifier, $translator));
+
+        self::assertStringContainsString('set.cannot_modify_oper', $messages[0]);
+    }
+
+    #[Test]
+    public function executeIrcopModeRejectsUnregisteredNick(): void
+    {
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('UnregisteredUser', null));
+
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params ? json_encode($params) : ''));
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $validator);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['UnregisteredUser', 'PASSWORD', 'newpass'], $notifier, $translator));
+
+        self::assertStringContainsString('set.not_registered_ircop', $messages[0]);
+    }
+
+    #[Test]
+    public function getAuditDataReturnsNullAfterOwnerMode(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->expects(self::once())->method('changeLanguage')->with('es');
+        $account->method('getLanguage')->willReturn('es');
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $this->createStub(NickTargetValidator::class));
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['LANGUAGE', 'es'], $notifier, $translator));
+
+        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
+    }
+
+    #[Test]
+    public function getAuditDataReturnsIrcopAuditDataAfterIrcopMode(): void
+    {
+        $targetAccount = $this->createMock(RegisteredNick::class);
+        $targetAccount->expects(self::once())->method('changeLanguage')->with('es');
+        $targetAccount->method('getLanguage')->willReturn('es');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($targetAccount);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetUser', $targetAccount));
+
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $validator);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['TargetUser', 'LANGUAGE', 'es'], $notifier, $translator));
+
+        $auditData = $cmd->getAuditData($this->createStub(NickServContext::class));
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('TargetUser', $auditData->target);
+        self::assertSame('LANGUAGE', $auditData->extra['option']);
+        self::assertSame('es', $auditData->extra['value']);
+    }
+
+    #[Test]
+    public function getAuditDataExcludesPasswordValueInIrcopMode(): void
+    {
+        $targetAccount = $this->createMock(RegisteredNick::class);
+        $targetAccount->expects(self::once())->method('changePasswordWithHasher');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($targetAccount);
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetUser', $targetAccount));
+
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setLanguage = new SetLanguageHandler($nickRepo);
+        $setPrivate = new SetPrivateHandler($nickRepo);
+        $setMsg = new SetMsgHandler($nickRepo);
+        $setTimezone = new SetTimezoneHandler($nickRepo);
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''));
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $validator);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['TargetUser', 'PASSWORD', 'secret123'], $notifier, $translator));
+
+        $auditData = $cmd->getAuditData($this->createStub(NickServContext::class));
+        self::assertInstanceOf(IrcopAuditData::class, $auditData);
+        self::assertSame('TargetUser', $auditData->target);
+        self::assertSame('PASSWORD', $auditData->extra['option']);
+        self::assertNull($auditData->extra['value']);
     }
 }

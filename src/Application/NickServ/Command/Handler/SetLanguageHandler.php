@@ -16,7 +16,7 @@ final readonly class SetLanguageHandler implements SetOptionHandlerInterface
     ) {
     }
 
-    public function handle(NickServContext $context, RegisteredNick $account, string $value): void
+    public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
         if ('' === $value) {
             $context->reply('error.syntax', ['syntax' => $context->trans('set.language.syntax')]);
