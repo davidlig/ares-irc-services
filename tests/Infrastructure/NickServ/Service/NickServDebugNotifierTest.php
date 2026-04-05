@@ -189,6 +189,41 @@ final class NickServDebugNotifierTest extends TestCase
     }
 
     #[Test]
+    public function logShowsOptionWithoutValue(): void
+    {
+        $capturedMessage = '';
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::atLeastOnce())
+            ->method('trans')
+            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale) use (&$capturedMessage): string {
+                if ('debug.action_with_option' === $id) {
+                    return $params['%operator%'] . ' ' . $params['%command%'] . ' ' . $params['%target%'] . ' Option=' . $params['%option%'];
+                }
+
+                return '';
+            });
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('sendMessage')
+            ->willReturnCallback(static function (string $channel, string $message, string $type) use (&$capturedMessage): void {
+                $capturedMessage = $message;
+            });
+
+        $debug = $this->createNotifier('#opers', $notifier, translator: $translator);
+
+        $debug->log(
+            operator: 'Admin',
+            command: 'NOEXPIRE',
+            target: 'TargetUser',
+            extra: ['option' => 'ON'],
+        );
+
+        self::assertStringContainsString('Option=ON', $capturedMessage);
+    }
+
+    #[Test]
     public function logWithDuration(): void
     {
         $capturedMessage = '';
