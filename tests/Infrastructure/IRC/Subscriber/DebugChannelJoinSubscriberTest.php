@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Subscriber;
 
-use App\Application\Port\DebugActionPort;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Subscriber\DebugChannelJoinSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -24,15 +24,31 @@ final class DebugChannelJoinSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onBurstCompleteCallsEnsureChannelJoined(): void
+    public function onBurstCompleteCallsEnsureChannelJoinedOnAllNotifiers(): void
     {
-        $debugAction = $this->createMock(DebugActionPort::class);
-        $debugAction->expects(self::once())->method('ensureChannelJoined');
+        $notifier1 = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier1->expects(self::once())->method('ensureChannelJoined');
 
-        $subscriber = new DebugChannelJoinSubscriber($debugAction);
+        $notifier2 = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier2->expects(self::once())->method('ensureChannelJoined');
+
+        $subscriber = new DebugChannelJoinSubscriber([$notifier1, $notifier2]);
 
         $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $subscriber->onBurstComplete($event);
+    }
+
+    #[Test]
+    public function onBurstCompleteHandlesEmptyNotifiersArray(): void
+    {
+        $subscriber = new DebugChannelJoinSubscriber([]);
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+
+        $subscriber->onBurstComplete($event);
+
+        self::assertTrue(true);
     }
 }

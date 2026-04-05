@@ -16,6 +16,7 @@ final class IrcopCommandExecutedEventTest extends TestCase
     public function constructorWithAllParameters(): void
     {
         $event = new IrcopCommandExecutedEvent(
+            serviceName: 'nickserv',
             operatorNick: 'AdminUser',
             commandName: 'KILL',
             permission: 'operserv.kill',
@@ -26,6 +27,7 @@ final class IrcopCommandExecutedEventTest extends TestCase
             extra: ['duration' => '1h'],
         );
 
+        self::assertSame('nickserv', $event->serviceName);
         self::assertSame('AdminUser', $event->operatorNick);
         self::assertSame('KILL', $event->commandName);
         self::assertSame('operserv.kill', $event->permission);
@@ -40,11 +42,13 @@ final class IrcopCommandExecutedEventTest extends TestCase
     public function constructorWithRequiredParametersOnly(): void
     {
         $event = new IrcopCommandExecutedEvent(
+            serviceName: 'chanserv',
             operatorNick: 'TestOper',
             commandName: 'GLINE',
             permission: 'operserv.gline',
         );
 
+        self::assertSame('chanserv', $event->serviceName);
         self::assertSame('TestOper', $event->operatorNick);
         self::assertSame('GLINE', $event->commandName);
         self::assertSame('operserv.gline', $event->permission);
@@ -59,6 +63,7 @@ final class IrcopCommandExecutedEventTest extends TestCase
     public function eventExtendsSymfonyEvent(): void
     {
         $event = new IrcopCommandExecutedEvent(
+            serviceName: 'operserv',
             operatorNick: 'Admin',
             commandName: 'TEST',
             permission: 'test.permission',

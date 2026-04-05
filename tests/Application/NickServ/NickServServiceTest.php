@@ -794,7 +794,8 @@ final class NickServServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'nickserv' === $event->serviceName
+                && 'Nick' === $event->operatorNick
                 && 'AUDITCMD' === $event->commandName
                 && 'NICKSERV_ADMIN' === $event->permission
                 && 'TargetNick' === $event->target
@@ -811,12 +812,16 @@ final class NickServServiceTest extends TestCase
 
         $registry = new NickServCommandRegistry([$auditableHandler]);
 
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('NickServ');
+        $notifier->method('getServiceKey')->willReturn('nickserv');
+
         $service = new NickServService(
             $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker,
             $registry,
             $nickRepository,
-            $this->createStub(NickServNotifierInterface::class),
+            $notifier,
             new UserMessageTypeResolver($nickRepository),
             $this->createStub(TranslatorInterface::class),
             new PendingVerificationRegistry(),

@@ -967,7 +967,8 @@ final class MemoServServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'memoserv' === $event->serviceName
+                && 'Nick' === $event->operatorNick
                 && 'AUDITCMD' === $event->commandName
                 && 'MEMOSERV_ADMIN' === $event->permission
                 && 'TargetNick' === $event->target
@@ -978,10 +979,14 @@ final class MemoServServiceTest extends TestCase
 
         $registry = new MemoServCommandRegistry([$auditableHandler]);
 
+        $notifier = $this->createStub(MemoServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('MemoServ');
+        $notifier->method('getServiceKey')->willReturn('memoserv');
+
         $service = $this->createMemoServService(
             $registry,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MemoServNotifierInterface::class),
+            $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $this->createStub(TranslatorInterface::class),
             $this->createServiceNicks(),

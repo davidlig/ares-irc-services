@@ -9,6 +9,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 final class IrcopCommandExecutedEvent extends Event
 {
     public function __construct(
+        public readonly string $serviceName,
         public readonly string $operatorNick,
         public readonly string $commandName,
         public readonly string $permission,

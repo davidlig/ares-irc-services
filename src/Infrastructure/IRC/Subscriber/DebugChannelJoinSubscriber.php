@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Subscriber;
 
-use App\Application\Port\DebugActionPort;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -12,12 +12,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Joins the debug channel when services connect (if configured).
  *
  * The debug channel receives OPER.DEBUG action logs for IRCop commands.
- * ChanServ joins this channel to receive the logs.
+ * Each service (NickServ, ChanServ, OperServ) joins its debug channel if configured.
  */
 final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterface
 {
+    /**
+     * @param iterable<ServiceDebugNotifierInterface> $debugNotifiers
+     */
     public function __construct(
-        private DebugActionPort $debugAction,
+        private iterable $debugNotifiers,
     ) {
     }
 
@@ -30,6 +33,8 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
-        $this->debugAction->ensureChannelJoined();
+        foreach ($this->debugNotifiers as $notifier) {
+            $notifier->ensureChannelJoined();
+        }
     }
 }

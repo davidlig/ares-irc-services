@@ -1070,7 +1070,8 @@ final class OperServServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'operserv' === $event->serviceName
+                && 'Nick' === $event->operatorNick
                 && 'AUDITCMD' === $event->commandName
                 && 'OPERSERV_ADMIN' === $event->permission
                 && 'TargetNick' === $event->target
@@ -1083,10 +1084,14 @@ final class OperServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
 
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('OperServ');
+        $notifier->method('getServiceKey')->willReturn('operserv');
+
         $service = $this->createOperServService(
             $registry,
             $nickRepository,
-            $this->createStub(OperServNotifierInterface::class),
+            $notifier,
             $this->createStub(UserMessageTypeResolverInterface::class),
             $this->createStub(TranslatorInterface::class),
             $this->createAccessHelper(),

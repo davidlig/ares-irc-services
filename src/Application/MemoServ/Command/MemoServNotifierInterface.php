@@ -18,4 +18,9 @@ interface MemoServNotifierInterface
      * Get the bot's nickname.
      */
     public function getNick(): string;
+
+    /**
+     * Get the service key (e.g., 'memoserv').
+     */
+    public function getServiceKey(): string;
 }

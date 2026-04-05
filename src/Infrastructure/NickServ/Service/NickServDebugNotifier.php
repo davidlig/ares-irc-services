@@ -2,20 +2,19 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\OperServ\Service;
+namespace App\Infrastructure\NickServ\Service;
 
+use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
-use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-final readonly class OperServDebugAction implements DebugActionPort
+final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterface
 {
     private const string COLOR_BLUE = "\x0302";
 
@@ -23,19 +22,25 @@ final readonly class OperServDebugAction implements DebugActionPort
 
     private const string COLOR_RESET = "\x03";
 
+    private const string PASSWORD_OPTION = 'PASSWORD';
+
     public function __construct(
-        private ChannelServiceActionsPort $channelActions,
-        private NetworkUserLookupPort $userLookup,
-        private OperServNotifierInterface $notifier,
-        private IdentifiedSessionRegistry $identifiedRegistry,
-        private OperIrcopRepositoryInterface $ircopRepo,
-        private RootUserRegistry $rootRegistry,
-        private RegisteredNickRepositoryInterface $nickRepo,
-        private TranslatorInterface $translator,
-        private string $defaultLanguage,
-        private ?string $debugChannel,
-        private LoggerInterface $logger,
+        private readonly NickServNotifierInterface $notifier,
+        private readonly NetworkUserLookupPort $userLookup,
+        private readonly IdentifiedSessionRegistry $identifiedRegistry,
+        private readonly OperIrcopRepositoryInterface $ircopRepo,
+        private readonly RootUserRegistry $rootRegistry,
+        private readonly RegisteredNickRepositoryInterface $nickRepo,
+        private readonly TranslatorInterface $translator,
+        private readonly string $defaultLanguage,
+        private readonly ?string $debugChannel,
+        private readonly LoggerInterface $logger,
     ) {
+    }
+
+    public function getServiceName(): string
+    {
+        return 'nickserv';
     }
 
     public function isConfigured(): bool
@@ -45,11 +50,6 @@ final readonly class OperServDebugAction implements DebugActionPort
 
     public function ensureChannelJoined(): void
     {
-        if (!$this->isConfigured()) {
-            return;
-        }
-
-        $this->channelActions->joinChannelAsService($this->debugChannel);
     }
 
     public function log(
@@ -111,68 +111,55 @@ final readonly class OperServDebugAction implements DebugActionPort
         ?string $reason,
         array $extra,
     ): void {
-        $this->ensureChannelJoined();
-
         $coloredOperator = self::COLOR_BLUE . $operator . self::COLOR_RESET;
         $coloredCommand = self::COLOR_RED . $command . self::COLOR_RESET;
         $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
 
         $duration = $extra['duration'] ?? null;
+        $option = $extra['option'] ?? null;
+        $value = $extra['value'] ?? null;
 
-        // Use specific translation for GLOBAL command
-        if ('GLOBAL' === $command) {
-            $messageParams = [
-                '%operator%' => $coloredOperator,
-                '%command%' => $coloredCommand,
-                '%target%' => $coloredTarget,
-                '%type%' => $extra['type'] ?? 'PRIVMSG',
-                '%count%' => $extra['count'] ?? '0',
-                '%message%' => $reason ?? '',
-            ];
-
-            $message = $this->translator->trans(
-                'debug.action_global',
-                $messageParams,
-                'operserv',
-                $this->defaultLanguage,
-            );
-        } else {
-            // Format reason with appropriate prefix (reason, message, or empty)
-            $formattedReason = '';
-            if (null !== $reason && '' !== $reason) {
-                $reasonType = $extra['reasonType'] ?? 'reason';
-                $prefixKey = 'reason' === $reasonType ? 'debug.prefix_reason' : 'debug.prefix_message';
-                $formattedReason = $this->translator->trans(
-                    $prefixKey,
-                    ['%reason%' => $reason],
-                    'operserv',
-                    $this->defaultLanguage,
-                );
-            }
-
-            $messageParams = [
-                '%operator%' => $coloredOperator,
-                '%command%' => $coloredCommand,
-                '%target%' => $coloredTarget,
-                '%reason%' => $formattedReason,
-            ];
-
-            // Use different translation key depending on whether duration is present
-            $translationKey = null !== $duration && '' !== $duration
-                ? 'debug.actionWithDuration'
-                : 'debug.action_message';
-
-            if (null !== $duration && '' !== $duration) {
-                $messageParams['%duration%'] = $duration;
-            }
-
-            $message = $this->translator->trans(
-                $translationKey,
-                $messageParams,
-                'operserv',
+        $formattedReason = '';
+        if (null !== $reason && '' !== $reason) {
+            $formattedReason = $this->translator->trans(
+                'debug.prefix_reason',
+                ['%reason%' => $reason],
+                'nickserv',
                 $this->defaultLanguage,
             );
         }
+
+        $translationKey = 'debug.action_message';
+        $messageParams = [
+            '%operator%' => $coloredOperator,
+            '%command%' => $coloredCommand,
+            '%target%' => $coloredTarget,
+            '%reason%' => $formattedReason,
+        ];
+
+        if (null !== $option) {
+            if (self::PASSWORD_OPTION === $option) {
+                $messageParams['%option%'] = $option;
+                $translationKey = 'debug.action_with_option';
+            } elseif (null !== $value) {
+                $messageParams['%option%'] = $option;
+                $messageParams['%value%'] = $value;
+                $translationKey = 'debug.action_with_value';
+            }
+        }
+
+        if (null !== $duration && '' !== $duration) {
+            $messageParams['%duration%'] = $duration;
+            $messageParams['%reason%'] = $formattedReason;
+            $translationKey = 'debug.action_duration';
+        }
+
+        $message = $this->translator->trans(
+            $translationKey,
+            $messageParams,
+            'nickserv',
+            $this->defaultLanguage,
+        );
 
         $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
     }

@@ -13,4 +13,9 @@ interface OperServNotifierInterface
     public function getNick(): string;
 
     public function getUid(): string;
+
+    /**
+     * Get the service key (e.g., 'operserv').
+     */
+    public function getServiceKey(): string;
 }

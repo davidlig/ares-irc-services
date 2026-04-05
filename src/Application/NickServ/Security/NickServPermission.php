@@ -28,11 +28,11 @@ final readonly class NickServPermission
     /** IRCop permission to forbid and unforbid nicknames. */
     public const string FORBID = 'nickserv.forbid';
 
-    /** IRCop permission to modify a nickname's settings. */
-    public const string SET = 'nickserv.set';
-
     /** IRCop permission to forbid and allow vhost patterns. */
     public const string FORBIDVHOST = 'nickserv.forbidvhost';
+
+    /** IRCop permission to modify another user's settings. */
+    public const string SASET = 'nickserv.saset';
 
     private function __construct()
     {

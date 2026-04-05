@@ -14,7 +14,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use App\Infrastructure\OperServ\Service\OperServDebugAction;
+use App\Infrastructure\OperServ\Service\OperServDebugNotifier;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,13 +23,13 @@ use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[CoversClass(OperServDebugAction::class)]
-final class OperServDebugActionTest extends TestCase
+#[CoversClass(OperServDebugNotifier::class)]
+final class OperServDebugNotifierTest extends TestCase
 {
     #[Test]
     public function isConfiguredReturnsFalseWhenChannelIsNull(): void
     {
-        $debug = $this->createDebugAction(debugChannel: null);
+        $debug = $this->createDebugNotifier(debugChannel: null);
 
         self::assertFalse($debug->isConfigured());
     }
@@ -37,7 +37,7 @@ final class OperServDebugActionTest extends TestCase
     #[Test]
     public function isConfiguredReturnsFalseWhenChannelIsEmpty(): void
     {
-        $debug = $this->createDebugAction(debugChannel: '');
+        $debug = $this->createDebugNotifier(debugChannel: '');
 
         self::assertFalse($debug->isConfigured());
     }
@@ -45,7 +45,7 @@ final class OperServDebugActionTest extends TestCase
     #[Test]
     public function isConfiguredReturnsTrueWhenChannelIsSet(): void
     {
-        $debug = $this->createDebugAction(debugChannel: '#ircops');
+        $debug = $this->createDebugNotifier(debugChannel: '#ircops');
 
         self::assertTrue($debug->isConfigured());
     }
@@ -56,7 +56,7 @@ final class OperServDebugActionTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::once())->method('joinChannelAsService')->with('#ircops');
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             channelActions: $channelActions,
             debugChannel: '#ircops',
         );
@@ -70,7 +70,7 @@ final class OperServDebugActionTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('joinChannelAsService');
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             channelActions: $channelActions,
             debugChannel: null,
         );
@@ -89,7 +89,7 @@ final class OperServDebugActionTest extends TestCase
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             logger: $logger,
             notifier: $notifier,
             debugChannel: null,
@@ -113,7 +113,7 @@ final class OperServDebugActionTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id) => $id);
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
@@ -140,7 +140,7 @@ final class OperServDebugActionTest extends TestCase
         $translator->expects(self::once())->method('trans')
             ->willReturnCallback(static fn (string $id, array $params) => $id);
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
@@ -161,7 +161,7 @@ final class OperServDebugActionTest extends TestCase
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             logger: $logger,
             notifier: $notifier,
             debugChannel: null,
@@ -189,7 +189,7 @@ final class OperServDebugActionTest extends TestCase
                 && '4' === $params['%count%']
                 && 'test message' === $params['%message%']));
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
@@ -205,7 +205,7 @@ final class OperServDebugActionTest extends TestCase
     {
         $rootRegistry = new RootUserRegistry('RootUser');
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             rootRegistry: $rootRegistry,
         );
 
@@ -231,7 +231,7 @@ final class OperServDebugActionTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             nickRepo: $nickRepo,
             ircopRepo: $ircopRepo,
         );
@@ -244,7 +244,7 @@ final class OperServDebugActionTest extends TestCase
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             nickRepo: $nickRepo,
         );
 
@@ -254,7 +254,7 @@ final class OperServDebugActionTest extends TestCase
     #[Test]
     public function isIrcopOrRootReturnsFalseForOperNotIdentified(): void
     {
-        $debug = $this->createDebugAction();
+        $debug = $this->createDebugNotifier();
 
         self::assertFalse($debug->isIrcopOrRoot('SomeUser', false));
     }
@@ -275,7 +275,7 @@ final class OperServDebugActionTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn(null);
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             nickRepo: $nickRepo,
             ircopRepo: $ircopRepo,
         );
@@ -289,7 +289,7 @@ final class OperServDebugActionTest extends TestCase
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn(null);
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             nickRepo: $nickRepo,
         );
 
@@ -299,7 +299,7 @@ final class OperServDebugActionTest extends TestCase
     #[Test]
     public function getDebugChannelReturnsConfiguredChannel(): void
     {
-        $debug = $this->createDebugAction(debugChannel: '#ircops');
+        $debug = $this->createDebugNotifier(debugChannel: '#ircops');
 
         self::assertSame('#ircops', $debug->getDebugChannel());
     }
@@ -307,7 +307,7 @@ final class OperServDebugActionTest extends TestCase
     #[Test]
     public function getDebugChannelReturnsNullWhenNotConfigured(): void
     {
-        $debug = $this->createDebugAction(debugChannel: null);
+        $debug = $this->createDebugNotifier(debugChannel: null);
 
         self::assertNull($debug->getDebugChannel());
     }
@@ -336,7 +336,7 @@ final class OperServDebugActionTest extends TestCase
                 return $key;
             });
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
@@ -366,7 +366,7 @@ final class OperServDebugActionTest extends TestCase
                 return 'Debug message';
             });
 
-        $debug = $this->createDebugAction(
+        $debug = $this->createDebugNotifier(
             logger: $logger,
             notifier: $notifier,
             channelActions: $channelActions,
@@ -378,7 +378,15 @@ final class OperServDebugActionTest extends TestCase
         $debug->log('Admin', 'KILL', 'BadUser', 'user@host', '127.0.0.1', null, []);
     }
 
-    private function createDebugAction(
+    #[Test]
+    public function getServiceNameReturnsOperserv(): void
+    {
+        $debug = $this->createDebugNotifier();
+
+        self::assertSame('operserv', $debug->getServiceName());
+    }
+
+    private function createDebugNotifier(
         ?ChannelServiceActionsPort $channelActions = null,
         ?NetworkUserLookupPort $userLookup = null,
         ?OperServNotifierInterface $notifier = null,
@@ -389,8 +397,8 @@ final class OperServDebugActionTest extends TestCase
         ?TranslatorInterface $translator = null,
         ?LoggerInterface $logger = null,
         ?string $debugChannel = '#ircops',
-    ): OperServDebugAction {
-        return new OperServDebugAction(
+    ): OperServDebugNotifier {
+        return new OperServDebugNotifier(
             channelActions: $channelActions ?? $this->createStub(ChannelServiceActionsPort::class),
             userLookup: $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             notifier: $notifier ?? $this->createStub(OperServNotifierInterface::class),

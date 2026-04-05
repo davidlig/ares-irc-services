@@ -540,7 +540,7 @@ services:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $forceService: '@App\Application\NickServ\Service\NickForceService'
             $eventDispatcher: '@event_dispatcher'
-            $debug: '@App\Application\Port\DebugActionPort'
+            $debug: '@App\Infrastructure\NickServ\Service\NickServDebugNotifier'
             $logger: '@monolog.logger.irc'
             $guestPrefix: '%services.guest_prefix%'
 
@@ -822,6 +822,11 @@ services:
     App\Application\NickServ\Command\Handler\SetCommand:
         tags: ['nickserv.command']
 
+    App\Application\NickServ\Command\Handler\SasetCommand:
+        arguments:
+            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
+        tags: ['nickserv.command']
+
     App\Application\NickServ\TimezoneHelpProvider: ~
 
     App\Application\NickServ\Command\Handler\HelpCommand:
@@ -932,7 +937,7 @@ services:
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
 
-    App\Infrastructure\NickServ\Security\Voter\NickServSetVoter:
+    App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter:
         arguments:
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
@@ -942,7 +947,7 @@ services:
         arguments:
             $voters:
                 - '@App\Infrastructure\NickServ\Security\Voter\NickServIdentifiedOwnerVoter'
-                - '@App\Infrastructure\NickServ\Security\Voter\NickServSetVoter'
+                - '@App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter'
                 - '@App\Infrastructure\Security\Voter\IdentifiedVoter'
                 - '@App\Infrastructure\Security\Voter\IrcopPermissionVoter'
 
@@ -1194,11 +1199,27 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    # --- OperServ Debug Action -------------------------------------------------
+    # --- Debug Notifiers -----------------------------------------------------------
 
-    App\Application\Port\DebugActionPort: '@App\Infrastructure\OperServ\Service\OperServDebugAction'
+    App\Application\Port\ServiceDebugNotifierRegistry:
+        arguments:
+            $notifierIter: !tagged_iterator app.debug_notifier
 
-    App\Infrastructure\OperServ\Service\OperServDebugAction:
+    App\Infrastructure\NickServ\Service\NickServDebugNotifier:
+        arguments:
+            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $translator: '@translator'
+            $defaultLanguage: '%services.default_language%'
+            $debugChannel: '%ircops.debug_channel%'
+            $logger: '@monolog.logger.ircops'
+        tags: ['app.debug_notifier']
+
+    App\Infrastructure\OperServ\Service\OperServDebugNotifier:
         arguments:
             $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
@@ -1211,6 +1232,7 @@ services:
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
             $logger: '@monolog.logger.ircops'
+        tags: ['app.debug_notifier']
 
     App\Application\OperServ\Command\Handler\KillCommand:
         arguments:
@@ -1287,14 +1309,14 @@ services:
 
     App\Infrastructure\IRC\Subscriber\DebugChannelJoinSubscriber:
         arguments:
-            $debugAction: '@App\Application\Port\DebugActionPort'
+            $debugNotifiers: !tagged_iterator app.debug_notifier
         tags: ['kernel.event_subscriber']
 
     # --- IRCop Command Audit ----------------------------------------------------
 
     App\Infrastructure\IRC\Subscriber\IrcopCommandAuditSubscriber:
         arguments:
-            $debug: '@App\Application\Port\DebugActionPort'
+            $registry: '@App\Application\Port\ServiceDebugNotifierRegistry'
             $detector: '@App\Application\Security\IrcopPermissionDetector'
         tags: ['kernel.event_subscriber']
 

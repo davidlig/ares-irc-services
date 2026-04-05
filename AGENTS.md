@@ -75,6 +75,22 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 - Integration test pattern: `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php`
 - Coverage documentation: `.agents/testing/testing-coverage-priorities.md`
 
+### 1.3.1 Container Lint (CRITICAL — NON-NEGOTIABLE)
+
+**Before running tests, you MUST run the container lint check and ensure it passes.**
+
+```bash
+php bin/console lint:container
+```
+
+If there are errors:
+1. **DO NOT proceed with tests** — fix the container errors first
+2. Common errors: wrong argument types, missing services, invalid service definitions
+3. Fix and re-run `php bin/console lint:container` until it shows `[OK]`
+4. Only THEN proceed with running tests
+
+This ensures the Symfony DI container is valid before any test execution.
+
 ---
 
 ### 1.4 Parallel Execution Workflow (CRITICAL — PERFORMANCE)

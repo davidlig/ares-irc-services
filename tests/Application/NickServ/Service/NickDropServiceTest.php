@@ -6,9 +6,9 @@ namespace App\Tests\Application\NickServ\Service;
 
 use App\Application\NickServ\Service\NickDropService;
 use App\Application\NickServ\Service\NickForceService;
-use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -42,7 +42,7 @@ final class NickDropServiceTest extends TestCase
                 && 'TestNick' === $event->nickname
                 && 'manual' === $event->reason));
 
-        $debug = $this->createMock(DebugActionPort::class);
+        $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
             'OperUser',
             'DROP',
@@ -87,7 +87,7 @@ final class NickDropServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
-        $debug = $this->createMock(DebugActionPort::class);
+        $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log');
 
         $logger = $this->createMock(LoggerInterface::class);
@@ -123,7 +123,7 @@ final class NickDropServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (NickDropEvent $event): bool => 'inactivity' === $event->reason));
 
-        $debug = $this->createMock(DebugActionPort::class);
+        $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::never())->method('log');
 
         $logger = $this->createMock(LoggerInterface::class);
@@ -159,7 +159,7 @@ final class NickDropServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
-        $debug = $this->createMock(DebugActionPort::class);
+        $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::never())->method('log');
 
         $logger = $this->createMock(LoggerInterface::class);

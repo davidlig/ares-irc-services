@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Subscriber;
 
-use App\Application\Port\DebugActionPort;
+use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\ServiceDebugNotifierRegistry;
 use App\Application\Security\IrcopPermissionDetector;
 use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Infrastructure\IRC\Subscriber\IrcopCommandAuditSubscriber;
@@ -18,9 +19,9 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
     #[Test]
     public function getSubscribedEventsReturnsCorrectEvent(): void
     {
-        $debug = $this->createStub(DebugActionPort::class);
+        $registry = new ServiceDebugNotifierRegistry([]);
         $detector = new IrcopPermissionDetector();
-        $subscriber = new IrcopCommandAuditSubscriber($debug, $detector);
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
 
         $events = $subscriber::getSubscribedEvents();
 
@@ -31,11 +32,11 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
     #[Test]
     public function onIrcopCommandLogsForIrcopPermission(): void
     {
-        $debug = $this->createMock(DebugActionPort::class);
-        $detector = new IrcopPermissionDetector();
-        $subscriber = new IrcopCommandAuditSubscriber($debug, $detector);
-
-        $debug->expects(self::once())
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->method('getServiceName')->willReturn('nickserv');
+        $notifier->method('isConfigured')->willReturn(true);
+        $notifier->expects(self::once())->method('ensureChannelJoined');
+        $notifier->expects(self::once())
             ->method('log')
             ->with(
                 operator: 'Admin',
@@ -47,7 +48,12 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
                 extra: ['duration' => '1h'],
             );
 
+        $registry = new ServiceDebugNotifierRegistry([$notifier]);
+        $detector = new IrcopPermissionDetector();
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
+
         $event = new IrcopCommandExecutedEvent(
+            serviceName: 'nickserv',
             operatorNick: 'Admin',
             commandName: 'KILL',
             permission: 'operserv.kill',
@@ -64,14 +70,15 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
     #[Test]
     public function onIrcopCommandDoesNotLogForIdentifiedPermission(): void
     {
-        $debug = $this->createMock(DebugActionPort::class);
-        $detector = new IrcopPermissionDetector();
-        $subscriber = new IrcopCommandAuditSubscriber($debug, $detector);
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->expects(self::never())->method('log');
 
-        $debug->expects(self::never())
-            ->method('log');
+        $registry = new ServiceDebugNotifierRegistry([$notifier]);
+        $detector = new IrcopPermissionDetector();
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
 
         $event = new IrcopCommandExecutedEvent(
+            serviceName: 'nickserv',
             operatorNick: 'User',
             commandName: 'REGISTER',
             permission: 'IDENTIFIED',
@@ -83,14 +90,15 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
     #[Test]
     public function onIrcopCommandDoesNotLogForInvalidPermissionFormat(): void
     {
-        $debug = $this->createMock(DebugActionPort::class);
-        $detector = new IrcopPermissionDetector();
-        $subscriber = new IrcopCommandAuditSubscriber($debug, $detector);
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->expects(self::never())->method('log');
 
-        $debug->expects(self::never())
-            ->method('log');
+        $registry = new ServiceDebugNotifierRegistry([$notifier]);
+        $detector = new IrcopPermissionDetector();
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
 
         $event = new IrcopCommandExecutedEvent(
+            serviceName: 'nickserv',
             operatorNick: 'User',
             commandName: 'SOME',
             permission: 'INVALID',
@@ -102,11 +110,11 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
     #[Test]
     public function onIrcopCommandLogsWithNullValues(): void
     {
-        $debug = $this->createMock(DebugActionPort::class);
-        $detector = new IrcopPermissionDetector();
-        $subscriber = new IrcopCommandAuditSubscriber($debug, $detector);
-
-        $debug->expects(self::once())
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->method('getServiceName')->willReturn('operserv');
+        $notifier->method('isConfigured')->willReturn(true);
+        $notifier->expects(self::once())->method('ensureChannelJoined');
+        $notifier->expects(self::once())
             ->method('log')
             ->with(
                 operator: 'Admin',
@@ -118,7 +126,12 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
                 extra: [],
             );
 
+        $registry = new ServiceDebugNotifierRegistry([$notifier]);
+        $detector = new IrcopPermissionDetector();
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
+
         $event = new IrcopCommandExecutedEvent(
+            serviceName: 'operserv',
             operatorNick: 'Admin',
             commandName: 'GLINE',
             permission: 'operserv.gline',
@@ -130,11 +143,11 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
     #[Test]
     public function onIrcopCommandLogsForNestedPermission(): void
     {
-        $debug = $this->createMock(DebugActionPort::class);
-        $detector = new IrcopPermissionDetector();
-        $subscriber = new IrcopCommandAuditSubscriber($debug, $detector);
-
-        $debug->expects(self::once())
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->method('getServiceName')->willReturn('operserv');
+        $notifier->method('isConfigured')->willReturn(true);
+        $notifier->expects(self::once())->method('ensureChannelJoined');
+        $notifier->expects(self::once())
             ->method('log')
             ->with(
                 operator: 'Root',
@@ -146,12 +159,61 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
                 extra: [],
             );
 
+        $registry = new ServiceDebugNotifierRegistry([$notifier]);
+        $detector = new IrcopPermissionDetector();
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
+
         $event = new IrcopCommandExecutedEvent(
+            serviceName: 'operserv',
             operatorNick: 'Root',
             commandName: 'ROLE',
             permission: 'operserv.admin.add',
         );
 
         $subscriber->onIrcopCommand($event);
+    }
+
+    #[Test]
+    public function onIrcopCommandDoesNotLogWhenNotifierNotConfigured(): void
+    {
+        $notifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $notifier->method('getServiceName')->willReturn('nickserv');
+        $notifier->method('isConfigured')->willReturn(false);
+        $notifier->expects(self::never())->method('ensureChannelJoined');
+        $notifier->expects(self::never())->method('log');
+
+        $registry = new ServiceDebugNotifierRegistry([$notifier]);
+        $detector = new IrcopPermissionDetector();
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
+
+        $event = new IrcopCommandExecutedEvent(
+            serviceName: 'nickserv',
+            operatorNick: 'Admin',
+            commandName: 'KILL',
+            permission: 'operserv.kill',
+            target: 'BadUser',
+        );
+
+        $subscriber->onIrcopCommand($event);
+    }
+
+    #[Test]
+    public function onIrcopCommandDoesNotLogWhenNotifierNotFound(): void
+    {
+        $registry = new ServiceDebugNotifierRegistry([]);
+        $detector = new IrcopPermissionDetector();
+        $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
+
+        $event = new IrcopCommandExecutedEvent(
+            serviceName: 'unknownservice',
+            operatorNick: 'Admin',
+            commandName: 'KILL',
+            permission: 'operserv.kill',
+            target: 'BadUser',
+        );
+
+        $subscriber->onIrcopCommand($event);
+
+        self::assertTrue(true);
     }
 }

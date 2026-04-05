@@ -1033,7 +1033,8 @@ final class ChanServServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'Nick' === $event->operatorNick
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'chanserv' === $event->serviceName
+                && 'Nick' === $event->operatorNick
                 && 'AUDITCMD' === $event->commandName
                 && 'CHANSPORT_FOUNDER' === $event->permission
                 && '#test' === $event->target
@@ -1046,11 +1047,15 @@ final class ChanServServiceTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
 
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->method('getServiceKey')->willReturn('chanserv');
+
         $service = $this->createChanServService(
             $registry,
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(ChanServNotifierInterface::class),
+            $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $this->createStub(TranslatorInterface::class),
             $this->createStub(ChannelLookupPort::class),

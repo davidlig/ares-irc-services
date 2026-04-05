@@ -41,4 +41,9 @@ interface ChanServNotifierInterface
      * Get the bot's nickname.
      */
     public function getNick(): string;
+
+    /**
+     * Get the service key (e.g., 'chanserv').
+     */
+    public function getServiceKey(): string;
 }

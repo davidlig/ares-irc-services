@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Service;
 
-use App\Application\Port\DebugActionPort;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -32,7 +32,7 @@ readonly class NickDropService
         private NetworkUserLookupPort $userLookup,
         private NickForceService $forceService,
         private EventDispatcherInterface $eventDispatcher,
-        private DebugActionPort $debug,
+        private ServiceDebugNotifierInterface $debug,
         private LoggerInterface $logger,
         private string $guestPrefix = 'Guest-',
     ) {

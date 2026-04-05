@@ -135,6 +135,7 @@ final readonly class OperServService
 
                 if (null !== $auditData) {
                     $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                        serviceName: $this->notifier->getServiceKey(),
                         operatorNick: $sender->nick,
                         commandName: $cmdName,
                         permission: $requiredPermission,

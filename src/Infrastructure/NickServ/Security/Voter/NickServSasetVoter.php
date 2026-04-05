@@ -17,11 +17,11 @@ use function in_array;
 use function strtolower;
 
 /**
- * Grants access for SET command when:
- * 1. User is identified as the account owner (same nick + +r), OR
- * 2. User is an IRCop with 'nickserv.set' permission and target is not Root/IRCop.
+ * Grants access for SASET command when:
+ * User is an IRCop with 'nickserv.saset' permission.
+ * Root users always have access.
  */
-final class NickServSetVoter extends Voter
+final class NickServSasetVoter extends Voter
 {
     public function __construct(
         private readonly IrcopAccessHelper $accessHelper,
@@ -32,7 +32,7 @@ final class NickServSetVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return NickServPermission::SET === $attribute && $subject instanceof NickServContext;
+        return NickServPermission::SASET === $attribute && $subject instanceof NickServContext;
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
@@ -52,26 +52,19 @@ final class NickServSetVoter extends Voter
         }
         // @codeCoverageIgnoreEnd
 
-        $account = $subject->senderAccount;
         $senderNickLower = strtolower($sender->nick);
 
-        // 1. Propietario identificado (mismo nick)
-        if (null !== $account && $sender->isIdentified) {
-            if (0 === strcasecmp($sender->nick, $account->getNickname())) {
-                return true;
-            }
-        }
-
-        // 2. Root users have all permissions
+        // Root users have all permissions
         if ($sender->isIdentified && $this->rootRegistry->isRoot($senderNickLower)) {
             return true;
         }
 
-        // 3. Must have ROLE_OPER and permission
+        // Must have ROLE_OPER and permission
         if (!in_array(IrcServiceUser::ROLE_OPER, $user->getRoles(), true)) {
             return false;
         }
 
+        $account = $subject->senderAccount;
         if (null === $account) {
             return false;
         }
@@ -79,7 +72,7 @@ final class NickServSetVoter extends Voter
         return $this->accessHelper->hasPermission(
             $account->getId(),
             $senderNickLower,
-            NickServPermission::SET
+            NickServPermission::SASET
         );
     }
 }
