@@ -21,7 +21,51 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 - **Recent commits**: You MUST also **review recent commits** (`git log` or the commit history) to check whether the bug was **introduced in a specific commit**. If the user indicates a commit (e.g. "el bug se introdujo en el commit X"), inspect that commit with `git show <hash>` and base the fix or re-implementation on it. Even when no commit is mentioned, scanning the last few commits touching the affected area can pinpoint regressions.
 - **Workflow**: (1) Read the pertinent `var/log/*.log` entries for the reported scenario. (2) If a commit is mentioned or the bug looks like a regression, review the relevant commit(s) with `git show` / `git log`. (3) Correlate log lines and diff with the user's description. (4) Form a hypothesis and then search the codebase or implement the fix. Do **not** skip log review when debugging reported errors.
 
-### 1.3 Test Coverage (CRITICAL — NON-NEGOTIABLE)
+### 1.3 Pre-Commit Verification Order (CRITICAL — NON-NEGOTIABLE)
+
+**You MUST run verifications in this EXACT order before committing:**
+
+```bash
+# Step 1: Verify container is valid
+php bin/console lint:container
+
+# Step 2: Verify YAML files are valid
+php bin/console lint:yaml . --exclude vendor/ --parse-tags
+
+# Step 3: Format code
+./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
+
+# Step 4: Run tests
+./vendor/bin/phpunit --no-coverage --display-all-issues
+
+# Step 5: Check coverage (if applicable)
+./scripts/check-coverage.sh 100
+```
+
+**Why this order matters:**
+- `lint:container` catches DI errors early (wrong types, missing services)
+- `lint:yaml` catches configuration errors before code runs
+- `php-cs-fixer` ensures code style is consistent
+- `phpunit` validates functionality
+- `coverage` ensures code is tested
+
+**If any step fails:**
+1. **DO NOT proceed to the next step**
+2. Fix the error
+3. Re-run the failed step
+4. Only continue when it passes
+
+**Single command for Phase 3 (Parallel Verification):**
+
+```bash
+php bin/console lint:container && \
+php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
+./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
+./vendor/bin/phpunit --no-coverage --display-all-issues && \
+./scripts/check-coverage.sh 100
+```
+
+### 1.4 Test Coverage (CRITICAL — NON-NEGOTIABLE)
 
 **100% test coverage is MANDATORY for ALL new code. There are NO exceptions.**
 
@@ -43,16 +87,9 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 #### Test writing workflow (MANDATORY):
 
 1. **After implementing new code**, immediately create its test file
-2. **Run tests with strict mode** to catch warnings/deprecations:
-   ```bash
-   ./vendor/bin/phpunit --no-coverage --display-all-issues
-   ```
-3. **Run coverage check** to verify coverage meets requirements:
-   ```bash
-   ./scripts/check-coverage.sh 100
-   ```
-4. **Check `var/coverage/clover.xml`** for `<line num="X" type="stmt" count="0"/>` entries if coverage fails
-5. **Add tests until ALL branches/lines are covered**
+2. **Run the full verification chain** (see section 1.3)
+3. **Check `var/coverage/clover.xml`** for `<line num="X" type="stmt" count="0"/>` entries if coverage fails
+4. **Add tests until ALL branches/lines are covered**
 
 #### Test quality requirements:
 
@@ -75,7 +112,7 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 - Integration test pattern: `tests/Integration/Infrastructure/NickServ/Doctrine/RegisteredNickDoctrineRepositoryTest.php`
 - Coverage documentation: `.agents/testing/testing-coverage-priorities.md`
 
-### 1.3.1 Container Lint (CRITICAL — NON-NEGOTIABLE)
+### 1.5 Container Lint (CRITICAL — NON-NEGOTIABLE)
 
 **Before running tests, you MUST run the container lint check and ensure it passes.**
 
@@ -91,7 +128,7 @@ If there are errors:
 
 This ensures the Symfony DI container is valid before any test execution.
 
-### 1.3.2 YAML Lint (CRITICAL — NON-NEGOTIABLE)
+### 1.6 YAML Lint (CRITICAL — NON-NEGOTIABLE)
 
 **Before running tests, you MUST run the YAML lint check and ensure it passes.**
 
@@ -157,13 +194,22 @@ Single message with:
 
 #### Phase 3: Parallel Verification (AFTER IMPLEMENTATION)
 
-Run ALL verifications together in ONE bash command:
+Run ALL verifications together in ONE bash command (MUST follow this order):
 
 ```bash
+php bin/console lint:container && \
+php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
 ./vendor/bin/phpunit --no-coverage --display-all-issues && \
 ./scripts/check-coverage.sh 100
 ```
+
+**Order is CRITICAL:**
+1. **lint:container** — Verify Symfony DI container is valid
+2. **lint:yaml** — Verify YAML syntax and custom tags
+3. **php-cs-fixer** — Format code style
+4. **phpunit** — Run tests
+5. **check-coverage** — Verify coverage threshold
 
 #### Parallelization Rules
 
