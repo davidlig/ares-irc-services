@@ -240,6 +240,10 @@ final readonly class InfoCommand implements NickServCommandInterface
         if ('' !== $displayVhost) {
             $context->reply('info.vhost', ['vhost' => $displayVhost]);
         }
+
+        if ($account->isNoExpire()) {
+            $context->reply('info.no_expire');
+        }
     }
 
     private function replyLastSeen(NickServContext $context, RegisteredNick $account): void

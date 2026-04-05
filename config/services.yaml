@@ -895,6 +895,11 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['nickserv.command']
 
+    App\Application\NickServ\Command\Handler\NoexpireCommand:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+        tags: ['nickserv.command']
+
     # --- NickServ Services -------------------------------------------------------
 
     App\Application\NickServ\Service\NickTargetValidator:

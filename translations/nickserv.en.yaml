@@ -128,6 +128,7 @@ info:
   last_quit:        "  \x0314Last quit msg\x03  : %message%"
   email:            "  \x0314Email\x03          : %email%"
   vhost:            "  \x0314VHost\x03           : %vhost%"
+  no_expire:        "  \x0314Never Expires\x03   : Yes"
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AChannels with access:\x03"
   channels_entry_founder:   "  %channel% (\x0303Founder\x03)"
@@ -247,6 +248,7 @@ permissions:
   nickserv.rename: "Force rename a connected nickname to a random nick"
   nickserv.drop: "Delete a registered nickname"
   nickserv.saset: "Modify another nickname's settings"
+  nickserv.noexpire: "Set or remove expiration protection for a nickname"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -429,6 +431,27 @@ forbidvhost:
     entry:       "  %index%. \x0304%pattern%\x03 — by %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No forbidden vhost patterns."
     unknown_creator: "unknown"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax:           "NOEXPIRE <nickname> {ON|OFF}"
+  short:            "Set or remove expiration protection for a nickname."
+  help:             |
+    Controls whether a nickname will expire due to inactivity.
+    When ON, the nickname never expires regardless of last activity.
+    When OFF, normal expiration rules apply.
+    
+    Only IRCops with 'nickserv.noexpire' permission can use this command.
+    
+    Syntax: NOEXPIRE <nickname> {ON|OFF}
+    Examples:
+      NOEXPIRE ImportantUser ON
+      NOEXPIRE ImportantUser OFF
+  success_on:       "\x0303✔\x03 Nickname \x02%nickname%\x02 is now protected from expiration."
+  success_off:      "\x0303✔\x03 Nickname \x02%nickname%\x02 will now expire normally."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  forbidden:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is forbidden."
+  suspended:         "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

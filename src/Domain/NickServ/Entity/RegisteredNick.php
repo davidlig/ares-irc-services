@@ -95,6 +95,9 @@ class RegisteredNick
     /** When true, services send messages as PRIVMSG; when false, as NOTICE. */
     private bool $msgPrivmsg = false;
 
+    /** When true, the nickname will never expire due to inactivity. */
+    private bool $noExpire = false;
+
     /**
      * Creates a new pending registration awaiting email verification.
      */
@@ -308,6 +311,11 @@ class RegisteredNick
         return $this->timezone;
     }
 
+    public function isNoExpire(): bool
+    {
+        return $this->noExpire;
+    }
+
     public function changePassword(string $newHash): void
     {
         $this->passwordHash = $newHash;
@@ -358,6 +366,15 @@ class RegisteredNick
     public function switchMsg(bool $usePrivmsg): void
     {
         $this->msgPrivmsg = $usePrivmsg;
+    }
+
+    /**
+     * Set or clear the no-expire flag.
+     * When true, the nickname will never expire due to inactivity.
+     */
+    public function setNoExpire(bool $noExpire): void
+    {
+        $this->noExpire = $noExpire;
     }
 
     /**

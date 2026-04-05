@@ -34,6 +34,9 @@ final readonly class NickServPermission
     /** IRCop permission to modify another user's settings. */
     public const string SASET = 'nickserv.saset';
 
+    /** IRCop permission to protect a nickname from expiration. */
+    public const string NOEXPIRE = 'nickserv.noexpire';
+
     private function __construct()
     {
     }

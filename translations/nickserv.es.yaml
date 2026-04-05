@@ -128,6 +128,7 @@ info:
   last_quit:        "  \x0314Último mensaje\x03  : %message%"
   email:            "  \x0314Correo\x03          : %email%"
   vhost:            "  \x0314VHost\x03           : %vhost%"
+  no_expire:        "  \x0314Nunca expira\x03    : Sí"
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanales con acceso:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
@@ -317,6 +318,7 @@ permissions:
   nickserv.rename: "Forzar cambio de nick de un nickname conectado a uno aleatorio"
   nickserv.drop: "Eliminar un nickname registrado"
   nickserv.saset: "Modificar la configuración de otro nickname"
+  nickserv.noexpire: "Activar o desactivar la protección de expiración para un nickname"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -499,6 +501,27 @@ forbidvhost:
     entry:       "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No hay patrones de vhost prohibidos."
     unknown_creator: "desconocido"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax:           "NOEXPIRE <nickname> {ON|OFF}"
+  short:            "Activa o desactiva la protección de expiración para un nickname."
+  help:             |
+    Controla si un nickname expirará por inactividad.
+    Con ON, el nickname nunca expira independientemente de su última actividad.
+    Con OFF, se aplican las reglas normales de expiración.
+    
+    Solo los IRCops con permiso 'nickserv.noexpire' pueden usar este comando.
+    
+    Sintaxis: NOEXPIRE <nickname> {ON|OFF}
+    Ejemplos:
+      NOEXPIRE UsuarioImportante ON
+      NOEXPIRE UsuarioImportante OFF
+  success_on:       "\x0303✔\x03 El nickname \x02%nickname%\x02 está ahora protegido contra expiración."
+  success_off:      "\x0303✔\x03 El nickname \x02%nickname%\x02 expirará normalmente."
+  not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
+  forbidden:         "\x0304✗\x03 El nickname \x02%nickname%\x02 está prohibido."
+  suspended:         "\x0304✗\x03 El nickname \x02%nickname%\x02 está suspendido."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

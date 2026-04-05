@@ -76,6 +76,7 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->from(RegisteredNick::class, 'n')
             ->where('n.status = :status')
             ->andWhere('COALESCE(n.lastSeenAt, n.registeredAt) < :threshold')
+            ->andWhere('n.noExpire = false')
             ->setParameter('status', NickStatus::Registered)
             ->setParameter('threshold', $threshold);
 

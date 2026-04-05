@@ -43,6 +43,7 @@ final class RegisteredNickTest extends TestCase
         self::assertInstanceOf(DateTimeImmutable::class, $nick->getRegisteredAt());
         self::assertSame($expiresAt->getTimestamp(), $nick->getExpiresAt()?->getTimestamp());
         self::assertNull($nick->getReason());
+        self::assertFalse($nick->isNoExpire());
     }
 
     #[Test]
@@ -498,5 +499,56 @@ final class RegisteredNickTest extends TestCase
         $idProp->setValue($nick, 99);
 
         self::assertSame(99, $nick->getId());
+    }
+
+    #[Test]
+    public function noExpireDefaultsToFalse(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        self::assertFalse($nick->isNoExpire());
+    }
+
+    #[Test]
+    public function setNoExpireTrueSetsFlag(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        self::assertFalse($nick->isNoExpire());
+
+        $nick->setNoExpire(true);
+
+        self::assertTrue($nick->isNoExpire());
+    }
+
+    #[Test]
+    public function setNoExpireFalseClearsFlag(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->setNoExpire(true);
+        self::assertTrue($nick->isNoExpire());
+
+        $nick->setNoExpire(false);
+
+        self::assertFalse($nick->isNoExpire());
     }
 }
