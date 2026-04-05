@@ -115,7 +115,7 @@ final class NoexpireCommand implements NickServCommandInterface, AuditableComman
 
         $this->auditData = new IrcopAuditData(
             target: $targetNick,
-            extra: ['action' => $action],
+            extra: ['option' => $action],
         );
 
         $context->reply(

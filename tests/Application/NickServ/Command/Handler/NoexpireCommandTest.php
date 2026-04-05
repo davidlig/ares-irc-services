@@ -220,7 +220,7 @@ final class NoexpireCommandTest extends TestCase
         $audit = $cmd->getAuditData($context);
         self::assertInstanceOf(IrcopAuditData::class, $audit);
         self::assertSame('TestNick', $audit->target);
-        self::assertSame(['action' => 'ON'], $audit->extra);
+        self::assertSame(['option' => 'ON'], $audit->extra);
     }
 
     #[Test]
@@ -247,7 +247,7 @@ final class NoexpireCommandTest extends TestCase
         $audit = $cmd->getAuditData($context);
         self::assertInstanceOf(IrcopAuditData::class, $audit);
         self::assertSame('TestNick', $audit->target);
-        self::assertSame(['action' => 'OFF'], $audit->extra);
+        self::assertSame(['option' => 'OFF'], $audit->extra);
     }
 
     #[Test]
