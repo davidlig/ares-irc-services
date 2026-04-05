@@ -7,6 +7,7 @@ namespace App\Tests\Application\NickServ\Service;
 use App\Application\NickServ\Service\ForbiddenVhostService;
 use App\Domain\NickServ\Entity\ForbiddenVhost;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -23,7 +24,8 @@ final class ForbiddenVhostServiceTest extends TestCase
         $this->service = new ForbiddenVhostService($this->repository);
     }
 
-    public function testForbidCreatesAndSavesForbiddenVhost(): void
+    #[Test]
+    public function forbidCreatesAndSavesForbiddenVhost(): void
     {
         $this->repository
             ->expects(self::once())
@@ -37,7 +39,8 @@ final class ForbiddenVhostServiceTest extends TestCase
         self::assertSame(123, $result->getCreatedByNickId());
     }
 
-    public function testUnforbidRemovesExistingPattern(): void
+    #[Test]
+    public function unforbidRemovesExistingPattern(): void
     {
         $forbidden = ForbiddenVhost::create('*.pirated.com', 123);
 
@@ -57,7 +60,8 @@ final class ForbiddenVhostServiceTest extends TestCase
         self::assertTrue($result);
     }
 
-    public function testUnforbidReturnsFalseWhenNotFound(): void
+    #[Test]
+    public function unforbidReturnsFalseWhenNotFound(): void
     {
         $this->repository
             ->expects(self::once())
@@ -74,7 +78,8 @@ final class ForbiddenVhostServiceTest extends TestCase
         self::assertFalse($result);
     }
 
-    public function testMatchesForbiddenPatternReturnsTrueWhenMatch(): void
+    #[Test]
+    public function matchesForbiddenPatternReturnsTrueWhenMatch(): void
     {
         $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1);
         $forbidden2 = ForbiddenVhost::create('badhost.*', 2);
@@ -89,7 +94,8 @@ final class ForbiddenVhostServiceTest extends TestCase
         self::assertTrue($result);
     }
 
-    public function testMatchesForbiddenPatternReturnsFalseWhenNoMatch(): void
+    #[Test]
+    public function matchesForbiddenPatternReturnsFalseWhenNoMatch(): void
     {
         $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1);
         $forbidden2 = ForbiddenVhost::create('badhost.*', 2);
@@ -104,7 +110,8 @@ final class ForbiddenVhostServiceTest extends TestCase
         self::assertFalse($result);
     }
 
-    public function testMatchesForbiddenPatternReturnsFalseWhenEmptyList(): void
+    #[Test]
+    public function matchesForbiddenPatternReturnsFalseWhenEmptyList(): void
     {
         $this->repository
             ->expects(self::once())
@@ -116,7 +123,8 @@ final class ForbiddenVhostServiceTest extends TestCase
         self::assertFalse($result);
     }
 
-    public function testGetAllReturnsAllForbiddenPatterns(): void
+    #[Test]
+    public function getAllReturnsAllForbiddenPatterns(): void
     {
         $forbidden1 = ForbiddenVhost::create('*.pirated.com', 1);
         $forbidden2 = ForbiddenVhost::create('badhost.*', 2);
@@ -133,7 +141,8 @@ final class ForbiddenVhostServiceTest extends TestCase
         self::assertSame('badhost.*', $result[1]->getPattern());
     }
 
-    public function testCountReturnsRepositoryCount(): void
+    #[Test]
+    public function countReturnsRepositoryCount(): void
     {
         $this->repository
             ->expects(self::once())

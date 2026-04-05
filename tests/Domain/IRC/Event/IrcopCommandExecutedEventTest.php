@@ -6,12 +6,14 @@ namespace App\Tests\Domain\IRC\Event;
 
 use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(IrcopCommandExecutedEvent::class)]
 final class IrcopCommandExecutedEventTest extends TestCase
 {
-    public function testConstructorWithAllParameters(): void
+    #[Test]
+    public function constructorWithAllParameters(): void
     {
         $event = new IrcopCommandExecutedEvent(
             operatorNick: 'AdminUser',
@@ -34,7 +36,8 @@ final class IrcopCommandExecutedEventTest extends TestCase
         self::assertSame(['duration' => '1h'], $event->extra);
     }
 
-    public function testConstructorWithRequiredParametersOnly(): void
+    #[Test]
+    public function constructorWithRequiredParametersOnly(): void
     {
         $event = new IrcopCommandExecutedEvent(
             operatorNick: 'TestOper',
@@ -52,7 +55,8 @@ final class IrcopCommandExecutedEventTest extends TestCase
         self::assertSame([], $event->extra);
     }
 
-    public function testEventExtendsSymfonyEvent(): void
+    #[Test]
+    public function eventExtendsSymfonyEvent(): void
     {
         $event = new IrcopCommandExecutedEvent(
             operatorNick: 'Admin',

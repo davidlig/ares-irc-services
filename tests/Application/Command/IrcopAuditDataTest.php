@@ -6,12 +6,14 @@ namespace App\Tests\Application\Command;
 
 use App\Application\Command\IrcopAuditData;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(IrcopAuditData::class)]
 final class IrcopAuditDataTest extends TestCase
 {
-    public function testConstructorWithAllParameters(): void
+    #[Test]
+    public function constructorWithAllParameters(): void
     {
         $data = new IrcopAuditData(
             target: 'BadUser',
@@ -28,7 +30,8 @@ final class IrcopAuditDataTest extends TestCase
         self::assertSame(['duration' => '1h'], $data->extra);
     }
 
-    public function testConstructorWithTargetOnly(): void
+    #[Test]
+    public function constructorWithTargetOnly(): void
     {
         $data = new IrcopAuditData(target: 'SomeUser');
 
@@ -39,7 +42,8 @@ final class IrcopAuditDataTest extends TestCase
         self::assertSame([], $data->extra);
     }
 
-    public function testConstructorWithTargetAndReason(): void
+    #[Test]
+    public function constructorWithTargetAndReason(): void
     {
         $data = new IrcopAuditData(
             target: 'Spammer',

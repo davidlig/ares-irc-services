@@ -6,6 +6,7 @@ namespace App\Tests\Application\Security;
 
 use App\Application\Security\IrcopPermissionDetector;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(IrcopPermissionDetector::class)]
@@ -18,62 +19,74 @@ final class IrcopPermissionDetectorTest extends TestCase
         $this->detector = new IrcopPermissionDetector();
     }
 
-    public function testIsIrcopPermissionReturnsTrueForOperServKill(): void
+    #[Test]
+    public function isIrcopPermissionReturnsTrueForOperServKill(): void
     {
         self::assertTrue($this->detector->isIrcopPermission('operserv.kill'));
     }
 
-    public function testIsIrcopPermissionReturnsTrueForOperServGline(): void
+    #[Test]
+    public function isIrcopPermissionReturnsTrueForOperServGline(): void
     {
         self::assertTrue($this->detector->isIrcopPermission('operserv.gline'));
     }
 
-    public function testIsIrcopPermissionReturnsTrueForOperServAdminAdd(): void
+    #[Test]
+    public function isIrcopPermissionReturnsTrueForOperServAdminAdd(): void
     {
         self::assertTrue($this->detector->isIrcopPermission('operserv.admin.add'));
     }
 
-    public function testIsIrcopPermissionReturnsTrueForNickServDrop(): void
+    #[Test]
+    public function isIrcopPermissionReturnsTrueForNickServDrop(): void
     {
         self::assertTrue($this->detector->isIrcopPermission('nickserv.drop'));
     }
 
-    public function testIsIrcopPermissionReturnsTrueForChanServSuspend(): void
+    #[Test]
+    public function isIrcopPermissionReturnsTrueForChanServSuspend(): void
     {
         self::assertTrue($this->detector->isIrcopPermission('chanserv.suspend'));
     }
 
-    public function testIsIrcopPermissionReturnsFalseForIdentified(): void
+    #[Test]
+    public function isIrcopPermissionReturnsFalseForIdentified(): void
     {
         self::assertFalse($this->detector->isIrcopPermission('IDENTIFIED'));
     }
 
-    public function testIsIrcopPermissionReturnsFalseForUppercasePermission(): void
+    #[Test]
+    public function isIrcopPermissionReturnsFalseForUppercasePermission(): void
     {
         self::assertFalse($this->detector->isIrcopPermission('OPERSERV.KILL'));
     }
 
-    public function testIsIrcopPermissionReturnsFalseForMixedCasePermission(): void
+    #[Test]
+    public function isIrcopPermissionReturnsFalseForMixedCasePermission(): void
     {
         self::assertFalse($this->detector->isIrcopPermission('OperServ.Kill'));
     }
 
-    public function testIsIrcopPermissionReturnsFalseForPermissionWithoutDot(): void
+    #[Test]
+    public function isIrcopPermissionReturnsFalseForPermissionWithoutDot(): void
     {
         self::assertFalse($this->detector->isIrcopPermission('operserv'));
     }
 
-    public function testIsIrcopPermissionReturnsFalseForPermissionWithMultipleDots(): void
+    #[Test]
+    public function isIrcopPermissionReturnsFalseForPermissionWithMultipleDots(): void
     {
         self::assertTrue($this->detector->isIrcopPermission('operserv.admin.role.add'));
     }
 
-    public function testIsIrcopPermissionReturnsFalseForEmptyString(): void
+    #[Test]
+    public function isIrcopPermissionReturnsFalseForEmptyString(): void
     {
         self::assertFalse($this->detector->isIrcopPermission(''));
     }
 
-    public function testIsIrcopPermissionReturnsFalseForPermissionWithUnderscore(): void
+    #[Test]
+    public function isIrcopPermissionReturnsFalseForPermissionWithUnderscore(): void
     {
         self::assertTrue($this->detector->isIrcopPermission('operserv.my_permission'));
     }

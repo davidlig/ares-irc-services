@@ -22,6 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ForbidvhostCommand::class)]
@@ -307,6 +308,147 @@ final class ForbidvhostCommandTest extends TestCase
         self::assertEmpty($messages);
     }
 
+    #[Test]
+    public function addWithEmptyPatternShowsSyntax(): void
+    {
+        $cmd = $this->createCommand();
+
+        $messages = [];
+        $context = $this->createContext(['ADD', '   '], $messages);
+
+        $cmd->execute($context);
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function delWithEmptyPatternShowsSyntax(): void
+    {
+        $cmd = $this->createCommand();
+
+        $messages = [];
+        $context = $this->createContext(['DEL', '   '], $messages);
+
+        $cmd->execute($context);
+
+        self::assertContains('error.syntax', $messages);
+    }
+
+    #[Test]
+    public function listShowsUnknownCreatorWhenNoCreatorId(): void
+    {
+        $forbidden = ForbiddenVhost::create('pirated.com', null);
+
+        $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
+
+        $service = new ForbiddenVhostService($repo);
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+
+        $messages = [];
+        $context = $this->createContext(['LIST'], $messages);
+
+        $cmd->execute($context);
+
+        self::assertContains('forbidvhost.list.header', $messages);
+    }
+
+    #[Test]
+    public function listShowsUnknownCreatorWhenCreatorNotSender(): void
+    {
+        $forbidden = ForbiddenVhost::create('pirated.com', 999);
+
+        $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
+
+        $service = new ForbiddenVhostService($repo);
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+
+        $messages = [];
+        $context = $this->createContext(['LIST'], $messages);
+
+        $cmd->execute($context);
+
+        self::assertContains('forbidvhost.list.header', $messages);
+    }
+
+    #[Test]
+    public function listShowsCreatorNameWhenCreatorIsSender(): void
+    {
+        $ref = new ReflectionClass(ForbiddenVhost::class);
+        $forbidden = ForbiddenVhost::create('pirated.com', 1);
+        $idProp = $ref->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($forbidden, 10);
+
+        $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $repo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
+
+        $service = new ForbiddenVhostService($repo);
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+
+        $messages = [];
+        $context = $this->createContextWithSenderAccount(['LIST'], $messages, 1);
+
+        $cmd->execute($context);
+
+        self::assertContains('forbidvhost.list.header', $messages);
+        self::assertContains('forbidvhost.list.entry', $messages);
+    }
+
+    #[Test]
+    public function getAuditDataReturnsNullInitially(): void
+    {
+        $cmd = $this->createCommand();
+
+        $messages = [];
+        $context = $this->createContext(['ADD'], $messages);
+
+        self::assertNull($cmd->getAuditData($context));
+    }
+
+    #[Test]
+    public function getAuditDataReturnsDataAfterSuccessfulAdd(): void
+    {
+        $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn(null);
+        $repo->expects(self::once())->method('save');
+
+        $service = new ForbiddenVhostService($repo);
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+
+        $messages = [];
+        $context = $this->createContext(['ADD', 'pirated.com'], $messages);
+
+        $cmd->execute($context);
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertNotNull($auditData);
+        self::assertSame('pirated.com', $auditData->target);
+    }
+
+    #[Test]
+    public function getAuditDataReturnsDataAfterSuccessfulDel(): void
+    {
+        $existing = ForbiddenVhost::create('pirated.com', 1);
+
+        $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByPattern')->with('pirated.com')->willReturn($existing);
+        $repo->expects(self::once())->method('remove')->with($existing);
+
+        $service = new ForbiddenVhostService($repo);
+        $cmd = new ForbidvhostCommand($repo, $service, new ForbiddenPatternValidator(), $this->createStub(LoggerInterface::class));
+
+        $messages = [];
+        $context = $this->createContext(['DEL', 'pirated.com'], $messages);
+
+        $cmd->execute($context);
+
+        $auditData = $cmd->getAuditData($context);
+        self::assertNotNull($auditData);
+        self::assertSame('pirated.com', $auditData->target);
+    }
+
     private function createCommand(): ForbidvhostCommand
     {
         $repo = $this->createStub(ForbiddenVhostRepositoryInterface::class);
@@ -395,5 +537,38 @@ final class ForbidvhostCommandTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private function createContextWithSenderAccount(array $args, array &$messages, int $senderAccountId): NickServContext
+    {
+        $sender = new SenderView('UID123', 'TestUser', 'ident', 'host', 'name', 'ip');
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn($senderAccountId);
+        $account->method('getNickname')->willReturn('TestUser');
+
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new NickServContext(
+            $sender,
+            $account,
+            'FORBIDVHOST',
+            $args,
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
     }
 }

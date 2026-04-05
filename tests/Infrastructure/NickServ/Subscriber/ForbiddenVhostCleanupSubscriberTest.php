@@ -7,23 +7,15 @@ namespace App\Tests\Infrastructure\NickServ\Subscriber;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use App\Infrastructure\NickServ\Subscriber\ForbiddenVhostCleanupSubscriber;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ForbiddenVhostCleanupSubscriber::class)]
 final class ForbiddenVhostCleanupSubscriberTest extends TestCase
 {
-    private ForbiddenVhostRepositoryInterface&MockObject $repository;
-
-    private ForbiddenVhostCleanupSubscriber $subscriber;
-
-    protected function setUp(): void
-    {
-        $this->repository = $this->createMock(ForbiddenVhostRepositoryInterface::class);
-        $this->subscriber = new ForbiddenVhostCleanupSubscriber($this->repository);
-    }
-
-    public function testGetSubscribedEvents(): void
+    #[Test]
+    public function getSubscribedEventsReturnsCorrectMapping(): void
     {
         $events = ForbiddenVhostCleanupSubscriber::getSubscribedEvents();
 
@@ -31,8 +23,12 @@ final class ForbiddenVhostCleanupSubscriberTest extends TestCase
         self::assertSame(['onNickDrop', 0], $events[NickDropEvent::class]);
     }
 
-    public function testOnNickDropClearsCreatorReferences(): void
+    #[Test]
+    public function onNickDropClearsCreatorReferences(): void
     {
+        $repository = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $subscriber = new ForbiddenVhostCleanupSubscriber($repository);
+
         $event = new NickDropEvent(
             nickId: 123,
             nickname: 'TestNick',
@@ -40,16 +36,20 @@ final class ForbiddenVhostCleanupSubscriberTest extends TestCase
             reason: 'manual'
         );
 
-        $this->repository
+        $repository
             ->expects(self::once())
             ->method('clearCreatedByNickId')
             ->with(123);
 
-        $this->subscriber->onNickDrop($event);
+        $subscriber->onNickDrop($event);
     }
 
-    public function testOnNickDropClearsCreatorReferencesForDifferentNickIds(): void
+    #[Test]
+    public function onNickDropClearsCreatorReferencesForDifferentNickIds(): void
     {
+        $repository = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $subscriber = new ForbiddenVhostCleanupSubscriber($repository);
+
         $event = new NickDropEvent(
             nickId: 456,
             nickname: 'OtherNick',
@@ -57,11 +57,11 @@ final class ForbiddenVhostCleanupSubscriberTest extends TestCase
             reason: 'manual'
         );
 
-        $this->repository
+        $repository
             ->expects(self::once())
             ->method('clearCreatedByNickId')
             ->with(456);
 
-        $this->subscriber->onNickDrop($event);
+        $subscriber->onNickDrop($event);
     }
 }

@@ -543,4 +543,77 @@ final class SetVhostHandlerTest extends TestCase
 
         self::assertSame(['set.vhost.forced'], $messages);
     }
+
+    #[Test]
+    public function forbiddenVhostPatternRejectsVhost(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->expects(self::never())->method('changeVhost');
+
+        $forbidden = $this->createMock(\App\Domain\NickServ\Entity\ForbiddenVhost::class);
+        $forbidden->expects(self::once())->method('matches')->with('pirated.host.com')->willReturn(true);
+
+        $forbiddenRepo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $forbiddenRepo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::never())->method('save');
+
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn(null);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $forbiddenRepo);
+        $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'pirated.host.com'), $account, 'pirated.host.com');
+
+        self::assertSame(['set.vhost.invalid'], $messages);
+    }
+
+    #[Test]
+    public function forbiddenVhostPatternAllowsCleanVhost(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->expects(self::once())->method('changeVhost')->with('clean.host.com');
+
+        $forbidden = $this->createMock(\App\Domain\NickServ\Entity\ForbiddenVhost::class);
+        $forbidden->expects(self::once())->method('matches')->with('clean.host.com')->willReturn(false);
+
+        $forbiddenRepo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
+        $forbiddenRepo->expects(self::once())->method('findAll')->willReturn([$forbidden]);
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('findByVhost')->willReturn(null);
+        $nickRepo->expects(self::once())->method('save');
+
+        $validator = new VhostValidator();
+        $displayResolver = new VhostDisplayResolver('');
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn(null);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $forbiddenRepo);
+        $handler->handle($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $notifier, $translator, 'clean.host.com'), $account, 'clean.host.com');
+
+        self::assertSame(['set.vhost.success'], $messages);
+    }
 }

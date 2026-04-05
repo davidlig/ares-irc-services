@@ -11,7 +11,7 @@
 
         <field name="pattern" type="string" length="255" unique="true"/>
 
-        <field name="createdByNickId" type="integer" nullable="true"/>
+        <field name="createdByNickId" type="integer" nullable="true" column="created_by_nick_id"/>
 
         <field name="createdAt" type="datetime_immutable"/>
 

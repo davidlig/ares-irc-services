@@ -7,12 +7,16 @@ namespace App\Tests\Domain\NickServ\Entity;
 use App\Domain\NickServ\Entity\ForbiddenVhost;
 use DateTimeImmutable;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(ForbiddenVhost::class)]
 final class ForbiddenVhostTest extends TestCase
 {
-    public function testCreateForbiddenVhost(): void
+    #[Test]
+    public function createForbiddenVhost(): void
     {
         $forbidden = ForbiddenVhost::create('*.pirated.com', 123);
 
@@ -21,7 +25,8 @@ final class ForbiddenVhostTest extends TestCase
         self::assertInstanceOf(DateTimeImmutable::class, $forbidden->getCreatedAt());
     }
 
-    public function testCreateWithoutCreator(): void
+    #[Test]
+    public function createWithoutCreator(): void
     {
         $forbidden = ForbiddenVhost::create('badhost.*');
 
@@ -29,7 +34,8 @@ final class ForbiddenVhostTest extends TestCase
         self::assertNull($forbidden->getCreatedByNickId());
     }
 
-    public function testMatchesExactPattern(): void
+    #[Test]
+    public function matchesExactPattern(): void
     {
         $forbidden = ForbiddenVhost::create('pirated.com');
 
@@ -37,7 +43,8 @@ final class ForbiddenVhostTest extends TestCase
         self::assertFalse($forbidden->matches('other.com'));
     }
 
-    public function testMatchesWildcardPattern(): void
+    #[Test]
+    public function matchesWildcardPattern(): void
     {
         $forbidden = ForbiddenVhost::create('*.pirated.com');
 
@@ -47,7 +54,8 @@ final class ForbiddenVhostTest extends TestCase
         self::assertFalse($forbidden->matches('other.com'));
     }
 
-    public function testMatchesQuestionMarkWildcard(): void
+    #[Test]
+    public function matchesQuestionMarkWildcard(): void
     {
         $forbidden = ForbiddenVhost::create('bad?.com');
 
@@ -56,7 +64,8 @@ final class ForbiddenVhostTest extends TestCase
         self::assertFalse($forbidden->matches('bad12.com'));
     }
 
-    public function testMatchesIsCaseInsensitive(): void
+    #[Test]
+    public function matchesIsCaseInsensitive(): void
     {
         $forbidden = ForbiddenVhost::create('*.Pirated.COM');
 
@@ -65,7 +74,8 @@ final class ForbiddenVhostTest extends TestCase
         self::assertTrue($forbidden->matches('Sub.Pirated.Com'));
     }
 
-    public function testMatchesMultipleWildcards(): void
+    #[Test]
+    public function matchesMultipleWildcards(): void
     {
         $forbidden = ForbiddenVhost::create('*.bad.*.com');
 
@@ -73,7 +83,8 @@ final class ForbiddenVhostTest extends TestCase
         self::assertFalse($forbidden->matches('bad.com'));
     }
 
-    public function testEmptyPatternThrowsException(): void
+    #[Test]
+    public function emptyPatternThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Pattern cannot be empty.');
@@ -81,7 +92,8 @@ final class ForbiddenVhostTest extends TestCase
         ForbiddenVhost::create('');
     }
 
-    public function testWhitespaceOnlyPatternThrowsException(): void
+    #[Test]
+    public function whitespaceOnlyPatternThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Pattern cannot be empty.');
@@ -89,7 +101,8 @@ final class ForbiddenVhostTest extends TestCase
         ForbiddenVhost::create('   ');
     }
 
-    public function testTooLongPatternThrowsException(): void
+    #[Test]
+    public function tooLongPatternThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Pattern cannot exceed');
@@ -98,10 +111,24 @@ final class ForbiddenVhostTest extends TestCase
         ForbiddenVhost::create($longPattern);
     }
 
-    public function testPatternIsTrimmed(): void
+    #[Test]
+    public function patternIsTrimmed(): void
     {
         $forbidden = ForbiddenVhost::create('  badhost.com  ');
 
         self::assertSame('badhost.com', $forbidden->getPattern());
+    }
+
+    #[Test]
+    public function getIdReturnsValueAfterPersistence(): void
+    {
+        $forbidden = ForbiddenVhost::create('*.test.com', 1);
+
+        $reflection = new ReflectionClass($forbidden);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($forbidden, 42);
+
+        self::assertSame(42, $forbidden->getId());
     }
 }

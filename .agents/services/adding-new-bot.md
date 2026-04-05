@@ -472,9 +472,13 @@ The Bot must implement `ServiceCommandListenerInterface`. The Gateway auto-disco
 
 ```php
 // tests/Domain/HostServ/HostRequestTest.php
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
 final class HostRequestTest extends TestCase
 {
-    public function testApproveChangesStatus(): void
+    #[Test]
+    public function approveChangesStatus(): void
     {
         $request = new HostRequest(/* ... */);
         $request->approve();
@@ -487,9 +491,13 @@ final class HostRequestTest extends TestCase
 
 ```php
 // tests/Application/HostServ/Command/Handler/RequestCommandTest.php
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
 final class RequestCommandTest extends TestCase
 {
-    public function testHandleValidRequest(): void
+    #[Test]
+    public function handleValidRequest(): void
     {
         $notifier = $this->createMock(HostServNotifierInterface::class);
         $repo = $this->createMock(HostRequestRepositoryInterface::class);
@@ -502,9 +510,13 @@ final class RequestCommandTest extends TestCase
 
 ```php
 // tests/Infrastructure/HostServ/Bot/HostServBotTest.php
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
 final class HostServBotTest extends TestCase
 {
-    public function testOnCommandDispatchesToService(): void
+    #[Test]
+    public function onCommandDispatchesToService(): void
     {
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn(new SenderView(...));

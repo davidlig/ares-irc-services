@@ -9,12 +9,14 @@ use App\Application\Security\IrcopPermissionDetector;
 use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Infrastructure\IRC\Subscriber\IrcopCommandAuditSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(IrcopCommandAuditSubscriber::class)]
 final class IrcopCommandAuditSubscriberTest extends TestCase
 {
-    public function testGetSubscribedEventsReturnsCorrectEvent(): void
+    #[Test]
+    public function getSubscribedEventsReturnsCorrectEvent(): void
     {
         $debug = $this->createStub(DebugActionPort::class);
         $detector = new IrcopPermissionDetector();
@@ -26,7 +28,8 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
         self::assertSame('onIrcopCommand', $events[IrcopCommandExecutedEvent::class]);
     }
 
-    public function testOnIrcopCommandLogsForIrcopPermission(): void
+    #[Test]
+    public function onIrcopCommandLogsForIrcopPermission(): void
     {
         $debug = $this->createMock(DebugActionPort::class);
         $detector = new IrcopPermissionDetector();
@@ -58,7 +61,8 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
         $subscriber->onIrcopCommand($event);
     }
 
-    public function testOnIrcopCommandDoesNotLogForIdentifiedPermission(): void
+    #[Test]
+    public function onIrcopCommandDoesNotLogForIdentifiedPermission(): void
     {
         $debug = $this->createMock(DebugActionPort::class);
         $detector = new IrcopPermissionDetector();
@@ -76,7 +80,8 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
         $subscriber->onIrcopCommand($event);
     }
 
-    public function testOnIrcopCommandDoesNotLogForInvalidPermissionFormat(): void
+    #[Test]
+    public function onIrcopCommandDoesNotLogForInvalidPermissionFormat(): void
     {
         $debug = $this->createMock(DebugActionPort::class);
         $detector = new IrcopPermissionDetector();
@@ -94,7 +99,8 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
         $subscriber->onIrcopCommand($event);
     }
 
-    public function testOnIrcopCommandLogsWithNullValues(): void
+    #[Test]
+    public function onIrcopCommandLogsWithNullValues(): void
     {
         $debug = $this->createMock(DebugActionPort::class);
         $detector = new IrcopPermissionDetector();
@@ -121,7 +127,8 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
         $subscriber->onIrcopCommand($event);
     }
 
-    public function testOnIrcopCommandLogsForNestedPermission(): void
+    #[Test]
+    public function onIrcopCommandLogsForNestedPermission(): void
     {
         $debug = $this->createMock(DebugActionPort::class);
         $detector = new IrcopPermissionDetector();

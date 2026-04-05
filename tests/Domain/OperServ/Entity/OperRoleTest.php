@@ -216,6 +216,20 @@ final class OperRoleTest extends TestCase
     }
 
     #[Test]
+    public function getIdReturnsCorrectValue(): void
+    {
+        $role = OperRole::create('Test');
+
+        $reflection = new ReflectionClass($role);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($role, 123);
+
+        self::assertSame(123, $role->getId());
+        self::assertIsInt($role->getId());
+    }
+
+    #[Test]
     public function addPermissionWithStub(): void
     {
         $role = OperRole::create('Test');
