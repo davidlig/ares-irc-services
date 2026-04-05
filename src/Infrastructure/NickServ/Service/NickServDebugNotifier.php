@@ -145,6 +145,9 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
                 $messageParams['%option%'] = $option;
                 $messageParams['%value%'] = $value;
                 $translationKey = 'debug.action_with_value';
+            } else {
+                $messageParams['%option%'] = $option;
+                $translationKey = 'debug.action_with_option';
             }
         }
 
