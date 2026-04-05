@@ -373,17 +373,17 @@ For commands with IRCop permissions, add descriptions in `translations/{service}
 ```yaml
 # File: translations/nickserv.en.yaml
 permissions:
-  nickserv.drop: "Drop a registered nickname (IRCop only)"
-  nickserv.info: "View extended info of any nickname (IRCop only)"
-  nickserv.sendpass: "Send password reset email (IRCop only)"
+  nickserv.drop: "Drop a registered nickname"
+  nickserv.info: "View extended info of any nickname"
+  nickserv.sendpass: "Send password reset email"
 ```
 
 ```yaml
 # File: translations/nickserv.es.yaml
 permissions:
-  nickserv.drop: "Eliminar un nickname registrado (solo IRCop)"
-  nickserv.info: "Ver información extendida de cualquier nickname (solo IRCop)"
-  nickserv.sendpass: "Enviar email de reseteo de contraseña (solo IRCop)"
+  nickserv.drop: "Eliminar un nickname registrado"
+  nickserv.info: "Ver información extendida de cualquier nickname"
+  nickserv.sendpass: "Enviar email de reseteo de contraseña"
 ```
 
 These descriptions appear in `ROLE PERMS <role> LIST`:
@@ -391,9 +391,9 @@ These descriptions appear in `ROLE PERMS <role> LIST`:
 ```
 -OperServ- --- Permissions for ADMIN ---
 -OperServ- Assigned:
--OperServ-   nickserv.drop - Drop a registered nickname (IRCop only)
+-OperServ-   nickserv.drop - Drop a registered nickname
 -OperServ- Available:
--OperServ-   nickserv.info - View extended info of any nickname (IRCop only)
+-OperServ-   nickserv.info - View extended info of any nickname
 ```
 
 ### Automatic Placeholders
@@ -601,7 +601,7 @@ public function getPermissions(): array
 
 // 3. Add translation in translations/nickserv.en.yaml
 permissions:
-  nickserv.drop: "Drop a registered nickname (IRCop only)"
+  nickserv.drop: "Drop a registered nickname"
 ```
 
 ### Creating a Custom Voter
@@ -1484,7 +1484,7 @@ final readonly class DropCommand implements NickServCommandInterface
 # File: translations/nickserv.en.yaml
 drop:
   syntax: "DROP <nickname>"
-  short: "Drop a registered nickname (IRCop only)"
+  short: "Drop a registered nickname"
   help: |
     Drop a registered nickname from the database.
     This action cannot be undone.
@@ -1498,14 +1498,14 @@ drop:
   done: "\x0303✓\x03 Nickname \x02%nick%\x02 has been dropped."
 
 permissions:
-  nickserv.drop: "Drop a registered nickname (IRCop only)"
+  nickserv.drop: "Drop a registered nickname"
 ```
 
 ```yaml
 # File: translations/nickserv.es.yaml
 drop:
   syntax: "DROP <nickname>"
-  short: "Eliminar un nickname registrado (solo IRCop)"
+  short: "Eliminar un nickname registrado"
   help: |
     Elimina un nickname registrado de la base de datos.
     Esta acción no se puede deshacer.
@@ -1519,7 +1519,7 @@ drop:
   done: "\x0303✓\x03 El nickname \x02%nick%\x02 ha sido eliminado."
 
 permissions:
-  nickserv.drop: "Eliminar un nickname registrado (solo IRCop)"
+  nickserv.drop: "Eliminar un nickname registrado"
 ```
 
 ### Step 5: Register in services.yaml

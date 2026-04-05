@@ -14,10 +14,11 @@
 unknown_command: "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
 
 error:
-  syntax:         "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
-  oper_only:      "\x0304✗\x03 Este comando está restringido a Operadores IRC."
-  not_identified: "\x0304✗\x03 No estás identificado. Usa \x0303/msg %bot% IDENTIFY <nickname> <contraseña>\x03"
-  mail_failed:    "\x0304✗\x03 No se pudo enviar el correo. Comprueba tu dirección o inténtalo más tarde."
+  syntax:            "\x0304✗\x03 Sintaxis incorrecta. Uso: \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 Este comando está restringido a Operadores IRC."
+  not_identified:    "\x0304✗\x03 No estás identificado. Usa \x0303/msg %bot% IDENTIFY <nickname> <contraseña>\x03"
+  permission_denied: "\x0304✗\x03 Permiso denegado. No tienes acceso a este comando."
+  mail_failed:       "\x0304✗\x03 No se pudo enviar el correo. Comprueba tu dirección o inténtalo más tarde."
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -193,25 +194,75 @@ set:
     taken:          "\x0304✗\x03 Ese vhost ya está en uso por otro nickname."
     forced:         "\x0304✗\x03 Tu vhost está configurado automáticamente y no puede cambiarse con SET VHOST."
 
-  # --- IRCop SET mode ---------------------------------------------------------
-  ircop:
-    syntax:         "SET <nickname> <opción> <valor>"
-    short:          "Modifica la configuración de un nickname."
-    help:           |
-      Permite a un IRCop modificar la configuración de un nickname registrado.
-      El nickname objetivo no puede ser un usuario Root ni un IRCop.
-      
-      Opciones disponibles: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-      
-      SET PASSWORD: Cambia la contraseña directamente.
-      SET EMAIL: Cambia el correo directamente sin validación de token.
-      
-      Este comando requiere permiso IRCop: nickserv.set
-      
-      Sintaxis: SET <nickname> <opción> <valor>
-      Ejemplo: SET Usuario PASSWORD nuevopass
-  not_registered_ircop: "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
-  cannot_modify_oper:    "\x0304✗\x03 No puedes modificar un nickname de Operador IRC."
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <nickname> <opción> <valor>"
+  short:            "Modifica la configuración de otro usuario."
+  help:             |
+    Permite a un IRCop modificar la configuración de un nickname registrado.
+    El nickname objetivo no puede ser un usuario Root, IRCop ni un servicio.
+    
+    Opciones disponibles: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+    
+    SASET PASSWORD: Cambia la contraseña directamente (sin confirmación por email).
+    SASET EMAIL: Cambia el correo directamente (sin validación de token).
+    
+    Este comando requiere permiso IRCop: nickserv.saset
+    
+    Sintaxis: SASET <nickname> <opción> <valor>
+    Ejemplo: SASET Usuario PASSWORD nuevopass
+  unknown_option:   "\x0304✗\x03 Opción desconocida \x02%option%\x02. Opciones disponibles: %options%."
+  not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
+  cannot_modify_oper: "\x0304✗\x03 No puedes modificar un nickname de Operador IRC."
+
+  password:
+    syntax:         "SASET <nickname> PASSWORD <nueva_contraseña>"
+    short:          "Cambia la contraseña de un usuario."
+    help:           "Cambia la contraseña del nickname de otro usuario.\nEl cambio es inmediato.\n\nSintaxis: SASET <nickname> PASSWORD <nueva_contraseña>\nEjemplo: SASET Usuario PASSWORD nuevopass123"
+    success:        "\x0303✔\x03 La contraseña de \x02%nickname%\x02 ha sido actualizada."
+
+  email:
+    syntax:         "SASET <nickname> EMAIL <nuevo_email>"
+    short:          "Cambia el correo de un usuario."
+    help:           "Cambia el correo electrónico del nickname de otro usuario.\nNo se envía confirmación—el cambio es inmediato.\n\nSintaxis: SASET <nickname> EMAIL <nuevo_email>\nEjemplo: SASET Usuario EMAIL usuario@ejemplo.com"
+    success:        "\x0303✔\x03 El correo de \x02%nickname%\x02 ha sido actualizado a \x02%email%\x02."
+
+  language:
+    syntax:         "SASET <nickname> LANGUAGE <código>"
+    short:          "Cambia el idioma de un usuario."
+    help:           "Cambia el idioma de otro usuario.\nIdiomas disponibles: en (inglés), es (español).\n\nSintaxis: SASET <nickname> LANGUAGE <código>\nEjemplo: SASET Usuario LANGUAGE es"
+    success:        "\x0303✔\x03 Idioma de \x02%nickname%\x02 cambiado a \x02%language%\x02."
+
+  timezone:
+    syntax:         "SASET <nickname> TIMEZONE <zona|OFF>"
+    short:          "Cambia la zona horaria de un usuario."
+    help:           "Establece o quita la zona horaria de otro usuario.\nUsa OFF para quitarla.\n\nSintaxis: SASET <nickname> TIMEZONE <zona>\nEjemplo: SASET Usuario TIMEZONE Europe/Madrid"
+    success:        "\x0303✔\x03 Zona horaria de \x02%nickname%\x02 establecida a \x02%timezone%\x02."
+    cleared:        "\x0303✔\x03 Zona horaria de \x02%nickname%\x02 eliminada."
+    invalid:        "\x0304✗\x03 Zona horaria \x02%timezone%\x02 no válida."
+
+  private:
+    syntax:         "SASET <nickname> PRIVATE {ON|OFF}"
+    short:          "Cambia la privacidad de un usuario."
+    help:           "Activa o desactiva la privacidad de la información de otro usuario.\n\nSintaxis: SASET <nickname> PRIVATE {ON|OFF}\nEjemplo: SASET Usuario PRIVATE ON"
+    on:             "\x0303✔\x03 La información de \x02%nickname%\x02 es ahora \x02privada\x02."
+    off:            "\x0303✔\x03 La información de \x02%nickname%\x02 es ahora \x02pública\x02."
+
+  msg:
+    syntax:         "SASET <nickname> MSG {ON|OFF}"
+    short:          "Cambia la preferencia de mensajes de un usuario."
+    help:           "Establece si otro usuario recibe respuestas como PRIVMSG (ON) o NOTICE (OFF).\n\nSintaxis: SASET <nickname> MSG {ON|OFF}\nEjemplo: SASET Usuario MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 recibirá mensajes como \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 recibirá mensajes como \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SASET <nickname> VHOST <vhost|OFF>"
+    short:          "Cambia el host virtual de un usuario."
+    help:           "Establece o quita el host virtual de otro usuario.\nUsa OFF para quitarlo.\n\nSintaxis: SASET <nickname> VHOST <vhost>\nEjemplo: SASET Usuario VHOST usuarios.ejemplo.com"
+    success:        "\x0303✔\x03 VHost de \x02%nickname%\x02 establecido a \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 VHost de \x02%nickname%\x02 eliminado."
+    invalid:        "\x0304✗\x03 VHost no válido para \x02%nickname%\x02."
+    taken:          "\x0304✗\x03 Ese vhost ya está en uso por otro nickname."
 
 # --- HELP -------------------------------------------------------------------
 help:
@@ -261,10 +312,11 @@ userip:
   result:           "\x0307ℹ\x03 Usuario: \x02%nick%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 permissions:
-  nickserv.userip:  "Ver la dirección IP/Host real de un usuario (solo IRCop)"
-  nickserv.suspend: "Suspender/reactivar un nickname (solo IRCop)"
-  nickserv.rename:  "Forzar cambio de nick de un usuario conectado a uno aleatorio (solo IRCop)"
-  nickserv.drop:    "Eliminar un nickname registrado (solo IRCop)"
+  nickserv.userip: "Ver la dirección IP/Host real de un usuario"
+  nickserv.suspend: "Suspender/reactivar un nickname"
+  nickserv.rename: "Forzar cambio de nick de un usuario conectado a uno aleatorio"
+  nickserv.drop: "Eliminar un nickname registrado"
+  nickserv.saset: "Modificar la configuración de otro usuario"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -447,3 +499,11 @@ forbidvhost:
     entry:       "  %index%. \x0304%pattern%\x03 — por %nick% (%date%)"
     empty:       "\x0307ℹ\x03 No hay patrones de vhost prohibidos."
     unknown_creator: "desconocido"
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator% ejecuta el comando %command% sobre %target%. %reason%"
+  action_with_option: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%. %reason%"
+  action_with_value: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
+  action_duration: "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. %reason%"
+  prefix_reason: "Razón: %reason%"

@@ -14,10 +14,11 @@
 unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
 
 error:
-  syntax:         "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
-  oper_only:      "\x0304✗\x03 This command is restricted to IRC Operators."
-  not_identified: "\x0304✗\x03 You are not identified. Use \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
-  mail_failed:    "\x0304✗\x03 The email could not be sent. Check your address or try again later."
+  syntax:            "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 This command is restricted to IRC Operators."
+  not_identified:    "\x0304✗\x03 You are not identified. Use \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
+  permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
+  mail_failed:       "\x0304✗\x03 The email could not be sent. Check your address or try again later."
 
 # --- REGISTER ---------------------------------------------------------------
 register:
@@ -193,26 +194,6 @@ set:
     taken:          "\x0304✗\x03 That vhost is already in use by another nickname."
     forced:         "\x0304✗\x03 Your vhost is configured automatically and cannot be changed with SET VHOST."
 
-  # --- IRCop SET mode ---------------------------------------------------------
-  ircop:
-    syntax:         "SET <nickname> <option> <value>"
-    short:          "Modify a nickname's configuration."
-    help:           |
-      Allows an IRCop to modify a registered nickname's settings.
-      The target nickname cannot be a Root user or an IRCop.
-      
-      Available options: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
-      
-      SET PASSWORD: Changes the password directly.
-      SET EMAIL: Changes the email directly without token validation.
-      
-      This command requires IRCop permission: nickserv.set
-      
-      Syntax: SET <nickname> <option> <value>
-      Example: SET User PASSWORD newpass
-  not_registered_ircop: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
-  cannot_modify_oper:    "\x0304✗\x03 Cannot modify an IRC operator nickname."
-
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [command]"
@@ -261,10 +242,11 @@ userip:
   result:           "\x0307ℹ\x03 User: \x02%nick%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 permissions:
-  nickserv.userip:  "View a user's real IP address/hostname (IRCop only)"
-  nickserv.suspend: "Suspend/reactivate a nickname (IRCop only)"
-  nickserv.rename:  "Force rename a connected user to a random nick (IRCop only)"
-  nickserv.drop:    "Delete a registered nickname (IRCop only)"
+  nickserv.userip: "View a user's real IP address/hostname"
+  nickserv.suspend: "Suspend/reactivate a nickname"
+  nickserv.rename: "Force rename a connected user to a random nick"
+  nickserv.drop: "Delete a registered nickname"
+  nickserv.saset: "Modify another user's nickname settings"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -448,3 +430,11 @@ forbidvhost:
     entry:       "  %index%. \x0304%pattern%\x03 — by %nick% (%date%)"
     empty:       "\x0307ℹ\x03 No forbidden vhost patterns."
     unknown_creator: "unknown"
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator% executes command %command% on %target%. %reason%"
+  action_with_option: "%operator% executes command %command% on %target%. Option: %option%. %reason%"
+  action_with_value: "%operator% executes command %command% on %target%. Option: %option%=%value%. %reason%"
+  action_duration: "%operator% executes command %command% on %target%. Duration: %duration%. %reason%"
+  prefix_reason: "Reason: %reason%"

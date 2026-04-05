@@ -4,14 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
-use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
-use App\Application\NickServ\Service\NickProtectabilityResult;
-use App\Application\NickServ\Service\NickProtectabilityStatus;
-use App\Application\NickServ\Service\NickTargetValidator;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 use function array_slice;
 use function count;
@@ -20,38 +14,19 @@ use function in_array;
 use function strtoupper;
 
 /**
- * SET [<nickname>] <option> <value>.
+ * SET <option> <value>.
  *
- * Allows a registered and identified user to change their NickServ settings.
- * IRCops with 'nickserv.set' permission can modify other users' settings.
+ * Allows a registered and identified user to change their own NickServ settings.
  * Delegates each option to a dedicated Set*Handler.
  *
- * Owner syntax:
- *   SET PASSWORD <new_password>
- *   SET EMAIL    <new_email>              — request change (token sent to current email)
- *   SET EMAIL    <new_email> <token>      — confirm change with token
- *   SET LANGUAGE <code>       (en | es | …)
- *   SET PRIVATE  ON|OFF
- *   SET MSG      ON|OFF   (ON = PRIVMSG, OFF = NOTICE)
- *   SET VHOST    <vhost>|OFF
- *   SET TIMEZONE <timezone>|OFF
- *
- * IRCop syntax:
- *   SET <nickname> <option> <value>
- *   - Password changed directly without email
- *   - Email changed directly without token validation
- *   - Cannot modify Root or IRCop nicknames
+ * For modifying other users' settings, use SASET.
  */
-final class SetCommand implements NickServCommandInterface, AuditableCommandInterface
+final class SetCommand implements NickServCommandInterface
 {
     private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'];
 
-    private const string PASSWORD_OPTION = 'PASSWORD';
-
     /** @var array<string, SetOptionHandlerInterface> */
     private array $handlers;
-
-    private ?IrcopAuditData $auditData = null;
 
     public function __construct(
         SetPasswordHandler $setPasswordHandler,
@@ -61,8 +36,6 @@ final class SetCommand implements NickServCommandInterface, AuditableCommandInte
         SetMsgHandler $setMsgHandler,
         SetTimezoneHandler $setTimezoneHandler,
         SetVhostHandler $setVhostHandler,
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NickTargetValidator $targetValidator,
     ) {
         $this->handlers = [
             'PASSWORD' => $setPasswordHandler,
@@ -87,7 +60,7 @@ final class SetCommand implements NickServCommandInterface, AuditableCommandInte
 
     public function getMinArgs(): int
     {
-        return 1;
+        return 2;
     }
 
     public function getSyntaxKey(): string
@@ -165,7 +138,7 @@ final class SetCommand implements NickServCommandInterface, AuditableCommandInte
 
     public function getRequiredPermission(): ?string
     {
-        return null;
+        return 'IDENTIFIED';
     }
 
     public function getHelpParams(): array
@@ -179,69 +152,26 @@ final class SetCommand implements NickServCommandInterface, AuditableCommandInte
             return;
         }
 
-        $mode = $this->detectMode($context->args);
+        if (count($context->args) < 2) {
+            $context->reply('error.syntax', [
+                'syntax' => $context->trans($this->getSyntaxKey()),
+            ]);
 
-        if ('error' === $mode['mode']) {
+            return;
+        }
+
+        $option = strtoupper($context->args[0]);
+        $value = implode(' ', array_slice($context->args, 1));
+
+        if (!in_array($option, self::SUPPORTED_OPTIONS, true)) {
             $context->reply('set.unknown_option', [
-                'option' => $mode['option'] ?? '',
+                'option' => $option,
                 'options' => implode(', ', self::SUPPORTED_OPTIONS),
             ]);
 
             return;
         }
 
-        if ('owner' === $mode['mode']) {
-            $this->executeOwnerMode($context, $mode);
-
-            return;
-        }
-
-        $this->executeIrcopMode($context, $mode);
-    }
-
-    /**
-     * @param array<string> $args
-     *
-     * @return array{mode: string, option?: string, value?: string, targetNick?: string, error?: string}
-     */
-    private function detectMode(array $args): array
-    {
-        if (0 === count($args)) {
-            return ['mode' => 'error', 'option' => ''];
-        }
-
-        $first = strtoupper($args[0]);
-
-        // Si el primer argumento es una opción válida → modo propietario
-        if (in_array($first, self::SUPPORTED_OPTIONS, true)) {
-            return [
-                'mode' => 'owner',
-                'option' => $first,
-                'value' => implode(' ', array_slice($args, 1)),
-            ];
-        }
-
-        // Si hay al menos 2 argumentos y el segundo es una opción válida → modo IRCop
-        if (count($args) >= 2) {
-            $second = strtoupper($args[1]);
-            if (in_array($second, self::SUPPORTED_OPTIONS, true)) {
-                return [
-                    'mode' => 'ircop',
-                    'targetNick' => $args[0],
-                    'option' => $second,
-                    'value' => implode(' ', array_slice($args, 2)),
-                ];
-            }
-        }
-
-        return ['mode' => 'error', 'option' => $first];
-    }
-
-    /**
-     * @param array{mode: string, option: string, value: string} $mode
-     */
-    private function executeOwnerMode(NickServContext $context, array $mode): void
-    {
         $account = $context->senderAccount;
         if (null === $account) {
             $context->reply('error.not_identified');
@@ -249,11 +179,11 @@ final class SetCommand implements NickServCommandInterface, AuditableCommandInte
             return;
         }
 
-        $handler = $this->handlers[$mode['option']] ?? null;
+        $handler = $this->handlers[$option] ?? null;
         // @codeCoverageIgnoreStart
         if (null === $handler) {
             $context->reply('set.unknown_option', [
-                'option' => $mode['option'],
+                'option' => $option,
                 'options' => implode(', ', self::SUPPORTED_OPTIONS),
             ]);
 
@@ -261,69 +191,6 @@ final class SetCommand implements NickServCommandInterface, AuditableCommandInte
         }
         // @codeCoverageIgnoreEnd
 
-        $handler->handle($context, $account, $mode['value'], false);
-
-        // Owner mode does not generate audit data
-        $this->auditData = null;
-    }
-
-    /**
-     * @param array{mode: string, targetNick: string, option: string, value: string} $mode
-     */
-    private function executeIrcopMode(NickServContext $context, array $mode): void
-    {
-        $targetNick = $mode['targetNick'];
-        $protectability = $this->targetValidator->validate($targetNick);
-
-        if (!$protectability->isAllowed()) {
-            $this->replyProtectabilityError($context, $protectability);
-
-            return;
-        }
-
-        $targetAccount = $protectability->account;
-        if (null === $targetAccount) {
-            $context->reply('set.not_registered_ircop', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        $handler = $this->handlers[$mode['option']] ?? null;
-        // @codeCoverageIgnoreStart
-        if (null === $handler) {
-            $context->reply('set.unknown_option', [
-                'option' => $mode['option'],
-                'options' => implode(', ', self::SUPPORTED_OPTIONS),
-            ]);
-
-            return;
-        }
-        // @codeCoverageIgnoreEnd
-
-        $handler->handle($context, $targetAccount, $mode['value'], true);
-
-        // Generate audit data for IRCop mode
-        $auditValue = self::PASSWORD_OPTION === $mode['option'] ? null : $mode['value'];
-        $this->auditData = new IrcopAuditData(
-            target: $targetNick,
-            extra: ['option' => $mode['option'], 'value' => $auditValue],
-        );
-    }
-
-    private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
-    {
-        match ($result->status) {
-            NickProtectabilityStatus::IsRoot => $context->reply('set.cannot_modify_oper', ['%nickname%' => $result->nickname]),
-            NickProtectabilityStatus::IsIrcop => $context->reply('set.cannot_modify_oper', ['%nickname%' => $result->nickname]),
-            NickProtectabilityStatus::IsService => $context->reply('set.cannot_modify_oper', ['%nickname%' => $result->nickname]),
-            // @codeCoverageIgnoreStart
-            NickProtectabilityStatus::Allowed => null, // Defensive: never called with Allowed
-            // @codeCoverageIgnoreEnd
-        };
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
+        $handler->handle($context, $account, $value, false);
     }
 }

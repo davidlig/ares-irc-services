@@ -213,12 +213,12 @@ help:
   ircop_header: "The following commands are available for \x0304\x02IRCOPS\x02\x03:"
 
 permissions:
-  nickserv.userip: "View the real IP/Host of a user (IRCop only)"
+  nickserv.userip: "View the real IP/Host of a user"
 
 # Spanish
 help:
   ircop_header: "Los siguientes comandos están disponibles para \x0304\x02IRCOPS\x02\x03:"
 
 permissions:
-  nickserv.userip: "Ver la dirección IP/Host real de un usuario (solo IRCop)"
+  nickserv.userip: "Ver la dirección IP/Host real de un usuario"
 ```
