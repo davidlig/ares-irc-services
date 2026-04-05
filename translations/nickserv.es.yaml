@@ -443,7 +443,7 @@ forbidvhost:
       Muestra todos los patrones de vhost prohibidos.
       
       Sintaxis: FORBIDVHOST LIST
-    header:      "\x0307→\x03 Patrones de vhost prohibidos (\x02%count%\x02):"
+    header:      "\x0307ℹ\x03 Patrones de vhost prohibidos (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — por %nick% (%date%)"
-    empty:       "\x0307→\x03 No hay patrones de vhost prohibidos."
+    empty:       "\x0307ℹ\x03 No hay patrones de vhost prohibidos."
     unknown_creator: "desconocido"

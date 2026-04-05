@@ -444,7 +444,7 @@ forbidvhost:
       Shows all forbidden vhost patterns.
       
       Syntax: FORBIDVHOST LIST
-    header:      "\x0307→\x03 Forbidden vhost patterns (\x02%count%\x02):"
+    header:      "\x0307ℹ\x03 Forbidden vhost patterns (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — by %nick% (%date%)"
-    empty:       "\x0307→\x03 No forbidden vhost patterns."
+    empty:       "\x0307ℹ\x03 No forbidden vhost patterns."
     unknown_creator: "unknown"
