@@ -458,6 +458,9 @@ services:
     App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface:
         class: App\Infrastructure\NickServ\Doctrine\RegisteredNickDoctrineRepository
 
+    App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface:
+        class: App\Infrastructure\NickServ\Doctrine\ForbiddenVhostDoctrineRepository
+
     # --- ChanServ Domain --------------------------------------------------------
 
     App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface:
@@ -879,6 +882,14 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['nickserv.command']
 
+    App\Application\NickServ\Command\Handler\ForbidvhostCommand:
+        arguments:
+            $forbiddenVhostRepository: '@App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface'
+            $forbiddenVhostService: '@App\Application\NickServ\Service\ForbiddenVhostService'
+            $patternValidator: '@App\Application\NickServ\ForbiddenPatternValidator'
+            $logger: '@monolog.logger.irc'
+        tags: ['nickserv.command']
+
     # --- NickServ Services -------------------------------------------------------
 
     App\Application\NickServ\Service\NickTargetValidator:
@@ -898,6 +909,17 @@ services:
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $logger: '@monolog.logger.irc'
             $defaultLanguage: '%services.default_language%'
+
+    App\Application\NickServ\Service\ForbiddenVhostService:
+        arguments:
+            $repository: '@App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface'
+
+    # --- NickServ Subscribers (event cleanup) -----------------------------------
+
+    App\Infrastructure\NickServ\Subscriber\ForbiddenVhostCleanupSubscriber:
+        arguments:
+            $forbiddenVhostRepository: '@App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface'
+        tags: ['kernel.event_subscriber']
 
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---
 

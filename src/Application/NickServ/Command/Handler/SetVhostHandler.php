@@ -9,6 +9,7 @@ use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
@@ -25,6 +26,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         private readonly VhostDisplayResolver $displayResolver,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
+        private readonly ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
     ) {
     }
 
@@ -64,6 +66,12 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
             return;
         }
 
+        if ($this->isForbidden($normalized)) {
+            $context->reply('set.vhost.invalid');
+
+            return;
+        }
+
         $existing = $this->nickRepository->findByVhost($normalized);
         if (null !== $existing && $existing->getId() !== $account->getId()) {
             $context->reply('set.vhost.taken');
@@ -98,5 +106,17 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         $pattern = $ircop->getRole()->getForcedVhostPattern();
 
         return null !== $pattern && '' !== $pattern && ForcedVhost::isValidPattern($pattern);
+    }
+
+    private function isForbidden(string $vhost): bool
+    {
+        $forbiddenList = $this->forbiddenVhostRepository->findAll();
+        foreach ($forbiddenList as $forbidden) {
+            if ($forbidden->matches($vhost)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

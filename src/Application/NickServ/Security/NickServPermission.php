@@ -31,6 +31,9 @@ final readonly class NickServPermission
     /** IRCop permission to modify a nickname's settings. */
     public const string SET = 'nickserv.set';
 
+    /** IRCop permission to forbid and allow vhost patterns. */
+    public const string FORBIDVHOST = 'nickserv.forbidvhost';
+
     private function __construct()
     {
     }

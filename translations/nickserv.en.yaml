@@ -389,3 +389,62 @@ unforbid:
     Example: UNFORBID SomeNick
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 is no longer forbidden."
   not_forbidden:    "\x0304✗\x03 Nickname \x02%nickname%\x02 is not forbidden."
+
+# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
+forbidvhost:
+  syntax:           "FORBIDVHOST ADD|DEL|LIST [pattern]"
+  short:            "Manage forbidden vhost patterns."
+  help:             |
+    Manages patterns that prevent users from setting matching vhosts
+    via NickServ SET VHOST. OperServ ROLE VHOST is exempt.
+    
+    Wildcards: * matches any sequence, ? matches single character.
+    Example: *.pirated.com blocks any vhost ending with .pirated.com
+    
+    This command requires IRCop permission: nickserv.forbidvhost
+    
+    Subcommands:
+      ADD <pattern>    Add a forbidden pattern
+      DEL <pattern>    Remove a forbidden pattern
+      LIST             Show all forbidden patterns
+  
+  unknown_sub: "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
+  
+  add:
+    syntax:      "FORBIDVHOST ADD <pattern>"
+    short:       "Add a forbidden vhost pattern."
+    help:        |
+      Adds a pattern to the forbidden vhost list. Users will not be
+      able to set vhosts matching this pattern via SET VHOST.
+      OperServ roles can still set forced vhosts.
+      
+      Wildcards: * matches any sequence, ? matches single character.
+      
+      Syntax: FORBIDVHOST ADD <pattern>
+      Example: FORBIDVHOST ADD *.pirated.com
+    done:            "\x0303✓\x03 Forbidden vhost pattern added: \x02%pattern%\x02"
+    already_exists:  "\x0304✗\x03 Pattern \x02%pattern%\x02 already exists."
+    invalid:          "\x0304✗\x03 Invalid vhost pattern format."
+  
+  del:
+    syntax:      "FORBIDVHOST DEL <pattern>"
+    short:       "Remove a forbidden vhost pattern."
+    help:        |
+      Removes a pattern from the forbidden vhost list.
+      
+      Syntax: FORBIDVHOST DEL <pattern>
+      Example: FORBIDVHOST DEL *.pirated.com
+    done:        "\x0303✓\x03 Forbidden vhost pattern removed: \x02%pattern%\x02"
+    not_found:   "\x0304✗\x03 Pattern \x02%pattern%\x02 not found."
+  
+  list:
+    short:       "List all forbidden vhost patterns."
+    syntax:      "FORBIDVHOST LIST"
+    help:        |
+      Shows all forbidden vhost patterns.
+      
+      Syntax: FORBIDVHOST LIST
+    header:      "\x0307→\x03 Forbidden vhost patterns (\x02%count%\x02):"
+    entry:       "  %index%. \x0304%pattern%\x03 — by %nick% (%date%)"
+    empty:       "\x0307→\x03 No forbidden vhost patterns."
+    unknown_creator: "unknown"

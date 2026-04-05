@@ -389,3 +389,61 @@ unforbid:
     Ejemplo: UNFORBID AlgunNick
   success:          "\x0303✔\x03 El nickname \x02%nickname%\x02 ya no está prohibido."
   not_forbidden:    "\x0304✗\x03 El nickname \x02%nickname%\x02 no está prohibido."
+
+# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
+forbidvhost:
+  syntax:           "FORBIDVHOST ADD|DEL|LIST [patrón]"
+  short:            "Gestiona vhosts prohibidos."
+  help:             |
+    Gestiona patrones que impiden a los usuarios establecer vhosts
+    coincidentes vía %bot% SET VHOST.
+    
+    Comodines: * coincide con cualquier secuencia, ? coincide con un caracter.
+    Ejemplo: *.pirata.com bloquea cualquier vhost que termine en .pirata.com
+    
+    Este comando requiere permiso de IRCop: nickserv.forbidvhost
+    
+    Subcomandos:
+      ADD <patrón>    Agregar un patrón prohibido
+      DEL <patrón>    Eliminar un patrón prohibido
+      LIST            Mostrar todos los patrones prohibidos
+  
+  unknown_sub: "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
+  
+  add:
+    syntax:      "FORBIDVHOST ADD <patrón>"
+    short:       "Agregar un patrón de vhost prohibido."
+    help:        |
+      Agrega un patrón a la lista de vhosts prohibidos. Los usuarios no podrán
+      establecer vhosts que coincidan con este patrón vía SET VHOST.
+      
+      Comodines: * coincide con cualquier secuencia, ? coincide con un caracter.
+      
+      Sintaxis: FORBIDVHOST ADD <patrón>
+      Ejemplo: FORBIDVHOST ADD *.pirata.com
+    done:            "\x0303✓\x03 Patrón de vhost prohibido agregado: \x02%pattern%\x02"
+    already_exists:  "\x0304✗\x03 El patrón \x02%pattern%\x02 ya existe."
+    invalid:          "\x0304✗\x03 Formato de patrón de vhost inválido."
+  
+  del:
+    syntax:      "FORBIDVHOST DEL <patrón>"
+    short:       "Eliminar un patrón de vhost prohibido."
+    help:        |
+      Elimina un patrón de la lista de vhosts prohibidos.
+      
+      Sintaxis: FORBIDVHOST DEL <patrón>
+      Ejemplo: FORBIDVHOST DEL *.pirata.com
+    done:        "\x0303✓\x03 Patrón de vhost prohibido eliminado: \x02%pattern%\x02"
+    not_found:   "\x0304✗\x03 Patrón \x02%pattern%\x02 no encontrado."
+  
+  list:
+    short:       "Listar todos los patrones de vhost prohibidos."
+    syntax:      "FORBIDVHOST LIST"
+    help:        |
+      Muestra todos los patrones de vhost prohibidos.
+      
+      Sintaxis: FORBIDVHOST LIST
+    header:      "\x0307→\x03 Patrones de vhost prohibidos (\x02%count%\x02):"
+    entry:       "  %index%. \x0304%pattern%\x03 — por %nick% (%date%)"
+    empty:       "\x0307→\x03 No hay patrones de vhost prohibidos."
+    unknown_creator: "desconocido"
