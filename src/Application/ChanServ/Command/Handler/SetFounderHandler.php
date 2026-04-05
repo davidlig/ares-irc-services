@@ -53,17 +53,17 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
         $newAccount = $this->nickRepository->findByNick($newNickname);
         if (null === $newAccount) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $newNickname]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $newNickname]);
 
             return;
         }
         if (NickStatus::Suspended === $newAccount->getStatus()) {
-            $context->reply('set.founder.suspended', ['%nick%' => $newNickname]);
+            $context->reply('set.founder.suspended', ['%nickname%' => $newNickname]);
 
             return;
         }
         if (NickStatus::Registered !== $newAccount->getStatus()) {
-            $context->reply('set.founder.must_be_registered', ['%nick%' => $newNickname]);
+            $context->reply('set.founder.must_be_registered', ['%nickname%' => $newNickname]);
 
             return;
         }
@@ -80,7 +80,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
         $existingChannelsByNewFounder = $this->channelRepository->findByFounderNickId($newAccount->getId());
         if (count($existingChannelsByNewFounder) >= $this->maxChannelsPerNick) {
-            $context->reply('set.founder.limit_exceeded', ['%nick%' => $newNickname, '%max%' => (string) $this->maxChannelsPerNick]);
+            $context->reply('set.founder.limit_exceeded', ['%nickname%' => $newNickname, '%max%' => (string) $this->maxChannelsPerNick]);
 
             return;
         }
@@ -182,11 +182,11 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
         $newAccount = $this->nickRepository->findById($newFounderNickId);
         $newFounderNick = $newAccount?->getNickname() ?? (string) $newFounderNickId;
-        $context->reply('set.founder.updated', ['%nick%' => $newFounderNick]);
+        $context->reply('set.founder.updated', ['%nickname%' => $newFounderNick]);
 
         $notice = $context->trans('set.founder.notice_channel', [
             '%from%' => $context->sender->nick,
-            '%nick%' => $newFounderNick,
+            '%nickname%' => $newFounderNick,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
     }

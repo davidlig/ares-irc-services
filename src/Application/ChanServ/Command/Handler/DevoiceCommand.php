@@ -109,7 +109,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
-            $context->reply('voice.user_not_on_channel', ['%nick%' => $targetNick]);
+            $context->reply('voice.user_not_on_channel', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -136,6 +136,6 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
                 '%mode%' => '-v',
             ])
         );
-        $context->reply('devoice.done', ['%nick%' => $targetNick]);
+        $context->reply('devoice.done', ['%nickname%' => $targetNick]);
     }
 }

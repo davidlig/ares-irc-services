@@ -10,7 +10,7 @@ error:
   invalid_channel: "\x0304✗\x03 Nombre de canal no válido. Usa \x02#canal\x02."
   channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   generic:        "\x0304✗\x03 Ocurrió un error. Inténtalo de nuevo."
-  nick_not_registered: "\x0304✗\x03 El nick \x02%nick%\x02 no está registrado."
+  nick_not_registered: "\x0304✗\x03 El nick \x02%nickname%\x02 no está registrado."
   insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 en el canal \x02%channel%\x02."
   mail_failed: "\x0304✗\x03 No se pudo enviar el correo. Inténtalo más tarde."
 
@@ -29,15 +29,15 @@ info:
   help:             "Muestra fundador, fecha de registro, sucesor, URL, email, descripción, último uso, topic y opciones (TOPICLOCK, MLOCK, SECURE)."
   header:          "\x02Información del canal \x0307%channel%\x03:\x02"
   footer:          "\x0314─────────────────────────────\x03"
-  founder:         "  \x0314Fundador\x03         : \x02%nick%\x02"
+  founder:         "  \x0314Fundador\x03         : \x02%nickname%\x02"
   registered:      "  \x0314Registrado\x03       : %date%"
-  successor:       "  \x0314Sucesor\x03          : \x02%nick%\x02"
+  successor:       "  \x0314Sucesor\x03          : \x02%nickname%\x02"
   description:     "  \x0314Descripción\x03      : %desc%"
   url:             "  \x0314URL\x03             : %url%"
   email:           "  \x0314Email\x03           : %email%"
   last_used:       "  \x0314Último uso\x03       : %date%"
   topic:           "  \x0314Último tema\x03      : %topic%"
-  topic_set_by:    "  \x0314Tema cambiado por\x03 : %nick%"
+  topic_set_by:    "  \x0314Tema cambiado por\x03 : %nickname%"
   options:         "  \x0314Opciones\x03         : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
   mlock_modes:     "  \x0314Candado de modos\x03 : %modes%"
 
@@ -63,19 +63,19 @@ op:
   syntax:           "OP <#canal> <nickname>"
   short:            "Dar modo operador en el canal."
   help:             "Dar modo operador en el canal."
-  done:             "\x0303✔\x03 \x02%nick%\x02 ha recibido estatus de operador de canal."
-  user_not_on_channel: "\x0304✗\x03 El usuario \x02%nick%\x02 no está en la red."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ha recibido estatus de operador de canal."
+  user_not_on_channel: "\x0304✗\x03 El nickname \x02%nickname%\x02 no está en la red."
   notice_grant:     "\x0303✔\x03 \x0302%from%\x03 da \x0304%mode%\x03 a \x0314%to%\x03"
 
 deop:
   syntax:           "DEOP <#canal> <nickname>"
   short:            "Quitar modo operador en el canal."
   help:             "Quitar modo operador en el canal."
-  done:             "\x0303✔\x03 \x02%nick%\x02 ha sido deopado."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ha sido deopado."
 
 secure:
-  requires_access: "\x0304✗\x03 Con SECURE activado, \x02%nick%\x02 debe estar en la lista de acceso para recibir rango."
-  requires_min_level: "\x0304✗\x03 Con SECURE activado, \x02%nick%\x02 debe tener al menos nivel \x02%level%\x02 para recibir \x02%mode%\x02."
+  requires_access: "\x0304✗\x03 Con SECURE activado, \x02%nickname%\x02 debe estar en la lista de acceso para recibir rango."
+  requires_min_level: "\x0304✗\x03 Con SECURE activado, \x02%nickname%\x02 debe tener al menos nivel \x02%level%\x02 para recibir \x02%mode%\x02."
 
 set:
   syntax:           "SET <#canal> <opción> [valor]"
@@ -88,25 +88,25 @@ set:
     help:           "Sin token: envía un token al email del fundador actual. Con token: completa la transferencia."
     token_sent:     "\x0303✔\x03 Se ha enviado un token de cambio de fundador a %email_hint%."
     invalid_token:  "\x0304✗\x03 Token inválido o expirado."
-    updated:        "\x0303✔\x03 El fundador ha sido cambiado a \x02%nick%\x02."
+    updated:        "\x0303✔\x03 El fundador ha sido cambiado a \x02%nickname%\x02."
     no_email:       "\x0304✗\x03 El fundador actual no tiene email. No se puede enviar el token."
     throttled:      "\x0304✗\x03 Espera antes de solicitar otro token."
-    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 debe estar registrado y activado."
-    suspended:         "\x0304✗\x03 \x02%nick%\x02 está suspendido y no puede ser fundador."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 debe estar registrado y activado."
+    suspended:         "\x0304✗\x03 \x02%nickname%\x02 está suspendido y no puede ser fundador."
     cannot_be_self:   "\x0304✗\x03 El nuevo fundador no puede ser el actual."
     cannot_be_successor: "\x0304✗\x03 El nuevo fundador no puede ser el sucesor del canal."
-    limit_exceeded: "\x0304✗\x03 \x02%nick%\x02 ha alcanzado el máximo de %max% canales registrados."
-    notice_channel:   "\x02%from%\x02 asigna como fundador del canal a \x02%nick%\x02."
+    limit_exceeded: "\x0304✗\x03 \x02%nickname%\x02 ha alcanzado el máximo de %max% canales registrados."
+    notice_channel:   "\x02%from%\x02 asigna como fundador del canal a \x02%nickname%\x02."
   successor:
     syntax:         "SET <#canal> SUCCESSOR [nickname]"
     short:          "Establecer el sucesor del canal."
     help:           "Asigna un nickname como sucesor de un canal. Si no se establece un nickname borra el actual. El nick debe estar registrado y activado."
     cleared:        "\x0303✔\x03 Sucesor borrado."
-    updated:        "\x0303✔\x03 Sucesor establecido en \x02%nick%\x02."
-    must_be_registered: "\x0304✗\x03 \x02%nick%\x02 debe estar registrado y activado."
-    suspended:      "\x0304✗\x03 \x02%nick%\x02 está suspendido y no puede ser sucesor."
+    updated:        "\x0303✔\x03 Sucesor establecido en \x02%nickname%\x02."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 debe estar registrado y activado."
+    suspended:      "\x0304✗\x03 \x02%nickname%\x02 está suspendido y no puede ser sucesor."
     cannot_be_founder: "\x0304✗\x03 El fundador no puede ser sucesor."
-    notice_channel:   "\x02%from%\x02 asigna como sucesor del canal a \x02%nick%\x02."
+    notice_channel:   "\x02%from%\x02 asigna como sucesor del canal a \x02%nickname%\x02."
     notice_channel_cleared: "\x02%from%\x02 borra al sucesor del canal."
   desc:
     syntax:         "SET <#canal> DESC <descripción>"
@@ -138,8 +138,8 @@ set:
     help:           "Bloquea la posibilidad de cambiar el topic de un canal. Al activar se establece el actual."
     on:             "\x0303✔\x03 Topic lock activado."
     off:            "\x0303✔\x03 Topic lock desactivado."
-    notice_on:      "\x0303✔\x03 \x0302%nick%\x03 activa TOPICLOCK."
-    notice_off:     "\x0304✗\x03 \x0302%nick%\x03 desactiva TOPICLOCK."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa TOPICLOCK."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva TOPICLOCK."
   mlock:
     syntax:         "SET <#canal> MLOCK {ON|OFF}"
     short:          "Bloquear modos del canal."
@@ -147,16 +147,16 @@ set:
     no_modes:       "sin modos"
     on:             "\x0303✔\x03 MLOCK activado (%modes%)."
     off:            "\x0303✔\x03 MLOCK desactivado."
-    notice_on:      "\x0303✔\x03 \x0302%nick%\x03 activa MLOCK (%modes%)."
-    notice_off:     "\x0304✗\x03 \x0302%nick%\x03 desactiva MLOCK."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa MLOCK (%modes%)."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva MLOCK."
   secure:
     syntax:         "SET <#canal> SECURE {ON|OFF}"
     short:          "Exigir rangos de canal solo a lista de acceso."
     help:           "Bloquea la posibilidad de asignar rangos en el canal a nicknames que no estén en la lista de acceso."
     on:             "\x0303✔\x03 SECURE activado."
     off:            "\x0303✔\x03 SECURE desactivado."
-    notice_on:      "\x0303✔\x03 \x0302%nick%\x03 activa el modo SECURE."
-    notice_off:     "\x0304✗\x03 \x0302%nick%\x03 desactiva el modo SECURE."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa el modo SECURE."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva el modo SECURE."
 
 access:
   syntax:           "ACCESS <#canal> {ADD|DEL|LIST} [nick] [nivel]"
@@ -173,19 +173,19 @@ access:
     help:           "Muestra nick y nivel de cada entrada."
     header:         "\x0303Lista de acceso de \x02%channel%\x02\x03"
     empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no tiene entradas de acceso."
-    entry:          "  #%index%: %nick% (nivel %level%)"
+    entry:          "  #%index%: %nickname% (nivel %level%)"
   add:
     syntax:         "ACCESS <#canal> ADD <nick> <nivel>"
     short:          "Añadir o actualizar nivel (requiere nivel ACCESSCHANGE)."
     help:           "Nivel 1-499. Solo puedes asignar niveles por debajo del tuyo."
-    done:           "\x0303✔\x03 \x02%nick%\x02 establecido a nivel %level%."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 establecido a nivel %level%."
     notice_channel: "\x0303✔\x03 \x0302%from%\x03 establece a \x0314%to%\x03 a nivel \x0304%level%\x03"
   del:
     syntax:         "ACCESS <#canal> DEL <nick>"
     short:          "Quitar de la lista (requiere nivel ACCESSCHANGE)."
     help:           "Solo puedes quitar nicks con nivel menor al tuyo."
-    not_in_list:    "\x0304✗\x03 \x02%nick%\x02 no está en la lista de acceso."
-    done:           "\x0303✔\x03 \x02%nick%\x02 eliminado de la lista de acceso."
+    not_in_list:    "\x0304✗\x03 \x02%nickname%\x02 no está en la lista de acceso."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 eliminado de la lista de acceso."
     notice_channel: "\x0304✗\x03 \x0302%from%\x03 quita a \x0314%to%\x03 de la lista de acceso"
 
 delaccess:
@@ -195,7 +195,7 @@ delaccess:
   done:             "\x0303✔\x03 Tu acceso ha sido eliminado de \x02%channel%\x02."
   not_in_list:      "\x0304✗\x03 No tienes acceso en \x02%channel%\x02."
   founder_not_in_access: "\x0304✗\x03 Eres el fundador de \x02%channel%\x02 y no estás en la lista de acceso."
-  notice_channel: "\x0304✗\x03 \x0302%nick%\x03 elimina su acceso del canal"
+  notice_channel: "\x0304✗\x03 \x0302%nickname%\x03 elimina su acceso del canal"
 
 levels:
   syntax:           "LEVELS <#canal> {LIST|SET|RESET} [nivel] [valor]"
@@ -224,29 +224,29 @@ voice:
   syntax:           "VOICE <#canal> <nickname>"
   short:            "Dar modo voz en el canal."
   help:             "Dar modo voz en el canal."
-  done:             "\x0303✔\x03 \x02%nick%\x02 ha recibido voz."
-  user_not_on_channel: "\x0304✗\x03 El usuario \x02%nick%\x02 no está en la red."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ha recibido voz."
+  user_not_on_channel: "\x0304✗\x03 El nickname \x02%nickname%\x02 no está en la red."
   notice_grant:     "\x0303✔\x03 \x0302%from%\x03 da \x0304%mode%\x03 a \x0314%to%\x03"
 
 devoice:
   syntax:           "DEVOICE <#canal> <nickname>"
   short:            "Quitar modo voz en el canal."
   help:             "Quitar modo voz en el canal."
-  done:             "\x0303✔\x03 \x02%nick%\x02 ha sido devoiceado."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ha sido devoiceado."
 
 invite:
   syntax:           "INVITE <#canal>"
   short:            "Invitarse al canal."
   help:             "Invitarse al canal."
   done:             "\x0303✔\x03 Has sido invitado a \x02%channel%\x02."
-  notice_channel:   "\x0303✔\x03 \x0302%nick%\x03 se invita al canal."
+  notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 se invita al canal."
 
 admin:
   syntax:           "ADMIN <#canal> <nickname>"
   short:            "Dar modo admin en el canal."
   help:             "Dar modo admin en el canal. Solo si el IRCd soporta +a."
-  done:             "\x0303✔\x03 \x02%nick%\x02 ha recibido admin de canal."
-  user_not_on_channel: "\x0304✗\x03 El usuario \x02%nick%\x02 no está en la red."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ha recibido admin de canal."
+  user_not_on_channel: "\x0304✗\x03 El nickname \x02%nickname%\x02 no está en la red."
   notice_grant:     "\x0303✔\x03 \x0302%from%\x03 da \x0304%mode%\x03 a \x0314%to%\x03"
   not_supported:    "\x0304✗\x03 Esta red no soporta el modo admin de canal (+a)."
 
@@ -254,14 +254,14 @@ deadmin:
   syntax:           "DEADMIN <#canal> <nickname>"
   short:            "Quitar modo admin en el canal."
   help:             "Quitar modo admin en el canal."
-  done:             "\x0303✔\x03 \x02%nick%\x02 ha sido deadminado."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ha sido deadminado."
 
 halfop:
   syntax:           "HALFOP <#canal> <nickname>"
   short:            "Dar modo semi-operador en el canal."
   help:             "Dar modo semi-operador en el canal. Solo si el IRCd soporta +h."
-  done:             "\x0303✔\x03 \x02%nick%\x02 ha recibido halfop."
-  user_not_on_channel: "\x0304✗\x03 El usuario \x02%nick%\x02 no está en la red."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ha recibido halfop."
+  user_not_on_channel: "\x0304✗\x03 El nickname \x02%nickname%\x02 no está en la red."
   notice_grant:     "\x0303✔\x03 \x0302%from%\x03 da \x0304%mode%\x03 a \x0314%to%\x03"
   not_supported:    "\x0304✗\x03 Esta red no soporta el modo halfop (+h)."
 
@@ -269,7 +269,7 @@ dehalfop:
   syntax:           "DEHALFOP <#canal> <nickname>"
   short:            "Quitar modo semi-operador en el canal."
   help:             "Quitar modo semi-operador en el canal."
-  done:             "\x0303✔\x03 \x02%nick%\x02 ha sido dehalfopeado."
+  done:             "\x0303✔\x03 \x02%nickname%\x02 ha sido dehalfopeado."
 
 akick:
   syntax:           "AKICK <#canal> {ADD|DEL|LIST|ENFORCE} [máscara] [expiración] [razón]"
@@ -278,7 +278,7 @@ akick:
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST o ENFORCE."
   invalid_mask:     "\x0304✗\x03 Formato de máscara inválido. Usa \x02nick!usuario@host\x02 con comodines (*)."
   dangerous_mask:   "\x0304✗\x03 La máscara \x02%mask%\x02 es demasiado amplia. Debe contener al menos 4 caracteres alfanuméricos."
-  protected_user:   "\x0304✗\x03 El usuario \x02%nick%\x02 tiene acceso en este canal."
+  protected_user:   "\x0304✗\x03 El nickname \x02%nickname%\x02 tiene acceso en este canal."
   max_entries:      "\x0304✗\x03 Máximo %max% entradas AKICK por canal."
   add:
     syntax:         "AKICK <#canal> ADD <máscara> [expiración] [razón]"
@@ -300,7 +300,7 @@ akick:
     help:           "Muestra máscara, razón, expiración y quién añadió."
     header:         "\x0303Lista AKICK de \x02%channel%\x02\x03"
     empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no tiene AKICKs."
-    entry:          "  #%index% %mask% %reason% (por %nick%, expira: %expiration%)"
+    entry:          "  #%index% %mask% %reason% (por %nickname%, expira: %expiration%)"
     no_reason:      "Sin razón"
     never_expires:  "nunca"
     unknown_creator: "desconocido"

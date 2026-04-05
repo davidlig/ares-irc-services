@@ -113,7 +113,7 @@ info:
   help:             "Muestra los datos de registro de un nickname: fecha de alta, estado de\nconexión, último mensaje de salida y correo electrónico. El correo solo es\nvisible para el propietario identificado. Con PRIVATE ON solo el dueño y\nlos Operadores IRC pueden ver la información."
   not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
   private:          "\x0304✗\x03 La información del nickname \x02%nickname%\x02 es privada."
-  header:           "\x02Información del usuario \x0307%nickname%\x03:\x02"
+  header:           "\x02Información del nickname \x0307%nickname%\x03:\x02"
   status:           "  \x0314Estado\x03          : %status%"
   status_registered:  "\x0303Registrado\x03"
   status_suspended:   "\x0304Suspendido\x03"
@@ -197,7 +197,7 @@ set:
 # --- SASET (IRCop) --------------------------------------------------------------
 saset:
   syntax:           "SASET <nickname> <opción> <valor>"
-  short:            "Modifica la configuración de otro usuario."
+  short:            "Modifica la configuración de otro nickname."
   help:             |
     Permite a un IRCop modificar la configuración de un nickname registrado.
     El nickname objetivo no puede ser un usuario Root, IRCop ni un servicio.
@@ -217,48 +217,48 @@ saset:
 
   password:
     syntax:         "SASET <nickname> PASSWORD <nueva_contraseña>"
-    short:          "Cambia la contraseña de un usuario."
-    help:           "Cambia la contraseña del nickname de otro usuario.\nEl cambio es inmediato.\n\nSintaxis: SASET <nickname> PASSWORD <nueva_contraseña>\nEjemplo: SASET Usuario PASSWORD nuevopass123"
+    short:          "Cambia la contraseña de un nickname."
+    help:           "Cambia la contraseña de otro nickname.\nEl cambio es inmediato.\n\nSintaxis: SASET <nickname> PASSWORD <nueva_contraseña>\nEjemplo: SASET Usuario PASSWORD nuevopass123"
     success:        "\x0303✔\x03 La contraseña de \x02%nickname%\x02 ha sido actualizada."
 
   email:
     syntax:         "SASET <nickname> EMAIL <nuevo_email>"
-    short:          "Cambia el correo de un usuario."
-    help:           "Cambia el correo electrónico del nickname de otro usuario.\nNo se envía confirmación—el cambio es inmediato.\n\nSintaxis: SASET <nickname> EMAIL <nuevo_email>\nEjemplo: SASET Usuario EMAIL usuario@ejemplo.com"
+    short:          "Cambia el correo de un nickname."
+    help:           "Cambia el correo electrónico de otro nickname.\nNo se envía confirmación—el cambio es inmediato.\n\nSintaxis: SASET <nickname> EMAIL <nuevo_email>\nEjemplo: SASET Usuario EMAIL usuario@ejemplo.com"
     success:        "\x0303✔\x03 El correo de \x02%nickname%\x02 ha sido actualizado a \x02%email%\x02."
 
   language:
     syntax:         "SASET <nickname> LANGUAGE <código>"
-    short:          "Cambia el idioma de un usuario."
-    help:           "Cambia el idioma de otro usuario.\nIdiomas disponibles: en (inglés), es (español).\n\nSintaxis: SASET <nickname> LANGUAGE <código>\nEjemplo: SASET Usuario LANGUAGE es"
+    short:          "Cambia el idioma de un nickname."
+    help:           "Cambia el idioma de otro nickname.\nIdiomas disponibles: en (inglés), es (español).\n\nSintaxis: SASET <nickname> LANGUAGE <código>\nEjemplo: SASET Usuario LANGUAGE es"
     success:        "\x0303✔\x03 Idioma de \x02%nickname%\x02 cambiado a \x02%language%\x02."
 
   timezone:
     syntax:         "SASET <nickname> TIMEZONE <zona|OFF>"
-    short:          "Cambia la zona horaria de un usuario."
-    help:           "Establece o quita la zona horaria de otro usuario.\nUsa OFF para quitarla.\n\nSintaxis: SASET <nickname> TIMEZONE <zona>\nEjemplo: SASET Usuario TIMEZONE Europe/Madrid"
+    short:          "Cambia la zona horaria de un nickname."
+    help:           "Establece o quita la zona horaria de otro nickname.\nUsa OFF para quitarla.\n\nSintaxis: SASET <nickname> TIMEZONE <zona>\nEjemplo: SASET Usuario TIMEZONE Europe/Madrid"
     success:        "\x0303✔\x03 Zona horaria de \x02%nickname%\x02 establecida a \x02%timezone%\x02."
     cleared:        "\x0303✔\x03 Zona horaria de \x02%nickname%\x02 eliminada."
     invalid:        "\x0304✗\x03 Zona horaria \x02%timezone%\x02 no válida."
 
   private:
     syntax:         "SASET <nickname> PRIVATE {ON|OFF}"
-    short:          "Cambia la privacidad de un usuario."
-    help:           "Activa o desactiva la privacidad de la información de otro usuario.\n\nSintaxis: SASET <nickname> PRIVATE {ON|OFF}\nEjemplo: SASET Usuario PRIVATE ON"
+    short:          "Cambia la privacidad de un nickname."
+    help:           "Activa o desactiva la privacidad de la información de otro nickname.\n\nSintaxis: SASET <nickname> PRIVATE {ON|OFF}\nEjemplo: SASET Usuario PRIVATE ON"
     on:             "\x0303✔\x03 La información de \x02%nickname%\x02 es ahora \x02privada\x02."
     off:            "\x0303✔\x03 La información de \x02%nickname%\x02 es ahora \x02pública\x02."
 
   msg:
     syntax:         "SASET <nickname> MSG {ON|OFF}"
-    short:          "Cambia la preferencia de mensajes de un usuario."
-    help:           "Establece si otro usuario recibe respuestas como PRIVMSG (ON) o NOTICE (OFF).\n\nSintaxis: SASET <nickname> MSG {ON|OFF}\nEjemplo: SASET Usuario MSG ON"
+    short:          "Cambia la preferencia de mensajes de un nickname."
+    help:           "Establece si otro nickname recibe respuestas como PRIVMSG (ON) o NOTICE (OFF).\n\nSintaxis: SASET <nickname> MSG {ON|OFF}\nEjemplo: SASET Usuario MSG ON"
     on:             "\x0303✔\x03 \x02%nickname%\x02 recibirá mensajes como \x02PRIVMSG\x02."
     off:            "\x0303✔\x03 \x02%nickname%\x02 recibirá mensajes como \x02NOTICE\x02."
 
   vhost:
     syntax:         "SASET <nickname> VHOST <vhost|OFF>"
-    short:          "Cambia el host virtual de un usuario."
-    help:           "Establece o quita el host virtual de otro usuario.\nUsa OFF para quitarlo.\n\nSintaxis: SASET <nickname> VHOST <vhost>\nEjemplo: SASET Usuario VHOST usuarios.ejemplo.com"
+    short:          "Cambia el host virtual de un nickname."
+    help:           "Establece o quita el host virtual de otro nickname.\nUsa OFF para quitarlo.\n\nSintaxis: SASET <nickname> VHOST <vhost>\nEjemplo: SASET Usuario VHOST usuarios.ejemplo.com"
     success:        "\x0303✔\x03 VHost de \x02%nickname%\x02 establecido a \x02%vhost%\x02."
     cleared:        "\x0303✔\x03 VHost de \x02%nickname%\x02 eliminado."
     invalid:        "\x0304✗\x03 VHost no válido para \x02%nickname%\x02."
@@ -282,7 +282,7 @@ help:
   syntax_label:     "\x0307Sintaxis:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 No hay ayuda disponible para \x02%command%\x02."
-  ircop_header:     "Los siguientes comandos están disponibles para \x0304\x02IRCOPS\x02\x03:"
+  ircop_header:     "\x02\x0314Comandos disponibles para IRCOPS:\x03\x0F"
 
   set_timezone:
     index_label:    "\x0314Regiones\x03 (usa \x02HELP SET TIMEZONE <región>\x02 para listar):"
@@ -298,25 +298,25 @@ protection:
 # --- IRCop Commands ---------------------------------------------------------
 userip:
   syntax:           "USERIP <nickname>"
-  short:            "Obtiene la dirección IP/Host real del usuario."
+  short:            "Obtiene la dirección IP/Host real del nickname."
   help:             |
-    Muestra la dirección IP real y el hostname del usuario especificado.
+    Muestra la dirección IP real y el hostname del nickname especificado.
     Solo disponible para IRCops con permiso 'nickserv.userip'.
 
-    Este comando muestra información sensible del usuario.
+    Este comando muestra información sensible del nickname.
     Úsalo con responsabilidad.
 
     Sintaxis: USERIP <nickname>
     Ejemplo: USERIP SomeUser
-  not_online:       "\x0304✗\x03 El usuario \x02%nick%\x02 no está conectado."
-  result:           "\x0307ℹ\x03 Usuario: \x02%nick%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+  not_online:       "\x0304✗\x03 El nickname \x02%nickname%\x02 no está conectado."
+  result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 permissions:
-  nickserv.userip: "Ver la dirección IP/Host real de un usuario"
+  nickserv.userip: "Ver la dirección IP/Host real de un nickname"
   nickserv.suspend: "Suspender/reactivar un nickname"
-  nickserv.rename: "Forzar cambio de nick de un usuario conectado a uno aleatorio"
+  nickserv.rename: "Forzar cambio de nick de un nickname conectado a uno aleatorio"
   nickserv.drop: "Eliminar un nickname registrado"
-  nickserv.saset: "Modificar la configuración de otro usuario"
+  nickserv.saset: "Modificar la configuración de otro nickname"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -362,9 +362,9 @@ unsuspend:
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
   syntax:           "RENAME <nickname>"
-  short:            "Fuerza el cambio de nick de un usuario conectado a uno aleatorio."
+  short:            "Fuerza el cambio de nick de un nickname conectado a uno aleatorio."
   help:             |
-    Fuerza a un usuario conectado a cambiar su nickname a uno generado aleatoriamente.
+    Fuerza a un nickname conectado a cambiar su nick a uno generado aleatoriamente.
     Útil para hacer cumplir las políticas de la red sin desconectar al usuario.
     
     El formato del nuevo nickname usa el prefijo configurado (%prefix%).
@@ -373,11 +373,11 @@ rename:
     
     Sintaxis: RENAME <nickname>
     Ejemplo: RENAME Problematico
-  not_online:        "\x0304✗\x03 El usuario \x02%nickname%\x02 no está conectado."
+  not_online:        "\x0304✗\x03 El nickname \x02%nickname%\x02 no está conectado."
   cannot_rename_root: "\x0304✗\x03 No se puede renombrar al usuario root \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 No se puede renombrar al IRC operator \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 No se puede renombrar el nickname de servicio \x02%nickname%\x02."
-  success:           "\x0303✓\x03 El usuario \x02%nickname%\x02 ha sido renombrado a \x02%new_nick%\x02."
+  success:           "\x0303✓\x03 El nickname \x02%nickname%\x02 ha sido nombrado a \x02%new_nick%\x02."
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
@@ -496,7 +496,7 @@ forbidvhost:
       
       Sintaxis: FORBIDVHOST LIST
     header:      "\x0307ℹ\x03 Patrones de vhost prohibidos (\x02%count%\x02):"
-    entry:       "  %index%. \x0304%pattern%\x03 — por %nick% (%date%)"
+    entry:       "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No hay patrones de vhost prohibidos."
     unknown_creator: "desconocido"
 

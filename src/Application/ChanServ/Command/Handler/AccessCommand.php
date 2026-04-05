@@ -145,7 +145,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
             $nickName = null !== $nick ? $nick->getNickname() : (string) $access->getNickId();
             $context->reply('access.list.entry', [
                 '%index%' => (string) $num,
-                '%nick%' => $nickName,
+                '%nickname%' => $nickName,
                 '%level%' => (string) $access->getLevel(),
             ]);
             ++$num;
@@ -163,7 +163,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
 
         $targetAccount = $this->nickRepository->findByNick($data['nickname']);
         if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $data['nickname']]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $data['nickname']]);
 
             return;
         }
@@ -254,7 +254,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
             $this->accessRepository->save($access);
         }
 
-        $context->reply('access.add.done', ['%nick%' => $nickname, '%level%' => (string) $level]);
+        $context->reply('access.add.done', ['%nickname%' => $nickname, '%level%' => (string) $level]);
         $channelNotice = $context->trans('access.add.notice_channel', [
             '%from%' => $context->sender->nick,
             '%to%' => $nickname,
@@ -276,14 +276,14 @@ final readonly class AccessCommand implements ChanServCommandInterface
 
         $targetAccount = $this->nickRepository->findByNick($nickname);
         if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $nickname]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
 
             return;
         }
 
         $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
         if (null === $existing) {
-            $context->reply('access.del.not_in_list', ['%nick%' => $nickname]);
+            $context->reply('access.del.not_in_list', ['%nickname%' => $nickname]);
 
             return;
         }
@@ -295,7 +295,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
         }
 
         $this->accessRepository->remove($existing);
-        $context->reply('access.del.done', ['%nick%' => $nickname]);
+        $context->reply('access.del.done', ['%nickname%' => $nickname]);
         $channelNotice = $context->trans('access.del.notice_channel', [
             '%from%' => $context->sender->nick,
             '%to%' => $nickname,

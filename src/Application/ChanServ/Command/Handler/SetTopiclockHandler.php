@@ -31,7 +31,7 @@ final readonly class SetTopiclockHandler implements SetOptionHandlerInterface
         $nick = $context->sender?->nick ?? '';
         if ('' !== $nick) {
             $key = $on ? 'set.topiclock.notice_on' : 'set.topiclock.notice_off';
-            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->trans($key, ['%nick%' => $nick]));
+            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->trans($key, ['%nickname%' => $nick]));
         }
     }
 }

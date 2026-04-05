@@ -119,14 +119,14 @@ final readonly class OpCommand implements ChanServCommandInterface
 
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $targetNick]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
 
             return;
         }
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
-            $context->reply('op.user_not_on_channel', ['%nick%' => $targetNick]);
+            $context->reply('op.user_not_on_channel', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -137,7 +137,7 @@ final readonly class OpCommand implements ChanServCommandInterface
             $minLevelForMode = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOOP);
             if ($targetLevel < $minLevelForMode) {
                 $context->reply('secure.requires_min_level', [
-                    '%nick%' => $targetNick,
+                    '%nickname%' => $targetNick,
                     '%level%' => (string) $minLevelForMode,
                     '%mode%' => '+o',
                 ]);
@@ -155,7 +155,7 @@ final readonly class OpCommand implements ChanServCommandInterface
                 '%mode%' => '+o',
             ])
         );
-        $context->reply('op.done', ['%nick%' => $targetNick]);
+        $context->reply('op.done', ['%nickname%' => $targetNick]);
     }
 
     private function getLevelValue(int $channelId, string $key): int

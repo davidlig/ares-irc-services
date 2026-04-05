@@ -115,7 +115,7 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
-            $context->reply('halfop.user_not_on_channel', ['%nick%' => $targetNick]);
+            $context->reply('halfop.user_not_on_channel', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -142,6 +142,6 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
                 '%mode%' => '-h',
             ])
         );
-        $context->reply('dehalfop.done', ['%nick%' => $targetNick]);
+        $context->reply('dehalfop.done', ['%nickname%' => $targetNick]);
     }
 }

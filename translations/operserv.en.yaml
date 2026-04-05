@@ -8,7 +8,7 @@ error:
   oper_only:        "\x0304✗\x03 This command is restricted to IRC Operators."
   permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
   root_only:        "\x0304✗\x03 This command is restricted to network root administrators."
-  nick_not_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is not registered."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
 
 # --- HELP --------------------------------------------------------------------
 help:
@@ -37,22 +37,22 @@ ircop:
 
   unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
   unknown_role:     "\x0304✗\x03 Role \x02%role%\x02 does not exist. Use \x0303/msg %bot% ROLE LIST\x03 to see available roles."
-  already_admin:    "\x0304✗\x03 \x02%nick%\x02 is already an IRC operator (role: %role%)."
-  not_admin:       "\x0304✗\x03 \x02%nick%\x02 is not an IRC operator."
-  role_changed:     "\x0303✓\x03 Changed role for \x02%nick%\x02 from %old% to %new%."
+  already_admin:    "\x0304✗\x03 \x02%nickname%\x02 is already an IRC operator (role: %role%)."
+  not_admin:       "\x0304✗\x03 \x02%nickname%\x02 is not an IRC operator."
+  role_changed:     "\x0303✓\x03 Changed role for \x02%nickname%\x02 from %old% to %new%."
 
   add:
     syntax:         "IRCOP <nickname> ADD <role>"
     short:          "Add a network IRC operator."
     help:           "Adds a registered nickname as a network IRC operator.\nUse ROLE LIST to see available roles.\nThis command is restricted to Root users."
-    done:           "\x0303✓\x03 Added \x02%nick%\x02 as \x02%role%\x02."
-    nick_not_active: "\x0304✗\x03 Nickname \x02%nick%\x02 is not an active registered nickname."
+    done:           "\x0303✓\x03 Added \x02%nickname%\x02 as \x02%role%\x02."
+    nick_not_active: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not an active registered nickname."
 
   del:
     syntax:         "IRCOP <nickname> DEL"
     short:          "Remove a network IRC operator."
     help:            "Removes a network IRC operator from the list.\nThis command is restricted to Root users."
-    done:           "\x0303✓\x03 Removed \x02%nick%\x02 from IRC operators."
+    done:           "\x0303✓\x03 Removed \x02%nickname%\x02 from IRC operators."
 
   list:
     syntax:         "IRCOP LIST"
@@ -176,10 +176,10 @@ kill:
   syntax:           "KILL <nickname> <reason>"
   short:            "Forcefully disconnect a user from the network."
   help:             "Disconnects a user from the IRC network.\nIRCops and Root users cannot be killed.\nThis command requires the operserv.kill permission.\n\nSyntax: KILL <nickname> <reason>\nExample: KILL BadUser Flooding channels"
-  user_not_online:  "\x0304✗\x03 Nick \x02%nick%\x02 is not connected."
-  protected_root:   "\x0304✗\x03 Cannot kill Root user \x02%nick%\x02."
-  protected_ircop:  "\x0304✗\x03 Cannot kill IRC operator \x02%nick%\x02."
-  done:             "\x0303✓\x03 User \x02%nick%\x02 has been killed (%reason%)."
+  user_not_online:  "\x0304✗\x03 Nick \x02%nickname%\x02 is not connected."
+  protected_root:   "\x0304✗\x03 Cannot kill Root user \x02%nickname%\x02."
+  protected_ircop:  "\x0304✗\x03 Cannot kill IRC operator \x02%nickname%\x02."
+  done:             "\x0303✓\x03 User \x02%nickname%\x02 has been killed (%reason%)."
   permission_denied: "\x0304✗\x03 Permission denied. You need operserv.kill permission."
 
 # --- GLINE --------------------------------------------------------------------
@@ -191,12 +191,12 @@ gline:
   invalid_mask:     "\x0304✗\x03 Invalid mask format. Must be in format user@host (e.g., *@192.168.*)."
   global_mask:      "\x0304✗\x03 G-line mask \x02%mask%\x02 is too broad. Global masks are not allowed."
   dangerous_mask:   "\x0304✗\x03 G-line mask \x02%mask%\x02 is too broad. Host part needs at least 4 alphanumeric characters."
-  protected_user:   "\x0304✗\x03 Cannot G-line protected user \x02%nick%\x02."
+  protected_user:   "\x0304✗\x03 Cannot G-line protected user \x02%nickname%\x02."
   invalid_expiry:   "\x0304✗\x03 Invalid expiry format. Use 0 for permanent, or a value like 7d, 12h, 30m."
   already_exists:   "\x0304✗\x03 G-line for \x02%mask%\x02 already exists."
   max_entries:      "\x0304✗\x03 Maximum number of G-lines (%max%) reached."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 not found."
-  user_not_found:   "\x0304✗\x03 User \x02%nick%\x02 is not online."
+  user_not_found:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not online."
   permanent:        "permanent"
 
   add:
@@ -220,19 +220,19 @@ gline:
     no_reason:      "No reason"
     never_expires:  "Permanent"
     unknown_creator: "unknown"
-    entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nick%\x03, expires: %expiration%)"
+    entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, expires: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <message>"
   short:            "Send a global message to all connected users."
-  help:             "Sends a message to all connected users.\n\nIf the first argument is a service name (NickServ, ChanServ,\nMemoServ, OperServ), the message will be sent using that existing service.\n\nIf not a service, a temporary pseudo-client will be created with the\nspecified mask. The mask must be in format: nick!ident@vhost\n- nick: IRC valid nickname (letters, []{}|\\`, digits, starts with letter)\n- ident: alphanumeric with . _ ~ -\n- vhost: valid hostname\n\nFor pseudo-clients, the nickname cannot be connected or registered.\nThe pseudo-client will remain connected during the send and disconnect\nautomatically (the nick will be blocked for 24h via SQLINE/QLINE).\n\nPRIVMSG sends as private message, NOTICE sends as notice.\nThis command requires the operserv.global permission."
+  help:             "Sends a message to all connected users.\n\nIf the first argument is a service name, the message will be sent using that existing service.\n\nIf not a service, a temporary pseudo-client will be created with the\nspecified mask. The mask must be in format: nick!ident@vhost\n- nick: IRC valid nickname (letters, []{}|\\`, digits, starts with letter)\n- ident: alphanumeric with . _ ~ -\n- vhost: valid hostname\n\nFor pseudo-clients, the nickname cannot be connected or registered.\nThe pseudo-client will remain connected during the send and disconnect\nautomatically (the nick will be blocked for 24h via SQLINE/QLINE).\n\nPRIVMSG sends as private message, NOTICE sends as notice.\nThis command requires the operserv.global permission."
   mask_invalid:    "\x0304✗\x03 Invalid mask format: %error%"
   nick_service:    "\x0304✗\x03 Cannot use a service nickname."
-  nick_connected: "\x0304✗\x03 Nickname \x02%nick%\x02 is currently connected."
-  nick_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is registered."
+  nick_connected: "\x0304✗\x03 Nickname \x02%nickname%\x02 is currently connected."
+  nick_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is registered."
   type_invalid:    "\x0304✗\x03 Message type must be PRIVMSG or NOTICE."
-  done:            "\x0303✓\x03 Global message sent from \x02%nick%\x02 to %count% users."
+  done:            "\x0303✓\x03 Global message sent from \x02%nickname%\x02 to %count% users."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
@@ -244,6 +244,6 @@ debug:
 
 # --- PERMISSIONS --------------------------------------------------------------
 permissions:
-  operserv.kill:    "Disconnect a user from the network (KILL)"
+  operserv.kill:    "Disconnect a nickname from the network (KILL)"
   operserv.gline:   "Manage network-wide G-lines (GLINE)"
   operserv.global:  "Send global messages to all users (GLOBAL)"

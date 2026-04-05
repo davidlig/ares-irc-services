@@ -119,7 +119,7 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         $context->reply('delaccess.done', ['%channel%' => $channelName]);
 
         $channelNotice = $context->trans('delaccess.notice_channel', [
-            '%nick%' => $context->sender->nick,
+            '%nickname%' => $context->sender->nick,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $channelNotice);
     }

@@ -171,14 +171,14 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
         // Validate nickname is not connected or registered
         $connectedUser = $this->userLookup->findByNick($nickname);
         if (null !== $connectedUser) {
-            $context->reply('global.nick_connected', ['%nick%' => $nickname]);
+            $context->reply('global.nick_connected', ['%nickname%' => $nickname]);
 
             return;
         }
 
         $registeredNick = $this->nickRepository->findByNick($nicknameLower);
         if (null !== $registeredNick) {
-            $context->reply('global.nick_registered', ['%nick%' => $nickname]);
+            $context->reply('global.nick_registered', ['%nickname%' => $nickname]);
 
             return;
         }
@@ -228,7 +228,7 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
             }
         }
 
-        $context->reply('global.done', ['%nick%' => $nickname, '%count%' => (string) $count]);
+        $context->reply('global.done', ['%nickname%' => $nickname, '%count%' => (string) $count]);
 
         $sender = $context->getSender();
         $this->logger->info('GLOBAL: message sent', [

@@ -176,7 +176,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
 
         $protectedUser = $this->findProtectedUser($mask);
         if (null !== $protectedUser) {
-            $context->reply('gline.protected_user', ['%nick%' => $protectedUser]);
+            $context->reply('gline.protected_user', ['%nickname%' => $protectedUser]);
 
             return;
         }
@@ -300,7 +300,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
                 '%index%' => (string) $num,
                 '%mask%' => sprintf("\x0304%s\x03", $gline->getMask()),
                 '%reason%' => $gline->getReason() ?? $context->trans('gline.list.no_reason'),
-                '%nick%' => $creatorName,
+                '%nickname%' => $creatorName,
                 '%expiration%' => $expires,
             ]);
             ++$num;
@@ -311,7 +311,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
     {
         $user = $this->userLookup->findByNick($nickname);
         if (null === $user) {
-            $context->reply('gline.user_not_found', ['%nick%' => $nickname]);
+            $context->reply('gline.user_not_found', ['%nickname%' => $nickname]);
 
             return null;
         }

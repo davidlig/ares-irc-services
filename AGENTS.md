@@ -91,6 +91,22 @@ If there are errors:
 
 This ensures the Symfony DI container is valid before any test execution.
 
+### 1.3.2 YAML Lint (CRITICAL — NON-NEGOTIABLE)
+
+**Before running tests, you MUST run the YAML lint check and ensure it passes.**
+
+```bash
+php bin/console lint:yaml . --exclude vendor/ --parse-tags
+```
+
+If there are errors:
+1. **DO NOT proceed with tests** — fix the YAML errors first
+2. Common errors: syntax errors, missing quotes, invalid indentation, custom tags without `--parse-tags`
+3. Fix and re-run `php bin/console lint:yaml . --exclude vendor/ --parse-tags` until it shows `[OK]`
+4. Only THEN proceed with running tests
+
+This ensures all YAML configuration files have valid syntax before any test execution.
+
 ---
 
 ### 1.4 Parallel Execution Workflow (CRITICAL — PERFORMANCE)

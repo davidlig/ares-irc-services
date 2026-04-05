@@ -8,7 +8,7 @@ error:
   oper_only:        "\x0304✗\x03 Este comando está restringido a Operadores de IRC."
   permission_denied: "\x0304✗\x03 Permiso denegado. No tienes acceso a este comando."
   root_only:        "\x0304✗\x03 Este comando está restringido a administradores root de la red."
-  nick_not_registered: "\x0304✗\x03 El nickname \x02%nick%\x02 no está registrado."
+  nick_not_registered: "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
 
 # --- HELP --------------------------------------------------------------------
 help:
@@ -37,22 +37,22 @@ ircop:
 
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
   unknown_role:     "\x0304✗\x03 El rol \x02%role%\x02 no existe. Usa \x0303/msg %bot% ROLE LIST\x03 para ver los roles disponibles."
-  already_admin:   "\x0304✗\x03 \x02%nick%\x02 ya es operador (rol: %role%)."
-  not_admin:       "\x0304✗\x03 \x02%nick%\x02 no es un operador de red."
-  role_changed:    "\x0303✓\x03 Cambiado el rol de \x02%nick%\x02 de %old% a %new%."
+  already_admin:   "\x0304✗\x03 \x02%nickname%\x02 ya es operador (rol: %role%)."
+  not_admin:       "\x0304✗\x03 \x02%nickname%\x02 no es un operador de red."
+  role_changed:    "\x0303✓\x03 Cambiado el rol de \x02%nickname%\x02 de %old% a %new%."
 
   add:
     syntax:         "IRCOP <nickname> ADD <rol>"
     short:          "Añade un operador de red."
     help:            "Añade un nickname registrado como operador de red.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root."
-    done:           "\x0303✓\x03 Añadido \x02%nick%\x02 como \x02%role%\x02."
-    nick_not_active: "\x0304✗\x03 El nickname \x02%nick%\x02 no es un nickname registrado activo."
+    done:           "\x0303✓\x03 Añadido \x02%nickname%\x02 como \x02%role%\x02."
+    nick_not_active: "\x0304✗\x03 El nickname \x02%nickname%\x02 no es un nickname registrado activo."
 
   del:
     syntax:         "IRCOP <nickname> DEL"
     short:          "Elimina un operador de red."
     help:            "Elimina un operador de red de la lista.\nEste comando está restringido a usuarios Root."
-    done:           "\x0303✓\x03 Eliminado \x02%nick%\x02 de operadores."
+    done:           "\x0303✓\x03 Eliminado \x02%nickname%\x02 de operadores."
 
   list:
     syntax:         "IRCOP LIST"
@@ -176,10 +176,10 @@ kill:
   syntax:           "KILL <nickname> <razón>"
   short:            "Desconecta forzosamente a un usuario de la red."
   help:             "Desconecta a un usuario de la red IRC.\nLos IRCops y usuarios Root no pueden ser killeados.\nEste comando requiere el permiso operserv.kill.\n\nSintaxis: KILL <nickname> <razón>\nEjemplo: KILL BadUser Flooding en canales"
-  user_not_online:  "\x0304✗\x03 El nick \x02%nick%\x02 no está conectado."
-  protected_root:   "\x0304✗\x03 No se puede hacer KILL al usuario Root \x02%nick%\x02."
-  protected_ircop:  "\x0304✗\x03 No se puede hacer KILL al IRC operator \x02%nick%\x02."
-  done:             "\x0303✓\x03 Usuario \x02%nick%\x02 desconectado (%reason%)."
+  user_not_online:  "\x0304✗\x03 El nick \x02%nickname%\x02 no está conectado."
+  protected_root:   "\x0304✗\x03 No se puede hacer KILL al usuario Root \x02%nickname%\x02."
+  protected_ircop:  "\x0304✗\x03 No se puede hacer KILL al IRC operator \x02%nickname%\x02."
+  done:             "\x0303✓\x03 Usuario \x02%nickname%\x02 desconectado (%reason%)."
   permission_denied: "\x0304✗\x03 Permiso denegado. Necesitas el permiso operserv.kill."
 
 # --- GLINE --------------------------------------------------------------------
@@ -191,12 +191,12 @@ gline:
   invalid_mask:     "\x0304✗\x03 Formato de máscara inválido. Debe ser usuario@host (ej: *@192.168.*)."
   global_mask:      "\x0304✗\x03 La máscara G-line \x02%mask%\x02 es demasiado amplia. No se permiten máscaras globales."
   dangerous_mask:   "\x0304✗\x03 La máscara G-line \x02%mask%\x02 es demasiado amplia. La parte del host necesita al menos 4 caracteres alfanuméricos."
-  protected_user:   "\x0304✗\x03 No se puede aplicar GLINE al usuario protegido \x02%nick%\x02."
+  protected_user:   "\x0304✗\x03 No se puede aplicar GLINE al usuario protegido \x02%nickname%\x02."
   invalid_expiry:   "\x0304✗\x03 Formato de expiración inválido. Usa 0 para permanente, o un valor como 7d, 12h, 30m."
   already_exists:   "\x0304✗\x03 Ya existe un G-line para \x02%mask%\x02."
   max_entries:      "\x0304✗\x03 Se alcanzó el máximo de G-lines (%max%)."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 no encontrado."
-  user_not_found:   "\x0304✗\x03 El usuario \x02%nick%\x02 no está conectado."
+  user_not_found:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está conectado."
   permanent:        "permanente"
 
   add:
@@ -220,19 +220,19 @@ gline:
     no_reason:      "Sin razón"
     never_expires:  "Permanente"
     unknown_creator: "desconocido"
-    entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nick%\x03, expira: %expiration%)"
+    entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, expira: %expiration%)"
 
 # --- GLOBAL -------------------------------------------------------------------
 global:
   syntax:           "GLOBAL {servicio|nick!ident@vhost} {PRIVMSG|NOTICE} <mensaje>"
   short:            "Envía un mensaje global a todos los usuarios conectados."
-  help:             "Envía un mensaje a todos los usuarios conectados.\n\nSi el primer argumento es un nombre de servicio (NickServ, ChanServ,\nMemoServ, OperServ), el mensaje se enviará usando ese servicio existente.\n\nSi no es un servicio, se creará un pseudo-cliente temporal con la máscara\nespecificada. La máscara debe tener el formato: nick!ident@vhost\n- nick: nickname IRC válido (letras, []{}|\\`, dígitos, empieza por letra)\n- ident: alfanumérico con . _ ~ -\n- vhost: hostname válido\n\nPara pseudo-clientes, el nickname no puede estar conectado ni registrado.\nEl pseudo-cliente permanecerá conectado durante el envío y se desconectará\nautomáticamente (el nick será bloqueado 24h mediante SQLINE/QLINE).\n\nPRIVMSG envía como mensaje privado, NOTICE envía como aviso.\nEste comando requiere el permiso operserv.global."
+  help:             "Envía un mensaje a todos los usuarios conectados.\n\nSi el primer argumento es un nombre de servicio, el mensaje se enviará usando ese servicio existente.\n\nSi no es un servicio, se creará un pseudo-cliente temporal con la máscara\nespecificada. La máscara debe tener el formato: nick!ident@vhost\n- nick: nickname IRC válido (letras, []{}|\\`, dígitos, empieza por letra)\n- ident: alfanumérico con . _ ~ -\n- vhost: hostname válido\n\nPara pseudo-clientes, el nickname no puede estar conectado ni registrado.\nEl pseudo-cliente permanecerá conectado durante el envío y se desconectará\nautomáticamente (el nick será bloqueado 24h mediante SQLINE/QLINE).\n\nPRIVMSG envía como mensaje privado, NOTICE envía como aviso.\nEste comando requiere el permiso operserv.global."
   mask_invalid:    "\x0304✗\x03 Formato de máscara inválido: %error%"
   nick_service:    "\x0304✗\x03 No se puede usar un nickname de servicio."
-  nick_connected: "\x0304✗\x03 El nickname \x02%nick%\x02 está conectado actualmente."
-  nick_registered: "\x0304✗\x03 El nickname \x02%nick%\x02 está registrado."
+  nick_connected: "\x0304✗\x03 El nickname \x02%nickname%\x02 está conectado actualmente."
+  nick_registered: "\x0304✗\x03 El nickname \x02%nickname%\x02 está registrado."
   type_invalid:    "\x0304✗\x03 El tipo de mensaje debe ser PRIVMSG o NOTICE."
-  done:            "\x0303✓\x03 Mensaje global enviado desde \x02%nick%\x02 a %count% usuarios."
+  done:            "\x0303✓\x03 Mensaje global enviado desde \x02%nickname%\x02 a %count% usuarios."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
@@ -244,6 +244,6 @@ debug:
 
 # --- PERMISOS ----------------------------------------------------------------
 permissions:
-  operserv.kill:    "Desconecta a un usuario de la red (KILL)"
+  operserv.kill:    "Desconecta a un nickname de la red (KILL)"
   operserv.gline:   "Gestiona G-lines de red (GLINE)"
   operserv.global:  "Envía mensajes globales a todos los usuarios (GLOBAL)"

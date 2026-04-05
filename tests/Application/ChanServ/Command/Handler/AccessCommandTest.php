@@ -211,8 +211,8 @@ final class AccessCommandTest extends TestCase
 
         self::assertSame([
             'access.list.header{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%channel%":"#test"}',
-            'access.list.entry{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%index%":"1","%nick%":"NickTen","%level%":"100"}',
-            'access.list.entry{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%index%":"2","%nick%":"NickTwenty","%level%":"50"}',
+            'access.list.entry{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%index%":"1","%nickname%":"NickTen","%level%":"100"}',
+            'access.list.entry{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%index%":"2","%nickname%":"NickTwenty","%level%":"50"}',
         ], $messages);
     }
 

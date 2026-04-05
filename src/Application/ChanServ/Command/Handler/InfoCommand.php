@@ -97,9 +97,9 @@ final readonly class InfoCommand implements ChanServCommandInterface
         }
 
         $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
-        $context->replyRaw($context->trans('info.founder', ['%nick%' => $founderName]));
+        $context->replyRaw($context->trans('info.founder', ['%nickname%' => $founderName]));
         if (null !== $successorName) {
-            $context->replyRaw($context->trans('info.successor', ['%nick%' => $successorName]));
+            $context->replyRaw($context->trans('info.successor', ['%nickname%' => $successorName]));
         }
         if ('' !== $channel->getDescription()) {
             $context->replyRaw($context->trans('info.description', ['%desc%' => $channel->getDescription()]));
@@ -119,7 +119,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
                 '%topic%' => $channel->getTopic(),
             ]));
             if (null !== $channel->getLastTopicSetByNick()) {
-                $context->replyRaw($context->trans('info.topic_set_by', ['%nick%' => $channel->getLastTopicSetByNick()]));
+                $context->replyRaw($context->trans('info.topic_set_by', ['%nickname%' => $channel->getLastTopicSetByNick()]));
             }
         }
         if ($channel->isMlockActive()) {

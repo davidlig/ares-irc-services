@@ -212,7 +212,7 @@ help:
   syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
   unknown_command:  "\x0304✗\x03 No help available for \x02%command%\x02."
-  ircop_header:     "The following commands are available for \x0304\x02IRCOPS\x02\x03:"
+  ircop_header:     "\x02\x0314Available commands for IRCOPS:\x03\x0F"
 
   set_timezone:
     index_label:    "\x0314Regions\x03 (use \x02HELP SET TIMEZONE <region>\x02 for list):"
@@ -228,25 +228,25 @@ protection:
 # --- IRCop Commands ---------------------------------------------------------
 userip:
   syntax:           "USERIP <nickname>"
-  short:            "Get the user's real IP address and hostname."
+  short:            "Get the nickname's real IP address and hostname."
   help:             |
-    Shows the real IP address and hostname of the specified user.
+    Shows the real IP address and hostname of the specified nickname.
     Only available to IRCops with 'nickserv.userip' permission.
     
-    This command displays sensitive user information.
+    This command displays sensitive nickname information.
     Use responsibly.
     
     Syntax: USERIP <nickname>
     Example: USERIP SomeUser
-  not_online:       "\x0304✗\x03 User \x02%nick%\x02 is not connected."
-  result:           "\x0307ℹ\x03 User: \x02%nick%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+  not_online:       "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected."
+  result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 permissions:
-  nickserv.userip: "View a user's real IP address/hostname"
+  nickserv.userip: "View a nickname's real IP address/hostname"
   nickserv.suspend: "Suspend/reactivate a nickname"
-  nickserv.rename: "Force rename a connected user to a random nick"
+  nickserv.rename: "Force rename a connected nickname to a random nick"
   nickserv.drop: "Delete a registered nickname"
-  nickserv.saset: "Modify another user's nickname settings"
+  nickserv.saset: "Modify another nickname's settings"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -292,9 +292,9 @@ unsuspend:
 # --- RENAME (IRCop) -----------------------------------------------------------
 rename:
   syntax:           "RENAME <nickname>"
-  short:            "Force rename a connected user to a random nickname."
+  short:            "Force rename a connected nickname to a random nickname."
   help:             |
-    Forces a connected user to change their nickname to a randomly generated one.
+    Forces a connected nickname to change their nick to a randomly generated one.
     Useful for enforcing network policies without disconnecting the user.
     
     The new nickname format uses the configured guest prefix (%prefix%).
@@ -303,11 +303,11 @@ rename:
     
     Syntax: RENAME <nickname>
     Example: RENAME Troublemaker
-  not_online:        "\x0304✗\x03 User \x02%nickname%\x02 is not connected."
+  not_online:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected."
   cannot_rename_root: "\x0304✗\x03 Cannot rename root user \x02%nickname%\x02."
   cannot_rename_oper: "\x0304✗\x03 Cannot rename IRC operator \x02%nickname%\x02."
   cannot_rename_service: "\x0304✗\x03 Cannot rename service nickname \x02%nickname%\x02."
-  success:           "\x0303✓\x03 User \x02%nickname%\x02 has been renamed to \x02%new_nick%\x02."
+  success:           "\x0303✓\x03 Nickname \x02%nickname%\x02 has been renamed to \x02%new_nick%\x02."
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
@@ -378,7 +378,7 @@ forbidvhost:
   short:            "Manage forbidden vhost patterns."
   help:             |
     Manages patterns that prevent users from setting matching vhosts
-    via NickServ SET VHOST. OperServ ROLE VHOST is exempt.
+    via NickServ SET VHOST.
     
     Wildcards: * matches any sequence, ? matches single character.
     Example: *.pirated.com blocks any vhost ending with .pirated.com
@@ -398,7 +398,6 @@ forbidvhost:
     help:        |
       Adds a pattern to the forbidden vhost list. Users will not be
       able to set vhosts matching this pattern via SET VHOST.
-      OperServ roles can still set forced vhosts.
       
       Wildcards: * matches any sequence, ? matches single character.
       
@@ -427,7 +426,7 @@ forbidvhost:
       
       Syntax: FORBIDVHOST LIST
     header:      "\x0307ℹ\x03 Forbidden vhost patterns (\x02%count%\x02):"
-    entry:       "  %index%. \x0304%pattern%\x03 — by %nick% (%date%)"
+    entry:       "  %index%. \x0304%pattern%\x03 — by %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No forbidden vhost patterns."
     unknown_creator: "unknown"
 

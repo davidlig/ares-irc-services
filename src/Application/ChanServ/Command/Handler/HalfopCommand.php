@@ -114,14 +114,14 @@ final readonly class HalfopCommand implements ChanServCommandInterface
 
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $targetNick]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
 
             return;
         }
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
-            $context->reply('halfop.user_not_on_channel', ['%nick%' => $targetNick]);
+            $context->reply('halfop.user_not_on_channel', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -131,7 +131,7 @@ final readonly class HalfopCommand implements ChanServCommandInterface
             $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOHALFOP);
             if ($targetLevel < $minLevelForMode) {
                 $context->reply('secure.requires_min_level', [
-                    '%nick%' => $targetNick,
+                    '%nickname%' => $targetNick,
                     '%level%' => (string) $minLevelForMode,
                     '%mode%' => '+h',
                 ]);
@@ -149,6 +149,6 @@ final readonly class HalfopCommand implements ChanServCommandInterface
                 '%mode%' => '+h',
             ])
         );
-        $context->reply('halfop.done', ['%nick%' => $targetNick]);
+        $context->reply('halfop.done', ['%nickname%' => $targetNick]);
     }
 }

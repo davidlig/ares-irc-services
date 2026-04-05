@@ -33,32 +33,32 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
 
         $account = $this->nickRepository->findByNick($nickname);
         if (null === $account) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $nickname]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
 
             return;
         }
         if (NickStatus::Suspended === $account->getStatus()) {
-            $context->reply('set.successor.suspended', ['%nick%' => $nickname]);
+            $context->reply('set.successor.suspended', ['%nickname%' => $nickname]);
 
             return;
         }
         if (NickStatus::Registered !== $account->getStatus()) {
-            $context->reply('set.successor.must_be_registered', ['%nick%' => $nickname]);
+            $context->reply('set.successor.must_be_registered', ['%nickname%' => $nickname]);
 
             return;
         }
         if ($channel->isFounder($account->getId())) {
-            $context->reply('set.successor.cannot_be_founder', ['%nick%' => $nickname]);
+            $context->reply('set.successor.cannot_be_founder', ['%nickname%' => $nickname]);
 
             return;
         }
 
         $channel->assignSuccessor($account->getId());
         $this->channelRepository->save($channel);
-        $context->reply('set.successor.updated', ['%nick%' => $nickname]);
+        $context->reply('set.successor.updated', ['%nickname%' => $nickname]);
         $notice = $context->trans('set.successor.notice_channel', [
             '%from%' => $context->sender->nick,
-            '%nick%' => $nickname,
+            '%nickname%' => $nickname,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
     }

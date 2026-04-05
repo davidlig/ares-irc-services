@@ -211,7 +211,7 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
             $context->reply('forbidvhost.list.entry', [
                 '%index%' => (string) $num,
                 '%pattern%' => sprintf("\x0304%s\x03", $forbidden->getPattern()),
-                '%nick%' => $creatorName,
+                '%nickname%' => $creatorName,
                 '%date%' => $createdAt,
             ]);
             ++$num;

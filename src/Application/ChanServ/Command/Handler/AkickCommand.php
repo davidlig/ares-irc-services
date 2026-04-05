@@ -215,7 +215,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
                 '%index%' => (string) $num,
                 '%mask%' => sprintf("\x0304%s\x03", $akick->getMask()),
                 '%reason%' => $reason,
-                '%nick%' => $creatorName,
+                '%nickname%' => $creatorName,
                 '%expiration%' => $expires,
             ]);
             ++$num;
@@ -256,7 +256,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         $protectedNick = $this->findProtectedUser($channel, $mask);
         if (null !== $protectedNick) {
-            $context->reply('akick.protected_user', ['%nick%' => $protectedNick]);
+            $context->reply('akick.protected_user', ['%nickname%' => $protectedNick]);
 
             return;
         }

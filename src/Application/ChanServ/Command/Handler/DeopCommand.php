@@ -112,7 +112,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
         }
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
-            $context->reply('op.user_not_on_channel', ['%nick%' => $targetNick]);
+            $context->reply('op.user_not_on_channel', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -130,7 +130,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
         }
         $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'o', false);
         $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('op.notice_grant', ['%from%' => $context->sender->nick, '%to%' => $targetNick, '%mode%' => '-o']));
-        $context->reply('deop.done', ['%nick%' => $targetNick]);
+        $context->reply('deop.done', ['%nickname%' => $targetNick]);
     }
 
     private function getLevelValue(int $channelId, string $key): int

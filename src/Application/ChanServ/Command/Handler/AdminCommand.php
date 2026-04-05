@@ -114,14 +114,14 @@ final readonly class AdminCommand implements ChanServCommandInterface
 
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $targetNick]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
 
             return;
         }
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
-            $context->reply('admin.user_not_on_channel', ['%nick%' => $targetNick]);
+            $context->reply('admin.user_not_on_channel', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -131,7 +131,7 @@ final readonly class AdminCommand implements ChanServCommandInterface
             $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOADMIN);
             if ($targetLevel < $minLevelForMode) {
                 $context->reply('secure.requires_min_level', [
-                    '%nick%' => $targetNick,
+                    '%nickname%' => $targetNick,
                     '%level%' => (string) $minLevelForMode,
                     '%mode%' => '+a',
                 ]);
@@ -149,6 +149,6 @@ final readonly class AdminCommand implements ChanServCommandInterface
                 '%mode%' => '+a',
             ])
         );
-        $context->reply('admin.done', ['%nick%' => $targetNick]);
+        $context->reply('admin.done', ['%nickname%' => $targetNick]);
     }
 }

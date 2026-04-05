@@ -115,7 +115,7 @@ final readonly class DeadminCommand implements ChanServCommandInterface
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
-            $context->reply('admin.user_not_on_channel', ['%nick%' => $targetNick]);
+            $context->reply('admin.user_not_on_channel', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -142,6 +142,6 @@ final readonly class DeadminCommand implements ChanServCommandInterface
                 '%mode%' => '-a',
             ])
         );
-        $context->reply('deadmin.done', ['%nick%' => $targetNick]);
+        $context->reply('deadmin.done', ['%nickname%' => $targetNick]);
     }
 }

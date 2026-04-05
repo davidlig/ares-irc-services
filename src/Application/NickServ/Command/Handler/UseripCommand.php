@@ -88,7 +88,7 @@ final class UseripCommand implements NickServCommandInterface, AuditableCommandI
         $target = $this->userLookup->findByNick($targetNick);
 
         if (null === $target) {
-            $context->reply('userip.not_online', ['%nick%' => $targetNick]);
+            $context->reply('userip.not_online', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -103,7 +103,7 @@ final class UseripCommand implements NickServCommandInterface, AuditableCommandI
         );
 
         $context->reply('userip.result', [
-            '%nick%' => $targetNick,
+            '%nickname%' => $targetNick,
             '%ip%' => $ip,
             '%host%' => $host,
         ]);

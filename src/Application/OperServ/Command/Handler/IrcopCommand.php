@@ -131,13 +131,13 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
         $targetAccount = $this->nickRepository->findByNick($nickname);
         if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $nickname]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
 
             return;
         }
 
         if (!$targetAccount->isRegistered()) {
-            $context->reply('ircop.nick_not_active', ['%nick%' => $nickname]);
+            $context->reply('ircop.nick_not_active', ['%nickname%' => $nickname]);
 
             return;
         }
@@ -156,7 +156,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
         if (null !== $existing) {
             $oldRoleName = $existing->getRole()->getName();
             if ($oldRoleName === $roleName) {
-                $context->reply('ircop.already_admin', ['%nick%' => $nickname, '%role%' => $roleName]);
+                $context->reply('ircop.already_admin', ['%nickname%' => $nickname, '%role%' => $roleName]);
 
                 return;
             }
@@ -168,7 +168,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
             $this->modeApplier->removeModesForNick($nickname, $oldRole);
             $this->modeApplier->applyModesForNick($nickname, $role);
 
-            $context->reply('ircop.role_changed', ['%nick%' => $nickname, '%old%' => $oldRoleName, '%new%' => $roleName]);
+            $context->reply('ircop.role_changed', ['%nickname%' => $nickname, '%old%' => $oldRoleName, '%new%' => $roleName]);
 
             return;
         }
@@ -184,21 +184,21 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
         $this->modeApplier->applyModesForNick($nickname, $role);
 
-        $context->reply('ircop.add.done', ['%nick%' => $nickname, '%role%' => $roleName]);
+        $context->reply('ircop.add.done', ['%nickname%' => $nickname, '%role%' => $roleName]);
     }
 
     private function doDel(OperServContext $context, string $nickname): void
     {
         $targetAccount = $this->nickRepository->findByNick($nickname);
         if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nick%' => $nickname]);
+            $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
 
             return;
         }
 
         $ircop = $this->ircopRepository->findByNickId($targetAccount->getId());
         if (null === $ircop) {
-            $context->reply('ircop.not_admin', ['%nick%' => $nickname]);
+            $context->reply('ircop.not_admin', ['%nickname%' => $nickname]);
 
             return;
         }
@@ -207,7 +207,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
         $this->modeApplier->removeModesForNick($nickname, $role);
 
         $this->ircopRepository->remove($ircop);
-        $context->reply('ircop.del.done', ['%nick%' => $nickname]);
+        $context->reply('ircop.del.done', ['%nickname%' => $nickname]);
     }
 
     private function doList(OperServContext $context): void

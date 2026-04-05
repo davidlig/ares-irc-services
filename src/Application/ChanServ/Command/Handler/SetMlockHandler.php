@@ -52,11 +52,11 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
         $nick = $context->sender?->nick ?? '';
         if ('' !== $nick && $on) {
             $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->trans('set.mlock.notice_on', [
-                '%nick%' => $nick,
+                '%nickname%' => $nick,
                 '%modes%' => $modesDisplay,
             ]));
         } elseif ('' !== $nick) {
-            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->trans('set.mlock.notice_off', ['%nick%' => $nick]));
+            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $context->trans('set.mlock.notice_off', ['%nickname%' => $nick]));
         }
     }
 

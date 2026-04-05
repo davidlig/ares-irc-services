@@ -104,7 +104,7 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
 
         $target = $this->userLookup->findByNick($targetNick);
         if (null === $target) {
-            $context->reply('kill.user_not_online', ['%nick%' => $targetNick]);
+            $context->reply('kill.user_not_online', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -112,13 +112,13 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         $targetNickLower = strtolower($targetNick);
 
         if ($this->rootRegistry->isRoot($targetNickLower)) {
-            $context->reply('kill.protected_root', ['%nick%' => $targetNick]);
+            $context->reply('kill.protected_root', ['%nickname%' => $targetNick]);
 
             return;
         }
 
         if ($this->isOper($target, $targetNickLower)) {
-            $context->reply('kill.protected_ircop', ['%nick%' => $targetNick]);
+            $context->reply('kill.protected_ircop', ['%nickname%' => $targetNick]);
 
             return;
         }
@@ -156,7 +156,7 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         );
 
         $context->reply('kill.done', [
-            '%nick%' => $targetNick,
+            '%nickname%' => $targetNick,
             '%reason%' => $reason,
         ]);
     }
