@@ -6,6 +6,48 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 
 ## PART 1: AI ASSISTANT WORKFLOW & OPERATIONS
 
+### 1.0 Golden Rules (CRITICAL — NON-NEGOTIABLE)
+
+These rules apply to **EVERY operation**, not just feature implementation.
+
+#### Parallelize EVERYTHING by Default
+
+**ALWAYS launch multiple independent operations in a SINGLE message:**
+
+- Reading multiple files → Use multiple `read` tool calls in one message
+- Searching for patterns → Use multiple `grep`/`glob` in one message
+- Exploring different areas → Use multiple `task` agents in one message
+- Writing independent files → Use multiple `write` tool calls in one message
+
+```
+Pattern: ONE message with multiple tool calls
+├── read file1.php          │
+├── read file2.php          │  All execute in parallel
+├── grep "pattern" src/      │  → Faster results
+└── glob "**/*.yaml"        │
+```
+
+#### When to NOT Parallelize
+
+| Situation | Reason |
+|-----------|--------|
+| Sequential dependencies | B depends on result of A |
+| Same file modifications | Race conditions, merge conflicts |
+| Debugging with mental context | Requires sequential reasoning |
+| Bug investigation (logs) | Must correlate events in order |
+
+#### Rules Summary
+
+1. **Read operations**: ALWAYS parallel (multiple files in one message)
+2. **Search operations**: ALWAYS parallel (multiple patterns in one message)
+3. **Write operations**: CAN parallel if files don't overlap
+4. **Dependent tasks**: MUST be sequential (wait for result before next step)
+5. **Task agents**: Use for exploration in parallel before implementation
+
+**See section 1.7 for detailed parallelization workflow and patterns.**
+
+---
+
 ### 1.1 Development Workflow (CRITICAL)
 - **Think Before Coding**: Before writing or modifying any code, you MUST present a structured step-by-step plan or pseudocode. Wait for my explicit approval before generating the actual code.
 - **Refactoring & Technical Debt**: Before adding features to an existing file, analyze it for architectural violations and **Code Smells** (especially "Long Methods" or classes violating SRP). If you detect a method with too much logic, you MUST propose a refactor using the **"Extract Method"** technique to break it down into smaller, highly descriptive, and single-purpose private methods before proceeding with the new feature.
@@ -152,7 +194,7 @@ This ensures all YAML configuration files have valid syntax before any test exec
 
 ---
 
-### 1.4 Parallel Execution Workflow (CRITICAL — PERFORMANCE)
+### 1.7 Parallel Execution Workflow (CRITICAL — PERFORMANCE)
 
 **When implementing new features, EXECUTE TASKS IN PARALLEL whenever possible.**
 
