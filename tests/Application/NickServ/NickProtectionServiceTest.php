@@ -213,7 +213,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
         );
 
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'host.example');
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'host.example', 'real.host', 'AAA=');
 
         self::assertNotNull($account->getLastSeenAt());
         self::assertStringContainsString('Leaving', $account->getLastQuitMessage() ?? '');
@@ -238,7 +238,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
         );
 
-        $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host');
+        $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host', 'real.host', 'AAA=');
 
         self::assertNull($identifiedRegistry->findNick('UID1'));
     }
@@ -267,7 +267,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
         );
 
-        $service->onUserQuit('UID1', 'SomeNick', 'Quit', 'id', 'host');
+        $service->onUserQuit('UID1', 'SomeNick', 'Quit', 'id', 'host', 'real.host', 'AAA=');
 
         self::assertNotNull($account->getLastSeenAt());
         self::assertNull($identifiedRegistry->findNick('UID1'));
@@ -558,7 +558,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
         );
 
-        $service->onUserQuit('UID1', 'QuitNick', '', '', 'host.example');
+        $service->onUserQuit('UID1', 'QuitNick', '', '', 'host.example', 'real.host', 'AAA=');
         self::assertSame('host.example', $account->getLastQuitMessage());
     }
 
@@ -584,8 +584,169 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(ForbiddenNickService::class),
         );
 
-        $service->onUserQuit('UID1', 'QuitNick', 'Leaving now', 'myident', 'host.example');
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving now', 'myident', 'host.example', 'real.host', 'AAA=');
         self::assertSame('Leaving now (myident@host.example)', $account->getLastQuitMessage());
+    }
+
+    #[Test]
+    public function onUserQuitUpdatesLastConnectionWhenIdentified(): void
+    {
+        $account = RegisteredNick::createPending('QuitNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'QuitNick');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNick')->with('QuitNick')->willReturn($account);
+        $repo->expects(self::once())->method('save');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new BurstState(),
+            $identifiedRegistry,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+        );
+
+        // IPv4 base64 encoded: 192.168.1.100
+        // inet_pton('192.168.1.100') = bytes [C0,A8,01,64] = base64_encode -> 'wKgBZA=='
+        $ipBase64 = base64_encode(inet_pton('192.168.1.100'));
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', $ipBase64);
+
+        self::assertSame('192.168.1.100', $account->getLastConnectIp());
+        self::assertSame('real.isp.example', $account->getLastConnectHost());
+    }
+
+    #[Test]
+    public function onUserQuitDoesNotUpdateLastConnectionWhenNotIdentified(): void
+    {
+        $account = RegisteredNick::createPending('QuitNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+        self::assertNull($account->getLastConnectIp());
+        self::assertNull($account->getLastConnectHost());
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNick')->with('QuitNick')->willReturn($account);
+        $repo->expects(self::once())->method('save');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new BurstState(),
+            new IdentifiedSessionRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+        );
+
+        // User not identified (not in registry)
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', 'AICQAGQ=');
+
+        // Should remain null because user was not identified
+        self::assertNull($account->getLastConnectIp());
+        self::assertNull($account->getLastConnectHost());
+    }
+
+    #[Test]
+    public function onUserQuitDoesNotUpdateLastConnectionWithEmptyIp(): void
+    {
+        $account = RegisteredNick::createPending('QuitNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'QuitNick');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNick')->with('QuitNick')->willReturn($account);
+        $repo->expects(self::once())->method('save');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new BurstState(),
+            $identifiedRegistry,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+        );
+
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '');
+
+        self::assertNull($account->getLastConnectIp());
+        self::assertNull($account->getLastConnectHost());
+    }
+
+    #[Test]
+    public function onUserQuitDoesNotUpdateLastConnectionWithAsteriskIp(): void
+    {
+        $account = RegisteredNick::createPending('QuitNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'QuitNick');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNick')->with('QuitNick')->willReturn($account);
+        $repo->expects(self::once())->method('save');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new BurstState(),
+            $identifiedRegistry,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+        );
+
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '*');
+
+        self::assertNull($account->getLastConnectIp());
+        self::assertNull($account->getLastConnectHost());
+    }
+
+    #[Test]
+    public function onUserQuitUpdatesLastConnectionWithInvalidBase64(): void
+    {
+        $account = RegisteredNick::createPending('QuitNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'QuitNick');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::once())->method('findByNick')->with('QuitNick')->willReturn($account);
+        $repo->expects(self::once())->method('save');
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new BurstState(),
+            $identifiedRegistry,
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+        );
+
+        // Invalid base64 (not decodable) - decodeIp returns '*', and updateLastConnection treats '*' as null
+        $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '!!!invalid!!!');
+
+        // When IP decoding fails, it returns '*', which is treated as empty by updateLastConnection
+        self::assertNull($account->getLastConnectIp());
+        self::assertSame('real.isp.example', $account->getLastConnectHost());
     }
 
     #[Test]

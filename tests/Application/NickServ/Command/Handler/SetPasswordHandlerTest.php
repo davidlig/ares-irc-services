@@ -14,6 +14,7 @@ use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickPasswordChangedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -154,5 +155,119 @@ final class SetPasswordHandlerTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+    }
+
+    #[Test]
+    public function handleWithEmptyIpDispatchesEventWithAsteriskIp(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->expects(self::once())->method('changePasswordWithHasher');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $handler = new SetPasswordHandler(
+            $nickRepo,
+            $this->createStub(PasswordHasherInterface::class),
+            $eventDispatcher,
+        );
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $context = new NickServContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', ''),
+            null,
+            'SET',
+            ['PASSWORD', 'newpass'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+
+        $handler->handle($context, $account, 'newpass', true);
+
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+    }
+
+    #[Test]
+    public function handleWithInvalidBase64IpDispatchesEventWithOriginalIp(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->expects(self::once())->method('changePasswordWithHasher');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $handler = new SetPasswordHandler(
+            $nickRepo,
+            $this->createStub(PasswordHasherInterface::class),
+            $eventDispatcher,
+        );
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $context = new NickServContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'invalid!base64'),
+            null,
+            'SET',
+            ['PASSWORD', 'newpass'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+
+        $handler->handle($context, $account, 'newpass', true);
+
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('invalid!base64', $dispatchedEvents[0]->performedByIp);
     }
 }

@@ -14,6 +14,7 @@ use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickPasswordChangedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use DateTimeImmutable;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use ReflectionClass;
 use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
@@ -499,6 +501,114 @@ final class RecoverCommandTest extends TestCase
     }
 
     #[Test]
+    public function recoverWithEmptyIpDispatchesEventWithAsteriskIp(): void
+    {
+        $nick = $this->createNickWithId('User', 1);
+        $nick->activate();
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($nick);
+        $nickRepo->expects(self::once())->method('save');
+
+        $passwordHasher = $this->createMock(PasswordHasherInterface::class);
+        $passwordHasher->expects(self::once())->method('hash');
+
+        $recovery = new RecoveryTokenRegistry();
+        $expires = (new DateTimeImmutable())->modify('+1 hour');
+        $recovery->store('User', 'token123', $expires);
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new RecoverCommand(
+            $nickRepo,
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+            $passwordHasher,
+            $this->createStub(LoggerInterface::class),
+            $eventDispatcher,
+            3600,
+            0,
+        );
+
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', ''), ['User', 'token123'], $notifier, $translator, $recovery));
+
+        self::assertContains('recover.success_identify', $messages);
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+    }
+
+    #[Test]
+    public function recoverWithInvalidBase64IpDispatchesEventWithOriginalIp(): void
+    {
+        $nick = $this->createNickWithId('User', 1);
+        $nick->activate();
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($nick);
+        $nickRepo->expects(self::once())->method('save');
+
+        $passwordHasher = $this->createMock(PasswordHasherInterface::class);
+        $passwordHasher->expects(self::once())->method('hash');
+
+        $recovery = new RecoveryTokenRegistry();
+        $expires = (new DateTimeImmutable())->modify('+1 hour');
+        $recovery->store('User', 'token123', $expires);
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new RecoverCommand(
+            $nickRepo,
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+            $passwordHasher,
+            $this->createStub(LoggerInterface::class),
+            $eventDispatcher,
+            3600,
+            0,
+        );
+
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'invalid!base64'), ['User', 'token123'], $notifier, $translator, $recovery));
+
+        self::assertContains('recover.success_identify', $messages);
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('invalid!base64', $dispatchedEvents[0]->performedByIp);
+    }
+
+    #[Test]
     public function doesNothingWhenSenderNull(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -756,5 +866,18 @@ final class RecoverCommandTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+    }
+
+    private function createNickWithId(string $nickname, int $id): RegisteredNick
+    {
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick->activate();
+
+        $reflection = new ReflectionClass(RegisteredNick::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($nick, $id);
+
+        return $nick;
     }
 }

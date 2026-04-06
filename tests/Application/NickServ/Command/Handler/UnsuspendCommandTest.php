@@ -16,6 +16,7 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickUnsuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -237,6 +238,76 @@ final class UnsuspendCommandTest extends TestCase
         self::assertSame('TestNick', $auditData->target);
         self::assertNull($auditData->reason);
         self::assertSame([], $auditData->extra);
+    }
+
+    #[Test]
+    public function executeWithEmptyIpStoresAsteriskInEvent(): void
+    {
+        $nick = $this->createNickWithId('TestNick', 1);
+        $nick->suspend('Spamming', new DateTimeImmutable('+7 days'));
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o', '');
+
+        $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
+
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
+
+        $cmd->execute($context);
+
+        self::assertContains('unsuspend.success', $messages);
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickUnsuspendedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+    }
+
+    #[Test]
+    public function executeWithInvalidBase64IpStoresOriginalInEvent(): void
+    {
+        $nick = $this->createNickWithId('TestNick', 1);
+        $nick->suspend('Spamming', new DateTimeImmutable('+7 days'));
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'invalid!base64', false, true, 'SID1', 'h', 'o', '');
+
+        $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
+
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
+
+        $cmd->execute($context);
+
+        self::assertContains('unsuspend.success', $messages);
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickUnsuspendedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('invalid!base64', $dispatchedEvents[0]->performedByIp);
     }
 
     #[Test]

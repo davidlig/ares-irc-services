@@ -972,6 +972,181 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function showLastConnectionToIdentifiedOwner(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('isPrivate')->willReturn(false);
+        $account->method('getNickname')->willReturn('Owner');
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('getRegisteredAt')->willReturn(new DateTimeImmutable());
+        $account->method('getLastSeenAt')->willReturn(null);
+        $account->method('getLastQuitMessage')->willReturn(null);
+        $account->method('getEmail')->willReturn('owner@example.com');
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getId')->willReturn(1);
+        $account->method('getLastConnectIp')->willReturn('192.168.1.100');
+        $account->method('getLastConnectHost')->willReturn('user.isp.example');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+        $vhostResolver = new VhostDisplayResolver('');
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByNick')->willReturn([]);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('findBySuccessorNickId')->willReturn([]);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($nickRepo, $userLookup, $vhostResolver, $accessRepo, $channelRepo);
+        // Identified owner (isIdentified = true)
+        $cmd->execute($this->createContext(new SenderView('UID1', 'Owner', 'i', 'h', 'c', 'ip', true, false, '', ''), ['Owner'], $notifier, $translator));
+
+        self::assertContains('info.last_connect', $messages);
+    }
+
+    #[Test]
+    public function showLastConnectionToIrcOper(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('isPrivate')->willReturn(false);
+        $account->method('getNickname')->willReturn('Target');
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('getRegisteredAt')->willReturn(new DateTimeImmutable());
+        $account->method('getLastSeenAt')->willReturn(null);
+        $account->method('getLastQuitMessage')->willReturn(null);
+        $account->method('getEmail')->willReturn(null);
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getId')->willReturn(1);
+        $account->method('getLastConnectIp')->willReturn('10.0.0.1');
+        $account->method('getLastConnectHost')->willReturn('hidden.host');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+        $vhostResolver = new VhostDisplayResolver('');
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByNick')->willReturn([]);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('findBySuccessorNickId')->willReturn([]);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($nickRepo, $userLookup, $vhostResolver, $accessRepo, $channelRepo);
+        // IRCop (isOper = true) but not identified owner
+        $cmd->execute($this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, '', ''), ['Target'], $notifier, $translator));
+
+        self::assertContains('info.last_connect', $messages);
+    }
+
+    #[Test]
+    public function doNotShowLastConnectionToRegularUser(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('isPrivate')->willReturn(false);
+        $account->method('getNickname')->willReturn('Target');
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('getRegisteredAt')->willReturn(new DateTimeImmutable());
+        $account->method('getLastSeenAt')->willReturn(null);
+        $account->method('getLastQuitMessage')->willReturn(null);
+        $account->method('getEmail')->willReturn(null);
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getId')->willReturn(1);
+        $account->method('getLastConnectIp')->willReturn('192.168.1.1');
+        $account->method('getLastConnectHost')->willReturn('user.isp.com');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+        $vhostResolver = new VhostDisplayResolver('');
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByNick')->willReturn([]);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('findBySuccessorNickId')->willReturn([]);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($nickRepo, $userLookup, $vhostResolver, $accessRepo, $channelRepo);
+        // Regular user (not identified owner, not IRCop)
+        $cmd->execute($this->createContext(new SenderView('UID1', 'RegularUser', 'i', 'h', 'c', 'ip', false, false, '', ''), ['Target'], $notifier, $translator));
+
+        self::assertNotContains('info.last_connect', $messages);
+    }
+
+    #[Test]
+    public function doNotShowLastConnectionWhenNotSet(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('isPrivate')->willReturn(false);
+        $account->method('getNickname')->willReturn('Owner');
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('getRegisteredAt')->willReturn(new DateTimeImmutable());
+        $account->method('getLastSeenAt')->willReturn(null);
+        $account->method('getLastQuitMessage')->willReturn(null);
+        $account->method('getEmail')->willReturn('owner@example.com');
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getId')->willReturn(1);
+        $account->method('getLastConnectIp')->willReturn(null);
+        $account->method('getLastConnectHost')->willReturn(null);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+        $vhostResolver = new VhostDisplayResolver('');
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByNick')->willReturn([]);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('findBySuccessorNickId')->willReturn([]);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($nickRepo, $userLookup, $vhostResolver, $accessRepo, $channelRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'Owner', 'i', 'h', 'c', 'ip', true, false, '', ''), ['Owner'], $notifier, $translator));
+
+        self::assertNotContains('info.last_connect', $messages);
+    }
+
+    #[Test]
     public function getHelpKeyReturnsExpectedKey(): void
     {
         $cmd = new InfoCommand(

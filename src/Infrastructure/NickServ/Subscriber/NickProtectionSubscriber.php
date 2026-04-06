@@ -90,6 +90,8 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             $event->reason,
             $event->ident,
             $event->displayHost,
+            $event->hostname,
+            $event->ipBase64,
         );
     }
 }

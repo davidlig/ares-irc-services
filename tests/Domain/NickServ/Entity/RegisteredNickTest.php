@@ -386,6 +386,99 @@ final class RegisteredNickTest extends TestCase
     }
 
     #[Test]
+    public function updateLastConnectionStoresIpAndHost(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        self::assertNull($nick->getLastConnectIp());
+        self::assertNull($nick->getLastConnectHost());
+
+        $nick->updateLastConnection('192.168.1.1', 'user.isp.example');
+
+        self::assertSame('192.168.1.1', $nick->getLastConnectIp());
+        self::assertSame('user.isp.example', $nick->getLastConnectHost());
+    }
+
+    #[Test]
+    public function updateLastConnectionWithEmptyStringsStoresNull(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->updateLastConnection('192.168.1.1', 'user.isp.example');
+        self::assertSame('192.168.1.1', $nick->getLastConnectIp());
+        self::assertSame('user.isp.example', $nick->getLastConnectHost());
+
+        $nick->updateLastConnection('', '');
+
+        self::assertNull($nick->getLastConnectIp());
+        self::assertNull($nick->getLastConnectHost());
+    }
+
+    #[Test]
+    public function updateLastConnectionWithAsteriskStoresNull(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->updateLastConnection('192.168.1.1', 'user.isp.example');
+        self::assertSame('192.168.1.1', $nick->getLastConnectIp());
+
+        $nick->updateLastConnection('*', 'host.example');
+
+        self::assertNull($nick->getLastConnectIp());
+        self::assertSame('host.example', $nick->getLastConnectHost());
+    }
+
+    #[Test]
+    public function updateLastConnectionWithEmptyHostStoresNull(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->updateLastConnection('192.168.1.1', '');
+
+        self::assertSame('192.168.1.1', $nick->getLastConnectIp());
+        self::assertNull($nick->getLastConnectHost());
+    }
+
+    #[Test]
+    public function getLastConnectIpReturnsNullWhenNotSet(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        self::assertNull($nick->getLastConnectIp());
+        self::assertNull($nick->getLastConnectHost());
+    }
+
+    #[Test]
     public function privacyAndMessageTypeFlags(): void
     {
         $nick = RegisteredNick::createPending(

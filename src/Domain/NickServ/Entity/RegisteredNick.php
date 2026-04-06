@@ -83,6 +83,12 @@ class RegisteredNick
 
     private ?string $lastQuitMessage = null;
 
+    /** IP address from last identified connection (visible to IRCops and owner). */
+    private ?string $lastConnectIp = null;
+
+    /** Hostname from last identified connection (visible to IRCops and owner). */
+    private ?string $lastConnectHost = null;
+
     /** When true, INFO output is hidden from non-oper users. */
     private bool $private = false;
 
@@ -296,6 +302,16 @@ class RegisteredNick
         return $this->lastQuitMessage;
     }
 
+    public function getLastConnectIp(): ?string
+    {
+        return $this->lastConnectIp;
+    }
+
+    public function getLastConnectHost(): ?string
+    {
+        return $this->lastConnectHost;
+    }
+
     public function isPrivate(): bool
     {
         return $this->private;
@@ -348,6 +364,16 @@ class RegisteredNick
     public function updateQuitMessage(?string $message): void
     {
         $this->lastQuitMessage = $message;
+    }
+
+    /**
+     * Updates the IP and hostname from the last identified connection.
+     * Only updated on QUIT when the user was identified.
+     */
+    public function updateLastConnection(string $ip, string $hostname): void
+    {
+        $this->lastConnectIp = '' !== $ip && '*' !== $ip ? $ip : null;
+        $this->lastConnectHost = '' !== $hostname ? $hostname : null;
     }
 
     public function switchPrivate(bool $private): void

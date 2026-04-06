@@ -118,15 +118,16 @@ info:
   status_registered:  "\x0303Registered\x03"
   status_suspended:   "\x0304Suspended\x03"
   status_forbidden:   "\x0304Forbidden\x03"
-  reason:            "  \x0314Reason\x03          : %reason%"
-  suspended_until:   "  \x0314Ends on\x03        : %date%"
-  suspended_permanent: "  \x0314Ends on\x03        : Permanent"
+  reason:           "  \x0314Reason\x03          : %reason%"
+  suspended_until:  "  \x0314Ends on\x03         : %date%"
+  suspended_permanent: "  \x0314Ends on\x03         : Permanent"
   registered_at:    "  \x0314Registered\x03      : %date%"
-  last_seen_online: "  \x0314Last seen\x03      : \x0303● NOW ONLINE\x03"
-  last_seen_at:     "  \x0314Last seen\x03      : %date%"
-  last_seen_never:  "  \x0314Last seen\x03      : Never"
-  last_quit:        "  \x0314Last quit msg\x03  : %message%"
-  email:            "  \x0314Email\x03          : %email%"
+  last_seen_online: "  \x0314Last seen\x03       : \x0303● NOW ONLINE\x03"
+  last_seen_at:     "  \x0314Last seen\x03       : %date%"
+  last_seen_never:  "  \x0314Last seen\x03       : Never"
+  last_quit:        "  \x0314Last quit msg\x03   : %message%"
+  last_connect:     "  \x0314Last seen from\x03  : %ip% (%host%)"
+  email:            "  \x0314Email\x03           : %email%"
   vhost:            "  \x0314VHost\x03           : %vhost%"
   no_expire:        "  \x0314Never Expires\x03   : Yes"
   footer:           "\x0314─────────────────────────────\x03"
@@ -233,10 +234,10 @@ userip:
   help:             |
     Shows the real IP address and hostname of the specified nickname.
     Only available to IRCops with 'nickserv.userip' permission.
-    
+
     This command displays sensitive nickname information.
     Use responsibly.
-    
+
     Syntax: USERIP <nickname>
     Example: USERIP SomeUser
   not_online:       "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected."
@@ -258,12 +259,12 @@ suspend:
   help:             |
     Suspends a nickname, preventing the owner from identifying.
     The suspension can be temporary or permanent.
-    
+
     Duration formats: \x0303%d\x03 (days), \x0303%h\x03 (hours), \x0303%m\x03 (minutes), or \x03030\x03 (permanent).
-    
+
     Suspended users cannot identify to their nickname.
     IRC operators and root users cannot be suspended.
-    
+
     Syntax: SUSPEND <nickname> <duration> <reason>
     Examples:
       SUSPEND BadUser 7d Spamming in #help
@@ -285,7 +286,7 @@ unsuspend:
   short:            "Remove suspension from a nickname."
   help:             |
     Removes an active suspension from a nickname, allowing the owner to identify again.
-    
+
     Syntax: UNSUSPEND <nickname>
     Example: UNSUSPEND SomeUser
   success:          "\x0303✔\x03 Suspension has been lifted from \x02%nickname%\x02."
@@ -299,11 +300,11 @@ rename:
   help:             |
     Forces a connected nickname to change their nick to a randomly generated one.
     Useful for enforcing network policies without disconnecting the user.
-    
+
     The new nickname format uses the configured guest prefix (%prefix%).
-    
+
     This command requires IRCop permission: nickserv.rename
-    
+
     Syntax: RENAME <nickname>
     Example: RENAME Troublemaker
   not_online:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is not connected."
@@ -319,13 +320,13 @@ drop:
   help:             |
     Drops a registered nickname from the database.
     This action cannot be undone.
-    
+
     If the user is online, they will be renamed to a Guest- nickname.
     Root users and IRC operators cannot be dropped.
     You cannot drop your own nickname.
-    
+
     This command requires IRCop permission: nickserv.drop
-    
+
     Syntax: DROP <nickname>
     Example: DROP OldAccount
   not_registered:     "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
@@ -344,14 +345,14 @@ forbid:
   help:             |
     Prohibits a nickname from being used on the network.
     The nickname cannot be registered or used by anyone.
-    
+
     If the nickname is currently registered, it will be dropped first.
     If someone is using it, they will be forced to change to a Guest- nickname.
-    
+
     Root users, IRC operators, and service nicknames cannot be forbidden.
-    
+
     This command requires IRCop permission: nickserv.forbid
-    
+
     Syntax: FORBID <nickname> <reason>
     Example: FORBID BadNick Repeated policy violations
   success:            "\x0303✔\x03 Nickname \x02%nickname%\x02 has been forbidden."
@@ -367,9 +368,9 @@ unforbid:
   short:            "Remove a nickname prohibition."
   help:             |
     Removes a nickname prohibition, allowing the nickname to be used again.
-    
+
     This command requires IRCop permission: nickserv.forbid
-    
+
     Syntax: UNFORBID <nickname>
     Example: UNFORBID SomeNick
   success:          "\x0303✔\x03 Nickname \x02%nickname%\x02 is no longer forbidden."
@@ -382,51 +383,51 @@ forbidvhost:
   help:             |
     Manages patterns that prevent users from setting matching vhosts
     via NickServ SET VHOST.
-    
+
     Wildcards: * matches any sequence, ? matches single character.
     Example: *.pirated.com blocks any vhost ending with .pirated.com
-    
+
     This command requires IRCop permission: nickserv.forbidvhost
-    
+
     Subcommands:
       ADD <pattern>    Add a forbidden pattern
       DEL <pattern>    Remove a forbidden pattern
       LIST             Show all forbidden patterns
-  
+
   unknown_sub: "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
-  
+
   add:
     syntax:      "FORBIDVHOST ADD <pattern>"
     short:       "Add a forbidden vhost pattern."
     help:        |
       Adds a pattern to the forbidden vhost list. Users will not be
       able to set vhosts matching this pattern via SET VHOST.
-      
+
       Wildcards: * matches any sequence, ? matches single character.
-      
+
       Syntax: FORBIDVHOST ADD <pattern>
       Example: FORBIDVHOST ADD *.pirated.com
     done:            "\x0303✓\x03 Forbidden vhost pattern added: \x02%pattern%\x02"
     already_exists:  "\x0304✗\x03 Pattern \x02%pattern%\x02 already exists."
     invalid:          "\x0304✗\x03 Invalid vhost pattern format."
-  
+
   del:
     syntax:      "FORBIDVHOST DEL <pattern>"
     short:       "Remove a forbidden vhost pattern."
     help:        |
       Removes a pattern from the forbidden vhost list.
-      
+
       Syntax: FORBIDVHOST DEL <pattern>
       Example: FORBIDVHOST DEL *.pirated.com
     done:        "\x0303✓\x03 Forbidden vhost pattern removed: \x02%pattern%\x02"
     not_found:   "\x0304✗\x03 Pattern \x02%pattern%\x02 not found."
-  
+
   list:
     short:       "List all forbidden vhost patterns."
     syntax:      "FORBIDVHOST LIST"
     help:        |
       Shows all forbidden vhost patterns.
-      
+
       Syntax: FORBIDVHOST LIST
     header:      "\x0307ℹ\x03 Forbidden vhost patterns (\x02%count%\x02):"
     entry:       "  %index%. \x0304%pattern%\x03 — by %nickname% (%date%)"
@@ -440,16 +441,16 @@ history:
   help:             |
     Manage the action history for a nickname.
     Only IRCops with 'nickserv.history' permission can use this command.
-    
+
     Actions recorded automatically:
       SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
       SASET EMAIL, RECOVER
-    
+
     Syntax: HISTORY <nickname> ADD <message>
             HISTORY <nickname> DEL <id>
             HISTORY <nickname> VIEW [PAGE|ALL]
             HISTORY <nickname> CLEAR
-    
+
     Examples:
       HISTORY SomeNick VIEW
       HISTORY SomeNick ADD Manual note about this user
@@ -457,7 +458,7 @@ history:
       HISTORY SomeNick VIEW ALL
       HISTORY SomeNick DEL 123
       HISTORY SomeNick CLEAR
-    
+
     Use VIEW to see the history (shows 3 entries by default).
     Use VIEW PAGE 2 to see the next page.
     Use VIEW ALL to see the complete history.
@@ -466,39 +467,39 @@ history:
     Use CLEAR to delete all history entries.
   not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
   unknown_operator: "(unknown)"
-  
+
   add:
     syntax:     "HISTORY <nickname> ADD <message>"
     short:      "Add a manual history entry."
     help:        |
       Adds a manual entry to the nickname's history.
-      
+
       Syntax: HISTORY <nickname> ADD <message>
       Example: HISTORY SomeNick ADD User reported for spam
     success:    "\x0303✔\x03 History entry added for \x02%nickname%\x02."
-  
+
   del:
     syntax:     "HISTORY <nickname> DEL <id>"
     short:      "Delete a history entry by ID."
     help:        |
       Deletes a specific history entry by its ID.
-      
+
       Syntax: HISTORY <nickname> DEL <id>
       Example: HISTORY SomeNick DEL 42
     success:    "\x0303✔\x03 History entry \x02%id%\x02 deleted."
     not_found:  "\x0304✗\x03 History entry \x02%id%\x02 not found."
     invalid_id: "\x0304✗\x03 Invalid entry ID: \x02%id%\x02."
-  
+
   view:
     syntax:     "HISTORY <nickname> VIEW [PAGE|ALL]"
     short:      "View nickname action history."
     help:        |
       Displays the nickname's action history.
-      
+
       Syntax: HISTORY <nickname> VIEW
               HISTORY <nickname> VIEW PAGE
               HISTORY <nickname> VIEW ALL
-      
+
       By default shows 3 entries at a time.
       Use VIEW 2 to see the second page.
       Use VIEW ALL to see the complete history.
@@ -507,14 +508,14 @@ history:
     extra:       "  Extra: %extra%"
     no_entries:  "\x0307ℹ\x03 No history entries found for \x02%nickname%\x02."
     page_hint:   "Use \x0303HISTORY %nickname% VIEW %next_page%\x03 for more entries."
-  
+
   clear:
     syntax:     "HISTORY <nickname> CLEAR"
     short:      "Delete all history entries for a nickname."
     help:        |
       Removes all history entries for the specified nickname.
       This action cannot be undone.
-      
+
       Syntax: HISTORY <nickname> CLEAR
       Example: HISTORY SomeNick CLEAR
     success:    "\x0303✔\x03 Cleared \x02%count%\x02 history entries for \x02%nickname%\x02."
@@ -546,9 +547,9 @@ noexpire:
     Controls whether a nickname will expire due to inactivity.
     When ON, the nickname never expires regardless of last activity.
     When OFF, normal expiration rules apply.
-    
+
     Only IRCops with 'nickserv.noexpire' permission can use this command.
-    
+
     Syntax: NOEXPIRE <nickname> {ON|OFF}
     Examples:
       NOEXPIRE ImportantUser ON

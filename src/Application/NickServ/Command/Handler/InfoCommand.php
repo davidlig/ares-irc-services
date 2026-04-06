@@ -232,6 +232,11 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.last_quit', ['message' => $account->getLastQuitMessage()]);
         }
 
+        $canSeeConnectionInfo = $isOwnerIdentified || ($context->sender?->isOper ?? false);
+        if ($canSeeConnectionInfo) {
+            $this->replyLastConnection($context, $account);
+        }
+
         if ($isOwnerIdentified && null !== $account->getEmail()) {
             $context->reply('info.email', ['email' => $account->getEmail()]);
         }
@@ -258,6 +263,19 @@ final readonly class InfoCommand implements NickServCommandInterface
             ]);
         } else {
             $context->reply('info.last_seen_never');
+        }
+    }
+
+    private function replyLastConnection(NickServContext $context, RegisteredNick $account): void
+    {
+        $ip = $account->getLastConnectIp();
+        $host = $account->getLastConnectHost();
+
+        if (null !== $ip || null !== $host) {
+            $context->reply('info.last_connect', [
+                'ip' => $ip ?? '*',
+                'host' => $host ?? '*',
+            ]);
         }
     }
 

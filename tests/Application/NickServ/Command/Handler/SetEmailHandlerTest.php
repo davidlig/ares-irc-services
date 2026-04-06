@@ -15,6 +15,7 @@ use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickEmailChangedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -412,5 +413,127 @@ final class SetEmailHandlerTest extends TestCase
         };
 
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
+    }
+
+    #[Test]
+    public function handleWithEmptyIpDispatchesEventWithAsteriskIp(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->method('getEmail')->willReturn('old@example.com');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $eventDispatcher,
+        );
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $context = new NickServContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', ''),
+            null,
+            'SET',
+            ['EMAIL', 'new@example.com'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+
+        $handler->handle($context, $account, 'new@example.com', true);
+
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickEmailChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+    }
+
+    #[Test]
+    public function handleWithInvalidBase64IpDispatchesEventWithOriginalIp(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->method('getEmail')->willReturn('old@example.com');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $handler = new SetEmailHandler(
+            $nickRepo,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(MessageBusInterface::class),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $eventDispatcher,
+        );
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $context = new NickServContext(
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'invalid!base64'),
+            null,
+            'SET',
+            ['EMAIL', 'new@example.com'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new NickServCommandRegistry([]),
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+        );
+
+        $handler->handle($context, $account, 'new@example.com', true);
+
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickEmailChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('invalid!base64', $dispatchedEvents[0]->performedByIp);
     }
 }

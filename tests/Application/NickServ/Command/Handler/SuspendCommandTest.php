@@ -19,6 +19,7 @@ use App\Application\NickServ\Service\NickSuspensionService;
 use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -117,6 +118,96 @@ final class SuspendCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
+    }
+
+    #[Test]
+    public function executeWithEmptyIpStoresAsteriskInEvent(): void
+    {
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o', '');
+
+        $context = $this->createContext($sender, ['TestNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = new SuspendCommand(
+            $nickRepository,
+            $validator,
+            $suspensionService,
+            $eventDispatcher,
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.success', $messages);
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickSuspendedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+    }
+
+    #[Test]
+    public function executeWithInvalidBase64IpStoresOriginalInEvent(): void
+    {
+        $nick = $this->createNickWithId('TestNick', 1);
+
+        $messages = [];
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($nick);
+        $nickRepository->expects(self::once())->method('save');
+
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TestNick', $nick));
+
+        $suspensionService = $this->createMock(NickSuspensionService::class);
+        $suspensionService->expects(self::once())->method('enforceSuspension');
+
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+                $dispatchedEvents[] = $event;
+
+                return $event;
+            });
+
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'invalid!base64', false, true, 'SID1', 'h', 'o', '');
+
+        $context = $this->createContext($sender, ['TestNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
+
+        $cmd = new SuspendCommand(
+            $nickRepository,
+            $validator,
+            $suspensionService,
+            $eventDispatcher,
+        );
+
+        $cmd->execute($context);
+
+        self::assertContains('suspend.success', $messages);
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(NickSuspendedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('invalid!base64', $dispatchedEvents[0]->performedByIp);
     }
 
     #[Test]

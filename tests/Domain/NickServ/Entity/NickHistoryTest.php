@@ -112,4 +112,22 @@ final class NickHistoryTest extends TestCase
         self::assertSame('Password reset', $array['message']);
         self::assertSame(['method' => 'email_token'], $array['extra_data']);
     }
+
+    #[Test]
+    public function setIdSetsIdForDoctrineHydration(): void
+    {
+        $history = NickHistory::record(
+            nickId: 42,
+            action: 'TEST',
+            performedBy: 'Admin',
+            performedByNickId: 5,
+            message: 'Test message',
+        );
+
+        self::assertSame(0, $history->getId());
+
+        $history->setId(100);
+
+        self::assertSame(100, $history->getId());
+    }
 }

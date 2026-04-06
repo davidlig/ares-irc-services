@@ -70,7 +70,7 @@ final class SetEmailHandlerIrcopTest extends TestCase
         $existingAccount = $this->createStub(RegisteredNick::class);
         $existingAccount->method('getId')->willReturn(2);
 
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByEmail')->willReturn($existingAccount);
 
         $handler = new SetEmailHandler(

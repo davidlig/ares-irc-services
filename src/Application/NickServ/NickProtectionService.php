@@ -171,15 +171,25 @@ final readonly class NickProtectionService
     /**
      * Called when a user quits the network. Receives only primitives; no Core event types.
      */
-    public function onUserQuit(string $uid, string $nick, string $reason, string $ident, string $displayHost): void
-    {
+    public function onUserQuit(
+        string $uid,
+        string $nick,
+        string $reason,
+        string $ident,
+        string $displayHost,
+        string $hostname,
+        string $ipBase64,
+    ): void {
         $account = $this->nickRepository->findByNick($nick);
+        $registeredNick = null;
 
         if (null === $account) {
             $registeredNick = $this->identifiedRegistry->findNick($uid);
             if (null !== $registeredNick) {
                 $account = $this->nickRepository->findByNick($registeredNick);
             }
+        } else {
+            $registeredNick = $this->identifiedRegistry->findNick($uid);
         }
 
         $this->identifiedRegistry->remove($uid);
@@ -196,6 +206,12 @@ final readonly class NickProtectionService
             : ('' !== $origin ? $origin : null);
 
         $account->updateQuitMessage($stored);
+
+        if (null !== $registeredNick && '' !== $ipBase64 && '*' !== $ipBase64) {
+            $ip = $this->decodeIp($ipBase64);
+            $account->updateLastConnection($ip, $hostname);
+        }
+
         $this->nickRepository->save($account);
     }
 
@@ -273,5 +289,23 @@ final readonly class NickProtectionService
             $user->uid,
             $guestNick,
         ));
+    }
+
+    /**
+     * Decodes a base64-encoded IP address to its human-readable form.
+     * Returns '*' when decoding fails (invalid base64).
+     * Note: Empty or asterisk inputs are filtered before calling this method.
+     */
+    private function decodeIp(string $ipBase64): string
+    {
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return '*';
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : '*';
     }
 }

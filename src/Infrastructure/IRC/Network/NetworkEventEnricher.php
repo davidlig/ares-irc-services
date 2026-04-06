@@ -105,6 +105,8 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             reason: $event->reason,
             ident: $user->ident->value,
             displayHost: $user->getDisplayHost(),
+            hostname: $user->hostname,
+            ipBase64: $user->ipBase64,
         ));
     }
 

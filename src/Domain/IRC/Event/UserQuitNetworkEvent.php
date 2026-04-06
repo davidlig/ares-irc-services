@@ -24,6 +24,10 @@ final readonly class UserQuitNetworkEvent
         public readonly string $ident = '',
         /** Best available hostname (vhost > cloaked host), e.g. "Clk-1C178BB8" */
         public readonly string $displayHost = '',
+        /** Real hostname from IRCd, e.g. "user.isp.com" */
+        public readonly string $hostname = '',
+        /** IP address in base64 format from IRCd */
+        public readonly string $ipBase64 = '',
     ) {
     }
 }
