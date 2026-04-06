@@ -37,6 +37,9 @@ final readonly class NickServPermission
     /** IRCop permission to protect a nickname from expiration. */
     public const string NOEXPIRE = 'nickserv.noexpire';
 
+    /** IRCop permission to view and manage nickname action history. */
+    public const string HISTORY = 'nickserv.history';
+
     private function __construct()
     {
     }

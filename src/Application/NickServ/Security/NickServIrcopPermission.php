@@ -23,6 +23,7 @@ final readonly class NickServIrcopPermission implements PermissionProviderInterf
             NickServPermission::FORBID,
             NickServPermission::FORBIDVHOST,
             NickServPermission::SASET,
+            NickServPermission::HISTORY,
         ];
     }
 }

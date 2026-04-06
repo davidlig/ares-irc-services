@@ -19,6 +19,7 @@ use App\Domain\NickServ\Service\PasswordHasherInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetPasswordHandler::class)]
@@ -60,7 +61,7 @@ final class SetPasswordHandlerTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetPasswordHandler($nickRepo, $passwordHasher);
+        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $account, '');
 
         self::assertSame(['error.syntax'], $messages);
@@ -83,7 +84,7 @@ final class SetPasswordHandlerTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetPasswordHandler($nickRepo, $passwordHasher);
+        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $account, 'newpass');
 
         self::assertSame(['set.password.success'], $messages);

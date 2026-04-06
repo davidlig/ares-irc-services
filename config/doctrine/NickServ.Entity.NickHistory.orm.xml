@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                           https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\NickServ\Entity\NickHistory" table="nick_history">
+        <indexes>
+            <index name="idx_nick_id" columns="nick_id"/>
+            <index name="idx_performed_at" columns="performed_at"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="nickId" type="integer" column="nick_id"/>
+        <field name="action" type="string" length="50" column="action"/>
+        <field name="performedBy" type="string" length="32" column="performed_by"/>
+        <field name="performedByNickId" type="integer" nullable="true" column="performed_by_nick_id"/>
+        <field name="performedAt" type="datetime_immutable" column="performed_at"/>
+        <field name="message" type="string" length="512" column="message"/>
+        <field name="extraData" type="json" nullable="true" column="extra_data"/>
+    </entity>
+</doctrine-mapping>

@@ -9,11 +9,15 @@ use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickEmailChangedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
+
+use function sprintf;
 
 use const FILTER_VALIDATE_EMAIL;
 
@@ -25,6 +29,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
         private readonly MessageBusInterface $messageBus,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface $logger,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -125,8 +130,26 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             return;
         }
 
+        $oldEmail = $account->getEmail();
         $account->changeEmail($newEmail);
         $this->nickRepository->save($account);
+
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new NickEmailChangedEvent(
+            nickId: $account->getId(),
+            nickname: $account->getNickname(),
+            oldEmail: $oldEmail,
+            newEmail: $newEmail,
+            changedByOwner: true,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $context->reply('set.email.success', ['email' => $newEmail]);
     }
 
@@ -139,8 +162,43 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             return;
         }
 
+        $oldEmail = $account->getEmail();
         $account->changeEmail($newEmail);
         $this->nickRepository->save($account);
+
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new NickEmailChangedEvent(
+            nickId: $account->getId(),
+            nickname: $account->getNickname(),
+            oldEmail: $oldEmail,
+            newEmail: $newEmail,
+            changedByOwner: false,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $context->reply('set.email.success', ['email' => $newEmail]);
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }

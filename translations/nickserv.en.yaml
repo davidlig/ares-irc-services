@@ -249,6 +249,7 @@ permissions:
   nickserv.drop: "Delete a registered nickname"
   nickserv.saset: "Modify another nickname's settings"
   nickserv.noexpire: "Set or remove expiration protection for a nickname"
+  nickserv.history: "View and manage nickname action history"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -431,6 +432,111 @@ forbidvhost:
     entry:       "  %index%. \x0304%pattern%\x03 — by %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No forbidden vhost patterns."
     unknown_creator: "unknown"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  short:            "View or manage nickname action history."
+  help:             |
+    Manage the action history for a nickname.
+    Only IRCops with 'nickserv.history' permission can use this command.
+    
+    Actions recorded automatically:
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+    
+    Syntax: HISTORY <nickname> ADD <message>
+            HISTORY <nickname> DEL <id>
+            HISTORY <nickname> VIEW [PAGE|ALL]
+            HISTORY <nickname> CLEAR
+    
+    Examples:
+      HISTORY SomeNick VIEW
+      HISTORY SomeNick ADD Manual note about this user
+      HISTORY SomeNick VIEW 2
+      HISTORY SomeNick VIEW ALL
+      HISTORY SomeNick DEL 123
+      HISTORY SomeNick CLEAR
+    
+    Use VIEW to see the history (shows 3 entries by default).
+    Use VIEW PAGE 2 to see the next page.
+    Use VIEW ALL to see the complete history.
+    Use ADD to add a manual entry.
+    Use DEL to delete a specific entry by ID.
+    Use CLEAR to delete all history entries.
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  unknown_operator: "(unknown)"
+  
+  add:
+    syntax:     "HISTORY <nickname> ADD <message>"
+    short:      "Add a manual history entry."
+    help:        |
+      Adds a manual entry to the nickname's history.
+      
+      Syntax: HISTORY <nickname> ADD <message>
+      Example: HISTORY SomeNick ADD User reported for spam
+    success:    "\x0303✔\x03 History entry added for \x02%nickname%\x02."
+  
+  del:
+    syntax:     "HISTORY <nickname> DEL <id>"
+    short:      "Delete a history entry by ID."
+    help:        |
+      Deletes a specific history entry by its ID.
+      
+      Syntax: HISTORY <nickname> DEL <id>
+      Example: HISTORY SomeNick DEL 42
+    success:    "\x0303✔\x03 History entry \x02%id%\x02 deleted."
+    not_found:  "\x0304✗\x03 History entry \x02%id%\x02 not found."
+    invalid_id: "\x0304✗\x03 Invalid entry ID: \x02%id%\x02."
+  
+  view:
+    syntax:     "HISTORY <nickname> VIEW [PAGE|ALL]"
+    short:      "View nickname action history."
+    help:        |
+      Displays the nickname's action history.
+      
+      Syntax: HISTORY <nickname> VIEW
+              HISTORY <nickname> VIEW PAGE
+              HISTORY <nickname> VIEW ALL
+      
+      By default shows 3 entries at a time.
+      Use VIEW 2 to see the second page.
+      Use VIEW ALL to see the complete history.
+    header:     "\x02History for \x0307%nickname%\x03\x02 (showing %start%-%end% of %total%):"
+    entry:       "%id%. [%date%] \x0303%action%\x03 by %operator% — %message%"
+    extra:       "  Extra: %extra%"
+    no_entries:  "\x0307ℹ\x03 No history entries found for \x02%nickname%\x02."
+    page_hint:   "Use \x0303HISTORY %nickname% VIEW %next_page%\x03 for more entries."
+  
+  clear:
+    syntax:     "HISTORY <nickname> CLEAR"
+    short:      "Delete all history entries for a nickname."
+    help:        |
+      Removes all history entries for the specified nickname.
+      This action cannot be undone.
+      
+      Syntax: HISTORY <nickname> CLEAR
+      Example: HISTORY SomeNick CLEAR
+    success:    "\x0303✔\x03 Cleared \x02%count%\x02 history entries for \x02%nickname%\x02."
+
+# --- History message translations (used when viewing history) ---
+history.message:
+  unsuspend:                  "Suspension lifted"
+  password_changed_owner:     "Password changed by owner"
+  password_changed_operator:  "Password changed by operator"
+  email_changed_owner:        "Email changed from %old_email% to %new_email%"
+  email_changed_operator:     "Email changed to %new_email% by operator"
+  recover:                    "Password reset via email token"
+
+# --- History extra field translations ---
+history.extra:
+  duration:      "Duration: %value%"
+  expires_at:    "Expires: %value%"
+  old_email:     "Old email: %value%"
+  new_email:     "New email: %value%"
+  method:        "Method: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:

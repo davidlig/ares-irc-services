@@ -24,6 +24,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RecoverCommand::class)]
@@ -70,7 +71,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['SomeNick'], $notifier, $translator, new RecoveryTokenRegistry()));
 
         self::assertSame(['recover.not_registered'], $messages);
@@ -95,7 +96,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
 
         self::assertSame(['recover.pending'], $messages);
@@ -123,7 +124,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
 
         self::assertSame(['recover.suspended'], $messages);
@@ -150,7 +151,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
 
         self::assertSame(['recover.forbidden'], $messages);
@@ -178,7 +179,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
 
         self::assertSame(['recover.no_email'], $messages);
@@ -206,7 +207,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
 
         self::assertSame(['recover.no_email'], $messages);
@@ -237,7 +238,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 300);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 300);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.throttled'], $messages);
@@ -281,7 +282,7 @@ final class RecoverCommandTest extends TestCase
         });
         $notifier->method('getNick')->willReturn('NickServ');
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.email_sent'], $messages);
@@ -323,7 +324,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator, $recovery));
 
         self::assertSame(['error.mail_failed'], $messages);
@@ -347,7 +348,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'some-token'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.not_registered'], $messages);
@@ -373,7 +374,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'token'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.pending'], $messages);
@@ -402,7 +403,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'token'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.suspended'], $messages);
@@ -430,7 +431,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'token'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.forbidden'], $messages);
@@ -458,7 +459,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['Nick', 'wrong-token'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.invalid_token'], $messages);
@@ -491,7 +492,7 @@ final class RecoverCommandTest extends TestCase
             $messages[] = $m;
         });
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['User', 'valid-token'], $notifier, $translator, $recovery));
 
         self::assertSame(['recover.success_identify', 'recover.success_then_change'], $messages);
@@ -510,7 +511,7 @@ final class RecoverCommandTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
-        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, 3600, 0);
+        $cmd = new RecoverCommand($nickRepo, $messageBus, $translator, $passwordHasher, $logger, $this->createStub(EventDispatcherInterface::class), 3600, 0);
         $cmd->execute($this->createContext(null, ['Nick'], $notifier, $translator, new RecoveryTokenRegistry()));
     }
 
@@ -523,6 +524,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -538,6 +540,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -553,6 +556,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -568,6 +572,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -583,6 +588,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -598,6 +604,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -613,6 +620,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -628,6 +636,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -643,6 +652,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -658,6 +668,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );
@@ -673,6 +684,7 @@ final class RecoverCommandTest extends TestCase
             $this->createStub(TranslatorInterface::class),
             $this->createStub(PasswordHasherInterface::class),
             $this->createStub(LoggerInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
             3600,
             0,
         );

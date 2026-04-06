@@ -37,6 +37,7 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetCommand::class)]
@@ -136,8 +137,8 @@ final class SetCommandTest extends TestCase
     public function doesNothingWhenSenderNull(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -155,8 +156,8 @@ final class SetCommandTest extends TestCase
     public function replyNotIdentifiedWhenSenderAccountNull(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -182,8 +183,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -209,8 +210,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -239,8 +240,8 @@ final class SetCommandTest extends TestCase
         $account->method('getLanguage')->willReturn('es');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -270,8 +271,8 @@ final class SetCommandTest extends TestCase
         $nickRepo->expects(self::once())->method('save')->with($account);
         $passwordHasher = $this->createStub(PasswordHasherInterface::class);
         $passwordHasher->method('hash')->willReturn('newhash');
-        $setPassword = new SetPasswordHandler($nickRepo, $passwordHasher);
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -305,13 +306,14 @@ final class SetCommandTest extends TestCase
         $logger = $this->createStub(LoggerInterface::class);
         $translatorForHandler = $this->createStub(TranslatorInterface::class);
         $translatorForHandler->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setEmail = new SetEmailHandler(
             $nickRepo,
             new PendingEmailChangeRegistry(),
             $messageBus,
             $translatorForHandler,
             $logger,
+            $this->createStub(EventDispatcherInterface::class),
         );
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
@@ -340,8 +342,8 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('switchPrivate')->with(true);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -369,8 +371,8 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('switchMsg')->with(true);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -398,8 +400,8 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('changeTimezone')->with('America/New_York');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -427,8 +429,8 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('changeVhost')->with('vhost.example.com');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -457,8 +459,8 @@ final class SetCommandTest extends TestCase
         $account->method('getLanguage')->willReturn('es');
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -484,8 +486,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -511,8 +513,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -539,8 +541,8 @@ final class SetCommandTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getEmail')->willReturn('old@example.com');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -571,8 +573,8 @@ final class SetCommandTest extends TestCase
         $existingAccount->method('getNickname')->willReturn('OtherUser');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByEmail')->willReturn($existingAccount);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -598,8 +600,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -627,8 +629,8 @@ final class SetCommandTest extends TestCase
         $account->method('getLanguage')->willReturn('en');
         $account->method('changeLanguage')->willThrowException(new InvalidArgumentException('Unsupported language'));
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -654,8 +656,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -681,8 +683,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -708,8 +710,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -737,8 +739,8 @@ final class SetCommandTest extends TestCase
         $account->method('getTimezone')->willReturn('UTC');
         $account->method('changeTimezone')->willThrowException(new InvalidArgumentException('Invalid timezone'));
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -764,8 +766,8 @@ final class SetCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -795,8 +797,8 @@ final class SetCommandTest extends TestCase
         $existingAccount->method('getId')->willReturn(2);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByVhost')->willReturn($existingAccount);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -824,8 +826,8 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('switchPrivate')->with(false);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -853,8 +855,8 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('switchMsg')->with(false);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -882,8 +884,8 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('changeTimezone')->with(null);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -911,8 +913,8 @@ final class SetCommandTest extends TestCase
         $account->expects(self::once())->method('changeVhost')->with(null);
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('save')->with($account);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -937,8 +939,8 @@ final class SetCommandTest extends TestCase
     public function getNameReturnsSet(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -953,8 +955,8 @@ final class SetCommandTest extends TestCase
     public function getAliasesReturnsEmptyArray(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -969,8 +971,8 @@ final class SetCommandTest extends TestCase
     public function getMinArgsReturnsTwo(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -985,8 +987,8 @@ final class SetCommandTest extends TestCase
     public function getSyntaxKeyReturnsSetSyntax(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -1001,8 +1003,8 @@ final class SetCommandTest extends TestCase
     public function getHelpKeyReturnsSetHelp(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -1017,8 +1019,8 @@ final class SetCommandTest extends TestCase
     public function getOrderReturnsFour(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -1033,8 +1035,8 @@ final class SetCommandTest extends TestCase
     public function getShortDescKeyReturnsSetShort(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -1049,8 +1051,8 @@ final class SetCommandTest extends TestCase
     public function getSubCommandHelpReturnsExpectedOptions(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -1074,8 +1076,8 @@ final class SetCommandTest extends TestCase
     public function isOperOnlyReturnsFalse(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -1090,8 +1092,8 @@ final class SetCommandTest extends TestCase
     public function getRequiredPermissionReturnsIdentified(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -1106,8 +1108,8 @@ final class SetCommandTest extends TestCase
     public function getHelpParamsReturnsEmptyArray(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class));
+        $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(MessageBusInterface::class), $this->createStub(TranslatorInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventDispatcherInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);

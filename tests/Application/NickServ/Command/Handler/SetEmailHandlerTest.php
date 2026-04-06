@@ -23,6 +23,7 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetEmailHandler::class)]
@@ -67,7 +68,7 @@ final class SetEmailHandlerTest extends TestCase
         });
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, ''), $account, '');
 
         self::assertSame(['error.syntax'], $messages);
@@ -90,7 +91,7 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'not-an-email'), $account, 'not-an-email');
 
         self::assertSame(['register.invalid_email'], $messages);
@@ -115,7 +116,7 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com wrong-token'), $account, 'new@example.com wrong-token');
 
         self::assertSame(['set.email.invalid_token'], $messages);
@@ -154,7 +155,7 @@ final class SetEmailHandlerTest extends TestCase
         });
         $notifier->method('getNick')->willReturn('NickServ');
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['set.email.pending_sent'], $messages);
@@ -194,7 +195,7 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com ' . $token), $account, 'new@example.com ' . $token);
 
         self::assertSame(['set.email.success'], $messages);
@@ -225,7 +226,7 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com ' . $token), $account, 'new@example.com ' . $token);
 
         self::assertSame(['register.email_already_used'], $messages);
@@ -250,7 +251,7 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['error.not_identified'], $messages);
@@ -280,7 +281,7 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'other@example.com'), $account, 'other@example.com');
 
         self::assertSame(['register.email_already_used'], $messages);
@@ -313,7 +314,7 @@ final class SetEmailHandlerTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['error.mail_failed'], $messages);
@@ -341,7 +342,7 @@ final class SetEmailHandlerTest extends TestCase
             $messages[] = $m;
         });
 
-        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger);
+        $handler = new SetEmailHandler($nickRepo, $pending, $messageBus, $translator, $logger, $this->createStub(EventDispatcherInterface::class));
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['error.not_identified'], $messages);

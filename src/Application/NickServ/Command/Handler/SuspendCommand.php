@@ -13,11 +13,14 @@ use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickSuspensionService;
 use App\Application\NickServ\Service\NickTargetValidator;
+use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateInterval;
 use DateTimeImmutable;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
+use function sprintf;
 use function strtolower;
 use function trim;
 
@@ -29,6 +32,7 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickTargetValidator $targetValidator,
         private readonly NickSuspensionService $suspensionService,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -141,6 +145,22 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
 
         $this->suspensionService->enforceSuspension($account);
 
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new NickSuspendedEvent(
+            nickId: $account->getId(),
+            nickname: $targetNick,
+            reason: $reason,
+            duration: '0' === strtolower($durationStr) ? null : $durationStr,
+            expiresAt: $expiresAt,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $durationDisplay = null === $expiresAt
             ? $context->trans('suspend.permanent')
             : $context->formatDate($expiresAt);
@@ -196,5 +216,22 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         };
 
         return (new DateTimeImmutable())->add(new DateInterval($intervalSpec));
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }

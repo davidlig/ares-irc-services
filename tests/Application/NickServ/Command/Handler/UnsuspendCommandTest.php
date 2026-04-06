@@ -21,6 +21,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UnsuspendCommand::class)]
@@ -125,7 +127,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['UnknownNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository);
+        $cmd = new UnsuspendCommand($nickRepository, $this->createStub(EventDispatcherInterface::class));
 
         $cmd->execute($context);
 
@@ -145,7 +147,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository);
+        $cmd = new UnsuspendCommand($nickRepository, $this->createStub(EventDispatcherInterface::class));
 
         $cmd->execute($context);
 
@@ -156,8 +158,7 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithSuspendedNickUnsuspendsSuccessfully(): void
     {
         $sender = $this->createSender();
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable());
-        $nick->activate();
+        $nick = $this->createNickWithId('TestNick', 1);
         $nick->suspend('Spamming', new DateTimeImmutable('+7 days'));
 
         self::assertTrue($nick->isSuspended());
@@ -167,9 +168,12 @@ final class UnsuspendCommandTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($nick);
         $nickRepository->expects(self::once())->method('save')->with($nick);
 
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository);
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
 
         $cmd->execute($context);
 
@@ -183,8 +187,7 @@ final class UnsuspendCommandTest extends TestCase
     public function executeWithPermanentSuspendedNickUnsuspendsSuccessfully(): void
     {
         $sender = $this->createSender();
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable());
-        $nick->activate();
+        $nick = $this->createNickWithId('TestNick', 1);
         $nick->suspend('Permanent ban', null);
 
         self::assertTrue($nick->isSuspended());
@@ -194,9 +197,12 @@ final class UnsuspendCommandTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($nick);
         $nickRepository->expects(self::once())->method('save')->with($nick);
 
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository);
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
 
         $cmd->execute($context);
 
@@ -210,8 +216,7 @@ final class UnsuspendCommandTest extends TestCase
     public function getAuditDataReturnsDataAfterSuccessfulExecute(): void
     {
         $sender = $this->createSender();
-        $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable());
-        $nick->activate();
+        $nick = $this->createNickWithId('TestNick', 1);
         $nick->suspend('Spamming', new DateTimeImmutable('+7 days'));
 
         $messages = [];
@@ -219,9 +224,11 @@ final class UnsuspendCommandTest extends TestCase
         $nickRepository->method('findByNick')->willReturn($nick);
         $nickRepository->expects(self::once())->method('save');
 
+        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd = new UnsuspendCommand($nickRepository);
+        $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
 
         $cmd->execute($context);
 
@@ -240,10 +247,24 @@ final class UnsuspendCommandTest extends TestCase
         self::assertSame([], $cmd->getHelpParams());
     }
 
+    private function createNickWithId(string $nickname, int $id): RegisteredNick
+    {
+        $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick->activate();
+
+        $reflection = new ReflectionClass(RegisteredNick::class);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($nick, $id);
+
+        return $nick;
+    }
+
     private function createCommand(): UnsuspendCommand
     {
         return new UnsuspendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
         );
     }
 

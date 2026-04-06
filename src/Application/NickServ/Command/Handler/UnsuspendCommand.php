@@ -9,7 +9,11 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Domain\NickServ\Event\NickUnsuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+
+use function sprintf;
 
 final class UnsuspendCommand implements NickServCommandInterface, AuditableCommandInterface
 {
@@ -17,6 +21,7 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -96,6 +101,19 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
         $account->unsuspend();
         $this->nickRepository->save($account);
 
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new NickUnsuspendedEvent(
+            nickId: $account->getId(),
+            nickname: $targetNick,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $this->auditData = new IrcopAuditData(
             target: $targetNick,
         );
@@ -106,5 +124,22 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
     public function getAuditData(object $context): ?IrcopAuditData
     {
         return $this->auditData;
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }

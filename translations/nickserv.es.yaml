@@ -319,6 +319,7 @@ permissions:
   nickserv.drop: "Eliminar un nickname registrado"
   nickserv.saset: "Modificar la configuración de otro nickname"
   nickserv.noexpire: "Activar o desactivar la protección de expiración para un nickname"
+  nickserv.history: "Ver y gestionar el historial de acciones del nickname"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:
@@ -501,6 +502,111 @@ forbidvhost:
     entry:       "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
     empty:       "\x0307ℹ\x03 No hay patrones de vhost prohibidos."
     unknown_creator: "desconocido"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Ver o gestionar el historial de acciones de un nickname."
+  help:             |
+    Gestiona el historial de acciones de un nickname.
+    Solo IRCops con permiso 'nickserv.history' pueden usar este comando.
+    
+    Acciones registradas automáticamente:
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+    
+    Sintaxis: HISTORY <nickname> ADD <mensaje>
+              HISTORY <nickname> DEL <id>
+              HISTORY <nickname> VIEW [PÁGINA|ALL]
+              HISTORY <nickname> CLEAR
+    
+    Ejemplos:
+      HISTORY UnNick VIEW
+      HISTORY UnNick ADD Nota manual sobre este usuario
+      HISTORY UnNick VIEW 2
+      HISTORY UnNick VIEW ALL
+      HISTORY UnNick DEL 123
+      HISTORY UnNick CLEAR
+    
+    Usa VIEW para ver el historial (muestra 3 entradas por defecto).
+    Usa VIEW 2 para ver la segunda página.
+    Usa VIEW ALL para ver el historial completo.
+    Usa ADD para añadir una entrada manual.
+    Usa DEL para eliminar una entrada específica por ID.
+    Usa CLEAR para eliminar todo el historial.
+  not_registered:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
+  unknown_operator: "(desconocido)"
+  
+  add:
+    syntax:     "HISTORY <nickname> ADD <mensaje>"
+    short:      "Añadir una entrada manual al historial."
+    help:        |
+      Añade una entrada manual al historial del nickname.
+      
+      Sintaxis: HISTORY <nickname> ADD <mensaje>
+      Ejemplo: HISTORY UnNick ADD Usuario reportado por spam
+    success:    "\x0303✔\x03 Entrada de historial añadida para \x02%nickname%\x02."
+  
+  del:
+    syntax:     "HISTORY <nickname> DEL <id>"
+    short:      "Eliminar una entrada del historial por ID."
+    help:        |
+      Elimina una entrada específica del historial por su ID.
+      
+      Sintaxis: HISTORY <nickname> DEL <id>
+      Ejemplo: HISTORY UnNick DEL 42
+    success:    "\x0303✔\x03 Entrada de historial \x02%id%\x02 eliminada."
+    not_found:  "\x0304✗\x03 Entrada de historial \x02%id%\x02 no encontrada."
+    invalid_id: "\x0304✗\x03 ID de entrada inválido: \x02%id%\x02."
+  
+  view:
+    syntax:     "HISTORY <nickname> VIEW [PÁGINA|ALL]"
+    short:      "Ver historial de acciones del nickname."
+    help:        |
+      Muestra el historial de acciones del nickname.
+      
+      Sintaxis: HISTORY <nickname> VIEW
+                HISTORY <nickname> VIEW PÁGINA
+                HISTORY <nickname> VIEW ALL
+      
+      Por defecto muestra 3 entradas a la vez.
+      Usa VIEW 2 para ver la segunda página.
+      Usa VIEW ALL para ver el historial completo.
+    header:     "\x02Historial de \x0307%nickname%\x03\x02 (mostrando %start%-%end% de %total%):"
+    entry:       "%id%. [%date%] \x0303%action%\x03 por %operator% — %message%"
+    extra:       "  Extra: %extra%"
+    no_entries:  "\x0307ℹ\x03 No hay entradas de historial para \x02%nickname%\x02."
+    page_hint:   "Usa \x0303HISTORY %nickname% VIEW %next_page%\x03 para más entradas."
+  
+  clear:
+    syntax:     "HISTORY <nickname> CLEAR"
+    short:      "Eliminar todo el historial de un nickname."
+    help:        |
+      Elimina todas las entradas de historial del nickname especificado.
+      Esta acción no se puede deshacer.
+      
+      Sintaxis: HISTORY <nickname> CLEAR
+      Ejemplo: HISTORY UnNick CLEAR
+    success:    "\x0303✔\x03 Eliminadas \x02%count%\x02 entradas de historial para \x02%nickname%\x02."
+
+# --- Mensajes de historial (usados al ver el historial) ---
+history.message:
+  unsuspend:                  "Levantada la suspensión"
+  password_changed_owner:     "Contraseña cambiada por el propietario"
+  password_changed_operator:   "Contraseña cambiada por un operador"
+  email_changed_owner:        "Email cambiado de %old_email% a %new_email%"
+  email_changed_operator:     "Email cambiado a %new_email% por un operador"
+  recover:                    "Contraseña restablecida vía token de email"
+
+# --- Traducciones de campos extra del historial ---
+history.extra:
+  duration:      "Duración: %value%"
+  expires_at:    "Expira: %value%"
+  old_email:     "Email anterior: %value%"
+  new_email:     "Email nuevo: %value%"
+  method:        "Método: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
 
 # --- NOEXPIRE (IRCop) ---------------------------------------------------------
 noexpire:

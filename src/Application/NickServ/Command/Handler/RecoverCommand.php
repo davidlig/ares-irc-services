@@ -10,11 +10,13 @@ use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickPasswordChangedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
@@ -35,6 +37,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
         private readonly TranslatorInterface $translator,
         private readonly PasswordHasherInterface $passwordHasher,
         private readonly LoggerInterface $logger,
+        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly int $recoverTokenTtlSeconds,
         private readonly int $recoverMinIntervalSeconds,
     ) {
@@ -233,8 +236,39 @@ final readonly class RecoverCommand implements NickServCommandInterface
         $account->changePasswordWithHasher($newPassword, $this->passwordHasher);
         $this->nickRepository->save($account);
 
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new NickPasswordChangedEvent(
+            nickId: $account->getId(),
+            nickname: $targetNick,
+            changedByOwner: true,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $identifyCmd = '/msg NickServ IDENTIFY ' . $targetNick . ' ' . $newPassword;
         $context->reply('recover.success_identify', ['identify_cmd' => $identifyCmd]);
         $context->reply('recover.success_then_change');
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }
