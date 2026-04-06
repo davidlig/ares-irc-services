@@ -503,7 +503,7 @@ history:
       Use VIEW 2 to see the second page.
       Use VIEW ALL to see the complete history.
     header:     "\x02History for \x0307%nickname%\x03\x02 (showing %start%-%end% of %total%):"
-    entry:       "%id%. [%date%] \x0303%action%\x03 by %operator% — %message%"
+    entry:       "#%id% [%date%] \x0303%action%\x03 by %operator% — %message%"
     extra:       "  Extra: %extra%"
     no_entries:  "\x0307ℹ\x03 No history entries found for \x02%nickname%\x02."
     page_hint:   "Use \x0303HISTORY %nickname% VIEW %next_page%\x03 for more entries."
