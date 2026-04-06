@@ -26,23 +26,27 @@ You are an expert Symfony 7.4 Architect using PHP 8.4. You MUST follow these str
 **You MUST run verifications in this EXACT order before committing:**
 
 ```bash
-# Step 1: Verify container is valid
+# Step 1: PHP syntax check (run on modified files)
+php -l ruta/fichero.php
+
+# Step 2: Verify container is valid
 php bin/console lint:container
 
-# Step 2: Verify YAML files are valid
+# Step 3: Verify YAML files are valid
 php bin/console lint:yaml . --exclude vendor/ --parse-tags
 
-# Step 3: Format code
+# Step 4: Format code
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
 
-# Step 4: Run tests
+# Step 5: Run tests
 ./vendor/bin/phpunit --no-coverage --display-all-issues
 
-# Step 5: Check coverage (if applicable)
+# Step 6: Check coverage (if applicable)
 ./scripts/check-coverage.sh 100
 ```
 
 **Why this order matters:**
+- `php -l` catches syntax errors instantly (parse errors, missing semicolons, brackets)
 - `lint:container` catches DI errors early (wrong types, missing services)
 - `lint:yaml` catches configuration errors before code runs
 - `php-cs-fixer` ensures code style is consistent
@@ -64,6 +68,8 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
 ./vendor/bin/phpunit --no-coverage --display-all-issues && \
 ./scripts/check-coverage.sh 100
 ```
+
+**Note:** `php -l` syntax check should be run manually on modified files after editing, before Phase 3.
 
 ### 1.4 Test Coverage (CRITICAL — NON-NEGOTIABLE)
 
@@ -205,11 +211,12 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
 ```
 
 **Order is CRITICAL:**
-1. **lint:container** — Verify Symfony DI container is valid
-2. **lint:yaml** — Verify YAML syntax and custom tags
-3. **php-cs-fixer** — Format code style
-4. **phpunit** — Run tests
-5. **check-coverage** — Verify coverage threshold
+1. **php -l** — Catch syntax errors instantly
+2. **lint:container** — Verify Symfony DI container is valid
+3. **lint:yaml** — Verify YAML syntax and custom tags
+4. **php-cs-fixer** — Format code style
+5. **phpunit** — Run tests
+6. **check-coverage** — Verify coverage threshold
 
 #### Parallelization Rules
 
