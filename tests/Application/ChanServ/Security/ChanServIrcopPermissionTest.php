@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\ChanServ\Security;
 
 use App\Application\ChanServ\Security\ChanServIrcopPermission;
+use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Security\PermissionProviderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,10 +31,10 @@ final class ChanServIrcopPermissionTest extends TestCase
     }
 
     #[Test]
-    public function getPermissionsReturnsEmptyArrayUntilCommandsAreImplemented(): void
+    public function getPermissionsReturnsDefinedPermissions(): void
     {
         $permission = new ChanServIrcopPermission();
 
-        self::assertSame([], $permission->getPermissions());
+        self::assertSame([ChanServPermission::DROP], $permission->getPermissions());
     }
 }

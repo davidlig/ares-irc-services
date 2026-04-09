@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Security;
 
+use App\Application\ChanServ\Security\ChanServPermission;
+use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Security\IrcopPermissionDetector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,13 +42,13 @@ final class IrcopPermissionDetectorTest extends TestCase
     #[Test]
     public function isIrcopPermissionReturnsTrueForNickServDrop(): void
     {
-        self::assertTrue($this->detector->isIrcopPermission('nickserv.drop'));
+        self::assertTrue($this->detector->isIrcopPermission(NickServPermission::DROP));
     }
 
     #[Test]
     public function isIrcopPermissionReturnsTrueForChanServSuspend(): void
     {
-        self::assertTrue($this->detector->isIrcopPermission('chanserv.suspend'));
+        self::assertTrue($this->detector->isIrcopPermission(ChanServPermission::SUSPEND));
     }
 
     #[Test]

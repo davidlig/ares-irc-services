@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\NickServ\Security;
 
 use App\Application\NickServ\Security\NickServIrcopPermission;
+use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Security\PermissionProviderInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,6 +35,6 @@ final class NickServIrcopPermissionTest extends TestCase
     {
         $permission = new NickServIrcopPermission();
 
-        self::assertSame(['nickserv.userip', 'nickserv.suspend', 'nickserv.rename', 'nickserv.drop', 'nickserv.forbid', 'nickserv.forbidvhost', 'nickserv.saset', 'nickserv.history'], $permission->getPermissions());
+        self::assertSame([NickServPermission::USERIP, NickServPermission::SUSPEND, NickServPermission::RENAME, NickServPermission::DROP, NickServPermission::FORBID, NickServPermission::FORBIDVHOST, NickServPermission::SASET, NickServPermission::HISTORY], $permission->getPermissions());
     }
 }

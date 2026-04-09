@@ -4,7 +4,7 @@ This document describes the unified permission system for IRCOP commands across 
 
 ## Overview
 
-Each IRCOP-only command has a permission string (e.g., `NICKSERV_DROP`, `CHANSERV_SUSPEND`) that is:
+Each IRCOP-only command has a permission string (e.g., `nickserv.drop`, `chanserv.suspend`) that is:
 1. Stored centrally in the `oper_permissions` database table
 2. Assigned to roles via `ROLE PERMS <role> ADD <permission>`
 3. Checked by `IrcopPermissionVoter` when commands are executed
@@ -57,7 +57,7 @@ Each service has an `IrcopPermission` class:
 
 ### Authorization Flow
 
-1. Command handler calls `$context->getRequiredPermission()` (returns `NICKSERV_DROP` or similar)
+1. Command handler calls `$context->getRequiredPermission()` (returns `nickserv.drop` or similar)
 2. Service calls `$authorizationChecker->isGranted($permission, $context)`
 3. `IrcopPermissionVoter` checks:
    - User has ROLE_OPER flag from IRCd
@@ -267,7 +267,7 @@ In the appropriate service's IrcopPermission class:
 
 ```php
 // src/Application/ChanServ/Security/ChanServIrcopPermission.php
-public const string MY_NEW_COMMAND = 'CHANSERV_MYNEWCOMMAND';
+public const string MY_NEW_COMMAND = 'chanserv.mynewcommand';
 
 public function getPermissions(): array
 {
@@ -418,7 +418,7 @@ Test voter authorization:
 $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
 $authorizationChecker->expects(self::once())
     ->method('isGranted')
-    ->with('CHANSERV_DROP', self::anything())
+    ->with('chanserv.drop', self::anything())
     ->willReturn(true);
 ```
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Security;
 
+use App\Application\ChanServ\Security\ChanServPermission;
+use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Security\PermissionProviderInterface;
 use App\Application\Security\PermissionRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -72,14 +74,14 @@ final class PermissionRegistryTest extends TestCase
     #[Test]
     public function getPermissionsByServiceGroupsByServiceName(): void
     {
-        $provider1 = self::createProvider('NickServ', ['NICKSERV_DROP']);
-        $provider2 = self::createProvider('ChanServ', ['CHANSERV_SUSPEND', 'CHANSERV_DROP']);
+        $provider1 = self::createProvider('NickServ', [NickServPermission::DROP]);
+        $provider2 = self::createProvider('ChanServ', [ChanServPermission::SUSPEND, ChanServPermission::DROP]);
         $registry = new PermissionRegistry([$provider1, $provider2]);
 
         $byService = $registry->getPermissionsByService();
 
-        self::assertSame(['NICKSERV_DROP'], $byService['NickServ']);
-        self::assertSame(['CHANSERV_DROP', 'CHANSERV_SUSPEND'], $byService['ChanServ']);
+        self::assertSame([NickServPermission::DROP], $byService['NickServ']);
+        self::assertSame([ChanServPermission::DROP, ChanServPermission::SUSPEND], $byService['ChanServ']);
     }
 
     #[Test]

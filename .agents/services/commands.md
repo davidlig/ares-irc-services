@@ -28,11 +28,11 @@ User sends: /msg NickServ REGISTER password email
         └─────────────┴─────────────┘
                       │
                       ▼
-          handler->getRequiredPermission()
+           handler->getRequiredPermission()
                       │
         ┌─────────────┼─────────────┐
         │             │             │
-       null       'IDENTIFIED'   'NICKSERV_DROP'
+       null       'identified'   'nickserv.drop'
         │             │             │
         ▼             ▼             ▼
     No check    IdentifiedVoter  IrcopPermissionVoter
