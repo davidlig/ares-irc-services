@@ -57,6 +57,7 @@ help:
   footer:           "\x0314─────────────────────────────\x03"
   intro_expiration: "NOTE: Channels \x0304\x1Funused\x0F for more than %days% days are automatically removed."
   unknown_command:  "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+  ircop_header:     "\x02\x0314Available commands for IRCOPS:\x03\x0F"
   suboptions:       "Sub-options:"
 
 op:
@@ -305,6 +306,13 @@ akick:
     never_expires:  "never"
     unknown_creator: "unknown"
 
+drop:
+  syntax:           "DROP <#channel>"
+  short:            "Drop a registered channel."
+  help:             "Removes a registered channel from the database."
+  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been dropped."
+  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+
 # NOJOIN documentation for LEVELS:
 # NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
 # Default: -1 (disabled). Set to 0 to only allow registered users, 50 for level 50+, etc.
@@ -315,4 +323,8 @@ nojoin:
 # --- DEBUG CHANNEL -----------------------------------------------------------
 debug_channel:
   kick_reason: "You are not authorized to join this channel."
+
+debug:
+  action_message: "%operator% executes command %command% on %target%. %reason%"
+  prefix_reason:  "Reason: %reason%"
 

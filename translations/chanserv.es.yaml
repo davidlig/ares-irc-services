@@ -57,6 +57,7 @@ help:
   footer:           "\x0314─────────────────────────────\x03"
   intro_expiration: "NOTA: Los canales \x0304\x1Fsin uso\x0F durante más de %days% días se eliminan automáticamente."
   unknown_command:  "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
+  ircop_header:     "\x02\x0314Comandos disponibles para IRCOPS:\x03\x0F"
   suboptions:       "Sub-opciones:"
 
 op:
@@ -305,6 +306,13 @@ akick:
     never_expires:  "nunca"
     unknown_creator: "desconocido"
 
+drop:
+  syntax:           "DROP <#canal>"
+  short:            "Eliminar un canal registrado."
+  help:             "Elimina un canal de la base de datos."
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha sido eliminado."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
+
 # NOJOIN documentación para LEVELS:
 # NOJOIN: Nivel mínimo de acceso para entrar al canal. Usuarios con nivel < NOJOIN son expulsados.
 # Por defecto: -1 (deshabilitado). Pon 0 para permitir solo usuarios registrados, 50 para nivel 50+, etc.
@@ -315,4 +323,8 @@ nojoin:
 # --- CANAL DE DEBUG -----------------------------------------------------------
 debug_channel:
   kick_reason: "No estás autorizado para entrar en este canal."
+
+debug:
+  action_message: "%operator% ejecuta el comando %command% sobre %target%. %reason%"
+  prefix_reason:  "Razón: %reason%"
 

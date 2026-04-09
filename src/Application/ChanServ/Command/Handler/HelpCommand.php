@@ -7,18 +7,24 @@ namespace App\Application\ChanServ\Command\Handler;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\HelpFormatterContextAdapter;
+use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\RootUserRegistry;
+use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
 
 /**
  * HELP [command [sub-option]].
  *
- * Lists commands (filtered by IRCd mode support) or shows help for a command.
+ * Lists commands (filtered by IRCd mode support and IRCop permission) or shows help for a command.
  * Design aligned with NickServ via UnifiedHelpFormatter.
  */
 final readonly class HelpCommand implements ChanServCommandInterface
 {
     public function __construct(
         private UnifiedHelpFormatter $formatter,
+        private IrcopAccessHelper $accessHelper,
+        private RootUserRegistry $rootRegistry,
+        private PermissionRegistry $permissionRegistry,
         private readonly int $inactivityExpiryDays = 0,
     ) {
     }
@@ -95,20 +101,20 @@ final readonly class HelpCommand implements ChanServCommandInterface
             $subCmd = $this->findSubCommand($handler, $subName);
 
             if (null !== $subCmd) {
-                $adapter = new HelpFormatterContextAdapter($context);
+                $adapter = new HelpFormatterContextAdapter($context, $this->accessHelper, $this->rootRegistry, $this->permissionRegistry);
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return;
             }
         }
 
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = new HelpFormatterContextAdapter($context, $this->accessHelper, $this->rootRegistry, $this->permissionRegistry);
         $this->formatter->showCommandHelp($adapter, $handler);
     }
 
     private function showGeneralHelp(ChanServContext $context): void
     {
-        $adapter = new HelpFormatterContextAdapter($context);
+        $adapter = new HelpFormatterContextAdapter($context, $this->accessHelper, $this->rootRegistry, $this->permissionRegistry);
         $this->formatter->showGeneralHelp($adapter);
         if ($this->inactivityExpiryDays > 0) {
             $context->replyRaw(' ');

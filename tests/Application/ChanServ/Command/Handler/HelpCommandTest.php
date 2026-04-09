@@ -11,10 +11,15 @@ use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\HelpCommand;
+use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -116,7 +121,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$handler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext([], $notifier, $translator, $registry));
 
         self::assertContains('help.footer', $messages);
@@ -190,7 +195,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$handler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['UNKNOWNCMD'], $notifier, $translator, $registry));
 
         self::assertContains('help.unknown_command', $messages);
@@ -264,7 +269,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$registerHandler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['REGISTER'], $notifier, $translator, $registry));
 
         self::assertContains('register.help', $messages);
@@ -339,7 +344,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$handler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 30);
+        $cmd = $this->createCommand(30);
         $cmd->execute($this->createContext([], $notifier, $translator, $registry));
 
         $all = implode(' ', $messages);
@@ -422,7 +427,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$setHandler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['SET', 'FOUNDER'], $notifier, $translator, $registry));
 
         self::assertContains('set.founder.help', $messages);
@@ -504,7 +509,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$setHandler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['SET', 'NOSUCHSUB'], $notifier, $translator, $registry));
 
         self::assertContains('set.help', $messages);
@@ -586,7 +591,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$setHandler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['SET', 'founder'], $notifier, $translator, $registry));
 
         self::assertContains('set.founder.help', $messages);
@@ -660,7 +665,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$registerHandler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['REG'], $notifier, $translator, $registry));
 
         self::assertContains('register.help', $messages);
@@ -753,7 +758,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$accessHandler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['ACCESS'], $notifier, $translator, $registry));
 
         self::assertContains('access.help', $messages);
@@ -836,7 +841,7 @@ final class HelpCommandTest extends TestCase
         };
         $registry = new ChanServCommandRegistry([$akickHandler]);
 
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         $cmd->execute($this->createContext(['AKICK', 'INVALID'], $notifier, $translator, $registry));
 
         self::assertContains('akick.help', $messages);
@@ -845,71 +850,86 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function getNameReturnsHelp(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertSame('HELP', $cmd->getName());
     }
 
     #[Test]
     public function getAliasesReturnsQuestionMark(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertSame(['?'], $cmd->getAliases());
     }
 
     #[Test]
     public function getMinArgsReturnsZero(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertSame(0, $cmd->getMinArgs());
     }
 
     #[Test]
     public function getSyntaxKeyReturnsHelpSyntax(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertSame('help.syntax', $cmd->getSyntaxKey());
     }
 
     #[Test]
     public function getHelpKeyReturnsHelpHelp(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertSame('help.help', $cmd->getHelpKey());
     }
 
     #[Test]
     public function getOrderReturns99(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertSame(99, $cmd->getOrder());
     }
 
     #[Test]
     public function getShortDescKeyReturnsHelpShort(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertSame('help.short', $cmd->getShortDescKey());
     }
 
     #[Test]
     public function getSubCommandHelpReturnsEmptyArray(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertSame([], $cmd->getSubCommandHelp());
     }
 
     #[Test]
     public function isOperOnlyReturnsFalse(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertFalse($cmd->isOperOnly());
     }
 
     #[Test]
     public function getRequiredPermissionReturnsNull(): void
     {
-        $cmd = new HelpCommand(new UnifiedHelpFormatter(), 0);
+        $cmd = $this->createCommand();
         self::assertNull($cmd->getRequiredPermission());
+    }
+
+    private function createCommand(int $inactivityExpiryDays = 0): HelpCommand
+    {
+        return new HelpCommand(
+            new UnifiedHelpFormatter(),
+            new IrcopAccessHelper(
+                new RootUserRegistry(''),
+                $this->createStub(OperIrcopRepositoryInterface::class),
+                $this->createStub(OperRoleRepositoryInterface::class),
+            ),
+            new RootUserRegistry(''),
+            new PermissionRegistry([]),
+            $inactivityExpiryDays,
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Command;
 
+use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\RootUserRegistry;
+use App\Application\Security\IrcopPermissionDetector;
+use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
+
+use function strtolower;
 
 /**
  * Adapter from ChanServContext to HelpFormatterContextInterface for UnifiedHelpFormatter.
@@ -21,6 +27,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
     public function __construct(
         private ChanServContext $context,
+        private IrcopAccessHelper $accessHelper,
+        private RootUserRegistry $rootRegistry,
+        private PermissionRegistry $permissionRegistry,
     ) {
     }
 
@@ -46,16 +55,20 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
     public function shouldShowCommandInGeneralHelp(object $command): bool
     {
-        if ($command->isOperOnly()) {
+        $permission = $command->getRequiredPermission();
+        if (null !== $permission && IrcopPermissionDetector::isIrcopPermission($permission)) {
             return false;
+        }
+
+        if ($command->isOperOnly()) {
+            return $this->context->sender?->isOper ?? false;
         }
 
         $name = $command->getName();
         if (isset(self::MODE_DEPENDENT_COMMANDS[$name])) {
             $mode = self::MODE_DEPENDENT_COMMANDS[$name];
-            $supported = ['a' => $this->context->getChannelModeSupport()->hasAdmin(), 'h' => $this->context->getChannelModeSupport()->hasHalfOp()][$mode] ?? false;
 
-            return $supported;
+            return ['a' => $this->context->getChannelModeSupport()->hasAdmin(), 'h' => $this->context->getChannelModeSupport()->hasHalfOp()][$mode] ?? false;
         }
 
         return true;
@@ -63,13 +76,86 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
     public function getIrcopCommands(): iterable
     {
-        // ChanServ does not have IRCop commands yet
-        return [];
+        $sender = $this->context->sender;
+        $account = $this->context->senderAccount;
+
+        if (null === $sender || null === $account) {
+            return [];
+        }
+
+        $nickLower = strtolower($sender->nick);
+
+        if ($this->rootRegistry->isRoot($nickLower)) {
+            return $this->filterIrcopCommands($this->context->getRegistry()->all());
+        }
+
+        if (!$sender->isOper) {
+            return [];
+        }
+
+        return $this->filterByPermission(
+            $this->context->getRegistry()->all(),
+            $account->getId(),
+            $nickLower,
+        );
     }
 
     public function hasIrcopAccess(): bool
     {
-        // ChanServ does not have IRCop commands yet
+        $sender = $this->context->sender;
+        $account = $this->context->senderAccount;
+
+        if (null === $sender || null === $account) {
+            return false;
+        }
+
+        $nickLower = strtolower($sender->nick);
+
+        if ($this->rootRegistry->isRoot($nickLower)) {
+            return true;
+        }
+
+        if ($sender->isOper) {
+            $servicePermissions = $this->permissionRegistry->getPermissionsByService()['ChanServ'] ?? [];
+            foreach ($servicePermissions as $permission) {
+                if ($this->accessHelper->hasPermission($account->getId(), $nickLower, $permission)) {
+                    return true;
+                }
+            }
+        }
+
         return false;
+    }
+
+    /**
+     * @param iterable<object> $commands
+     *
+     * @return iterable<object>
+     */
+    private function filterIrcopCommands(iterable $commands): iterable
+    {
+        foreach ($commands as $command) {
+            $permission = $command->getRequiredPermission();
+            if (null !== $permission && IrcopPermissionDetector::isIrcopPermission($permission)) {
+                yield $command;
+            }
+        }
+    }
+
+    /**
+     * @param iterable<object> $commands
+     *
+     * @return iterable<object>
+     */
+    private function filterByPermission(iterable $commands, int $nickId, string $nickLower): iterable
+    {
+        foreach ($commands as $command) {
+            $permission = $command->getRequiredPermission();
+            if (null !== $permission
+                && IrcopPermissionDetector::isIrcopPermission($permission)
+                && $this->accessHelper->hasPermission($nickId, $nickLower, $permission)) {
+                yield $command;
+            }
+        }
     }
 }
