@@ -261,7 +261,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         if (!empty($assignedPermissions)) {
             $context->reply('role.perms.list.assigned');
             foreach ($assignedPermissions as $perm) {
-                $description = $context->trans('permissions.' . $perm, [], 'operserv');
+                $description = $this->resolvePermissionDescription($perm, $context);
                 if (str_starts_with($description, 'permissions.')) {
                     $context->replyRaw(sprintf('  %s', $perm));
                 } else {
@@ -275,7 +275,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         if (!empty($availablePermissions)) {
             $context->reply('role.perms.list.available');
             foreach ($availablePermissions as $perm) {
-                $description = $context->trans('permissions.' . $perm, [], 'operserv');
+                $description = $this->resolvePermissionDescription($perm, $context);
                 if (str_starts_with($description, 'permissions.')) {
                     $context->replyRaw(sprintf('  %s', $perm));
                 } else {
@@ -529,5 +529,18 @@ final readonly class RoleCommand implements OperServCommandInterface
         $this->vhostApplier->updateVhostForRole($role->getId(), $normalized);
 
         $context->reply('role.vhost.set.done', ['%role%' => $role->getName()]);
+    }
+
+    private function resolvePermissionDescription(string $perm, OperServContext $context): string
+    {
+        $domain = str_contains($perm, '.') ? strstr($perm, '.', true) : 'operserv';
+
+        $description = $context->transForDomain('permissions.' . $perm, $domain);
+
+        if (str_starts_with($description, 'permissions.') && 'operserv' !== $domain) {
+            $description = $context->trans('permissions.' . $perm);
+        }
+
+        return $description;
     }
 }

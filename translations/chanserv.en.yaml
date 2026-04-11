@@ -347,6 +347,10 @@ nojoin:
 debug_channel:
   kick_reason: "You are not authorized to join this channel."
 
+permissions:
+  chanserv.drop: "Drop a registered channel (DROP)"
+  chanserv.suspend: "Suspend or unsuspend a channel (SUSPEND/UNSUSPEND)"
+
 debug:
   action_message: "%operator% executes command %command% on %target%. %reason%"
   prefix_reason:  "Reason: %reason%"

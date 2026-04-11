@@ -163,6 +163,50 @@ final class OperServContextTest extends TestCase
     }
 
     #[Test]
+    public function transForDomainTranslatesInSpecifiedDomain(): void
+    {
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('OperServ');
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects($this->once())
+            ->method('trans')
+            ->with(
+                'permissions.nickserv.drop',
+                $this->anything(),
+                'nickserv',
+                'en'
+            )
+            ->willReturn('Drop a registered nickname');
+
+        $context = $this->createContext(notifier: $notifier, translator: $translator);
+
+        self::assertSame('Drop a registered nickname', $context->transForDomain('permissions.nickserv.drop', 'nickserv'));
+    }
+
+    #[Test]
+    public function transForDomainUsesConfiguredLanguage(): void
+    {
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('OperServ');
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects($this->once())
+            ->method('trans')
+            ->with(
+                'permissions.chanserv.drop',
+                $this->anything(),
+                'chanserv',
+                'es'
+            )
+            ->willReturn('Eliminar un canal registrado');
+
+        $context = $this->createContext(notifier: $notifier, translator: $translator, language: 'es');
+
+        self::assertSame('Eliminar un canal registrado', $context->transForDomain('permissions.chanserv.drop', 'chanserv'));
+    }
+
+    #[Test]
     public function commandAndArgsAreAccessible(): void
     {
         $context = $this->createContext(command: 'TESTCMD', args: ['arg1', 'arg2']);

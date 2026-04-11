@@ -347,6 +347,10 @@ nojoin:
 debug_channel:
   kick_reason: "No estás autorizado para entrar en este canal."
 
+permissions:
+  chanserv.drop: "Eliminar un canal registrado (DROP)"
+  chanserv.suspend: "Suspender o quitar la suspensión de un canal (SUSPEND/UNSUSPEND)"
+
 debug:
   action_message: "%operator% ejecuta el comando %command% sobre %target%. %reason%"
   prefix_reason:  "Razón: %reason%"

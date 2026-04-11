@@ -816,6 +816,164 @@ final class RoleCommandTest extends TestCase
     }
 
     #[Test]
+    public function permsListResolvesDescriptionsFromServiceDomains(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'operserv', string $locale = 'en'): string {
+            if ('permissions.nickserv.drop' === $id && 'nickserv' === $domain) {
+                return 'Delete a registered nickname (DROP)';
+            }
+            if ('permissions.chanserv.suspend' === $id && 'chanserv' === $domain) {
+                return 'Suspend or unsuspend a channel (SUSPEND/UNSUSPEND)';
+            }
+            if ('permissions.operserv.kill' === $id && 'operserv' === $domain) {
+                return 'Disconnect a nickname from the network (KILL)';
+            }
+
+            return $id;
+        });
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('CROSSROLE', 'Cross domain role', false);
+        $permKill = OperPermission::create('operserv.kill', 'Kill users');
+        $permDrop = OperPermission::create('nickserv.drop', 'Drop nick');
+        $role->addPermission($permKill);
+        $role->addPermission($permDrop);
+
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $permissionRegistry = new PermissionRegistry([
+            new readonly class('OperServ', ['operserv.kill']) implements PermissionProviderInterface {
+                public function __construct(
+                    private string $serviceName,
+                    private array $permissions,
+                ) {
+                }
+
+                public function getServiceName(): string
+                {
+                    return $this->serviceName;
+                }
+
+                public function getPermissions(): array
+                {
+                    return $this->permissions;
+                }
+            },
+            new readonly class('NickServ', ['nickserv.drop']) implements PermissionProviderInterface {
+                public function __construct(
+                    private string $serviceName,
+                    private array $permissions,
+                ) {
+                }
+
+                public function getServiceName(): string
+                {
+                    return $this->serviceName;
+                }
+
+                public function getPermissions(): array
+                {
+                    return $this->permissions;
+                }
+            },
+            new readonly class('ChanServ', ['chanserv.suspend']) implements PermissionProviderInterface {
+                public function __construct(
+                    private string $serviceName,
+                    private array $permissions,
+                ) {
+                }
+
+                public function getServiceName(): string
+                {
+                    return $this->serviceName;
+                }
+
+                public function getPermissions(): array
+                {
+                    return $this->permissions;
+                }
+            },
+        ]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
+        $cmd->execute($this->createContext($sender, ['PERMS', 'CROSSROLE', 'LIST'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.perms.list.assigned', $messages);
+        self::assertContains('  operserv.kill - Disconnect a nickname from the network (KILL)', $messages);
+        self::assertContains('  nickserv.drop - Delete a registered nickname (DROP)', $messages);
+        self::assertContains('role.perms.list.available', $messages);
+        self::assertContains('  chanserv.suspend - Suspend or unsuspend a channel (SUSPEND/UNSUSPEND)', $messages);
+    }
+
+    #[Test]
+    public function permsListFallsBackToOperServDomainWhenServiceDomainMissing(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'operserv', string $locale = 'en'): string {
+            if ('permissions.unknown.perm' === $id && 'unknown' === $domain) {
+                return 'permissions.unknown.perm';
+            }
+            if ('permissions.unknown.perm' === $id && 'operserv' === $domain) {
+                return 'Fallback description from operserv';
+            }
+
+            return $id;
+        });
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('FALLBACK', 'Fallback role', false);
+
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $permissionRegistry = new PermissionRegistry([
+            new readonly class('Unknown', ['unknown.perm']) implements PermissionProviderInterface {
+                public function __construct(
+                    private string $serviceName,
+                    private array $permissions,
+                ) {
+                }
+
+                public function getServiceName(): string
+                {
+                    return $this->serviceName;
+                }
+
+                public function getPermissions(): array
+                {
+                    return $this->permissions;
+                }
+            },
+        ]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, $permissionRegistry);
+        $cmd->execute($this->createContext($sender, ['PERMS', 'FALLBACK', 'LIST'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.perms.list.available', $messages);
+        self::assertContains('  unknown.perm - Fallback description from operserv', $messages);
+    }
+
+    #[Test]
     public function permsListShowsAllAssignedWhenRoleHasAllPermissions(): void
     {
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');

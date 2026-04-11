@@ -244,13 +244,15 @@ userip:
   result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
 
 permissions:
-  nickserv.userip: "View a nickname's real IP address/hostname"
-  nickserv.suspend: "Suspend/reactivate a nickname"
-  nickserv.rename: "Force rename a connected nickname to a random nick"
-  nickserv.drop: "Delete a registered nickname"
-  nickserv.saset: "Modify another nickname's settings"
-  nickserv.noexpire: "Set or remove expiration protection for a nickname"
-  nickserv.history: "View and manage nickname action history"
+  nickserv.userip: "View a nickname's real IP address/hostname (USERIP)"
+  nickserv.suspend: "Suspend or unsuspend a nickname (SUSPEND/UNSUSPEND)"
+  nickserv.rename: "Force rename a connected nickname to a random nick (RENAME)"
+  nickserv.drop: "Drop a registered nickname (DROP)"
+  nickserv.forbid: "Forbid or unforbid a nickname (FORBID/UNFORBID)"
+  nickserv.forbidvhost: "Forbid or allow vhost patterns (FORBIDVHOST)"
+  nickserv.saset: "Modify another nickname's settings (SASET)"
+  nickserv.noexpire: "Set or remove expiration protection for a nickname (NOEXPIRE)"
+  nickserv.history: "View and manage nickname action history (HISTORY)"
 
 # --- SUSPEND (IRCop) ---------------------------------------------------------
 suspend:

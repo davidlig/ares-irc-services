@@ -95,6 +95,11 @@ final readonly class OperServContext implements IrcopContextInterface
         return $this->translator->trans($key, $this->wrapParams($params), 'operserv', $this->language);
     }
 
+    public function transForDomain(string $key, string $domain, array $params = []): string
+    {
+        return $this->translator->trans($key, $this->wrapParams($params), $domain, $this->language);
+    }
+
     public function isRoot(): bool
     {
         if (null === $this->sender) {
