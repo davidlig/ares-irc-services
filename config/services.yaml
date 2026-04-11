@@ -704,7 +704,6 @@ services:
     App\Application\ChanServ\Command\Handler\UnsuspendCommand:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
             $eventDispatcher: '@event_dispatcher'
         tags: ['chanserv.command']
 
@@ -731,7 +730,7 @@ services:
     App\Application\ChanServ\Maintenance\UnsuspendExpiredChannelsTask:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
+            $eventDispatcher: '@event_dispatcher'
             $intervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
         tags: ['maintenance.task']
@@ -745,6 +744,16 @@ services:
         arguments:
             $chanservNick: '%chanserv.nick%'
             $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServUnsuspendSubscriber:
+        arguments:
+            $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
+            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
 
     App\Infrastructure\ChanServ\Subscriber\ChanServNojoinEnforceSubscriber:
         arguments:

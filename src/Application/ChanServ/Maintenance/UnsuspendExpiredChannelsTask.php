@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Maintenance;
 
-use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 
@@ -21,7 +22,7 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
-        private ChannelSuspensionService $suspensionService,
+        private EventDispatcherInterface $eventDispatcher,
         private LoggerInterface $logger,
         private readonly int $intervalSeconds,
     ) {
@@ -49,11 +50,20 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
         foreach ($expired as $channel) {
             $channelName = $channel->getName();
             $channelId = $channel->getId();
+            $channelNameLower = $channel->getNameLower();
 
             $channel->unsuspend();
             $this->channelRepository->save($channel);
 
-            $this->suspensionService->liftSuspension($channel);
+            $this->eventDispatcher->dispatch(new ChannelUnsuspendedEvent(
+                channelId: $channelId,
+                channelName: $channelName,
+                channelNameLower: $channelNameLower,
+                performedBy: '*',
+                performedByNickId: null,
+                performedByIp: '*',
+                performedByHost: '*',
+            ));
 
             $this->logger->info(sprintf(
                 'Maintenance [%s]: auto-unsuspended channel %s (id %d).',

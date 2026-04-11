@@ -11,7 +11,6 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\UnsuspendCommand;
 use App\Application\ChanServ\Security\ChanServPermission;
-use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Command\IrcopAuditData;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
@@ -127,7 +126,6 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand(
             $channelRepository,
-            $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventDispatcherInterface::class),
         );
 
@@ -148,7 +146,6 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand(
             $channelRepository,
-            $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventDispatcherInterface::class),
         );
 
@@ -171,7 +168,6 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand(
             $channelRepository,
-            $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventDispatcherInterface::class),
         );
 
@@ -198,13 +194,10 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
         $channelRepository->expects(self::once())->method('save')->with($channel);
 
-        $suspensionService = $this->createMock(ChannelSuspensionService::class);
-        $suspensionService->expects(self::once())->method('liftSuspension')->with($channel);
-
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::isInstanceOf(ChannelUnsuspendedEvent::class));
 
-        $cmd = new UnsuspendCommand($channelRepository, $suspensionService, $eventDispatcher);
+        $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
 
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
@@ -221,13 +214,10 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::never())->method('findByChannelName');
 
-        $suspensionService = $this->createMock(ChannelSuspensionService::class);
-        $suspensionService->expects(self::never())->method('liftSuspension');
-
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
-        $cmd = new UnsuspendCommand($channelRepository, $suspensionService, $eventDispatcher);
+        $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
 
         $messages = [];
         $context = $this->createContext(null, null, ['#test'], $messages);
@@ -262,7 +252,6 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand(
             $channelRepository,
-            $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventDispatcherInterface::class),
         );
 
@@ -280,7 +269,6 @@ final class UnsuspendCommandTest extends TestCase
     {
         return new UnsuspendCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(ChannelSuspensionService::class),
             $this->createStub(EventDispatcherInterface::class),
         );
     }
@@ -405,9 +393,6 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
         $channelRepository->expects(self::once())->method('save');
 
-        $suspensionService = $this->createMock(ChannelSuspensionService::class);
-        $suspensionService->expects(self::once())->method('liftSuspension');
-
         $dispatchedEvents = [];
         $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
@@ -419,7 +404,7 @@ final class UnsuspendCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new UnsuspendCommand($channelRepository, $suspensionService, $eventDispatcher);
+        $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
         $cmd->execute($context);
 
         self::assertCount(1, $dispatchedEvents);
@@ -443,9 +428,6 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
         $channelRepository->expects(self::once())->method('save');
 
-        $suspensionService = $this->createMock(ChannelSuspensionService::class);
-        $suspensionService->expects(self::once())->method('liftSuspension');
-
         $dispatchedEvents = [];
         $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
@@ -457,7 +439,7 @@ final class UnsuspendCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
 
-        $cmd = new UnsuspendCommand($channelRepository, $suspensionService, $eventDispatcher);
+        $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
         $cmd->execute($context);
 
         self::assertCount(1, $dispatchedEvents);

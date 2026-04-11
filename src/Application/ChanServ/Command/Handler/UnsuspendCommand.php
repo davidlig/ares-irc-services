@@ -7,7 +7,6 @@ namespace App\Application\ChanServ\Command\Handler;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Security\ChanServPermission;
-use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
@@ -22,7 +21,6 @@ final class UnsuspendCommand implements ChanServCommandInterface, AuditableComma
 
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly ChannelSuspensionService $suspensionService,
         private readonly EventDispatcherInterface $eventDispatcher,
     ) {
     }
@@ -112,8 +110,6 @@ final class UnsuspendCommand implements ChanServCommandInterface, AuditableComma
 
         $channel->unsuspend();
         $this->channelRepository->save($channel);
-
-        $this->suspensionService->liftSuspension($channel);
 
         $ip = $this->decodeIp($context->sender->ipBase64);
         $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
