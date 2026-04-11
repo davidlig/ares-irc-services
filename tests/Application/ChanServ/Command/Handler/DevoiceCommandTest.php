@@ -455,6 +455,22 @@ final class DevoiceCommandTest extends TestCase
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
     }
 
+    #[Test]
+    public function allowsSuspendedChannelReturnsFalse(): void
+    {
+        $cmd = new DevoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+
+        self::assertFalse($cmd->allowsSuspendedChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

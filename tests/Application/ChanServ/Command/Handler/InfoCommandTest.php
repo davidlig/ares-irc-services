@@ -18,6 +18,7 @@ use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -396,6 +397,99 @@ final class InfoCommandTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
         );
         self::assertNull($cmd->getRequiredPermission());
+    }
+
+    #[Test]
+    public function showsSuspendedStatusForSuspendedChannel(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->suspend('Abuse violation');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.suspended_status', $rawMessages);
+        self::assertContains('info.suspended_reason', $rawMessages);
+        self::assertContains('info.suspended_permanent', $rawMessages);
+    }
+
+    #[Test]
+    public function showsSuspendedStatusWithExpiryForTimedSuspension(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->suspend('Spam', new DateTimeImmutable('+7 days'));
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.suspended_status', $rawMessages);
+        self::assertContains('info.suspended_reason', $rawMessages);
+        self::assertContains('info.suspended_until', $rawMessages);
+    }
+
+    #[Test]
+    public function showsSuspendedStatusWithoutReasonWhenReasonIsNull(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->suspend('Abuse', null);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
+
+        self::assertContains('info.suspended_status', $rawMessages);
+        self::assertContains('info.suspended_permanent', $rawMessages);
+    }
+
+    #[Test]
+    public function allowsSuspendedChannelReturnsTrue(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertTrue($cmd->allowsSuspendedChannel());
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

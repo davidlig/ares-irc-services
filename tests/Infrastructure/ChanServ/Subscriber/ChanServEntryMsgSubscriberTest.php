@@ -290,4 +290,27 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
 
         $this->subscriber->onUserJoinedChannel($event);
     }
+
+    #[Test]
+    public function doesNotSendNoticeWhenChannelIsSuspended(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($channel);
+        $this->notifier
+            ->expects(self::never())
+            ->method('sendNotice');
+
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001ABCD'),
+            channel: new ChannelName('#test'),
+            role: ChannelMemberRole::None,
+        );
+        $this->subscriber->onUserJoinedChannel($event);
+    }
 }

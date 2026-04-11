@@ -493,6 +493,21 @@ final class OpCommandTest extends TestCase
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
     }
 
+    #[Test]
+    public function allowsSuspendedChannelReturnsFalse(): void
+    {
+        $cmd = new OpCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+
+        self::assertFalse($cmd->allowsSuspendedChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

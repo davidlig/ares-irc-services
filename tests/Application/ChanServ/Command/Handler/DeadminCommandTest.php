@@ -536,6 +536,22 @@ final class DeadminCommandTest extends TestCase
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
     }
 
+    #[Test]
+    public function allowsSuspendedChannelReturnsFalse(): void
+    {
+        $cmd = new DeadminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertFalse($cmd->allowsSuspendedChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

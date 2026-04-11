@@ -370,4 +370,50 @@ final class ChanServTopicApplySubscriberTest extends TestCase
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
     }
+
+    #[Test]
+    public function onChannelSyncedSkipsSuspendedChannel(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(true);
+
+        $channel = new Channel(new ChannelName('#test'));
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger->expects(self::never())->method('warning');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsSuspendedChannel(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(true);
+        $registered->method('getName')->willReturn('#test');
+        $registered->method('getTopic')->willReturn('Some topic');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger->expects(self::never())->method('warning');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncComplete($event);
+    }
 }

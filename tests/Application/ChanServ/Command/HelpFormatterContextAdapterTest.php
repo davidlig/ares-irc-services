@@ -225,6 +225,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -297,6 +302,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -366,6 +376,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -433,6 +448,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $c): void
@@ -505,6 +525,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $c): void
@@ -604,6 +629,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return ChanServPermission::DROP;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -701,6 +731,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return ChanServPermission::DROP;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $c): void
@@ -1008,6 +1043,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return ChanServPermission::DROP;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -1061,6 +1101,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $c): void

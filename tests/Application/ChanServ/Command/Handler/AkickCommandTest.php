@@ -2138,6 +2138,15 @@ final class AkickCommandTest extends TestCase
         self::assertEmpty($bans, 'No bans should be applied when user is unknown');
     }
 
+    #[Test]
+    public function allowsSuspendedChannelReturnsFalse(): void
+    {
+        [$channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+
+        self::assertFalse($cmd->allowsSuspendedChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

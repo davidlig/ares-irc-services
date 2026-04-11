@@ -722,6 +722,66 @@ final class ChanServAkickEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onUserJoinedSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+        $channel->method('getId')->willReturn(1);
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('kickFromChannel');
+
+        $subscriber = new ChanServAkickEnforceSubscriber(
+            $channelRepo,
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $channelServiceActions,
+            'ChanServ',
+            new NullLogger(),
+        );
+
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001ABCD'),
+            channel: new ChannelName('#test'),
+            role: ChannelMemberRole::None,
+        );
+        $subscriber->onUserJoined($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('listAll')->willReturn([$channel]);
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('kickFromChannel');
+
+        $subscriber = new ChanServAkickEnforceSubscriber(
+            $channelRepo,
+            $this->createStub(ChannelAkickRepositoryInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $channelServiceActions,
+            'ChanServ',
+            new NullLogger(),
+        );
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
     public function onSyncCompleteDoesNothingWhenAllAkicksExpired(): void
     {
         $expiredAkick1 = ChannelAkick::create(1, 2, '*!*@*.isp.com', 'Spam', new DateTimeImmutable('-1 day'));

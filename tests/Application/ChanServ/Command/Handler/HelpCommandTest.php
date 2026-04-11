@@ -115,6 +115,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -187,6 +192,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $c): void
@@ -263,6 +273,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -336,6 +351,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $c): void
@@ -421,6 +441,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -501,6 +526,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $c): void
@@ -585,6 +615,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -657,6 +692,11 @@ final class HelpCommandTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $c): void
@@ -752,6 +792,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -835,6 +880,11 @@ final class HelpCommandTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -915,6 +965,14 @@ final class HelpCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
         self::assertNull($cmd->getRequiredPermission());
+    }
+
+    #[Test]
+    public function allowsSuspendedChannelReturnsTrue(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertTrue($cmd->allowsSuspendedChannel());
     }
 
     private function createCommand(int $inactivityExpiryDays = 0): HelpCommand

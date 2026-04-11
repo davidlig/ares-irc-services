@@ -738,6 +738,18 @@ final class AccessCommandTest extends TestCase
         self::assertSame('IDENTIFIED', $cmd->getRequiredPermission());
     }
 
+    #[Test]
+    public function allowsSuspendedChannelReturnsFalse(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $accessHelper = new ChanServAccessHelper($accessRepo, $this->createStub(ChannelLevelRepositoryInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper);
+
+        self::assertFalse($cmd->allowsSuspendedChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

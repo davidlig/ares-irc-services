@@ -181,6 +181,11 @@ final class ChanServServiceTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -332,6 +337,11 @@ final class ChanServServiceTest extends TestCase
                 return 'CHANSERV_OP_TEST';
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -437,6 +447,11 @@ final class ChanServServiceTest extends TestCase
                 return 'IDENTIFIED';
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -537,6 +552,11 @@ final class ChanServServiceTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -626,6 +646,11 @@ final class ChanServServiceTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $context): void
@@ -725,6 +750,11 @@ final class ChanServServiceTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 throw ChannelNotRegisteredException::forChannel('#test');
@@ -816,6 +846,11 @@ final class ChanServServiceTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 throw new ChannelAlreadyRegisteredException('#test');
@@ -905,6 +940,11 @@ final class ChanServServiceTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $context): void
@@ -1004,6 +1044,11 @@ final class ChanServServiceTest extends TestCase
             public function getRequiredPermission(): ?string
             {
                 return 'CHANSPORT_FOUNDER';
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
             }
 
             public function execute(ChanServContext $context): void
@@ -1137,6 +1182,11 @@ final class ChanServServiceTest extends TestCase
                 return 'CHANSERV_OP';
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1244,6 +1294,11 @@ final class ChanServServiceTest extends TestCase
                 return 'CHANSERV_OP';
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1333,5 +1388,418 @@ final class ChanServServiceTest extends TestCase
             $defaultTimezone,
             $logger ?? $this->createStub(LoggerInterface::class),
         );
+    }
+
+    #[Test]
+    public function blocksCommandOnSuspendedChannel(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SOMEOP';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isCurrentlySuspended')->willReturn(true);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')
+            ->with('suspend.channel_suspended', self::anything(), 'chanserv', 'en')
+            ->willReturn('Channel #test is suspended');
+
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->expects(self::once())->method('sendMessage')
+            ->with($sender->uid, 'Channel #test is suspended', 'NOTICE');
+
+        $registry = new ChanServCommandRegistry([$handler]);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $notifier,
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+        );
+
+        $service->dispatch('SOMEOP #test', $sender);
+
+        self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
+    public function allowsCommandOnSuspendedChannelWhenAllowed(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'INFO';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn(null);
+
+        $registry = new ChanServCommandRegistry([$handler]);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(ChanServNotifierInterface::class),
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+
+        $service->dispatch('INFO #suspended', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
+    public function doesNotBlockCommandWhenChannelFoundButNotCurrentlySuspended(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SOMEOP';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isCurrentlySuspended')->willReturn(false);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+
+        $registry = new ChanServCommandRegistry([$handler]);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $notifier,
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+
+        $service->dispatch('SOMEOP #test', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
+    public function doesNotBlockCommandWhenChannelNotFoundForSuspendedCheck(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SOMEOP';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn(null);
+
+        $registry = new ChanServCommandRegistry([$handler]);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(ChanServNotifierInterface::class),
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+
+        $service->dispatch('SOMEOP #nonexistent', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
     }
 }

@@ -284,4 +284,30 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         self::assertNotNull($found);
         self::assertSame(100, $found->getSuccessorNickId());
     }
+
+    #[Test]
+    public function findExpiredSuspensionsReturnsOnlyExpiredSuspendedChannels(): void
+    {
+        $expired = RegisteredChannel::register('#expired', 1, 'Expired');
+        $expired->suspend('Abuse', new DateTimeImmutable('-1 day'));
+
+        $active = RegisteredChannel::register('#active', 2, 'Active suspension');
+        $active->suspend('Abuse', new DateTimeImmutable('+7 days'));
+
+        $permanent = RegisteredChannel::register('#permanent', 3, 'Permanent suspension');
+        $permanent->suspend('Abuse', null);
+
+        $normal = RegisteredChannel::register('#normal', 4, 'Normal');
+
+        $this->repository->save($expired);
+        $this->repository->save($active);
+        $this->repository->save($permanent);
+        $this->repository->save($normal);
+        $this->flushAndClear();
+
+        $result = $this->repository->findExpiredSuspensions();
+
+        self::assertCount(1, $result);
+        self::assertSame('#expired', $result[0]->getName());
+    }
 }

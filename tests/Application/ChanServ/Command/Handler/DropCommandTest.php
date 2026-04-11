@@ -202,6 +202,14 @@ final class DropCommandTest extends TestCase
         self::assertSame('#test', $auditData->target);
     }
 
+    #[Test]
+    public function allowsSuspendedChannelReturnsTrue(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertTrue($cmd->allowsSuspendedChannel());
+    }
+
     private function createCommand(): DropCommand
     {
         return new DropCommand(

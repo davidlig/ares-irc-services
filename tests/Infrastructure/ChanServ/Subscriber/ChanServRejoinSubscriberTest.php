@@ -703,4 +703,138 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncCompleteReconcilePermanentMode($event);
     }
+
+    #[Test]
+    public function onChannelSyncedSkipsSuspendedChannel(): void
+    {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
+        $this->modeSupport->expects(self::never())->method('getPermanentChannelModeLetter');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+
+        $channel = new Channel(new ChannelName('#test'));
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(true);
+
+        $localChannelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $localChannelRepository->method('findByChannelName')->willReturn($registered);
+
+        $localChannelLookup = $this->createStub(ChannelLookupPort::class);
+        $localModeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $localModeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $localChannelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $localChannelServiceActions->expects(self::never())->method('setChannelModes');
+
+        $subscriber = new ChanServRejoinSubscriber(
+            $localChannelRepository,
+            $localChannelLookup,
+            $localModeSupportProvider,
+            $localChannelServiceActions,
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $subscriber->onChannelSyncedSetRegistered($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteReconcileRegisteredSkipsSuspendedChannel(): void
+    {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
+        $this->modeSupport->expects(self::never())->method('getPermanentChannelModeLetter');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#test');
+        $registered->method('isSuspended')->willReturn(true);
+
+        $localChannelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $localChannelRepository->method('listAll')->willReturn([$registered]);
+
+        $localModeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $localModeSupport->method('getChannelRegisteredModeLetter')->willReturn('r');
+
+        $localModeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $localModeSupportProvider->method('getSupport')->willReturn($localModeSupport);
+
+        $view = new ChannelView('#test', '+nt', null, 1);
+
+        $localChannelLookup = $this->createStub(ChannelLookupPort::class);
+        $localChannelLookup->method('listAll')->willReturn([$view]);
+
+        $localChannelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $localChannelServiceActions->expects(self::never())->method('setChannelModes');
+
+        $subscriber = new ChanServRejoinSubscriber(
+            $localChannelRepository,
+            $localChannelLookup,
+            $localModeSupportProvider,
+            $localChannelServiceActions,
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $subscriber->onSyncCompleteReconcileRegisteredMode($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteReconcilePermanentSkipsSuspendedChannel(): void
+    {
+        $this->channelRepository->expects(self::never())->method('findByChannelName');
+        $this->channelRepository->expects(self::never())->method('listAll');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->channelLookup->expects(self::never())->method('listAll');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
+        $this->modeSupport->expects(self::never())->method('getPermanentChannelModeLetter');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('getName')->willReturn('#test');
+        $registered->method('isSuspended')->willReturn(true);
+
+        $localChannelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $localChannelRepository->method('listAll')->willReturn([$registered]);
+
+        $localModeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $localModeSupport->method('getPermanentChannelModeLetter')->willReturn('P');
+
+        $localModeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $localModeSupportProvider->method('getSupport')->willReturn($localModeSupport);
+
+        $localChannelLookup = $this->createStub(ChannelLookupPort::class);
+        $localChannelLookup->method('listAll')->willReturn([]);
+
+        $localChannelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $localChannelServiceActions->expects(self::never())->method('setChannelModes');
+
+        $subscriber = new ChanServRejoinSubscriber(
+            $localChannelRepository,
+            $localChannelLookup,
+            $localModeSupportProvider,
+            $localChannelServiceActions,
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $subscriber->onSyncCompleteReconcilePermanentMode($event);
+    }
 }

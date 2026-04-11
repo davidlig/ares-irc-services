@@ -1092,6 +1092,68 @@ final class ChanServNojoinEnforceSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onUserJoinedSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+        $channel->method('getId')->willReturn(1);
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('kickFromChannel');
+
+        $subscriber = $this->createSubscriber(
+            $channelRepo,
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $channelServiceActions,
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        $event = new UserJoinedChannelEvent(new Uid('UID1'), new ChannelName('#test'), ChannelMemberRole::None);
+        $subscriber->onUserJoined($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+        $channel->method('getId')->willReturn(1);
+        $channel->method('getName')->willReturn('#test');
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('listAll')->willReturn([$channel]);
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('kickFromChannel');
+
+        $subscriber = $this->createSubscriber(
+            $channelRepo,
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $channelServiceActions,
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
     public function doesNotKickIdentifiedUserWithLevelZeroAndNojoinZero(): void
     {
         $registeredNick = $this->createStub(RegisteredNick::class);

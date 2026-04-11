@@ -113,6 +113,11 @@ final class ChanServCommandRegistryTest extends TestCase
                 return null;
             }
 
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
             }

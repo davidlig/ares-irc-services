@@ -2503,4 +2503,179 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $this->subscriber->onChannelSynced(new ChannelSyncedEvent($coreChannel, channelSetupApplicable: true));
     }
+
+    #[Test]
+    public function onUserJoinedChannelSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->rebuildSubscriber();
+
+        $event = new UserJoinedChannelEvent(
+            uid: new Uid('001USER'),
+            channel: new ChannelName('#test'),
+            role: ChannelMemberRole::None,
+        );
+        $this->subscriber->onUserJoinedChannel($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('getName')->willReturn('#test');
+        $channel->method('isSuspended')->willReturn(true);
+
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::atLeastOnce())->method('listAll')->willReturn([$channel]);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->rebuildSubscriber();
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $this->subscriber->onSyncComplete(new NetworkSyncCompleteEvent($connection, '001'));
+    }
+
+    #[Test]
+    public function onIrcMessageProcessedSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+        $channel->method('getName')->willReturn('#test');
+
+        $registry = new ChannelRankSyncPendingRegistry();
+        $registry->add('#test');
+        $registry->snapshotPendingAtStart();
+
+        $this->syncPendingRegistry = $registry;
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->rebuildSubscriber();
+
+        $this->subscriber->onIrcMessageProcessed();
+
+        self::assertSame([], $registry->getPendingAtStart());
+    }
+
+    #[Test]
+    public function onModeReceivedSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isSecure')->willReturn(true);
+        $channel->method('isSuspended')->willReturn(true);
+
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->rebuildSubscriber();
+
+        $event = new ModeReceivedEvent(
+            channelName: new ChannelName('#test'),
+            modeStr: '+o',
+            modeParams: ['001USER'],
+        );
+        $this->subscriber->onModeReceived($event);
+    }
+
+    #[Test]
+    public function onChannelSecureEnabledSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isSecure')->willReturn(true);
+        $channel->method('isSuspended')->willReturn(true);
+        $channel->method('getName')->willReturn('#test');
+
+        $registry = new ChannelRankSyncPendingRegistry();
+
+        $this->syncPendingRegistry = $registry;
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->rebuildSubscriber();
+
+        $this->subscriber->onChannelSecureEnabled(new ChannelSecureEnabledEvent('#test'));
+
+        $registry->snapshotPendingAtStart();
+        self::assertSame([], $registry->getPendingAtStart());
+    }
+
+    #[Test]
+    public function onUserLeftChannelSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+        $channel->method('getId')->willReturn(self::CHANNEL_ID);
+
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->channelRepository->expects(self::never())->method('save');
+        $this->rebuildSubscriber();
+
+        $event = new UserLeftChannelEvent(
+            uid: new Uid('001USER'),
+            nick: new \App\Domain\IRC\ValueObject\Nick('TestUser'),
+            channel: new ChannelName('#test'),
+            reason: '',
+            wasKicked: false,
+        );
+        $this->subscriber->onUserLeftChannel($event);
+    }
+
+    #[Test]
+    public function onChannelFounderChangedSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+        $channel->method('getName')->willReturn('#test');
+
+        $registry = new ChannelRankSyncPendingRegistry();
+
+        $this->syncPendingRegistry = $registry;
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->rebuildSubscriber();
+
+        $this->subscriber->onChannelFounderChanged(new ChannelFounderChangedEvent('#test'));
+
+        $registry->snapshotPendingAtStart();
+        self::assertSame([], $registry->getPendingAtStart());
+    }
+
+    #[Test]
+    public function onChannelSyncedSkipsSuspendedChannel(): void
+    {
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isSuspended')->willReturn(true);
+
+        $coreChannel = new \App\Domain\IRC\Network\Channel(new ChannelName('#test'));
+
+        $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
+        $this->rebuildSubscriber();
+
+        $this->subscriber->onChannelSynced(new ChannelSyncedEvent($coreChannel, channelSetupApplicable: true));
+    }
 }

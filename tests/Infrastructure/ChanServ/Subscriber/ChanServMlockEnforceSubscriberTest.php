@@ -1401,4 +1401,107 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
         $this->subscriber->onChannelSynced($event);
     }
+
+    #[Test]
+    public function onChannelSyncedSkipsSuspendedChannel(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isMlockActive')->willReturn(true);
+        $registered->method('isSuspended')->willReturn(true);
+
+        $this->burstCompletePort
+            ->expects(self::atLeastOnce())
+            ->method('isComplete')
+            ->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsSuspendedChannel(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isMlockActive')->willReturn(true);
+        $registered->method('getName')->willReturn('#test');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('listAll')
+            ->willReturn([$registered]);
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
+
+        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $event = new NetworkSyncCompleteEvent($connection, '001');
+        $this->subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onMlockUpdatedSkipsSuspendedChannel(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isMlockActive')->willReturn(true);
+        $registered->method('isSuspended')->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
+
+        $event = new ChannelMlockUpdatedEvent(channelName: '#test');
+        $this->subscriber->onMlockUpdated($event);
+    }
+
+    #[Test]
+    public function onChannelModesChangedSkipsSuspendedChannel(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isMlockActive')->willReturn(true);
+        $registered->method('isSuspended')->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelModes');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->modeSupportProvider->expects(self::never())->method('getSupport');
+        $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
+        $this->burstCompletePort->expects(self::never())->method('isComplete');
+
+        $event = new ChannelModesChangedEvent($channel, '+nt', []);
+        $this->subscriber->onChannelModesChanged($event);
+    }
 }

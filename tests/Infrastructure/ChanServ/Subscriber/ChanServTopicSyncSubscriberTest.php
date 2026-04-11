@@ -517,4 +517,29 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
 
         $this->subscriber->onTopicReceived($event);
     }
+
+    #[Test]
+    public function onTopicReceivedSkipsSuspendedChannel(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(true);
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+        $this->channelServiceActions
+            ->expects(self::never())
+            ->method('setChannelTopic');
+        $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
+        $this->logger->expects(self::never())->method('warning');
+
+        $event = new FtopicReceivedEvent(
+            channelName: new ChannelName('#test'),
+            topic: 'New topic',
+            setterNick: 'User',
+        );
+        $this->subscriber->onTopicReceived($event);
+    }
 }

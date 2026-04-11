@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Domain\ChanServ\Entity;
 
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\ValueObject\ChannelStatus;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -130,5 +131,116 @@ final class RegisteredChannelTest extends TestCase
         $idProp->setValue($channel, 42);
 
         self::assertSame(42, $channel->getId());
+    }
+
+    #[Test]
+    public function registerCreatesChannelWithActiveStatus(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        self::assertSame(ChannelStatus::Active, $channel->getStatus());
+        self::assertFalse($channel->isSuspended());
+    }
+
+    #[Test]
+    public function suspendSetsStatusToSuspended(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Policy violation');
+
+        self::assertSame(ChannelStatus::Suspended, $channel->getStatus());
+        self::assertSame('Policy violation', $channel->getSuspendedReason());
+    }
+
+    #[Test]
+    public function suspendWithExpirationSetsUntil(): void
+    {
+        $until = new DateTimeImmutable('+7 days');
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Temporary suspension', $until);
+
+        self::assertSame($until, $channel->getSuspendedUntil());
+    }
+
+    #[Test]
+    public function suspendPermanentSetsUntilToNull(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Permanent suspension');
+
+        self::assertNull($channel->getSuspendedUntil());
+    }
+
+    #[Test]
+    public function unsuspendResetsToActive(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Violation');
+        $channel->unsuspend();
+
+        self::assertSame(ChannelStatus::Active, $channel->getStatus());
+    }
+
+    #[Test]
+    public function unsuspendClearsReasonAndUntil(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Violation', new DateTimeImmutable('+7 days'));
+        $channel->unsuspend();
+
+        self::assertNull($channel->getSuspendedReason());
+        self::assertNull($channel->getSuspendedUntil());
+    }
+
+    #[Test]
+    public function isSuspendedReturnsTrueWhenSuspended(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Violation');
+
+        self::assertTrue($channel->isSuspended());
+    }
+
+    #[Test]
+    public function isSuspendedReturnsFalseWhenActive(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        self::assertFalse($channel->isSuspended());
+    }
+
+    #[Test]
+    public function isCurrentlySuspendedReturnsTrueWhenPermanent(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Permanent');
+
+        self::assertTrue($channel->isCurrentlySuspended());
+    }
+
+    #[Test]
+    public function isCurrentlySuspendedReturnsTrueWhenNotExpired(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Temporary', new DateTimeImmutable('+1 hour'));
+
+        self::assertTrue($channel->isCurrentlySuspended());
+    }
+
+    #[Test]
+    public function isCurrentlySuspendedReturnsFalseWhenExpired(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Expired', new DateTimeImmutable('-1 second'));
+
+        self::assertFalse($channel->isCurrentlySuspended());
+    }
+
+    #[Test]
+    public function isCurrentlySuspendedReturnsFalseWhenActive(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        self::assertFalse($channel->isCurrentlySuspended());
     }
 }
