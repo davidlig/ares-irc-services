@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\ChanServ\Entity;
 
+use App\Domain\ChanServ\ValueObject\ChannelStatus;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
@@ -63,6 +64,12 @@ class RegisteredChannel
 
     /** Nickname of who last set the topic (null if set by services or unknown). */
     private ?string $lastTopicSetByNick = null;
+
+    private ChannelStatus $status = ChannelStatus::Active;
+
+    private ?string $suspendedReason = null;
+
+    private ?DateTimeImmutable $suspendedUntil = null;
 
     private ?DateTimeImmutable $lastUsedAt = null;
 
@@ -255,5 +262,52 @@ class RegisteredChannel
     public function isFounder(int $nickId): bool
     {
         return $this->founderNickId === $nickId;
+    }
+
+    public function getStatus(): ChannelStatus
+    {
+        return $this->status;
+    }
+
+    public function getSuspendedReason(): ?string
+    {
+        return $this->suspendedReason;
+    }
+
+    public function getSuspendedUntil(): ?DateTimeImmutable
+    {
+        return $this->suspendedUntil;
+    }
+
+    public function isSuspended(): bool
+    {
+        return ChannelStatus::Suspended === $this->status;
+    }
+
+    public function isCurrentlySuspended(): bool
+    {
+        if (!$this->isSuspended()) {
+            return false;
+        }
+
+        if (null === $this->suspendedUntil) {
+            return true;
+        }
+
+        return new DateTimeImmutable() < $this->suspendedUntil;
+    }
+
+    public function suspend(string $reason, ?DateTimeImmutable $until = null): void
+    {
+        $this->status = ChannelStatus::Suspended;
+        $this->suspendedReason = $reason;
+        $this->suspendedUntil = $until;
+    }
+
+    public function unsuspend(): void
+    {
+        $this->status = ChannelStatus::Active;
+        $this->suspendedReason = null;
+        $this->suspendedUntil = null;
     }
 }

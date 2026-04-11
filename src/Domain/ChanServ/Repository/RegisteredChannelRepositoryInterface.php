@@ -45,4 +45,9 @@ interface RegisteredChannelRepositoryInterface
      * @return RegisteredChannel[] Channels inactive since the given threshold (lastUsedAt or createdAt < threshold)
      */
     public function findRegisteredInactiveSince(DateTimeImmutable $threshold): array;
+
+    /**
+     * @return RegisteredChannel[] Channels that are currently suspended and their suspension has expired
+     */
+    public function findExpiredSuspensions(): array;
 }
