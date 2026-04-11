@@ -8,6 +8,7 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\ChanServ\ValueObject\ChannelStatus;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -74,6 +75,11 @@ final readonly class InfoCommand implements ChanServCommandInterface
         return null;
     }
 
+    public function allowsSuspendedChannel(): bool
+    {
+        return true;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -97,6 +103,20 @@ final readonly class InfoCommand implements ChanServCommandInterface
         }
 
         $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
+
+        if (ChannelStatus::Suspended === $channel->getStatus()) {
+            $context->replyRaw($context->trans('info.suspended_status'));
+            if (null !== $channel->getSuspendedReason()) {
+                $context->replyRaw($context->trans('info.suspended_reason', ['%reason%' => $channel->getSuspendedReason()]));
+            }
+            $suspendedUntil = $channel->getSuspendedUntil();
+            if (null !== $suspendedUntil) {
+                $context->replyRaw($context->trans('info.suspended_until', ['%date%' => $context->formatDate($suspendedUntil)]));
+            } else {
+                $context->replyRaw($context->trans('info.suspended_permanent'));
+            }
+        }
+
         $context->replyRaw($context->trans('info.founder', ['%nickname%' => $founderName]));
         if (null !== $successorName) {
             $context->replyRaw($context->trans('info.successor', ['%nickname%' => $successorName]));

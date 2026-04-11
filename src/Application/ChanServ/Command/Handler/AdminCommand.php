@@ -76,6 +76,11 @@ final readonly class AdminCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function allowsSuspendedChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (!$context->getChannelModeSupport()->hasAdmin()) {

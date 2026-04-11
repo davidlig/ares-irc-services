@@ -56,6 +56,9 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
         if (null === $registered) {
             return;
         }
+        if ($registered->isSuspended()) {
+            return;
+        }
         $modeSupport = $this->modeSupportProvider->getSupport();
         $registeredLetter = $modeSupport->getChannelRegisteredModeLetter();
         if (null === $registeredLetter) {
@@ -91,6 +94,9 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
         }
 
         foreach ($registeredChannels as $channel) {
+            if ($channel->isSuspended()) {
+                continue;
+            }
             $view = $this->channelLookup->findByChannelName($channel->getName());
             if (null === $view) {
                 continue;
@@ -130,6 +136,9 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
         }
 
         foreach ($registeredChannels as $channel) {
+            if ($channel->isSuspended()) {
+                continue;
+            }
             $view = $this->channelLookup->findByChannelName($channel->getName());
             if (null === $view) {
                 continue;

@@ -132,6 +132,18 @@ final readonly class ChanServService implements ChanServDispatchPort
                 return;
             }
 
+            if (!$handler->allowsSuspendedChannel()) {
+                $channelName = $context->getChannelNameArg(0);
+                if (null !== $channelName) {
+                    $channel = $this->channelRepository->findByChannelName($channelName);
+                    if (null !== $channel && $channel->isCurrentlySuspended()) {
+                        $context->reply('suspend.channel_suspended', ['%channel%' => $channelName]);
+
+                        return;
+                    }
+                }
+            }
+
             $this->logger->debug(sprintf(
                 'ChanServ: %s executed %s [args: %d]',
                 $sender->nick,

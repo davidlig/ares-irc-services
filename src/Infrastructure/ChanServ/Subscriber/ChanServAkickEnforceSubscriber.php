@@ -54,6 +54,10 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
             return;
         }
 
+        if ($channel->isSuspended()) {
+            return;
+        }
+
         $user = $this->userLookup->findByUid($uid);
         if (null === $user) {
             return;
@@ -84,6 +88,10 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
         $channels = $this->channelRepository->listAll();
 
         foreach ($channels as $channel) {
+            if ($channel->isSuspended()) {
+                continue;
+            }
+
             $channelName = $channel->getName();
             $view = $this->channelLookup->findByChannelName($channelName);
 

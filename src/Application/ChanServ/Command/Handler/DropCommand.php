@@ -72,6 +72,11 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
         return ChanServPermission::DROP;
     }
 
+    public function allowsSuspendedChannel(): bool
+    {
+        return true;
+    }
+
     public function getHelpParams(): array
     {
         return [];

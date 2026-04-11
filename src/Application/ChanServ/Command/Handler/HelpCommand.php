@@ -79,6 +79,11 @@ final readonly class HelpCommand implements ChanServCommandInterface
         return null;
     }
 
+    public function allowsSuspendedChannel(): bool
+    {
+        return true;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (empty($context->args)) {

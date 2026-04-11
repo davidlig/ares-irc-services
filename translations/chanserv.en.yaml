@@ -29,17 +29,21 @@ info:
   help:             "Shows founder, registered date, successor, URL, email, description, last used, topic, and options (TOPICLOCK, MLOCK, SECURE)."
   header:          "\x02Information for channel \x0307%channel%\x03:\x02"
   footer:          "\x0314─────────────────────────────\x03"
-  founder:         "  \x0314Founder\x03     : \x02%nickname%\x02"
-  registered:      "  \x0314Registered\x03  : %date%"
-  successor:       "  \x0314Successor\x03  : \x02%nickname%\x02"
-  description:     "  \x0314Description\x03 : %desc%"
-  url:             "  \x0314URL\x03         : %url%"
-  email:           "  \x0314Email\x03       : %email%"
-  last_used:       "  \x0314Last used\x03   : %date%"
-  topic:           "  \x0314Last topic\x03  : %topic%"
-  topic_set_by:    "  \x0314Topic set by\x03: %nickname%"
-  options:         "  \x0314Options\x03     : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
-  mlock_modes:     "  \x0314Mode lock\x03   : %modes%"
+  founder:         "  \x0314Founder\x03      : \x02%nickname%\x02"
+  registered:      "  \x0314Registered\x03   : %date%"
+  successor:       "  \x0314Successor\x03    : \x02%nickname%\x02"
+  description:     "  \x0314Description\x03  : %desc%"
+  url:             "  \x0314URL\x03          : %url%"
+  email:           "  \x0314Email\x03        : %email%"
+  last_used:       "  \x0314Last used\x03    : %date%"
+  topic:           "  \x0314Last topic\x03   : %topic%"
+  topic_set_by:    "  \x0314Topic set by\x03 : %nickname%"
+  options:         "  \x0314Options\x03      : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  mlock_modes:     "  \x0314Mode lock\x03    : %modes%"
+  suspended_status: "  \x0314Status\x03       : \x0304Suspended\x03"
+  suspended_reason: "  \x0314Reason\x03       : %reason%"
+  suspended_until:  "  \x0314Ends on\x03      : %date%"
+  suspended_permanent: "  \x0314Ends on\x03      : Permanent"
 
 help:
   syntax:           "HELP [command [sub-option]]"
@@ -313,6 +317,25 @@ drop:
   success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been dropped."
   not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
 
+suspend:
+  syntax:           "SUSPEND <#channel> <duration> <reason>"
+  short:            "Suspend a channel."
+  help:             "Temporarily disables a registered channel. Duration formats: 0 = permanent, 1d, 12h, 60m.\nWhile suspended, channel modes, access, and enforcement are disabled.\nThis command requires IRCop permission: chanserv.suspend"
+  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been suspended until \x02%duration%\x02."
+  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  already_suspended: "\x0304✗\x03 Channel \x02%channel%\x02 is already suspended."
+  invalid_duration:  "\x0304✗\x03 Invalid duration. Use: 0 (permanent), 1d, 12h, or 60m."
+  permanent:         "Permanent"
+  channel_suspended: "\x0304✗\x03 Channel \x02%channel%\x02 is suspended and cannot be used."
+
+unsuspend:
+  syntax:           "UNSUSPEND <#channel>"
+  short:            "Lift a channel suspension."
+  help:             "Reactivates a suspended channel, restoring its modes and enforcement.\nThis command requires IRCop permission: chanserv.suspend"
+  success:          "\x0303✔\x03 Channel \x02%channel%\x02 is no longer suspended."
+  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  not_suspended:    "\x0304✗\x03 Channel \x02%channel%\x02 is not suspended."
+
 # NOJOIN documentation for LEVELS:
 # NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
 # Default: -1 (disabled). Set to 0 to only allow registered users, 50 for level 50+, etc.
@@ -327,4 +350,3 @@ debug_channel:
 debug:
   action_message: "%operator% executes command %command% on %target%. %reason%"
   prefix_reason:  "Reason: %reason%"
-

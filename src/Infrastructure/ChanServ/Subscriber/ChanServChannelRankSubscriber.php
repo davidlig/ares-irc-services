@@ -95,7 +95,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         foreach ($this->syncPendingRegistry->getPendingAtStart() as $channelName) {
             $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-            if (null !== $channel) {
+            if (null !== $channel && !$channel->isSuspended()) {
                 $this->syncRanksForChannel($channel);
             }
             $this->syncPendingRegistry->remove($channelName);
@@ -107,6 +107,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         $channelName = $event->channelName->value;
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $channel || !$channel->isSecure()) {
+            return;
+        }
+
+        if ($channel->isSuspended()) {
             return;
         }
 
@@ -172,6 +176,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
+        if ($channel->isSuspended()) {
+            return;
+        }
+
         $this->syncPendingRegistry->add($channel->getName());
     }
 
@@ -182,6 +190,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $channel) {
+            return;
+        }
+
+        if ($channel->isSuspended()) {
             return;
         }
 
@@ -232,6 +244,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
+        if ($channel->isSuspended()) {
+            return;
+        }
+
         $memberCtx = $this->resolveMemberContext($channel, $uid);
         if (null === $memberCtx) {
             return;
@@ -260,6 +276,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
+        if ($channel->isSuspended()) {
+            return;
+        }
+
         $this->syncPendingRegistry->add($channel->getName());
     }
 
@@ -271,6 +291,9 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         $channels = $this->channelRepository->listAll();
         foreach ($channels as $channel) {
+            if ($channel->isSuspended()) {
+                continue;
+            }
             $this->syncRanksForChannel($channel);
         }
     }
@@ -285,6 +308,10 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         $channel = $this->channelRepository->findByChannelName(strtolower($event->channel->name->value));
         if (null === $channel) {
+            return;
+        }
+
+        if ($channel->isSuspended()) {
             return;
         }
 

@@ -50,6 +50,10 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
             return;
         }
 
+        if ($registered->isSuspended()) {
+            return;
+        }
+
         $storedTopic = $registered->getTopic();
         if (null === $storedTopic) {
             return;
@@ -71,6 +75,10 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
     {
         $channels = $this->channelRepository->listAll();
         foreach ($channels as $channel) {
+            if ($channel->isSuspended()) {
+                continue;
+            }
+
             $storedTopic = $channel->getTopic();
             if (null === $storedTopic) {
                 continue;

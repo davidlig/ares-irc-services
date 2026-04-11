@@ -77,6 +77,11 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         return 'IDENTIFIED';
     }
 
+    public function allowsSuspendedChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);

@@ -694,6 +694,20 @@ services:
             $dropService: '@App\Application\ChanServ\Service\ChanDropService'
         tags: ['chanserv.command']
 
+    App\Application\ChanServ\Command\Handler\SuspendCommand:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
+            $eventDispatcher: '@event_dispatcher'
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\UnsuspendCommand:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
+            $eventDispatcher: '@event_dispatcher'
+        tags: ['chanserv.command']
+
     App\Application\ChanServ\Service\ChanDropService:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
@@ -701,9 +715,24 @@ services:
             $debug: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
             $logger: '@monolog.logger.irc'
 
+    App\Application\ChanServ\Service\ChannelSuspensionService:
+        arguments:
+            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
+            $logger: '@monolog.logger.irc'
+
     App\Application\ChanServ\Maintenance\PurgeExpiredAkickTask:
         arguments:
             $intervalSeconds: '%maintenance.purge_expired_akick_interval%'
+            $logger: '@monolog.logger.irc'
+        tags: ['maintenance.task']
+
+    App\Application\ChanServ\Maintenance\UnsuspendExpiredChannelsTask:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
+            $intervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
         tags: ['maintenance.task']
 

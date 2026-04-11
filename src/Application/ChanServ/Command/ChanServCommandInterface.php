@@ -36,5 +36,11 @@ interface ChanServCommandInterface
     /** Null = no permission; otherwise e.g. identified for REGISTER. */
     public function getRequiredPermission(): ?string;
 
+    /**
+     * Whether this command is allowed on suspended channels.
+     * Commands like SUSPEND, UNSUSPEND, INFO, and DROP should return true.
+     */
+    public function allowsSuspendedChannel(): bool;
+
     public function execute(ChanServContext $context): void;
 }

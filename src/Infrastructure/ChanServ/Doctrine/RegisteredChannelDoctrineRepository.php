@@ -6,6 +6,7 @@ namespace App\Infrastructure\ChanServ\Doctrine;
 
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\ChanServ\ValueObject\ChannelStatus;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -107,5 +108,19 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
             )
             ->setParameter('successorNickId', $successorNickId)
             ->execute();
+    }
+
+    public function findExpiredSuspensions(): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('c')
+            ->from(RegisteredChannel::class, 'c')
+            ->where('c.status = :status')
+            ->andWhere('c.suspendedUntil IS NOT NULL')
+            ->andWhere('c.suspendedUntil <= :now')
+            ->setParameter('status', ChannelStatus::Suspended)
+            ->setParameter('now', new DateTimeImmutable());
+
+        return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
     }
 }

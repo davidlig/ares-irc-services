@@ -66,6 +66,9 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         if (null === $registered || !$registered->isMlockActive()) {
             return;
         }
+        if ($registered->isSuspended()) {
+            return;
+        }
         $view = $this->channelLookup->findByChannelName($channelName);
         if (null === $view) {
             return;
@@ -79,6 +82,9 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         if (null === $registered || !$registered->isMlockActive()) {
             return;
         }
+        if ($registered->isSuspended()) {
+            return;
+        }
         $view = $this->channelLookup->findByChannelName($event->channelName);
         if (null === $view) {
             return;
@@ -90,6 +96,9 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
     {
         $channels = $this->channelRepository->listAll();
         foreach ($channels as $registered) {
+            if ($registered->isSuspended()) {
+                continue;
+            }
             if (!$registered->isMlockActive()) {
                 continue;
             }
@@ -107,6 +116,9 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         $channelName = $ircChannel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $registered || !$registered->isMlockActive()) {
+            return;
+        }
+        if ($registered->isSuspended()) {
             return;
         }
         $view = $this->channelLookup->findByChannelName($channelName);
