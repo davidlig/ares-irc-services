@@ -329,6 +329,7 @@ suspend:
   invalid_duration:  "\x0304✗\x03 Invalid duration. Use: 0 (permanent), 1d, 12h, or 60m."
   permanent:         "Permanent"
   channel_suspended: "\x0304✗\x03 Channel \x02%channel%\x02 is suspended and cannot be used."
+  channel_forbidden: "\x0304✗\x03 Channel \x02%channel%\x02 is forbidden and cannot be used."
   notice_channel:    "\x0304⚠\x03 Channel has been suspended. Reason: %reason%"
 
 unsuspend:
@@ -363,6 +364,7 @@ forbid:
   reason_required:  "\x0304✗\x03 You must specify a reason."
   success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been forbidden."
   updated:          "\x0303✔\x03 Forbidden reason for channel \x02%channel%\x02 has been updated."
+  channel_forbidden: "\x0304✗\x03 Channel \x02%channel%\x02 is forbidden and cannot be used."
 
 unforbid:
   syntax:           "UNFORBID <#channel>"

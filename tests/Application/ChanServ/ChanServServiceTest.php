@@ -186,6 +186,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -342,6 +347,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -452,6 +462,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -557,6 +572,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -649,6 +669,11 @@ final class ChanServServiceTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -755,6 +780,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 throw ChannelNotRegisteredException::forChannel('#test');
@@ -851,6 +881,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 throw new ChannelAlreadyRegisteredException('#test');
@@ -943,6 +978,11 @@ final class ChanServServiceTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -1051,6 +1091,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->auditData = new IrcopAuditData(
@@ -1070,10 +1115,9 @@ final class ChanServServiceTest extends TestCase
         };
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorizationChecker->expects(self::once())
+        $authorizationChecker->expects(self::exactly(2))
             ->method('isGranted')
-            ->with('CHANSPORT_FOUNDER', self::anything())
-            ->willReturn(true);
+            ->willReturnCallback(static fn (string $permission): bool => true);
 
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())
@@ -1187,6 +1231,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1194,10 +1243,9 @@ final class ChanServServiceTest extends TestCase
         };
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorizationChecker->expects(self::once())
+        $authorizationChecker->expects(self::exactly(2))
             ->method('isGranted')
-            ->with('CHANSERV_OP', self::anything())
-            ->willReturn(true);
+            ->willReturnCallback(static fn (string $permission): bool => true);
 
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::never())
@@ -1299,6 +1347,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1311,10 +1364,9 @@ final class ChanServServiceTest extends TestCase
         };
 
         $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorizationChecker->expects(self::once())
+        $authorizationChecker->expects(self::exactly(2))
             ->method('isGranted')
-            ->with('CHANSERV_OP', self::anything())
-            ->willReturn(true);
+            ->willReturnCallback(static fn (string $permission): bool => true);
 
         // Event should NOT be dispatched when auditData is null
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -1457,6 +1509,11 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1570,6 +1627,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1664,6 +1726,11 @@ final class ChanServServiceTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return false;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return false;
             }
@@ -1772,6 +1839,11 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1801,5 +1873,259 @@ final class ChanServServiceTest extends TestCase
         $service->dispatch('SOMEOP #nonexistent', $sender);
 
         self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
+    public function repliesForbiddenWhenChannelIsForbiddenAndHandlerDoesNotAllowForbidden(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'ACCESS';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return false;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isForbidden')->willReturn(true);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')
+            ->with('forbid.channel_forbidden', self::anything(), 'chanserv', 'en')
+            ->willReturn('Channel #test is forbidden');
+
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->expects(self::once())->method('sendMessage')
+            ->with($sender->uid, 'Channel #test is forbidden', 'NOTICE');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('chanserv.level_founder', self::anything())
+            ->willReturn(false);
+
+        $registry = new ChanServCommandRegistry([$handler]);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $notifier,
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+        );
+
+        $service->dispatch('ACCESS #test', $sender);
+
+        self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
+    public function blocksCommandOnForbiddenChannelEvenForLevelFounder(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'ACCESS';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return false;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isForbidden')->willReturn(true);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')
+            ->with('forbid.channel_forbidden', self::anything(), 'chanserv', 'en')
+            ->willReturn('Channel #test is forbidden');
+
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->expects(self::once())->method('sendMessage')
+            ->with($sender->uid, 'Channel #test is forbidden', 'NOTICE');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('chanserv.level_founder', self::anything())
+            ->willReturn(true);
+
+        $registry = new ChanServCommandRegistry([$handler]);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $notifier,
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+        );
+
+        $service->dispatch('ACCESS #test', $sender);
+
+        self::assertNull($contextHolder->context);
     }
 }

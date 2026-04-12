@@ -8,6 +8,7 @@ use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
@@ -124,6 +125,26 @@ final readonly class ChanServService implements ChanServDispatchPort
                 return;
             }
 
+            $isLevelFounder = $this->authorizationChecker->isGranted(ChanServPermission::LEVEL_FOUNDER, $context);
+
+            $context = new ChanServContext(
+                sender: $sender,
+                senderAccount: $account,
+                command: $cmdName,
+                args: $args,
+                notifier: $this->notifier,
+                translator: $this->translator,
+                language: $language,
+                timezone: $timezone,
+                messageType: $messageType,
+                registry: $this->commandRegistry,
+                channelLookup: $this->channelLookup,
+                channelModeSupport: $modeSupport,
+                userLookup: $this->userLookup,
+                serviceNicks: $this->serviceNicks,
+                isLevelFounder: $isLevelFounder,
+            );
+
             if (count($args) < $handler->getMinArgs()) {
                 $context->reply('error.syntax', [
                     'syntax' => $context->trans($handler->getSyntaxKey()),
@@ -132,7 +153,19 @@ final readonly class ChanServService implements ChanServDispatchPort
                 return;
             }
 
-            if (!$handler->allowsSuspendedChannel()) {
+            if (!$handler->allowsForbiddenChannel()) {
+                $channelName = $context->getChannelNameArg(0);
+                if (null !== $channelName) {
+                    $channel = $this->channelRepository->findByChannelName($channelName);
+                    if (null !== $channel && $channel->isForbidden()) {
+                        $context->reply('forbid.channel_forbidden', ['%channel%' => $channelName]);
+
+                        return;
+                    }
+                }
+            }
+
+            if (!$handler->allowsSuspendedChannel() && !$isLevelFounder) {
                 $channelName = $context->getChannelNameArg(0);
                 if (null !== $channelName) {
                     $channel = $this->channelRepository->findByChannelName($channelName);
