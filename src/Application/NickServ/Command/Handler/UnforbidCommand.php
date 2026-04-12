@@ -49,7 +49,7 @@ final class UnforbidCommand implements NickServCommandInterface, AuditableComman
 
     public function getOrder(): int
     {
-        return 73;
+        return 70;
     }
 
     public function getShortDescKey(): string

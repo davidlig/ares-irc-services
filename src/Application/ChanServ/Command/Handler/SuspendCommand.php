@@ -59,7 +59,7 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
 
     public function getOrder(): int
     {
-        return 76;
+        return 77;
     }
 
     public function getShortDescKey(): string

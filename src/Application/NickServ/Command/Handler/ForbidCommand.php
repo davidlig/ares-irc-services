@@ -60,7 +60,7 @@ final class ForbidCommand implements NickServCommandInterface, AuditableCommandI
 
     public function getOrder(): int
     {
-        return 72;
+        return 69;
     }
 
     public function getShortDescKey(): string

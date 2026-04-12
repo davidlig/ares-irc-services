@@ -76,7 +76,7 @@ final class DropCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(75, $cmd->getOrder());
+        self::assertSame(71, $cmd->getOrder());
     }
 
     #[Test]

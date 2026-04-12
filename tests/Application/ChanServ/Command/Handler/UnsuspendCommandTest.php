@@ -74,7 +74,7 @@ final class UnsuspendCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(77, $cmd->getOrder());
+        self::assertSame(78, $cmd->getOrder());
     }
 
     #[Test]

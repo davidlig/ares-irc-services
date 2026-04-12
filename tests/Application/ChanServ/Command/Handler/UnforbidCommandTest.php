@@ -70,7 +70,7 @@ final class UnforbidCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(79, $cmd->getOrder());
+        self::assertSame(80, $cmd->getOrder());
     }
 
     #[Test]

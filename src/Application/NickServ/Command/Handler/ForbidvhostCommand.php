@@ -58,7 +58,7 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
 
     public function getOrder(): int
     {
-        return 75;
+        return 72;
     }
 
     public function getShortDescKey(): string

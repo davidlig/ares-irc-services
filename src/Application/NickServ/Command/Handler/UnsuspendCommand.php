@@ -52,7 +52,7 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
 
     public function getOrder(): int
     {
-        return 71;
+        return 68;
     }
 
     public function getShortDescKey(): string

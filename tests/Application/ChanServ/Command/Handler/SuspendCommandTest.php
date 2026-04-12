@@ -75,7 +75,7 @@ final class SuspendCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(76, $cmd->getOrder());
+        self::assertSame(77, $cmd->getOrder());
     }
 
     #[Test]

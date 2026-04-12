@@ -118,7 +118,7 @@ final class ForbidvhostCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(75, $cmd->getOrder());
+        self::assertSame(72, $cmd->getOrder());
     }
 
     #[Test]

@@ -57,7 +57,7 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
 
     public function getOrder(): int
     {
-        return 75;
+        return 71;
     }
 
     public function getShortDescKey(): string

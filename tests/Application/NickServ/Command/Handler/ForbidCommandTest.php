@@ -77,7 +77,7 @@ final class ForbidCommandTest extends TestCase
     {
         $cmd = $this->createCommand();
 
-        self::assertSame(72, $cmd->getOrder());
+        self::assertSame(69, $cmd->getOrder());
     }
 
     #[Test]

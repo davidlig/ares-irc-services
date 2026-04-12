@@ -47,7 +47,7 @@ final class UnforbidCommand implements ChanServCommandInterface, AuditableComman
 
     public function getOrder(): int
     {
-        return 79;
+        return 80;
     }
 
     public function getShortDescKey(): string

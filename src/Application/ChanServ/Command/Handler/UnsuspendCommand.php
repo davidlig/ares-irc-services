@@ -52,7 +52,7 @@ final class UnsuspendCommand implements ChanServCommandInterface, AuditableComma
 
     public function getOrder(): int
     {
-        return 77;
+        return 78;
     }
 
     public function getShortDescKey(): string

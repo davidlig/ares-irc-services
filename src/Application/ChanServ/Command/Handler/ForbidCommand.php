@@ -53,7 +53,7 @@ final class ForbidCommand implements ChanServCommandInterface, AuditableCommandI
 
     public function getOrder(): int
     {
-        return 78;
+        return 79;
     }
 
     public function getShortDescKey(): string

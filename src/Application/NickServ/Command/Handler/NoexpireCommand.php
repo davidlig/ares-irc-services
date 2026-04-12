@@ -50,7 +50,7 @@ final class NoexpireCommand implements NickServCommandInterface, AuditableComman
 
     public function getOrder(): int
     {
-        return 72;
+        return 66;
     }
 
     public function getShortDescKey(): string

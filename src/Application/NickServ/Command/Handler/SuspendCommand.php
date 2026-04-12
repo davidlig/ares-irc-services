@@ -63,7 +63,7 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
 
     public function getOrder(): int
     {
-        return 70;
+        return 67;
     }
 
     public function getShortDescKey(): string
