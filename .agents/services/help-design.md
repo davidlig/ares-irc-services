@@ -124,7 +124,7 @@ When a user has IRCop permissions, show a separated section after normal command
 ### Format
 
 1. **Blank line** after normal commands section
-2. **Header**: `help.ircop_header` (e.g., "Los siguientes comandos están disponibles para IRCOPS:")
+2. **Header**: `help.ircop_header` (e.g., "The following commands are available for IRCOPS:")
 3. **Commands**: List only commands the user has permission for
 4. **Footer**: Standard separator
 
@@ -132,7 +132,7 @@ When a user has IRCop permissions, show a separated section after normal command
 
 ```yaml
 help:
-  ircop_header: "Los siguientes comandos están disponibles para \x0304\x02IRCOPS\x02\x03:"
+  ircop_header: "The following commands are available for \x0304\x02IRCOPS\x02\x03:"
 ```
 
 The `\x0304\x02IRCOPS\x02\x03` renders as **red bold "IRCOPS"**.
@@ -205,20 +205,13 @@ public function hasIrcopAccess(): bool
 
 ### Translations
 
-Add to `translations/{service}.en.yaml` and `translations/{service}.es.yaml`:
+Add to `translations/{service}.en.yaml` (English) AND `translations/{service}.es.yaml` (Spanish). Every key MUST exist in both files:
 
 ```yaml
-# English
+# File: translations/nickserv.en.yaml
 help:
   ircop_header: "The following commands are available for \x0304\x02IRCOPS\x02\x03:"
 
 permissions:
   nickserv.userip: "View the real IP/Host of a user"
-
-# Spanish
-help:
-  ircop_header: "Los siguientes comandos están disponibles para \x0304\x02IRCOPS\x02\x03:"
-
-permissions:
-  nickserv.userip: "Ver la dirección IP/Host real de un usuario"
 ```

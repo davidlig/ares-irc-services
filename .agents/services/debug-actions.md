@@ -1,38 +1,38 @@
-# Debug Actions - Reglas para comandos IRCop
+# Debug Actions - Rules for IRCop Commands
 
-## Propósito
+## Purpose
 
-Los comandos sensibles ejecutados por IRCops deben registrar sus acciones en:
-1. Un canal de debug compartido (si está configurado)
-2. Un archivo de log dedicado (`ircops.log`)
+Sensitive commands executed by IRCops must log their actions to:
+1. A shared debug channel (if configured)
+2. A dedicated log file (`ircops.log`)
 
-## Configuración
+## Configuration
 
-### Variable de entorno
+### Environment Variable
 
 ```env
 IRCOPS_DEBUG_CHANNEL=#ircops
 ```
 
-- Si está vacío o no definido, no se envían mensajes al canal
-- El log en archivo siempre está activo
+- If empty or undefined, no messages are sent to the channel
+- File logging is always active
 
-### Log configuration
+### Log Configuration
 
-**Archivo:** `config/packages/monolog.yaml`
+**File:** `config/packages/monolog.yaml`
 
 ```yaml
 ircops_rotating:
     type:      rotating_file
     path:      '%kernel.logs_dir%/ircops.log'
     level:     info
-    max_files: 26    # ~6 meses (rotación semanal)
+    max_files: 26    # ~6 months (weekly rotation)
     channels:  [ircops]
 ```
 
-## Arquitectura
+## Architecture
 
-### Interfaz
+### Interface
 
 ```php
 namespace App\Application\Port;
@@ -53,147 +53,173 @@ interface ServiceDebugNotifierInterface
 }
 ```
 
-### Implementaciones por servicio
+### Service Implementations
 
-Cada servicio implementa `ServiceDebugNotifierInterface`:
+Each service implements `ServiceDebugNotifierInterface`:
 
-| Servicio | Clase | Bot que envía mensajes |
+| Service | Class | Bot that sends messages |
 |----------|-------|------------------------|
 | OperServ | `OperServDebugNotifier` | OperServ |
 | NickServ | `NickServDebugNotifier` | NickServ |
-| ChanServ | (futuro) | ChanServ |
-| MemoServ | (futuro) | MemoServ |
+| ChanServ | `ChanServDebugNotifier` | ChanServ |
+| MemoServ | (future) | MemoServ |
 
-### Inyección en comandos
+### Injection in Commands
 
 ```php
 public function __construct(
     private readonly ServiceDebugNotifierInterface $debugNotifier,
-    // ... otras dependencias
+    // ... other dependencies
 ) {}
 ```
 
-## Comandos que requieren debug
+## Commands that Require Debug
 
-Solo comandos ejecutados por IRCops requieren debug.
+Only commands executed by IRCops require debug logging.
 
-### OperServ (todos los comandos son IRCop-only)
-- `KILL` - Desconectar usuario
-- `IRCOP ADD/DEL` - Gestionar IRCops
-- `ROLE ADD/DEL/MOD` - Gestionar roles y permisos
-- Futuros: GLINE, KLINE, etc.
+### OperServ (all commands are IRCop-only)
+- `KILL` - Disconnect a user
+- `IRCOP ADD/DEL` - Manage IRCops
+- `ROLE ADD/DEL/MOD` - Manage roles and permissions
+- Future: GLINE, KLINE, etc.
 
-### NickServ (comandos IRCop)
-- `SASET` - Modificar settings de otro usuario
-- `DROP` - Eliminar nickname
-- `SUSPEND` - Suspender nickname
-- `UNSUSPEND` - Reactivar nickname
-- `RENAME` - Forzar cambio de nick
-- `FORBID` - Prohibir nickname
-- `FORBIDVHOST` - Prohibir vhost
-- `UNFORBID` - Desprohibir nickname
-- `USERIP` - Ver IP real
+### NickServ (IRCop commands)
+- `SASET` - Modify another user's settings
+- `DROP` - Drop a nickname
+- `SUSPEND` - Suspend a nickname
+- `UNSUSPEND` - Unsuspend a nickname
+- `RENAME` - Force a nick change
+- `FORBID` - Forbid a nickname
+- `FORBIDVHOST` - Forbid a vhost
+- `UNFORBID` - Unforbid a nickname
+- `USERIP` - View real IP
 
-### ChanServ (comandos IRCop)
-- (ninguno actualmente)
+### ChanServ (IRCop commands)
+- `DROP` - Drop a registered channel
+- `SUSPEND` - Suspend a channel
+- `UNSUSPEND` - Unsuspend a channel
+- `FORBID` - Forbid a channel
+- `UNFORBID` - Unforbid a channel
 
-## Formato de mensajes
+### ChanServ (`level_founder` — actions as founder)
+When an IRCop with `chanserv.level_founder` permission executes a command on a channel they are **not the real founder of**, the action is automatically audited with permission `chanserv.level_founder`. This applies to commands like `SET`, `ACCESS`, `AKICK`, `OP`, `DEOP`, `VOICE`, `DEVOICE`, `HALFOP`, `DEHALFOP`, `ADMIN`, `DEADMIN`, `LEVELS`, `INVITE`, etc.
 
-Cada servicio envía mensajes con su propio bot como prefijo.
+Commands that do NOT require identification (`getRequiredPermission() === null`) such as `HELP` and `INFO` are NOT audited, because `level_founder` does not grant any additional privilege for them — any user can use them regardless.
 
-### En el canal de debug (con colores IRC)
+**The event is NOT emitted if**:
+- The IRCop is the real channel founder (it's their own channel, no special audit needed)
+- The command has no required permission (`null`) — e.g., HELP, INFO
+- The command has no channel argument (e.g., HELP without a channel)
 
-**Colores:**
-- Azul (`\x0302`) para nicks del operador y objetivo
-- Rojo (`\x0304`) para el nombre del comando
+## Message Format
+
+Each service sends messages with its own bot as prefix.
+
+### On the debug channel (with IRC colors)
+
+**Colors:**
+- Blue (`\x0302`) for operator and target nicks
+- Red (`\x0304`) for the command name
 
 ### OperServ KILL
 ```
-<OperServ> Operator1 ejecuta el comando KILL sobre BadUser. Motivo: Flooding channels
+<OperServ> Operator1 executes command KILL on BadUser. Reason: Flooding channels
            Nick: BadUser | Host: ~user@192.168.1.100 | IP: 10.0.0.55
 ```
 
-### NickServ SASET (con opción)
+### NickServ SASET (with option)
 ```
-<NickServ> OperNick ejecuta el comando SASET sobre TargetUser. Opción: VHOST=ares.example.com
-```
-
-### NickServ SASET (PASSWORD - valor oculto)
-```
-<NickServ> OperNick ejecuta el comando SASET sobre TargetUser. Opción: PASSWORD
+<NickServ> OperNick executes command SASET on TargetUser. Option: VHOST=ares.example.com
 ```
 
-### NickServ SUSPEND (con duración)
+### NickServ SASET (PASSWORD - value hidden)
 ```
-<NickServ> OperNick ejecuta el comando SUSPEND sobre BadUser. Duración: 7d. Razón: Spam
+<NickServ> OperNick executes command SASET on TargetUser. Option: PASSWORD
 ```
 
-### En el archivo de log (sin colores)
+### NickServ SUSPEND (with duration)
+```
+<NickServ> OperNick executes command SUSPEND on BadUser. Duration: 7d. Reason: Spam
+```
+
+### On the log file (no colors)
 
 ```
 [2025-01-15T14:32:07+00:00] ircops.INFO: KILL {"operator":"Admin1","target":"BadUser","target_host":"~user@host.com","target_ip":"10.0.0.55","reason":"Flooding"} []
 ```
 
-## Protección del canal
+## Channel Protection
 
-El canal de debug (`IRCOPS_DEBUG_CHANNEL`) tiene restricción de entrada:
-- Solo IRCops identificados y Roots pueden entrar
-- Los demás usuarios son kickeados automáticamente por ChanServ
-- El mensaje de kick usa el idioma del usuario
+The debug channel (`IRCOPS_DEBUG_CHANNEL`) has restricted entry:
+- Only identified IRCops and Roots can join
+- Other users are automatically kicked by ChanServ
+- The kick message uses the user's language
 
-### Flujo de protección
+### Protection Flow
 
-1. Usuario entra al canal → `UserJoinedChannelEvent`
-2. `IrcopsDebugChannelProtectionSubscriber` verifica:
-   a. Si el canal no es el de debug → no hacer nada
-   b. Si es ChanServ → permitir
-   c. Si es Root → permitir
-   d. Si es IRCop identificado → permitir
-   e. Si no → ChanServ kickea con mensaje traducido
+1. User joins channel → `UserJoinedChannelEvent`
+2. `IrcopsDebugChannelProtectionSubscriber` checks:
+   a. If the channel is not the debug channel → do nothing
+   b. If it's ChanServ → allow
+   c. If it's Root → allow
+   d. If it's an identified IRCop → allow
+   e. Otherwise → ChanServ kicks with translated message
 
-## Ejemplos
+## Examples
 
 ### OperServ KILL
 ```
-<OperServ> Admin1 ejecuta el comando KILL sobre BadUser. Motivo: Flooding channels
+<OperServ> Admin1 executes command KILL on BadUser. Reason: Flooding channels
            Nick: BadUser | Host: ~user@192.168.1.100 | IP: 10.0.0.55
 ```
 
 ### OperServ IRCOP ADD
 ```
-<OperServ> AdminRoot ejecuta el comando IRCOP ADD sobre NewOper. Rol: OPER
+<OperServ> AdminRoot executes command IRCOP ADD on NewOper. Role: OPER
            Nick: NewOper | Host: ~oper@isp.net
 ```
 
-### Proyecto futuro: NickServ DROP (IRCop-only)
+### NickServ DROP (IRCop-only)
 ```
-<NickServ> OperNick ejecuta el comando DROP sobre OldAccount. Motivo: Solicitado por el usuario
+<NickServ> OperNick executes command DROP on OldAccount. Reason: Requested by user
            Nick: OldAccount | Host: ~user@host.com
 ```
 
-## Extensión para nuevos servicios
+### ChanServ level_founder (IRCop acting as founder on another's channel)
+```
+<ChanServ> OperNick executes command SET on #channel. Option: URL=http://www.example.com
+```
 
-Para añadir debug notifier a un nuevo servicio:
+This is generated automatically when an IRCop with `chanserv.level_founder` permission executes any ChanServ command on a channel they are not the real founder of. The permission in the event is `chanserv.level_founder` and `extra` includes `founder_action: true`, `option` (sub-command like URL, DESC, ACCESS ADD, etc.), and `value` (the value argument).
 
-1. Crear `src/Infrastructure/<Service>/Service/<Service>DebugNotifier.php`
-2. Implementar `ServiceDebugNotifierInterface`
-3. Inyectar el logger del canal `ircops` (`@monolog.logger.ircops`) y el bot del servicio
-4. Registrar en `ServiceDebugNotifierRegistry` con el tag `app.debug_notifier` en `services.yaml`
-5. Añadir traducciones en `translations/<service>.en.yaml` y `.es.yaml`
+Host and IP information is logged to the file (`ircops.log`) including `target_host` and `target_ip` fields but is not displayed on the debug channel.
 
-## Traducciones
+## Adding a New Service
 
-Claves de traducción en cada servicio:
+To add a debug notifier to a new service:
+
+1. Create `src/Infrastructure/<Service>/Service/<Service>DebugNotifier.php`
+2. Implement `ServiceDebugNotifierInterface`
+3. Inject the `ircops` channel logger (`@monolog.logger.ircops`) and the service bot
+4. Register in `ServiceDebugNotifierRegistry` with the `app.debug_notifier` tag in `services.yaml`
+5. Add translations in `translations/<service>.en.yaml` (English) AND `translations/<service>.es.yaml` (Spanish). Every key in `.en.yaml` MUST also exist in `.es.yaml`.
+
+## Translations
+
+**You MUST create translations for ALL available languages: `en` (English) and `es` (Spanish).**
+Every key added to `.en.yaml` MUST also be added to `.es.yaml` with the corresponding Spanish translation.
+
+Translation keys in each service (shown for `.en.yaml` files):
 
 ```yaml
-# operserv.en.yaml / operserv.es.yaml
+# translations/operserv.en.yaml
 debug:
   action_message: "%operator% executes command %command% on %target%. Reason: %reason%"
   action_info: "Nick: %nick% | Host: %host% | IP: %ip%"
 ```
 
 ```yaml
-# nickserv.en.yaml / nickserv.es.yaml
+# translations/nickserv.en.yaml
 debug:
   action_message: "%operator% executes command %command% on %target%. %reason%"
   action_with_option: "%operator% executes command %command% on %target%. Option: %option%. %reason%"
@@ -203,7 +229,7 @@ debug:
 ```
 
 ```yaml
-# chanserv.en.yaml / chanserv.es.yaml
+# translations/chanserv.en.yaml
 debug_channel:
   kick_reason: "You are not authorized to join this channel."
 ```

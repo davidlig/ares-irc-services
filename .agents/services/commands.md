@@ -56,7 +56,7 @@ User sends: /msg NickServ REGISTER password email
 When creating a new command, complete ALL these steps:
 
 - [ ] **Step 1**: Create the Command Handler class
-- [ ] **Step 2**: Add translations (en + es)
+- [ ] **Step 2**: Add translations for ALL languages (`en` + `es`)
 - [ ] **Step 3**: Register in `config/services.yaml`
 - [ ] **Step 4**: Configure permissions (if needed)
 - [ ] **Step 5**: Create tests with 100% coverage
@@ -87,8 +87,8 @@ Write ALL files in ONE message after Phase 1 completes:
 write src/Domain/Service/Entity/NewEntity.php           // If needed
 write src/Application/Service/Command/Handler/NewCommand.php
 write tests/Application/Service/Command/Handler/NewCommandTest.php
-edit translations/service.en.yaml   // append translations
-edit translations/service.es.yaml   // append translations
+edit translations/service.en.yaml   // append English translations
+edit translations/service.es.yaml   // append Spanish translations
 ```
 
 ### Phase 3: Configuration (Sequential - MUST WAIT)
@@ -345,7 +345,10 @@ final readonly class SetCommand implements NickServCommandInterface
 
 ---
 
-## Step 2: Add Translations
+## Step 2: Add Translations (CRITICAL)
+
+**You MUST create translations for ALL available languages: `en` (English) and `es` (Spanish).**
+Every key added to `.en.yaml` MUST also be added to `.es.yaml` with the corresponding Spanish translation, and vice versa. A task is not complete if any translation file is missing keys.
 
 ### File Locations
 
@@ -412,13 +415,13 @@ register:
 
 ### Permission Translations
 
-For commands with IRCop permissions, add descriptions in `translations/{service}.en.yaml`:
+For commands with IRCop permissions, add descriptions in `translations/{service}.en.yaml` AND `translations/{service}.es.yaml`:
 
 ```yaml
 # File: translations/nickserv.en.yaml
 permissions:
   nickserv.drop: "Drop a registered nickname"
-  nickserv.info: "View extended info of any nickname"
+  nickserv.info: "View extended information on any nickname"
   nickserv.sendpass: "Send password reset email"
 ```
 
@@ -624,7 +627,7 @@ if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($req
 
 1. **`{Service}Permission.php`** - Constants used by Voters
 2. **`{Service}IrcopPermission.php`** - PermissionProviderInterface implementation
-3. **`translations/{service}.en.yaml`** - Permission descriptions
+3. **`translations/{service}.en.yaml`** AND **`translations/{service}.es.yaml`** - Permission descriptions (ALL languages)
 
 When adding a new IRCop permission:
 
@@ -643,9 +646,14 @@ public function getPermissions(): array
     ];
 }
 
-// 3. Add translation in translations/nickserv.en.yaml
+// 3. Add translation in translations/nickserv.en.yaml AND nickserv.es.yaml
+// translations/nickserv.en.yaml
 permissions:
   nickserv.drop: "Drop a registered nickname"
+
+// translations/nickserv.es.yaml
+permissions:
+  nickserv.drop: "Eliminar un nickname registrado"
 ```
 
 ### Creating a Custom Voter
@@ -1310,11 +1318,19 @@ Sensitive commands executed by IRCops should log actions to:
 
 ### Implementation
 
-1. **Add translation keys** in `translations/operserv.en.yaml`:
+1. **Add translation keys** in `translations/operserv.en.yaml` AND `translations/operserv.es.yaml`:
 
 ```yaml
+# translations/operserv.en.yaml
 debug:
   action_message: "%operator% executes command %command% on %target%. Reason: %reason%"
+  action_info: "Nick: %nick% | Host: %host% | IP: %ip%"
+```
+
+```yaml
+# translations/operserv.es.yaml
+debug:
+  action_message: "%operator% ejecuta el comando %command% sobre %target%. Razón: %reason%"
   action_info: "Nick: %nick% | Host: %host% | IP: %ip%"
 ```
 
@@ -1364,7 +1380,7 @@ App\Infrastructure\OperServ\Service\OperServDebugAction:
 | Dependency injection error | Interface not bound | Add binding in `services.yaml` |
 | Null in execute() | `$context->sender` is null | Always check `if (null === $context->sender)` |
 | Authorization silent failure | Voter missing or wrong attribute | Check `supports()` method in Voter |
-| Wrong number of translations | Missing file | Add translations in both `.en.yaml` and `.es.yaml` |
+| Wrong number of translations | Missing file or language | Add translations in ALL languages: `.en.yaml` AND `.es.yaml` |
 | Coverage < 100% after changes | New code, no tests | Run `./scripts/check-coverage.sh 100` |
 | Service circular reference | Constructor injection loop | Use setter injection or refactor |
 | Context not constructed properly | Missing/test args wrong | Copy context creation from existing tests |
@@ -1522,7 +1538,7 @@ final readonly class DropCommand implements NickServCommandInterface
 }
 ```
 
-### Step 4: Add Translations
+### Step 4: Add Translations (ALL languages: `en` + `es`)
 
 ```yaml
 # File: translations/nickserv.en.yaml
@@ -1530,11 +1546,11 @@ drop:
   syntax: "DROP <nickname>"
   short: "Drop a registered nickname"
   help: |
-    Drop a registered nickname from the database.
+    Drops a registered nickname from the database.
     This action cannot be undone.
-    
+
     This command requires IRCop permission: nickserv.drop
-    
+
     Syntax: DROP <nickname>
     Example: DROP OldAccount
   not_registered: "\x0304✗\x03 Nickname \x02%nick%\x02 is not registered."
@@ -1553,9 +1569,9 @@ drop:
   help: |
     Elimina un nickname registrado de la base de datos.
     Esta acción no se puede deshacer.
-    
+
     Este comando requiere permiso de IRCop: nickserv.drop
-    
+
     Sintaxis: DROP <nickname>
     Ejemplo: DROP OldAccount
   not_registered: "\x0304✗\x03 El nickname \x02%nick%\x02 no está registrado."

@@ -55,6 +55,7 @@ Pattern: ONE message with multiple tool calls
 - **Commit order (CRITICAL)**: You MUST run PHP CS Fixer **before** committing. The correct sequence is: (1) implement or modify code, (2) run `./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php` (or the project's configured command), (3) then commit. Never commit first and fix style in a separate commit; each commit must already contain formatted code so that style fixes and functional changes stay in the same commit.
 - **Git Management**: Commit changes when a task is done. Commit messages MUST be in **English** and follow **Conventional Commits** (`feat:`, `fix:`, `refactor:`).
 - **README Sync**: If you add/change/remove features, commands, or config vars, you MUST update `README.md`. A task is not complete if the docs are outdated.
+- **Translations (CRITICAL)**: When adding or modifying translatable strings, you MUST create translations for **ALL available languages**: `en` (English) and `es` (Spanish). Files are located at `translations/<service>.en.yaml` and `translations/<service>.es.yaml`. Every key added to `.en.yaml` MUST also be added to `.es.yaml` with the corresponding Spanish translation, and vice versa. A task is not complete if any translation file is missing keys.
 
 ### 1.2 Error / Bug Reports: Log & Commit Review (CRITICAL)
 - When the user reports an **error**, **bug** or **unexpected behaviour** (e.g. "there is an error with…", "check the logs", "fix this issue"), you MUST **review the application logs** **before** proposing or writing code.
@@ -227,7 +228,7 @@ For new commands/services, use Task agents for independent work:
 | Create Repository interface | ✅ Yes | Independent |
 | Create Command Handler | ✅ Yes | After Phase 1 patterns found |
 | Create Test file | ✅ Yes | Can write tests in parallel with implementation |
-| Add translations (en + es) | ✅ Yes | Independent files |
+| Add translations (all languages: `en` + `es`) | ✅ Yes | Independent files |
 | Update services.yaml | ❌ No | Depends on class names created |
 
 **Pattern:** Write implementation and tests simultaneously using multiple tool calls:

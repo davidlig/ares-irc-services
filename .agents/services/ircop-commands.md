@@ -233,6 +233,24 @@ if (null !== $requiredPermission) {
 }
 ```
 
+#### For ChanServ level_founder (Automatic)
+
+When an IRCop with `chanserv.level_founder` permission executes a ChanServ command (SET, ACCESS, OP, etc.) on a channel they are **not** the real founder of, `ChanServService::dispatch()` automatically emits an `IrcopCommandExecutedEvent` with permission `chanserv.level_founder`.
+
+This is independent of the normal audit flow — it happens **after** the handler executes, **and only if**:
+1. `isLevelFounder === true` (the IRCop has the `chanserv.level_founder` permission)
+2. `requiredPermission !== null` (commands like HELP and INFO that anyone can use are excluded)
+3. The command has a valid channel argument (`#channel`)
+4. The IRCop is **not** the real channel founder (`!$channel->isFounder($account->getId())`)
+
+The event includes `extra: ['founder_action' => true]` (plus `option` and `value` for sub-commands like SET URL) to distinguish level_founder actions from normal IRCop commands.
+
+**Events are NOT emitted** when:
+- `isLevelFounder === false` (normal user)
+- `requiredPermission === null` (commands anyone can use, like HELP, INFO)
+- The IRCop **is** the real channel founder (they're acting on their own channel)
+- The command has no channel argument (e.g., HELP without a channel)
+
 #### For Commands (Optional)
 
 Commands that need to log specific audit data implement `AuditableCommandInterface`:
@@ -271,6 +289,10 @@ Commands that don't implement the interface will still be logged, but with empty
 | `operserv.kill` | ✅ Yes | IRCOP permission |
 | `operserv.gline` | ✅ Yes | IRCOP permission |
 | `nickserv.drop` | ✅ Yes | IRCOP permission |
+| `chanserv.drop` | ✅ Yes | IRCOP permission |
+| `chanserv.suspend` | ✅ Yes | IRCOP permission |
+| `chanserv.forbid` | ✅ Yes | IRCOP permission |
+| `chanserv.level_founder` | ✅ Yes | IRCOP permission (auto-logged when non-founder uses level_founder) |
 | `IDENTIFIED` | ❌ No | User permission, not IRCOP |
 | `null` | ❌ No | No permission required |
 
@@ -413,6 +435,7 @@ The `chanserv.level_founder` permission allows an IRCop to act as if they were t
 | Token requirement (SET FOUNDER) | Two-step email token verification | Skipped; direct founder transfer |
 | Channel suspended block | Command blocked | Command allowed |
 | Channel forbidden block | Command blocked | Command blocked (see rules below) |
+| **Audit logging** | Not logged (IDENTIFIED permission) | **Logged** with `chanserv.level_founder` permission |
 
 ### Forbidden Channel Rules (CRITICAL)
 
@@ -577,8 +600,8 @@ When a user has IRCop permissions, show a separated section:
 ```
 ─────────────────────────────────────
 
-Los siguientes comandos están disponibles para IRCOPS:
-  USERIP    Obtiene la dirección IP/Host real del usuario.
+The following commands are available for IRCOPS:
+  USERIP    Gets the real IP/Host address of the user.
 ─────────────────────────────────────
 ```
 
