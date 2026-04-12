@@ -17,4 +17,8 @@ final readonly class ChanServPermission
     public const string LEVEL_FOUNDER = 'chanserv.level_founder';
 
     public const string HISTORY = 'chanserv.history';
+
+    public const string CLEARACCESS = 'chanserv.clearaccess';
+
+    public const string CLEARUSERS = 'chanserv.clearusers';
 }

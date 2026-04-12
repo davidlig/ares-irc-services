@@ -359,6 +359,8 @@ permissions:
   chanserv.forbid: "Prohibir o deshabilitar la prohibición de un canal (FORBID/UNFORBID)"
   chanserv.noexpire: "Activar o desactivar la protección de expiración para un canal (NOEXPIRE)"
   chanserv.history: "Ver y gestionar el historial de acciones del canal (HISTORY)"
+  chanserv.clearaccess: "Limpiar la lista de acceso completa de un canal (CLEARACCESS)"
+  chanserv.clearusers: "Expulsar a todos los usuarios de un canal (CLEARUSERS)"
 
 noexpire:
   syntax:           "NOEXPIRE <#canal> {ON|OFF}"
@@ -480,3 +482,37 @@ history.extra:
   mask:            "Máscara: %value%"
   ip:            "IP: %value%"
   host:          "Host: %value%"
+
+# --- CLEARACCESS (IRCop) ---------------------------------------------------------
+clearaccess:
+  syntax:           "CLEARACCESS <#canal>"
+  short:            "Limpiar la lista de acceso completa de un canal."
+  help:             |
+    Elimina todas las entradas de acceso de la lista de acceso de un canal.
+    Esta acción es irreversible y no se puede deshacer.
+    Solo los IRCops con permiso 'chanserv.clearaccess' pueden usar este comando.
+
+    Sintaxis: CLEARACCESS <#canal>
+    Ejemplos:
+      CLEARACCESS #canal
+  success:          "\x0303✔\x03 Eliminadas \x02%count%\x02 entradas de acceso de \x02%channel%\x02."
+  empty:            "\x0307ℹ\x03 El canal \x02%channel%\x02 no tiene entradas de acceso."
+
+clearusers:
+  syntax:           "CLEARUSERS <#canal> [razón]"
+  short:            "Expulsar a todos los usuarios de un canal."
+  help:             |
+    Expulsa a todos los usuarios del canal especificado.
+    Este es un comando exclusivo de IRCop para gestión de canales.
+    Se puede proporcionar una razón opcional; si se omite, se usa una razón predeterminada.
+
+    Solo los IRCops con permiso 'chanserv.clearusers' pueden usar este comando.
+
+    Sintaxis: CLEARUSERS <#canal> [razón]
+    Ejemplos:
+      CLEARUSERS #canal
+      CLEARUSERS #canal flooding
+  not_on_network:   "\x0304✗\x03 El canal \x02%channel%\x02 no se encuentra actualmente en la red."
+  empty:            "\x0307ℹ\x03 El canal \x02%channel%\x02 no tiene usuarios para expulsar."
+  success:          "\x0303✔\x03 Se expulsaron \x02%count%\x02 usuario(s) de \x02%channel%\x02."
+  default_reason:   "Comando CLEARUSERS"

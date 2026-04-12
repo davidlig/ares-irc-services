@@ -359,6 +359,8 @@ permissions:
   chanserv.forbid: "Forbid or unforbid a channel (FORBID/UNFORBID)"
   chanserv.noexpire: "Set or remove expiration protection for a channel (NOEXPIRE)"
   chanserv.history: "View and manage channel action history (HISTORY)"
+  chanserv.clearaccess: "Clear the entire access list of a channel (CLEARACCESS)"
+  chanserv.clearusers: "Kick all users from a channel (CLEARUSERS)"
 
 noexpire:
   syntax:           "NOEXPIRE <#channel> {ON|OFF}"
@@ -480,3 +482,37 @@ history.extra:
   mask:            "Mask: %value%"
   ip:            "IP: %value%"
   host:          "Host: %value%"
+
+# --- CLEARACCESS (IRCop) ---------------------------------------------------------
+clearaccess:
+  syntax:           "CLEARACCESS <#channel>"
+  short:            "Clear the entire access list of a channel."
+  help:             |
+    Removes all access entries from a channel's access list.
+    This action is irreversible and cannot be undone.
+    Only IRCops with 'chanserv.clearaccess' permission can use this command.
+
+    Syntax: CLEARACCESS <#channel>
+    Examples:
+      CLEARACCESS #channel
+  success:          "\x0303✔\x03 Cleared \x02%count%\x02 access entries from \x02%channel%\x02."
+  empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 has no access entries."
+
+clearusers:
+  syntax:           "CLEARUSERS <#channel> [reason]"
+  short:            "Kick all users from a channel."
+  help:             |
+    Kicks all users from the specified channel.
+    This is an IRCop-only command used for channel management.
+    An optional reason can be provided; if omitted, a default reason is used.
+
+    Only IRCops with 'chanserv.clearusers' permission can use this command.
+
+    Syntax: CLEARUSERS <#channel> [reason]
+    Examples:
+      CLEARUSERS #channel
+      CLEARUSERS #channel flooding
+  not_on_network:   "\x0304✗\x03 Channel \x02%channel%\x02 is not currently on the network."
+  empty:            "\x0307ℹ\x03 Channel \x02%channel%\x02 has no users to kick."
+  success:          "\x0303✔\x03 Kicked \x02%count%\x02 user(s) from \x02%channel%\x02."
+  default_reason:   "CLEARUSERS command"
