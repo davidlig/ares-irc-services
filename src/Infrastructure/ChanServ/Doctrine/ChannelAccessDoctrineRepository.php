@@ -71,4 +71,14 @@ class ChannelAccessDoctrineRepository implements ChannelAccessRepositoryInterfac
             ->setParameter('nickId', $nickId)
             ->execute();
     }
+
+    public function deleteByChannelId(int $channelId): int
+    {
+        return (int) $this->em
+            ->createQuery(
+                'DELETE FROM App\Domain\ChanServ\Entity\ChannelAccess a WHERE a.channelId = :channelId'
+            )
+            ->setParameter('channelId', $channelId)
+            ->execute();
+    }
 }

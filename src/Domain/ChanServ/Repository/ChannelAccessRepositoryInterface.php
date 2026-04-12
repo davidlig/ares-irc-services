@@ -30,4 +30,9 @@ interface ChannelAccessRepositoryInterface
      * Delete all access entries for a nick (used when nick is dropped).
      */
     public function deleteByNickId(int $nickId): void;
+
+    /**
+     * Delete all access entries for a channel and return the number of deleted entries.
+     */
+    public function deleteByChannelId(int $channelId): int;
 }
