@@ -44,6 +44,8 @@ info:
   suspended_reason: "  \x0314Razón\x03             : %reason%"
   suspended_until:  "  \x0314Hasta\x03             : %date%"
   suspended_permanent: "  \x0314Hasta\x03             : Permanente"
+  forbidden_status:  "  \x0314Estado\x03            : \x0304Prohibido\x03"
+  forbidden_reason:  "  \x0314Razón\x03             : %reason%"
 
 help:
   syntax:           "HELP [comando [sub-opción]]"
@@ -352,6 +354,22 @@ debug_channel:
 permissions:
   chanserv.drop: "Eliminar un canal registrado (DROP)"
   chanserv.suspend: "Suspender o quitar la suspensión de un canal (SUSPEND/UNSUSPEND)"
+  chanserv.forbid: "Prohibir o deshabilitar la prohibición de un canal (FORBID/UNFORBID)"
+
+forbid:
+  syntax:           "FORBID <#canal> <razón>"
+  short:             "Prohibir un canal para que no pueda ser usado."
+  help:              "Previene que un canal sea usado por cualquiera.\nSi el canal está registrado, será eliminado primero.\nTodos los usuarios en el canal serán expulsados y el canal será bloqueado.\nEste comando requiere permiso de IRCop: chanserv.forbid"
+  reason_required:  "\x0304✗\x03 Debes especificar una razón."
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha sido prohibido."
+  updated:          "\x0303✔\x03 La razón de prohibición del canal \x02%channel%\x02 ha sido actualizada."
+
+unforbid:
+  syntax:           "UNFORBID <#canal>"
+  short:             "Quitar la prohibición de un canal."
+  help:              "Quita la prohibición de un canal, permitiendo que sea registrado nuevamente.\nEste comando requiere permiso de IRCop: chanserv.forbid"
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ya no está prohibido."
+  not_forbidden:    "\x0304✗\x03 El canal \x02%channel%\x02 no está prohibido."
 
 debug:
   action_message: "%operator% ejecuta el comando %command% sobre %target%. %reason%"
