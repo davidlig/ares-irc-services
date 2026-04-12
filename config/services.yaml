@@ -58,10 +58,16 @@ parameters:
     # History retention: days to keep nickname action history (0 = forever)
     nickserv.history_retention_days_default: 30
     nickserv.history_retention_days: '%env(int:default:nickserv.history_retention_days_default:NICKSERV_HISTORY_RETENTION_DAYS)%'
+    # History view: maximum entries per page in VIEW (default: 40)
+    nickserv.history_view_limit_default: 40
+    nickserv.history_view_limit: '%env(int:default:nickserv.history_view_limit_default:NICKSERV_HISTORY_VIEW_LIMIT)%'
 
     # History retention: days to keep channel action history (0 = forever)
     chanserv.history_retention_days_default: 30
     chanserv.history_retention_days: '%env(int:default:chanserv.history_retention_days_default:CHANSERV_HISTORY_RETENTION_DAYS)%'
+    # History view: maximum entries per page in VIEW (default: 40)
+    chanserv.history_view_limit_default: 40
+    chanserv.history_view_limit: '%env(int:default:chanserv.history_view_limit_default:CHANSERV_HISTORY_VIEW_LIMIT)%'
 
     # ChanServ pseudo-client
     chanserv.nick:     '%env(CHANSERV_NICK)%'
@@ -725,6 +731,7 @@ services:
             $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
             $historyService: '@App\Application\ChanServ\Service\ChannelHistoryService'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $historyViewLimit: '%chanserv.history_view_limit%'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\ForbidCommand:
@@ -1075,6 +1082,7 @@ services:
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
             $historyRepository: '@App\Domain\NickServ\Repository\NickHistoryRepositoryInterface'
             $historyService: '@App\Application\NickServ\Service\NickHistoryService'
+            $historyViewLimit: '%nickserv.history_view_limit%'
         tags: ['nickserv.command']
 
     # --- NickServ Services -------------------------------------------------------

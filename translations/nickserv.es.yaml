@@ -577,7 +577,7 @@ history:
       Usa VIEW ALL para ver el historial completo.
     header:     "\x02Historial de \x0307%nickname%\x03\x02 (mostrando %start%-%end% de %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 por %operator% — %message%"
-    extra:       "  Extra: %extra%"
+    extra:       "  \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 No hay entradas de historial para \x02%nickname%\x02."
     page_hint:   "Usa \x0303HISTORY %nickname% VIEW %next_page%\x03 para más entradas."
 

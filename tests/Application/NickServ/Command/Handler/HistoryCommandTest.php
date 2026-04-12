@@ -363,10 +363,30 @@ final class HistoryCommandTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($nick);
 
         $historyRepo = $this->createMock(NickHistoryRepositoryInterface::class);
-        $historyRepo->method('countByNickId')->willReturn(10);
+        $historyRepo->method('countByNickId')->willReturn(100);
         $historyRepo->expects(self::once())
             ->method('findByNickId')
-            ->with(1, 3, 3);
+            ->with(1, 5, 5);
+
+        $messages = [];
+        $context = $this->createContext(['TestNick', 'VIEW', '2'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
+
+        $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo), historyViewLimit: 5);
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewWithPageNumberUsesDefaultLimit(): void
+    {
+        $nick = $this->createNickWithId('TestNick', 1);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($nick);
+
+        $historyRepo = $this->createStub(NickHistoryRepositoryInterface::class);
+        $historyRepo->method('countByNickId')->willReturn(100);
+        $historyRepo->method('findByNickId')->willReturn([]);
 
         $messages = [];
         $context = $this->createContext(['TestNick', 'VIEW', '2'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
@@ -385,15 +405,15 @@ final class HistoryCommandTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($nick);
 
         $historyRepo = $this->createMock(NickHistoryRepositoryInterface::class);
-        $historyRepo->method('countByNickId')->willReturn(5);
+        $historyRepo->method('countByNickId')->willReturn(100);
         $historyRepo->expects(self::once())
             ->method('findByNickId')
-            ->with(1, 3, 0);
+            ->with(1, 5, 0);
 
         $messages = [];
         $context = $this->createContext(['TestNick', 'VIEW', '-5'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo));
+        $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo), historyViewLimit: 5);
         $cmd->execute($context);
 
         self::assertContains('history.view.header', $messages);
@@ -413,7 +433,7 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['TestNick', 'VIEW', '1'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
 
-        $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo));
+        $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo), historyViewLimit: 5);
         $cmd->execute($context);
 
         self::assertContains('history.view.page_hint', $messages);

@@ -186,6 +186,7 @@ Edit `.env.local` and configure your IRCD connection:
 | `IRC_SERVER_NAME` | FQDN Ares presents to IRCD | `services.example.com` |
 | `IRC_PROTOCOL` | Protocol driver | `unreal` or `inspircd` |
 | `CHANSERV_HISTORY_RETENTION_DAYS` | Days to retain channel history (0 = forever) | `30` |
+| `CHANSERV_HISTORY_VIEW_LIMIT` | Max history entries per page in VIEW | `40` |
 
 After editing `.env.local`:
 
@@ -219,7 +220,7 @@ HISTORY <channel> DEL <id>       — Delete a specific history entry
 HISTORY <channel> CLEAR          — Remove all history entries for a channel
 ```
 
-Retention is controlled by the `CHANSERV_HISTORY_RETENTION_DAYS` environment variable (default: 30 days; set to `0` to keep entries forever).
+Retention is controlled by the `CHANSERV_HISTORY_RETENTION_DAYS` environment variable (default: 30 days; set to `0` to keep entries forever). Pagination is controlled by `CHANSERV_HISTORY_VIEW_LIMIT` (default: 40 entries per page).
 
 ---
 

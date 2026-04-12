@@ -426,17 +426,43 @@ final class HistoryCommandTest extends TestCase
     }
 
     #[Test]
-    public function executeViewWithPageNumber(): void
+    public function executeWithPageNumber(): void
     {
         $channel = $this->createChannelWithId('#test', 1);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
-        $historyRepo->method('countByChannelId')->willReturn(10);
+        $historyRepo->method('countByChannelId')->willReturn(100);
         $historyRepo->expects(self::once())
             ->method('findByChannelId')
-            ->with(1, 3, 3);
+            ->with(1, 5, 5);
+
+        $messages = [];
+        $context = $this->createContext(['#test', 'VIEW', '2'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
+
+        $cmd = new HistoryCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            historyViewLimit: 5,
+        );
+        $cmd->execute($context);
+
+        self::assertContains('history.view.header', $messages);
+    }
+
+    #[Test]
+    public function executeViewWithPageNumberUsesDefaultLimit(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
+        $historyRepo->method('countByChannelId')->willReturn(100);
+        $historyRepo->method('findByChannelId')->willReturn([]);
 
         $messages = [];
         $context = $this->createContext(['#test', 'VIEW', '2'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
@@ -455,15 +481,21 @@ final class HistoryCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
 
         $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
-        $historyRepo->method('countByChannelId')->willReturn(5);
+        $historyRepo->method('countByChannelId')->willReturn(100);
         $historyRepo->expects(self::once())
             ->method('findByChannelId')
-            ->with(1, 3, 0);
+            ->with(1, 5, 0);
 
         $messages = [];
         $context = $this->createContext(['#test', 'VIEW', '-5'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
-        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd = new HistoryCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            historyViewLimit: 5,
+        );
         $cmd->execute($context);
 
         self::assertContains('history.view.header', $messages);
@@ -483,7 +515,13 @@ final class HistoryCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['#test', 'VIEW', '1'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
-        $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
+        $cmd = new HistoryCommand(
+            $channelRepo,
+            $historyRepo,
+            new ChannelHistoryService($historyRepo),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            historyViewLimit: 5,
+        );
         $cmd->execute($context);
 
         self::assertContains('history.view.page_hint', $messages);

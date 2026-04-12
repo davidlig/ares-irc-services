@@ -30,14 +30,13 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
 
     private const string ACTION_CLEAR = 'CLEAR';
 
-    private const int VIEW_LIMIT = 3;
-
     private ?IrcopAuditData $auditData = null;
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickHistoryRepositoryInterface $historyRepository,
         private readonly NickHistoryService $historyService,
+        private readonly int $historyViewLimit = 40,
     ) {
     }
 
@@ -227,15 +226,15 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
             return;
         }
 
-        $limit = $showAll ? null : self::VIEW_LIMIT;
-        $offset = $showAll ? 0 : ((int) $page - 1) * self::VIEW_LIMIT;
+        $limit = $showAll ? null : $this->historyViewLimit;
+        $offset = $showAll ? 0 : ((int) $page - 1) * $this->historyViewLimit;
 
         $entries = $this->historyRepository->findByNickId($nickId, $limit, $offset);
 
-        $totalPages = $showAll ? 1 : (int) ceil($total / self::VIEW_LIMIT);
+        $totalPages = $showAll ? 1 : (int) ceil($total / $this->historyViewLimit);
 
-        $start = $showAll ? 1 : ((int) $page - 1) * self::VIEW_LIMIT + 1;
-        $end = $showAll ? $total : min((int) $page * self::VIEW_LIMIT, $total);
+        $start = $showAll ? 1 : ((int) $page - 1) * $this->historyViewLimit + 1;
+        $end = $showAll ? $total : min((int) $page * $this->historyViewLimit, $total);
 
         $context->reply('history.view.header', [
             '%nickname%' => $targetNick,

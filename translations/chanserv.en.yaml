@@ -447,7 +447,7 @@ history:
     short:      "View channel action history."
     header:     "\x02History for \x0307%channel%\x03\x02 (showing %start%-%end% of %total%):"
     entry:       "#%id% [%date%] \x0303%action%\x03 by %operator% — %message%"
-    extra:       "  Extra: %extra%"
+    extra:       "  \x0307→\x03 %extra%"
     no_entries:  "\x0307ℹ\x03 No history entries found for \x02%channel%\x02."
     page_hint:   "Use \x0303HISTORY %channel% VIEW %next_page%\x03 for more entries."
 
