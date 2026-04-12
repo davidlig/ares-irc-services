@@ -10,13 +10,13 @@ use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\SetFounderHandler;
-use App\Application\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -42,9 +42,10 @@ final class SetFounderHandlerTest extends TestCase
         array $args,
         string $senderNick = 'Founder',
         bool $isLevelFounder = false,
+        string $ipBase64 = 'ip',
     ): ChanServContext {
         return new ChanServContext(
-            new SenderView('UID1', $senderNick, 'i', 'h', 'c', 'ip'),
+            new SenderView('UID1', $senderNick, 'i', 'h', 'c', $ipBase64),
             null,
             'SET',
             $args,
@@ -461,6 +462,124 @@ final class SetFounderHandlerTest extends TestCase
         self::assertInstanceOf(ChannelFounderChangedEvent::class, $dispatched);
         self::assertSame(['set.founder.updated'], $messages);
         self::assertCount(1, $channelNotices);
+    }
+
+    #[Test]
+    public function validTokenWithWildcardIpDispatchesEventWithStarIp(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $newAccount->method('getNickname')->willReturn('NewFounder');
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::atLeastOnce())->method('getId')->willReturn(1);
+        $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
+        $channel->expects(self::atLeastOnce())->method('getFounderNickId')->willReturn(10);
+        $channel->expects(self::once())->method('changeFounder')->with(20);
+        $channel->expects(self::atLeastOnce())->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+        $existingAccess = $this->createStub(ChannelAccess::class);
+        $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepo->expects(self::once())->method('findByChannelAndNick')->with(1, 20)->willReturn($existingAccess);
+        $accessRepo->expects(self::once())->method('remove')->with($existingAccess);
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
+        $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
+        $registry = new FounderChangeTokenRegistry();
+        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $dispatchedIp = '';
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+            $dispatchedIp = $e->performedByIp;
+
+            return $e;
+        });
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (): void {
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $eventDispatcher,
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder', 'valid-token'], ipBase64: '*'),
+            $channel,
+            'NewFounder',
+        );
+
+        self::assertSame('*', $dispatchedIp);
+    }
+
+    #[Test]
+    public function validTokenWithInvalidBase64IpDispatchesEventWithRawIp(): void
+    {
+        $newAccount = $this->createStub(RegisteredNick::class);
+        $newAccount->method('getStatus')->willReturn(NickStatus::Registered);
+        $newAccount->method('getId')->willReturn(20);
+        $newAccount->method('getNickname')->willReturn('NewFounder');
+        $currentFounder = $this->createStub(RegisteredNick::class);
+        $currentFounder->method('getEmail')->willReturn('founder@example.com');
+        $channel = $this->createMock(RegisteredChannel::class);
+        $channel->expects(self::atLeastOnce())->method('getId')->willReturn(1);
+        $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
+        $channel->expects(self::atLeastOnce())->method('getFounderNickId')->willReturn(10);
+        $channel->expects(self::once())->method('changeFounder')->with(20);
+        $channel->expects(self::atLeastOnce())->method('getSuccessorNickId')->willReturn(null);
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('save')->with($channel);
+        $existingAccess = $this->createStub(ChannelAccess::class);
+        $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
+        $accessRepo->expects(self::once())->method('findByChannelAndNick')->with(1, 20)->willReturn($existingAccess);
+        $accessRepo->expects(self::once())->method('remove')->with($existingAccess);
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
+        $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
+        $registry = new FounderChangeTokenRegistry();
+        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $dispatchedIp = '';
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
+            $dispatchedIp = $e->performedByIp;
+
+            return $e;
+        });
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (): void {
+        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $handler = new SetFounderHandler(
+            $channelRepo,
+            $accessRepo,
+            $nickRepo,
+            $registry,
+            $eventDispatcher,
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+        );
+        $handler->handle(
+            $this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder', 'valid-token'], ipBase64: '!!!invalid!!!'),
+            $channel,
+            'NewFounder',
+        );
+
+        self::assertSame('!!!invalid!!!', $dispatchedIp);
     }
 
     #[Test]

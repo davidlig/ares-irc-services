@@ -6,15 +6,20 @@ namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelSuccessorChangedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+
+use function sprintf;
 
 final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -22,8 +27,25 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
     {
         $nickname = trim($value);
         if ('' === $nickname) {
+            $oldSuccessorNickId = $channel->getSuccessorNickId();
             $channel->assignSuccessor(null);
             $this->channelRepository->save($channel);
+
+            $ip = $this->decodeIp($context->sender->ipBase64);
+            $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+            $performedByNickId = $context->senderAccount?->getId();
+
+            $this->eventDispatcher->dispatch(new ChannelSuccessorChangedEvent(
+                channelId: $channel->getId(),
+                channelName: $channel->getName(),
+                oldSuccessorNickId: $oldSuccessorNickId,
+                newSuccessorNickId: null,
+                performedBy: $context->sender->nick,
+                performedByNickId: $performedByNickId,
+                performedByIp: $ip,
+                performedByHost: $host,
+            ));
+
             $context->reply('set.successor.cleared');
             $notice = $context->trans('set.successor.notice_channel_cleared', ['%from%' => $context->sender->nick]);
             $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
@@ -53,13 +75,47 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
             return;
         }
 
+        $oldSuccessorNickId = $channel->getSuccessorNickId();
         $channel->assignSuccessor($account->getId());
         $this->channelRepository->save($channel);
+
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new ChannelSuccessorChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channel->getName(),
+            oldSuccessorNickId: $oldSuccessorNickId,
+            newSuccessorNickId: $account->getId(),
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $context->reply('set.successor.updated', ['%nickname%' => $nickname]);
         $notice = $context->trans('set.successor.notice_channel', [
             '%from%' => $context->sender->nick,
             '%nickname%' => $nickname,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }

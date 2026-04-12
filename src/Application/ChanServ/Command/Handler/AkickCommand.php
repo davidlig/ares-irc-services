@@ -13,6 +13,7 @@ use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Entity\ChannelAkick;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelAkickChangedEvent;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
@@ -21,6 +22,7 @@ use App\Domain\IRC\ValueObject\UserMask;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateInterval;
 use DateTimeImmutable;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
@@ -49,6 +51,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         private ChannelAccessRepositoryInterface $accessRepository,
         private ChanServAccessHelper $accessHelper,
         private ChannelLookupPort $channelLookup,
+        private EventDispatcherInterface $eventDispatcher,
         private ?BurstCompletePort $burstCompletePort = null,
     ) {
     }
@@ -356,6 +359,22 @@ final readonly class AkickCommand implements ChanServCommandInterface
             }
         }
 
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new ChannelAkickChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channelName,
+            action: 'ADD',
+            mask: $mask,
+            reason: $reason,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $context->reply('akick.add.done', ['%mask%' => $mask]);
 
         $noticeReason = null === $reason ? $context->trans('akick.list.no_reason') : $reason;
@@ -396,6 +415,22 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
         $mask = $akick->getMask();
         $this->akickRepository->remove($akick);
+
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new ChannelAkickChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channelName,
+            action: 'DEL',
+            mask: $mask,
+            reason: null,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
 
         $context->reply('akick.del.done', ['%mask%' => $mask]);
 
@@ -526,5 +561,22 @@ final readonly class AkickCommand implements ChanServCommandInterface
         $creator = $this->nickRepository->findById($creatorNickId);
 
         return null !== $creator ? $creator->getNickname() : $context->trans('akick.list.unknown_creator');
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }

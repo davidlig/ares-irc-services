@@ -6,10 +6,13 @@ namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
+use App\Domain\ChanServ\Event\ChannelAccessChangedEvent;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function sprintf;
 use function strtolower;
 
 /**
@@ -24,6 +27,7 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelAccessRepositoryInterface $accessRepository,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -132,11 +136,47 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         }
 
         $this->accessRepository->remove($existing);
+
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+        $nickname = $context->sender->nick;
+
+        $this->eventDispatcher->dispatch(new ChannelAccessChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channelName,
+            action: 'DEL',
+            targetNickId: $senderAccount->getId(),
+            targetNickname: $nickname,
+            level: null,
+            performedBy: $nickname,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $context->reply('delaccess.done', ['%channel%' => $channelName]);
 
         $channelNotice = $context->trans('delaccess.notice_channel', [
             '%nickname%' => $context->sender->nick,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $channelNotice);
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }

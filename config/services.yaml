@@ -59,6 +59,10 @@ parameters:
     nickserv.history_retention_days_default: 30
     nickserv.history_retention_days: '%env(int:default:nickserv.history_retention_days_default:NICKSERV_HISTORY_RETENTION_DAYS)%'
 
+    # History retention: days to keep channel action history (0 = forever)
+    chanserv.history_retention_days_default: 30
+    chanserv.history_retention_days: '%env(int:default:chanserv.history_retention_days_default:CHANSERV_HISTORY_RETENTION_DAYS)%'
+
     # ChanServ pseudo-client
     chanserv.nick:     '%env(CHANSERV_NICK)%'
     chanserv.ident:    '%env(CHANSERV_IDENT)%'
@@ -478,6 +482,9 @@ services:
     App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface:
         class: App\Infrastructure\ChanServ\Doctrine\ChannelLevelDoctrineRepository
 
+    App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface:
+        class: App\Infrastructure\ChanServ\Doctrine\ChannelHistoryDoctrineRepository
+
     # --- MemoServ Domain --------------------------------------------------------
 
     App\Domain\MemoServ\Repository\MemoRepositoryInterface:
@@ -654,9 +661,13 @@ services:
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\AccessCommand:
+        arguments:
+            $eventDispatcher: '@event_dispatcher'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\DelaccessCommand:
+        arguments:
+            $eventDispatcher: '@event_dispatcher'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\LevelsCommand:
@@ -686,6 +697,7 @@ services:
     App\Application\ChanServ\Command\Handler\AkickCommand:
         arguments:
             $accessRepository: '@App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface'
+            $eventDispatcher: '@event_dispatcher'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\DropCommand:
@@ -705,6 +717,14 @@ services:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
             $eventDispatcher: '@event_dispatcher'
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\HistoryCommand:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
+            $historyService: '@App\Application\ChanServ\Service\ChannelHistoryService'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\ForbidCommand:
@@ -739,6 +759,10 @@ services:
             $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
             $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
+
+    App\Application\ChanServ\Service\ChannelHistoryService:
+        arguments:
+            $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
 
     App\Application\ChanServ\Maintenance\PurgeExpiredAkickTask:
         arguments:
@@ -890,6 +914,17 @@ services:
         tags: ['kernel.event_subscriber']
 
     App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
+        tags: ['kernel.event_subscriber']
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServHistorySubscriber:
+        arguments:
+            $historyService: '@App\Application\ChanServ\Service\ChannelHistoryService'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+        tags: ['kernel.event_subscriber']
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServHistoryChannelDropSubscriber:
+        arguments:
+            $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
         tags: ['kernel.event_subscriber']
 
     App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber:
@@ -1246,6 +1281,14 @@ services:
             $logger:               '@monolog.logger.maintenance'
             $intervalSeconds:      '%maintenance.interval%'
             $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
+        tags: ['maintenance.task']
+
+    App\Application\ChanServ\Maintenance\CleanupChannelHistoryTask:
+        arguments:
+            $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
+            $logger: '@monolog.logger.maintenance'
+            $intervalSeconds: '%maintenance.interval%'
+            $retentionDays: '%chanserv.history_retention_days%'
         tags: ['maintenance.task']
 
     # --- In-memory pruners (tagged for PruneMemoryRegistriesTask) -----------------

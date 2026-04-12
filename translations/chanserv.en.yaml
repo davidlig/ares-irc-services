@@ -358,6 +358,7 @@ permissions:
   chanserv.suspend: "Suspend or unsuspend a channel (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Forbid or unforbid a channel (FORBID/UNFORBID)"
   chanserv.noexpire: "Set or remove expiration protection for a channel (NOEXPIRE)"
+  chanserv.history: "View and manage channel action history (HISTORY)"
 
 noexpire:
   syntax:           "NOEXPIRE <#channel> {ON|OFF}"
@@ -401,3 +402,81 @@ debug:
   action_with_value: "%operator% executes command %command% on %target%. Option: %option%=%value%. %reason%"
   founder_action: "Level-founder action"
   prefix_reason:  "Reason: %reason%"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
+  short:            "View or manage channel action history."
+  help:             |
+    Manage the action history for a channel.
+    Only IRCops with 'chanserv.history' permission can use this command.
+
+    Subcommands:
+      ADD   — Add a manual entry to the channel's history.
+      DEL   — Delete a specific entry by ID.
+      VIEW  — View history entries (paginated, 3 per page).
+      CLEAR — Delete all history entries for the channel.
+
+    Syntax: HISTORY <#channel> {ADD|DEL|VIEW|CLEAR} [arguments]
+    Examples:
+      HISTORY #channel VIEW
+      HISTORY #channel VIEW 2
+      HISTORY #channel VIEW ALL
+      HISTORY #channel ADD Suspected takeover attempt
+      HISTORY #channel DEL 42
+      HISTORY #channel CLEAR
+  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  unknown_operator: "(unknown)"
+
+  add:
+    syntax:     "HISTORY <#channel> ADD <message>"
+    short:      "Add a manual history entry."
+    help:        |
+      Adds a manual entry to the channel's history.
+    success:    "\x0303✔\x03 History entry added for \x02%channel%\x02."
+
+  del:
+    syntax:     "HISTORY <#channel> DEL <id>"
+    short:      "Delete a history entry by ID."
+    success:    "\x0303✔\x03 History entry \x02%id%\x02 deleted."
+    not_found:  "\x0304✗\x03 History entry \x02%id%\x02 not found."
+    invalid_id: "\x0304✗\x03 Invalid entry ID: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <#channel> VIEW [PAGE|ALL]"
+    short:      "View channel action history."
+    header:     "\x02History for \x0307%channel%\x03\x02 (showing %start%-%end% of %total%):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 by %operator% — %message%"
+    extra:       "  Extra: %extra%"
+    no_entries:  "\x0307ℹ\x03 No history entries found for \x02%channel%\x02."
+    page_hint:   "Use \x0303HISTORY %channel% VIEW %next_page%\x03 for more entries."
+
+  clear:
+    syntax:     "HISTORY <#channel> CLEAR"
+    short:      "Delete all history entries for a channel."
+    success:    "\x0303✔\x03 Cleared \x02%count%\x02 history entries for \x02%channel%\x02."
+
+# --- History message translations ---
+history.message:
+  unsuspend:                  "Suspension lifted"
+  founder_changed:            "Founder changed from %old_founder% to %new_founder%"
+  successor_changed:          "Successor changed from %old_successor% to %new_successor%"
+  successor_cleared:          "Successor cleared"
+  access_add:                 "Access added for %target_nickname% (level %level%)"
+  access_del:                 "Access removed for %target_nickname%"
+  akick_add:                  "AKICK added: %mask%"
+  akick_del:                  "AKICK removed: %mask%"
+
+# --- History extra field translations ---
+history.extra:
+  duration:      "Duration: %value%"
+  expires_at:    "Expires: %value%"
+  old_founder:     "Old founder: %value%"
+  new_founder:     "New founder: %value%"
+  old_successor:   "Old successor: %value%"
+  new_successor:   "New successor: %value%"
+  target_nickname: "Target: %value%"
+  level:           "Level: %value%"
+  mask:            "Mask: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"

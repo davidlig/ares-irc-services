@@ -358,6 +358,7 @@ permissions:
   chanserv.suspend: "Suspender o quitar la suspensión de un canal (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Prohibir o deshabilitar la prohibición de un canal (FORBID/UNFORBID)"
   chanserv.noexpire: "Activar o desactivar la protección de expiración para un canal (NOEXPIRE)"
+  chanserv.history: "Ver y gestionar el historial de acciones del canal (HISTORY)"
 
 noexpire:
   syntax:           "NOEXPIRE <#canal> {ON|OFF}"
@@ -401,3 +402,81 @@ debug:
   action_with_value: "%operator% ejecuta el comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
   founder_action: "Acción level-founder"
   prefix_reason:  "Razón: %reason%"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <#canal> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Ver o gestionar el historial de acciones del canal."
+  help:             |
+    Gestiona el historial de acciones de un canal.
+    Solo los IRCops con permiso 'chanserv.history' pueden usar este comando.
+
+    Subcomandos:
+      ADD   — Añade una entrada manual al historial del canal.
+      DEL   — Elimina una entrada específica por ID.
+      VIEW  — Ver entradas del historial (paginado, 3 por página).
+      CLEAR — Elimina todas las entradas del historial del canal.
+
+    Sintaxis: HISTORY <#canal> {ADD|DEL|VIEW|CLEAR} [argumentos]
+    Ejemplos:
+      HISTORY #canal VIEW
+      HISTORY #canal VIEW 2
+      HISTORY #canal VIEW ALL
+      HISTORY #canal ADD Sospecha de intento de takeover
+      HISTORY #canal DEL 42
+      HISTORY #canal CLEAR
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
+  unknown_operator: "(desconocido)"
+
+  add:
+    syntax:     "HISTORY <#canal> ADD <mensaje>"
+    short:      "Añadir una entrada manual al historial."
+    help:        |
+      Añade una entrada manual al historial del canal.
+    success:    "\x0303✔\x03 Entrada de historial añadida para \x02%channel%\x02."
+
+  del:
+    syntax:     "HISTORY <#canal> DEL <id>"
+    short:      "Eliminar una entrada de historial por ID."
+    success:    "\x0303✔\x03 Entrada de historial \x02%id%\x02 eliminada."
+    not_found:  "\x0304✗\x03 Entrada de historial \x02%id%\x02 no encontrada."
+    invalid_id: "\x0304✗\x03 ID de entrada inválido: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <#canal> VIEW [PÁGINA|ALL]"
+    short:      "Ver historial de acciones del canal."
+    header:     "\x02Historial de \x0307%channel%\x03\x02 (mostrando %start%-%end% de %total%):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 por %operator% — %message%"
+    extra:       "  Extra: %extra%"
+    no_entries:  "\x0307ℹ\x03 No hay entradas de historial para \x02%channel%\x02."
+    page_hint:   "Usa \x0303HISTORY %channel% VIEW %next_page%\x03 para más entradas."
+
+  clear:
+    syntax:     "HISTORY <#canal> CLEAR"
+    short:      "Eliminar todas las entradas de historial de un canal."
+    success:    "\x0303✔\x03 Eliminadas \x02%count%\x02 entradas de historial para \x02%channel%\x02."
+
+# --- Historial: traducciones de mensajes ---
+history.message:
+  unsuspend:                  "Levantada la suspensión"
+  founder_changed:            "Fundador cambiado de %old_founder% a %new_founder%"
+  successor_changed:          "Sucesor cambiado de %old_successor% a %new_successor%"
+  successor_cleared:          "Sucesor eliminado"
+  access_add:                 "Acceso añadido para %target_nickname% (nivel %level%)"
+  access_del:                 "Acceso eliminado para %target_nickname%"
+  akick_add:                  "AKICK añadido: %mask%"
+  akick_del:                  "AKICK eliminado: %mask%"
+
+# --- Historial: traducciones de campos extra ---
+history.extra:
+  duration:      "Duración: %value%"
+  expires_at:    "Expira: %value%"
+  old_founder:     "Fundador anterior: %value%"
+  new_founder:     "Fundador nuevo: %value%"
+  old_successor:   "Sucesor anterior: %value%"
+  new_successor:   "Sucesor nuevo: %value%"
+  target_nickname: "Objetivo: %value%"
+  level:           "Nivel: %value%"
+  mask:            "Máscara: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"

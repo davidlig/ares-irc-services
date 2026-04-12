@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServContext;
-use App\Application\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
 use App\Application\Helper\SecureToken;
 use App\Application\Mail\Message\SendEmail;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -176,6 +176,11 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             return;
         }
 
+        $oldFounderNickId = $channel->getFounderNickId();
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
         $channel->changeFounder($newFounderNickId);
         $this->channelRepository->save($channel);
 
@@ -184,7 +189,17 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             $this->accessRepository->remove($existingAccess);
         }
 
-        $this->eventDispatcher->dispatch(new ChannelFounderChangedEvent($channel->getName()));
+        $this->eventDispatcher->dispatch(new ChannelFounderChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channel->getName(),
+            oldFounderNickId: $oldFounderNickId,
+            newFounderNickId: $newFounderNickId,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+            byOperator: false,
+        ));
 
         $newAccount = $this->nickRepository->findById($newFounderNickId);
         $newFounderNick = $newAccount?->getNickname() ?? (string) $newFounderNickId;
@@ -199,6 +214,11 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
     private function directTransfer(ChanServContext $context, RegisteredChannel $channel, int $newFounderNickId): void
     {
+        $oldFounderNickId = $channel->getFounderNickId();
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
         $channel->changeFounder($newFounderNickId);
         $this->channelRepository->save($channel);
 
@@ -207,7 +227,17 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             $this->accessRepository->remove($existingAccess);
         }
 
-        $this->eventDispatcher->dispatch(new ChannelFounderChangedEvent($channel->getName()));
+        $this->eventDispatcher->dispatch(new ChannelFounderChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channel->getName(),
+            oldFounderNickId: $oldFounderNickId,
+            newFounderNickId: $newFounderNickId,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+            byOperator: $context->isLevelFounder,
+        ));
 
         $newAccount = $this->nickRepository->findById($newFounderNickId);
         $newFounderNick = $newAccount?->getNickname() ?? (string) $newFounderNickId;
@@ -218,6 +248,23 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             '%nickname%' => $newFounderNick,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 
     private function maskEmail(string $email): string

@@ -10,12 +10,15 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelAccessChangedEvent;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
+use function sprintf;
 use function strtoupper;
 
 /**
@@ -31,6 +34,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
         private ChannelAccessRepositoryInterface $accessRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
         private ChanServAccessHelper $accessHelper,
+        private EventDispatcherInterface $eventDispatcher,
     ) {
     }
 
@@ -292,6 +296,23 @@ final readonly class AccessCommand implements ChanServCommandInterface
             $this->accessRepository->save($access);
         }
 
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new ChannelAccessChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channelName,
+            action: 'ADD',
+            targetNickId: $targetAccount->getId(),
+            targetNickname: $nickname,
+            level: $level,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $context->reply('access.add.done', ['%nickname%' => $nickname, '%level%' => (string) $level]);
         $channelNotice = $context->trans('access.add.notice_channel', [
             '%from%' => $context->sender->nick,
@@ -335,11 +356,46 @@ final readonly class AccessCommand implements ChanServCommandInterface
         }
 
         $this->accessRepository->remove($existing);
+
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new ChannelAccessChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channelName,
+            action: 'DEL',
+            targetNickId: $targetAccount->getId(),
+            targetNickname: $nickname,
+            level: null,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
         $context->reply('access.del.done', ['%nickname%' => $nickname]);
         $channelNotice = $context->trans('access.del.notice_channel', [
             '%from%' => $context->sender->nick,
             '%to%' => $nickname,
         ]);
         $context->getNotifier()->sendNoticeToChannel($channelName, $channelNotice);
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\ChanServAccessHelper;
-use App\Application\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Application\ChanServ\Event\ChannelSecureEnabledEvent;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
@@ -15,6 +14,7 @@ use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -1851,7 +1851,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#nonexistent')->willReturn(null);
         $this->rebuildSubscriber();
 
-        $this->subscriber->onChannelFounderChanged(new ChannelFounderChangedEvent('#nonexistent'));
+        $this->subscriber->onChannelFounderChanged(new ChannelFounderChangedEvent(
+            channelId: 999,
+            channelName: '#nonexistent',
+            oldFounderNickId: 1,
+            newFounderNickId: 2,
+            performedBy: 'TestOp',
+            performedByNickId: 1,
+            performedByIp: '127.0.0.1',
+            performedByHost: 'test@host',
+        ));
 
         self::assertSame([], $registry->getPendingAtStart());
     }
@@ -1869,7 +1878,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
         $this->rebuildSubscriber();
 
-        $this->subscriber->onChannelFounderChanged(new ChannelFounderChangedEvent('#test'));
+        $this->subscriber->onChannelFounderChanged(new ChannelFounderChangedEvent(
+            channelId: 1,
+            channelName: '#test',
+            oldFounderNickId: 1,
+            newFounderNickId: 2,
+            performedBy: 'TestOp',
+            performedByNickId: 1,
+            performedByIp: '127.0.0.1',
+            performedByHost: 'test@host',
+        ));
 
         $registry->snapshotPendingAtStart();
         self::assertSame(['#test'], $registry->getPendingAtStart());
@@ -2655,7 +2673,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $this->subscriber->onChannelFounderChanged(new ChannelFounderChangedEvent('#test'));
+        $this->subscriber->onChannelFounderChanged(new ChannelFounderChangedEvent(
+            channelId: 1,
+            channelName: '#test',
+            oldFounderNickId: 1,
+            newFounderNickId: 2,
+            performedBy: 'TestOp',
+            performedByNickId: 1,
+            performedByIp: '127.0.0.1',
+            performedByHost: 'test@host',
+        ));
 
         $registry->snapshotPendingAtStart();
         self::assertSame([], $registry->getPendingAtStart());
