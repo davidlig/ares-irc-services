@@ -375,4 +375,7 @@ unforbid:
 
 debug:
   action_message: "%operator% executes command %command% on %target%. %reason%"
+  action_with_option: "%operator% executes command %command% on %target%. Option: %option%. %reason%"
+  action_with_value: "%operator% executes command %command% on %target%. Option: %option%=%value%. %reason%"
+  founder_action: "Level-founder action"
   prefix_reason:  "Reason: %reason%"
