@@ -19,6 +19,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(UnsuspendExpiredChannelsTask::class)]
 final class UnsuspendExpiredChannelsTaskTest extends TestCase
 {
+    private const string SERVER_NAME = 'test-server.example.com';
+
     #[Test]
     public function getNameReturnsExpectedValue(): void
     {
@@ -26,6 +28,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             new NullLogger(),
+            self::SERVER_NAME,
             3600,
         );
 
@@ -39,6 +42,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             new NullLogger(),
+            self::SERVER_NAME,
             7200,
         );
 
@@ -52,6 +56,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
             new NullLogger(),
+            self::SERVER_NAME,
             3600,
         );
 
@@ -81,6 +86,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             $channelRepo,
             $eventDispatcher,
             new NullLogger(),
+            self::SERVER_NAME,
             3600,
         );
         $task->run();
@@ -102,6 +108,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             $channelRepo,
             $eventDispatcher,
             new NullLogger(),
+            self::SERVER_NAME,
             3600,
         );
         $task->run();

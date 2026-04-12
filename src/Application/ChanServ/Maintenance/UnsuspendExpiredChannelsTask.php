@@ -24,6 +24,7 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
         private RegisteredChannelRepositoryInterface $channelRepository,
         private EventDispatcherInterface $eventDispatcher,
         private LoggerInterface $logger,
+        private readonly string $serverName,
         private readonly int $intervalSeconds,
     ) {
     }
@@ -59,7 +60,7 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
                 channelId: $channelId,
                 channelName: $channelName,
                 channelNameLower: $channelNameLower,
-                performedBy: '*',
+                performedBy: $this->serverName,
                 performedByNickId: null,
                 performedByIp: '*',
                 performedByHost: '*',

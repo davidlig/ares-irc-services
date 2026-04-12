@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\NickServ\Maintenance;
 
 use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
@@ -14,7 +15,9 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
+        private ServiceDebugNotifierInterface $debugNotifier,
         private LoggerInterface $logger,
+        private readonly string $serverName,
         private readonly int $intervalSeconds,
     ) {
     }
@@ -45,8 +48,14 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
             $nick->unsuspend();
             $this->nickRepository->save($nick);
 
+            $this->debugNotifier->log(
+                operator: $this->serverName,
+                command: 'UNSUSPEND',
+                target: $nickname,
+            );
+
             $this->logger->info(sprintf(
-                'Maintenance [%s]: auto-un suspended nick %s (id %d).',
+                'Maintenance [%s]: auto-unsuspended nick %s (id %d).',
                 $this->getName(),
                 $nickname,
                 $nickId,

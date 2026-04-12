@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\ChanServ\Maintenance;
 
 use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
@@ -20,7 +21,9 @@ final readonly class PurgeExpiredAkickTask implements MaintenanceTaskInterface
 {
     public function __construct(
         private ChannelAkickRepositoryInterface $akickRepository,
+        private ServiceDebugNotifierInterface $debugNotifier,
         private LoggerInterface $logger,
+        private readonly string $serverName,
         private readonly int $intervalSeconds,
     ) {
     }
@@ -50,6 +53,13 @@ final readonly class PurgeExpiredAkickTask implements MaintenanceTaskInterface
             $akickId = $akick->getId();
 
             $this->akickRepository->remove($akick);
+
+            $this->debugNotifier->log(
+                operator: $this->serverName,
+                command: 'AKICK DEL',
+                target: $mask,
+                reason: 'expired',
+            );
 
             $this->logger->info(sprintf(
                 'Maintenance [%s]: removed expired AKICK %s (id %d) from channel %d.',

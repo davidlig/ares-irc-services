@@ -717,20 +717,27 @@ services:
     App\Application\ChanServ\Service\ChannelSuspensionService:
         arguments:
             $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $notifier: '@App\Application\ChanServ\Command\ChanServNotifierInterface'
             $channelLookup: '@App\Application\Port\ChannelLookupPort'
             $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
+            $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
 
     App\Application\ChanServ\Maintenance\PurgeExpiredAkickTask:
         arguments:
-            $intervalSeconds: '%maintenance.purge_expired_akick_interval%'
+            $akickRepository: '@App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface'
+            $debugNotifier: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
+            $serverName: '%irc.server_name%'
             $logger: '@monolog.logger.irc'
+            $intervalSeconds: '%maintenance.purge_expired_akick_interval%'
         tags: ['maintenance.task']
 
     App\Application\ChanServ\Maintenance\UnsuspendExpiredChannelsTask:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
             $eventDispatcher: '@event_dispatcher'
+            $serverName: '%irc.server_name%'
             $intervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
         tags: ['maintenance.task']
@@ -752,6 +759,9 @@ services:
             $channelLookup: '@App\Application\Port\ChannelLookupPort'
             $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
             $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $debugNotifier: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
+            $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
@@ -1146,6 +1156,8 @@ services:
     App\Application\NickServ\Maintenance\UnsuspendExpiredSuspensionsTask:
         arguments:
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $debugNotifier: '@App\Infrastructure\NickServ\Service\NickServDebugNotifier'
+            $serverName: '%irc.server_name%'
             $logger: '@monolog.logger.maintenance'
             $intervalSeconds: '%maintenance.interval%'
         tags: ['maintenance.task']
@@ -1398,6 +1410,8 @@ services:
     App\Application\OperServ\Maintenance\PurgeExpiredGlinesTask:
         arguments:
             $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
+            $debugNotifier: '@App\Infrastructure\OperServ\Service\OperServDebugNotifier'
+            $serverName: '%irc.server_name%'
             $logger: '@monolog.logger.maintenance'
             $intervalSeconds: '%maintenance.purge_expired_glines_interval%'
         tags: ['maintenance.task']
