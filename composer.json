@@ -2,7 +2,7 @@
     "name": "davidlig/ares-irc-services",
     "description": "Modular IRC services daemon. PHP 8.4, Symfony 7.4, Clean Architecture.",
     "type": "project",
-    "license": "CC-BY-NC-4.0",
+    "license": "AGPL-3.0-or-later",
     "keywords": ["irc", "services", "php", "development"],
     "minimum-stability": "stable",
     "prefer-stable": true,

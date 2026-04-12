@@ -196,34 +196,6 @@ make restart
 
 ---
 
-## ChanServ HISTORY
-
-ChanServ records an audit trail of sensitive channel operations. IRCop users with the `chanserv.history` permission can view, add, delete, and clear history entries.
-
-### Automatically recorded actions
-
-| Action | Trigger |
-|--------|---------|
-| `SET_FOUNDER` | Founder change via SET FOUNDER |
-| `SET_SUCCESSOR` / `CLEAR_SUCCESSOR` | Successor change via SET SUCCESSOR |
-| `ACCESS_ADD` / `ACCESS_DEL` | Access list modifications via ACCESS ADD/DEL, DELACCESS |
-| `AKICK_ADD` / `AKICK_DEL` | AKICK list modifications via AKICK ADD/DEL |
-| `SUSPEND` / `UNSUSPEND` | Channel suspend/unsuspend |
-| `ADD` / `DEL` / `CLEAR` | Manual history entries by IRCop users |
-
-### Syntax
-
-```
-HISTORY <channel> VIEW [page]   — View history entries (paginated)
-HISTORY <channel> ADD <text>     — Add a manual note to the channel history
-HISTORY <channel> DEL <id>       — Delete a specific history entry
-HISTORY <channel> CLEAR          — Remove all history entries for a channel
-```
-
-Retention is controlled by the `CHANSERV_HISTORY_RETENTION_DAYS` environment variable (default: 30 days; set to `0` to keep entries forever). Pagination is controlled by `CHANSERV_HISTORY_VIEW_LIMIT` (default: 40 entries per page).
-
----
-
 ## License
 
-Proprietary — All rights reserved.
+This project is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). See the [LICENSE](LICENSE) file for details.
