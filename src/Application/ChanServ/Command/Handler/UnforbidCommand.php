@@ -81,6 +81,11 @@ final class UnforbidCommand implements ChanServCommandInterface, AuditableComman
         return true;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (null === $context->sender) {

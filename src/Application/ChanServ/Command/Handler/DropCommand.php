@@ -83,6 +83,11 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
         return false;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
     public function getHelpParams(): array
     {
         return [];

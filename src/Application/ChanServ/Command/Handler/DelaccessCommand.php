@@ -88,6 +88,11 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         return false;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);

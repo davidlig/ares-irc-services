@@ -86,6 +86,11 @@ final class UnsuspendCommand implements ChanServCommandInterface, AuditableComma
         return false;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (null === $context->sender) {

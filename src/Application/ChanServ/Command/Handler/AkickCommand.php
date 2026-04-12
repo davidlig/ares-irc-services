@@ -118,6 +118,11 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return false;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return true;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);

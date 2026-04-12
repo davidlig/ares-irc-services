@@ -48,5 +48,13 @@ interface ChanServCommandInterface
      */
     public function allowsForbiddenChannel(): bool;
 
+    /**
+     * Whether this command uses isLevelFounder to bypass channel-level access checks.
+     * Commands that return true will be audited as level_founder actions
+     * when executed by an IRCop with chanserv.level_founder permission on channels
+     * they are not the real founder of.
+     */
+    public function usesLevelFounder(): bool;
+
     public function execute(ChanServContext $context): void;
 }

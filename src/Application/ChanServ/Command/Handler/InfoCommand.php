@@ -86,6 +86,11 @@ final readonly class InfoCommand implements ChanServCommandInterface
         return true;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);

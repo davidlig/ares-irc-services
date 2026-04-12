@@ -90,6 +90,11 @@ final readonly class HelpCommand implements ChanServCommandInterface
         return false;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (empty($context->args)) {

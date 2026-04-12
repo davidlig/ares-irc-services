@@ -88,6 +88,11 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
         return false;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return true;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (!$context->getChannelModeSupport()->hasHalfOp()) {

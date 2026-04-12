@@ -93,6 +93,11 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
         return false;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (null === $context->sender) {

@@ -87,6 +87,11 @@ final class ForbidCommand implements ChanServCommandInterface, AuditableCommandI
         return true;
     }
 
+    public function usesLevelFounder(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (null === $context->sender) {
