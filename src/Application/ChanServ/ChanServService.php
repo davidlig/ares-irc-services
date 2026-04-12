@@ -30,7 +30,10 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
+use function array_slice;
+use function base64_decode;
 use function count;
+use function inet_ntop;
 use function sprintf;
 
 use const PREG_SPLIT_NO_EMPTY;
@@ -205,6 +208,33 @@ final readonly class ChanServService implements ChanServDispatchPort
                     ));
                 }
             }
+
+            if ($isLevelFounder && null !== $account && $handler->usesLevelFounder()) {
+                $auditChannelName = $context->getChannelNameArg(0);
+                if (null !== $auditChannelName) {
+                    $auditChannel = $this->channelRepository->findByChannelName($auditChannelName);
+                    if (null !== $auditChannel && !$auditChannel->isFounder($account->getId())) {
+                        $auditExtra = ['founder_action' => true];
+                        if (count($args) >= 2) {
+                            $auditExtra['option'] = strtoupper($args[1]);
+                        }
+                        if (count($args) >= 3) {
+                            $auditExtra['value'] = implode(' ', array_slice($args, 2));
+                        }
+
+                        $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                            serviceName: $this->notifier->getServiceKey(),
+                            operatorNick: $sender->nick,
+                            commandName: $cmdName,
+                            permission: ChanServPermission::LEVEL_FOUNDER,
+                            target: $auditChannelName,
+                            targetHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
+                            targetIp: $this->decodeIp($sender->ipBase64),
+                            extra: $auditExtra,
+                        ));
+                    }
+                }
+            }
         } catch (ChannelNotRegisteredException|ChannelAlreadyRegisteredException|InsufficientAccessException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -216,5 +246,22 @@ final readonly class ChanServService implements ChanServDispatchPort
         } finally {
             $this->authorizationContext->clear();
         }
+    }
+
+    private function decodeIp(string $ipBase64): string
+    {
+        if ('' === $ipBase64 || '*' === $ipBase64) {
+            return '*';
+        }
+
+        $binary = base64_decode($ipBase64, true);
+
+        if (false === $binary) {
+            return $ipBase64;
+        }
+
+        $ip = inet_ntop($binary);
+
+        return false !== $ip ? $ip : $ipBase64;
     }
 }
