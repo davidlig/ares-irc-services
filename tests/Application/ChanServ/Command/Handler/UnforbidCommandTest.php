@@ -114,6 +114,14 @@ final class UnforbidCommandTest extends TestCase
     }
 
     #[Test]
+    public function allowsForbiddenChannelReturnsTrue(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertTrue($cmd->allowsForbiddenChannel());
+    }
+
+    #[Test]
     public function executeWithNullSenderReturnsEarly(): void
     {
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);

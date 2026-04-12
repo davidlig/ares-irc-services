@@ -119,6 +119,14 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
+    #[Test]
     public function executeWithInvalidChannelRepliesInvalidChannel(): void
     {
         $sender = $this->createSender();

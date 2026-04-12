@@ -494,6 +494,16 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function allowsForbiddenChannelReturnsTrue(): void
+    {
+        $cmd = new InfoCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+        );
+        self::assertTrue($cmd->allowsForbiddenChannel());
+    }
+
+    #[Test]
     public function showsForbiddenStatusForForbiddenChannel(): void
     {
         $channel = RegisteredChannel::createForbidden('#Test', 'Spam channel');

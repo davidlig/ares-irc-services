@@ -81,6 +81,12 @@ final class ForbidCommand implements ChanServCommandInterface, AuditableCommandI
         return true;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return true;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (null === $context->sender) {
