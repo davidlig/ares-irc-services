@@ -52,8 +52,8 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
             return;
         }
 
-        $storedTopic = $registered->getTopic();
-        if ($registered->isTopicLock() && null !== $storedTopic) {
+        if ($registered->isTopicLock()) {
+            $storedTopic = $registered->getTopic();
             $this->channelServiceActions->setChannelTopic($channelName, $storedTopic);
             $this->logger->debug('ChanServ TOPICLOCK: reapplied stored topic', ['channel' => $channelName]);
 

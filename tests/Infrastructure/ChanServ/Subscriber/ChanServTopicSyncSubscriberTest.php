@@ -117,7 +117,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function doesNothingWhenTopicLockEnabledButNoStoredTopic(): void
+    public function clearsTopicWhenTopicLockEnabledButNoStoredTopic(): void
     {
         $registered = $this->createMock(RegisteredChannel::class);
         $registered->expects(self::atLeastOnce())->method('isTopicLock')->willReturn(true);
@@ -130,9 +130,10 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->willReturn($registered);
 
         $this->channelServiceActions
-            ->expects(self::never())
-            ->method('setChannelTopic');
-        $this->syncCompletedRegistry->expects(self::atLeastOnce())->method('isSyncCompleted')->with('#test')->willReturn(false);
+            ->expects(self::once())
+            ->method('setChannelTopic')
+            ->with('#test', null);
+        $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
         $this->logger->expects(self::never())->method('warning');
 
         $event = new FtopicReceivedEvent(
