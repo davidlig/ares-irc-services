@@ -74,6 +74,8 @@ class RegisteredChannel
 
     private ?string $forbiddenReason = null;
 
+    private bool $noExpire = false;
+
     private ?DateTimeImmutable $lastUsedAt = null;
 
     private DateTimeImmutable $createdAt;
@@ -346,5 +348,15 @@ class RegisteredChannel
         }
 
         $this->forbiddenReason = $reason;
+    }
+
+    public function isNoExpire(): bool
+    {
+        return $this->noExpire;
+    }
+
+    public function setNoExpire(bool $noExpire): void
+    {
+        $this->noExpire = $noExpire;
     }
 }

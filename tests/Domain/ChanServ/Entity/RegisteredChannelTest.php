@@ -303,4 +303,25 @@ final class RegisteredChannelTest extends TestCase
 
         self::assertNull($channel->getForbiddenReason());
     }
+
+    #[Test]
+    public function isNoExpireReturnsFalseByDefault(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        self::assertFalse($channel->isNoExpire());
+    }
+
+    #[Test]
+    public function setNoExpireSetsValue(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->setNoExpire(true);
+
+        self::assertTrue($channel->isNoExpire());
+
+        $channel->setNoExpire(false);
+
+        self::assertFalse($channel->isNoExpire());
+    }
 }

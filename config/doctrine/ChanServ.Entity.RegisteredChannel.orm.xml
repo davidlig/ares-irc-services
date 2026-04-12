@@ -37,5 +37,6 @@
         <field name="suspendedReason" type="string" length="255" nullable="true" column="suspended_reason"/>
         <field name="suspendedUntil" type="datetime_immutable" nullable="true" column="suspended_until"/>
         <field name="forbiddenReason" type="string" length="255" nullable="true" column="forbidden_reason"/>
+        <field name="noExpire" type="boolean" column="no_expire"/>
     </entity>
 </doctrine-mapping>

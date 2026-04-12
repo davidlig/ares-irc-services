@@ -236,6 +236,43 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
     }
 
     #[Test]
+    public function findRegisteredInactiveSinceExcludesNoExpireChannels(): void
+    {
+        $noExpireChannel = RegisteredChannel::register('#protected', 1, 'Protected');
+        $this->repository->save($noExpireChannel);
+        $this->entityManager->flush();
+        $this->entityManager->createQueryBuilder()
+            ->update(RegisteredChannel::class, 'c')
+            ->set('c.lastUsedAt', ':date')
+            ->set('c.noExpire', ':noExpire')
+            ->where('c.nameLower = :name')
+            ->setParameter('date', new DateTimeImmutable('-60 days'))
+            ->setParameter('noExpire', true)
+            ->setParameter('name', '#protected')
+            ->getQuery()
+            ->execute();
+        $this->entityManager->clear();
+
+        $normalChannel = RegisteredChannel::register('#normal', 2, 'Normal');
+        $this->repository->save($normalChannel);
+        $this->entityManager->flush();
+        $this->entityManager->createQueryBuilder()
+            ->update(RegisteredChannel::class, 'c')
+            ->set('c.lastUsedAt', ':date')
+            ->where('c.nameLower = :name')
+            ->setParameter('date', new DateTimeImmutable('-60 days'))
+            ->setParameter('name', '#normal')
+            ->getQuery()
+            ->execute();
+        $this->entityManager->clear();
+
+        $inactive = $this->repository->findRegisteredInactiveSince(new DateTimeImmutable('-30 days'));
+
+        self::assertCount(1, $inactive);
+        self::assertSame('#normal', $inactive[0]->getName());
+    }
+
+    #[Test]
     public function clearSuccessorNickIdSetsSuccessorToNull(): void
     {
         $channel1 = RegisteredChannel::register('#alpha', 1, 'Alpha');

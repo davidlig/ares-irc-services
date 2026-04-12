@@ -718,6 +718,11 @@ services:
             $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
         tags: ['chanserv.command']
 
+    App\Application\ChanServ\Command\Handler\NoexpireCommand:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+        tags: ['chanserv.command']
+
     App\Application\ChanServ\Service\ChanDropService:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'

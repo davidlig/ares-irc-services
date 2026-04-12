@@ -19,6 +19,7 @@ final readonly class ChanServIrcopPermission implements PermissionProviderInterf
             ChanServPermission::DROP,
             ChanServPermission::SUSPEND,
             ChanServPermission::FORBID,
+            ChanServPermission::NOEXPIRE,
             ChanServPermission::LEVEL_FOUNDER,
         ];
     }

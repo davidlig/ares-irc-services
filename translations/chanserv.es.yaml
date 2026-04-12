@@ -39,6 +39,7 @@ info:
   topic:           "  \x0314Último tema\x03       : %topic%"
   topic_set_by:    "  \x0314Tema cambiado por\x03 : %nickname%"
   options:         "  \x0314Opciones\x03          : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  no_expire:       "  \x0314Nunca Expira\x03      : Sí"
   mlock_modes:     "  \x0314Candado de modos\x03  : %modes%"
   suspended_status: "  \x0314Estado\x03            : \x0304Suspendido\x03"
   suspended_reason: "  \x0314Razón\x03             : %reason%"
@@ -283,7 +284,7 @@ akick:
   short:            "Gestionar lista de auto-kick."
   help:             "ADD <máscara> [expiración] [razón]: añadir entrada. DEL <máscara|nº>: eliminar. LIST: listar. ENFORCE <máscara>: expulsar."
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST o ENFORCE."
-  invalid_mask:     "\x0304✗\x03 Formato de máscara inválido. Usa \x02nick!usuario@host\x02 con comodines (*)."
+  invalid_mask:     "\x0304✗\x03 Formato de máscara inválido. Usa \x02nick!ident@host\x02 con comodines (*)."
   dangerous_mask:   "\x0304✗\x03 La máscara \x02%mask%\x02 es demasiado amplia. Debe contener al menos 4 caracteres alfanuméricos."
   protected_user:   "\x0304✗\x03 El nickname \x02%nickname%\x02 tiene acceso en este canal."
   max_entries:      "\x0304✗\x03 Máximo %max% entradas AKICK por canal."
@@ -356,6 +357,27 @@ permissions:
   chanserv.drop: "Eliminar un canal registrado (DROP)"
   chanserv.suspend: "Suspender o quitar la suspensión de un canal (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Prohibir o deshabilitar la prohibición de un canal (FORBID/UNFORBID)"
+  chanserv.noexpire: "Activar o desactivar la protección de expiración para un canal (NOEXPIRE)"
+
+noexpire:
+  syntax:           "NOEXPIRE <#canal> {ON|OFF}"
+  short:            "Activa o desactiva la protección de expiración para un canal."
+  help:             |
+    Controla si un canal expirará por inactividad.
+    Con ON, el canal nunca expira independientemente de su última actividad.
+    Con OFF, se aplican las reglas normales de expiración.
+
+    Solo los IRCops con permiso 'chanserv.noexpire' pueden usar este comando.
+
+    Sintaxis: NOEXPIRE <#canal> {ON|OFF}
+    Ejemplos:
+      NOEXPIRE #Importante ON
+      NOEXPIRE #Importante OFF
+  success_on:       "\x0303✔\x03 El canal \x02%channel%\x02 está ahora protegido contra expiración."
+  success_off:      "\x0303✔\x03 El canal \x02%channel%\x02 expirará normalmente."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
+  forbidden:         "\x0304✗\x03 El canal \x02%channel%\x02 está prohibido."
+  suspended:         "\x0304✗\x03 El canal \x02%channel%\x02 está suspendido."
 
 forbid:
   syntax:           "FORBID <#canal> <razón>"

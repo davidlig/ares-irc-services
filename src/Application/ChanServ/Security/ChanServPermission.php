@@ -12,5 +12,7 @@ final readonly class ChanServPermission
 
     public const string FORBID = 'chanserv.forbid';
 
+    public const string NOEXPIRE = 'chanserv.noexpire';
+
     public const string LEVEL_FOUNDER = 'chanserv.level_founder';
 }

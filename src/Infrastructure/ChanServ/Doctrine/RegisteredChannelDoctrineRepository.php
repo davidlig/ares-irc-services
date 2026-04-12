@@ -95,6 +95,7 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
         $qb->select('c')
             ->from(RegisteredChannel::class, 'c')
             ->where('COALESCE(c.lastUsedAt, c.createdAt) < :threshold')
+            ->andWhere('c.noExpire = false')
             ->setParameter('threshold', $threshold);
 
         return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);

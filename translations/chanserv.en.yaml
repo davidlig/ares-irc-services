@@ -29,23 +29,24 @@ info:
   help:             "Shows founder, registered date, successor, URL, email, description, last used, topic, and options (TOPICLOCK, MLOCK, SECURE)."
   header:          "\x02Information for channel \x0307%channel%\x03:\x02"
   footer:          "\x0314─────────────────────────────\x03"
-  founder:         "  \x0314Founder\x03      : \x02%nickname%\x02"
-  registered:      "  \x0314Registered\x03   : %date%"
-  successor:       "  \x0314Successor\x03    : \x02%nickname%\x02"
-  description:     "  \x0314Description\x03  : %desc%"
-  url:             "  \x0314URL\x03          : %url%"
-  email:           "  \x0314Email\x03        : %email%"
-  last_used:       "  \x0314Last used\x03    : %date%"
-  topic:           "  \x0314Last topic\x03   : %topic%"
-  topic_set_by:    "  \x0314Topic set by\x03 : %nickname%"
-  options:         "  \x0314Options\x03      : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
-  mlock_modes:     "  \x0314Mode lock\x03    : %modes%"
-  suspended_status: "  \x0314Status\x03       : \x0304Suspended\x03"
-  suspended_reason: "  \x0314Reason\x03       : %reason%"
-  suspended_until:  "  \x0314Ends on\x03      : %date%"
-  suspended_permanent: "  \x0314Ends on\x03      : Permanent"
-  forbidden_status:  "  \x0314Status\x03       : \x0304Forbidden\x03"
-  forbidden_reason:  "  \x0314Reason\x03       : %reason%"
+  founder:         "  \x0314Founder\x03       : \x02%nickname%\x02"
+  registered:      "  \x0314Registered\x03    : %date%"
+  successor:       "  \x0314Successor\x03     : \x02%nickname%\x02"
+  description:     "  \x0314Description\x03   : %desc%"
+  url:             "  \x0314URL\x03           : %url%"
+  email:           "  \x0314Email\x03         : %email%"
+  last_used:       "  \x0314Last used\x03     : %date%"
+  topic:           "  \x0314Last topic\x03    : %topic%"
+  topic_set_by:    "  \x0314Topic set by\x03  : %nickname%"
+  options:         "  \x0314Options\x03       : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  no_expire:       "  \x0314Never Expires\x03 : Yes"
+  mlock_modes:     "  \x0314Mode lock\x03     : %modes%"
+  suspended_status: "  \x0314Status\x03        : \x0304Suspended\x03"
+  suspended_reason: "  \x0314Reason\x03        : %reason%"
+  suspended_until:  "  \x0314Ends on\x03       : %date%"
+  suspended_permanent: "  \x0314Ends on\x03       : Permanent"
+  forbidden_status: "  \x0314Status\x03       : \x0304Forbidden\x03"
+  forbidden_reason: "  \x0314Reason\x03       : %reason%"
 
 help:
   syntax:           "HELP [command [sub-option]]"
@@ -283,7 +284,7 @@ akick:
   short:            "Manage auto-kick list."
   help:             "ADD <mask> [expiry] [reason]: add entry. DEL <mask|num>: remove. LIST: list entries. ENFORCE <mask>: kick matching users."
   unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, or ENFORCE."
-  invalid_mask:     "\x0304✗\x03 Invalid mask format. Use \x02nick!user@host\x02 with wildcards (*)."
+  invalid_mask:     "\x0304✗\x03 Invalid mask format. Use \x02nick!ident@host\x02 with wildcards (*)."
   dangerous_mask:   "\x0304✗\x03 The mask \x02%mask%\x02 is too broad. It must contain at least 4 alphanumeric characters."
   protected_user:   "\x0304✗\x03 Nickname \x02%nickname%\x02 has access in this channel."
   max_entries:      "\x0304✗\x03 Maximum %max% AKICK entries per channel."
@@ -356,6 +357,27 @@ permissions:
   chanserv.drop: "Drop a registered channel (DROP)"
   chanserv.suspend: "Suspend or unsuspend a channel (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Forbid or unforbid a channel (FORBID/UNFORBID)"
+  chanserv.noexpire: "Set or remove expiration protection for a channel (NOEXPIRE)"
+
+noexpire:
+  syntax:           "NOEXPIRE <#channel> {ON|OFF}"
+  short:            "Set or remove expiration protection for a channel."
+  help:             |
+    Controls whether a channel will expire due to inactivity.
+    When ON, the channel never expires regardless of last activity.
+    When OFF, normal expiration rules apply.
+
+    Only IRCops with 'chanserv.noexpire' permission can use this command.
+
+    Syntax: NOEXPIRE <#channel> {ON|OFF}
+    Examples:
+      NOEXPIRE #Important ON
+      NOEXPIRE #Important OFF
+  success_on:       "\x0303✔\x03 Channel \x02%channel%\x02 is now protected from expiration."
+  success_off:      "\x0303✔\x03 Channel \x02%channel%\x02 will now expire normally."
+  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  forbidden:         "\x0304✗\x03 Channel \x02%channel%\x02 is forbidden."
+  suspended:         "\x0304✗\x03 Channel \x02%channel%\x02 is suspended."
 
 forbid:
   syntax:           "FORBID <#channel> <reason>"
