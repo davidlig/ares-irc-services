@@ -1726,6 +1726,52 @@ final class DropCommandTest extends TestCase
 
 ---
 
+## ChanServ HISTORY Command
+
+The `HISTORY` command is an IRCop-only command (`chanserv.history` permission) that provides an audit trail of channel operations.
+
+### Architecture
+
+| Layer | File | Role |
+|-------|------|------|
+| Domain | `Entity/ChannelHistory.php` | Immutable history entry entity |
+| Domain | `Repository/ChannelHistoryRepositoryInterface.php` | Repository contract |
+| Domain | `Event/ChannelFounderChangedEvent.php` | Event (moved from App layer, now with richer data) |
+| Domain | `Event/ChannelSuccessorChangedEvent.php` | Event |
+| Domain | `Event/ChannelAccessChangedEvent.php` | Event |
+| Domain | `Event/ChannelAkickChangedEvent.php` | Event |
+| Application | `Command/Handler/HistoryCommand.php` | IRCop command (ADD/DEL/VIEW/CLEAR) |
+| Application | `Service/ChannelHistoryService.php` | Recording service |
+| Application | `Maintenance/CleanupChannelHistoryTask.php` | Retention cleanup task |
+| Infrastructure | `Doctrine/ChannelHistoryDoctrineRepository.php` | Doctrine implementation |
+| Infrastructure | `Subscriber/ChanServHistorySubscriber.php` | Listens to 6 events, records history |
+| Infrastructure | `Subscriber/ChanServHistoryChannelDropSubscriber.php` | Cascade cleanup on channel DROP |
+
+### Auto-recorded actions
+
+- `SET_FOUNDER` — dispatched by `SetFounderHandler`
+- `SET_SUCCESSOR` / `CLEAR_SUCCESSOR` — dispatched by `SetSuccessorHandler`
+- `ACCESS_ADD` / `ACCESS_DEL` — dispatched by `AccessCommand` and `DelaccessCommand`
+- `AKICK_ADD` / `AKICK_DEL` — dispatched by `AkickCommand`
+- `SUSPEND` / `UNSUSPEND` — dispatched by existing suspend/unsuspend handlers
+
+### IP decoding
+
+All event-dispatching handlers include a `decodeIp()` method that converts base64-encoded IPs to human-readable format:
+- Empty string or `*` → `*`
+- Invalid base64 → raw string as-is
+- Valid base64 IPv4/IPv6 → decoded IP address
+
+### Retention
+
+Configured via `CHANSERV_HISTORY_RETENTION_DAYS` env var (default: 30). Set to `0` to keep forever. `CleanupChannelHistoryTask` runs as a maintenance task.
+
+### Data integrity
+
+`ChanServHistoryChannelDropSubscriber` listens to `ChannelDropEvent` and cascades all history when a channel is dropped — no orphaned records.
+
+---
+
 ## Related Documentation
 
 - **Core vs Services Architecture**: `.agents/services/README.md`

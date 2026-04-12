@@ -185,6 +185,7 @@ Edit `.env.local` and configure your IRCD connection:
 | `IRC_LINK_PASSWORD` | Link password from IRCD config | `your-secret-password` |
 | `IRC_SERVER_NAME` | FQDN Ares presents to IRCD | `services.example.com` |
 | `IRC_PROTOCOL` | Protocol driver | `unreal` or `inspircd` |
+| `CHANSERV_HISTORY_RETENTION_DAYS` | Days to retain channel history (0 = forever) | `30` |
 
 After editing `.env.local`:
 
@@ -192,34 +193,33 @@ After editing `.env.local`:
 make restart
 ```
 
-### Available Make Commands
+---
 
-| Command | Description |
-|---------|-------------|
-| `make build` | Build Docker image |
-| `make up` | Start services in background |
-| `make down` | Stop services |
-| `make restart` | Restart services |
-| `make logs` | Follow logs in real-time |
-| `make shell` | Open shell inside container |
-| `make health` | Check container health |
-| `make db-backup` | Backup database to `backups/` |
-| `make db-restore FILE=path` | Restore database from backup |
+## ChanServ HISTORY
 
-### Data Persistence
+ChanServ records an audit trail of sensitive channel operations. IRCop users with the `chanserv.history` permission can view, add, delete, and clear history entries.
 
-| Host Path | Container Path | Purpose |
-|-----------|---------------|---------|
-| `./var/data/` | `/app/var/data/` | SQLite database (`ares.db`) |
-| `./var/log/` | `/app/var/log/` | IRC service logs |
-| `.env.local` | `/app/.env.local` | Configuration |
+### Automatically recorded actions
 
-### Updating
+| Action | Trigger |
+|--------|---------|
+| `SET_FOUNDER` | Founder change via SET FOUNDER |
+| `SET_SUCCESSOR` / `CLEAR_SUCCESSOR` | Successor change via SET SUCCESSOR |
+| `ACCESS_ADD` / `ACCESS_DEL` | Access list modifications via ACCESS ADD/DEL, DELACCESS |
+| `AKICK_ADD` / `AKICK_DEL` | AKICK list modifications via AKICK ADD/DEL |
+| `SUSPEND` / `UNSUSPEND` | Channel suspend/unsuspend |
+| `ADD` / `DEL` / `CLEAR` | Manual history entries by IRCop users |
 
-```bash
-git pull origin main
-make up    # Rebuilds image with latest code
+### Syntax
+
 ```
+HISTORY <channel> VIEW [page]   — View history entries (paginated)
+HISTORY <channel> ADD <text>     — Add a manual note to the channel history
+HISTORY <channel> DEL <id>       — Delete a specific history entry
+HISTORY <channel> CLEAR          — Remove all history entries for a channel
+```
+
+Retention is controlled by the `CHANSERV_HISTORY_RETENTION_DAYS` environment variable (default: 30 days; set to `0` to keep entries forever).
 
 ---
 
