@@ -17,6 +17,8 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
 
     private const string COLOR_RESET = "\x03";
 
+    private const string PASSWORD_OPTION = 'PASSWORD';
+
     public function __construct(
         private ChanServNotifierInterface $notifier,
         private TranslatorInterface $translator,
@@ -52,7 +54,7 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
         $this->logToFile($operator, $command, $target, $targetHost, $targetIp, $reason, $extra);
 
         if ($this->isConfigured()) {
-            $this->logToChannel($operator, $command, $target, $reason);
+            $this->logToChannel($operator, $command, $target, $targetHost, $targetIp, $reason, $extra);
         }
     }
 
@@ -71,6 +73,14 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
             'target' => $target,
         ];
 
+        if (null !== $targetHost) {
+            $context['target_host'] = $targetHost;
+        }
+
+        if (null !== $targetIp) {
+            $context['target_ip'] = $targetIp;
+        }
+
         if (null !== $reason) {
             $context['reason'] = $reason;
         }
@@ -86,15 +96,48 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
         string $operator,
         string $command,
         string $target,
+        ?string $targetHost,
+        ?string $targetIp,
         ?string $reason,
+        array $extra,
     ): void {
         $coloredOperator = self::COLOR_BLUE . $operator . self::COLOR_RESET;
         $coloredCommand = self::COLOR_RED . $command . self::COLOR_RESET;
         $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
 
-        $formattedReason = '';
-        if (null !== $reason && '' !== $reason) {
-            $formattedReason = $this->translator->trans(
+        $option = $extra['option'] ?? null;
+        $value = $extra['value'] ?? null;
+        $isFounderAction = !empty($extra['founder_action']);
+
+        $translationKey = 'debug.action_message';
+        $messageParams = [
+            '%operator%' => $coloredOperator,
+            '%command%' => $coloredCommand,
+            '%target%' => $coloredTarget,
+            '%reason%' => '',
+        ];
+
+        if (null !== $option) {
+            if (self::PASSWORD_OPTION === $option) {
+                $messageParams['%option%'] = $option;
+                $translationKey = 'debug.action_with_option';
+            } elseif (null !== $value) {
+                $messageParams['%option%'] = $option;
+                $messageParams['%value%'] = $value;
+                $translationKey = 'debug.action_with_value';
+            } else {
+                $messageParams['%option%'] = $option;
+                $translationKey = 'debug.action_with_option';
+            }
+        } elseif ($isFounderAction) {
+            $messageParams['%reason%'] = $this->translator->trans(
+                'debug.prefix_reason',
+                ['%reason%' => $this->translator->trans('debug.founder_action', [], 'chanserv', $this->defaultLanguage)],
+                'chanserv',
+                $this->defaultLanguage,
+            );
+        } elseif (null !== $reason && '' !== $reason) {
+            $messageParams['%reason%'] = $this->translator->trans(
                 'debug.prefix_reason',
                 ['%reason%' => $reason],
                 'chanserv',
@@ -103,13 +146,8 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
         }
 
         $message = $this->translator->trans(
-            'debug.action_message',
-            [
-                '%operator%' => $coloredOperator,
-                '%command%' => $coloredCommand,
-                '%target%' => $coloredTarget,
-                '%reason%' => $formattedReason,
-            ],
+            $translationKey,
+            $messageParams,
             'chanserv',
             $this->defaultLanguage,
         );
