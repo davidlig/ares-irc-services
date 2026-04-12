@@ -118,6 +118,11 @@ final class ChanServCommandRegistryTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $context): void
             {
             }

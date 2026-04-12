@@ -91,6 +91,12 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);

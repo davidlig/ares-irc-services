@@ -84,6 +84,12 @@ final readonly class HelpCommand implements ChanServCommandInterface
         return true;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (empty($context->args)) {

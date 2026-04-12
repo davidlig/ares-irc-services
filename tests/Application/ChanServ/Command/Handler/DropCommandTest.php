@@ -210,6 +210,14 @@ final class DropCommandTest extends TestCase
         self::assertTrue($cmd->allowsSuspendedChannel());
     }
 
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
     private function createCommand(): DropCommand
     {
         return new DropCommand(

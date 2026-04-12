@@ -77,6 +77,12 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
         return true;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function getHelpParams(): array
     {
         return [];

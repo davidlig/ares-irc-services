@@ -82,6 +82,12 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -110,7 +116,9 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
             return;
         }
 
-        $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_VOICEDEVOICE, $channelName, 'DEVOICE');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_VOICEDEVOICE, $channelName, 'DEVOICE');
+        }
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
@@ -126,7 +134,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
             $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
         }
         $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
-        if (!$isSelfTarget && $senderLevel <= $targetLevel) {
+        if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEVOICE', '%channel%' => $channelName]);
 
             return;

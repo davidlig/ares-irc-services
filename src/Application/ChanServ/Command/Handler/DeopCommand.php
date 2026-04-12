@@ -86,6 +86,12 @@ final readonly class DeopCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -110,10 +116,12 @@ final readonly class DeopCommand implements ChanServCommandInterface
 
             return;
         }
-        $requiredLevel = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_OPDEOP);
-        $senderLevel = $this->effectiveAccessLevel($channel, $senderAccount->getId());
-        if ($senderLevel < $requiredLevel) {
-            throw InsufficientAccessException::forOperation($channelName, 'DEOP');
+        if (!$context->isLevelFounder) {
+            $requiredLevel = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_OPDEOP);
+            $senderLevel = $this->effectiveAccessLevel($channel, $senderAccount->getId());
+            if ($senderLevel < $requiredLevel) {
+                throw InsufficientAccessException::forOperation($channelName, 'DEOP');
+            }
         }
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
@@ -128,7 +136,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
             $targetLevel = $this->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
         }
         $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
-        if (!$isSelfTarget && $senderLevel <= $targetLevel) {
+        if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEOP', '%channel%' => $channelName]);
 
             return;

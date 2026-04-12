@@ -82,6 +82,12 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (!$context->getChannelModeSupport()->hasHalfOp()) {
@@ -116,7 +122,9 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
             return;
         }
 
-        $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_HALFOPDEHALFOP, $channelName, 'DEHALFOP');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_HALFOPDEHALFOP, $channelName, 'DEHALFOP');
+        }
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
@@ -132,7 +140,7 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
             $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
         }
         $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
-        if (!$isSelfTarget && $senderLevel <= $targetLevel) {
+        if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEHALFOP', '%channel%' => $channelName]);
 
             return;

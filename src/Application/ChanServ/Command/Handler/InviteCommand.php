@@ -77,6 +77,12 @@ final readonly class InviteCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -98,7 +104,9 @@ final readonly class InviteCommand implements ChanServCommandInterface
             return;
         }
 
-        $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_INVITE, $channelName, 'INVITE');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_INVITE, $channelName, 'INVITE');
+        }
 
         if (null === $context->sender) {
             $context->reply('error.generic');

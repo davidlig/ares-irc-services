@@ -442,6 +442,22 @@ final class AdminCommandTest extends TestCase
         self::assertFalse($cmd->allowsSuspendedChannel());
     }
 
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $cmd = new AdminCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

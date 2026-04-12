@@ -81,6 +81,12 @@ final readonly class AdminCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (!$context->getChannelModeSupport()->hasAdmin()) {
@@ -115,7 +121,9 @@ final readonly class AdminCommand implements ChanServCommandInterface
             return;
         }
 
-        $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_ADMINDEADMIN, $channelName, 'ADMIN');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_ADMINDEADMIN, $channelName, 'ADMIN');
+        }
 
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         if (null === $targetAccount) {
@@ -131,7 +139,7 @@ final readonly class AdminCommand implements ChanServCommandInterface
             return;
         }
 
-        if ($channel->isSecure()) {
+        if (!$context->isLevelFounder && $channel->isSecure()) {
             $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
             $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOADMIN);
             if ($targetLevel < $minLevelForMode) {

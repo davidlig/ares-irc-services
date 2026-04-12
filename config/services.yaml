@@ -1100,11 +1100,18 @@ services:
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
 
+    App\Infrastructure\ChanServ\Security\Voter\ChanServLevelFounderVoter:
+        arguments:
+            $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
+            $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
+
     Symfony\Component\Security\Core\Authorization\AccessDecisionManager:
         arguments:
             $voters:
                 - '@App\Infrastructure\NickServ\Security\Voter\NickServIdentifiedOwnerVoter'
                 - '@App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter'
+                - '@App\Infrastructure\ChanServ\Security\Voter\ChanServLevelFounderVoter'
                 - '@App\Infrastructure\Security\Voter\IdentifiedVoter'
                 - '@App\Infrastructure\Security\Voter\IrcopPermissionVoter'
 

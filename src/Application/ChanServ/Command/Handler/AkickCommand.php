@@ -112,6 +112,12 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -196,7 +202,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
     private function doList(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
     {
-        $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK LIST');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK LIST');
+        }
 
         $entries = $this->akickRepository->listByChannel($channel->getId());
 
@@ -232,7 +240,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
     private function doAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
     {
-        $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK ADD');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK ADD');
+        }
 
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
@@ -354,7 +364,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
     private function doDel(ChanServContext $context, RegisteredChannel $channel, string $channelName): void
     {
-        $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK DEL');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK DEL');
+        }
 
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);

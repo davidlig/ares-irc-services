@@ -124,6 +124,12 @@ final readonly class SetCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -157,12 +163,14 @@ final readonly class SetCommand implements ChanServCommandInterface
             return;
         }
 
-        if ('FOUNDER' === $option || 'SUCCESSOR' === $option) {
-            if (!$channel->isFounder($senderAccount->getId())) {
-                throw InsufficientAccessException::forOperation($channelName, 'SET ' . $option);
+        if (!$context->isLevelFounder) {
+            if ('FOUNDER' === $option || 'SUCCESSOR' === $option) {
+                if (!$channel->isFounder($senderAccount->getId())) {
+                    throw InsufficientAccessException::forOperation($channelName, 'SET ' . $option);
+                }
+            } else {
+                $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_SET, $channelName, 'SET');
             }
-        } else {
-            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_SET, $channelName, 'SET');
         }
 
         $value = 'FOUNDER' === $option

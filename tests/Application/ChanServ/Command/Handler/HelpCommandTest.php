@@ -120,6 +120,11 @@ final class HelpCommandTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -195,6 +200,11 @@ final class HelpCommandTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -278,6 +288,11 @@ final class HelpCommandTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -354,6 +369,11 @@ final class HelpCommandTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -446,6 +466,11 @@ final class HelpCommandTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -529,6 +554,11 @@ final class HelpCommandTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -620,6 +650,11 @@ final class HelpCommandTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -695,6 +730,11 @@ final class HelpCommandTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -797,6 +837,11 @@ final class HelpCommandTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -881,6 +926,11 @@ final class HelpCommandTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -973,6 +1023,14 @@ final class HelpCommandTest extends TestCase
         $cmd = $this->createCommand();
 
         self::assertTrue($cmd->allowsSuspendedChannel());
+    }
+
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $cmd = $this->createCommand();
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
     }
 
     private function createCommand(int $inactivityExpiryDays = 0): HelpCommand

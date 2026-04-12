@@ -83,6 +83,12 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -111,7 +117,9 @@ final readonly class VoiceCommand implements ChanServCommandInterface
             return;
         }
 
-        $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_VOICEDEVOICE, $channelName, 'VOICE');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_VOICEDEVOICE, $channelName, 'VOICE');
+        }
 
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         if (null === $targetAccount) {
@@ -127,7 +135,7 @@ final readonly class VoiceCommand implements ChanServCommandInterface
             return;
         }
 
-        if ($channel->isSecure()) {
+        if (!$context->isLevelFounder && $channel->isSecure()) {
             $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
             $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOVOICE);
             if ($targetLevel < $minLevelForMode) {

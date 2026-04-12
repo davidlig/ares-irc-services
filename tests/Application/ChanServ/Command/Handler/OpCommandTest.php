@@ -508,6 +508,21 @@ final class OpCommandTest extends TestCase
         self::assertFalse($cmd->allowsSuspendedChannel());
     }
 
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $cmd = new OpCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

@@ -42,5 +42,11 @@ interface ChanServCommandInterface
      */
     public function allowsSuspendedChannel(): bool;
 
+    /**
+     * Whether this command is allowed on forbidden channels.
+     * Commands like FORBID (update reason), UNFORBID, and INFO should return true.
+     */
+    public function allowsForbiddenChannel(): bool;
+
     public function execute(ChanServContext $context): void;
 }

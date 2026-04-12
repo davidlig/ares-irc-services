@@ -88,6 +88,12 @@ final readonly class OpCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -116,10 +122,12 @@ final readonly class OpCommand implements ChanServCommandInterface
             return;
         }
 
-        $requiredLevel = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_OPDEOP);
-        $senderLevel = $this->effectiveAccessLevel($channel, $senderAccount->getId());
-        if ($senderLevel < $requiredLevel) {
-            throw InsufficientAccessException::forOperation($channelName, 'OP');
+        if (!$context->isLevelFounder) {
+            $requiredLevel = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_OPDEOP);
+            $senderLevel = $this->effectiveAccessLevel($channel, $senderAccount->getId());
+            if ($senderLevel < $requiredLevel) {
+                throw InsufficientAccessException::forOperation($channelName, 'OP');
+            }
         }
 
         $targetAccount = $this->nickRepository->findByNick($targetNick);
@@ -137,7 +145,7 @@ final readonly class OpCommand implements ChanServCommandInterface
         }
         $targetUid = $targetSender->uid;
 
-        if ($channel->isSecure()) {
+        if (!$context->isLevelFounder && $channel->isSecure()) {
             $targetLevel = $this->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
             $minLevelForMode = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOOP);
             if ($targetLevel < $minLevelForMode) {

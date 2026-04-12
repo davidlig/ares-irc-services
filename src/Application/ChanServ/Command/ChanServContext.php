@@ -35,6 +35,7 @@ final readonly class ChanServContext implements IrcopContextInterface
         private readonly ChannelModeSupportInterface $channelModeSupport,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly ServiceNicknameRegistry $serviceNicks,
+        public readonly bool $isLevelFounder = false,
     ) {
     }
 

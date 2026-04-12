@@ -122,6 +122,12 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -143,7 +149,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
             return;
         }
 
-        if (!$channel->isFounder($senderAccount->getId())) {
+        if (!$context->isLevelFounder && !$channel->isFounder($senderAccount->getId())) {
             throw InsufficientAccessException::forOperation($channelName, 'LEVELS');
         }
 

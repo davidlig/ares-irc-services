@@ -370,6 +370,16 @@ final class DelaccessCommandTest extends TestCase
         self::assertFalse($cmd->allowsSuspendedChannel());
     }
 
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $cmd = new DelaccessCommand($channelRepo, $accessRepo);
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

@@ -82,6 +82,12 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         $channelName = $context->getChannelNameArg(0);
@@ -103,7 +109,7 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
             return;
         }
 
-        if ($channel->isFounder($senderAccount->getId())) {
+        if (!$context->isLevelFounder && $channel->isFounder($senderAccount->getId())) {
             $context->reply('delaccess.founder_not_in_access', ['%channel%' => $channelName]);
 
             return;

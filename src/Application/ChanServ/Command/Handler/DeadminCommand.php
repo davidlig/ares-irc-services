@@ -82,6 +82,12 @@ final readonly class DeadminCommand implements ChanServCommandInterface
         return false;
     }
 
+    /** Whether this command is allowed on forbidden channels. */
+    public function allowsForbiddenChannel(): bool
+    {
+        return false;
+    }
+
     public function execute(ChanServContext $context): void
     {
         if (!$context->getChannelModeSupport()->hasAdmin()) {
@@ -116,7 +122,9 @@ final readonly class DeadminCommand implements ChanServCommandInterface
             return;
         }
 
-        $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_ADMINDEADMIN, $channelName, 'DEADMIN');
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_ADMINDEADMIN, $channelName, 'DEADMIN');
+        }
 
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
@@ -132,7 +140,7 @@ final readonly class DeadminCommand implements ChanServCommandInterface
             $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
         }
         $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
-        if (!$isSelfTarget && $senderLevel <= $targetLevel) {
+        if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEADMIN', '%channel%' => $channelName]);
 
             return;

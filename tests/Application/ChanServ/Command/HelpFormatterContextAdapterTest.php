@@ -230,6 +230,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -303,6 +308,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -381,6 +391,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -451,6 +466,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -528,6 +548,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -634,6 +659,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -734,6 +764,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }
@@ -1048,6 +1083,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -1104,6 +1144,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
 
             public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
             {
                 return true;
             }

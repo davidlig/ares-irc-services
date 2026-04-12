@@ -566,4 +566,20 @@ final class VoiceCommandTest extends TestCase
 
         self::assertFalse($cmd->allowsSuspendedChannel());
     }
+
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        $cmd = new VoiceCommand(
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            new ChanServAccessHelper(
+                $this->createStub(ChannelAccessRepositoryInterface::class),
+                $this->createStub(ChannelLevelRepositoryInterface::class),
+            ),
+        );
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
 }

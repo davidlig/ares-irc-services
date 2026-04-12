@@ -2147,6 +2147,15 @@ final class AkickCommandTest extends TestCase
         self::assertFalse($cmd->allowsSuspendedChannel());
     }
 
+    #[Test]
+    public function allowsForbiddenChannelReturnsFalse(): void
+    {
+        [$channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper] = $this->createStubReposAndHelper();
+        $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class));
+
+        self::assertFalse($cmd->allowsForbiddenChannel());
+    }
+
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {

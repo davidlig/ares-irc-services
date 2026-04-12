@@ -85,6 +85,12 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             return;
         }
 
+        if ($context->isLevelFounder) {
+            $this->directTransfer($context, $channel, $newAccount->getId());
+
+            return;
+        }
+
         $currentFounder = $this->nickRepository->findById($channel->getFounderNickId());
         $founderEmail = $currentFounder?->getEmail();
         if (null === $founderEmail || '' === $founderEmail) {
@@ -170,6 +176,29 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
             return;
         }
 
+        $channel->changeFounder($newFounderNickId);
+        $this->channelRepository->save($channel);
+
+        $existingAccess = $this->accessRepository->findByChannelAndNick($channel->getId(), $newFounderNickId);
+        if (null !== $existingAccess) {
+            $this->accessRepository->remove($existingAccess);
+        }
+
+        $this->eventDispatcher->dispatch(new ChannelFounderChangedEvent($channel->getName()));
+
+        $newAccount = $this->nickRepository->findById($newFounderNickId);
+        $newFounderNick = $newAccount?->getNickname() ?? (string) $newFounderNickId;
+        $context->reply('set.founder.updated', ['%nickname%' => $newFounderNick]);
+
+        $notice = $context->trans('set.founder.notice_channel', [
+            '%from%' => $context->sender->nick,
+            '%nickname%' => $newFounderNick,
+        ]);
+        $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
+    }
+
+    private function directTransfer(ChanServContext $context, RegisteredChannel $channel, int $newFounderNickId): void
+    {
         $channel->changeFounder($newFounderNickId);
         $this->channelRepository->save($channel);
 
