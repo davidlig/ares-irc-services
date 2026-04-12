@@ -8,12 +8,14 @@ use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function implode;
 use function in_array;
@@ -24,9 +26,8 @@ use function str_split;
  * Restores a channel's IRC-level state when its suspension is lifted.
  *
  * On unsuspend (manual via UNSUSPEND command or automatic from expired suspension):
- * 1. If the channel does not exist on the IRC network (e.g. all users were kicked
- *    during suspension and the empty channel was destroyed), ChanServ joins it first
- *    to recreate it.
+ * 1. If the channel does not exist on the IRC network (e.g. the empty channel
+ *    was destroyed after all users left), ChanServ joins it first to recreate it.
  * 2. Restores +rP modes
  * 3. Applies MLOCK if the channel has MLOCK active
  */
@@ -38,6 +39,9 @@ final readonly class ChanServUnsuspendSubscriber implements EventSubscriberInter
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ChannelServiceActionsPort $channelServiceActions,
+        private ServiceDebugNotifierInterface $debugNotifier,
+        private TranslatorInterface $translator,
+        private string $defaultLanguage = 'en',
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -72,6 +76,13 @@ final readonly class ChanServUnsuspendSubscriber implements EventSubscriberInter
         if ($channel->isMlockActive()) {
             $this->applyMlock($channel);
         }
+
+        $this->debugNotifier->log(
+            operator: $event->performedBy,
+            command: 'UNSUSPEND',
+            target: $channelName,
+            reason: $this->translator->trans('unsuspend.reason_expired', [], 'chanserv', $this->defaultLanguage),
+        );
     }
 
     private function applyMlock(RegisteredChannel $channel): void

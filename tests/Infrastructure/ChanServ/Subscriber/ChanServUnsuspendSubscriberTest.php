@@ -10,6 +10,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelView;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ChanServUnsuspendSubscriber::class)]
 final class ChanServUnsuspendSubscriberTest extends TestCase
@@ -49,13 +51,23 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::once())->method('log')->with(
+            'Admin',
+            'UNSUSPEND',
+            '#test',
+            null,
+            null,
+            'unsuspend.reason_expired',
+        );
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
+            debugNotifier: $debugNotifier,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -83,13 +95,16 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::never())->method('log');
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
+            debugNotifier: $debugNotifier,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -124,12 +139,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('joinChannelAsService')->with('#test');
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -171,12 +186,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+ntl', ['100']);
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -211,12 +226,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -254,12 +269,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channelServiceActions->expects(self::once())->method('joinChannelAsService')->with('#test');
         $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -295,12 +310,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -336,12 +351,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -383,12 +398,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+nt', []);
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -430,12 +445,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+t', []);
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -477,12 +492,12 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('setChannelModes')->with('#test', '+ntk', ['mykey']);
 
-        $subscriber = new ChanServUnsuspendSubscriber(
-            $suspensionService,
-            $channelRepo,
-            $channelLookup,
-            $modeSupportProvider,
-            $channelServiceActions,
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
         );
 
         $event = new ChannelUnsuspendedEvent(
@@ -496,6 +511,159 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         );
 
         $subscriber->onChannelUnsuspended($event);
+    }
+
+    #[Test]
+    public function onChannelUnsuspendedLogsToDebugWithAsteriskOperatorForMaintenance(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1, 'Test');
+        $channel->suspend('Abuse');
+
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+
+        $suspensionService = $this->createMock(ChannelSuspensionService::class);
+        $suspensionService->expects(self::once())->method('liftSuspension');
+
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+nt', null, 2));
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::once())->method('log')->with(
+            '*',
+            'UNSUSPEND',
+            '#test',
+            null,
+            null,
+            'unsuspend.reason_expired',
+        );
+
+        $subscriber = $this->createSubscriber(
+            suspensionService: $suspensionService,
+            channelRepo: $channelRepo,
+            channelLookup: $channelLookup,
+            modeSupportProvider: $modeSupportProvider,
+            channelServiceActions: $channelServiceActions,
+            debugNotifier: $debugNotifier,
+        );
+
+        $event = new ChannelUnsuspendedEvent(
+            channelId: 1,
+            channelName: '#test',
+            channelNameLower: '#test',
+            performedBy: '*',
+            performedByNickId: null,
+            performedByIp: '*',
+            performedByHost: '*',
+        );
+
+        $subscriber->onChannelUnsuspended($event);
+    }
+
+    #[Test]
+    public function onChannelUnsuspendedTranslatesReasonWithDefaultLanguage(): void
+    {
+        $channel = $this->createChannelWithId('#test', 1, 'Test');
+        $channel->suspend('Abuse');
+
+        $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+
+        $suspensionService = $this->createMock(ChannelSuspensionService::class);
+        $suspensionService->expects(self::once())->method('liftSuspension');
+
+        $channelLookup = $this->createMock(ChannelLookupPort::class);
+        $channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(new ChannelView('#test', '+nt', null, 2));
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);
+
+        $translatedArgs = [];
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())
+            ->method('trans')
+            ->willReturnCallback(static function (
+                string $id,
+                array $params = [],
+                ?string $domain = null,
+                ?string $locale = null,
+            ) use (&$translatedArgs): string {
+                $translatedArgs = [
+                    'id' => $id,
+                    'domain' => $domain,
+                    'locale' => $locale,
+                ];
+
+                return $id;
+            });
+
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::once())->method('log')->with(
+            '*',
+            'UNSUSPEND',
+            '#test',
+            null,
+            null,
+            'unsuspend.reason_expired',
+        );
+
+        $subscriber = new ChanServUnsuspendSubscriber(
+            $suspensionService,
+            $channelRepo,
+            $channelLookup,
+            $modeSupportProvider,
+            $channelServiceActions,
+            $debugNotifier,
+            $translator,
+            'es',
+        );
+
+        $event = new ChannelUnsuspendedEvent(
+            channelId: 1,
+            channelName: '#test',
+            channelNameLower: '#test',
+            performedBy: '*',
+            performedByNickId: null,
+            performedByIp: '*',
+            performedByHost: '*',
+        );
+
+        $subscriber->onChannelUnsuspended($event);
+
+        self::assertSame('unsuspend.reason_expired', $translatedArgs['id']);
+        self::assertSame('chanserv', $translatedArgs['domain']);
+        self::assertSame('es', $translatedArgs['locale']);
+    }
+
+    private function createSubscriber(
+        ?ChannelSuspensionService $suspensionService = null,
+        ?RegisteredChannelRepositoryInterface $channelRepo = null,
+        ?ChannelLookupPort $channelLookup = null,
+        ?ActiveChannelModeSupportProviderInterface $modeSupportProvider = null,
+        ?ChannelServiceActionsPort $channelServiceActions = null,
+        ?ServiceDebugNotifierInterface $debugNotifier = null,
+    ): ChanServUnsuspendSubscriber {
+        return new ChanServUnsuspendSubscriber(
+            $suspensionService ?? $this->createStub(ChannelSuspensionService::class),
+            $channelRepo ?? $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider ?? $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $channelServiceActions ?? $this->createStub(ChannelServiceActionsPort::class),
+            $debugNotifier ?? $this->createStub(ServiceDebugNotifierInterface::class),
+            $this->createStubTranslator(),
+        );
+    }
+
+    private function createStubTranslator(): TranslatorInterface
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static fn (string $id): string => $id,
+        );
+
+        return $translator;
     }
 
     private function createChannelWithId(string $name, int $id, string $description): RegisteredChannel
