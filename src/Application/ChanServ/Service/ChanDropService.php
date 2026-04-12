@@ -56,14 +56,12 @@ readonly class ChanDropService
 
         $this->channelRepository->delete($channel);
 
-        if ('manual' === $reason && null !== $operatorNick) {
-            $this->debug->log(
-                operator: $operatorNick,
-                command: 'DROP',
-                target: $channelName,
-                reason: $reason,
-            );
-        }
+        $this->debug->log(
+            operator: $operatorNick ?? '*',
+            command: 'DROP',
+            target: $channelName,
+            reason: $reason,
+        );
 
         $this->logger->info(sprintf(
             'ChanDrop: %s (id %d) dropped. Reason: %s. Operator: %s.',

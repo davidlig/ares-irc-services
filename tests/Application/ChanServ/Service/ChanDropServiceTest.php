@@ -56,7 +56,7 @@ final class ChanDropServiceTest extends TestCase
     }
 
     #[Test]
-    public function dropChannelWithInactivityReasonDoesNotLogToDebug(): void
+    public function dropChannelWithInactivityReasonLogsToDebugWithAsteriskOperator(): void
     {
         $channel = $this->createChannelWithId('#inactive', 100);
 
@@ -67,7 +67,14 @@ final class ChanDropServiceTest extends TestCase
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (ChannelDropEvent $event): bool => 'inactivity' === $event->reason));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
-        $debug->expects(self::never())->method('log');
+        $debug->expects(self::once())->method('log')->with(
+            '*',
+            'DROP',
+            '#inactive',
+            null,
+            null,
+            'inactivity',
+        );
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');
@@ -83,7 +90,7 @@ final class ChanDropServiceTest extends TestCase
     }
 
     #[Test]
-    public function dropChannelWithManualReasonAndNullOperatorDoesNotLogToDebug(): void
+    public function dropChannelWithManualReasonAndNullOperatorLogsToDebugWithAsteriskOperator(): void
     {
         $channel = $this->createChannelWithId('#testchan', 200);
 
@@ -94,7 +101,14 @@ final class ChanDropServiceTest extends TestCase
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
-        $debug->expects(self::never())->method('log');
+        $debug->expects(self::once())->method('log')->with(
+            '*',
+            'DROP',
+            '#testchan',
+            null,
+            null,
+            'manual',
+        );
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');

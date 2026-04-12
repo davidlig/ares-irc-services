@@ -107,7 +107,7 @@ final class NickDropServiceTest extends TestCase
     }
 
     #[Test]
-    public function dropNickWithInactivityReasonDoesNotLogToDebug(): void
+    public function dropNickWithInactivityReasonLogsToDebugWithAsteriskOperator(): void
     {
         $nick = $this->createNickWithId('InactiveNick', 200);
 
@@ -124,7 +124,15 @@ final class NickDropServiceTest extends TestCase
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (NickDropEvent $event): bool => 'inactivity' === $event->reason));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
-        $debug->expects(self::never())->method('log');
+        $debug->expects(self::once())->method('log')->with(
+            '*',
+            'DROP',
+            'InactiveNick',
+            null,
+            null,
+            'inactivity',
+            self::anything(),
+        );
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');
@@ -143,7 +151,7 @@ final class NickDropServiceTest extends TestCase
     }
 
     #[Test]
-    public function dropNickWithManualReasonAndNullOperatorDoesNotLogToDebug(): void
+    public function dropNickWithManualReasonAndNullOperatorLogsToDebugWithAsteriskOperator(): void
     {
         $nick = $this->createNickWithId('TestNick', 300);
 
@@ -160,7 +168,15 @@ final class NickDropServiceTest extends TestCase
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
-        $debug->expects(self::never())->method('log');
+        $debug->expects(self::once())->method('log')->with(
+            '*',
+            'DROP',
+            'TestNick',
+            null,
+            null,
+            'manual',
+            self::anything(),
+        );
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');

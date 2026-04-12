@@ -69,15 +69,13 @@ readonly class NickDropService
 
         $this->nickRepository->delete($account);
 
-        if ('manual' === $reason && null !== $operatorNick) {
-            $this->debug->log(
-                operator: $operatorNick,
-                command: 'DROP',
-                target: $nickname,
-                reason: $reason,
-                extra: ['was_online' => null !== $onlineUser],
-            );
-        }
+        $this->debug->log(
+            operator: $operatorNick ?? '*',
+            command: 'DROP',
+            target: $nickname,
+            reason: $reason,
+            extra: ['was_online' => null !== $onlineUser],
+        );
 
         $this->logger->info(sprintf(
             'NickDrop: %s (id %d) dropped. Reason: %s. Online: %s. Operator: %s.',
