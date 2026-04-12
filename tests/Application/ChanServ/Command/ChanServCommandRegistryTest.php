@@ -123,6 +123,11 @@ final class ChanServCommandRegistryTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
             }

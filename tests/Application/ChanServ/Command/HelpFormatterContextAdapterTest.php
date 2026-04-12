@@ -235,6 +235,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -317,6 +322,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -396,6 +406,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -473,6 +488,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function allowsForbiddenChannel(): bool
             {
                 return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
             }
 
             public function execute(ChanServContext $c): void
@@ -555,6 +575,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function allowsForbiddenChannel(): bool
             {
                 return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
             }
 
             public function execute(ChanServContext $c): void
@@ -664,6 +689,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -771,6 +801,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function allowsForbiddenChannel(): bool
             {
                 return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
             }
 
             public function execute(ChanServContext $c): void
@@ -1088,6 +1123,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $c): void
             {
             }
@@ -1151,6 +1191,11 @@ final class HelpFormatterContextAdapterTest extends TestCase
             public function allowsForbiddenChannel(): bool
             {
                 return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
             }
 
             public function execute(ChanServContext $c): void

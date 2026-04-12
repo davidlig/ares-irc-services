@@ -191,6 +191,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -352,6 +357,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -467,6 +477,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -577,6 +592,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -676,6 +696,11 @@ final class ChanServServiceTest extends TestCase
             public function allowsForbiddenChannel(): bool
             {
                 return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
             }
 
             public function execute(ChanServContext $context): void
@@ -785,6 +810,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 throw ChannelNotRegisteredException::forChannel('#test');
@@ -886,6 +916,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 throw new ChannelAlreadyRegisteredException('#test');
@@ -985,6 +1020,11 @@ final class ChanServServiceTest extends TestCase
             public function allowsForbiddenChannel(): bool
             {
                 return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
             }
 
             public function execute(ChanServContext $context): void
@@ -1094,6 +1134,11 @@ final class ChanServServiceTest extends TestCase
             public function allowsForbiddenChannel(): bool
             {
                 return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
             }
 
             public function execute(ChanServContext $context): void
@@ -1236,6 +1281,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1350,6 +1400,11 @@ final class ChanServServiceTest extends TestCase
             public function allowsForbiddenChannel(): bool
             {
                 return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
             }
 
             public function execute(ChanServContext $context): void
@@ -1514,6 +1569,11 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1632,6 +1692,11 @@ final class ChanServServiceTest extends TestCase
                 return true;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1731,6 +1796,11 @@ final class ChanServServiceTest extends TestCase
             }
 
             public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function usesLevelFounder(): bool
             {
                 return false;
             }
@@ -1844,6 +1914,11 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -1943,6 +2018,11 @@ final class ChanServServiceTest extends TestCase
             }
 
             public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function usesLevelFounder(): bool
             {
                 return false;
             }
@@ -2074,6 +2154,11 @@ final class ChanServServiceTest extends TestCase
                 return false;
             }
 
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
             public function execute(ChanServContext $context): void
             {
                 $this->holder->context = $context;
@@ -2127,5 +2212,1003 @@ final class ChanServServiceTest extends TestCase
         $service->dispatch('ACCESS #test', $sender);
 
         self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
+    public function dispatchesLevelFounderAuditEventWhenIrcopIsNotRealFounder(): void
+    {
+        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1')), true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SET';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'IDENTIFIED';
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return true;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isForbidden')->willReturn(false);
+        $channel->method('isCurrentlySuspended')->willReturn(false);
+        $channel->method('isFounder')->willReturn(false);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->method('getServiceKey')->willReturn('chanserv');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::exactly(2))
+            ->method('isGranted')
+            ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'chanserv' === $event->serviceName
+                && 'OperNick' === $event->operatorNick
+                && 'SET' === $event->commandName
+                && 'chanserv.level_founder' === $event->permission
+                && '#test' === $event->target
+                && 'ident@host' === $event->targetHost
+                && '127.0.0.1' === $event->targetIp
+                && ['founder_action' => true, 'option' => 'DESC', 'value' => 'desc'] === $event->extra));
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $registry = new ChanServCommandRegistry([$handler]);
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $nickRepository,
+            $notifier,
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('SET #test DESC desc', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+        self::assertTrue($contextHolder->context->isLevelFounder);
+    }
+
+    #[Test]
+    public function doesNotDispatchLevelFounderAuditEventWhenIrcopIsRealFounder(): void
+    {
+        $sender = new SenderView('UID1', 'FounderNick', 'ident', 'host', 'cloak', 'AQ', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SET';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'IDENTIFIED';
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return true;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isForbidden')->willReturn(false);
+        $channel->method('isCurrentlySuspended')->willReturn(false);
+        $channel->method('isFounder')->willReturn(true);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->method('getServiceKey')->willReturn('chanserv');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::exactly(2))
+            ->method('isGranted')
+            ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $registry = new ChanServCommandRegistry([$handler]);
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $nickRepository,
+            $notifier,
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('SET #test DESC desc', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+        self::assertTrue($contextHolder->context->isLevelFounder);
+    }
+
+    #[Test]
+    public function doesNotDispatchLevelFounderAuditEventWhenNotLevelFounder(): void
+    {
+        $sender = new SenderView('UID1', 'RegularUser', 'ident', 'host', 'cloak', 'AQ', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SET';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'IDENTIFIED';
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return true;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn(99);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isForbidden')->willReturn(false);
+        $channel->method('isCurrentlySuspended')->willReturn(false);
+        $channel->method('isFounder')->willReturn(false);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::exactly(2))
+            ->method('isGranted')
+            ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $registry = new ChanServCommandRegistry([$handler]);
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $nickRepository,
+            $notifier,
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('SET #test DESC desc', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+        self::assertFalse($contextHolder->context->isLevelFounder);
+    }
+
+    #[Test]
+    public function doesNotDispatchLevelFounderAuditEventWhenCommandDoesNotUseLevelFounder(): void
+    {
+        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1')), true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'DELACCESS';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'IDENTIFIED';
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::exactly(2))
+            ->method('isGranted')
+            ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $registry = new ChanServCommandRegistry([$handler]);
+
+        $service = $this->createChanServService(
+            $registry,
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $nickRepository,
+            $notifier,
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('DELACCESS #test 5', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+        self::assertTrue($contextHolder->context->isLevelFounder);
+    }
+
+    #[Test]
+    public function doesNotDispatchLevelFounderAuditEventForPublicCommand(): void
+    {
+        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', base64_encode(inet_pton('127.0.0.1')), true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'INFO';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::once())
+            ->method('isGranted')
+            ->with('chanserv.level_founder', self::anything())
+            ->willReturn(true);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())
+            ->method('dispatch');
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $registry = new ChanServCommandRegistry([$handler]);
+
+        $service = $this->createChanServService(
+            $registry,
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $nickRepository,
+            $notifier,
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('INFO #test', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+        self::assertTrue($contextHolder->context->isLevelFounder);
+    }
+
+    #[Test]
+    public function dispatchesLevelFounderAuditEventWithWildcardIpReturnsAsterisk(): void
+    {
+        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', '*', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SET';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'IDENTIFIED';
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return true;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isForbidden')->willReturn(false);
+        $channel->method('isCurrentlySuspended')->willReturn(false);
+        $channel->method('isFounder')->willReturn(false);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->method('getServiceKey')->willReturn('chanserv');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::exactly(2))
+            ->method('isGranted')
+            ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'chanserv' === $event->serviceName
+                && 'OperNick' === $event->operatorNick
+                && 'SET' === $event->commandName
+                && 'chanserv.level_founder' === $event->permission
+                && '#test' === $event->target
+                && 'ident@host' === $event->targetHost
+                && '*' === $event->targetIp));
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $registry = new ChanServCommandRegistry([$handler]);
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $nickRepository,
+            $notifier,
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('SET #test DESC desc', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+        self::assertTrue($contextHolder->context->isLevelFounder);
+    }
+
+    #[Test]
+    public function dispatchesLevelFounderAuditEventWithInvalidBase64IpReturnsOriginalString(): void
+    {
+        $sender = new SenderView('UID1', 'OperNick', 'ident', 'host', 'cloak', '!!invalid-base64!!', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SET';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return 'IDENTIFIED';
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return false;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return true;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isForbidden')->willReturn(false);
+        $channel->method('isCurrentlySuspended')->willReturn(false);
+        $channel->method('isFounder')->willReturn(false);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->method('getServiceKey')->willReturn('chanserv');
+
+        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
+        $authorizationChecker->expects(self::exactly(2))
+            ->method('isGranted')
+            ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'chanserv' === $event->serviceName
+                && 'OperNick' === $event->operatorNick
+                && 'SET' === $event->commandName
+                && 'chanserv.level_founder' === $event->permission
+                && '#test' === $event->target
+                && 'ident@host' === $event->targetHost
+                && '!!invalid-base64!!' === $event->targetIp));
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $registry = new ChanServCommandRegistry([$handler]);
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $nickRepository,
+            $notifier,
+            new UserMessageTypeResolver($nickRepository),
+            $this->createStub(TranslatorInterface::class),
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            null,
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $eventDispatcher,
+        );
+
+        $service->dispatch('SET #test DESC desc', $sender);
+
+        self::assertInstanceOf(ChanServContext::class, $contextHolder->context);
+        self::assertTrue($contextHolder->context->isLevelFounder);
     }
 }

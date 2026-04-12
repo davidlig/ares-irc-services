@@ -126,6 +126,160 @@ final class ChanServDebugNotifierTest extends TestCase
     }
 
     #[Test]
+    public function logWithTargetHostIncludesTargetHostInFileContext(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info')->with('DROP', self::callback(static fn (array $context): bool => 'user@host' === $context['target_host']));
+
+        $notifier = $this->createNotifier(logger: $logger, debugChannel: null);
+
+        $notifier->log('OperUser', 'DROP', '#test', 'user@host', null, 'manual');
+    }
+
+    #[Test]
+    public function logWithTargetIpIncludesTargetIpInFileContext(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('info')->with('DROP', self::callback(static fn (array $context): bool => '10.0.0.1' === $context['target_ip']));
+
+        $notifier = $this->createNotifier(logger: $logger, debugChannel: null);
+
+        $notifier->log('OperUser', 'DROP', '#test', null, '10.0.0.1', 'manual');
+    }
+
+    #[Test]
+    public function logWithFounderActionSendsFounderActionReasonToChannel(): void
+    {
+        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $chanNotifier->expects(self::once())->method('sendMessage')->with('#ircops', self::stringContains('Level-founder action'), 'NOTICE');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
+            'debug.founder_action' => 'Level-founder action',
+            'debug.prefix_reason' => 'Reason: ' . ($params['%reason%'] ?? ''),
+            'debug.action_message' => ($params['%operator%'] ?? '') . ' ' . ($params['%command%'] ?? '') . ' ' . ($params['%target%'] ?? '') . ' ' . ($params['%reason%'] ?? ''),
+            default => $id,
+        });
+
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $notifier = $this->createNotifier(
+            chanNotifier: $chanNotifier,
+            translator: $translator,
+            logger: $logger,
+            debugChannel: '#ircops',
+        );
+
+        $notifier->log('OperUser', 'SET', '#test', 'ident@host', '10.0.0.1', null, ['founder_action' => true]);
+    }
+
+    #[Test]
+    public function logWithOptionAndValueSendsActionWithValueToChannel(): void
+    {
+        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $chanNotifier->expects(self::once())->method('sendMessage')
+            ->with('#ircops', self::stringContains('URL=http://example.com'), 'NOTICE');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
+            'debug.action_with_value' => ($params['%operator%'] ?? '') . ' SET ' . ($params['%target%'] ?? '') . ' Option: ' . ($params['%option%'] ?? '') . '=' . ($params['%value%'] ?? ''),
+            default => $id,
+        });
+
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $notifier = $this->createNotifier(
+            chanNotifier: $chanNotifier,
+            translator: $translator,
+            logger: $logger,
+            debugChannel: '#ircops',
+        );
+
+        $notifier->log('OperUser', 'SET', '#test', 'ident@host', '10.0.0.1', null, ['founder_action' => true, 'option' => 'URL', 'value' => 'http://example.com']);
+    }
+
+    #[Test]
+    public function logWithOptionOnlySendsActionWithOptionToChannel(): void
+    {
+        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $chanNotifier->expects(self::once())->method('sendMessage')
+            ->with('#ircops', self::stringContains('SUSPEND'), 'NOTICE');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
+            'debug.action_with_option' => ($params['%operator%'] ?? '') . ' SUSPEND ' . ($params['%target%'] ?? '') . ' Option: ' . ($params['%option%'] ?? ''),
+            default => $id,
+        });
+
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $notifier = $this->createNotifier(
+            chanNotifier: $chanNotifier,
+            translator: $translator,
+            logger: $logger,
+            debugChannel: '#ircops',
+        );
+
+        $notifier->log('OperUser', 'SUSPEND', '#test', null, null, 'abuse', ['option' => 'SUSPEND']);
+    }
+
+    #[Test]
+    public function logWithPasswordOptionHidesValueOnChannel(): void
+    {
+        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $chanNotifier->expects(self::once())->method('sendMessage')
+            ->with('#ircops', self::logicalAnd(
+                self::stringContains('PASSWORD'),
+                self::logicalNot(self::stringContains('secretvalue')),
+            ), 'NOTICE');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
+            'debug.action_with_option' => ($params['%operator%'] ?? '') . ' SASET ' . ($params['%target%'] ?? '') . ' Option: ' . ($params['%option%'] ?? ''),
+            default => $id,
+        });
+
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $notifier = $this->createNotifier(
+            chanNotifier: $chanNotifier,
+            translator: $translator,
+            logger: $logger,
+            debugChannel: '#ircops',
+        );
+
+        $notifier->log('OperUser', 'SASET', 'TargetUser', null, null, null, ['option' => 'PASSWORD', 'value' => 'secretvalue']);
+    }
+
+    #[Test]
+    public function logWithReasonAndNoFounderActionUsesGivenReason(): void
+    {
+        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $chanNotifier->expects(self::once())->method('sendMessage')->with('#ircops', self::logicalAnd(
+            self::stringContains('manual'),
+            self::logicalNot(self::stringContains('Level-founder action')),
+        ), 'NOTICE');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = '', string $locale = ''): string => match ($id) {
+            'debug.prefix_reason' => 'Reason: ' . ($params['%reason%'] ?? ''),
+            'debug.action_message' => ($params['%operator%'] ?? '') . ' ' . ($params['%command%'] ?? '') . ' ' . ($params['%target%'] ?? '') . ' ' . ($params['%reason%'] ?? ''),
+            default => $id,
+        });
+
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $notifier = $this->createNotifier(
+            chanNotifier: $chanNotifier,
+            translator: $translator,
+            logger: $logger,
+            debugChannel: '#ircops',
+        );
+
+        $notifier->log('OperUser', 'DROP', '#test', null, null, 'manual');
+    }
+
+    #[Test]
     public function ensureChannelJoinedDoesNothing(): void
     {
         $notifier = $this->createNotifier(debugChannel: '#ircops');
