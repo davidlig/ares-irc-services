@@ -92,6 +92,42 @@ public function getRequiredPermission(): ?string
 }
 ```
 
+#### ChanServLevelFounderVoter
+
+Checks `chanserv.level_founder` permission — allows IRCops to act as channel founder:
+
+```php
+// Checked in ChanServService::dispatch():
+$isLevelFounder = $this->authorizationChecker->isGranted(ChanServPermission::LEVEL_FOUNDER, $context);
+```
+
+Decision flow:
+1. Root users identified → grant immediately (bypass +o requirement)
+2. Must have `ROLE_OPER` (IRC operator)
+3. `IrcopAccessHelper::hasPermission($nickId, $nickLower, 'chanserv.level_founder')`
+
+This voter is registered in `config/services.yaml` alongside other voters in `AccessDecisionManager`.
+
+### ChanServCommandInterface: Channel Status Methods
+
+Every ChanServ command MUST implement two methods that control whether the command can run on channels with specific statuses:
+
+#### `allowsSuspendedChannel(): bool`
+
+- `true`: Command works on suspended channels (SUSPEND, UNSUSPEND, DROP, INFO, FORBID, UNFORBID, HELP)
+- `false`: Command is blocked on suspended channels (default for most commands)
+
+When `isLevelFounder` is true, suspended channel check is bypassed — the IRCop can use any command on a suspended channel.
+
+#### `allowsForbiddenChannel(): bool`
+
+- `true`: Command works on forbidden channels — **ONLY** FORBID, UNFORBID, and INFO
+- `false`: Command is blocked on forbidden channels (default for ALL other commands)
+
+**CRITICAL RULE: Only FORBID, UNFORBID, and INFO return `true`.** All other commands, even those with `level_founder`, return `false`. This means even an IRCop with `chanserv.level_founder` CANNOT use SET, OP, ACCESS, etc. on a forbidden channel. The `isLevelFounder` flag does NOT bypass the forbidden channel check.
+
+**When adding a new ChanServ command, you MUST implement `allowsForbiddenChannel()`.** Return `false` by default. Return `true` ONLY if the command must work on a forbidden channel (extremely rare).
+
 ## Automatic Audit Logging (NEW)
 
 ### Overview
@@ -343,9 +379,71 @@ Shows:
 
 - `operserv.kill` - KILL command (forcibly disconnect a user from the network)
 
-### NickServ, ChanServ, MemoServ Permissions
+### ChanServ Permissions
 
-**Note:** Permission definitions for these services are not yet implemented. Permissions will be added as IRCOP-only commands are developed.
+- `chanserv.drop` - Drop a registered channel
+- `chanserv.suspend` - Suspend/unsuspend a channel
+- `chanserv.forbid` - Forbid/unforbid a channel
+- `chanserv.level_founder` - Act as channel founder (bypass all access level checks, use SET FOUNDER without token)
+
+### NickServ Permissions
+
+- `nickserv.drop` - Drop a registered nickname
+- `nickserv.suspend` - Suspend a nickname
+- `nickserv.forbid` - Forbid/unforbid nicknames
+- `nickserv.saset` - Modify another user's settings
+- `nickserv.userip` - View real IP/Host of a user
+- `nickserv.rename` - Force rename a connected user
+- `nickserv.forbidvhost` - Forbid/allow vhost patterns
+- `nickserv.noexpire` - Protect a nickname from expiration
+- `nickserv.history` - View and manage nickname action history
+
+## ChanServ `level_founder` Permission
+
+### Overview
+
+The `chanserv.level_founder` permission allows an IRCop to act as if they were the channel founder. This is NOT a separate command — it modifies the behavior of existing ChanServ commands.
+
+### What `level_founder` Bypasses
+
+| Check | Normal behavior | With `level_founder` |
+|-------|----------------|---------------------|
+| `isFounder()` check (SET FOUNDER, SET SUCCESSOR, LEVELS) | Only actual founder | Bypassed; IRCop treated as founder |
+| `requireLevel()` (SET, ACCESS, AKICK, OP, DEOP, etc.) | Must meet level threshold | Bypassed; IRCop has founder-level access |
+| Token requirement (SET FOUNDER) | Two-step email token verification | Skipped; direct founder transfer |
+| Channel suspended block | Command blocked | Command allowed |
+| Channel forbidden block | Command blocked | Command blocked (see rules below) |
+
+### Forbidden Channel Rules (CRITICAL)
+
+**Rule: Only FORBID, UNFORBID, and INFO can operate on forbidden channels.** All other commands — including those with `level_founder` — are blocked on forbidden channels.
+
+This is enforced by the `allowsForbiddenChannel()` method on `ChanServCommandInterface`:
+
+- `allowsForbiddenChannel() = true`: FORBID, UNFORBID, INFO
+- `allowsForbiddenChannel() = false`: ALL other commands (DROP, SUSPEND, SET, OP, etc.)
+
+**When adding a new ChanServ command, you MUST implement `allowsForbiddenChannel()`.** Return `true` ONLY if the command must work on a forbidden channel (this should be extremely rare). Return `false` by default.
+
+### Architecture
+
+The `isLevelFounder` flag is computed in `ChanServService::dispatch()`:
+
+```
+1. Check required permission (IDENTIFIED, chanserv.drop, etc.)
+2. Compute isLevelFounder = isGranted('chanserv.level_founder', context)
+3. Create ChanServContext with isLevelFounder flag
+4. Check forbidden channel (allowsForbiddenChannel only — isLevelFounder does NOT bypass)
+5. Check suspended channel (allowsSuspendedChannel + isLevelFounder bypass)
+6. Execute handler
+```
+
+### Voter Implementation
+
+`ChanServLevelFounderVoter` (in `src/Infrastructure/ChanServ/Security/Voter/`) checks:
+1. Root users identified → grant immediately
+2. `ROLE_OPER` check → must be IRC operator
+3. `IrcopAccessHelper::hasPermission($nickId, $nickLower, 'chanserv.level_founder')` → role permission check</think>
 
 ## Root Users
 

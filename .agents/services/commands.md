@@ -153,6 +153,50 @@ interface NickServCommandInterface
 
 ### Basic Command Template
 
+**NickServ / MemoServ / OperServ** — use `NickServCommandInterface`, `MemoServCommandInterface`, or `OperServCommandInterface`. These only have the standard methods shown above.
+
+**ChanServ** — uses `ChanServCommandInterface` which adds two extra methods for channel status checks:
+
+```php
+interface ChanServCommandInterface
+{
+    // ... all standard methods from above ...
+
+    /**
+     * Whether this command is allowed on suspended channels.
+     * Commands like SUSPEND, UNSUSPEND, INFO, and DROP should return true.
+     */
+    public function allowsSuspendedChannel(): bool;
+
+    /**
+     * Whether this command is allowed on forbidden channels.
+     * ONLY FORBID (update reason), UNFORBID, and INFO should return true.
+     * ALL other commands MUST return false — even for IRCops with level_founder.
+     */
+    public function allowsForbiddenChannel(): bool;
+}
+```
+
+#### Forbidden Channel Rules (CRITICAL)
+
+A forbidden channel is NOT a registered channel — it's a block on a channel name. The `allowsForbiddenChannel()` check is enforced in `ChanServService::dispatch()` **before** any handler runs, and it **cannot be bypassed** — not even by `isLevelFounder`.
+
+- `allowsForbiddenChannel() = true`: **ONLY** FORBID, UNFORBID, and INFO
+- `allowsForbiddenChannel() = false`: ALL other commands (SET, ACCESS, AKICK, OP, DROP, SUSPEND, etc.)
+
+When creating a new ChanServ command, you MUST implement `allowsForbiddenChannel()`. Return `false` by default.
+
+#### Suspended Channel Rules
+
+A suspended channel is still registered but frozen. Commands that manage suspensions need access:
+
+- `allowsSuspendedChannel() = true`: SUSPEND, UNSUSPEND, DROP, INFO, FORBID, UNFORBID, HELP
+- `allowsSuspendedChannel() = false`: All other commands (SET, ACCESS, AKICK, OP, etc.)
+
+When `isLevelFounder` is true, the suspended channel check is bypassed — the IRCop can use any command on a suspended channel.
+
+### Basic Command Template
+
 ```php
 <?php
 
