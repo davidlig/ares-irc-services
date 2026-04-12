@@ -32,11 +32,19 @@ final class ChannelStatusTest extends TestCase
             $results[$status->value] = match ($status) {
                 ChannelStatus::Active => 'active',
                 ChannelStatus::Suspended => 'suspended',
+                ChannelStatus::Forbidden => 'forbidden',
             };
         }
 
-        self::assertCount(2, $results);
+        self::assertCount(3, $results);
         self::assertSame('active', $results['active']);
         self::assertSame('suspended', $results['suspended']);
+        self::assertSame('forbidden', $results['forbidden']);
+    }
+
+    #[Test]
+    public function forbiddenHasCorrectValue(): void
+    {
+        self::assertSame('forbidden', ChannelStatus::Forbidden->value);
     }
 }

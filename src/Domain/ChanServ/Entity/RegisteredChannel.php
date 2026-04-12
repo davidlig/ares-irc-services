@@ -7,6 +7,7 @@ namespace App\Domain\ChanServ\Entity;
 use App\Domain\ChanServ\ValueObject\ChannelStatus;
 use DateTimeImmutable;
 use InvalidArgumentException;
+use LogicException;
 
 use function sprintf;
 use function strlen;
@@ -71,6 +72,8 @@ class RegisteredChannel
 
     private ?DateTimeImmutable $suspendedUntil = null;
 
+    private ?string $forbiddenReason = null;
+
     private ?DateTimeImmutable $lastUsedAt = null;
 
     private DateTimeImmutable $createdAt;
@@ -92,6 +95,21 @@ class RegisteredChannel
         $channel->founderNickId = $founderNickId;
         $channel->description = $description;
         $channel->lastUsedAt = new DateTimeImmutable();
+
+        return $channel;
+    }
+
+    public static function createForbidden(
+        string $channelName,
+        string $reason,
+    ): self {
+        $channel = new self();
+        $channel->name = $channelName;
+        $channel->nameLower = strtolower($channelName);
+        $channel->founderNickId = 0;
+        $channel->description = '';
+        $channel->status = ChannelStatus::Forbidden;
+        $channel->forbiddenReason = $reason;
 
         return $channel;
     }
@@ -309,5 +327,24 @@ class RegisteredChannel
         $this->status = ChannelStatus::Active;
         $this->suspendedReason = null;
         $this->suspendedUntil = null;
+    }
+
+    public function isForbidden(): bool
+    {
+        return ChannelStatus::Forbidden === $this->status;
+    }
+
+    public function getForbiddenReason(): ?string
+    {
+        return $this->forbiddenReason;
+    }
+
+    public function updateForbiddenReason(string $reason): void
+    {
+        if (!$this->isForbidden()) {
+            throw new LogicException('Cannot update forbidden reason on a non-forbidden channel.');
+        }
+
+        $this->forbiddenReason = $reason;
     }
 }

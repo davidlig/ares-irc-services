@@ -310,4 +310,39 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
         self::assertCount(1, $result);
         self::assertSame('#expired', $result[0]->getName());
     }
+
+    #[Test]
+    public function findForbiddenChannelsReturnsOnlyForbiddenChannels(): void
+    {
+        $forbidden = RegisteredChannel::createForbidden('#forbidden1', 'Spam channel');
+        $forbidden2 = RegisteredChannel::createForbidden('#forbidden2', 'Illegal content');
+        $active = RegisteredChannel::register('#active', 1, 'Active channel');
+        $suspended = RegisteredChannel::register('#suspended', 2, 'Suspended channel');
+        $suspended->suspend('Abuse');
+
+        $this->repository->save($forbidden);
+        $this->repository->save($forbidden2);
+        $this->repository->save($active);
+        $this->repository->save($suspended);
+        $this->flushAndClear();
+
+        $result = $this->repository->findForbiddenChannels();
+
+        self::assertCount(2, $result);
+        $names = array_map(static fn (RegisteredChannel $c): string => $c->getName(), $result);
+        self::assertContains('#forbidden1', $names);
+        self::assertContains('#forbidden2', $names);
+    }
+
+    #[Test]
+    public function findForbiddenChannelsReturnsEmptyArrayWhenNoneForbidden(): void
+    {
+        $active = RegisteredChannel::register('#active', 1, 'Active channel');
+        $this->repository->save($active);
+        $this->flushAndClear();
+
+        $result = $this->repository->findForbiddenChannels();
+
+        self::assertSame([], $result);
+    }
 }

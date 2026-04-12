@@ -8,6 +8,7 @@ use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\ValueObject\ChannelStatus;
 use DateTimeImmutable;
 use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -242,5 +243,64 @@ final class RegisteredChannelTest extends TestCase
         $channel = RegisteredChannel::register('#test', 1, 'Desc');
 
         self::assertFalse($channel->isCurrentlySuspended());
+    }
+
+    #[Test]
+    public function createForbiddenSetsForbiddenState(): void
+    {
+        $channel = RegisteredChannel::createForbidden('#forbidden', 'Spam channel');
+
+        self::assertSame('#forbidden', $channel->getName());
+        self::assertSame('#forbidden', $channel->getNameLower());
+        self::assertSame(ChannelStatus::Forbidden, $channel->getStatus());
+        self::assertTrue($channel->isForbidden());
+        self::assertSame('Spam channel', $channel->getForbiddenReason());
+        self::assertSame(0, $channel->getFounderNickId());
+        self::assertSame('', $channel->getDescription());
+    }
+
+    #[Test]
+    public function isForbiddenReturnsFalseWhenActive(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        self::assertFalse($channel->isForbidden());
+    }
+
+    #[Test]
+    public function isForbiddenReturnsFalseWhenSuspended(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Violation');
+
+        self::assertFalse($channel->isForbidden());
+    }
+
+    #[Test]
+    public function updateForbiddenReasonChangesReasonOnForbiddenChannel(): void
+    {
+        $channel = RegisteredChannel::createForbidden('#forbidden', 'Original reason');
+        $channel->updateForbiddenReason('Updated reason');
+
+        self::assertSame('Updated reason', $channel->getForbiddenReason());
+    }
+
+    #[Test]
+    public function updateForbiddenReasonThrowsOnNonForbiddenChannel(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Cannot update forbidden reason on a non-forbidden channel.');
+
+        $channel->updateForbiddenReason('reason');
+    }
+
+    #[Test]
+    public function getForbiddenReasonReturnsNullWhenNotForbidden(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        self::assertNull($channel->getForbiddenReason());
     }
 }

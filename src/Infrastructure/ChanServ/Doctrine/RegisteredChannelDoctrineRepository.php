@@ -123,4 +123,15 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
 
         return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
     }
+
+    public function findForbiddenChannels(): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('c')
+            ->from(RegisteredChannel::class, 'c')
+            ->where('c.status = :status')
+            ->setParameter('status', ChannelStatus::Forbidden);
+
+        return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
+    }
 }
