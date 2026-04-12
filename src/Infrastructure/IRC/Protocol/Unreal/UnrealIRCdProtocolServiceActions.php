@@ -96,6 +96,11 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         $this->write(sprintf(':%s KICK %s %s :%s', $prefix, $channelName, $targetUid, $reason));
     }
 
+    public function partChannelAsService(string $serverSid, string $channelName, string $serviceUid): void
+    {
+        $this->write(sprintf(':%s PART %s', $serviceUid, $channelName));
+    }
+
     /**
      * UnrealIRCd TKL + G for G-lines.
      * Format: TKL + G user host set_by expire_timestamp set_at_timestamp :reason

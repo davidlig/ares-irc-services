@@ -315,4 +315,15 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertSame(':001Z00001 QUIT :Global message completed', $this->written[0]);
     }
+
+    #[Test]
+    public function partChannelAsServiceSendsPartCommand(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->partChannelAsService('001', '#test', '001CSRV');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001CSRV PART #test', $this->written[0]);
+    }
 }

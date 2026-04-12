@@ -54,7 +54,7 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
             return;
         }
 
-        if ($channel->isSuspended()) {
+        if ($channel->isSuspended() || $channel->isForbidden()) {
             return;
         }
 
@@ -88,7 +88,7 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
         $channels = $this->channelRepository->listAll();
 
         foreach ($channels as $channel) {
-            if ($channel->isSuspended()) {
+            if ($channel->isSuspended() || $channel->isForbidden()) {
                 continue;
             }
 

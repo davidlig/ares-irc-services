@@ -44,7 +44,7 @@ final readonly class ChanServEntryMsgSubscriber implements EventSubscriberInterf
             return;
         }
 
-        if ($channel->isSuspended()) {
+        if ($channel->isSuspended() || $channel->isForbidden()) {
             return;
         }
 

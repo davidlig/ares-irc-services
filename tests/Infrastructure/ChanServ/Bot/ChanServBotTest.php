@@ -639,4 +639,31 @@ final class ChanServBotTest extends TestCase
     {
         self::assertSame('ChanServ', $this->bot->getNickname());
     }
+
+    #[Test]
+    public function partChannelAsServiceWithModuleDelegates(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('partChannelAsService')
+            ->with('001', '#channel', self::CHANSERV_UID);
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+        $this->connectionHolder->setProtocolModule($module);
+
+        $this->bot->partChannelAsService('#channel');
+    }
+
+    #[Test]
+    public function partChannelAsServiceWhenModuleNullReturnsEarly(): void
+    {
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('partChannelAsService');
+
+        $this->bot->partChannelAsService('#channel');
+    }
 }

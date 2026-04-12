@@ -50,7 +50,7 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
             return;
         }
 
-        if ($registered->isSuspended()) {
+        if ($registered->isSuspended() || $registered->isForbidden()) {
             return;
         }
 
@@ -75,7 +75,7 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
     {
         $channels = $this->channelRepository->listAll();
         foreach ($channels as $channel) {
-            if ($channel->isSuspended()) {
+            if ($channel->isSuspended() || $channel->isForbidden()) {
                 continue;
             }
 

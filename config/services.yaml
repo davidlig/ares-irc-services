@@ -707,6 +707,17 @@ services:
             $eventDispatcher: '@event_dispatcher'
         tags: ['chanserv.command']
 
+    App\Application\ChanServ\Command\Handler\ForbidCommand:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
+        tags: ['chanserv.command']
+
+    App\Application\ChanServ\Command\Handler\UnforbidCommand:
+        arguments:
+            $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
+        tags: ['chanserv.command']
+
     App\Application\ChanServ\Service\ChanDropService:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
@@ -741,6 +752,44 @@ services:
             $intervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
         tags: ['maintenance.task']
+
+    App\Application\ChanServ\Service\ChannelForbiddenService:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $dropService: '@App\Application\ChanServ\Service\ChanDropService'
+            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $eventDispatcher: '@event_dispatcher'
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServChannelForbiddenSubscriber:
+        arguments:
+            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServChannelUnforbiddenSubscriber:
+        arguments:
+            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelBurstSubscriber:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelJoinSubscriber:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $forbiddenService: '@App\Application\ChanServ\Service\ChannelForbiddenService'
+            $logger: '@monolog.logger.irc'
 
     App\Infrastructure\ChanServ\Doctrine\ChannelAkickDoctrineRepository: ~
 

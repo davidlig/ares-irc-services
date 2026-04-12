@@ -89,6 +89,11 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         $this->write(sprintf(':%s KICK %s %s :%s', $prefix, $channelName, $targetUid, $reason));
     }
 
+    public function partChannelAsService(string $serverSid, string $channelName, string $serviceUid): void
+    {
+        $this->write(sprintf(':%s PART %s', $serviceUid, $channelName));
+    }
+
     /**
      * InspIRCd GLINE command.
      * Format: :serverSid GLINE user@host duration :reason

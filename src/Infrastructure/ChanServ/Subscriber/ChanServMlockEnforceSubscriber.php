@@ -66,7 +66,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         if (null === $registered || !$registered->isMlockActive()) {
             return;
         }
-        if ($registered->isSuspended()) {
+        if ($registered->isSuspended() || $registered->isForbidden()) {
             return;
         }
         $view = $this->channelLookup->findByChannelName($channelName);
@@ -82,7 +82,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         if (null === $registered || !$registered->isMlockActive()) {
             return;
         }
-        if ($registered->isSuspended()) {
+        if ($registered->isSuspended() || $registered->isForbidden()) {
             return;
         }
         $view = $this->channelLookup->findByChannelName($event->channelName);
@@ -96,7 +96,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
     {
         $channels = $this->channelRepository->listAll();
         foreach ($channels as $registered) {
-            if ($registered->isSuspended()) {
+            if ($registered->isSuspended() || $registered->isForbidden()) {
                 continue;
             }
             if (!$registered->isMlockActive()) {
@@ -118,7 +118,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         if (null === $registered || !$registered->isMlockActive()) {
             return;
         }
-        if ($registered->isSuspended()) {
+        if ($registered->isSuspended() || $registered->isForbidden()) {
             return;
         }
         $view = $this->channelLookup->findByChannelName($channelName);
