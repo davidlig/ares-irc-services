@@ -38,4 +38,9 @@ interface ChannelServiceActionsPort
      * @param string $reason      Kick reason shown to the user
      */
     public function kickFromChannel(string $channelName, string $targetUid, string $reason): void;
+
+    /**
+     * Service pseudo-client leaves a channel.
+     */
+    public function partChannelAsService(string $channelName): void;
 }

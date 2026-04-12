@@ -22,6 +22,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(InfoCommand::class)]
@@ -490,6 +491,60 @@ final class InfoCommandTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
         );
         self::assertTrue($cmd->allowsSuspendedChannel());
+    }
+
+    #[Test]
+    public function showsForbiddenStatusForForbiddenChannel(): void
+    {
+        $channel = RegisteredChannel::createForbidden('#Test', 'Spam channel');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = 'chanserv', string $locale = 'en'): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $this->createStub(RegisteredNickRepositoryInterface::class));
+        $context = $this->createContext(['#Test'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertContains('info.header', $rawMessages);
+        self::assertContains('info.forbidden_status', $rawMessages);
+        self::assertContains('info.forbidden_reason', $rawMessages);
+        self::assertContains('info.footer', $rawMessages);
+        self::assertNotContains('info.founder', $rawMessages);
+    }
+
+    #[Test]
+    public function showsForbiddenStatusWithoutReasonWhenReasonIsNull(): void
+    {
+        $reflection = new ReflectionClass(RegisteredChannel::class);
+        $channel = RegisteredChannel::createForbidden('#Test', 'Some reason');
+        $reasonProp = $reflection->getProperty('forbiddenReason');
+        $reasonProp->setAccessible(true);
+        $reasonProp->setValue($channel, null);
+
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = 'chanserv', string $locale = 'en'): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $this->createStub(RegisteredNickRepositoryInterface::class));
+        $context = $this->createContext(['#Test'], $notifier, $translator);
+        $cmd->execute($context);
+
+        self::assertContains('info.forbidden_status', $rawMessages);
+        self::assertNotContains('info.forbidden_reason', $rawMessages);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

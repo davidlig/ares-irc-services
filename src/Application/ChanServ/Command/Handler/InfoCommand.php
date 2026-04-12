@@ -94,6 +94,17 @@ final readonly class InfoCommand implements ChanServCommandInterface
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
 
+        if ($channel->isForbidden()) {
+            $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
+            $context->replyRaw($context->trans('info.forbidden_status'));
+            if (null !== $channel->getForbiddenReason()) {
+                $context->replyRaw($context->trans('info.forbidden_reason', ['%reason%' => $channel->getForbiddenReason()]));
+            }
+            $context->replyRaw($context->trans('info.footer'));
+
+            return;
+        }
+
         $founderNick = $this->nickRepository->findById($channel->getFounderNickId());
         $founderName = null !== $founderNick ? $founderNick->getNickname() : (string) $channel->getFounderNickId();
         $successorName = null;

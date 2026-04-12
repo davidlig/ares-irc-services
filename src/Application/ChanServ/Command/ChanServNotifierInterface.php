@@ -38,6 +38,11 @@ interface ChanServNotifierInterface
     public function kickFromChannel(string $channelName, string $targetUid, string $reason): void;
 
     /**
+     * Service bot leaves a channel.
+     */
+    public function partChannelAsService(string $channelName): void;
+
+    /**
      * Get the bot's nickname.
      */
     public function getNick(): string;

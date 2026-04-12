@@ -53,10 +53,19 @@ interface ProtocolServiceActionsInterface
      * @param string $serverSid   Server SID (source of the KICK command)
      * @param string $channelName Channel name (e.g., #channel)
      * @param string $targetUid   Target user's UID
-     * @param string $reason      Kick reason
+     * @param string $reason      Kick reason shown to the user
      * @param string $serviceUid  Optional service UID as source (e.g., ChanServ's UID)
      */
     public function kickFromChannel(string $serverSid, string $channelName, string $targetUid, string $reason, string $serviceUid = ''): void;
+
+    /**
+     * Service pseudo-client leaves a channel.
+     *
+     * @param string $serverSid   Server SID
+     * @param string $channelName Channel name (e.g., #channel)
+     * @param string $serviceUid  Service client UID
+     */
+    public function partChannelAsService(string $serverSid, string $channelName, string $serviceUid): void;
 
     /**
      * Add a network-wide G-line (user@host ban).

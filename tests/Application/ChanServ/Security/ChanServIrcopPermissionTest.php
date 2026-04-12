@@ -35,6 +35,6 @@ final class ChanServIrcopPermissionTest extends TestCase
     {
         $permission = new ChanServIrcopPermission();
 
-        self::assertSame([ChanServPermission::DROP, ChanServPermission::SUSPEND], $permission->getPermissions());
+        self::assertSame([ChanServPermission::DROP, ChanServPermission::SUSPEND, ChanServPermission::FORBID], $permission->getPermissions());
     }
 }

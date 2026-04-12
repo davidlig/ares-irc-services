@@ -9,4 +9,6 @@ final readonly class ChanServPermission
     public const string DROP = 'chanserv.drop';
 
     public const string SUSPEND = 'chanserv.suspend';
+
+    public const string FORBID = 'chanserv.forbid';
 }
