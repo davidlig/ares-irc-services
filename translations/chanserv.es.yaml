@@ -327,6 +327,7 @@ suspend:
   invalid_duration:  "\x0304✗\x03 Duración inválida. Usa: 0 (permanente), 1d, 12h o 60m."
   permanent:         "Permanente"
   channel_suspended: "\x0304✗\x03 El canal \x02%channel%\x02 está suspendido y no puede ser usado."
+  notice_channel:    "\x0304⚠\x03 El canal ha sido suspendido. Razón: %reason%"
 
 unsuspend:
   syntax:           "UNSUSPEND <#canal>"
@@ -335,6 +336,7 @@ unsuspend:
   success:          "\x0303✔\x03 El canal \x02%channel%\x02 ya no está suspendido."
   not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no está registrado."
   not_suspended:    "\x0304✗\x03 El canal \x02%channel%\x02 no está suspendido."
+  reason_expired:   "suspensión expirada"
 
 # NOJOIN documentación para LEVELS:
 # NOJOIN: Nivel mínimo de acceso para entrar al canal. Usuarios con nivel < NOJOIN son expulsados.
