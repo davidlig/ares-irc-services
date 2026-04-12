@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\ChanServ\Service;
 
+use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
@@ -14,12 +15,11 @@ use App\Domain\ChanServ\Entity\RegisteredChannel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ChannelSuspensionService::class)]
 final class ChannelSuspensionServiceTest extends TestCase
 {
-    private ChannelServiceActionsPort $channelServiceActions;
-
     private ChannelLookupPort $channelLookup;
 
     private ActiveChannelModeSupportProviderInterface $modeSupportProvider;
@@ -28,26 +28,41 @@ final class ChannelSuspensionServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $this->channelLookup = $this->createStub(ChannelLookupPort::class);
         $this->modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $this->modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $this->modeSupportProvider->method('getSupport')->willReturn($this->modeSupport);
     }
 
-    private function createService(): ChannelSuspensionService
-    {
+    private function createService(
+        ?ChannelServiceActionsPort $channelServiceActions = null,
+        ?ChanServNotifierInterface $notifier = null,
+        ?TranslatorInterface $translator = null,
+    ): ChannelSuspensionService {
         return new ChannelSuspensionService(
-            $this->channelServiceActions,
+            $channelServiceActions ?? $this->createStub(ChannelServiceActionsPort::class),
+            $notifier ?? $this->createStub(ChanServNotifierInterface::class),
             $this->channelLookup,
             $this->modeSupportProvider,
+            $translator ?? $this->createStubTranslator(),
         );
     }
 
+    private function createStubTranslator(): TranslatorInterface
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static fn (string $id): string => $id,
+        );
+
+        return $translator;
+    }
+
     #[Test]
-    public function enforceSuspensionRemovesRegisteredAndPermanentModes(): void
+    public function enforceSuspensionRemovesRegisteredAndPermanentModesAndSendsNotice(): void
     {
         $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->suspend('Abuse');
         $view = new ChannelView('#test', '+rPnt', 'Topic', 5);
 
         $this->channelLookup->method('findByChannelName')->willReturn($view);
@@ -56,20 +71,24 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('hasPermanentChannelMode')->willReturn(true);
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn('P');
 
-        $this->channelServiceActions->expects(self::once())
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())
             ->method('setChannelModes')
             ->with('#test', '-rP', []);
 
-        $this->channelServiceActions->expects(self::never())
-            ->method('kickFromChannel');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('sendNoticeToChannel')
+            ->with('#test', 'suspend.notice_channel');
 
-        $this->createService()->enforceSuspension($channel);
+        $this->createService($channelServiceActions, $notifier)->enforceSuspension($channel);
     }
 
     #[Test]
     public function enforceSuspensionRemovesOnlyRegisteredModeWhenPermanentNotSupported(): void
     {
         $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->suspend('Spam');
         $view = new ChannelView('#test', '+rnt', 'Topic', 3);
 
         $this->channelLookup->method('findByChannelName')->willReturn($view);
@@ -78,26 +97,24 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('hasPermanentChannelMode')->willReturn(false);
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
 
-        $this->channelServiceActions->expects(self::once())
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())
             ->method('setChannelModes')
             ->with('#test', '-r', []);
 
-        $this->channelServiceActions->expects(self::never())
-            ->method('kickFromChannel');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('sendNoticeToChannel');
 
-        $this->createService()->enforceSuspension($channel);
+        $this->createService($channelServiceActions, $notifier)->enforceSuspension($channel);
     }
 
     #[Test]
-    public function enforceSuspensionKicksAllUsersFromChannel(): void
+    public function enforceSuspensionSendsNoticeToChannelWithReason(): void
     {
         $channel = RegisteredChannel::register('#test', 1, 'Test');
-        $members = [
-            ['uid' => 'UIDAAA', 'roleLetter' => 'o'],
-            ['uid' => 'UIDAAB', 'roleLetter' => 'v'],
-            ['uid' => 'UIDAAC', 'roleLetter' => ''],
-        ];
-        $view = new ChannelView('#test', '+rP', null, 3, $members);
+        $channel->suspend('Abuse of services');
+        $view = new ChannelView('#test', '+nt', 'Topic', 5);
 
         $this->channelLookup->method('findByChannelName')->willReturn($view);
         $this->modeSupport->method('hasChannelRegisteredMode')->willReturn(false);
@@ -105,37 +122,189 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('hasPermanentChannelMode')->willReturn(false);
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
 
-        $this->channelServiceActions->expects(self::never())
-            ->method('setChannelModes');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('sendNoticeToChannel')
+            ->with('#test', 'suspend.notice_channel');
 
-        $this->channelServiceActions->expects(self::exactly(3))
-            ->method('kickFromChannel')
-            ->willReturnCallback(static function (string $chan, string $uid, string $reason): void {
-                self::assertSame('#test', $chan);
-                self::assertSame('Channel suspended', $reason);
-                self::assertContains($uid, ['UIDAAA', 'UIDAAB', 'UIDAAC']);
-            });
-
-        $this->createService()->enforceSuspension($channel);
+        $this->createService(notifier: $notifier)->enforceSuspension($channel);
     }
 
     #[Test]
-    public function enforceSuspensionDoesNothingWhenChannelNotOnNetwork(): void
+    public function enforceSuspensionSendsNoticeEvenWhenChannelNotOnNetwork(): void
     {
         $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->suspend('Abuse');
 
         $this->channelLookup->method('findByChannelName')->willReturn(null);
 
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->channelServiceActions->expects(self::never())->method('kickFromChannel');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('sendNoticeToChannel')
+            ->with('#test', 'suspend.notice_channel');
 
-        $this->createService()->enforceSuspension($channel);
+        $this->createService(notifier: $notifier)->enforceSuspension($channel);
     }
 
     #[Test]
-    public function enforceSuspensionDoesNothingWhenNoModesToRemove(): void
+    public function enforceSuspensionDoesNotKickUsers(): void
     {
         $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->suspend('Abuse');
+        $members = [
+            ['uid' => 'UIDAAA', 'roleLetter' => 'o'],
+            ['uid' => 'UIDAAB', 'roleLetter' => 'v'],
+        ];
+        $view = new ChannelView('#test', '+nt', 'Topic', 2, $members);
+
+        $this->channelLookup->method('findByChannelName')->willReturn($view);
+        $this->modeSupport->method('hasChannelRegisteredMode')->willReturn(false);
+        $this->modeSupport->method('getChannelRegisteredModeLetter')->willReturn(null);
+        $this->modeSupport->method('hasPermanentChannelMode')->willReturn(false);
+        $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
+
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())
+            ->method('kickFromChannel');
+
+        $this->createService($channelServiceActions)->enforceSuspension($channel);
+    }
+
+    #[Test]
+    public function enforceSuspensionTranslatesWithEnglishLocale(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->suspend('Abuse');
+
+        $this->channelLookup->method('findByChannelName')->willReturn(null);
+        $this->modeSupport->method('hasChannelRegisteredMode')->willReturn(false);
+        $this->modeSupport->method('getChannelRegisteredModeLetter')->willReturn(null);
+        $this->modeSupport->method('hasPermanentChannelMode')->willReturn(false);
+        $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
+
+        $translatedArgs = [];
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())
+            ->method('trans')
+            ->willReturnCallback(static function (
+                string $id,
+                array $params = [],
+                ?string $domain = null,
+                ?string $locale = null,
+            ) use (&$translatedArgs): string {
+                $translatedArgs = [
+                    'id' => $id,
+                    'params' => $params,
+                    'domain' => $domain,
+                    'locale' => $locale,
+                ];
+
+                return $id;
+            });
+
+        $service = new ChannelSuspensionService(
+            $this->createStub(ChannelServiceActionsPort::class),
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->channelLookup,
+            $this->modeSupportProvider,
+            $translator,
+            'en',
+        );
+        $service->enforceSuspension($channel);
+
+        self::assertSame('suspend.notice_channel', $translatedArgs['id']);
+        self::assertSame('Abuse', $translatedArgs['params']['%reason%']);
+        self::assertSame('chanserv', $translatedArgs['domain']);
+        self::assertSame('en', $translatedArgs['locale']);
+    }
+
+    #[Test]
+    public function enforceSuspensionTranslatesWithConfiguredDefaultLanguage(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->suspend('Abuso');
+
+        $this->channelLookup->method('findByChannelName')->willReturn(null);
+        $this->modeSupport->method('hasChannelRegisteredMode')->willReturn(false);
+        $this->modeSupport->method('getChannelRegisteredModeLetter')->willReturn(null);
+        $this->modeSupport->method('hasPermanentChannelMode')->willReturn(false);
+        $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
+
+        $translatedArgs = [];
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())
+            ->method('trans')
+            ->willReturnCallback(static function (
+                string $id,
+                array $params = [],
+                ?string $domain = null,
+                ?string $locale = null,
+            ) use (&$translatedArgs): string {
+                $translatedArgs = [
+                    'id' => $id,
+                    'params' => $params,
+                    'domain' => $domain,
+                    'locale' => $locale,
+                ];
+
+                return $id;
+            });
+
+        $service = new ChannelSuspensionService(
+            $this->createStub(ChannelServiceActionsPort::class),
+            $this->createStub(ChanServNotifierInterface::class),
+            $this->channelLookup,
+            $this->modeSupportProvider,
+            $translator,
+            'es',
+        );
+        $service->enforceSuspension($channel);
+
+        self::assertSame('es', $translatedArgs['locale']);
+    }
+
+    #[Test]
+    public function enforceSuspensionPassesEmptyStringForEmptyReason(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->suspend('');
+
+        $this->channelLookup->method('findByChannelName')->willReturn(null);
+        $this->modeSupport->method('hasChannelRegisteredMode')->willReturn(false);
+        $this->modeSupport->method('getChannelRegisteredModeLetter')->willReturn(null);
+        $this->modeSupport->method('hasPermanentChannelMode')->willReturn(false);
+        $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
+
+        $translatedArgs = [];
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())
+            ->method('trans')
+            ->willReturnCallback(static function (
+                string $id,
+                array $params = [],
+                ?string $domain = null,
+                ?string $locale = null,
+            ) use (&$translatedArgs): string {
+                $translatedArgs = [
+                    'id' => $id,
+                    'params' => $params,
+                    'domain' => $domain,
+                    'locale' => $locale,
+                ];
+
+                return $id;
+            });
+
+        $this->createService(translator: $translator)->enforceSuspension($channel);
+
+        self::assertSame('', $translatedArgs['params']['%reason%']);
+    }
+
+    #[Test]
+    public function enforceSuspensionSendsNoticeEvenWhenNoModesToRemove(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Test');
+        $channel->suspend('Abuse');
         $view = new ChannelView('#test', '+nt', 'Topic', 2);
 
         $this->channelLookup->method('findByChannelName')->willReturn($view);
@@ -144,9 +313,11 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('hasPermanentChannelMode')->willReturn(true);
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn('P');
 
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('sendNoticeToChannel');
 
-        $this->createService()->enforceSuspension($channel);
+        $this->createService(notifier: $notifier)->enforceSuspension($channel);
     }
 
     #[Test]
@@ -161,11 +332,12 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('hasPermanentChannelMode')->willReturn(true);
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn('P');
 
-        $this->channelServiceActions->expects(self::once())
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::once())
             ->method('setChannelModes')
             ->with('#test', '+rP', []);
 
-        $this->createService()->liftSuspension($channel);
+        $this->createService($channelServiceActions)->liftSuspension($channel);
     }
 
     #[Test]
@@ -175,9 +347,10 @@ final class ChannelSuspensionServiceTest extends TestCase
 
         $this->channelLookup->method('findByChannelName')->willReturn(null);
 
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $this->createService()->liftSuspension($channel);
+        $this->createService($channelServiceActions)->liftSuspension($channel);
     }
 
     #[Test]
@@ -192,8 +365,9 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('hasPermanentChannelMode')->willReturn(true);
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn('P');
 
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
+        $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelServiceActions->expects(self::never())->method('setChannelModes');
 
-        $this->createService()->liftSuspension($channel);
+        $this->createService($channelServiceActions)->liftSuspension($channel);
     }
 }

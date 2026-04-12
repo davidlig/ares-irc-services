@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Service;
 
+use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
@@ -11,6 +12,7 @@ use App\Application\Port\ChannelServiceActionsPort;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function sprintf;
 use function str_contains;
@@ -18,7 +20,7 @@ use function str_contains;
 /**
  * Handles IRC-level enforcement when a channel is suspended or unsuspended.
  *
- * Suspension: removes +rP modes and kicks all users from the channel.
+ * Suspension: removes +rP modes and sends a notice to the channel.
  * Unsuspension: restores +rP modes (MLOCK and rank enforcement are handled
  * by existing subscribers on the next mode sync).
  */
@@ -26,8 +28,11 @@ readonly class ChannelSuspensionService
 {
     public function __construct(
         private ChannelServiceActionsPort $channelServiceActions,
+        private ChanServNotifierInterface $notifier,
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        private TranslatorInterface $translator,
+        private string $defaultLanguage = 'en',
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -37,7 +42,7 @@ readonly class ChannelSuspensionService
         $channelName = $channel->getName();
 
         $this->removeRegistrationModes($channelName);
-        $this->kickAllUsers($channelName);
+        $this->sendSuspensionNotice($channel);
     }
 
     public function liftSuspension(RegisteredChannel $channel): void
@@ -105,25 +110,19 @@ readonly class ChannelSuspensionService
         ));
     }
 
-    private function kickAllUsers(string $channelName): void
+    private function sendSuspensionNotice(RegisteredChannel $channel): void
     {
-        $view = $this->channelLookup->findByChannelName($channelName);
-        if (null === $view) {
-            return;
-        }
-
-        foreach ($view->members as $member) {
-            $this->channelServiceActions->kickFromChannel(
-                $channelName,
-                $member['uid'],
-                'Channel suspended',
-            );
-        }
+        $message = $this->translator->trans(
+            'suspend.notice_channel',
+            ['%reason%' => $channel->getSuspendedReason() ?? ''],
+            'chanserv',
+            $this->defaultLanguage,
+        );
+        $this->notifier->sendNoticeToChannel($channel->getName(), $message);
 
         $this->logger->info(sprintf(
-            'ChannelSuspension: kicked %d users from %s',
-            $view->memberCount,
-            $channelName,
+            'ChannelSuspension: sent suspension notice to %s',
+            $channel->getName(),
         ));
     }
 
