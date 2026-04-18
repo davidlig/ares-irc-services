@@ -11,11 +11,11 @@ use function sprintf;
 /**
  * InspIRCd SpanTree: introduce a service pseudo-client with a UID line.
  * Format (1206+): :serverSid UID uuid ts nick real_host displayed_host real_user displayed_user ip connect_time modes :realname.
- * Modes: S=service, i=invisible, o=oper, d=deaf (no channel PRIVMSG; requires deaf module).
+ * Modes: o=oper, I=hidechans, k=servprotect. These map to Anope's DefaultPseudoclientModes.
  */
 final readonly class InspIRCdServiceIntroductionFormatter implements ServiceIntroductionFormatterInterface
 {
-    private const string SERVICE_UMODES = '+Siod';
+    private const string SERVICE_UMODES = '+oIk';
 
     public function formatIntroduction(
         string $serverSid,
@@ -28,7 +28,7 @@ final readonly class InspIRCdServiceIntroductionFormatter implements ServiceIntr
         $ts = time();
 
         return sprintf(
-            ':%s UID %s %d %s %s %s %s %s * %d %s :%s',
+            ':%s UID %s %d %s %s %s %s %s 0.0.0.0 %d %s :%s',
             $serverSid,
             $uid,
             $ts,

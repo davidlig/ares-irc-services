@@ -38,7 +38,7 @@ final class InspIRCdServiceIntroductionFormatterTest extends TestCase
         self::assertStringContainsString('NickServ', $line);
         self::assertStringContainsString('services', $line);
         self::assertStringContainsString('services.test.local', $line);
-        self::assertStringContainsString('+Siod', $line);
+        self::assertStringContainsString('+oIk', $line);
         self::assertStringContainsString(':Nickname Service', $line);
     }
 
@@ -55,7 +55,7 @@ final class InspIRCdServiceIntroductionFormatterTest extends TestCase
         );
 
         self::assertMatchesRegularExpression(
-            '/^:002 UID 002EFGH \d+ ChanServ services\.test\.local services\.test\.local services services \* \d+ \+Siod :Channel Service$/',
+            '/^:002 UID 002EFGH \d+ ChanServ services\.test\.local services\.test\.local services services 0\.0\.0\.0 \d+ \+oIk :Channel Service$/',
             $line
         );
     }
@@ -72,7 +72,7 @@ final class InspIRCdServiceIntroductionFormatterTest extends TestCase
             realname: 'Memo Service'
         );
 
-        self::assertStringContainsString('+Siod', $line);
+        self::assertStringContainsString('+oIk', $line);
     }
 
     #[Test]

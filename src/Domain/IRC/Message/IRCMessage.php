@@ -6,7 +6,7 @@ namespace App\Domain\IRC\Message;
 
 /**
  * Represents a parsed IRC message following RFC 1459 format:
- * [:prefix] COMMAND [params...] [:trailing]
+ * [:prefix] COMMAND [params...] [:trailing].
  */
 readonly class IRCMessage
 {

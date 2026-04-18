@@ -130,4 +130,42 @@ final class SocketConnectionTest extends TestCase
 
         fclose($server);
     }
+
+    /**
+     * When data arrives without a newline, readLine returns null and
+     * accumulates in the buffer. The next readLine call with a newline
+     * returns the full accumulated line.
+     */
+    #[Test]
+    #[Group('integration')]
+    public function readLineBuffersPartialDataUntilNewlineArrives(): void
+    {
+        $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
+        self::assertNotFalse($server, "Failed to create server: $errstr ($errno)");
+        $addr = stream_socket_get_name($server, false);
+        self::assertNotFalse($addr);
+        [$host, $port] = explode(':', $addr);
+
+        $conn = new SocketConnection($host, (int) $port, false, 2);
+        $conn->connect();
+
+        $client = stream_socket_accept($server, 2.0);
+        self::assertNotFalse($client);
+        stream_set_blocking($client, false);
+
+        // Send partial data without newline — readLine should return null
+        fwrite($client, 'PARTIAL');
+        usleep(50_000);
+        self::assertNull($conn->readLine());
+
+        // Send the rest with newline — readLine should return the full line
+        fwrite($client, " DATA\r\n");
+        usleep(50_000);
+        $line = $conn->readLine();
+        self::assertSame('PARTIAL DATA', $line);
+
+        fclose($client);
+        $conn->disconnect();
+        fclose($server);
+    }
 }

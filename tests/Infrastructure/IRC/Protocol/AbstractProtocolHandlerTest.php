@@ -78,7 +78,16 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection->expects(self::once())->method('writeLine')
             ->with('PONG :server');
 
-        $handler = new InspIRCdProtocolHandler();
+        $handler = new class extends AbstractProtocolHandler {
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
         $message = new IRCMessage('PING', null, [], 'server');
         $handler->handleIncoming($message, $connection);
     }
@@ -90,7 +99,16 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection->expects(self::once())->method('writeLine')
             ->with('PONG :target');
 
-        $handler = new InspIRCdProtocolHandler();
+        $handler = new class extends AbstractProtocolHandler {
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
         $message = new IRCMessage('PING', null, ['target'], null);
         $handler->handleIncoming($message, $connection);
     }
@@ -102,7 +120,16 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection->expects(self::once())->method('writeLine')
             ->with('PONG :');
 
-        $handler = new InspIRCdProtocolHandler();
+        $handler = new class extends AbstractProtocolHandler {
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
         $message = new IRCMessage('PING', null, [''], null);
         $handler->handleIncoming($message, $connection);
     }
@@ -113,7 +140,16 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
 
-        $handler = new InspIRCdProtocolHandler();
+        $handler = new class extends AbstractProtocolHandler {
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
         $message = new IRCMessage('PRIVMSG', null, ['#test'], 'Hello');
         $handler->handleIncoming($message, $connection);
     }
@@ -124,8 +160,37 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
 
-        $handler = new InspIRCdProtocolHandler();
+        $handler = new class extends AbstractProtocolHandler {
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
         $message = new IRCMessage('JOIN', null, ['#test'], null);
+        $handler->handleIncoming($message, $connection);
+    }
+
+    #[Test]
+    public function handleIncomingWithErrorLogsCritical(): void
+    {
+        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection->expects(self::never())->method('writeLine');
+
+        $handler = new class extends AbstractProtocolHandler {
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
+            }
+        };
+        $message = new IRCMessage('ERROR', null, [], 'Ping timeout');
         $handler->handleIncoming($message, $connection);
     }
 

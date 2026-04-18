@@ -67,9 +67,20 @@ abstract class AbstractProtocolHandler implements ProtocolHandlerInterface
     /**
      * Handles mandatory RFC 1459 protocol commands.
      * PING must always be answered with PONG to keep the link alive.
+     * ERROR signals the remote server is closing the link — we log the
+     * reason so the operator can see why the link was rejected.
      */
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
     {
+        if ('ERROR' === $message->command) {
+            $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
+            $this->logger->critical('Remote server sent ERROR — closing link.', [
+                'reason' => $reason,
+            ]);
+
+            return;
+        }
+
         if ('PING' === $message->command) {
             $target = $message->trailing ?? ($message->params[0] ?? '');
             $pong = 'PONG :' . $target;

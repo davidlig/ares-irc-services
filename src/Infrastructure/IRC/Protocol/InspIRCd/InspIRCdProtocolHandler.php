@@ -7,6 +7,7 @@ namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
+use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -15,22 +16,49 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use function sprintf;
 
 /**
- * Implements the InspIRCd SpanTree server-to-server link protocol (v1.2+).
+ * Implements the InspIRCd SpanTree server-to-server link protocol (v4 / 1206).
  *
- * Handshake sequence:
- *   1. SERVER <name> <password> <hopcount> <SID> :<description>
+ * Handshake sequence (outbound, protocol 1206):
+ *   1. CAPAB START 1206
+ *   2. CAPAB CAPABILITIES :CASEMAPPING=ascii
+ *   3. CAPAB END
+ *   4. SERVER <name> <password> <SID> :<description>
  *
- * After the IRCD burst completes it sends ENDBURST. We must respond with
- * our own ENDBURST to mark that we have finished syncing.
+ * When the remote IRCD accepts our credentials it sends its own SERVER line
+ * back and enters WAIT_AUTH_2. We MUST send BURST + introductions + ENDBURST
+ * at that point — InspIRCd will not send its netburst until it receives our
+ * BURST (see treesocket2.cpp: WAIT_AUTH_2 expects BURST command).
+ *
+ * After we send ENDBURST, InspIRCd finishes authentication (FinishAuth),
+ * sends its own netburst (DoBurst) and finally ENDBURST. We process the
+ * remote burst and, on ENDBURST, dispatch NetworkSyncCompleteEvent so
+ * post-sync actions can run (e.g. ChanServ rejoining channels).
+ *
+ * We follow the Anope approach: modules, chanmodes, usermodes, and extbans
+ * are NOT sent in CAPAB. InspIRCd skips the comparison when the remote
+ * server omits these fields (see capab.cpp: if (!remote) return true;).
+ *
+ * We do NOT send CHALLENGE in CAPAB CAPABILITIES, which tells InspIRCd
+ * to use plaintext password authentication (no HMAC-SHA256). If both
+ * sides send a CHALLENGE, InspIRCd switches to HMAC-SHA256 auth.
  *
  * The SID is a 3-character alphanumeric server identifier unique on the network.
+ * Protocol 1206 (v4) does NOT include a hop-count before the SID (unlike 1205/v3).
+ *
+ * Reference: https://github.com/inspircd/inspircd/blob/insp4/src/modules/m_spanningtree/
+ * Reference: https://github.com/anope/anope/blob/2.1/modules/protocol/inspircd.cpp
  */
 class InspIRCdProtocolHandler extends AbstractProtocolHandler
 {
     private const string PROTOCOL_NAME = 'inspircd';
 
+    private const int PROTOCOL_VERSION = 1206;
+
+    private bool $outgoingBurstSent = false;
+
     public function __construct(
         private readonly string $sid = 'A0A',
+        private readonly ?ActiveConnectionHolder $connectionHolder = null,
         LoggerInterface $logger = new NullLogger(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ) {
@@ -42,6 +70,23 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
         return self::PROTOCOL_NAME;
     }
 
+    /**
+     * InspIRCd v4 sends IRCv3 message tags (e.g. @time=...;msgid=...)
+     * on PRIVMSG, OPERTYPE, etc. Strip them before parsing so the rest of
+     * the pipeline sees a clean RFC 1459 message.
+     */
+    public function parseRawLine(string $rawLine): IRCMessage
+    {
+        if (str_starts_with($rawLine, '@')) {
+            $spacePos = strpos($rawLine, ' ');
+            if (false !== $spacePos) {
+                $rawLine = substr($rawLine, $spacePos + 1);
+            }
+        }
+
+        return parent::parseRawLine($rawLine);
+    }
+
     public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
     {
         $this->logger->debug('Starting InspIRCd handshake.', [
@@ -49,20 +94,9 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
             'sid' => $this->sid,
         ]);
 
-        $connection->writeLine(sprintf(
-            'SERVER %s %s 0 %s :%s',
-            $link->serverName,
-            $link->password,
-            $this->sid,
-            $link->description,
-        ));
-
-        $this->logger->debug(sprintf(
-            '> SERVER %s *** 0 %s :%s',
-            $link->serverName,
-            $this->sid,
-            $link->description,
-        ));
+        $this->outgoingBurstSent = false;
+        $this->sendCapabilities($connection);
+        $this->sendServerLine($connection, $link);
 
         $this->logger->info('InspIRCd handshake sent.', [
             'server' => (string) $link->serverName,
@@ -70,23 +104,118 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
         ]);
     }
 
-    /**
-     * Handles InspIRCd-specific incoming commands on top of the base PING/PONG.
-     *
-     * ENDBURST: the InspIRCd equivalent of EOS. We must respond with our own
-     * ENDBURST so InspIRCd knows we are ready after the initial sync.
-     */
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
     {
-        parent::handleIncoming($message, $connection);
+        if ('PING' === $message->command) {
+            $this->handlePing($message, $connection);
 
-        if ('ENDBURST' === $message->command) {
-            $this->dispatchBurstComplete($connection, $this->sid);
-
-            $endburst = sprintf(':%s ENDBURST', $this->sid);
-            $connection->writeLine($endburst);
-            $this->logger->info('Sent ENDBURST — initial burst and sync complete.', ['sid' => $this->sid]);
-            // NetworkSyncCompleteEvent is dispatched by SyncCompleteDispatcherSubscriber after MessageReceivedEvent(ENDBURST)
+            return;
         }
+
+        if ('ERROR' === $message->command) {
+            $reason = $message->trailing ?? ($message->params[0] ?? 'unknown');
+            $this->logger->critical('Remote server sent ERROR — closing link.', [
+                'reason' => $reason,
+            ]);
+
+            return;
+        }
+
+        match ($message->command) {
+            'SERVER' => $this->handleRemoteServer($message, $connection),
+            'ENDBURST' => $this->handleEndburst($connection),
+            default => null,
+        };
+    }
+
+    private function handlePing(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        $originSid = $message->prefix ?? null;
+        $targetParam = $message->params[0] ?? $message->trailing ?? '';
+        $pongTarget = $originSid ?? $targetParam;
+
+        $pong = sprintf(':%s PONG %s', $this->sid, $pongTarget);
+        $this->writeLine($connection, $pong);
+    }
+
+    private function sendCapabilities(ConnectionInterface $connection): void
+    {
+        $this->writeLine($connection, sprintf('CAPAB START %d', self::PROTOCOL_VERSION));
+
+        $this->writeLine($connection, 'CAPAB CAPABILITIES :CASEMAPPING=ascii');
+
+        $this->writeLine($connection, 'CAPAB END');
+    }
+
+    private function sendServerLine(ConnectionInterface $connection, ServerLink $link): void
+    {
+        $serverLine = sprintf(
+            'SERVER %s %s %s :%s',
+            $link->serverName,
+            $link->password,
+            $this->sid,
+            $link->description,
+        );
+        $this->writeLine($connection, $serverLine);
+
+        $this->logger->debug(sprintf(
+            '> SERVER %s *** %s :%s',
+            $link->serverName,
+            $this->sid,
+            $link->description,
+        ));
+    }
+
+    private function handleRemoteServer(IRCMessage $message, ConnectionInterface $connection): void
+    {
+        $remoteSid = $message->params[2] ?? null;
+        $remoteName = $message->params[0] ?? 'unknown';
+        $remoteDescription = $message->trailing ?? '';
+
+        if (null !== $remoteSid) {
+            $this->connectionHolder?->setRemoteServerSid($remoteSid);
+        }
+
+        $this->logger->info('Remote server introduced itself.', [
+            'name' => $remoteName,
+            'sid' => $remoteSid,
+            'description' => $remoteDescription,
+        ]);
+
+        $this->sendOutgoingBurst($connection);
+    }
+
+    private function sendOutgoingBurst(ConnectionInterface $connection): void
+    {
+        if ($this->outgoingBurstSent) {
+            return;
+        }
+
+        $this->outgoingBurstSent = true;
+
+        $burst = sprintf(':%s BURST %d', $this->sid, time());
+        $this->writeLine($connection, $burst);
+        $this->logger->info('Sent BURST — beginning service introduction.', ['sid' => $this->sid]);
+
+        $this->dispatchBurstComplete($connection, $this->sid);
+
+        $endburst = sprintf(':%s ENDBURST', $this->sid);
+        $this->writeLine($connection, $endburst);
+        $this->logger->info('Sent ENDBURST — outgoing burst complete.', ['sid' => $this->sid]);
+    }
+
+    private function handleEndburst(ConnectionInterface $connection): void
+    {
+        $this->logger->info('Received ENDBURST — remote burst complete, network synced.', ['sid' => $this->sid]);
+
+        $this->sendOutgoingBurst($connection);
+
+        $this->dispatchSyncComplete($connection, $this->sid);
+    }
+
+    private function writeLine(ConnectionInterface $connection, string $line): void
+    {
+        $connection->writeLine($line);
+        $this->logger->debug('> ' . $line);
     }
 }

@@ -16,6 +16,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function count;
+
 #[CoversClass(InspIRCdProtocolHandler::class)]
 final class InspIRCdProtocolHandlerTest extends TestCase
 {
@@ -34,6 +36,16 @@ final class InspIRCdProtocolHandlerTest extends TestCase
             description: 'Ares IRC Services',
             useTls: false,
         );
+    }
+
+    private function createRecordingConnection(array &$written): ConnectionInterface
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
+            $written[] = $line;
+        });
+
+        return $connection;
     }
 
     #[Test]
@@ -66,6 +78,19 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     }
 
     #[Test]
+    public function parseRawLineStripsIrcv3Tags(): void
+    {
+        $handler = $this->createHandler();
+
+        $msg = $handler->parseRawLine('@time=2026-04-18T21:23:31.529Z;msgid=994~1 :994AAAAAA PRIVMSG 0A0AAAAAA :help');
+
+        self::assertSame('PRIVMSG', $msg->command);
+        self::assertSame('994AAAAAA', $msg->prefix);
+        self::assertSame(['0A0AAAAAA'], $msg->params);
+        self::assertSame('help', $msg->trailing);
+    }
+
+    #[Test]
     public function formatMessageDelegatesToIRCMessage(): void
     {
         $handler = $this->createHandler();
@@ -77,25 +102,77 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     }
 
     #[Test]
-    public function performHandshakeWritesServerLine(): void
+    public function performHandshakeSendsMinimalCapabAndServerLine(): void
     {
-        $lines = [];
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
-            $lines[] = $line;
-        });
+        $written = [];
+        $connection = $this->createRecordingConnection($written);
 
         $handler = $this->createHandler('B1B');
         $link = $this->createServerLink();
 
         $handler->performHandshake($connection, $link);
 
-        self::assertCount(1, $lines);
-        self::assertSame('SERVER services.test.local link-secret 0 B1B :Ares IRC Services', $lines[0]);
+        self::assertSame('CAPAB START 1206', $written[0]);
+        self::assertSame('CAPAB CAPABILITIES :CASEMAPPING=ascii', $written[1]);
+        self::assertSame('CAPAB END', $written[2]);
+        self::assertSame('SERVER services.test.local link-secret B1B :Ares IRC Services', $written[3]);
+        self::assertCount(4, $written);
     }
 
     #[Test]
-    public function handleIncomingPingWritesPong(): void
+    public function performHandshakeDoesNotSendModulesOrModes(): void
+    {
+        $written = [];
+        $connection = $this->createRecordingConnection($written);
+
+        $handler = $this->createHandler();
+        $link = $this->createServerLink();
+
+        $handler->performHandshake($connection, $link);
+
+        foreach ($written as $line) {
+            self::assertStringNotContainsString('CAPAB MODULES', $line);
+            self::assertStringNotContainsString('CAPAB MODSUPPORT', $line);
+            self::assertStringNotContainsString('CAPAB CHANMODES', $line);
+            self::assertStringNotContainsString('CAPAB USERMODES', $line);
+            self::assertStringNotContainsString('CAPAB EXTBANS', $line);
+        }
+    }
+
+    #[Test]
+    public function performHandshakeServerLineHasNoHopCountForV4(): void
+    {
+        $written = [];
+        $connection = $this->createRecordingConnection($written);
+
+        $handler = $this->createHandler('0A0');
+        $link = $this->createServerLink();
+
+        $handler->performHandshake($connection, $link);
+
+        $serverLine = $written[3];
+        self::assertSame('SERVER services.test.local link-secret 0A0 :Ares IRC Services', $serverLine);
+        self::assertStringNotContainsString(' 0 0A0 ', $serverLine);
+    }
+
+    #[Test]
+    public function capabCapabilitiesContainsCaseMappingWithoutChallenge(): void
+    {
+        $written = [];
+        $connection = $this->createRecordingConnection($written);
+
+        $handler = $this->createHandler();
+        $link = $this->createServerLink();
+
+        $handler->performHandshake($connection, $link);
+
+        $capsLine = $written[1];
+        self::assertStringContainsString('CASEMAPPING=ascii', $capsLine);
+        self::assertStringNotContainsString('CHALLENGE', $capsLine);
+    }
+
+    #[Test]
+    public function handleIncomingPingRespondsWithPongWithSidPrefix(): void
     {
         $written = [];
         $connection = $this->createMock(ConnectionInterface::class);
@@ -103,16 +180,45 @@ final class InspIRCdProtocolHandlerTest extends TestCase
             $written[] = $line;
         });
 
-        $handler = $this->createHandler();
-        $msg = new IRCMessage(command: 'PING', trailing: 'token');
+        $handler = $this->createHandler('0A0');
+        $msg = new IRCMessage(command: 'PING', prefix: '994', params: ['0A0']);
 
         $handler->handleIncoming($msg, $connection);
 
-        self::assertSame(['PONG :token'], $written);
+        self::assertSame([':0A0 PONG 994'], $written);
     }
 
     #[Test]
-    public function handleIncomingEndburstWritesEndburst(): void
+    public function handleIncomingPingWithoutPrefixUsesParam(): void
+    {
+        $written = [];
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
+            $written[] = $line;
+        });
+
+        $handler = $this->createHandler('0A0');
+        $msg = new IRCMessage(command: 'PING', params: ['994']);
+
+        $handler->handleIncoming($msg, $connection);
+
+        self::assertSame([':0A0 PONG 994'], $written);
+    }
+
+    #[Test]
+    public function handleIncomingErrorLogsCritical(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::never())->method('writeLine');
+
+        $handler = $this->createHandler();
+        $msg = new IRCMessage(command: 'ERROR', trailing: 'Ping timeout');
+
+        $handler->handleIncoming($msg, $connection);
+    }
+
+    #[Test]
+    public function handleIncomingEndburstDispatchesSyncCompleteAndSendsBurstIfNotSent(): void
     {
         $written = [];
         $connection = $this->createMock(ConnectionInterface::class);
@@ -125,7 +231,33 @@ final class InspIRCdProtocolHandlerTest extends TestCase
 
         $handler->handleIncoming($msg, $connection);
 
-        self::assertSame([':C2C ENDBURST'], $written);
+        self::assertCount(2, $written);
+        self::assertMatchesRegularExpression('/^:C2C BURST \d+$/', $written[0]);
+        self::assertSame(':C2C ENDBURST', $written[1]);
+    }
+
+    #[Test]
+    public function handleIncomingEndburstDoesNotResendBurstIfAlreadySent(): void
+    {
+        $written = [];
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::atLeastOnce())->method('writeLine')->willReturnCallback(static function (string $line) use (&$written): void {
+            $written[] = $line;
+        });
+
+        $handler = $this->createHandler('C2C');
+
+        $serverMsg = new IRCMessage(command: 'SERVER', params: ['irc.test.net', 'pass', '994'], trailing: 'Test Server');
+        $handler->handleIncoming($serverMsg, $connection);
+
+        $burstCountBefore = count(array_filter($written, static fn (string $line): bool => str_contains($line, ' BURST ')));
+        self::assertSame(1, $burstCountBefore);
+
+        $endburstMsg = new IRCMessage(command: 'ENDBURST', prefix: '994');
+        $handler->handleIncoming($endburstMsg, $connection);
+
+        $burstCountAfter = count(array_filter($written, static fn (string $line): bool => str_contains($line, ' BURST ')));
+        self::assertSame(1, $burstCountAfter);
     }
 
     #[Test]

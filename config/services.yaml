@@ -204,6 +204,12 @@ services:
             $defaultDescription: '%irc.description%'
             $defaultProtocol:    '%irc.protocol%'
             $defaultUseTls:      '%irc.use_tls%'
+            $serverSid:          '%irc.server_sid%'
+            $serviceUids:
+                nickserv: '%nickserv.uid%'
+                chanserv: '%chanserv.uid%'
+                memoserv: '%memoserv.uid%'
+                operserv: '%operserv.uid%'
 
     # --- Protocol modules (one per IRCd type: Unreal, InspIRCd, etc.) ---
 
@@ -216,9 +222,10 @@ services:
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
-            $sid:             '%irc.server_sid%'
-            $logger:          '@monolog.logger.irc'
-            $eventDispatcher: '@event_dispatcher'
+            $sid:              '%irc.server_sid%'
+            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $logger:           '@monolog.logger.irc'
+            $eventDispatcher:  '@event_dispatcher'
         tags: ['irc.protocol_handler']
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder: ~

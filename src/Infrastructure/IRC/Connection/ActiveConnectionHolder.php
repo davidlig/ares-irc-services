@@ -22,6 +22,8 @@ final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, E
 
     private ?string $serverSid = null;
 
+    private ?string $remoteServerSid = null;
+
     private ?ProtocolModuleInterface $protocolModule = null;
 
     public static function getSubscribedEvents(): array
@@ -45,6 +47,11 @@ final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, E
     public function getServerSid(): ?string
     {
         return $this->serverSid;
+    }
+
+    public function setRemoteServerSid(string $sid): void
+    {
+        $this->remoteServerSid = $sid;
     }
 
     public function writeLine(string $line): void

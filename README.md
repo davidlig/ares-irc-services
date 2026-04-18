@@ -69,7 +69,18 @@ IRC_DESCRIPTION="Ares IRC Services"
 IRC_PROTOCOL=unreal                    # or: inspircd
 IRC_USE_TLS=false
 IRC_SERVER_SID=001                     # SID for this server (format depends on IRC_PROTOCOL: 001 / A0A)
+NICKSERV_UID=001AAAAAA                 # = <IRC_SERVER_SID> + suffix (must be unique on the network)
+CHANSERV_UID=001BBBBBB
+MEMOSERV_UID=001CCCCCC
+OPERSERV_UID=001EEEEEE
 ```
+
+> **CRITICAL:** The first 3 characters of every UID **MUST** match `IRC_SERVER_SID`.
+> If you change the SID (e.g. from `001` for UnrealIRCd to `0A0` for InspIRCd),
+> you **must** also update all four UIDs in `.env.local`. A mismatch causes the
+> IRCd to reject the link with no clear error message.
+>
+> Example for InspIRCd: `IRC_SERVER_SID=0A0` → `NICKSERV_UID=0A0AAAAAA`, etc.
 
 > **Never commit `.env.local`** — it is already listed in `.gitignore`.
 
@@ -121,6 +132,14 @@ Add a `<link>` tag to your `inspircd.conf`:
 ```
 
 Also ensure the `spanningtree` module is loaded.
+
+> **InspIRCd note:** Ares uses the SpanTree protocol v4 (1206). The handshake sends
+> `CAPAB START 1206` followed by a minimal `CAPAB CAPABILITIES :CASEMAPPING=ascii`
+> (following the Anope approach — InspIRCd skips module/mode comparison when the
+> remote server omits those CAPAB fields). No `CHALLENGE` is sent, so the link
+> uses **plaintext password** authentication. Set `IRC_SERVER_SID` to a 3-character
+> alphanumeric ID (e.g. `0A0`) and ensure all UIDs in `.env.local` use the same
+> prefix (e.g. `NICKSERV_UID=0A0AAAAAA`).
 
 ---
 
@@ -193,6 +212,36 @@ After editing `.env.local`:
 ```bash
 make restart
 ```
+
+---
+
+## Troubleshooting
+
+### Link closes immediately after handshake
+
+**Most common cause:** UID prefix does not match `IRC_SERVER_SID`.
+
+InspIRCd validates that the first 3 characters of every UID match the SID of the server that introduces them. If `IRC_SERVER_SID=0A0` but `NICKSERV_UID=002AAAAAA`, InspIRCd rejects the UID lines and closes the link.
+
+**Fix:** Ensure all UIDs in `.env.local` start with the same 3-character prefix as `IRC_SERVER_SID`:
+
+```dotenv
+IRC_SERVER_SID=0A0
+NICKSERV_UID=0A0AAAAAA
+CHANSERV_UID=0A0BBBBBB
+MEMOSERV_UID=0A0CCCCCC
+OPERSERV_UID=0A0EEEEEE
+```
+
+The `irc:connect` command validates this at startup and will refuse to connect if there is a mismatch.
+
+### No error message shown on disconnect
+
+When InspIRCd rejects a link, it sends an `ERROR :<reason>` message before closing the connection. Ares logs this reason at `CRITICAL` level. Check `var/log/irc-*.log` for the actual rejection reason (e.g. "Bogus UUID", "Invalid password", "CAPAB negotiation failed").
+
+### CAPAB lines appear garbled in logs
+
+If long `CAPAB` lines appear split or corrupted in `var/log/irc-*.log`, this was a buffering issue in the socket read layer (fixed: the connection now buffers incoming data until a complete line is received).
 
 ---
 

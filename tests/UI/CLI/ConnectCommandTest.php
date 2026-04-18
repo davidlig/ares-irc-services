@@ -35,10 +35,21 @@ final class ConnectCommandTest extends TestCase
         'useTls' => false,
     ];
 
+    private const string DEFAULT_SID = '001';
+
+    private const array DEFAULT_SERVICE_UIDS = [
+        'nickserv' => '001AAAAAA',
+        'chanserv' => '001BBBBBB',
+        'memoserv' => '001CCCCCC',
+        'operserv' => '001EEEEEE',
+    ];
+
     private function createCommand(
         ?ConnectToServerHandlerInterface $handler = null,
         ?ConsumerProcessManagerInterface $consumerManager = null,
         array $defaults = [],
+        string $serverSid = self::DEFAULT_SID,
+        array $serviceUids = self::DEFAULT_SERVICE_UIDS,
     ): ConnectCommand {
         $defaults = array_merge(self::DEFAULTS, $defaults);
         $defaultHandler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
@@ -53,6 +64,8 @@ final class ConnectCommandTest extends TestCase
             defaultDescription: $defaults['description'],
             defaultProtocol: $defaults['protocol'],
             defaultUseTls: $defaults['useTls'],
+            serverSid: $serverSid,
+            serviceUids: $serviceUids,
         );
     }
 
@@ -294,6 +307,62 @@ final class ConnectCommandTest extends TestCase
         $consumerManager->expects(self::once())->method('stop');
 
         $command = $this->createCommand($handler, $consumerManager);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--no-consumer' => true]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+    }
+
+    #[Test]
+    public function validateUidPrefixReturnsFailureOnMismatch(): void
+    {
+        $mismatchedUids = [
+            'nickserv' => '002AAAAAA',
+            'chanserv' => '001BBBBBB',
+            'memoserv' => '001CCCCCC',
+            'operserv' => '001EEEEEE',
+        ];
+
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $consumerManager = $this->createStub(ConsumerProcessManagerInterface::class);
+
+        $command = $this->createCommand(
+            handler: $handler,
+            consumerManager: $consumerManager,
+            serverSid: '0A0',
+            serviceUids: $mismatchedUids,
+        );
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--no-consumer' => true]);
+
+        self::assertSame(Command::FAILURE, $exitCode);
+        $display = $tester->getDisplay();
+        self::assertStringContainsString('UID/SID prefix mismatch', $display);
+        self::assertStringContainsString('nickserv', $display);
+    }
+
+    #[Test]
+    public function validateUidPrefixPassesWithMatchingSid(): void
+    {
+        $matchingUids = [
+            'nickserv' => '0A0AAAAAA',
+            'chanserv' => '0A0BBBBBB',
+            'memoserv' => '0A0CCCCCC',
+            'operserv' => '0A0EEEEEE',
+        ];
+
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $consumerManager = $this->createStub(ConsumerProcessManagerInterface::class);
+        $consumerManager->method('stop');
+
+        $command = $this->createCommand(
+            handler: $handler,
+            consumerManager: $consumerManager,
+            serverSid: '0A0',
+            serviceUids: $matchingUids,
+        );
         $tester = new CommandTester($command);
 
         $exitCode = $tester->execute(['--no-consumer' => true]);

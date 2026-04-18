@@ -30,6 +30,12 @@ use const SIGTERM;
 )]
 class ConnectCommand extends Command
 {
+    /** @var array<string, string> */
+    private readonly array $serviceUids;
+
+    /**
+     * @param array<string, string> $serviceUids Map of service key to UID (e.g. ['nickserv' => '0A0AAAAAA'])
+     */
     public function __construct(
         private readonly ConnectToServerHandlerInterface $handler,
         private readonly ConsumerProcessManagerInterface $consumerManager,
@@ -40,8 +46,11 @@ class ConnectCommand extends Command
         private readonly string $defaultDescription,
         private readonly string $defaultProtocol,
         private readonly bool $defaultUseTls,
+        private readonly string $serverSid,
+        array $serviceUids,
     ) {
         parent::__construct();
+        $this->serviceUids = $serviceUids;
     }
 
     protected function configure(): void
@@ -105,6 +114,16 @@ class ConnectCommand extends Command
         $useTls = $input->getOption('tls') ? true : $this->defaultUseTls;
 
         $io->title('Ares IRC Services');
+
+        $uidErrors = $this->validateUidPrefix();
+        if ([] !== $uidErrors) {
+            $io->error('UID/SID prefix mismatch — the link will be rejected by the IRCd.');
+            $io->listing($uidErrors);
+            $io->text(sprintf('IRC_SERVER_SID is "%s" but the UIDs above use a different prefix.', $this->serverSid));
+
+            return Command::FAILURE;
+        }
+
         $io->definitionList(
             ['Server name' => $serverName],
             ['Host' => sprintf('%s:%d', $host, $port)],
@@ -174,5 +193,19 @@ class ConnectCommand extends Command
             $client->disconnect('SIGHUP');
         });
         // @codeCoverageIgnoreEnd
+    }
+
+    /** @return string[] */
+    private function validateUidPrefix(): array
+    {
+        $errors = [];
+
+        foreach ($this->serviceUids as $service => $uid) {
+            if (!str_starts_with($uid, $this->serverSid)) {
+                $errors[] = sprintf('%s UID "%s" does not start with SID "%s"', $service, $uid, $this->serverSid);
+            }
+        }
+
+        return $errors;
     }
 }

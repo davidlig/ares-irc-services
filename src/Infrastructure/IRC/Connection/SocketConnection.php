@@ -21,6 +21,8 @@ class SocketConnection implements ConnectionInterface
     /** @var resource|null */
     private mixed $socket = null;
 
+    private string $recvBuffer = '';
+
     public function __construct(
         private readonly string $host,
         private readonly int $port,
@@ -70,6 +72,7 @@ class SocketConnection implements ConnectionInterface
 
         $this->socket = $socket;
         $this->status = ConnectionStatus::Connected;
+        $this->recvBuffer = '';
 
         $this->logger->info('TCP connection established.', ['address' => $address]);
     }
@@ -82,6 +85,7 @@ class SocketConnection implements ConnectionInterface
         }
 
         $this->status = ConnectionStatus::Disconnected;
+        $this->recvBuffer = '';
         $this->logger->info('TCP connection closed.', [
             'host' => $this->host,
             'port' => $this->port,
@@ -103,13 +107,27 @@ class SocketConnection implements ConnectionInterface
             return null;
         }
 
-        $line = fgets($this->socket);
+        $newlinePos = strpos($this->recvBuffer, "\n");
 
-        if (false === $line) {
-            return null;
+        if (false === $newlinePos) {
+            $chunk = @fread($this->socket, 8192);
+
+            if (false === $chunk || '' === $chunk) {
+                return null;
+            }
+
+            $this->recvBuffer .= $chunk;
+            $newlinePos = strpos($this->recvBuffer, "\n");
+
+            if (false === $newlinePos) {
+                return null;
+            }
         }
 
-        return rtrim($line, "\r\n");
+        $line = substr($this->recvBuffer, 0, $newlinePos);
+        $this->recvBuffer = substr($this->recvBuffer, $newlinePos + 1);
+
+        return rtrim($line, "\r");
     }
 
     public function isConnected(): bool
