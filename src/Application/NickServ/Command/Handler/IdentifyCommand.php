@@ -256,7 +256,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
 
     /**
      * Restores the registered nick (if the user is on a guest nick) and sets
-     * the +r (identified) mode via SVS2MODE.
+     * the +r (identified) mode via protocol-specific setUserAccount().
      *
      * For IRCops with forced vhost, personal vhost is NOT applied here.
      * The OperRoleForcedVhostSubscriber (listening to NickIdentifiedEvent) will

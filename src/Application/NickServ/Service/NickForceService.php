@@ -25,7 +25,7 @@ use function uniqid;
  * Handles all necessary cleanup when forcing a rename:
  * - De-identifies the user (removes session from registry)
  * - Dispatches UserDeidentifiedEvent if user was identified
- * - Clears +r mode via SVSLOGIN/SVS2MODE
+ * - Clears +r mode via protocol-specific setUserAccount()
  * - Clears any custom vhost
  * - Marks as pending restore to prevent protection loops
  * - Sends SVSNICK to force the nick change

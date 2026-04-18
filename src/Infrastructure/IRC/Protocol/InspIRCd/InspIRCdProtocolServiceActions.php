@@ -13,8 +13,14 @@ use function in_array;
 use function sprintf;
 
 /**
- * InspIRCd services: SVS2MODE (+r account), SVSMODE, SVSNICK, KILL.
- * Wire format matches InspIRCd server protocol (same style as Unreal).
+ * InspIRCd services: METADATA (account), SVSNICK, KILL, MODE, FMODE.
+ *
+ * InspIRCd does NOT have SVS2MODE or SVSMODE — those are UnrealIRCd commands
+ * that cause a ProtocolException on InspIRCd. User identification is done via
+ * METADATA keys (accountid, accountname) and the m_account module automatically
+ * sets +r on the user. De-identification clears the metadata with empty values.
+ *
+ * Reference: https://github.com/anope/anope/blob/2.1/modules/protocol/inspircd.cpp
  */
 final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceActionsInterface
 {
@@ -26,13 +32,20 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
     {
-        $modeDelta = ('0' === $accountName) ? '-r' : '+r';
-        $this->write(sprintf(':%s SVS2MODE %s %s', $serverSid, $targetUid, $modeDelta));
+        if ('0' === $accountName) {
+            $this->write(sprintf(':%s METADATA %s accountid ', $serverSid, $targetUid));
+            $this->write(sprintf(':%s METADATA %s accountname ', $serverSid, $targetUid));
+
+            return;
+        }
+
+        $this->write(sprintf(':%s METADATA %s accountid %s', $serverSid, $targetUid, $accountName));
+        $this->write(sprintf(':%s METADATA %s accountname %s', $serverSid, $targetUid, $accountName));
     }
 
     public function setUserMode(string $serverSid, string $targetUid, string $modes): void
     {
-        $this->write(sprintf(':%s SVSMODE %s %s', $serverSid, $targetUid, $modes));
+        $this->write(sprintf(':%s MODE %s %s', $serverSid, $targetUid, $modes));
     }
 
     public function forceNick(string $serverSid, string $targetUid, string $newNick): void
@@ -124,7 +137,7 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     {
         $ts = time();
         $line = sprintf(
-            ':%s UID %s %d %s %s %s %s %s * %d +B :%s',
+            ':%s UID %s %d %s %s %s %s %s 0.0.0.0 %d +B :%s',
             $serverSid,
             $uid,
             $ts,

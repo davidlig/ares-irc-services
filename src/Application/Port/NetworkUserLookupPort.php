@@ -20,7 +20,7 @@ interface NetworkUserLookupPort
 
     /**
      * Apply a mode change to a user (e.g. "+r", "-oHq").
-     * Updates the local NetworkUser state after sending SVSMODE.
+     * Updates the local NetworkUser state after sending the mode change.
      */
     public function applyModeChange(string $uid, string $modeDelta): void;
 

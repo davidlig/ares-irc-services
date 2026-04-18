@@ -24,7 +24,7 @@ interface NickServNotifierInterface
      * Associate a user with their services account (login).
      *
      * UnrealIRCd: Sends SVSLOGIN (account) + SVS2MODE (+r).
-     * InspIRCd: Sends SVS2MODE +r (different mechanism).
+     * InspIRCd: Sends METADATA accountid/accountname (m_account sets +r).
      *
      * To log out a user pass '0' (zero string) as $accountName.
      */

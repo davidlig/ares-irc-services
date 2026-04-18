@@ -37,14 +37,15 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function setUserAccountSetsRegisteredMode(): void
+    public function setUserAccountSendsAccountMetadata(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 SVS2MODE 001ABCD +r', $this->written[0]);
+        self::assertCount(2, $this->written);
+        self::assertSame(':001 METADATA 001ABCD accountid TestAccount', $this->written[0]);
+        self::assertSame(':001 METADATA 001ABCD accountname TestAccount', $this->written[1]);
     }
 
     #[Test]
@@ -54,19 +55,20 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
 
         $actions->setUserAccount('001', '001ABCD', '0');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 SVS2MODE 001ABCD -r', $this->written[0]);
+        self::assertCount(2, $this->written);
+        self::assertSame(':001 METADATA 001ABCD accountid ', $this->written[0]);
+        self::assertSame(':001 METADATA 001ABCD accountname ', $this->written[1]);
     }
 
     #[Test]
-    public function setUserModeSendsSvsmode(): void
+    public function setUserModeSendsMode(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->setUserMode('001', '001ABCD', '+i');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001 SVSMODE 001ABCD +i', $this->written[0]);
+        self::assertSame(':001 MODE 001ABCD +i', $this->written[0]);
     }
 
     #[Test]
@@ -291,7 +293,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         $actions->introducePseudoClient('001', 'GlobalBot', 'global', 'services.red', '001Z00001', 'Global Message Bot');
 
         self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:001 UID 001Z00001 \d+ GlobalBot services\.red services\.red global global \* \d+ \+B :Global Message Bot$/', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:001 UID 001Z00001 \d+ GlobalBot services\.red services\.red global global 0\.0\.0\.0 \d+ \+B :Global Message Bot$/', $this->written[0]);
     }
 
     #[Test]
@@ -302,7 +304,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         $actions->introducePseudoClient('002', 'Announce', 'announce', 'irc.example.net', '002Z00005', 'Network Announcements');
 
         self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:002 UID 002Z00005 \d+ Announce irc\.example\.net irc\.example\.net announce announce \* \d+ \+B :Network Announcements$/', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:002 UID 002Z00005 \d+ Announce irc\.example\.net irc\.example\.net announce announce 0\.0\.0\.0 \d+ \+B :Network Announcements$/', $this->written[0]);
     }
 
     #[Test]
