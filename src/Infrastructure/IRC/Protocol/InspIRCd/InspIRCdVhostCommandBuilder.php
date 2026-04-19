@@ -7,29 +7,34 @@ namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 use App\Application\Port\VhostCommandBuilderInterface;
 
 use function sprintf;
-use function str_contains;
 
 /**
- * InspIRCd vhost commands per server protocol docs (docs.inspircd.org/server/messages/fhost).
- * Uses FHOST: prefix is the UID of the user whose host is changed; param is the new displayed host.
- * InspIRCd does not document SVS2MODE for user modes (only SVSCMODE for channel list modes).
+ * InspIRCd vhost commands via ENCAP CHGHOST and MODE.
+ *
+ * Setting vhost: ENCAP <target_sid> CHGHOST <uid> <vhost>
+ * Clearing vhost: ENCAP <target_sid> CHGHOST <uid> <real_host> + MODE <uid> +x
+ *
+ * Inspired by Anope's SendVHostDel: first restore the real host via CHGHOST,
+ * then activate cloak mode (+x) so InspIRCd recalculates and displays the cloaked host.
+ *
+ * Reference: https://github.com/anope/anope/blob/2.1/modules/protocol/inspircd.cpp
  */
 final readonly class InspIRCdVhostCommandBuilder implements VhostCommandBuilderInterface
 {
     public function getSetVhostLine(string $serverSid, string $targetUid, string $vhost): string
     {
-        $arg = str_contains($vhost, ' ') ? ' :' . $vhost : ' ' . $vhost;
+        $targetSid = substr($targetUid, 0, 3);
 
-        return sprintf(':%s FHOST%s', $targetUid, $arg);
+        return sprintf(':%s ENCAP %s CHGHOST %s %s', $serverSid, $targetSid, $targetUid, $vhost);
     }
 
-    /**
-     * Clear displayed vhost (restore real/cloaked host).
-     * FHOST with "*" as displayed host resets to real; if a server requires the literal real
-     * host instead, the port could be extended to accept an optional realHost parameter.
-     */
-    public function getClearVhostLine(string $serverSid, string $targetUid): string
+    public function getClearVhostLines(string $serverSid, string $targetUid, string $realHost): array
     {
-        return sprintf(':%s FHOST *', $targetUid);
+        $targetSid = substr($targetUid, 0, 3);
+
+        return [
+            sprintf(':%s ENCAP %s CHGHOST %s %s', $serverSid, $targetSid, $targetUid, $realHost),
+            sprintf(':%s MODE %s +x', $serverSid, $targetUid),
+        ];
     }
 }

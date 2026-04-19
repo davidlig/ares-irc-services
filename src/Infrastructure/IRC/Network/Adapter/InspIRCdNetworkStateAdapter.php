@@ -71,9 +71,12 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
     }
 
     /**
-     * InspIRCd UID format: uuid timestamp nickname real_host displayed_host [real_user] displayed_user ip connect_time modes [mode_params] :realname
-     * 1205: 0=uuid, 1=ts, 2=nick, 3=real_host, 4=displayed_host, 5=displayed_user, 6=ip, 7=connect_time, 8=modes, 9+=mode_params
-     * 1206+: 0=uuid, 1=ts, 2=nick, 3=real_host, 4=displayed_host, 5=real_user, 6=displayed_user, 7=ip, 8=connect_time, 9=modes, 10+=mode_params.
+     * InspIRCd 4.x (1206) UID format:
+     * :serverSid UID uuid ts nick real_host displayed_host real_user displayed_user ip connect_time modes [mode_params] :realname
+     * 0=uuid, 1=ts, 2=nick, 3=real_host, 4=displayed_host, 5=real_user, 6=displayed_user, 7=ip, 8=connect_time, 9=modes, 10+=mode_params.
+     *
+     * Note: ts (params[1]) is the nick change timestamp; connect_time (params[8]) is when the user connected.
+     * Ares always negotiates protocol 1206 (v4), so 1205 (v3) format is not supported.
      */
     private function handleUid(IRCMessage $message): void
     {
@@ -91,10 +94,10 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $nickStr = $params[2];
         $hostname = $params[3];
         $cloakedHost = $params[4];
-        $is1206 = count($params) >= 11;
-        $username = $is1206 ? $params[6] : $params[5];
-        $ipRaw = $is1206 ? $params[7] : $params[6];
-        $umodes = $is1206 ? $params[9] : $params[8];
+        $username = $params[6];
+        $ipRaw = $params[7];
+        $connectedAtRaw = $params[8];
+        $umodes = $params[9];
         $gecos = $message->trailing ?? '';
         $serverSid = $message->prefix ?? '';
 
@@ -112,7 +115,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $connectedAt = new DateTimeImmutable('@' . $timestamp);
+        $connectedAt = new DateTimeImmutable('@' . $connectedAtRaw);
 
         $user = new NetworkUser(
             uid: $uid,

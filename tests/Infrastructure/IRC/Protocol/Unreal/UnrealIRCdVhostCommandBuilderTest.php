@@ -44,14 +44,16 @@ final class UnrealIRCdVhostCommandBuilderTest extends TestCase
     }
 
     #[Test]
-    public function getClearVhostLineProducesSvs2modeMinusT(): void
+    public function getClearVhostLinesProducesSvs2modeMinusT(): void
     {
-        $line = $this->builder->getClearVhostLine(
+        $lines = $this->builder->getClearVhostLines(
             serverSid: '001',
-            targetUid: '001ABCD'
+            targetUid: '001ABCD',
+            realHost: 'real.host.example'
         );
 
-        self::assertSame(':001 SVS2MODE 001ABCD -t', $line);
+        self::assertCount(1, $lines);
+        self::assertSame(':001 SVS2MODE 001ABCD -t', $lines[0]);
     }
 
     #[Test]

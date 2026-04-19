@@ -20,50 +20,52 @@ final class InspIRCdVhostCommandBuilderTest extends TestCase
     }
 
     #[Test]
-    public function getSetVhostLineProducesFhostCommand(): void
+    public function getSetVhostLineProducesEncapChgHost(): void
     {
         $line = $this->builder->getSetVhostLine(
-            serverSid: '001',
-            targetUid: '001ABCD',
+            serverSid: '0A0',
+            targetUid: '994AAAAAA',
             vhost: 'new.vhost.example'
         );
 
-        self::assertSame(':001ABCD FHOST new.vhost.example', $line);
+        self::assertSame(':0A0 ENCAP 994 CHGHOST 994AAAAAA new.vhost.example', $line);
     }
 
     #[Test]
-    public function getSetVhostLineEscapesVhostWithSpaces(): void
+    public function getSetVhostLineExtractsTargetSidFromUid(): void
     {
         $line = $this->builder->getSetVhostLine(
-            serverSid: '002',
-            targetUid: '002EFGH',
-            vhost: 'vhost with spaces'
-        );
-
-        self::assertSame(':002EFGH FHOST :vhost with spaces', $line);
-    }
-
-    #[Test]
-    public function getClearVhostLineProducesFhostAsterisk(): void
-    {
-        $line = $this->builder->getClearVhostLine(
-            serverSid: '001',
-            targetUid: '001ABCD'
-        );
-
-        self::assertSame(':001ABCD FHOST *', $line);
-    }
-
-    #[Test]
-    public function getSetVhostLineUsesTargetUidAsSource(): void
-    {
-        $line = $this->builder->getSetVhostLine(
-            serverSid: '003',
-            targetUid: '003IJKL',
+            serverSid: '0A0',
+            targetUid: '0A0BBBBBB',
             vhost: 'test.vhost'
         );
 
-        self::assertStringStartsWith(':003IJKL FHOST', $line);
-        self::assertFalse(str_starts_with($line, ':003 '));
+        self::assertSame(':0A0 ENCAP 0A0 CHGHOST 0A0BBBBBB test.vhost', $line);
+    }
+
+    #[Test]
+    public function getClearVhostLinesProducesEncapChgHostAndModePlusX(): void
+    {
+        $lines = $this->builder->getClearVhostLines(
+            serverSid: '0A0',
+            targetUid: '994AAAAAA',
+            realHost: '87.125.55.53'
+        );
+
+        self::assertCount(2, $lines);
+        self::assertSame(':0A0 ENCAP 994 CHGHOST 994AAAAAA 87.125.55.53', $lines[0]);
+        self::assertSame(':0A0 MODE 994AAAAAA +x', $lines[1]);
+    }
+
+    #[Test]
+    public function getSetVhostLineUsesServerSidAsSource(): void
+    {
+        $line = $this->builder->getSetVhostLine(
+            serverSid: '0A0',
+            targetUid: '994AAAAAA',
+            vhost: 'test.vhost'
+        );
+
+        self::assertStringStartsWith(':0A0 ENCAP', $line);
     }
 }

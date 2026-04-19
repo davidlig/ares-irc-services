@@ -13,14 +13,13 @@ use function in_array;
 use function sprintf;
 
 /**
- * InspIRCd services: METADATA (account), SVSNICK, KILL, MODE, FMODE.
+ * InspIRCd services: METADATA (account), MODE (+r/-r), SVSNICK, KILL, FMODE.
  *
  * InspIRCd does NOT have SVS2MODE or SVSMODE — those are UnrealIRCd commands
  * that cause a ProtocolException on InspIRCd. User identification is done via
- * METADATA keys (accountid, accountname) and the m_account module automatically
- * sets +r on the user. De-identification clears the metadata with empty values.
- *
- * Reference: https://github.com/anope/anope/blob/2.1/modules/protocol/inspircd.cpp
+ * METADATA keys (accountid, accountname). InspIRCd 4.x does NOT automatically
+ * set +r from METADATA — services must send an explicit MODE +r/-r after
+ * setting/clearing the account metadata.
  */
 final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceActionsInterface
 {
@@ -33,14 +32,16 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
     {
         if ('0' === $accountName) {
-            $this->write(sprintf(':%s METADATA %s accountid ', $serverSid, $targetUid));
-            $this->write(sprintf(':%s METADATA %s accountname ', $serverSid, $targetUid));
+            $this->write(sprintf(':%s METADATA %s accountid :', $serverSid, $targetUid));
+            $this->write(sprintf(':%s METADATA %s accountname :', $serverSid, $targetUid));
+            $this->write(sprintf(':%s MODE %s -r', $serverSid, $targetUid));
 
             return;
         }
 
-        $this->write(sprintf(':%s METADATA %s accountid %s', $serverSid, $targetUid, $accountName));
-        $this->write(sprintf(':%s METADATA %s accountname %s', $serverSid, $targetUid, $accountName));
+        $this->write(sprintf(':%s METADATA %s accountid :%s', $serverSid, $targetUid, $accountName));
+        $this->write(sprintf(':%s METADATA %s accountname :%s', $serverSid, $targetUid, $accountName));
+        $this->write(sprintf(':%s MODE %s +r', $serverSid, $targetUid));
     }
 
     public function setUserMode(string $serverSid, string $targetUid, string $modes): void

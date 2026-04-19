@@ -17,8 +17,10 @@ final readonly class UnrealIRCdVhostCommandBuilder implements VhostCommandBuilde
         return sprintf(':%s CHGHOST %s%s', $serverSid, $targetUid, $trailing);
     }
 
-    public function getClearVhostLine(string $serverSid, string $targetUid): string
+    public function getClearVhostLines(string $serverSid, string $targetUid, string $realHost): array
     {
-        return sprintf(':%s SVS2MODE %s -t', $serverSid, $targetUid);
+        return [
+            sprintf(':%s SVS2MODE %s -t', $serverSid, $targetUid),
+        ];
     }
 }

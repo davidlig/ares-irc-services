@@ -61,8 +61,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'displayuser',
                 '127.0.0.1',
                 '1234567890',
-                '',
-                '',
+                '+ix',
             ],
             'Real Name',
         );
@@ -313,7 +312,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'displayuser',
                 '127.0.0.1',
                 '1234567890',
-                '',
+                '+ix',
                 'extra',
             ],
             'Real Name',
@@ -341,7 +340,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'displayuser',
                 '127.0.0.1',
                 '1234567890',
-                '',
+                '+ix',
             ],
             'Real Name',
         );
@@ -370,11 +369,11 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'InspNick',
                 'host.name',
                 'cloak.host',
+                'realuser',
                 'displayuser',
                 '',
                 '1234567890',
                 '+i',
-                '',
             ],
             'Real Name',
         );
@@ -406,11 +405,11 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'InspNick',
                 'host.name',
                 'cloak.host',
+                'realuser',
                 'displayuser',
                 '*',
                 '1234567890',
                 '+i',
-                '',
             ],
             'Real Name',
         );
@@ -599,11 +598,11 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'InspNick',
                 'host.name',
                 'cloak.host',
+                'realuser',
                 'displayuser',
                 '::1',
                 '1234567890',
                 '+i',
-                '',
             ],
             'Real Name',
         );
@@ -720,11 +719,11 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'InspNick',
                 'host.name',
                 'cloak.host',
+                'realuser',
                 'displayuser',
                 'not-a-valid-ip',
                 '1234567890',
                 '+i',
-                '',
             ],
             'Real Name',
         );
@@ -756,11 +755,11 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'InspNick',
                 'host.name',
                 'cloak.host',
+                'realuser',
                 'displayuser',
                 '192.168.1.1',
                 '1234567890',
                 '+i',
-                '',
             ],
             'Real Name',
         );
@@ -893,11 +892,11 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'InspNick',
                 'host.name',
                 'cloak.host',
+                'realuser',
                 'displayuser',
                 '127.0.0.1',
                 '1234567890',
                 '+i',
-                '',
             ],
             null,
         );
@@ -927,7 +926,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleUidWith1205FormatDispatchesUserJoinedNetworkEvent(): void
+    public function handleUidReadsDisplayedUserAsIdent(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -948,11 +947,11 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
                 'InspNick',
                 'host.name',
                 'cloak.host',
+                'realuser',
                 'displayuser',
                 '127.0.0.1',
                 '1234567890',
                 '+i',
-                '',
             ],
             'Real Name',
         );

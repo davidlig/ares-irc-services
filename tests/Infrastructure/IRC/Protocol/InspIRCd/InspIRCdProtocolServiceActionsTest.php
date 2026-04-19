@@ -37,15 +37,16 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function setUserAccountSendsAccountMetadata(): void
+    public function setUserAccountSendsAccountMetadataAndSetsMode(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
 
-        self::assertCount(2, $this->written);
-        self::assertSame(':001 METADATA 001ABCD accountid TestAccount', $this->written[0]);
-        self::assertSame(':001 METADATA 001ABCD accountname TestAccount', $this->written[1]);
+        self::assertCount(3, $this->written);
+        self::assertSame(':001 METADATA 001ABCD accountid :TestAccount', $this->written[0]);
+        self::assertSame(':001 METADATA 001ABCD accountname :TestAccount', $this->written[1]);
+        self::assertSame(':001 MODE 001ABCD +r', $this->written[2]);
     }
 
     #[Test]
@@ -55,9 +56,10 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
 
         $actions->setUserAccount('001', '001ABCD', '0');
 
-        self::assertCount(2, $this->written);
-        self::assertSame(':001 METADATA 001ABCD accountid ', $this->written[0]);
-        self::assertSame(':001 METADATA 001ABCD accountname ', $this->written[1]);
+        self::assertCount(3, $this->written);
+        self::assertSame(':001 METADATA 001ABCD accountid :', $this->written[0]);
+        self::assertSame(':001 METADATA 001ABCD accountname :', $this->written[1]);
+        self::assertSame(':001 MODE 001ABCD -r', $this->written[2]);
     }
 
     #[Test]

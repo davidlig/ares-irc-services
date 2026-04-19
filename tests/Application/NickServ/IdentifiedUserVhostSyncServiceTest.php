@@ -67,10 +67,12 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
     }
 
     #[Test]
-    public function syncVhostForUserDoesNotClearVhostWhenNotIdentifiedAndNoVhost(): void
+    public function syncVhostForUserClearsVhostEvenWhenDisplayHostEqualsCloakedHost(): void
     {
         $notifier = $this->createMock(NickServNotifierInterface::class);
-        $notifier->expects(self::never())->method('setUserVhost');
+        $notifier->expects(self::once())
+            ->method('setUserVhost')
+            ->with('UID1', '', 'SID');
         $user = new SenderView('UID1', 'Nick', 'i', 'h', 'Cloak123', 'ip', false, false, 'SID', 'Cloak123');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
 

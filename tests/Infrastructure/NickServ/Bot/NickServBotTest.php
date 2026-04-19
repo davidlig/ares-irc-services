@@ -373,20 +373,34 @@ final class NickServBotTest extends TestCase
     public function setUserVhostSendsClearVhostWhenVhostEmpty(): void
     {
         $vhostBuilder = $this->createMock(VhostCommandBuilderInterface::class);
-        $vhostBuilder->expects(self::once())->method('getClearVhostLine')
-            ->with('001', '001USER')
-            ->willReturn(':001 SVSHOST 001USER');
+        $vhostBuilder->expects(self::once())->method('getClearVhostLines')
+            ->with('001', '001USER', 'real.host')
+            ->willReturn([':001 SVSHOST 001USER', ':001 MODE 001USER +x']);
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getVhostCommandBuilder')->willReturn($vhostBuilder);
 
-        $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $userLookup->method('findByUid')->willReturn(null);
+        $sender = new SenderView(
+            uid: '001USER',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'real.host',
+            cloakedHost: 'cloak.host',
+            ipBase64: '',
+            isIdentified: false,
+            isOper: false,
+            serverSid: '001',
+            displayHost: 'old.vhost',
+        );
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($sender);
+        $userLookup->expects(self::once())->method('updateVhost')->with('001USER', '');
 
         $this->connectionHolder->setProtocolModule($module);
 
         $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::once())->method('writeLine')->with(':001 SVSHOST 001USER');
+        $connection->expects(self::exactly(2))->method('writeLine');
 
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);

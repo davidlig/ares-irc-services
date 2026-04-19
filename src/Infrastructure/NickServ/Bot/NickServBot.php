@@ -148,10 +148,16 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
         }
         $sid = $this->getServerSid();
         $vhostBuilder = $module->getVhostCommandBuilder();
-        $line = '' !== $vhost
-            ? $vhostBuilder->getSetVhostLine($sid, $targetUid, $vhost)
-            : $vhostBuilder->getClearVhostLine($sid, $targetUid);
-        $this->write($line);
+
+        if ('' !== $vhost) {
+            $line = $vhostBuilder->getSetVhostLine($sid, $targetUid, $vhost);
+            $this->write($line);
+        } else {
+            $realHost = $sender?->hostname ?? '';
+            foreach ($vhostBuilder->getClearVhostLines($sid, $targetUid, $realHost) as $line) {
+                $this->write($line);
+            }
+        }
 
         // Update local NetworkUser state to keep displayHost in sync
         $this->userLookup->updateVhost($targetUid, $vhost);

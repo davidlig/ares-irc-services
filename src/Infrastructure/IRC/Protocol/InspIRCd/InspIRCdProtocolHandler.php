@@ -44,9 +44,6 @@ use function sprintf;
  *
  * The SID is a 3-character alphanumeric server identifier unique on the network.
  * Protocol 1206 (v4) does NOT include a hop-count before the SID (unlike 1205/v3).
- *
- * Reference: https://github.com/inspircd/inspircd/blob/insp4/src/modules/m_spanningtree/
- * Reference: https://github.com/anope/anope/blob/2.1/modules/protocol/inspircd.cpp
  */
 class InspIRCdProtocolHandler extends AbstractProtocolHandler
 {
