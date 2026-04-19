@@ -128,11 +128,11 @@ final class EmailDelayMiddlewareTest extends TestCase
             ->method('next')
             ->willReturn($next);
 
-        $start = time();
+        $start = hrtime(true);
         $result = $middleware->handle($envelope, $stack);
-        $elapsed = time() - $start;
+        $elapsedMs = (hrtime(true) - $start) / 1_000_000;
 
         self::assertSame($envelope, $result);
-        self::assertGreaterThanOrEqual(1, $elapsed);
+        self::assertGreaterThanOrEqual(900, $elapsedMs, 'EmailDelayMiddleware should sleep at least ~1 second');
     }
 }
