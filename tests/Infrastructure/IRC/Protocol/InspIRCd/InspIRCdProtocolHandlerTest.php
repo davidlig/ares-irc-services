@@ -11,6 +11,9 @@ use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
+use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,9 +24,14 @@ use function count;
 #[CoversClass(InspIRCdProtocolHandler::class)]
 final class InspIRCdProtocolHandlerTest extends TestCase
 {
-    private function createHandler(string $sid = 'A0A'): InspIRCdProtocolHandler
+    private function createHandler(string $sid = 'A0A', ?ActiveConnectionHolder $connectionHolder = null, ?InspIRCdChannelModeSupportFactory $factory = null): InspIRCdProtocolHandler
     {
-        return new InspIRCdProtocolHandler($sid);
+        return new InspIRCdProtocolHandler(
+            sid: $sid,
+            connectionHolder: $connectionHolder ?? new ActiveConnectionHolder(),
+            modeSupportFactory: $factory ?? new InspIRCdChannelModeSupportFactory(),
+            logger: new \Psr\Log\NullLogger(),
+        );
     }
 
     private function createServerLink(): ServerLink
@@ -270,5 +278,142 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         $msg = new IRCMessage(command: 'PRIVMSG', params: ['#chan'], trailing: 'hi');
 
         $handler->handleIncoming($msg, $connection);
+    }
+
+    #[Test]
+    public function handleCapabAccumulatesLinesAndUpdatesModuleOnCapabEnd(): void
+    {
+        $connectionHolder = new ActiveConnectionHolder();
+        $factory = new InspIRCdChannelModeSupportFactory();
+        $modeSupport = $factory->createDefault();
+
+        $handler = new InspIRCdProtocolHandler(
+            sid: '0A0',
+            connectionHolder: $connectionHolder,
+            modeSupportFactory: $factory,
+            logger: new \Psr\Log\NullLogger(),
+        );
+
+        $module = $this->createModuleWithHandler($handler, $connectionHolder, $modeSupport);
+        $connectionHolder->setProtocolModule($module);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b list:banexception=e list:invex=I param-set:key=k prefix:10000:voice=+v prefix:30000:op=@o simple:inviteonly=i simple:c_registered=r simple:topiclock=t'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+
+        self::assertFalse($module->getChannelModeSupport()->hasPermanentChannelMode());
+        self::assertFalse($module->getChannelModeSupport()->hasHalfOp());
+        self::assertFalse($module->getChannelModeSupport()->hasAdmin());
+        self::assertFalse($module->getChannelModeSupport()->hasOwner());
+        self::assertSame(['v', 'o'], $module->getChannelModeSupport()->getSupportedPrefixModes());
+        self::assertTrue($module->getChannelModeSupport()->hasChannelRegisteredMode());
+    }
+
+    #[Test]
+    public function handleCapabWithFullRanksUpdatesModuleCorrectly(): void
+    {
+        $connectionHolder = new ActiveConnectionHolder();
+        $factory = new InspIRCdChannelModeSupportFactory();
+        $modeSupport = $factory->createDefault();
+
+        $handler = new InspIRCdProtocolHandler(
+            sid: '0A0',
+            connectionHolder: $connectionHolder,
+            modeSupportFactory: $factory,
+            logger: new \Psr\Log\NullLogger(),
+        );
+
+        $module = $this->createModuleWithHandler($handler, $connectionHolder, $modeSupport);
+        $connectionHolder->setProtocolModule($module);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b param-set:key=k prefix:10000:voice=+v prefix:20000:halfop=%h prefix:30000:op=@o prefix:40000:admin=&a prefix:50000:founder=~q simple:c_registered=r simple:P=P simple:inviteonly=i'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+
+        self::assertTrue($module->getChannelModeSupport()->hasHalfOp());
+        self::assertTrue($module->getChannelModeSupport()->hasAdmin());
+        self::assertTrue($module->getChannelModeSupport()->hasOwner());
+        self::assertTrue($module->getChannelModeSupport()->hasPermanentChannelMode());
+        self::assertSame('P', $module->getChannelModeSupport()->getPermanentChannelModeLetter());
+        self::assertSame(['v', 'h', 'o', 'a', 'q'], $module->getChannelModeSupport()->getSupportedPrefixModes());
+    }
+
+    #[Test]
+    public function handleCapabDoesNotUpdateModuleWhenNoFactory(): void
+    {
+        $connectionHolder = new ActiveConnectionHolder();
+
+        $handler = new InspIRCdProtocolHandler(
+            sid: '0A0',
+            connectionHolder: $connectionHolder,
+            modeSupportFactory: null,
+            logger: new \Psr\Log\NullLogger(),
+        );
+
+        $factory = new InspIRCdChannelModeSupportFactory();
+        $modeSupport = $factory->createDefault();
+
+        $module = $this->createModuleWithHandler($handler, $connectionHolder, $modeSupport);
+        $connectionHolder->setProtocolModule($module);
+
+        $connection = $this->createStub(ConnectionInterface::class);
+
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b prefix:10000:voice=+v prefix:30000:op=@o simple:inviteonly=i'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+
+        self::assertTrue($module->getChannelModeSupport()->hasPermanentChannelMode());
+        self::assertTrue($module->getChannelModeSupport()->hasOwner());
+    }
+
+    #[Test]
+    public function performHandshakeResetsCapabAccumulation(): void
+    {
+        $connectionHolder = new ActiveConnectionHolder();
+        $factory = new InspIRCdChannelModeSupportFactory();
+        $modeSupport = $factory->createDefault();
+
+        $handler = new InspIRCdProtocolHandler(
+            sid: '0A0',
+            connectionHolder: $connectionHolder,
+            modeSupportFactory: $factory,
+            logger: new \Psr\Log\NullLogger(),
+        );
+
+        $module = $this->createModuleWithHandler($handler, $connectionHolder, $modeSupport);
+        $connectionHolder->setProtocolModule($module);
+
+        $written = [];
+        $connection = $this->createRecordingConnection($written);
+
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b prefix:10000:voice=+v simple:c_registered=r'), $connection);
+
+        $handler->performHandshake($connection, $this->createServerLink());
+
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['START'], trailing: '1206'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['CHANMODES'], trailing: 'list:ban=b param-set:key=k prefix:10000:voice=+v prefix:20000:halfop=%h prefix:30000:op=@o prefix:40000:admin=&a prefix:50000:founder=~q simple:c_registered=r simple:P=P'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'CAPAB', params: ['END']), $connection);
+
+        self::assertTrue($module->getChannelModeSupport()->hasHalfOp());
+        self::assertTrue($module->getChannelModeSupport()->hasOwner());
+        self::assertTrue($module->getChannelModeSupport()->hasPermanentChannelMode());
+    }
+
+    private function createModuleWithHandler(InspIRCdProtocolHandler $handler, ActiveConnectionHolder $connectionHolder, \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport $modeSupport): InspIRCdModule
+    {
+        return new InspIRCdModule(
+            handler: $handler,
+            serviceActions: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions($connectionHolder, new \Psr\Log\NullLogger()),
+            introductionFormatter: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter(),
+            vhostCommandBuilder: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder(),
+            channelModeSupport: $modeSupport,
+            userModeSupport: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport(),
+            nickReservation: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation($connectionHolder, new \Psr\Log\NullLogger()),
+        );
     }
 }

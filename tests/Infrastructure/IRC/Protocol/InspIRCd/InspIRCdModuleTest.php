@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\IRC\Protocol\InspIRCd;
 
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
@@ -21,6 +22,13 @@ use Psr\Log\NullLogger;
 #[CoversClass(InspIRCdModule::class)]
 final class InspIRCdModuleTest extends TestCase
 {
+    private InspIRCdChannelModeSupportFactory $modeSupportFactory;
+
+    protected function setUp(): void
+    {
+        $this->modeSupportFactory = new InspIRCdChannelModeSupportFactory();
+    }
+
     private function createModule(): InspIRCdModule
     {
         $handler = new InspIRCdProtocolHandler('A0A');
@@ -28,7 +36,7 @@ final class InspIRCdModuleTest extends TestCase
         $serviceActions = new InspIRCdProtocolServiceActions($connectionHolder, new NullLogger());
         $formatter = new InspIRCdServiceIntroductionFormatter();
         $vhostBuilder = new InspIRCdVhostCommandBuilder();
-        $channelModeSupport = new InspIRCdChannelModeSupport();
+        $channelModeSupport = $this->modeSupportFactory->createDefault();
         $userModeSupport = new InspIRCdUserModeSupport();
         $nickReservation = new InspIRCdNickReservation($connectionHolder, new NullLogger());
 
@@ -62,7 +70,7 @@ final class InspIRCdModuleTest extends TestCase
             new InspIRCdProtocolServiceActions($connectionHolder, new NullLogger()),
             new InspIRCdServiceIntroductionFormatter(),
             new InspIRCdVhostCommandBuilder(),
-            new InspIRCdChannelModeSupport(),
+            $this->modeSupportFactory->createDefault(),
             new InspIRCdUserModeSupport(),
             new InspIRCdNickReservation($connectionHolder, new NullLogger()),
         );
@@ -95,5 +103,36 @@ final class InspIRCdModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(InspIRCdUserModeSupport::class, $module->getUserModeSupport());
+    }
+
+    #[Test]
+    public function updateChannelModeSupportReplacesTheInstance(): void
+    {
+        $module = $this->createModule();
+
+        self::assertTrue($module->getChannelModeSupport()->hasPermanentChannelMode());
+        self::assertTrue($module->getChannelModeSupport()->hasOwner());
+
+        $newSupport = new InspIRCdChannelModeSupport(
+            prefixModes: ['v', 'o'],
+            listModeLetters: ['b'],
+            channelSettingUnsetWithoutParam: ['i'],
+            channelSettingUnsetWithParam: [],
+            channelSettingWithParamOnSet: [],
+            hasHalfOp: false,
+            hasAdmin: false,
+            hasOwner: false,
+            hasPermanentMode: false,
+            permanentModeLetter: null,
+            hasRegisteredMode: true,
+            registeredModeLetter: 'r',
+        );
+
+        $module->updateChannelModeSupport($newSupport);
+
+        self::assertSame($newSupport, $module->getChannelModeSupport());
+        self::assertFalse($module->getChannelModeSupport()->hasPermanentChannelMode());
+        self::assertFalse($module->getChannelModeSupport()->hasOwner());
+        self::assertSame(['v', 'o'], $module->getChannelModeSupport()->getSupportedPrefixModes());
     }
 }
