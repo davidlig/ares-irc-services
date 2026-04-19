@@ -5,6 +5,7 @@ FROM php:8.4-cli-alpine
 
 # Install system dependencies for PHP extensions
 # linux-headers is required for sockets extension (provides linux/sock_diag.h)
+# su-exec allows dropping privileges after fixing ownership in entrypoint
 RUN apk add --no-cache \
     $PHPIZE_DEPS \
     sqlite-dev \
@@ -13,13 +14,14 @@ RUN apk add --no-cache \
 
 # Install PHP extensions
 # Built-in in php:8.4-cli-alpine: ctype, dom, filter, hash, iconv, json, libxml, phar, tokenizer, xml, xmlwriter
-# Explicitly installed: pdo, pdo_sqlite, mbstring, sockets, opcache
+# Explicitly installed: pdo, pdo_sqlite, mbstring, sockets, opcache, pcntl
 RUN docker-php-ext-install -j$(nproc) \
     pdo \
     pdo_sqlite \
     mbstring \
     sockets \
-    opcache
+    opcache \
+    pcntl
 
 # Configure opcache for production
 RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini && \
@@ -33,17 +35,13 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# Copy dependency files first (cache optimization)
-COPY composer.json composer.lock ./
-
-# Install dependencies (production mode)
-RUN composer install -n --no-dev --optimize-autoloader --classmap-authoritative --no-scripts --no-progress
-
 # Copy application code
 COPY . .
 
-# Create non-root user and set permissions
-RUN adduser -D -u 1000 appuser && \
+ARG UID
+
+# Create user with same permissions as host and some useful stuff
+RUN adduser -u ${UID} --disabled-password --gecos "" appuser && \
     mkdir -p var/cache var/log var/data && \
     chown -R appuser:appuser /app
 

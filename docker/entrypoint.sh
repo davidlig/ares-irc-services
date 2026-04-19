@@ -23,11 +23,9 @@ if ! grep -q "^APP_SECRET=." /app/.env.local 2>/dev/null; then
     echo "APP_SECRET=${SECRET}" >> /app/.env.local
     echo "==> APP_SECRET generated: ${SECRET:0:8}..."
 elif grep -q "^APP_SECRET=changeme" /app/.env.local 2>/dev/null; then
-    # APP_SECRET has default value, replace it
     echo "==> Generating APP_SECRET (replacing default)"
     SECRET=$(php -r 'echo bin2hex(random_bytes(16));')
 
-    # Can't use sed -i on bind-mounted file, use temp file approach
     grep -v "^APP_SECRET=" /app/.env.local > /tmp/env.tmp || true
     echo "APP_SECRET=${SECRET}" >> /tmp/env.tmp
     cat /tmp/env.tmp > /app/.env.local
@@ -36,17 +34,17 @@ elif grep -q "^APP_SECRET=changeme" /app/.env.local 2>/dev/null; then
     echo "==> APP_SECRET generated: ${SECRET:0:8}..."
 fi
 
-# 3. Sync .env.local with new keys from .env (ares/irc-link and ares/services blocks)
+# 3. Sync .env.local with new keys from .env
 /app/docker/sync-env.sh
 
-# 3. Run composer install (always, as per requirement)
+# 4. Run composer install
 echo "==> Running composer install"
 composer install -n --no-dev --optimize-autoloader --classmap-authoritative --no-scripts
 
-# 4. Run database migrations
+# 5. Run database migrations
 echo "==> Running database migrations"
 php bin/console doctrine:migrations:migrate -n
 
-# 5. Start IRC services
+# 6. Start IRC services
 echo "==> Starting Ares IRC Services"
 exec php bin/console irc:connect

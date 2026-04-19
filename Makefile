@@ -1,7 +1,8 @@
-.PHONY: help build build-no-cache up down logs logs-tail ps shell clean restart test db-shell db-migrate db-backup db-restore config-show health
+.PHONY: help build build-no-cache up down logs logs-tail ps shell clean restart test db-shell db-migrate db-backup db-restore config-show health config
 
 # Detect docker compose command (v2 uses 'docker compose', v1 uses 'docker-compose')
 DOCKER_COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+UID := $(shell id -u)
 
 BACKUP_DIR ?= backups
 BACKUP_FILE = ares-$(shell date +%Y%m%d-%H%M%S).db
@@ -13,14 +14,21 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## Build Docker image
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml build
+	UID=$(UID) $(DOCKER_COMPOSE) -f docker/docker-compose.yml build
 
 build-no-cache: ## Build without cache
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml build --no-cache
+	UID=$(UID) $(DOCKER_COMPOSE) -f docker/docker-compose.yml build --no-cache
+
+config: ## Create .env.local from .env template
+	@./scripts/init-env.sh
 
 up: ## Start services in background (always rebuilds image)
-	@./scripts/init-env.sh
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml up -d --build
+	@if [ ! -f .env.local ]; then \
+		echo "❌ .env.local not found. Run 'make config' first to create it."; \
+		exit 1; \
+	fi
+	@mkdir -p var/data var/log
+	UID=$(UID) $(DOCKER_COMPOSE) -f docker/docker-compose.yml up -d --build
 
 down: ## Stop services
 	$(DOCKER_COMPOSE) -f docker/docker-compose.yml down

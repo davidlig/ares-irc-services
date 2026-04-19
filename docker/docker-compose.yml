@@ -3,6 +3,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        UID: ${UID:-1000}
     container_name: ares-irc-services
     restart: unless-stopped
 
