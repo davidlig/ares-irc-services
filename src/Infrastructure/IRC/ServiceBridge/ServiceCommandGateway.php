@@ -10,8 +10,10 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function in_array;
+
 /**
- * Single entry point for PRIVMSG targeting a service. Listens to MessageReceivedEvent,
+ * Single entry point for PRIVMSG and SQUERY targeting a service. Listens to MessageReceivedEvent,
  * matches target to registered service names, and invokes the listener with (senderUid, text).
  *
  * Bots register via ServiceCommandListenerInterface (tagged); they never subscribe
@@ -62,7 +64,7 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
     {
         $message = $event->message;
 
-        if ('PRIVMSG' !== $message->command) {
+        if (!in_array($message->command, ['PRIVMSG', 'SQUERY'], true)) {
             return;
         }
 

@@ -246,10 +246,12 @@ services:
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation:
         arguments:
+            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation:
         arguments:
+            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport: ~
@@ -1559,7 +1561,6 @@ services:
             $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
             $channelLookup: '@App\Application\Port\ChannelLookupPort'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
-            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
             $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'

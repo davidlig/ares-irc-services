@@ -5,55 +5,69 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 
 use App\Application\Port\ServiceNickReservationInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 use function sprintf;
 
 /**
- * InspIRCd nick reservation via QLINE command.
+ * InspIRCd v4 nick reservation via ADDLINE/DELLINE commands.
  *
- * QLINE prevents regular users from using a nickname while allowing
- * U-lined servers (like services) to introduce it.
+ * InspIRCd v4 (protocol 1205+) replaced QLINE with ADDLINE/DELLINE:
+ * - Reserve: :serverSid ADDLINE Q nick serverSid timestamp duration :reason
+ * - Release: :serverSid DELLINE Q nick
  *
- * Format: :serverSid QLINE nick duration :reason
- * Example: :001 QLINE NickServ 0 :Reserved for network services
- *
- * Duration 0 = permanent (no expiry)
+ * Duration 0 = permanent (no expiry).
  */
 final readonly class InspIRCdNickReservation implements ServiceNickReservationInterface
 {
     public function __construct(
+        private readonly ActiveConnectionHolder $connectionHolder,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
-    public function reserveNick(ConnectionInterface $connection, string $serverSid, string $nick, string $reason): void
+    public function reserveNick(string $nick, string $reason): void
     {
-        $line = sprintf(':%s QLINE %s 0 :%s', $serverSid, $nick, $reason);
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return;
+        }
 
-        $connection->writeLine($line);
-        $this->logger->info('Reserved service nick via QLINE', ['nick' => $nick, 'serverSid' => $serverSid]);
+        $line = sprintf(':%s ADDLINE Q %s %s %d 0 :%s', $serverSid, $nick, $serverSid, time(), $reason);
+
+        $this->connectionHolder->writeLine($line);
+        $this->logger->info('Reserved service nick via ADDLINE Q', ['nick' => $nick, 'serverSid' => $serverSid]);
     }
 
-    public function reserveNickWithDuration(ConnectionInterface $connection, string $serverSid, string $nick, int $durationSeconds, string $reason): void
+    public function reserveNickWithDuration(string $nick, int $durationSeconds, string $reason): void
     {
-        $line = sprintf(':%s QLINE %s %d :%s', $serverSid, $nick, $durationSeconds, $reason);
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return;
+        }
 
-        $connection->writeLine($line);
-        $this->logger->info('Reserved service nick via QLINE with duration', [
+        $line = sprintf(':%s ADDLINE Q %s %s %d %d :%s', $serverSid, $nick, $serverSid, time(), $durationSeconds, $reason);
+
+        $this->connectionHolder->writeLine($line);
+        $this->logger->info('Reserved service nick via ADDLINE Q with duration', [
             'nick' => $nick,
             'serverSid' => $serverSid,
             'duration' => $durationSeconds,
         ]);
     }
 
-    public function releaseNick(ConnectionInterface $connection, string $serverSid, string $nick): void
+    public function releaseNick(string $nick): void
     {
-        $line = sprintf(':%s QLINE %s', $serverSid, $nick);
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return;
+        }
 
-        $connection->writeLine($line);
-        $this->logger->info('Released service nick via QLINE', ['nick' => $nick, 'serverSid' => $serverSid]);
+        $line = sprintf(':%s DELLINE Q %s', $serverSid, $nick);
+
+        $this->connectionHolder->writeLine($line);
+        $this->logger->info('Released service nick via DELLINE Q', ['nick' => $nick, 'serverSid' => $serverSid]);
     }
 }

@@ -13,6 +13,8 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function in_array;
+
 final readonly class CtcpHandler implements EventSubscriberInterface
 {
     private const string CTCP_PATTERN = '/^\x01([^\x01]+)\x01$/';
@@ -50,7 +52,7 @@ final readonly class CtcpHandler implements EventSubscriberInterface
     {
         $message = $event->message;
 
-        if ('PRIVMSG' !== $message->command) {
+        if (!in_array($message->command, ['PRIVMSG', 'SQUERY'], true)) {
             return;
         }
 

@@ -43,9 +43,15 @@ interface ProtocolServiceActionsInterface
     public function joinChannelAsService(string $serverSid, string $channelName, string $serviceUid, string $maxPrefixLetter, ?int $channelTimestamp = null): void;
 
     /**
-     * Set or clear the channel topic. Null = clear. Source of the TOPIC line is $serviceUid when non-empty.
+     * Set or clear the channel topic. Null = clear.
+     *
+     * @param string      $serverSid         Server SID (source of the TOPIC/FTOPIC command)
+     * @param string      $channelName       Channel name (e.g., #channel)
+     * @param string|null $topic             Topic text, or null to clear
+     * @param string      $serviceUid        Optional service UID as source (e.g., ChanServ's UID)
+     * @param int|null    $channelCreationTs Channel creation timestamp (required for InspIRCd v4 FTOPIC)
      */
-    public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = ''): void;
+    public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = '', ?int $channelCreationTs = null): void;
 
     /**
      * Kick a user from a channel. Source is $serviceUid when non-empty.

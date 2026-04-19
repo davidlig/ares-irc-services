@@ -27,8 +27,10 @@ interface ChannelServiceActionsPort
 
     /**
      * Set or clear the channel topic. Null = clear topic.
+     *
+     * @param int|null $channelCreationTs Channel creation timestamp (for protocols like InspIRCd v4 FTOPIC)
      */
-    public function setChannelTopic(string $channelName, ?string $topic): void;
+    public function setChannelTopic(string $channelName, ?string $topic, ?int $channelCreationTs = null): void;
 
     /**
      * Kick a user from a channel.

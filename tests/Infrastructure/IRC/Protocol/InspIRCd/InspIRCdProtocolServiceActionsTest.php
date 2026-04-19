@@ -43,10 +43,11 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
 
-        self::assertCount(3, $this->written);
+        self::assertCount(4, $this->written);
         self::assertSame(':001 METADATA 001ABCD accountid :TestAccount', $this->written[0]);
         self::assertSame(':001 METADATA 001ABCD accountname :TestAccount', $this->written[1]);
-        self::assertSame(':001 MODE 001ABCD +r', $this->written[2]);
+        self::assertSame(':001 METADATA 001ABCD accountnicks :TestAccount', $this->written[2]);
+        self::assertSame(':001 MODE 001ABCD +r', $this->written[3]);
     }
 
     #[Test]
@@ -56,10 +57,11 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
 
         $actions->setUserAccount('001', '001ABCD', '0');
 
-        self::assertCount(3, $this->written);
+        self::assertCount(4, $this->written);
         self::assertSame(':001 METADATA 001ABCD accountid :', $this->written[0]);
         self::assertSame(':001 METADATA 001ABCD accountname :', $this->written[1]);
-        self::assertSame(':001 MODE 001ABCD -r', $this->written[2]);
+        self::assertSame(':001 METADATA 001ABCD accountnicks :', $this->written[2]);
+        self::assertSame(':001 MODE 001ABCD -r', $this->written[3]);
     }
 
     #[Test]
@@ -140,14 +142,14 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function inviteUserToChannelSendsInvite(): void
+    public function inviteUserToChannelSendsInviteWithTimestamp(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->inviteUserToChannel('001', '#test', '001ABCD');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001 INVITE 001ABCD #test', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:001 INVITE 001ABCD #test \d+$/', $this->written[0]);
     }
 
     #[Test]
@@ -184,14 +186,25 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function setChannelTopicSetsTopic(): void
+    public function setChannelTopicSetsFtopicWithTimestamps(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
-        $actions->setChannelTopic('001', '#test', 'New topic', '001CSRV');
+        $actions->setChannelTopic('001', '#test', 'New topic', '001CSRV', 12345);
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV TOPIC #test :New topic', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:001 FTOPIC #test 12345 \d+ :New topic$/', $this->written[0]);
+    }
+
+    #[Test]
+    public function setChannelTopicUsesCurrentTimeWhenNoCreationTs(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setChannelTopic('001', '#test', 'New topic');
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:001 FTOPIC #test \d+ \d+ :New topic$/', $this->written[0]);
     }
 
     #[Test]
@@ -199,14 +212,14 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
-        $actions->setChannelTopic('001', '#test', null, '001CSRV');
+        $actions->setChannelTopic('001', '#test', null, '001CSRV', 12345);
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV TOPIC #test', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:001 FTOPIC #test 12345 \d+ :$/', $this->written[0]);
     }
 
     #[Test]
-    public function kickFromChannelSendsKickCommand(): void
+    public function kickFromChannelSendsKickWithoutMembershipId(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
@@ -244,14 +257,14 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function addGlineSendsGlineCommand(): void
+    public function addGlineSendsAddlineGCommand(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->addGline('001', 'testuser', 'test.host', 3600, 'Test ban');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001 GLINE testuser@test.host 3600 :Test ban', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:001 ADDLINE G testuser@test.host 001 \d+ 3600 :Test ban$/', $this->written[0]);
     }
 
     #[Test]
@@ -262,18 +275,18 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001 GLINE *@192.168.* 0 :Permanent ban', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:001 ADDLINE G \*@192\.168\.\* 001 \d+ 0 :Permanent ban$/', $this->written[0]);
     }
 
     #[Test]
-    public function removeGlineSendsGlineRemoveCommand(): void
+    public function removeGlineSendsDellineGCommand(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->removeGline('001', 'testuser', 'test.host');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001 GLINE testuser@test.host !*', $this->written[0]);
+        self::assertSame(':001 DELLINE G testuser@test.host', $this->written[0]);
     }
 
     #[Test]
@@ -284,7 +297,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         $actions->removeGline('001', '*', '192.168.*');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001 GLINE *@192.168.* !*', $this->written[0]);
+        self::assertSame(':001 DELLINE G *@192.168.*', $this->written[0]);
     }
 
     #[Test]

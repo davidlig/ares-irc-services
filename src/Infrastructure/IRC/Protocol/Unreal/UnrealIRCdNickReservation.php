@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\Unreal;
 
 use App\Application\Port\ServiceNickReservationInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -23,23 +23,34 @@ use function sprintf;
 final readonly class UnrealIRCdNickReservation implements ServiceNickReservationInterface
 {
     public function __construct(
+        private readonly ActiveConnectionHolder $connectionHolder,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
-    public function reserveNick(ConnectionInterface $connection, string $serverSid, string $nick, string $reason): void
+    public function reserveNick(string $nick, string $reason): void
     {
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return;
+        }
+
         $line = sprintf(':%s SQLINE %s :%s', $serverSid, $nick, $reason);
 
-        $connection->writeLine($line);
+        $this->connectionHolder->writeLine($line);
         $this->logger->info('Reserved service nick via SQLINE', ['nick' => $nick, 'serverSid' => $serverSid]);
     }
 
-    public function reserveNickWithDuration(ConnectionInterface $connection, string $serverSid, string $nick, int $durationSeconds, string $reason): void
+    public function reserveNickWithDuration(string $nick, int $durationSeconds, string $reason): void
     {
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return;
+        }
+
         $line = sprintf(':%s SQLINE %s %d :%s', $serverSid, $nick, $durationSeconds, $reason);
 
-        $connection->writeLine($line);
+        $this->connectionHolder->writeLine($line);
         $this->logger->info('Reserved service nick via SQLINE with duration', [
             'nick' => $nick,
             'serverSid' => $serverSid,
@@ -47,11 +58,16 @@ final readonly class UnrealIRCdNickReservation implements ServiceNickReservation
         ]);
     }
 
-    public function releaseNick(ConnectionInterface $connection, string $serverSid, string $nick): void
+    public function releaseNick(string $nick): void
     {
+        $serverSid = $this->connectionHolder->getServerSid();
+        if (null === $serverSid) {
+            return;
+        }
+
         $line = sprintf(':%s UNSQLINE %s', $serverSid, $nick);
 
-        $connection->writeLine($line);
+        $this->connectionHolder->writeLine($line);
         $this->logger->info('Released service nick via UNSQLINE', ['nick' => $nick, 'serverSid' => $serverSid]);
     }
 }

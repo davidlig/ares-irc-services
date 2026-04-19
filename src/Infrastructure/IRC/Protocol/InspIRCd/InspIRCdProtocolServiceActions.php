@@ -13,13 +13,18 @@ use function in_array;
 use function sprintf;
 
 /**
- * InspIRCd services: METADATA (account), MODE (+r/-r), SVSNICK, KILL, FMODE.
+ * InspIRCd v4 services: METADATA (account, accountnicks), MODE (+r/-r), SVSNICK, KILL, FMODE.
  *
  * InspIRCd does NOT have SVS2MODE or SVSMODE — those are UnrealIRCd commands
  * that cause a ProtocolException on InspIRCd. User identification is done via
- * METADATA keys (accountid, accountname). InspIRCd 4.x does NOT automatically
- * set +r from METADATA — services must send an explicit MODE +r/-r after
- * setting/clearing the account metadata.
+ * METADATA keys (accountid, accountname, accountnicks). InspIRCd 4.x does NOT
+ * automatically set +r from METADATA — services must send an explicit MODE +r/-r
+ * after setting/clearing the account metadata.
+ *
+ * InspIRCd v4 (protocol 1205+) uses ADDLINE/DELLINE instead of GLINE/QLINE, and
+ * FTOPIC instead of TOPIC. KICK does NOT include a membership ID parameter —
+ * omitting it causes InspIRCd to skip membership ID validation, which is what
+ * services need since they do not track the internal Membership::id value.
  */
 final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceActionsInterface
 {
@@ -34,6 +39,7 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         if ('0' === $accountName) {
             $this->write(sprintf(':%s METADATA %s accountid :', $serverSid, $targetUid));
             $this->write(sprintf(':%s METADATA %s accountname :', $serverSid, $targetUid));
+            $this->write(sprintf(':%s METADATA %s accountnicks :', $serverSid, $targetUid));
             $this->write(sprintf(':%s MODE %s -r', $serverSid, $targetUid));
 
             return;
@@ -41,6 +47,7 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
 
         $this->write(sprintf(':%s METADATA %s accountid :%s', $serverSid, $targetUid, $accountName));
         $this->write(sprintf(':%s METADATA %s accountname :%s', $serverSid, $targetUid, $accountName));
+        $this->write(sprintf(':%s METADATA %s accountnicks :%s', $serverSid, $targetUid, $accountName));
         $this->write(sprintf(':%s MODE %s +r', $serverSid, $targetUid));
     }
 
@@ -76,7 +83,7 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     public function inviteUserToChannel(string $serverSid, string $channelName, string $targetUid, string $serviceUid = ''): void
     {
         $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
-        $this->write(sprintf(':%s INVITE %s %s', $prefix, $targetUid, $channelName));
+        $this->write(sprintf(':%s INVITE %s %s %d', $prefix, $targetUid, $channelName, time()));
     }
 
     public function joinChannelAsService(string $serverSid, string $channelName, string $serviceUid, string $maxPrefixLetter, ?int $channelTimestamp = null): void
@@ -90,11 +97,15 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         $this->write(sprintf(':%s FJOIN %s %s 0 :%s', $serverSid, $channelName, $timestamp, $memberEntry));
     }
 
-    public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = ''): void
+    public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = '', ?int $channelCreationTs = null): void
     {
-        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
-        $trailing = null === $topic ? '' : ' :' . $topic;
-        $this->write(sprintf(':%s TOPIC %s%s', $prefix, $channelName, $trailing));
+        $creationTs = $channelCreationTs ?? time();
+        $setTs = time();
+        if (null === $topic) {
+            $this->write(sprintf(':%s FTOPIC %s %d %d :', $serverSid, $channelName, $creationTs, $setTs));
+        } else {
+            $this->write(sprintf(':%s FTOPIC %s %d %d :%s', $serverSid, $channelName, $creationTs, $setTs, $topic));
+        }
     }
 
     public function kickFromChannel(string $serverSid, string $channelName, string $targetUid, string $reason, string $serviceUid = ''): void
@@ -109,24 +120,24 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     }
 
     /**
-     * InspIRCd GLINE command.
-     * Format: :serverSid GLINE user@host duration :reason
+     * InspIRCd v4 ADDLINE G command.
+     * Format: :serverSid ADDLINE G user@host serverSid timestamp duration :reason
      * Duration in seconds, 0 = permanent.
      */
     public function addGline(string $serverSid, string $userMask, string $hostMask, int $duration, string $reason): void
     {
         $mask = $userMask . '@' . $hostMask;
-        $this->write(sprintf(':%s GLINE %s %d :%s', $serverSid, $mask, $duration, $reason));
+        $this->write(sprintf(':%s ADDLINE G %s %s %d %d :%s', $serverSid, $mask, $serverSid, time(), $duration, $reason));
     }
 
     /**
-     * InspIRCd GLINE removal.
-     * Format: :serverSid GLINE user@host !duration (negative duration to remove).
+     * InspIRCd v4 DELLINE G command.
+     * Format: :serverSid DELLINE G user@host.
      */
     public function removeGline(string $serverSid, string $userMask, string $hostMask): void
     {
         $mask = $userMask . '@' . $hostMask;
-        $this->write(sprintf(':%s GLINE %s !*', $serverSid, $mask));
+        $this->write(sprintf(':%s DELLINE G %s', $serverSid, $mask));
     }
 
     /**

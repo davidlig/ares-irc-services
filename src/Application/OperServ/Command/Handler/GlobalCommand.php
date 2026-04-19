@@ -192,12 +192,11 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
 
         $nickReservation = $module->getNickReservation();
         $serverSid = $this->connectionHolder->getServerSid();
-        $connection = $this->connectionHolder->getConnection();
         $uid = $this->uidGenerator->generate();
 
         $reason = sprintf('Global message pseudo-client (sender: %s)', $sender->nick);
 
-        $nickReservation->reserveNickWithDuration($connection, $serverSid, $nickname, self::DURATION_SECONDS, $reason);
+        $nickReservation->reserveNickWithDuration($nickname, self::DURATION_SECONDS, $reason);
         $module->getServiceActions()->introducePseudoClient($serverSid, $mask->nickname, $mask->ident, $mask->vhost, $uid, $mask->nickname);
 
         $this->logger->info('GLOBAL: pseudo-client introduced', [

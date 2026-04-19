@@ -108,6 +108,44 @@ final class CtcpHandlerTest extends TestCase
     }
 
     #[Test]
+    public function onMessageRespondsToVersionViaSquery(): void
+    {
+        $senderUid = '001ABC';
+        $sender = $this->createSenderView($senderUid);
+        $message = new IRCMessage(
+            command: 'SQUERY',
+            prefix: $senderUid,
+            params: ['NickServ'],
+            trailing: "\x01VERSION\x01",
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::once())->method('findByUid')->with($senderUid)->willReturn($sender);
+
+        $sendCtcp = $this->createMock(SendCtcpPort::class);
+        $sendCtcp
+            ->expects(self::once())
+            ->method('sendCtcpReply')
+            ->with('002AAAAAA', $senderUid, 'VERSION', 'Ares IRC Services v1.0');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice
+            ->expects(self::atLeastOnce())
+            ->method('sendMessage')
+            ->with('002AAAAAA', $senderUid, self::anything(), 'NOTICE');
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+            userLookup: $userLookup,
+        );
+
+        $handler->onMessage($event);
+        self::assertTrue($event->isPropagationStopped());
+    }
+
+    #[Test]
     public function onMessageIgnoresEmptyTrailing(): void
     {
         $message = new IRCMessage(

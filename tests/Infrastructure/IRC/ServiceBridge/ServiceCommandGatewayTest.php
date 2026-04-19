@@ -129,6 +129,30 @@ final class ServiceCommandGatewayTest extends TestCase
     }
 
     #[Test]
+    public function dispatchesSqueryCommandToListener(): void
+    {
+        $this->logger->expects(self::atLeastOnce())->method('debug');
+        $message = new IRCMessage(
+            command: 'SQUERY',
+            prefix: '001ABCD',
+            params: ['NickServ'],
+            trailing: 'IDENTIFY password',
+        );
+
+        $this->nickservListener
+            ->expects(self::once())
+            ->method('onCommand')
+            ->with('001ABCD', 'IDENTIFY password');
+
+        $this->chanservListener
+            ->expects(self::never())
+            ->method('onCommand');
+
+        $event = new MessageReceivedEvent($message);
+        $this->gateway->onMessage($event);
+    }
+
+    #[Test]
     public function ignoresUnknownTarget(): void
     {
         $this->logger->expects(self::never())->method('debug');

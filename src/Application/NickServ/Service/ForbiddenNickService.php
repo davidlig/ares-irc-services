@@ -133,16 +133,7 @@ readonly class ForbiddenNickService
             return;
         }
 
-        $connection = $this->connectionHolder->getConnection();
-        $serverSid = $this->connectionHolder->getServerSid();
-
-        if (null === $connection || null === $serverSid) {
-            $this->logger->debug('ForbiddenNick: no connection or server SID');
-
-            return;
-        }
-
-        $reservation->reserveNick($connection, $serverSid, $nickname, $reason);
+        $reservation->reserveNick($nickname, $reason);
     }
 
     private function removeNickReservation(string $nickname): void
@@ -161,15 +152,6 @@ readonly class ForbiddenNickService
             return;
         }
 
-        $connection = $this->connectionHolder->getConnection();
-        $serverSid = $this->connectionHolder->getServerSid();
-
-        if (null === $connection || null === $serverSid) {
-            $this->logger->debug('ForbiddenNick: no connection or server SID');
-
-            return;
-        }
-
-        $reservation->releaseNick($connection, $serverSid, $nickname);
+        $reservation->releaseNick($nickname);
     }
 }

@@ -83,7 +83,7 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         }
     }
 
-    public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = ''): void
+    public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = '', ?int $channelCreationTs = null): void
     {
         $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
         $trailing = null === $topic ? '' : ' :' . $topic;

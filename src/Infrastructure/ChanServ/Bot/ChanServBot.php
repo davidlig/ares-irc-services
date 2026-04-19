@@ -187,12 +187,17 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         $module->getServiceActions()->joinChannelAsService($sid, $channelName, $this->chanservUid, $maxPrefix, $channelTimestamp);
     }
 
-    public function setChannelTopic(string $channelName, ?string $topic): void
+    public function setChannelTopic(string $channelName, ?string $topic, ?int $channelCreationTs = null): void
     {
         $module = $this->connectionHolder->getProtocolModule();
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
-            $module->getServiceActions()->setChannelTopic($sid, $channelName, $topic, $this->chanservUid);
+            $creationTs = $channelCreationTs;
+            if (null === $creationTs) {
+                $view = $this->channelLookup->findByChannelName($channelName);
+                $creationTs = $view?->timestamp;
+            }
+            $module->getServiceActions()->setChannelTopic($sid, $channelName, $topic, $this->chanservUid, $creationTs);
         }
     }
 

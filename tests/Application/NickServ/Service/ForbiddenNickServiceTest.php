@@ -12,7 +12,6 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\ServiceNickReservationInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
@@ -37,7 +36,7 @@ final class ForbiddenNickServiceTest extends TestCase
 
         $reservation = $this->createMock(ServiceNickReservationInterface::class);
         $reservation->expects(self::once())->method('reserveNick')
-            ->with(self::anything(), self::anything(), 'BadNick', 'Spam');
+            ->with('BadNick', 'Spam');
 
         $forbiddenService = $this->createService(
             nickRepository: $nickRepository,
@@ -110,12 +109,7 @@ final class ForbiddenNickServiceTest extends TestCase
 
         $reservation = $this->createMock(ServiceNickReservationInterface::class);
         $reservation->expects(self::once())->method('reserveNick')
-            ->with(
-                self::callback(static fn ($conn) => $conn instanceof ConnectionInterface),
-                self::equalTo('001'),
-                self::equalTo('BadNick'),
-                self::equalTo('Spamming network'),
-            );
+            ->with('BadNick', 'Spamming network');
 
         $forbiddenService = $this->createService(
             nickRepository: $nickRepository,
@@ -135,7 +129,7 @@ final class ForbiddenNickServiceTest extends TestCase
 
         $reservation = $this->createMock(ServiceNickReservationInterface::class);
         $reservation->expects(self::once())->method('reserveNick')
-            ->with(self::anything(), self::anything(), 'BadNick', 'New reason');
+            ->with('BadNick', 'New reason');
 
         $forbiddenService = $this->createService(
             nickRepository: $nickRepository,
@@ -190,11 +184,7 @@ final class ForbiddenNickServiceTest extends TestCase
 
         $reservation = $this->createMock(ServiceNickReservationInterface::class);
         $reservation->expects(self::once())->method('releaseNick')
-            ->with(
-                self::callback(static fn ($conn) => $conn instanceof ConnectionInterface),
-                self::equalTo('001'),
-                self::equalTo('BadNick'),
-            );
+            ->with('BadNick');
 
         $forbiddenService = $this->createService(
             nickRepository: $nickRepository,
@@ -216,11 +206,7 @@ final class ForbiddenNickServiceTest extends TestCase
 
         $reservation = $this->createMock(ServiceNickReservationInterface::class);
         $reservation->expects(self::once())->method('releaseNick')
-            ->with(
-                self::callback(static fn ($conn) => $conn instanceof ConnectionInterface),
-                '001',
-                'BadNick',
-            );
+            ->with('BadNick');
 
         $forbiddenService = $this->createService(
             nickRepository: $nickRepository,
@@ -394,8 +380,7 @@ final class ForbiddenNickServiceTest extends TestCase
         $nickRepository->method('findByNick')->willReturn(null);
         $nickRepository->expects(self::once())->method('save');
 
-        $reservation = $this->createMock(ServiceNickReservationInterface::class);
-        $reservation->expects(self::never())->method('reserveNick');
+        $reservation = $this->createStub(ServiceNickReservationInterface::class);
 
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getNickReservation')->willReturn($reservation);
@@ -403,7 +388,7 @@ final class ForbiddenNickServiceTest extends TestCase
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getConnection')->willReturn(null);
-        $connectionHolder->method('getServerSid')->willReturn('001');
+        $connectionHolder->method('getServerSid')->willReturn(null);
 
         $forbiddenService = new ForbiddenNickService(
             $nickRepository,
@@ -478,8 +463,7 @@ final class ForbiddenNickServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($nick);
 
-        $reservation = $this->createMock(ServiceNickReservationInterface::class);
-        $reservation->expects(self::never())->method('releaseNick');
+        $reservation = $this->createStub(ServiceNickReservationInterface::class);
 
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getNickReservation')->willReturn($reservation);
@@ -487,7 +471,7 @@ final class ForbiddenNickServiceTest extends TestCase
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
         $connectionHolder->method('getConnection')->willReturn(null);
-        $connectionHolder->method('getServerSid')->willReturn('001');
+        $connectionHolder->method('getServerSid')->willReturn(null);
 
         $forbiddenService = new ForbiddenNickService(
             $nickRepository,
@@ -514,7 +498,6 @@ final class ForbiddenNickServiceTest extends TestCase
         ?ServiceNickReservationInterface $reservation = null,
         bool $hasProtocolModule = true,
     ): ForbiddenNickService {
-        $connection = $this->createStub(ConnectionInterface::class);
         $protocolModule = null;
 
         if ($hasProtocolModule) {
@@ -525,7 +508,6 @@ final class ForbiddenNickServiceTest extends TestCase
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
-        $connectionHolder->method('getConnection')->willReturn($connection);
         $connectionHolder->method('getServerSid')->willReturn('001');
         $connectionHolder->method('isConnected')->willReturn(true);
 

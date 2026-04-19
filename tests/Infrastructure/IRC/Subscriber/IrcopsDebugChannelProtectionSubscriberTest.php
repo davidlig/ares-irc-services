@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Subscriber;
 
-use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
@@ -126,12 +125,12 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function subscriberAllowsRootToJoin(): void
+    public function subscriberAllowsIdentifiedRootToJoin(): void
     {
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('kickFromChannel');
 
-        $sender = new SenderView('UID1', 'RootUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i', '');
+        $sender = new SenderView('UID1', 'RootUser', 'i', 'h', 'c', 'ip', true, false, 'SID1', 'h', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
@@ -142,6 +141,34 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             channelActions: $channelActions,
             userLookup: $userLookup,
             rootRegistry: $rootRegistry,
+            debugChannel: '#ircops',
+        );
+
+        $event = $this->createEvent('UID1', '#ircops');
+        $subscriber->onUserJoined($event);
+    }
+
+    #[Test]
+    public function subscriberKicksNotIdentifiedRootUser(): void
+    {
+        $channelActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelActions->expects(self::once())->method('kickFromChannel');
+
+        $sender = new SenderView('UID1', 'RootUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($sender);
+
+        $rootRegistry = new RootUserRegistry('RootUser');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('kick_reason');
+
+        $subscriber = $this->createSubscriber(
+            channelActions: $channelActions,
+            userLookup: $userLookup,
+            rootRegistry: $rootRegistry,
+            translator: $translator,
             debugChannel: '#ircops',
         );
 
@@ -490,10 +517,48 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onSyncCompleteAllowsRootUserDuringBurst(): void
+    public function onSyncCompleteAllowsIdentifiedRootUserDuringBurst(): void
     {
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('kickFromChannel');
+
+        $channelView = new ChannelView(
+            name: '#ircops',
+            modes: '+nt',
+            topic: null,
+            memberCount: 1,
+            members: [
+                ['uid' => 'UID1', 'roleLetter' => ''],
+            ],
+        );
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn($channelView);
+
+        $sender = new SenderView('UID1', 'RootUser', 'i', 'h', 'c', 'ip', true, false, 'SID1', 'h', 'i');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($sender);
+
+        $rootRegistry = new RootUserRegistry('RootUser');
+
+        $subscriber = $this->createSubscriber(
+            channelActions: $channelActions,
+            channelLookup: $channelLookup,
+            userLookup: $userLookup,
+            rootRegistry: $rootRegistry,
+            debugChannel: '#ircops',
+        );
+
+        $event = new NetworkSyncCompleteEvent($this->createStub(ConnectionInterface::class), '001');
+        $subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteKicksNotIdentifiedRootUserDuringBurst(): void
+    {
+        $channelActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelActions->expects(self::once())->method('kickFromChannel');
 
         $channelView = new ChannelView(
             name: '#ircops',
@@ -515,11 +580,15 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
 
         $rootRegistry = new RootUserRegistry('RootUser');
 
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('kick_reason');
+
         $subscriber = $this->createSubscriber(
             channelActions: $channelActions,
             channelLookup: $channelLookup,
             userLookup: $userLookup,
             rootRegistry: $rootRegistry,
+            translator: $translator,
             debugChannel: '#ircops',
         );
 
@@ -709,7 +778,6 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         ?ChannelServiceActionsPort $channelActions = null,
         ?ChannelLookupPort $channelLookup = null,
         ?NetworkUserLookupPort $userLookup = null,
-        ?IdentifiedSessionRegistry $identifiedRegistry = null,
         ?OperIrcopRepositoryInterface $ircopRepo = null,
         ?RootUserRegistry $rootRegistry = null,
         ?RegisteredNickRepositoryInterface $nickRepo = null,
@@ -722,7 +790,6 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             channelActions: $channelActions ?? $this->createStub(ChannelServiceActionsPort::class),
             channelLookup: $channelLookup ?? $this->createStub(ChannelLookupPort::class),
             userLookup: $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
-            identifiedRegistry: $identifiedRegistry ?? new IdentifiedSessionRegistry(),
             ircopRepo: $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
             rootRegistry: $rootRegistry ?? new RootUserRegistry(''),
             nickRepo: $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),

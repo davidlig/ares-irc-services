@@ -30,7 +30,7 @@ final class InspIRCdModuleTest extends TestCase
         $vhostBuilder = new InspIRCdVhostCommandBuilder();
         $channelModeSupport = new InspIRCdChannelModeSupport();
         $userModeSupport = new InspIRCdUserModeSupport();
-        $nickReservation = new InspIRCdNickReservation(new NullLogger());
+        $nickReservation = new InspIRCdNickReservation($connectionHolder, new NullLogger());
 
         return new InspIRCdModule(
             $handler,
@@ -64,7 +64,7 @@ final class InspIRCdModuleTest extends TestCase
             new InspIRCdVhostCommandBuilder(),
             new InspIRCdChannelModeSupport(),
             new InspIRCdUserModeSupport(),
-            new InspIRCdNickReservation(new NullLogger()),
+            new InspIRCdNickReservation($connectionHolder, new NullLogger()),
         );
 
         self::assertSame($handler, $module->getHandler());

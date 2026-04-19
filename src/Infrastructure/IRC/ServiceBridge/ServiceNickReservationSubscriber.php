@@ -68,7 +68,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         foreach ($this->serviceListeners as $listener) {
             $nick = $listener->getServiceName();
 
-            $reservation->reserveNick($event->connection, $event->serverSid, $nick, 'Reserved for network services');
+            $reservation->reserveNick($nick, 'Reserved for network services');
 
             $this->freeServiceNickname($serviceActions, $event->serverSid, $nick);
 

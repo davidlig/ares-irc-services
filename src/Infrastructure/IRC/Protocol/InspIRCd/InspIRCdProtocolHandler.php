@@ -206,8 +206,6 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
         $this->logger->info('Received ENDBURST — remote burst complete, network synced.', ['sid' => $this->sid]);
 
         $this->sendOutgoingBurst($connection);
-
-        $this->dispatchSyncComplete($connection, $this->sid);
     }
 
     private function writeLine(ConnectionInterface $connection, string $line): void

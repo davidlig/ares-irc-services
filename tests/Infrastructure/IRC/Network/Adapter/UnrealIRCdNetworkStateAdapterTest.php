@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Network\Adapter;
 
-use App\Domain\IRC\Event\FjoinReceivedEvent;
-use App\Domain\IRC\Event\FtopicReceivedEvent;
-use App\Domain\IRC\Event\KickReceivedEvent;
-use App\Domain\IRC\Event\ModeReceivedEvent;
-use App\Domain\IRC\Event\NickChangeReceivedEvent;
-use App\Domain\IRC\Event\PartReceivedEvent;
-use App\Domain\IRC\Event\QuitReceivedEvent;
 use App\Domain\IRC\Event\ServerDelinkedEvent;
-use App\Domain\IRC\Event\SethostReceivedEvent;
-use App\Domain\IRC\Event\Umode2ReceivedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Message\IRCMessage;
+use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter;
+use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelPartReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserHostReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -79,11 +80,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleNickDispatchesNickChangeReceivedEvent(): void
+    public function handleNickDispatchesUserNickChangeReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof NickChangeReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserNickChangeReceivedEvent
                     && '001ABC' === $event->sourceId
                     && 'NewNick' === $event->newNickStr));
 
@@ -92,11 +93,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleQuitDispatchesQuitReceivedEvent(): void
+    public function handleQuitDispatchesUserQuitReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof QuitReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserQuitReceivedEvent
                     && '001ABC' === $event->sourceId
                     && 'Leaving' === $event->reason));
 
@@ -158,12 +159,12 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleSjoinDispatchesFjoinReceivedEvent(): void
+    public function handleSjoinDispatchesChannelJoinReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
             ->with(self::callback(static function ($event): bool {
-                if (!$event instanceof FjoinReceivedEvent) {
+                if (!$event instanceof ChannelJoinReceivedEvent) {
                     return false;
                 }
 
@@ -184,11 +185,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleSjoinWithModesAndModeParamsDispatchesFjoinReceivedEvent(): void
+    public function handleSjoinWithModesAndModeParamsDispatchesChannelJoinReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof FjoinReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof ChannelJoinReceivedEvent
                     && '#chan' === $event->channelName->value
                     && '+lk' === $event->modeStr
                     && $event->modeParams === ['500', 'secretkey']));
@@ -214,11 +215,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handlePartDispatchesPartReceivedEvent(): void
+    public function handlePartDispatchesChannelPartReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof PartReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof ChannelPartReceivedEvent
                     && '001ABC' === $event->sourceId
                     && '#test' === $event->channelName->value
                     && 'Bye' === $event->reason));
@@ -238,11 +239,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleKickDispatchesKickReceivedEvent(): void
+    public function handleKickDispatchesChannelKickReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof KickReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof ChannelKickReceivedEvent
                     && '#chan' === $event->channelName->value
                     && '002DEF' === $event->targetId
                     && 'Kicked' === $event->reason));
@@ -252,11 +253,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleUmode2DispatchesUmode2ReceivedEvent(): void
+    public function handleUmode2DispatchesUserModeReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof Umode2ReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserModeReceivedEvent
                     && '001ABC' === $event->sourceId
                     && '+i' === $event->modeStr));
 
@@ -265,11 +266,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleSethostDispatchesSethostReceivedEvent(): void
+    public function handleSethostDispatchesUserHostReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof SethostReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserHostReceivedEvent
                     && '001ABC' === $event->sourceId
                     && 'new.host.name' === $event->newHost));
 
@@ -278,11 +279,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleTopicDispatchesFtopicReceivedEvent(): void
+    public function handleTopicDispatchesChannelTopicReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof FtopicReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof ChannelTopicReceivedEvent
                     && '#test' === $event->channelName->value
                     && 'Welcome' === $event->topic
                     && 'SetterNick' === $event->setterNick));
@@ -292,12 +293,12 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleModeDispatchesModeReceivedEvent(): void
+    public function handleModeDispatchesChannelModeReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
             ->with(self::callback(static function ($event): bool {
-                if (!$event instanceof ModeReceivedEvent) {
+                if (!$event instanceof ChannelModeReceivedEvent) {
                     return false;
                 }
 
@@ -359,7 +360,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         );
         $adapter->handleMessage($message);
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(['*!*@bad.host'], $captured->listModes['b']);
     }
 
@@ -384,7 +385,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         );
         $adapter->handleMessage($message);
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(['*!*@exempt.host'], $captured->listModes['e']);
     }
 
@@ -409,7 +410,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         );
         $adapter->handleMessage($message);
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(['*!*@invite.host'], $captured->listModes['I']);
     }
 
@@ -434,7 +435,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         );
         $adapter->handleMessage($message);
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(0, $captured->members);
     }
 
@@ -539,7 +540,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('TOPIC', null, ['#test', 'SetterNick!user@host'], 'New topic'));
 
-        self::assertInstanceOf(FtopicReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelTopicReceivedEvent::class, $captured);
         self::assertSame('SetterNick', $captured->setterNick);
     }
 
@@ -624,7 +625,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')
-            ->with(self::callback(static fn ($event): bool => $event instanceof FjoinReceivedEvent
+            ->with(self::callback(static fn ($event): bool => $event instanceof ChannelJoinReceivedEvent
                     && '#test' === $event->channelName->value
                     && [] === $event->members));
 
@@ -659,7 +660,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         );
         $adapter->handleMessage($message);
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(0, $captured->members);
         self::assertSame(['*!*@ban1', '*!*@ban2'], $captured->listModes['b']);
     }
@@ -685,7 +686,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         );
         $adapter->handleMessage($message);
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(3, $captured->members);
     }
 
@@ -704,7 +705,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('MODE', null, ['#chan', '+b'], '*!*@bad.host'));
 
-        self::assertInstanceOf(ModeReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelModeReceivedEvent::class, $captured);
         self::assertSame(['*!*@bad.host'], $captured->modeParams);
     }
 
@@ -723,7 +724,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('MODE', null, ['#chan', '+k', 'secret'], 'extra'));
 
-        self::assertInstanceOf(ModeReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelModeReceivedEvent::class, $captured);
         self::assertSame(['secret', 'extra'], $captured->modeParams);
     }
 
@@ -782,7 +783,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('UMODE2', '001ABC', [], '+iwx'));
 
-        self::assertInstanceOf(Umode2ReceivedEvent::class, $captured);
+        self::assertInstanceOf(UserModeReceivedEvent::class, $captured);
         self::assertSame('001ABC', $captured->sourceId);
         self::assertSame('+iwx', $captured->modeStr);
     }
@@ -822,7 +823,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('TOPIC', null, ['#test', 'SetterNick'], 'New topic'));
 
-        self::assertInstanceOf(FtopicReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelTopicReceivedEvent::class, $captured);
         self::assertSame('SetterNick', $captured->setterNick);
     }
 
@@ -841,7 +842,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('TOPIC', null, ['#test'], 'New topic'));
 
-        self::assertInstanceOf(FtopicReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelTopicReceivedEvent::class, $captured);
         self::assertNull($captured->setterNick);
     }
 
@@ -860,7 +861,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '<ext:001ABC>'));
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(0, $captured->members);
     }
 
@@ -879,7 +880,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '001ABC123'));
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame('', $captured->modeStr);
         self::assertSame([], $captured->modeParams);
     }
@@ -899,7 +900,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SETHOST', '001ABC', [], ''));
 
-        self::assertInstanceOf(SethostReceivedEvent::class, $captured);
+        self::assertInstanceOf(UserHostReceivedEvent::class, $captured);
         self::assertSame('001ABC', $captured->sourceId);
         self::assertSame('', $captured->newHost);
     }
@@ -976,7 +977,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '<ext001ABC'));
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(1, $captured->members);
         self::assertSame('<ext001ABC', $captured->members[0]['uid']->value);
     }
@@ -996,7 +997,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '<ext:001ABC>001ABC123'));
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(1, $captured->members);
         self::assertSame('001ABC123', $captured->members[0]['uid']->value);
     }
@@ -1016,8 +1017,71 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test', 'notmodes'], '001ABC123'));
 
-        self::assertInstanceOf(FjoinReceivedEvent::class, $captured);
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame('', $captured->modeStr);
         self::assertSame([], $captured->modeParams);
+    }
+
+    #[Test]
+    public function handleSjoinWithHalfOpPrefixAssignsHalfOpRole(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '%001ABC123'));
+
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertCount(1, $captured->members);
+        self::assertSame('001ABC123', $captured->members[0]['uid']->value);
+        self::assertSame(ChannelMemberRole::HalfOp, $captured->members[0]['role']);
+    }
+
+    #[Test]
+    public function handleSjoinWithAdminPrefixAssignsAdminRole(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '~001ABC123'));
+
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertCount(1, $captured->members);
+        self::assertSame('001ABC123', $captured->members[0]['uid']->value);
+        self::assertSame(ChannelMemberRole::Admin, $captured->members[0]['role']);
+    }
+
+    #[Test]
+    public function handleSjoinWithOwnerPrefixAssignsOwnerRole(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '*001ABC123'));
+
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertCount(1, $captured->members);
+        self::assertSame('001ABC123', $captured->members[0]['uid']->value);
+        self::assertSame(ChannelMemberRole::Owner, $captured->members[0]['role']);
     }
 }

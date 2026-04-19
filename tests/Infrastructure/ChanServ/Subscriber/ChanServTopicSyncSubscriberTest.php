@@ -8,9 +8,9 @@ use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelSyncCompletedRegistryInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\FtopicReceivedEvent;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber;
+use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -48,7 +48,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function subscribesToFtopicReceivedEvent(): void
+    public function subscribesToChannelTopicReceivedEvent(): void
     {
         $this->channelRepository->expects(self::never())->method('findByChannelName');
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
@@ -56,7 +56,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('warning');
 
         self::assertSame(
-            [FtopicReceivedEvent::class => ['onTopicReceived', 0]],
+            [ChannelTopicReceivedEvent::class => ['onTopicReceived', 0]],
             ChanServTopicSyncSubscriber::getSubscribedEvents(),
         );
     }
@@ -84,7 +84,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->method('isSyncCompleted');
         $this->logger->expects(self::never())->method('warning');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic from user',
             setterNick: 'SomeUser',
@@ -108,7 +108,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
         $this->logger->expects(self::never())->method('warning');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
         );
@@ -136,7 +136,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
         $this->logger->expects(self::never())->method('warning');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
         );
@@ -169,7 +169,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::atLeastOnce())->method('debug');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
         );
@@ -210,7 +210,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::atLeastOnce())->method('debug');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
             setterNick: 'User',
@@ -250,7 +250,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::atLeastOnce())->method('debug');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
         );
@@ -285,7 +285,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::atLeastOnce())->method('debug');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
             setterNick: 'ChanServ',
@@ -317,7 +317,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
             ->method('isSyncCompleted');
         $this->logger->expects(self::never())->method('warning');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'Locked topic',
             setterNick: 'SomeUser',
@@ -352,7 +352,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
         $this->logger->expects(self::never())->method('warning');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
             setterNick: 'CHANSERV',
@@ -387,7 +387,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
         $this->logger->expects(self::never())->method('warning');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
             setterNick: 'NickServ',
@@ -429,7 +429,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::atLeastOnce())->method('debug');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
             setterNick: null,
@@ -471,7 +471,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::atLeastOnce())->method('debug');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
             setterNick: 'TestUser',
@@ -511,7 +511,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->logger->expects(self::never())->method('warning');
         $this->logger->expects(self::atLeastOnce())->method('debug');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
         );
@@ -536,7 +536,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
         $this->syncCompletedRegistry->expects(self::never())->method('isSyncCompleted');
         $this->logger->expects(self::never())->method('warning');
 
-        $event = new FtopicReceivedEvent(
+        $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
             topic: 'New topic',
             setterNick: 'User',

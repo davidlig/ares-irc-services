@@ -18,13 +18,13 @@ use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\MessageReceivedEvent;
-use App\Domain\IRC\Event\ModeReceivedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
 use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\ChanServ\ChannelRankSyncPendingRegistry;
+use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -82,7 +82,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             ChannelSyncedEvent::class => ['onChannelSynced', -5],
             ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
             ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
-            ModeReceivedEvent::class => ['onModeReceived', 255],
+            ChannelModeReceivedEvent::class => ['onChannelModeReceived', 255],
         ];
     }
 
@@ -102,7 +102,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         }
     }
 
-    public function onModeReceived(ModeReceivedEvent $event): void
+    public function onChannelModeReceived(ChannelModeReceivedEvent $event): void
     {
         $channelName = $event->channelName->value;
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));

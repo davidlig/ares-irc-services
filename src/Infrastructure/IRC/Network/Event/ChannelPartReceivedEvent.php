@@ -2,18 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\IRC\Event;
+namespace App\Infrastructure\IRC\Network\Event;
 
 use App\Domain\IRC\ValueObject\ChannelName;
 
-/**
- * Raw protocol event: PART received. Carries source, channel, reason, wasKicked.
- * Enricher resolves source and dispatches UserLeftChannelEvent.
- */
-final readonly class PartReceivedEvent
+final readonly class ChannelPartReceivedEvent
 {
     public function __construct(
-        /** Source identifier from message prefix (UID or nick string). */
         public readonly string $sourceId,
         public readonly ChannelName $channelName,
         public readonly string $reason,

@@ -2,17 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\IRC\Event;
+namespace App\Infrastructure\IRC\Network\Event;
 
 use App\Domain\IRC\ValueObject\ChannelName;
 
 /**
- * Raw protocol event: LMODE received. Carries channel, mode char, and params.
- * Enricher finds channel, updates list modes (b/e/I), saves, and dispatches ChannelModesChangedEvent.
- *
  * @param string[] $params
  */
-final readonly class LmodeReceivedEvent
+final readonly class ChannelListModeReceivedEvent
 {
     /**
      * @param string[] $params

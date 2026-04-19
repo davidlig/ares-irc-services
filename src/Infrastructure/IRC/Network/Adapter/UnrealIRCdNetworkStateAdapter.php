@@ -4,16 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network\Adapter;
 
-use App\Domain\IRC\Event\FjoinReceivedEvent;
-use App\Domain\IRC\Event\FtopicReceivedEvent;
-use App\Domain\IRC\Event\KickReceivedEvent;
-use App\Domain\IRC\Event\ModeReceivedEvent;
-use App\Domain\IRC\Event\NickChangeReceivedEvent;
-use App\Domain\IRC\Event\PartReceivedEvent;
-use App\Domain\IRC\Event\QuitReceivedEvent;
 use App\Domain\IRC\Event\ServerDelinkedEvent;
-use App\Domain\IRC\Event\SethostReceivedEvent;
-use App\Domain\IRC\Event\Umode2ReceivedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Network\ChannelMemberRole;
@@ -23,6 +14,15 @@ use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelPartReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserHostReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -31,6 +31,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
+use function in_array;
 use function sprintf;
 use function str_starts_with;
 use function strpos;
@@ -144,7 +145,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new NickChangeReceivedEvent($sourceId, $newNickStr));
+        $this->eventDispatcher->dispatch(new UserNickChangeReceivedEvent($sourceId, $newNickStr));
     }
 
     private function handleQuit(IRCMessage $message): void
@@ -156,7 +157,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new QuitReceivedEvent($sourceId, $reason));
+        $this->eventDispatcher->dispatch(new UserQuitReceivedEvent($sourceId, $reason));
     }
 
     /**
@@ -221,7 +222,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             }
         }
 
-        $this->eventDispatcher->dispatch(new FjoinReceivedEvent($channelName, $timestamp, $modeStr, $members, $listModes, $modeParams));
+        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members, $listModes, $modeParams));
     }
 
     /**
@@ -256,7 +257,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
     private function parseMemberEntry(string $entry): ?array
     {
         $entry = $this->stripExtAccount($entry);
-        $prefixLetters = ChannelMemberRole::fromSjoinEntryToLetters($entry);
+        $prefixLetters = self::parseSjoinEntryToLetters($entry);
         $role = ChannelMemberRole::highestRoleFromLetters($prefixLetters);
 
         try {
@@ -268,6 +269,39 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         }
 
         return ['uid' => $uid, 'role' => $role, 'prefixLetters' => $prefixLetters];
+    }
+
+    private static function roleFromSjoinPrefix(string $prefix): ChannelMemberRole
+    {
+        return match ($prefix) {
+            '+' => ChannelMemberRole::Voice,
+            '%' => ChannelMemberRole::HalfOp,
+            '@' => ChannelMemberRole::Op,
+            '~' => ChannelMemberRole::Admin,
+            '*' => ChannelMemberRole::Owner,
+            default => ChannelMemberRole::None,
+        };
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function parseSjoinEntryToLetters(string &$entry): array
+    {
+        $prefixChars = ['+', '%', '@', '~', '*'];
+        $letters = [];
+        while ('' !== $entry && in_array($entry[0], $prefixChars, true)) {
+            $role = self::roleFromSjoinPrefix($entry[0]);
+            $entry = substr($entry, 1);
+            if (ChannelMemberRole::None !== $role) {
+                $letter = $role->toModeLetter();
+                if ('' !== $letter && !in_array($letter, $letters, true)) {
+                    $letters[] = $letter;
+                }
+            }
+        }
+
+        return $letters;
     }
 
     /**
@@ -301,7 +335,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new PartReceivedEvent($sourceId, $channelName, $reason, false));
+        $this->eventDispatcher->dispatch(new ChannelPartReceivedEvent($sourceId, $channelName, $reason, false));
     }
 
     private function handleKick(IRCMessage $message): void
@@ -320,7 +354,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new KickReceivedEvent($channelName, $targetId, $reason));
+        $this->eventDispatcher->dispatch(new ChannelKickReceivedEvent($channelName, $targetId, $reason));
     }
 
     private function handleUmode2(IRCMessage $message): void
@@ -332,7 +366,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new Umode2ReceivedEvent($sourceId, $modeStr));
+        $this->eventDispatcher->dispatch(new UserModeReceivedEvent($sourceId, $modeStr));
     }
 
     /**
@@ -347,7 +381,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new SethostReceivedEvent($sourceId, $newHost));
+        $this->eventDispatcher->dispatch(new UserHostReceivedEvent($sourceId, $newHost));
     }
 
     private function handleMd(IRCMessage $message): void
@@ -389,7 +423,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new FtopicReceivedEvent($channelName, $topic, $setterNick));
+        $this->eventDispatcher->dispatch(new ChannelTopicReceivedEvent($channelName, $topic, $setterNick));
     }
 
     private function handleMode(IRCMessage $message): void
@@ -411,6 +445,6 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             return;
         }
 
-        $this->eventDispatcher->dispatch(new ModeReceivedEvent($channelName, $modeStr, $modeParams));
+        $this->eventDispatcher->dispatch(new ChannelModeReceivedEvent($channelName, $modeStr, $modeParams));
     }
 }

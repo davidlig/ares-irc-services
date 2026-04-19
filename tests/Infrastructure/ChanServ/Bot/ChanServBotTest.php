@@ -528,7 +528,7 @@ final class ChanServBotTest extends TestCase
     {
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('setChannelTopic')
-            ->with('001', '#channel', null, self::CHANSERV_UID);
+            ->with('001', '#channel', null, self::CHANSERV_UID, null);
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);

@@ -9,17 +9,6 @@ use App\Application\Port\ChannelModeSupportInterface;
 use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\ChannelTopicChangedEvent;
-use App\Domain\IRC\Event\FjoinReceivedEvent;
-use App\Domain\IRC\Event\FmodeReceivedEvent;
-use App\Domain\IRC\Event\FtopicReceivedEvent;
-use App\Domain\IRC\Event\KickReceivedEvent;
-use App\Domain\IRC\Event\LmodeReceivedEvent;
-use App\Domain\IRC\Event\ModeReceivedEvent;
-use App\Domain\IRC\Event\NickChangeReceivedEvent;
-use App\Domain\IRC\Event\PartReceivedEvent;
-use App\Domain\IRC\Event\QuitReceivedEvent;
-use App\Domain\IRC\Event\SethostReceivedEvent;
-use App\Domain\IRC\Event\Umode2ReceivedEvent;
 use App\Domain\IRC\Event\UserHostChangedEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
@@ -36,11 +25,23 @@ use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelListModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelPartReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserHostReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserMetadataReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
 use App\Infrastructure\IRC\Network\NetworkEventEnricher;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(NetworkEventEnricher::class)]
@@ -59,13 +60,13 @@ final class NetworkEventEnricherTest extends TestCase
 
         $events = $enricher->getSubscribedEvents();
 
-        self::assertArrayHasKey(QuitReceivedEvent::class, $events);
-        self::assertIsArray($events[QuitReceivedEvent::class]);
-        self::assertSame('onQuitReceived', $events[QuitReceivedEvent::class][0]);
+        self::assertArrayHasKey(UserQuitReceivedEvent::class, $events);
+        self::assertIsArray($events[UserQuitReceivedEvent::class]);
+        self::assertSame('onUserQuitReceived', $events[UserQuitReceivedEvent::class][0]);
     }
 
     #[Test]
-    public function onQuitReceivedDoesNothingWhenUserNotFound(): void
+    public function onUserQuitReceivedDoesNothingWhenUserNotFound(): void
     {
         $userRepo = $this->createMock(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
@@ -81,11 +82,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onQuitReceived(new QuitReceivedEvent('001ABC123', 'Leaving'));
+        $enricher->onUserQuitReceived(new UserQuitReceivedEvent('001ABC123', 'Leaving'));
     }
 
     #[Test]
-    public function onQuitReceivedDispatchesLeftChannelAndQuitNetworkAndRemovesUser(): void
+    public function onUserQuitReceivedDispatchesLeftChannelAndQuitNetworkAndRemovesUser(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -124,7 +125,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onQuitReceived(new QuitReceivedEvent('001ABC123', 'Bye'));
+        $enricher->onUserQuitReceived(new UserQuitReceivedEvent('001ABC123', 'Bye'));
 
         self::assertCount(2, $dispatched);
         self::assertInstanceOf(UserLeftChannelEvent::class, $dispatched[0]);
@@ -136,7 +137,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onNickChangeReceivedDispatchesUserNickChangedWhenUserFound(): void
+    public function onUserNickChangeReceivedDispatchesUserNickChangedWhenUserFound(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -174,7 +175,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onNickChangeReceived(new NickChangeReceivedEvent('001ABC123', 'NewNick'));
+        $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
 
         self::assertCount(1, $dispatched);
         self::assertInstanceOf(UserNickChangedEvent::class, $dispatched[0]);
@@ -183,7 +184,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onPartReceivedDispatchesUserLeftChannelWhenUserFound(): void
+    public function onChannelPartReceivedDispatchesUserLeftChannelWhenUserFound(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -220,7 +221,7 @@ final class NetworkEventEnricherTest extends TestCase
         );
 
         $channelName = new ChannelName('#test');
-        $enricher->onPartReceived(new PartReceivedEvent('001ABC123', $channelName, 'Bye', false));
+        $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('001ABC123', $channelName, 'Bye', false));
 
         self::assertCount(1, $dispatched);
         self::assertInstanceOf(UserLeftChannelEvent::class, $dispatched[0]);
@@ -230,7 +231,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onNickChangeReceivedDoesNothingWhenUserNotFound(): void
+    public function onUserNickChangeReceivedDoesNothingWhenUserNotFound(): void
     {
         $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
@@ -245,11 +246,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onNickChangeReceived(new NickChangeReceivedEvent('001ABC123', 'NewNick'));
+        $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
     }
 
     #[Test]
-    public function onNickChangeReceivedDispatchesMinusRWhenSkipRegistryPeekIsFalse(): void
+    public function onUserNickChangeReceivedDispatchesMinusRWhenSkipRegistryPeekIsFalse(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -286,7 +287,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onNickChangeReceived(new NickChangeReceivedEvent('001ABC123', 'NewNick'));
+        $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
 
         self::assertInstanceOf(UserModeChangedEvent::class, $dispatched[0]);
         self::assertSame('-r', $dispatched[0]->modeDelta);
@@ -294,7 +295,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onPartReceivedDoesNothingWhenUserNotFound(): void
+    public function onChannelPartReceivedDoesNothingWhenUserNotFound(): void
     {
         $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
@@ -309,11 +310,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onPartReceived(new PartReceivedEvent('001ABC123', new ChannelName('#test'), 'Bye', false));
+        $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('001ABC123', new ChannelName('#test'), 'Bye', false));
     }
 
     #[Test]
-    public function onKickReceivedDoesNothingWhenTargetNotFound(): void
+    public function onChannelKickReceivedDoesNothingWhenTargetNotFound(): void
     {
         $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
@@ -328,11 +329,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onKickReceived(new KickReceivedEvent(new ChannelName('#chan'), '002DEF', 'Kicked'));
+        $enricher->onChannelKickReceived(new ChannelKickReceivedEvent(new ChannelName('#chan'), '002DEF', 'Kicked'));
     }
 
     #[Test]
-    public function onKickReceivedDispatchesUserLeftChannelWhenTargetFound(): void
+    public function onChannelKickReceivedDispatchesUserLeftChannelWhenTargetFound(): void
     {
         $target = new NetworkUser(
             new Uid('002DEF456'),
@@ -367,7 +368,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onKickReceived(new KickReceivedEvent(new ChannelName('#chan'), '002DEF456', 'Kicked'));
+        $enricher->onChannelKickReceived(new ChannelKickReceivedEvent(new ChannelName('#chan'), '002DEF456', 'Kicked'));
 
         self::assertInstanceOf(UserLeftChannelEvent::class, $captured);
         self::assertSame('002DEF456', $captured->uid->value);
@@ -376,7 +377,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onFjoinReceivedCreatesNewChannelAndDispatchesChannelSyncedEvent(): void
+    public function onChannelJoinReceivedCreatesNewChannelAndDispatchesChannelSyncedEvent(): void
     {
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn(null);
@@ -399,7 +400,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $event = new FjoinReceivedEvent(
+        $event = new ChannelJoinReceivedEvent(
             new ChannelName('#test'),
             1704067200,
             '+nt',
@@ -407,14 +408,14 @@ final class NetworkEventEnricherTest extends TestCase
             [],
             [],
         );
-        $enricher->onFjoinReceived($event);
+        $enricher->onChannelJoinReceived($event);
 
         self::assertInstanceOf(ChannelSyncedEvent::class, $captured);
         self::assertSame('#test', $captured->channel->name->value);
     }
 
     #[Test]
-    public function onFmodeReceivedUpdatesChannelAndDispatchesChannelModesChangedEvent(): void
+    public function onChannelModeReceivedUpdatesChannelAndDispatchesChannelModesChangedEvent(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -438,14 +439,14 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onFmodeReceived(new FmodeReceivedEvent(new ChannelName('#chan'), '+t'));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+t'));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
         self::assertSame('#chan', $captured->channel->name->value);
     }
 
     #[Test]
-    public function onFmodeReceivedDoesNothingWhenChannelNotFound(): void
+    public function onChannelModeReceivedDoesNothingWhenChannelNotFound(): void
     {
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn(null);
@@ -461,11 +462,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onFmodeReceived(new FmodeReceivedEvent(new ChannelName('#chan'), '+t'));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+t'));
     }
 
     #[Test]
-    public function onLmodeReceivedAddsBanAndDispatchesChannelModesChangedEvent(): void
+    public function onChannelListModeReceivedAddsBanAndDispatchesChannelModesChangedEvent(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -489,13 +490,13 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onLmodeReceived(new LmodeReceivedEvent(new ChannelName('#chan'), 'b', ['*!*@bad.host']));
+        $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'b', ['*!*@bad.host']));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
     }
 
     #[Test]
-    public function onFtopicReceivedUpdatesTopicAndDispatchesChannelTopicChangedEvent(): void
+    public function onChannelTopicReceivedUpdatesTopicAndDispatchesChannelTopicChangedEvent(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -519,14 +520,14 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onFtopicReceived(new FtopicReceivedEvent(new ChannelName('#chan'), 'New topic'));
+        $enricher->onChannelTopicReceived(new ChannelTopicReceivedEvent(new ChannelName('#chan'), 'New topic'));
 
         self::assertInstanceOf(ChannelTopicChangedEvent::class, $captured);
         self::assertSame('New topic', $channel->getTopic());
     }
 
     #[Test]
-    public function onFtopicReceivedDoesNothingWhenChannelNotFound(): void
+    public function onChannelTopicReceivedDoesNothingWhenChannelNotFound(): void
     {
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn(null);
@@ -542,46 +543,31 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onFtopicReceived(new FtopicReceivedEvent(new ChannelName('#chan'), 'Topic'));
+        $enricher->onChannelTopicReceived(new ChannelTopicReceivedEvent(new ChannelName('#chan'), 'Topic'));
     }
 
     #[Test]
-    public function onModeReceivedCreatesChannelWhenNotFoundAndHasModeDelta(): void
+    public function onChannelModeReceivedDoesNothingWhenChannelNotFoundAndHasModeDelta(): void
     {
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn(null);
-        $channelRepo->expects(self::exactly(2))->method('save')->with(self::callback(static fn (Channel $c): bool => '#chan' === $c->name->value));
-
-        $captured = null;
+        $channelRepo->expects(self::never())->method('save');
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')
-            ->willReturnCallback(static function (object $event) use (&$captured): object {
-                $captured = $event;
-
-                return $event;
-            });
-
-        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
-        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
-        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
-        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeProvider->method('getSupport')->willReturn($modeSupport);
+        $eventDispatcher->expects(self::never())->method('dispatch');
 
         $enricher = new NetworkEventEnricher(
             $channelRepo,
             $this->createStub(NetworkUserRepositoryInterface::class),
             $eventDispatcher,
             $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
-            $modeProvider,
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+n', []));
-
-        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+n', []));
     }
 
     #[Test]
-    public function onUmode2ReceivedDispatchesUserModeChangedWhenUserFound(): void
+    public function onUserModeReceivedDispatchesUserModeChangedWhenUserFound(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -616,7 +602,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onUmode2Received(new Umode2ReceivedEvent('001ABC123', '+x'));
+        $enricher->onUserModeReceived(new UserModeReceivedEvent('001ABC123', '+x'));
 
         self::assertInstanceOf(UserModeChangedEvent::class, $captured);
         self::assertSame('001ABC123', $captured->uid->value);
@@ -624,7 +610,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onUmode2ReceivedDoesNothingWhenUserNotFound(): void
+    public function onUserModeReceivedDoesNothingWhenUserNotFound(): void
     {
         $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
@@ -639,11 +625,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onUmode2Received(new Umode2ReceivedEvent('001ABC123', '+x'));
+        $enricher->onUserModeReceived(new UserModeReceivedEvent('001ABC123', '+x'));
     }
 
     #[Test]
-    public function onSethostReceivedDispatchesUserHostChangedWhenUserFound(): void
+    public function onUserHostReceivedDispatchesUserHostChangedWhenUserFound(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -678,7 +664,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onSethostReceived(new SethostReceivedEvent('001ABC123', 'new.host.name'));
+        $enricher->onUserHostReceived(new UserHostReceivedEvent('001ABC123', 'new.host.name'));
 
         self::assertInstanceOf(UserHostChangedEvent::class, $captured);
         self::assertSame('001ABC123', $captured->uid->value);
@@ -686,7 +672,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onSethostReceivedDoesNothingWhenUserNotFound(): void
+    public function onUserHostReceivedDoesNothingWhenUserNotFound(): void
     {
         $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
         $userRepo->method('findByUid')->willReturn(null);
@@ -701,7 +687,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onSethostReceived(new SethostReceivedEvent('001ABC123', 'new.host'));
+        $enricher->onUserHostReceived(new UserHostReceivedEvent('001ABC123', 'new.host'));
     }
 
     #[Test]
@@ -756,7 +742,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onFjoinReceivedExistingChannelUpdatesAndDispatchesChannelSyncedEvent(): void
+    public function onChannelJoinReceivedExistingChannelUpdatesAndDispatchesChannelSyncedEvent(): void
     {
         $existingChannel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
         $existingChannel->syncMember(new Uid('001EXISTING'), ChannelMemberRole::Op, ['o']);
@@ -782,7 +768,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $event = new FjoinReceivedEvent(
+        $event = new ChannelJoinReceivedEvent(
             new ChannelName('#test'),
             1704067200,
             '+nt',
@@ -790,7 +776,7 @@ final class NetworkEventEnricherTest extends TestCase
             [],
             [],
         );
-        $enricher->onFjoinReceived($event);
+        $enricher->onChannelJoinReceived($event);
 
         self::assertInstanceOf(ChannelSyncedEvent::class, $dispatched[0]);
         self::assertInstanceOf(UserJoinedChannelEvent::class, $dispatched[1]);
@@ -798,7 +784,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onFjoinReceivedDispatchesUserJoinedChannelEventForExistingChannel(): void
+    public function onChannelJoinReceivedDispatchesUserJoinedChannelEventForExistingChannel(): void
     {
         $existingChannel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
 
@@ -822,7 +808,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $event = new FjoinReceivedEvent(
+        $event = new ChannelJoinReceivedEvent(
             new ChannelName('#test'),
             1704067200,
             '+nt',
@@ -830,7 +816,7 @@ final class NetworkEventEnricherTest extends TestCase
             [],
             [],
         );
-        $enricher->onFjoinReceived($event);
+        $enricher->onChannelJoinReceived($event);
 
         self::assertCount(2, $dispatched);
         self::assertInstanceOf(ChannelSyncedEvent::class, $dispatched[0]);
@@ -838,7 +824,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onLmodeReceivedWithExemptModeAddsExempt(): void
+    public function onChannelListModeReceivedWithExemptModeAddsExempt(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -862,13 +848,13 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onLmodeReceived(new LmodeReceivedEvent(new ChannelName('#chan'), 'e', ['*!*@exempt.host']));
+        $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'e', ['*!*@exempt.host']));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
     }
 
     #[Test]
-    public function onLmodeReceivedWithInviteExceptionModeAddsInviteException(): void
+    public function onChannelListModeReceivedWithInviteExceptionModeAddsInviteException(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -892,13 +878,13 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onLmodeReceived(new LmodeReceivedEvent(new ChannelName('#chan'), 'I', ['*!*@invite.host']));
+        $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'I', ['*!*@invite.host']));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
     }
 
     #[Test]
-    public function onLmodeReceivedEmptyMaskBreaksLoop(): void
+    public function onChannelListModeReceivedEmptyMaskBreaksLoop(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -916,11 +902,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onLmodeReceived(new LmodeReceivedEvent(new ChannelName('#chan'), 'b', ['', '*!*@bad.host']));
+        $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'b', ['', '*!*@bad.host']));
     }
 
     #[Test]
-    public function onFjoinReceivedWithListModesEIAddsExemptsAndInviteExceptions(): void
+    public function onChannelJoinReceivedWithListModesEIAddsExemptsAndInviteExceptions(): void
     {
         $dispatched = [];
         $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
@@ -943,7 +929,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $event = new FjoinReceivedEvent(
+        $event = new ChannelJoinReceivedEvent(
             new ChannelName('#test'),
             1704067200,
             '+nt',
@@ -951,13 +937,13 @@ final class NetworkEventEnricherTest extends TestCase
             ['b' => ['*!*@bad.host'], 'e' => ['*!*@exempt.host'], 'I' => ['*!*@invite.host']],
             [],
         );
-        $enricher->onFjoinReceived($event);
+        $enricher->onChannelJoinReceived($event);
 
         self::assertNotNull($dispatched['channel']);
     }
 
     #[Test]
-    public function onModeReceivedWithChannelFoundAppliesModes(): void
+    public function onChannelModeReceivedWithChannelFoundAppliesModes(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -987,14 +973,14 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+t', []));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+t', []));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
         self::assertStringContainsString('t', $channel->getModes());
     }
 
     #[Test]
-    public function onModeReceivedWithPrefixModesAppliesPrefixChanges(): void
+    public function onChannelModeReceivedWithPrefixModesAppliesPrefixChanges(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -1035,11 +1021,11 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+o', ['001ABC123']));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+o', ['001ABC123']));
     }
 
     #[Test]
-    public function onModeReceivedWithListModesAddsAndRemoves(): void
+    public function onChannelModeReceivedWithListModesAddsAndRemoves(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1063,11 +1049,11 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+b-b', ['*!*@bad.host', '*!*@old.host']));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+b-b', ['*!*@bad.host', '*!*@old.host']));
     }
 
     #[Test]
-    public function onModeReceivedWithChannelSettingModesAppliesParam(): void
+    public function onChannelModeReceivedWithChannelSettingModesAppliesParam(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1091,7 +1077,7 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+k', ['secretkey']));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+k', ['secretkey']));
     }
 
     #[Test]
@@ -1163,7 +1149,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onNickChangeReceivedInvalidNickReturnsEarly(): void
+    public function onUserNickChangeReceivedInvalidNickReturnsEarly(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -1192,11 +1178,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onNickChangeReceived(new NickChangeReceivedEvent('001ABC123', ''));
+        $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', ''));
     }
 
     #[Test]
-    public function onNickChangeReceivedWithInvalidNickContainingSpacesReturnsEarly(): void
+    public function onUserNickChangeReceivedWithInvalidNickContainingSpacesReturnsEarly(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -1225,7 +1211,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onNickChangeReceived(new NickChangeReceivedEvent('001ABC123', 'Invalid Nick'));
+        $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'Invalid Nick'));
     }
 
     #[Test]
@@ -1260,7 +1246,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onPartReceived(new PartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
+        $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
     }
 
     #[Test]
@@ -1282,7 +1268,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onPartReceived(new PartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
+        $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
     }
 
     #[Test]
@@ -1317,7 +1303,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onPartReceived(new PartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
+        $enricher->onChannelPartReceived(new ChannelPartReceivedEvent('NotAValidUID', new ChannelName('#test'), '', false));
     }
 
     #[Test]
@@ -1411,7 +1397,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onModeReceivedWithChannelFoundDoesNotCreateNewChannel(): void
+    public function onChannelModeReceivedWithChannelFoundDoesNotCreateNewChannel(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1435,13 +1421,13 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+s', []));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+s', []));
 
         self::assertStringContainsString('s', $channel->getModes());
     }
 
     #[Test]
-    public function onModeReceivedWhenChannelNotFoundAndNoModeDeltaReturnsEarly(): void
+    public function onChannelModeReceivedWhenChannelNotFoundAndNoModeDeltaReturnsEarly(): void
     {
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn(null);
@@ -1464,11 +1450,11 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+o', ['someuser']));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+o', ['someuser']));
     }
 
     #[Test]
-    public function onModeReceivedWithPrefixModeUserNotFoundSkipsGracefully(): void
+    public function onChannelModeReceivedWithPrefixModeUserNotFoundSkipsGracefully(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1501,13 +1487,13 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+o', ['001NOTFND']));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+o', ['001NOTFND']));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
     }
 
     #[Test]
-    public function onFjoinReceivedWithModeParamsAppliesThemToChannel(): void
+    public function onChannelJoinReceivedWithModeParamsAppliesThemToChannel(): void
     {
         $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1531,7 +1517,7 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $event = new FjoinReceivedEvent(
+        $event = new ChannelJoinReceivedEvent(
             new ChannelName('#test'),
             1704067200,
             '+lk',
@@ -1539,11 +1525,11 @@ final class NetworkEventEnricherTest extends TestCase
             [],
             ['key123', '100'],
         );
-        $enricher->onFjoinReceived($event);
+        $enricher->onChannelJoinReceived($event);
     }
 
     #[Test]
-    public function onFjoinReceivedWithMinusModeStrSkipsParamApplication(): void
+    public function onChannelJoinReceivedWithMinusModeStrSkipsParamApplication(): void
     {
         $channel = new Channel(new ChannelName('#test'), '+lk', new DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'oldkey');
@@ -1568,7 +1554,7 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $event = new FjoinReceivedEvent(
+        $event = new ChannelJoinReceivedEvent(
             new ChannelName('#test'),
             1704067200,
             '-l+k',
@@ -1576,11 +1562,11 @@ final class NetworkEventEnricherTest extends TestCase
             [],
             ['newkey'],
         );
-        $enricher->onFjoinReceived($event);
+        $enricher->onChannelJoinReceived($event);
     }
 
     #[Test]
-    public function onFjoinReceivedModeParamsExhaustedBreaksLoop(): void
+    public function onChannelJoinReceivedModeParamsExhaustedBreaksLoop(): void
     {
         $channel = new Channel(new ChannelName('#test'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1604,7 +1590,7 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $event = new FjoinReceivedEvent(
+        $event = new ChannelJoinReceivedEvent(
             new ChannelName('#test'),
             1704067200,
             '+kl',
@@ -1612,11 +1598,11 @@ final class NetworkEventEnricherTest extends TestCase
             [],
             ['keyonly'],
         );
-        $enricher->onFjoinReceived($event);
+        $enricher->onChannelJoinReceived($event);
     }
 
     #[Test]
-    public function onModeReceivedPrefixModeParamsExhaustedBreaksLoop(): void
+    public function onChannelModeReceivedPrefixModeParamsExhaustedBreaksLoop(): void
     {
         $user = new NetworkUser(
             new Uid('001ABC123'),
@@ -1657,11 +1643,11 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+o', []));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+o', []));
     }
 
     #[Test]
-    public function onModeReceivedListModeParamsExhaustedBreaksLoop(): void
+    public function onChannelModeReceivedListModeParamsExhaustedBreaksLoop(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1685,11 +1671,11 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+b', []));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+b', []));
     }
 
     #[Test]
-    public function onModeReceivedChannelSettingModeParamsExhaustedBreaksLoop(): void
+    public function onChannelModeReceivedChannelSettingModeParamsExhaustedBreaksLoop(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1713,11 +1699,11 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+k', []));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+k', []));
     }
 
     #[Test]
-    public function onModeReceivedRemovesExemptMode(): void
+    public function onChannelModeReceivedRemovesExemptMode(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channel->addExempt('*!*@exempt.host');
@@ -1748,13 +1734,13 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '-e', ['*!*@exempt.host']));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '-e', ['*!*@exempt.host']));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
     }
 
     #[Test]
-    public function onModeReceivedRemovesInviteException(): void
+    public function onChannelModeReceivedRemovesInviteException(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+n', new DateTimeImmutable('@0'));
         $channel->addInviteException('*!*@invite.host');
@@ -1785,13 +1771,13 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '-I', ['*!*@invite.host']));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '-I', ['*!*@invite.host']));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
     }
 
     #[Test]
-    public function onModeReceivedClearsModeParamOnUnset(): void
+    public function onChannelModeReceivedClearsModeParamOnUnset(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+nk', new DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'secretkey');
@@ -1822,44 +1808,13 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '-k', []));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '-k', []));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
     }
 
     #[Test]
-    public function mergeModeStringReturnsCurrentWhenDeltaIsEmpty(): void
-    {
-        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
-        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
-        $channelRepo->method('findByName')->willReturn($channel);
-        $channelRepo->expects(self::once())->method('save');
-
-        $captured = null;
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')
-            ->willReturnCallback(static function (object $event) use (&$captured): object {
-                $captured = $event;
-
-                return $event;
-            });
-
-        $enricher = new NetworkEventEnricher(
-            $channelRepo,
-            $this->createStub(NetworkUserRepositoryInterface::class),
-            $eventDispatcher,
-            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
-            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-        );
-
-        $enricher->applyOutgoingChannelModes('#chan', '', []);
-
-        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
-        self::assertSame('+nt', $channel->getModes());
-    }
-
-    #[Test]
-    public function onModeReceivedWithMixedAddRemoveModes(): void
+    public function onChannelModeReceivedWithMixedAddRemoveModes(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1889,7 +1844,7 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '+s-n', []));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '+s-n', []));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
         self::assertStringContainsString('s', $channel->getModes());
@@ -1897,7 +1852,7 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
-    public function onLmodeReceivedDoesNothingWhenChannelNotFound(): void
+    public function onChannelListModeReceivedDoesNothingWhenChannelNotFound(): void
     {
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
         $channelRepo->method('findByName')->willReturn(null);
@@ -1913,11 +1868,11 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onLmodeReceived(new LmodeReceivedEvent(new ChannelName('#chan'), 'b', ['*!*@bad.host']));
+        $enricher->onChannelListModeReceived(new ChannelListModeReceivedEvent(new ChannelName('#chan'), 'b', ['*!*@bad.host']));
     }
 
     #[Test]
-    public function onFmodeReceivedEmptyModeStrMergesCorrectly(): void
+    public function onChannelModeReceivedEmptyModeStrMergesCorrectly(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
         $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
@@ -1941,14 +1896,14 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
         );
 
-        $enricher->onFmodeReceived(new FmodeReceivedEvent(new ChannelName('#chan'), ''));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), ''));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
         self::assertSame('+nt', $channel->getModes());
     }
 
     #[Test]
-    public function onModeReceivedUnsetsChannelSettingMode(): void
+    public function onChannelModeReceivedUnsetsChannelSettingMode(): void
     {
         $channel = new Channel(new ChannelName('#chan'), '+nkl', new DateTimeImmutable('@0'));
         $channel->applyModeParam('k', 'secretkey');
@@ -1980,8 +1935,235 @@ final class NetworkEventEnricherTest extends TestCase
             $modeProvider,
         );
 
-        $enricher->onModeReceived(new ModeReceivedEvent(new ChannelName('#chan'), '-k-l', ['dummykey', '']));
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), '-k-l', ['dummykey', '']));
 
         self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+    }
+
+    #[Test]
+    public function onUserMetadataReceivedAccountNameDispatchesPlusRWhenUserFound(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABCDEF'),
+            new Nick('TestNick'),
+            new Ident('test'),
+            'test.host',
+            'cloak.host',
+            'vhost',
+            '+i',
+            new DateTimeImmutable('@0'),
+            'Real Name',
+            '001',
+            'aXB4',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'accountname', 'TestAccount'));
+
+        self::assertInstanceOf(UserModeChangedEvent::class, $captured);
+        self::assertSame('+r', $captured->modeDelta);
+    }
+
+    #[Test]
+    public function onUserMetadataReceivedAccountIdDispatchesPlusRWhenUserFound(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABCDEF'),
+            new Nick('TestNick'),
+            new Ident('test'),
+            'test.host',
+            'cloak.host',
+            'vhost',
+            '+i',
+            new DateTimeImmutable('@0'),
+            'Real Name',
+            '001',
+            'aXB4',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'accountid', '12345'));
+
+        self::assertInstanceOf(UserModeChangedEvent::class, $captured);
+        self::assertSame('+r', $captured->modeDelta);
+    }
+
+    #[Test]
+    public function onUserMetadataReceivedEmptyValueDispatchesMinusR(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABCDEF'),
+            new Nick('TestNick'),
+            new Ident('test'),
+            'test.host',
+            'cloak.host',
+            'vhost',
+            '+i',
+            new DateTimeImmutable('@0'),
+            'Real Name',
+            '001',
+            'aXB4',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'accountname', ''));
+
+        self::assertInstanceOf(UserModeChangedEvent::class, $captured);
+        self::assertSame('-r', $captured->modeDelta);
+    }
+
+    #[Test]
+    public function onUserMetadataReceivedDoesNothingWhenUserNotFound(): void
+    {
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn(null);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('999ZZZZZZ', 'accountname', 'TestAccount'));
+    }
+
+    #[Test]
+    public function onUserMetadataReceivedIgnoresNonAccountKey(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABCDEF'),
+            new Nick('TestNick'),
+            new Ident('test'),
+            'test.host',
+            'cloak.host',
+            'vhost',
+            '+i',
+            new DateTimeImmutable('@0'),
+            'Real Name',
+            '001',
+            'aXB4',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'certfp', 'somevalue'));
+    }
+
+    #[Test]
+    public function onChannelModeReceivedWithEmptyDeltaReturnsCurrentModes(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+nt', new DateTimeImmutable('@0'));
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(new ChannelName('#chan'), ''));
+
+        self::assertInstanceOf(ChannelModesChangedEvent::class, $captured);
+        self::assertSame('+nt', $channel->getModes());
+    }
+
+    #[Test]
+    public function mergeModeStringReturnsCurrentWhenDeltaIsEmpty(): void
+    {
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $ref = new ReflectionMethod($enricher, 'mergeModeString');
+        $result = $ref->invoke($enricher, '+nt', '');
+
+        self::assertSame('+nt', $result);
     }
 }

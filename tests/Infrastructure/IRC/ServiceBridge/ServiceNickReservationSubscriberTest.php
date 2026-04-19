@@ -43,8 +43,8 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $reservation = $this->createMock(ServiceNickReservationInterface::class);
         $reservation->expects(self::exactly(3))
             ->method('reserveNick')
-            ->willReturnCallback(static function (ConnectionInterface $conn, string $serverSid, string $nick, string $reason) use (&$reservedNicks): void {
-                $reservedNicks[] = ['serverSid' => $serverSid, 'nick' => $nick, 'reason' => $reason];
+            ->willReturnCallback(static function (string $nick, string $reason) use (&$reservedNicks): void {
+                $reservedNicks[] = ['nick' => $nick, 'reason' => $reason];
             });
 
         $module = $this->createStub(ProtocolModuleInterface::class);
@@ -78,7 +78,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $subscriber->onBurstComplete($event);
 
         self::assertCount(3, $reservedNicks);
-        self::assertSame('001', $reservedNicks[0]['serverSid']);
         self::assertSame('NickServ', $reservedNicks[0]['nick']);
         self::assertSame('Reserved for network services', $reservedNicks[0]['reason']);
         self::assertSame('ChanServ', $reservedNicks[1]['nick']);

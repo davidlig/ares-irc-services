@@ -30,7 +30,7 @@ final class UnrealIRCdModuleTest extends TestCase
         $vhostBuilder = new UnrealIRCdVhostCommandBuilder();
         $channelModeSupport = new UnrealIRCdChannelModeSupport();
         $userModeSupport = new UnrealIRCdUserModeSupport();
-        $nickReservation = new UnrealIRCdNickReservation(new NullLogger());
+        $nickReservation = new UnrealIRCdNickReservation($connectionHolder, new NullLogger());
 
         return new UnrealIRCdModule(
             $handler,
@@ -64,7 +64,7 @@ final class UnrealIRCdModuleTest extends TestCase
             new UnrealIRCdVhostCommandBuilder(),
             new UnrealIRCdChannelModeSupport(),
             new UnrealIRCdUserModeSupport(),
-            new UnrealIRCdNickReservation(new NullLogger()),
+            new UnrealIRCdNickReservation($connectionHolder, new NullLogger()),
         );
 
         self::assertSame($handler, $module->getHandler());

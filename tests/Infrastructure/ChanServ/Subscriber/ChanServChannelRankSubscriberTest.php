@@ -22,7 +22,6 @@ use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\MessageReceivedEvent;
-use App\Domain\IRC\Event\ModeReceivedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
@@ -32,6 +31,7 @@ use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\ChanServ\ChannelRankSyncPendingRegistry;
 use App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber;
+use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -133,7 +133,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
                 ChannelSyncedEvent::class => ['onChannelSynced', -5],
                 ChannelSecureEnabledEvent::class => ['onChannelSecureEnabled', 0],
                 ChannelFounderChangedEvent::class => ['onChannelFounderChanged', 0],
-                ModeReceivedEvent::class => ['onModeReceived', 255],
+                ChannelModeReceivedEvent::class => ['onChannelModeReceived', 255],
             ],
             ChanServChannelRankSubscriber::getSubscribedEvents(),
         );
@@ -294,7 +294,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onModeReceivedWithListModeB(): void
+    public function onChannelModeReceivedWithListModeB(): void
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(true);
@@ -337,16 +337,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::once())->method('setChannelMemberMode')->with('#test', '001USER', 'o', false);
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+bo',
             modeParams: ['*!*@banned.host', '001USER'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
-    public function onModeReceivedRemovingMode(): void
+    public function onChannelModeReceivedRemovingMode(): void
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(true);
@@ -357,12 +357,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '-o',
             modeParams: ['001USER'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
@@ -410,12 +410,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+o',
             modeParams: ['CannotFindByUid'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
@@ -1312,7 +1312,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onModeReceivedWhenChannelNotFoundDoesNothing(): void
+    public function onChannelModeReceivedWhenChannelNotFoundDoesNothing(): void
     {
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(null);
@@ -1320,16 +1320,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+o',
             modeParams: ['001USER'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
-    public function onModeReceivedWhenChannelNotSecureDoesNothing(): void
+    public function onChannelModeReceivedWhenChannelNotSecureDoesNothing(): void
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->expects(self::once())->method('isSecure')->willReturn(false);
@@ -1340,16 +1340,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+o',
             modeParams: ['001USER'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
-    public function onModeReceivedBreaksWhenParamIdxExceedsParams(): void
+    public function onChannelModeReceivedBreaksWhenParamIdxExceedsParams(): void
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
@@ -1360,16 +1360,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+o',
             modeParams: [],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
-    public function onModeReceivedWithListModeE(): void
+    public function onChannelModeReceivedWithListModeE(): void
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
@@ -1380,16 +1380,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+e',
             modeParams: ['*!*@exempt.host'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
-    public function onModeReceivedWithListModeI(): void
+    public function onChannelModeReceivedWithListModeI(): void
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
@@ -1400,16 +1400,16 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+I',
             modeParams: ['*!*@invite.host'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
-    public function onModeReceivedWhenRankAtOrBelowDesiredDoesNotStrip(): void
+    public function onChannelModeReceivedWhenRankAtOrBelowDesiredDoesNotStrip(): void
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
@@ -1452,12 +1452,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+v',
             modeParams: ['001USER'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
@@ -1765,7 +1765,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onModeReceivedWhenTargetUserNotInNetworkSkipsIteration(): void
+    public function onChannelModeReceivedWhenTargetUserNotInNetworkSkipsIteration(): void
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
@@ -1780,12 +1780,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelMemberMode');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+o',
             modeParams: ['001UNKNOWN'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]
@@ -2586,7 +2586,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onModeReceivedSkipsSuspendedChannel(): void
+    public function onChannelModeReceivedSkipsSuspendedChannel(): void
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
@@ -2599,12 +2599,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->channelServiceActions->expects(self::never())->method('setChannelModes');
         $this->rebuildSubscriber();
 
-        $event = new ModeReceivedEvent(
+        $event = new ChannelModeReceivedEvent(
             channelName: new ChannelName('#test'),
             modeStr: '+o',
             modeParams: ['001USER'],
         );
-        $this->subscriber->onModeReceived($event);
+        $this->subscriber->onChannelModeReceived($event);
     }
 
     #[Test]

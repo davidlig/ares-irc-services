@@ -2,21 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\IRC\Event;
+namespace App\Infrastructure\IRC\Network\Event;
 
 use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 
 /**
- * Raw protocol event: FJOIN/SJOIN received. Carries channel, timestamp, modes, mode params, member list, and optional list modes.
- * Enricher findOrCreates channel, syncs members, saves, and dispatches ChannelSyncedEvent / UserJoinedChannelEvent.
- *
  * @param array<int, array{uid: Uid, role: ChannelMemberRole, prefixLetters?: list<string>}> $members
- * @param array{b?: string[], e?: string[], I?: string[]}                                    $listModes  Optional ban/exempt/invite from SJOIN buffer
- * @param list<string>                                                                       $modeParams Params for modes that take one (e.g. k, L) in wire order
+ * @param array{b?: string[], e?: string[], I?: string[]}                                    $listModes
+ * @param list<string>                                                                       $modeParams
  */
-final readonly class FjoinReceivedEvent
+final readonly class ChannelJoinReceivedEvent
 {
     /**
      * @param array<int, array{uid: Uid, role: ChannelMemberRole, prefixLetters?: list<string>}> $members

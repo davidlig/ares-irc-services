@@ -8,17 +8,6 @@ use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\ChannelTopicChangedEvent;
-use App\Domain\IRC\Event\FjoinReceivedEvent;
-use App\Domain\IRC\Event\FmodeReceivedEvent;
-use App\Domain\IRC\Event\FtopicReceivedEvent;
-use App\Domain\IRC\Event\KickReceivedEvent;
-use App\Domain\IRC\Event\LmodeReceivedEvent;
-use App\Domain\IRC\Event\ModeReceivedEvent;
-use App\Domain\IRC\Event\NickChangeReceivedEvent;
-use App\Domain\IRC\Event\PartReceivedEvent;
-use App\Domain\IRC\Event\QuitReceivedEvent;
-use App\Domain\IRC\Event\SethostReceivedEvent;
-use App\Domain\IRC\Event\Umode2ReceivedEvent;
 use App\Domain\IRC\Event\UserHostChangedEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
@@ -34,6 +23,17 @@ use App\Domain\IRC\SkipIdentifiedModeStripRegistryInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelListModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelPartReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserHostReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserMetadataReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -67,21 +67,21 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
     public static function getSubscribedEvents(): array
     {
         return [
-            QuitReceivedEvent::class => ['onQuitReceived', 256],
-            NickChangeReceivedEvent::class => ['onNickChangeReceived', 256],
-            PartReceivedEvent::class => ['onPartReceived', 256],
-            KickReceivedEvent::class => ['onKickReceived', 256],
-            FjoinReceivedEvent::class => ['onFjoinReceived', 256],
-            FmodeReceivedEvent::class => ['onFmodeReceived', 256],
-            LmodeReceivedEvent::class => ['onLmodeReceived', 256],
-            FtopicReceivedEvent::class => ['onFtopicReceived', 256],
-            ModeReceivedEvent::class => ['onModeReceived', 256],
-            Umode2ReceivedEvent::class => ['onUmode2Received', 256],
-            SethostReceivedEvent::class => ['onSethostReceived', 256],
+            UserQuitReceivedEvent::class => ['onUserQuitReceived', 256],
+            UserNickChangeReceivedEvent::class => ['onUserNickChangeReceived', 256],
+            ChannelPartReceivedEvent::class => ['onChannelPartReceived', 256],
+            ChannelKickReceivedEvent::class => ['onChannelKickReceived', 256],
+            ChannelJoinReceivedEvent::class => ['onChannelJoinReceived', 256],
+            ChannelModeReceivedEvent::class => ['onChannelModeReceived', 256],
+            ChannelListModeReceivedEvent::class => ['onChannelListModeReceived', 256],
+            ChannelTopicReceivedEvent::class => ['onChannelTopicReceived', 256],
+            UserModeReceivedEvent::class => ['onUserModeReceived', 256],
+            UserHostReceivedEvent::class => ['onUserHostReceived', 256],
+            UserMetadataReceivedEvent::class => ['onUserMetadataReceived', 256],
         ];
     }
 
-    public function onQuitReceived(QuitReceivedEvent $event): void
+    public function onUserQuitReceived(UserQuitReceivedEvent $event): void
     {
         $user = $this->resolveUser($event->sourceId);
         if (null === $user) {
@@ -110,7 +110,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         ));
     }
 
-    public function onNickChangeReceived(NickChangeReceivedEvent $event): void
+    public function onUserNickChangeReceived(UserNickChangeReceivedEvent $event): void
     {
         $user = $this->resolveUser($event->sourceId);
         if (null === $user) {
@@ -133,7 +133,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         $this->eventDispatcher->dispatch(new UserNickChangedEvent($user->uid, $oldNick, $newNick));
     }
 
-    public function onPartReceived(PartReceivedEvent $event): void
+    public function onChannelPartReceived(ChannelPartReceivedEvent $event): void
     {
         $user = $this->resolveUser($event->sourceId);
         if (null === $user) {
@@ -149,7 +149,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         ));
     }
 
-    public function onKickReceived(KickReceivedEvent $event): void
+    public function onChannelKickReceived(ChannelKickReceivedEvent $event): void
     {
         $target = $this->resolveUser($event->targetId);
         if (null === $target) {
@@ -165,7 +165,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         ));
     }
 
-    public function onFjoinReceived(FjoinReceivedEvent $event): void
+    public function onChannelJoinReceived(ChannelJoinReceivedEvent $event): void
     {
         $channel = $this->channelRepository->findByName($event->channelName);
         $isNewChannel = null === $channel;
@@ -217,72 +217,11 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         }
     }
 
-    public function onFmodeReceived(FmodeReceivedEvent $event): void
+    public function onChannelModeReceived(ChannelModeReceivedEvent $event): void
     {
         $channel = $this->channelRepository->findByName($event->channelName);
         if (null === $channel) {
             return;
-        }
-
-        $current = $channel->getModes();
-        $channel->updateModes($this->mergeModeString($current, $event->modeStr));
-        $this->channelRepository->save($channel);
-        $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
-    }
-
-    public function onLmodeReceived(LmodeReceivedEvent $event): void
-    {
-        $channel = $this->channelRepository->findByName($event->channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $params = $event->params;
-        for ($i = 0; $i < count($params); $i += 3) {
-            $mask = $params[$i] ?? '';
-            if ('' === $mask) {
-                break;
-            }
-            if ('b' === $event->modeChar) {
-                $channel->addBan($mask);
-            } elseif ('e' === $event->modeChar) {
-                $channel->addExempt($mask);
-            } elseif ('I' === $event->modeChar) {
-                $channel->addInviteException($mask);
-            }
-        }
-
-        $this->channelRepository->save($channel);
-        $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
-    }
-
-    public function onFtopicReceived(FtopicReceivedEvent $event): void
-    {
-        $channel = $this->channelRepository->findByName($event->channelName);
-        if (null === $channel) {
-            return;
-        }
-
-        $channel->updateTopic($event->topic);
-        $this->channelRepository->save($channel);
-        $this->eventDispatcher->dispatch(new ChannelTopicChangedEvent($channel));
-    }
-
-    public function onModeReceived(ModeReceivedEvent $event): void
-    {
-        $channel = $this->channelRepository->findByName($event->channelName);
-        if (null === $channel) {
-            // Burst can send MODE before SJOIN; create minimal channel so we keep modes for MLOCK on sync.
-            $channelModeDelta = $this->extractChannelModeDelta($event->modeStr);
-            if ('' === $channelModeDelta) {
-                return;
-            }
-            $channel = new Channel(
-                name: $event->channelName,
-                modes: $this->mergeModeString('', $channelModeDelta),
-                createdAt: new DateTimeImmutable('@0'),
-            );
-            $this->channelRepository->save($channel);
         }
 
         $params = $event->modeParams;
@@ -332,8 +271,6 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                 continue;
             }
 
-            // Channel setting modes that take a param when set; consume in order.
-            // Store param for all of them when adding (so +l 500 is available for MLOCK); clear only when unset needs param (k, L, etc.).
             $modesWithParamOnSet = $this->modeSupportProvider->getSupport()->getChannelSettingModesWithParamOnSet();
             if (in_array($char, $modesWithParamOnSet, true)) {
                 if ($paramIdx >= count($params)) {
@@ -358,6 +295,44 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
 
         $this->channelRepository->save($channel);
         $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
+    }
+
+    public function onChannelListModeReceived(ChannelListModeReceivedEvent $event): void
+    {
+        $channel = $this->channelRepository->findByName($event->channelName);
+        if (null === $channel) {
+            return;
+        }
+
+        $params = $event->params;
+        for ($i = 0; $i < count($params); $i += 3) {
+            $mask = $params[$i] ?? '';
+            if ('' === $mask) {
+                break;
+            }
+            if ('b' === $event->modeChar) {
+                $channel->addBan($mask);
+            } elseif ('e' === $event->modeChar) {
+                $channel->addExempt($mask);
+            } elseif ('I' === $event->modeChar) {
+                $channel->addInviteException($mask);
+            }
+        }
+
+        $this->channelRepository->save($channel);
+        $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
+    }
+
+    public function onChannelTopicReceived(ChannelTopicReceivedEvent $event): void
+    {
+        $channel = $this->channelRepository->findByName($event->channelName);
+        if (null === $channel) {
+            return;
+        }
+
+        $channel->updateTopic($event->topic);
+        $this->channelRepository->save($channel);
+        $this->eventDispatcher->dispatch(new ChannelTopicChangedEvent($channel));
     }
 
     /**
@@ -422,6 +397,22 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
     }
 
+    public function onUserMetadataReceived(UserMetadataReceivedEvent $event): void
+    {
+        $user = $this->userRepository->findByUid(new Uid($event->targetUid));
+        if (null === $user) {
+            return;
+        }
+
+        if ('accountname' === $event->key || 'accountid' === $event->key) {
+            if ('' === $event->value) {
+                $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '-r'));
+            } else {
+                $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '+r'));
+            }
+        }
+    }
+
     /**
      * Extracts from a MODE string only channel setting mode letters (not prefix
      * v,h,o,a,q and not list modes per active IRCd).
@@ -453,7 +444,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         return $delta;
     }
 
-    public function onUmode2Received(Umode2ReceivedEvent $event): void
+    public function onUserModeReceived(UserModeReceivedEvent $event): void
     {
         $user = $this->resolveUser($event->sourceId);
         if (null === $user) {
@@ -463,7 +454,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, $event->modeStr));
     }
 
-    public function onSethostReceived(SethostReceivedEvent $event): void
+    public function onUserHostReceived(UserHostReceivedEvent $event): void
     {
         $user = $this->resolveUser($event->sourceId);
         if (null === $user) {

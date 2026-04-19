@@ -7,7 +7,7 @@ namespace App\Infrastructure\ChanServ\Subscriber;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelSyncCompletedRegistryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\FtopicReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -36,11 +36,11 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
     public static function getSubscribedEvents(): array
     {
         return [
-            FtopicReceivedEvent::class => ['onTopicReceived', 0],
+            ChannelTopicReceivedEvent::class => ['onTopicReceived', 0],
         ];
     }
 
-    public function onTopicReceived(FtopicReceivedEvent $event): void
+    public function onTopicReceived(ChannelTopicReceivedEvent $event): void
     {
         $channelName = $event->channelName->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
