@@ -34,9 +34,9 @@ use function sprintf;
  * remote burst and, on ENDBURST, dispatch NetworkSyncCompleteEvent so
  * post-sync actions can run (e.g. ChanServ rejoining channels).
  *
- * We follow the Anope approach: modules, chanmodes, usermodes, and extbans
- * are NOT sent in CAPAB. InspIRCd skips the comparison when the remote
- * server omits these fields (see capab.cpp: if (!remote) return true;).
+ * Modules, chanmodes, usermodes, and extbans are NOT sent in CAPAB.
+ * InspIRCd skips the comparison when the remote server omits these fields
+ * (see capab.cpp: if (!remote) return true;).
  *
  * We do NOT send CHALLENGE in CAPAB CAPABILITIES, which tells InspIRCd
  * to use plaintext password authentication (no HMAC-SHA256). If both

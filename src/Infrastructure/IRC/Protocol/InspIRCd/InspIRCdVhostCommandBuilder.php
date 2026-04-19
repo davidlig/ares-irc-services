@@ -14,10 +14,8 @@ use function sprintf;
  * Setting vhost: ENCAP <target_sid> CHGHOST <uid> <vhost>
  * Clearing vhost: ENCAP <target_sid> CHGHOST <uid> <real_host> + MODE <uid> +x
  *
- * Inspired by Anope's SendVHostDel: first restore the real host via CHGHOST,
- * then activate cloak mode (+x) so InspIRCd recalculates and displays the cloaked host.
- *
- * Reference: https://github.com/anope/anope/blob/2.1/modules/protocol/inspircd.cpp
+ * When clearing, first restore the real host via CHGHOST, then activate cloak
+ * mode (+x) so InspIRCd recalculates and displays the cloaked host.
  */
 final readonly class InspIRCdVhostCommandBuilder implements VhostCommandBuilderInterface
 {

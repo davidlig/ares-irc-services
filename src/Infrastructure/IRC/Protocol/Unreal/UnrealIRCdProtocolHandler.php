@@ -39,7 +39,7 @@ class UnrealIRCdProtocolHandler extends AbstractProtocolHandler
      * PROTOCTL capability tokens announced to UnrealIRCd.
      * Reference: https://www.unrealircd.org/docs/Server_protocol:PROTOCTL_command.
      *
-     * Aligned with Anope's capability set for maximum compatibility.
+     * Standard capability set for maximum IRCd compatibility.
      */
     private const array CAPABILITIES = [
         'NOQUIT',

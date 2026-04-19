@@ -135,7 +135,7 @@ Also ensure the `spanningtree` module is loaded.
 
 > **InspIRCd note:** Ares uses the SpanTree protocol v4 (1206). The handshake sends
 > `CAPAB START 1206` followed by a minimal `CAPAB CAPABILITIES :CASEMAPPING=ascii`
-> (following the Anope approach — InspIRCd skips module/mode comparison when the
+> (InspIRCd skips module/mode comparison when the
 > remote server omits those CAPAB fields). No `CHALLENGE` is sent, so the link
 > uses **plaintext password** authentication. Set `IRC_SERVER_SID` to a 3-character
 > alphanumeric ID (e.g. `0A0`) and ensure all UIDs in `.env.local` use the same

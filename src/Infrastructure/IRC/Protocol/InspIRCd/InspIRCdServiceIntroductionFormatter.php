@@ -11,7 +11,7 @@ use function sprintf;
 /**
  * InspIRCd SpanTree: introduce a service pseudo-client with a UID line.
  * Format (1206+): :serverSid UID uuid ts nick real_host displayed_host real_user displayed_user ip connect_time modes :realname.
- * Modes: o=oper, I=hidechans, k=servprotect. These map to Anope's DefaultPseudoclientModes.
+ * Modes: o=oper, I=hidechans, k=servprotect (standard service pseudo-client modes).
  */
 final readonly class InspIRCdServiceIntroductionFormatter implements ServiceIntroductionFormatterInterface
 {
