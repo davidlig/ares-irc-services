@@ -6,111 +6,124 @@ namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 
 use App\Application\Port\ChannelModeSupportInterface;
 
+use function in_array;
+
 /**
  * InspIRCd channel mode support.
  *
  * Based on https://docs.inspircd.org/4/channel-modes/.
- * Excluded from channel-setting / MLOCK: Prefix (o, v, y, Y) and List/ban (b, e, I, g, w, X, Z).
+ * Excluded from channel-setting / MLOCK: Prefix (o, v, etc.) and List/ban (b, e, I, etc.).
  * Channel settings only: not ranks nor ban/exempt/invex/filter/autoop lists.
+ *
+ * Can be created with factory defaults (full InspIRCd docs profile) or dynamically
+ * from the CAPAB CHANMODES payload received from the remote server.
+ *
+ * @see InspIRCdChannelModeSupportFactory
  */
 final readonly class InspIRCdChannelModeSupport implements ChannelModeSupportInterface
 {
-    private const array PREFIX_MODES = ['v', 'o'];
-
-    /** List/ban-related: b ban, e exempt, I invex; g filter, w autoop, X exemptchanops, Z namebase. Excluded from MLOCK. */
-    private const array LIST_MODE_LETTERS = ['b', 'e', 'I', 'g', 'w', 'X', 'Z'];
-
     /**
-     * Channel setting modes unset with -X only (no parameter). Switch + Parameter types.
-     * Excluded: list/ban (b,e,I,g,w,X,Z), prefix (o,v,y,Y), ParamBoth (k) → in UNSET_WITH_PARAM.
+     * @param list<string> $prefixModes                     Prefix mode letters sorted lowest→highest rank (e.g. ['v','h','o','a','q'])
+     * @param list<string> $listModeLetters                 List/ban mode letters (excluded from MLOCK)
+     * @param list<string> $channelSettingUnsetWithoutParam Channel setting modes unset without param
+     * @param list<string> $channelSettingUnsetWithParam    Channel setting modes requiring param to unset
+     * @param list<string> $channelSettingWithParamOnSet    Channel setting modes requiring param on set
+     * @param bool         $hasHalfOp                       Whether +h (halfop) is available
+     * @param bool         $hasAdmin                        Whether +a (admin/protect) is available
+     * @param bool         $hasOwner                        Whether +q (founder/owner) is available
+     * @param bool         $hasPermanentMode                Whether +P (permanent channel) is available
+     * @param string|null  $permanentModeLetter             Letter for permanent mode (e.g. 'P'), null if not supported
+     * @param bool         $hasRegisteredMode               Whether +r (channel registered) is available
+     * @param string|null  $registeredModeLetter            Letter for registered mode (e.g. 'r'), null if not supported
      */
-    private const array CHANNEL_SETTING_UNSET_WITHOUT_PARAM = [
-        'i', 'm', 'n', 'p', 's', 't',
-        'A', 'c', 'C', 'D', 'K', 'M', 'N', 'O', 'P', 'Q', 'r', 'R', 'S', 'T', 'u', 'U', 'z',
-        'l', 'B', 'd', 'E', 'f', 'F', 'H', 'J', 'j', 'L',
-    ];
-
-    /** ParamBoth: k needs key to unset (-k cheddar). Stored from MODE for MLOCK. */
-    private const array CHANNEL_SETTING_UNSET_WITH_PARAM = ['k'];
-
-    /**
-     * Modes that take a param when set; consume in order when parsing MODE.
-     * Core: k, l. Modules: B, d, E, f, F, H, J, j, L. Excludes List and Prefix (o, v, y, Y).
-     */
-    private const array CHANNEL_SETTING_WITH_PARAM_ON_SET = ['k', 'l', 'B', 'd', 'E', 'f', 'F', 'H', 'J', 'j', 'L'];
+    public function __construct(
+        private array $prefixModes,
+        private array $listModeLetters,
+        private array $channelSettingUnsetWithoutParam,
+        private array $channelSettingUnsetWithParam,
+        private array $channelSettingWithParamOnSet,
+        private bool $hasHalfOp,
+        private bool $hasAdmin,
+        private bool $hasOwner,
+        private bool $hasPermanentMode,
+        private ?string $permanentModeLetter,
+        private bool $hasRegisteredMode,
+        private ?string $registeredModeLetter,
+    ) {
+    }
 
     public function hasVoice(): bool
     {
-        return true;
+        return in_array('v', $this->prefixModes, true);
     }
 
     public function hasHalfOp(): bool
     {
-        return false;
+        return $this->hasHalfOp;
     }
 
     public function hasOp(): bool
     {
-        return true;
+        return in_array('o', $this->prefixModes, true);
     }
 
     public function hasAdmin(): bool
     {
-        return false;
+        return $this->hasAdmin;
     }
 
     public function hasOwner(): bool
     {
-        return false;
+        return $this->hasOwner;
     }
 
     /** @return list<string> */
     public function getSupportedPrefixModes(): array
     {
-        return self::PREFIX_MODES;
+        return $this->prefixModes;
     }
 
     /** @return list<string> */
     public function getListModeLetters(): array
     {
-        return self::LIST_MODE_LETTERS;
+        return $this->listModeLetters;
     }
 
     /** @return list<string> */
     public function getChannelSettingModesUnsetWithoutParam(): array
     {
-        return self::CHANNEL_SETTING_UNSET_WITHOUT_PARAM;
+        return $this->channelSettingUnsetWithoutParam;
     }
 
     /** @return list<string> */
     public function getChannelSettingModesUnsetWithParam(): array
     {
-        return self::CHANNEL_SETTING_UNSET_WITH_PARAM;
+        return $this->channelSettingUnsetWithParam;
     }
 
     /** @return list<string> */
     public function getChannelSettingModesWithParamOnSet(): array
     {
-        return self::CHANNEL_SETTING_WITH_PARAM_ON_SET;
+        return $this->channelSettingWithParamOnSet;
     }
 
     public function hasChannelRegisteredMode(): bool
     {
-        return true;
+        return $this->hasRegisteredMode;
     }
 
     public function getChannelRegisteredModeLetter(): ?string
     {
-        return 'r';
+        return $this->registeredModeLetter;
     }
 
     public function hasPermanentChannelMode(): bool
     {
-        return true;
+        return $this->hasPermanentMode;
     }
 
     public function getPermanentChannelModeLetter(): ?string
     {
-        return 'P';
+        return $this->permanentModeLetter;
     }
 }

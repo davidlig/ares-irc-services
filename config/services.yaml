@@ -222,10 +222,11 @@ services:
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
-            $sid:              '%irc.server_sid%'
-            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
-            $logger:           '@monolog.logger.irc'
-            $eventDispatcher:  '@event_dispatcher'
+            $sid:                '%irc.server_sid%'
+            $connectionHolder:   '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $modeSupportFactory: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory'
+            $logger:             '@monolog.logger.irc'
+            $eventDispatcher:    '@event_dispatcher'
         tags: ['irc.protocol_handler']
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder: ~
@@ -269,7 +270,10 @@ services:
             $nickReservation: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation'
         tags: ['irc.protocol_module']
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport: ~
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory: ~
+
+    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport:
+        factory: ['@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory', 'createDefault']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport: ~
 

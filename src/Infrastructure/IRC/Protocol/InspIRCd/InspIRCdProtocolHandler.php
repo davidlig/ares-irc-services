@@ -34,9 +34,12 @@ use function sprintf;
  * remote burst and, on ENDBURST, dispatch NetworkSyncCompleteEvent so
  * post-sync actions can run (e.g. ChanServ rejoining channels).
  *
- * Modules, chanmodes, usermodes, and extbans are NOT sent in CAPAB.
- * InspIRCd skips the comparison when the remote server omits these fields
- * (see capab.cpp: if (!remote) return true;).
+ * Incoming CAPAB lines (CHANMODES, MODSUPPORT, USERMODES, EXTBANS,
+ * CAPABILITIES) are accumulated during the remote handshake. When the remote
+ * CAPAB END is received, they are parsed into an InspIRCdCapab value object
+ * which is used to update InspIRCdChannelModeSupport via the factory.
+ * This lets the rest of Ares know which modes the remote IRCd actually
+ * supports (e.g. +P permanent, +q/+a/+h prefix ranks).
  *
  * We do NOT send CHALLENGE in CAPAB CAPABILITIES, which tells InspIRCd
  * to use plaintext password authentication (no HMAC-SHA256). If both
@@ -53,9 +56,15 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
 
     private bool $outgoingBurstSent = false;
 
+    /** @var list<string> Accumulated raw CAPAB lines from the remote server */
+    private array $remoteCapabLines = [];
+
+    private bool $remoteCapabActive = false;
+
     public function __construct(
         private readonly string $sid = 'A0A',
         private readonly ?ActiveConnectionHolder $connectionHolder = null,
+        private readonly ?InspIRCdChannelModeSupportFactory $modeSupportFactory = null,
         LoggerInterface $logger = new NullLogger(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ) {
@@ -92,6 +101,8 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
         ]);
 
         $this->outgoingBurstSent = false;
+        $this->remoteCapabLines = [];
+        $this->remoteCapabActive = false;
         $this->sendCapabilities($connection);
         $this->sendServerLine($connection, $link);
 
@@ -118,11 +129,60 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
             return;
         }
 
+        if ('CAPAB' === $message->command) {
+            $this->handleCapab($message);
+
+            return;
+        }
+
         match ($message->command) {
             'SERVER' => $this->handleRemoteServer($message, $connection),
             'ENDBURST' => $this->handleEndburst($connection),
             default => null,
         };
+    }
+
+    private function handleCapab(IRCMessage $message): void
+    {
+        $subCommand = strtoupper($message->params[0] ?? '');
+
+        if ('START' === $subCommand) {
+            $this->remoteCapabLines = [];
+            $this->remoteCapabActive = true;
+
+            return;
+        }
+
+        if ('END' === $subCommand) {
+            $this->remoteCapabActive = false;
+            $this->applyRemoteCapab();
+
+            return;
+        }
+
+        if ($this->remoteCapabActive) {
+            $this->remoteCapabLines[] = $message->toRawLine();
+        }
+    }
+
+    private function applyRemoteCapab(): void
+    {
+        if (null === $this->modeSupportFactory || [] === $this->remoteCapabLines) {
+            return;
+        }
+
+        $capab = InspIRCdCapab::fromCapabLines($this->remoteCapabLines);
+        $newModeSupport = $this->modeSupportFactory->createFromCapab($capab);
+
+        $module = $this->connectionHolder?->getProtocolModule();
+        if ($module instanceof InspIRCdModule) {
+            $module->updateChannelModeSupport($newModeSupport);
+            $this->logger->info('Updated InspIRCd channel mode support from remote CAPAB.', [
+                'prefixModes' => $newModeSupport->getSupportedPrefixModes(),
+                'hasPermanent' => $newModeSupport->hasPermanentChannelMode(),
+                'hasRegistered' => $newModeSupport->hasChannelRegisteredMode(),
+            ]);
+        }
     }
 
     private function handlePing(IRCMessage $message, ConnectionInterface $connection): void

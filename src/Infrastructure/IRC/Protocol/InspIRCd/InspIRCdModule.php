@@ -15,20 +15,27 @@ use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 
 /**
  * InspIRCd protocol module: handler, service actions, introduction formatter, vhost builder, channel mode support, nick reservation.
+ *
+ * The channelModeSupport property is mutable: it starts with the factory default
+ * (full InspIRCd docs profile) and is updated once the remote CAPAB is parsed,
+ * replacing it with an instance that reflects the actual modes the remote IRCd supports.
  */
-final readonly class InspIRCdModule implements ProtocolModuleInterface
+final class InspIRCdModule implements ProtocolModuleInterface
 {
     public const string PROTOCOL_NAME = 'inspircd';
+
+    private InspIRCdChannelModeSupport $channelModeSupport;
 
     public function __construct(
         private readonly InspIRCdProtocolHandler $handler,
         private readonly InspIRCdProtocolServiceActions $serviceActions,
         private readonly InspIRCdServiceIntroductionFormatter $introductionFormatter,
         private readonly InspIRCdVhostCommandBuilder $vhostCommandBuilder,
-        private readonly InspIRCdChannelModeSupport $channelModeSupport,
+        InspIRCdChannelModeSupport $channelModeSupport,
         private readonly InspIRCdUserModeSupport $userModeSupport,
         private readonly InspIRCdNickReservation $nickReservation,
     ) {
+        $this->channelModeSupport = $channelModeSupport;
     }
 
     public function getProtocolName(): string
@@ -69,5 +76,14 @@ final readonly class InspIRCdModule implements ProtocolModuleInterface
     public function getUserModeSupport(): UserModeSupportInterface
     {
         return $this->userModeSupport;
+    }
+
+    /**
+     * Replace the channel mode support with an updated instance built from
+     * the remote server's CAPAB CHANMODES payload.
+     */
+    public function updateChannelModeSupport(InspIRCdChannelModeSupport $support): void
+    {
+        $this->channelModeSupport = $support;
     }
 }
