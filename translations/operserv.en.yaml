@@ -234,6 +234,16 @@ global:
   type_invalid:    "\x0304✗\x03 Message type must be PRIVMSG or NOTICE."
   done:            "\x0303✓\x03 Global message sent from \x02%nickname%\x02 to %count% users."
 
+# --- RAW ---------------------------------------------------------------------
+raw:
+  syntax:           "RAW <line>"
+  short:            "Send a raw protocol line to the IRCd."
+  help:             "Sends the given line directly to the uplink IRCd socket.\nUse with extreme caution. Invalid protocol lines may crash the network.\nThis command requires the operserv.raw permission."
+  empty:            "\x0304✗\x03 You must specify a non-empty line to send."
+  too_long:         "\x0304✗\x03 Line is too long. Maximum 510 characters."
+  not_connected:    "\x0304✗\x03 Not connected to IRCd."
+  done:             "\x0303✓\x03 Raw line sent."
+
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message:   "%operator% executes command %command% on %target%. %reason%"
@@ -247,3 +257,4 @@ permissions:
   operserv.kill:    "Disconnect a nickname from the network (KILL)"
   operserv.gline:   "Manage network-wide G-lines (GLINE)"
   operserv.global:  "Send global messages to all users (GLOBAL)"
+  operserv.raw:     "Send raw protocol lines to the IRCd (RAW)"

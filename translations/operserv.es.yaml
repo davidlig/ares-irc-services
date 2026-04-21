@@ -234,6 +234,16 @@ global:
   type_invalid:    "\x0304✗\x03 El tipo de mensaje debe ser PRIVMSG o NOTICE."
   done:            "\x0303✓\x03 Mensaje global enviado desde \x02%nickname%\x02 a %count% usuarios."
 
+# --- RAW ---------------------------------------------------------------------
+raw:
+  syntax:           "RAW <línea>"
+  short:            "Envía una línea de protocolo cruda al IRCd."
+  help:             "Envía la línea indicada directamente al socket del IRCd de enlace.\nÚsalo con extrema precaución. Líneas de protocolo inválidas pueden bloquear la red.\nEste comando requiere el permiso operserv.raw."
+  empty:            "\x0304✗\x03 Debes especificar una línea no vacía para enviar."
+  too_long:         "\x0304✗\x03 La línea es demasiado larga. Máximo 510 caracteres."
+  not_connected:    "\x0304✗\x03 No conectado al IRCd."
+  done:             "\x0303✓\x03 Línea cruda enviada."
+
 # --- DEBUG -------------------------------------------------------------------
 debug:
   action_message:   "%operator% ejecuta el comando %command% sobre %target%. %reason%"
@@ -247,3 +257,4 @@ permissions:
   operserv.kill:    "Desconecta a un nickname de la red (KILL)"
   operserv.gline:   "Gestiona G-lines de red (GLINE)"
   operserv.global:  "Envía mensajes globales a todos los usuarios (GLOBAL)"
+  operserv.raw:     "Envía líneas de protocolo crudas al IRCd (RAW)"

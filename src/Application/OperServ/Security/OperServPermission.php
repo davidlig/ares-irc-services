@@ -12,6 +12,8 @@ final class OperServPermission
 
     public const string GLOBAL = 'operserv.global';
 
+    public const string RAW = 'operserv.raw';
+
     private function __construct()
     {
     }

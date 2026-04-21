@@ -22,6 +22,12 @@ final class OperServPermissionTest extends TestCase
     }
 
     #[Test]
+    public function rawConstantHasExpectedValue(): void
+    {
+        self::assertSame('operserv.raw', OperServPermission::RAW);
+    }
+
+    #[Test]
     public function allConstantsAreStrings(): void
     {
         $reflection = new ReflectionClass(OperServPermission::class);

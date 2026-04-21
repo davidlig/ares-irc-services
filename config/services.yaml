@@ -1542,6 +1542,12 @@ services:
             $logger: '@monolog.logger.ircops'
         tags: ['operserv.command']
 
+    App\Application\OperServ\Command\Handler\RawCommand:
+        arguments:
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $logger: '@monolog.logger.ircops'
+        tags: ['operserv.command']
+
     App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
         arguments:
             $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
