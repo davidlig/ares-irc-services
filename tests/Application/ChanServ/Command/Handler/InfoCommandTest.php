@@ -11,6 +11,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\InfoCommand;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -32,10 +33,13 @@ final class InfoCommandTest extends TestCase
         array $args,
         ChanServNotifierInterface $notifier,
         TranslatorInterface $translator,
+        ?ChannelLookupPort $channelLookup = null,
+        ?RegisteredNick $senderAccount = null,
+        ?SenderView $sender = null,
     ): ChanServContext {
         return new ChanServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
-            null,
+            $sender ?? new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $senderAccount,
             'INFO',
             $args,
             $notifier,
@@ -44,7 +48,7 @@ final class InfoCommandTest extends TestCase
             'UTC',
             'NOTICE',
             new ChanServCommandRegistry([]),
-            $this->createStub(ChannelLookupPort::class),
+            $channelLookup ?? $this->createStub(ChannelLookupPort::class),
             new NullChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
@@ -606,6 +610,293 @@ final class InfoCommandTest extends TestCase
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator));
 
         self::assertNotContains('info.no_expire', $rawMessages);
+    }
+
+    #[Test]
+    public function hidesTopicWhenChannelHasSecretMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+nts', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
+
+        self::assertNotContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function hidesTopicWhenChannelHasPrivateMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+ntp', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
+
+        self::assertNotContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function showsTopicWhenSenderIsFounderEvenWithSecretMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+nts', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $senderAccount = $this->createStub(RegisteredNick::class);
+        $senderAccount->method('getId')->willReturn(1);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, $senderAccount));
+
+        self::assertContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function showsTopicWhenSenderIsOperEvenWithPrivateMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+ntp', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $sender = new SenderView('UID1', 'OperNick', 'i', 'h', 'c', 'ip', isIdentified: false, isOper: true);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, null, $sender));
+
+        self::assertContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function hidesTopicWhenSenderNullAndChannelHasSecretMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic', 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+nts', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+
+        $context = new ChanServContext(
+            null,
+            null,
+            'INFO',
+            ['#Test'],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            new ChanServCommandRegistry([]),
+            $channelLookup,
+            new NullChannelModeSupport(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+        );
+
+        $cmd->execute($context);
+
+        self::assertNotContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function showsTopicWhenChannelHasNoSecretOrPrivateMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Public topic', 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+nt', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
+
+        self::assertContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function hidesTopicWhenMlockContainsSecretMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Secret topic via MLOCK', 'TopicSetter');
+        $channel->configureMlock(true, '+nts');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+nt', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
+
+        self::assertNotContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function hidesTopicWhenMlockContainsPrivateMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic via MLOCK', 'TopicSetter');
+        $channel->configureMlock(true, '+ntp');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+nt', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
+
+        self::assertNotContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function showsTopicWhenMlockHasNoSecretOrPrivate(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Public topic with MLOCK', 'TopicSetter');
+        $channel->configureMlock(true, '+nt');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+nt', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup));
+
+        self::assertContains('info.topic', $rawMessages);
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

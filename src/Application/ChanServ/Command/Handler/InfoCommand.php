@@ -6,6 +6,7 @@ namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\ChanServ\ValueObject\ChannelStatus;
@@ -124,6 +125,8 @@ final readonly class InfoCommand implements ChanServCommandInterface
             $successorName = null !== $successorNick ? $successorNick->getNickname() : (string) $channel->getSuccessorNickId();
         }
 
+        $canShowTopic = $this->canShowTopic($context, $channel);
+
         $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
 
         if (ChannelStatus::Suspended === $channel->getStatus()) {
@@ -156,7 +159,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
         if (null !== $channel->getEmail()) {
             $context->replyRaw($context->trans('info.email', ['%email%' => $channel->getEmail()]));
         }
-        if (null !== $channel->getTopic()) {
+        if ($canShowTopic && null !== $channel->getTopic()) {
             $context->replyRaw($context->trans('info.topic', [
                 '%topic%' => $channel->getTopic(),
             ]));
@@ -180,5 +183,41 @@ final readonly class InfoCommand implements ChanServCommandInterface
             $context->replyRaw($context->trans('info.no_expire'));
         }
         $context->replyRaw($context->trans('info.footer'));
+    }
+
+    private function canShowTopic(ChanServContext $context, RegisteredChannel $channel): bool
+    {
+        if ($this->isSenderFounderOrOper($context, $channel)) {
+            return true;
+        }
+
+        $view = $context->getChannelView($channel->getName());
+        if (null !== $view && (str_contains($view->modes, 's') || str_contains($view->modes, 'p'))) {
+            return false;
+        }
+
+        if ($channel->isMlockActive() && (
+            str_contains($channel->getMlock(), 's') || str_contains($channel->getMlock(), 'p')
+        )) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function isSenderFounderOrOper(ChanServContext $context, RegisteredChannel $channel): bool
+    {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return false;
+        }
+
+        $founderNickId = $channel->getFounderNickId();
+        $senderAccount = $context->getSenderAccount();
+        if (null !== $senderAccount && $senderAccount->getId() === $founderNickId) {
+            return true;
+        }
+
+        return $sender->isOper;
     }
 }
