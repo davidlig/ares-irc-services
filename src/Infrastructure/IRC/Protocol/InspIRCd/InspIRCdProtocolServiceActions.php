@@ -114,12 +114,13 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
 
     public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = '', ?int $channelCreationTs = null): void
     {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
         $creationTs = $channelCreationTs ?? time();
         $setTs = time();
         if (null === $topic) {
-            $this->write(sprintf(':%s FTOPIC %s %d %d :', $serverSid, $channelName, $creationTs, $setTs));
+            $this->write(sprintf(':%s FTOPIC %s %d %d :', $prefix, $channelName, $creationTs, $setTs));
         } else {
-            $this->write(sprintf(':%s FTOPIC %s %d %d :%s', $serverSid, $channelName, $creationTs, $setTs, $topic));
+            $this->write(sprintf(':%s FTOPIC %s %d %d :%s', $prefix, $channelName, $creationTs, $setTs, $topic));
         }
     }
 

@@ -252,11 +252,22 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function setChannelTopicSetsFtopicWithTimestamps(): void
+    public function setChannelTopicSetsFtopicWithTimestampsFromService(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->setChannelTopic('001', '#test', 'New topic', '001CSRV', 12345);
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:001CSRV FTOPIC #test 12345 \d+ :New topic$/', $this->written[0]);
+    }
+
+    #[Test]
+    public function setChannelTopicSetsFtopicFromServerWhenNoServiceUid(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setChannelTopic('001', '#test', 'New topic', '', 12345);
 
         self::assertCount(1, $this->written);
         self::assertMatchesRegularExpression('/^:001 FTOPIC #test 12345 \d+ :New topic$/', $this->written[0]);
@@ -281,7 +292,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         $actions->setChannelTopic('001', '#test', null, '001CSRV', 12345);
 
         self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:001 FTOPIC #test 12345 \d+ :$/', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:001CSRV FTOPIC #test 12345 \d+ :$/', $this->written[0]);
     }
 
     #[Test]
