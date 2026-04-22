@@ -24,13 +24,13 @@ interface ProtocolServiceActionsInterface
      * Set channel modes (e.g. +nt). Params for modes that require a value (e.g. +k key).
      * Source of the MODE line is $serviceUid when non-empty (e.g. :ChanServ MODE #chan +nt).
      */
-    public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = ''): void;
+    public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = '', ?int $channelTimestamp = null): void;
 
     /**
      * Set or remove a member prefix mode (+o/-o, +v/-v, etc.) for a user in the channel.
      * Source of the MODE line is $serviceUid when non-empty.
      */
-    public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = ''): void;
+    public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = '', ?int $channelTimestamp = null): void;
 
     /** Send INVITE for target user to the channel. Source is $serviceUid when non-empty. */
     public function inviteUserToChannel(string $serverSid, string $channelName, string $targetUid, string $serviceUid = ''): void;

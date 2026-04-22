@@ -144,7 +144,9 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         $module = $this->connectionHolder->getProtocolModule();
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
-            $module->getServiceActions()->setChannelModes($sid, $channelName, $modeStr, $params, $this->chanservUid);
+            $view = $this->channelLookup->findByChannelName($channelName);
+            $channelTimestamp = $view?->timestamp;
+            $module->getServiceActions()->setChannelModes($sid, $channelName, $modeStr, $params, $this->chanservUid, $channelTimestamp);
             $this->applyOutgoingChannelModes->applyOutgoingChannelModes($channelName, $modeStr, $params);
         }
     }
@@ -154,7 +156,9 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         $module = $this->connectionHolder->getProtocolModule();
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
-            $module->getServiceActions()->setChannelMemberMode($sid, $channelName, $targetUid, $modeLetter, $add, $this->chanservUid);
+            $view = $this->channelLookup->findByChannelName($channelName);
+            $channelTimestamp = $view?->timestamp;
+            $module->getServiceActions()->setChannelMemberMode($sid, $channelName, $targetUid, $modeLetter, $add, $this->chanservUid, $channelTimestamp);
         }
     }
 

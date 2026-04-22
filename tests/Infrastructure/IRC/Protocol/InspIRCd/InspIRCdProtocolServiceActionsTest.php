@@ -98,6 +98,72 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
+    public function setChannelModesSendsFmodeFromServerWhenTimestampProvided(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setChannelModes('001', '#test', '+nt', [], '', 12345);
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 FMODE #test 12345 +nt', $this->written[0]);
+    }
+
+    #[Test]
+    public function setChannelModesSendsFmodeWithParamsWhenTimestampProvided(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setChannelModes('001', '#test', '+k', ['secretkey'], '', 12345);
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 FMODE #test 12345 +k secretkey', $this->written[0]);
+    }
+
+    #[Test]
+    public function setChannelModesSendsFmodeFromServiceWhenTimestampProvided(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setChannelModes('001', '#test', '+k', ['secretkey'], '001CSRV', 12345);
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001CSRV FMODE #test 12345 +k secretkey', $this->written[0]);
+    }
+
+    #[Test]
+    public function setChannelMemberModeSendsFmodeFromServerWhenTimestampProvided(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', true, '', 12345);
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 FMODE #test 12345 +o 001ABCD', $this->written[0]);
+    }
+
+    #[Test]
+    public function setChannelMemberModeSendsFmodeWhenRemovingAndTimestampProvided(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', false, '', 12345);
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 FMODE #test 12345 -o 001ABCD', $this->written[0]);
+    }
+
+    #[Test]
+    public function setChannelMemberModeSendsFmodeFromServiceWhenTimestampProvided(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', true, '001CSRV', 12345);
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001CSRV FMODE #test 12345 +o 001ABCD', $this->written[0]);
+    }
+
+    #[Test]
     public function setChannelModesSendsModeFromServer(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);

@@ -66,17 +66,32 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         $this->write(sprintf(':%s KILL %s :%s', $serverSid, $targetUid, $reason));
     }
 
-    public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = ''): void
+    public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = '', ?int $channelTimestamp = null): void
     {
         $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+
+        if (null !== $channelTimestamp) {
+            $paramStr = [] === $params ? '' : ' ' . implode(' ', $params);
+            $this->write(sprintf(':%s FMODE %s %d %s%s', $prefix, $channelName, $channelTimestamp, $modeStr, $paramStr));
+
+            return;
+        }
+
         $paramStr = [] === $params ? '' : ' ' . implode(' ', $params);
         $this->write(sprintf(':%s MODE %s %s%s', $prefix, $channelName, $modeStr, $paramStr));
     }
 
-    public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = ''): void
+    public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = '', ?int $channelTimestamp = null): void
     {
         $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
         $delta = $add ? '+' . $modeLetter : '-' . $modeLetter;
+
+        if (null !== $channelTimestamp) {
+            $this->write(sprintf(':%s FMODE %s %d %s %s', $prefix, $channelName, $channelTimestamp, $delta, $targetUid));
+
+            return;
+        }
+
         $this->write(sprintf(':%s MODE %s %s %s', $prefix, $channelName, $delta, $targetUid));
     }
 

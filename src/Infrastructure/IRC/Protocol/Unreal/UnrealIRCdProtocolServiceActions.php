@@ -54,14 +54,14 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         $this->write(sprintf(':%s KILL %s :%s', $serverSid, $targetUid, $reason));
     }
 
-    public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = ''): void
+    public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = '', ?int $channelTimestamp = null): void
     {
         $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
         $paramStr = [] === $params ? '' : ' ' . implode(' ', $params);
         $this->write(sprintf(':%s MODE %s %s%s', $prefix, $channelName, $modeStr, $paramStr));
     }
 
-    public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = ''): void
+    public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = '', ?int $channelTimestamp = null): void
     {
         $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
         $delta = $add ? '+' . $modeLetter : '-' . $modeLetter;
