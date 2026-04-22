@@ -1216,6 +1216,66 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
+    public function handleFtopicExtractsNickFromHostmask(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FTOPIC', null, ['#ares', '1776797549', '1776800479', 'davidlig!ares@ares.virtual'], 'Canal oficial'));
+
+        self::assertInstanceOf(ChannelTopicReceivedEvent::class, $captured);
+        self::assertSame('davidlig', $captured->setterNick);
+        self::assertNull($captured->sourceUid);
+    }
+
+    #[Test]
+    public function handleFtopicIgnoresServerHostnameAsSetter(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FTOPIC', null, ['#ares', '1776886641', '1776887120', 'ares-services.davidlig.net'], 'Canal oficial'));
+
+        self::assertInstanceOf(ChannelTopicReceivedEvent::class, $captured);
+        self::assertNull($captured->setterNick);
+        self::assertNull($captured->sourceUid);
+    }
+
+    #[Test]
+    public function handleFtopicSetsSourceUidFromPrefixWhenNoSetterParam(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FTOPIC', '994AAAGUW', ['#ares', '1776889998', '1776891167'], 'Canal oficial del desarrollo'));
+
+        self::assertInstanceOf(ChannelTopicReceivedEvent::class, $captured);
+        self::assertNull($captured->setterNick);
+        self::assertSame('994AAAGUW', $captured->sourceUid);
+    }
+
+    #[Test]
     public function handleModeWithInvalidChannelNameDispatchesNothingForChannelMode(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);

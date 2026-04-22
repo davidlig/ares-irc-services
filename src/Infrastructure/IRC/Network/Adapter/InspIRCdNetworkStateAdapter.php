@@ -383,8 +383,16 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $channelStr = $message->params[0];
         $topic = $message->trailing;
         $setterNick = null;
+        $sourceUid = null;
         if (count($message->params) >= 4) {
-            $setterNick = $message->params[3];
+            $rawSetter = $message->params[3];
+            if (str_contains($rawSetter, '!')) {
+                $setterNick = explode('!', $rawSetter, 2)[0];
+            } elseif (!str_contains($rawSetter, '.')) {
+                $setterNick = $rawSetter;
+            }
+        } else {
+            $sourceUid = $message->prefix;
         }
 
         try {
@@ -393,7 +401,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $this->eventDispatcher->dispatch(new ChannelTopicReceivedEvent($channelName, $topic, $setterNick));
+        $this->eventDispatcher->dispatch(new ChannelTopicReceivedEvent($channelName, $topic, $setterNick, $sourceUid));
     }
 
     private function handleMode(IRCMessage $message): void

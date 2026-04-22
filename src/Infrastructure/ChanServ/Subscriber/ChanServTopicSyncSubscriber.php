@@ -6,6 +6,7 @@ namespace App\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelSyncCompletedRegistryInterface;
+use App\Application\Port\UidResolverInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
 use Psr\Log\LoggerInterface;
@@ -27,6 +28,7 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelServiceActionsPort $channelServiceActions,
         private ChannelSyncCompletedRegistryInterface $syncCompletedRegistry,
+        private UidResolverInterface $uidResolver,
         private string $chanservNick,
         private string $nickservNick,
         private LoggerInterface $logger = new NullLogger(),
@@ -74,18 +76,34 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
         }
 
         $topic = $event->topic;
-        $setterNick = $event->setterNick;
-        if (null !== $setterNick && $this->isServicesNick($setterNick)) {
-            $setterNick = null;
-        }
+        $setterNick = $this->resolveSetterNick($event);
 
         $registered->updateTopic($topic, $setterNick);
         $this->channelRepository->save($registered);
         $this->logger->debug('ChanServ synced topic to DB', ['channel' => $channelName]);
     }
 
+    private function resolveSetterNick(ChannelTopicReceivedEvent $event): ?string
+    {
+        $setterNick = $event->setterNick;
+
+        if (null === $setterNick && null !== $event->sourceUid) {
+            $setterNick = $this->uidResolver->resolveUidToNick($event->sourceUid);
+        }
+
+        if (null !== $setterNick && $this->isServicesNick($setterNick)) {
+            return null;
+        }
+
+        return $setterNick;
+    }
+
     private function isServicesNick(string $nick): bool
     {
+        if (str_contains($nick, '.')) {
+            return true;
+        }
+
         $nickLower = strtolower($nick);
 
         return $nickLower === strtolower($this->chanservNick) || $nickLower === strtolower($this->nickservNick);

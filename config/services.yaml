@@ -307,6 +307,9 @@ services:
     App\Domain\IRC\Repository\NetworkUserRepositoryInterface:
         class: App\Infrastructure\IRC\Network\InMemoryNetworkUserRepository
 
+    App\Application\Port\UidResolverInterface:
+        class: App\Infrastructure\IRC\Network\NetworkUidResolver
+
     App\Domain\IRC\Repository\ChannelRepositoryInterface:
         class: App\Infrastructure\IRC\Network\InMemoryChannelRepository
 

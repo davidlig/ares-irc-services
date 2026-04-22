@@ -159,15 +159,17 @@ final class InfrastructureEventTest extends TestCase
             channelName: new ChannelName('#test'),
             topic: 'Welcome',
             setterNick: 'OpNick',
+            sourceUid: '994AAAGUW',
         );
 
         self::assertSame('#test', $event->channelName->value);
         self::assertSame('Welcome', $event->topic);
         self::assertSame('OpNick', $event->setterNick);
+        self::assertSame('994AAAGUW', $event->sourceUid);
     }
 
     #[Test]
-    public function channelTopicReceivedEventDefaultsNullSetterNick(): void
+    public function channelTopicReceivedEventDefaultsNullOptionalProperties(): void
     {
         $event = new ChannelTopicReceivedEvent(
             channelName: new ChannelName('#test'),
@@ -175,6 +177,7 @@ final class InfrastructureEventTest extends TestCase
         );
 
         self::assertNull($event->setterNick);
+        self::assertNull($event->sourceUid);
     }
 
     #[Test]
