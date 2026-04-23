@@ -16,11 +16,13 @@ final class Version20260412120000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE registered_channels ADD no_expire BOOLEAN DEFAULT 0 NOT NULL');
+        $table = $schema->getTable('registered_channels');
+        $table->addColumn('no_expire', 'boolean', ['default' => false]);
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE registered_channels DROP no_expire');
+        $table = $schema->getTable('registered_channels');
+        $table->dropColumn('no_expire');
     }
 }

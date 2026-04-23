@@ -16,11 +16,13 @@ final class Version20260412014104 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE registered_channels ADD forbidden_reason VARCHAR(255) DEFAULT NULL');
+        $table = $schema->getTable('registered_channels');
+        $table->addColumn('forbidden_reason', 'string', ['length' => 255, 'notnull' => false]);
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE registered_channels DROP forbidden_reason');
+        $table = $schema->getTable('registered_channels');
+        $table->dropColumn('forbidden_reason');
     }
 }

@@ -16,14 +16,21 @@ final class Version20260330100000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('CREATE TABLE gline (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, mask VARCHAR(255) NOT NULL, creator_nick_id INTEGER DEFAULT NULL, reason VARCHAR(255) DEFAULT NULL, created_at DATETIME NOT NULL, expires_at DATETIME DEFAULT NULL)');
-        $this->addSql('CREATE UNIQUE INDEX idx_gline_mask ON gline (mask)');
-        $this->addSql('CREATE INDEX idx_gline_expires_at ON gline (expires_at)');
-        $this->addSql('CREATE INDEX idx_gline_creator_nick_id ON gline (creator_nick_id)');
+        $table = $schema->createTable('gline');
+        $table->addColumn('id', 'integer', ['autoincrement' => true]);
+        $table->addColumn('mask', 'string', ['length' => 255]);
+        $table->addColumn('creator_nick_id', 'integer', ['notnull' => false]);
+        $table->addColumn('reason', 'string', ['length' => 255, 'notnull' => false]);
+        $table->addColumn('created_at', 'datetime_immutable');
+        $table->addColumn('expires_at', 'datetime_immutable', ['notnull' => false]);
+        $table->setPrimaryKey(['id']);
+        $table->addUniqueIndex(['mask'], 'uniq_gline_mask');
+        $table->addIndex(['expires_at'], 'idx_gline_expires_at');
+        $table->addIndex(['creator_nick_id'], 'idx_gline_creator_nick_id');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP TABLE gline');
+        $schema->dropTable('gline');
     }
 }

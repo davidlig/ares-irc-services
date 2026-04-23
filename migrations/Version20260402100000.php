@@ -16,11 +16,13 @@ final class Version20260402100000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE registered_nicks ADD COLUMN suspended_until DATETIME DEFAULT NULL');
+        $table = $schema->getTable('registered_nicks');
+        $table->addColumn('suspended_until', 'datetime_immutable', ['notnull' => false]);
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE registered_nicks DROP COLUMN suspended_until');
+        $table = $schema->getTable('registered_nicks');
+        $table->dropColumn('suspended_until');
     }
 }
