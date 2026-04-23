@@ -17,12 +17,12 @@ final class Version20260328184511 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $table = $schema->getTable('channel_akick');
-        $table->changeColumn('creator_nick_id', ['notnull' => false]);
+        $table->modifyColumn('creator_nick_id', ['notnull' => false]);
     }
 
     public function down(Schema $schema): void
     {
         $table = $schema->getTable('channel_akick');
-        $table->changeColumn('creator_nick_id', ['notnull' => true]);
+        $table->modifyColumn('creator_nick_id', ['notnull' => true]);
     }
 }
