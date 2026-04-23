@@ -649,6 +649,7 @@ services:
 
     App\Application\ChanServ\Command\Handler\RegisterCommand:
         arguments:
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $maxChannelsPerNick: '%chanserv.max_channels_per_nick%'
             $registerMinIntervalSeconds: '%chanserv.register_min_interval%'
         tags: ['chanserv.command']

@@ -7,6 +7,7 @@ namespace App\Application\ChanServ\Command\Handler;
 use App\Application\ChanServ\ChannelRegisterThrottleRegistry;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
+use App\Application\OperServ\RootUserRegistry;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
@@ -17,6 +18,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
+use function strtolower;
 
 /**
  * REGISTER <#channel> <description>.
@@ -31,6 +33,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         private ChannelLevelRepositoryInterface $levelRepository,
         private ChannelRegisterThrottleRegistry $throttleRegistry,
         private EventDispatcherInterface $eventDispatcher,
+        private RootUserRegistry $rootRegistry,
         private int $maxChannelsPerNick = 3,
         private int $registerMinIntervalSeconds = 21600,
     ) {
@@ -132,22 +135,28 @@ final readonly class RegisterCommand implements ChanServCommandInterface
             return;
         }
 
-        $remainingCooldown = $this->throttleRegistry->getRemainingCooldownSeconds(
-            $senderAccount->getId(),
-            $this->registerMinIntervalSeconds
-        );
-        if ($remainingCooldown > 0) {
-            $minutes = (int) ceil($remainingCooldown / 60);
-            $context->reply('register.throttled', ['minutes' => (string) $minutes]);
+        $sender = $context->sender;
+        $isPrivileged = (null !== $sender && $sender->isOper)
+            || $this->rootRegistry->isRoot($context->sender?->nick ?? '');
 
-            return;
-        }
+        if (!$isPrivileged) {
+            $remainingCooldown = $this->throttleRegistry->getRemainingCooldownSeconds(
+                $senderAccount->getId(),
+                $this->registerMinIntervalSeconds
+            );
+            if ($remainingCooldown > 0) {
+                $minutes = (int) ceil($remainingCooldown / 60);
+                $context->reply('register.throttled', ['minutes' => (string) $minutes]);
 
-        $existingChannels = $this->channelRepository->findByFounderNickId($senderAccount->getId());
-        if (count($existingChannels) >= $this->maxChannelsPerNick) {
-            $context->reply('register.limit_exceeded', ['%max%' => (string) $this->maxChannelsPerNick]);
+                return;
+            }
 
-            return;
+            $existingChannels = $this->channelRepository->findByFounderNickId($senderAccount->getId());
+            if (count($existingChannels) >= $this->maxChannelsPerNick) {
+                $context->reply('register.limit_exceeded', ['%max%' => (string) $this->maxChannelsPerNick]);
+
+                return;
+            }
         }
 
         $channel = RegisteredChannel::register(
@@ -157,7 +166,9 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         );
         $this->channelRepository->save($channel);
 
-        $this->throttleRegistry->recordRegistration($senderAccount->getId());
+        if (!$isPrivileged) {
+            $this->throttleRegistry->recordRegistration($senderAccount->getId());
+        }
 
         foreach (ChannelLevel::DEFAULTS as $key => $value) {
             $level = new ChannelLevel($channel->getId(), $key, $value);
