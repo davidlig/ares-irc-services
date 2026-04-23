@@ -5,19 +5,21 @@ FROM php:8.4-cli-alpine
 
 # Install system dependencies for PHP extensions
 # linux-headers is required for sockets extension (provides linux/sock_diag.h)
-# su-exec allows dropping privileges after fixing ownership in entrypoint
+# mariadb-dev provides MySQL/MariaDB client headers for pdo_mysql extension
 RUN apk add --no-cache \
     $PHPIZE_DEPS \
     sqlite-dev \
     oniguruma-dev \
-    linux-headers
+    linux-headers \
+    mariadb-dev
 
 # Install PHP extensions
 # Built-in in php:8.4-cli-alpine: ctype, dom, filter, hash, iconv, json, libxml, phar, tokenizer, xml, xmlwriter
-# Explicitly installed: pdo, pdo_sqlite, mbstring, sockets, opcache, pcntl
+# Explicitly installed: pdo, pdo_sqlite, pdo_mysql, mbstring, sockets, opcache, pcntl
 RUN docker-php-ext-install -j$(nproc) \
     pdo \
     pdo_sqlite \
+    pdo_mysql \
     mbstring \
     sockets \
     opcache \
