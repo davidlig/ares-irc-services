@@ -49,11 +49,11 @@ final class InspIRCdVhostCommandBuilderTest extends TestCase
         $lines = $this->builder->getClearVhostLines(
             serverSid: '0A0',
             targetUid: '994AAAAAA',
-            realHost: '87.125.55.53'
+            realHost: 'cloak.xf5bhfwq.nts6htm7.v2xvy7av.ip'
         );
 
         self::assertCount(2, $lines);
-        self::assertSame(':0A0 ENCAP 994 CHGHOST 994AAAAAA 87.125.55.53', $lines[0]);
+        self::assertSame(':0A0 ENCAP 994 CHGHOST 994AAAAAA cloak.xf5bhfwq.nts6htm7.v2xvy7av.ip', $lines[0]);
         self::assertSame(':0A0 MODE 994AAAAAA +x', $lines[1]);
     }
 

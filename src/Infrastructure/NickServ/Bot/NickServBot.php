@@ -134,11 +134,9 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
     public function setUserVhost(string $targetUid, string $vhost, string $sourceServerSid): void
     {
         $sender = $this->userLookup->findByUid($targetUid);
-        if (null !== $sender) {
-            if ('' !== $vhost) {
-                if ($sender->displayHost === $vhost) {
-                    return;
-                }
+        if (null !== $sender && '' !== $vhost) {
+            if ($sender->displayHost === $vhost) {
+                return;
             }
         }
 
@@ -153,13 +151,12 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
             $line = $vhostBuilder->getSetVhostLine($sid, $targetUid, $vhost);
             $this->write($line);
         } else {
-            $realHost = $sender?->hostname ?? '';
-            foreach ($vhostBuilder->getClearVhostLines($sid, $targetUid, $realHost) as $line) {
+            $cloakedHost = $sender?->cloakedHost ?? '';
+            foreach ($vhostBuilder->getClearVhostLines($sid, $targetUid, $cloakedHost) as $line) {
                 $this->write($line);
             }
         }
 
-        // Update local NetworkUser state to keep displayHost in sync
         $this->userLookup->updateVhost($targetUid, $vhost);
     }
 

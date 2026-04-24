@@ -12,10 +12,11 @@ use function sprintf;
  * InspIRCd vhost commands via ENCAP CHGHOST and MODE.
  *
  * Setting vhost: ENCAP <target_sid> CHGHOST <uid> <vhost>
- * Clearing vhost: ENCAP <target_sid> CHGHOST <uid> <real_host> + MODE <uid> +x
+ * Clearing vhost: ENCAP <target_sid> CHGHOST <uid> <cloaked_host> + MODE <uid> +x
  *
- * When clearing, first restore the real host via CHGHOST, then activate cloak
- * mode (+x) so InspIRCd recalculates and displays the cloaked host.
+ * When clearing, first set the displayed host to the cloaked host via CHGHOST,
+ * then activate cloak mode (+x) so InspIRCd recalculates and displays the cloaked host.
+ * The realHost parameter must be the cloaked host, never the real IP, to prevent IP exposure.
  */
 final readonly class InspIRCdVhostCommandBuilder implements VhostCommandBuilderInterface
 {

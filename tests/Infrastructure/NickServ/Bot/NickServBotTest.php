@@ -374,7 +374,7 @@ final class NickServBotTest extends TestCase
     {
         $vhostBuilder = $this->createMock(VhostCommandBuilderInterface::class);
         $vhostBuilder->expects(self::once())->method('getClearVhostLines')
-            ->with('001', '001USER', 'real.host')
+            ->with('001', '001USER', 'cloak.host')
             ->willReturn([':001 SVSHOST 001USER', ':001 MODE 001USER +x']);
 
         $module = $this->createStub(ProtocolModuleInterface::class);
@@ -479,6 +479,55 @@ final class NickServBotTest extends TestCase
         );
 
         $bot->setUserVhost('001USER', 'same.vhost', '001');
+    }
+
+    #[Test]
+    public function setUserVhostClearUsesCloakedHostNotHostname(): void
+    {
+        $vhostBuilder = $this->createMock(VhostCommandBuilderInterface::class);
+        $vhostBuilder->expects(self::once())->method('getClearVhostLines')
+            ->with('001', '001USER', 'safe.cloaked.host')
+            ->willReturn([':001 ENCAP 001 CHGHOST 001USER safe.cloaked.host', ':001 MODE 001USER +x']);
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getVhostCommandBuilder')->willReturn($vhostBuilder);
+
+        $sender = new SenderView(
+            uid: '001USER',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: '5.224.47.252',
+            cloakedHost: 'safe.cloaked.host',
+            ipBase64: '',
+            isIdentified: false,
+            isOper: false,
+            serverSid: '001',
+            displayHost: 'old.vhost',
+        );
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($sender);
+        $userLookup->expects(self::once())->method('updateVhost')->with('001USER', '');
+
+        $this->connectionHolder->setProtocolModule($module);
+
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::exactly(2))->method('writeLine');
+
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
+
+        $bot = new NickServBot(
+            $this->connectionHolder,
+            $userLookup,
+            $this->createStub(SendNoticePort::class),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncInterface::class),
+            self::HOSTNAME,
+            self::NICKSERV_UID,
+        );
+
+        $bot->setUserVhost('001USER', '', '001');
     }
 
     #[Test]
