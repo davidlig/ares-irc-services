@@ -6,7 +6,7 @@ unknown_command: "\x0304✗\x03 Unknown command \x02%command%\x02. Use \x0303/ms
 error:
   syntax:           "\x0304✗\x03 Incorrect syntax. Usage: \x02%syntax%\x02"
   oper_only:        "\x0304✗\x03 This command is restricted to IRC Operators."
-  permission_denied: "\x0304✗\x03 Permission denied. You do not have access to this command."
+  permission_denied: "\x0304✗\x03 You do not have sufficient permissions to execute this command."
   root_only:        "\x0304✗\x03 This command is restricted to network root administrators."
   nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
 

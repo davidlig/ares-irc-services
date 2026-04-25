@@ -73,7 +73,7 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
 
     public function getOrder(): int
     {
-        return 50;
+        return 35;
     }
 
     public function getShortDescKey(): string

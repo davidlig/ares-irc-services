@@ -103,6 +103,8 @@ final readonly class OperServService
                 if (!$isGranted) {
                     if ('IDENTIFIED' === $requiredPermission) {
                         $context->reply('error.not_identified');
+                    } elseif (!$sender->isOper) {
+                        $context->reply('error.oper_only');
                     } else {
                         $context->reply('error.permission_denied');
                     }

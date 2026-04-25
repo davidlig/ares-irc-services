@@ -128,12 +128,13 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
     }
 
-    private function createCommandMock(bool $isOperOnly, string $name = 'TESTCMD'): OperServCommandInterface
+    private function createCommandMock(bool $isOperOnly, string $name = 'TESTCMD', ?string $requiredPermission = null): OperServCommandInterface
     {
-        return new class($isOperOnly, $name) implements OperServCommandInterface {
+        return new class($isOperOnly, $name, $requiredPermission) implements OperServCommandInterface {
             public function __construct(
                 private readonly bool $operOnly,
                 private readonly string $cmdName,
+                private readonly ?string $requiredPermission,
             ) {
             }
 
@@ -184,7 +185,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
 
             public function getRequiredPermission(): ?string
             {
-                return null;
+                return $this->requiredPermission;
             }
 
             public function execute(OperServContext $c): void
@@ -353,5 +354,104 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $adapter = new OperServHelpFormatterContextAdapter($context);
 
         self::assertFalse($adapter->hasIrcopAccess());
+    }
+
+    #[Test]
+    public function shouldShowCommandWithRequiredPermissionReturnsTrueWhenUserHasPermission(): void
+    {
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('hasPermission')->willReturn(true);
+
+        $role = $this->createStub(\App\Domain\OperServ\Entity\OperRole::class);
+        $role->method('getId')->willReturn(1);
+        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop->method('getRole')->willReturn($role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn($ircop);
+
+        $rootRegistry = new RootUserRegistry('');
+        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+
+        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account->method('getId')->willReturn(42);
+
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip');
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $registry = new OperServCommandRegistry([]);
+
+        $context = new OperServContext(
+            $sender,
+            $account,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $accessHelper,
+            $this->createServiceNicks(),
+        );
+
+        $adapter = new OperServHelpFormatterContextAdapter($context);
+        $command = $this->createCommandMock(false, 'GLOBALCMD', 'operserv.global');
+
+        self::assertTrue($adapter->shouldShowCommandInGeneralHelp($command));
+    }
+
+    #[Test]
+    public function shouldShowCommandWithRequiredPermissionReturnsFalseWhenNoAccount(): void
+    {
+        $context = $this->createContext(false);
+        $adapter = new OperServHelpFormatterContextAdapter($context);
+        $command = $this->createCommandMock(false, 'GLOBALCMD', 'operserv.global');
+
+        self::assertFalse($adapter->shouldShowCommandInGeneralHelp($command));
+    }
+
+    #[Test]
+    public function shouldShowCommandWithRequiredPermissionReturnsTrueWhenRoot(): void
+    {
+        $context = $this->createContext(true);
+        $adapter = new OperServHelpFormatterContextAdapter($context);
+        $command = $this->createCommandMock(false, 'GLOBALCMD', 'operserv.global');
+
+        self::assertTrue($adapter->shouldShowCommandInGeneralHelp($command));
+    }
+
+    #[Test]
+    public function shouldShowCommandWithRequiredPermissionReturnsFalseWhenSenderIsNull(): void
+    {
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $registry = new OperServCommandRegistry([]);
+        $accessHelper = $this->createAccessHelper(isRoot: false);
+
+        $context = new OperServContext(
+            null,
+            null,
+            'TEST',
+            [],
+            $notifier,
+            $translator,
+            'en',
+            'UTC',
+            'NOTICE',
+            $registry,
+            $accessHelper,
+            $this->createServiceNicks(),
+        );
+
+        $adapter = new OperServHelpFormatterContextAdapter($context);
+        $command = $this->createCommandMock(false, 'GLOBALCMD', 'operserv.global');
+
+        self::assertFalse($adapter->shouldShowCommandInGeneralHelp($command));
     }
 }

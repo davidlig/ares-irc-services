@@ -216,7 +216,7 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function operOnlyCommandHiddenFromNonRoot(): void
     {
-        $sender = new SenderView('UID1', 'NonRootUser', 'i', 'h', 'c', 'ip', false, false, '', '');
+        $sender = new SenderView('UID1', 'NonRootUser', 'i', 'h', 'c', 'ip', false, true, '', '');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -288,6 +288,27 @@ final class HelpCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, ['IRCOP'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('help.unknown_command', $messages);
+    }
+
+    #[Test]
+    public function nonIrcopUserReceivesIrcopOnlyError(): void
+    {
+        $sender = new SenderView('UID1', 'NonIrcopUser', 'i', 'h', 'c', 'ip', false, false, '', '');
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(false);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = new HelpCommand(new UnifiedHelpFormatter());
+        $cmd->execute($this->createContext($sender, [], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('error.oper_only', $messages);
     }
 
     #[Test]

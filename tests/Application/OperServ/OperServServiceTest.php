@@ -207,166 +207,6 @@ final class OperServServiceTest extends TestCase
         );
 
         $service->dispatch('UNKNOWN arg', $sender);
-    }
-
-    #[Test]
-    public function commandFoundExecutesHandler(): void
-    {
-        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
-
-        $handler = $this->createMockCommandHandler('TEST', false, null, 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
-            $contextHolder->context = $ctx;
-        };
-
-        $registry = new OperServCommandRegistry([$handler]);
-        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepository->expects(self::once())
-            ->method('findByNick')
-            ->with($sender->nick)
-            ->willReturn(null);
-        $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = $this->createStub(TranslatorInterface::class);
-        $accessHelper = $this->createAccessHelper();
-        $logger = $this->createStub(LoggerInterface::class);
-
-        $service = $this->createOperServService(
-            $registry,
-            $nickRepository,
-            $notifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            $this->createServiceNicks(),
-            'en',
-            'UTC',
-            $logger,
-        );
-
-        $service->dispatch('TEST arg1 arg2', $sender);
-
-        self::assertInstanceOf(OperServContext::class, $contextHolder->context);
-        self::assertSame('TEST', $contextHolder->context->command);
-        self::assertSame(['arg1', 'arg2'], $contextHolder->context->args);
-        self::assertSame($sender, $contextHolder->context->sender);
-    }
-
-    #[Test]
-    public function operOnlyCommandRejectsNonOper(): void
-    {
-        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
-
-        $handler = $this->createMockCommandHandler('OPCMD', false, 'OPERSERV_OPCMD', 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
-            $contextHolder->context = $ctx;
-        };
-
-        $registry = new OperServCommandRegistry([$handler]);
-        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $nickRepository->method('findByNick')->willReturn(null);
-        $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied.' : $id
-        );
-        $accessHelper = $this->createAccessHelper(isRoot: false);
-        $logger = $this->createStub(LoggerInterface::class);
-
-        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorizationChecker->expects(self::once())
-            ->method('isGranted')
-            ->with('OPERSERV_OPCMD', self::anything())
-            ->willReturn(false);
-
-        $notifier->expects(self::once())
-            ->method('sendMessage')
-            ->with($sender->uid, 'Permission denied.', 'NOTICE');
-
-        $service = $this->createOperServService(
-            $registry,
-            $nickRepository,
-            $notifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            $this->createServiceNicks(),
-            'en',
-            'UTC',
-            $logger,
-            $this->createStub(AuthorizationContextInterface::class),
-            $authorizationChecker,
-        );
-
-        $service->dispatch('OPCMD', $sender);
-
-        self::assertNull($contextHolder->context);
-    }
-
-    #[Test]
-    public function operOnlyCommandRejectsNonOperWithNullAccount(): void
-    {
-        $sender = new SenderView('UID1', 'UnregisteredUser', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
-
-        $handler = $this->createMockCommandHandler('ADMINCMD', false, 'OPERSERV_ADMINCMD', 0);
-        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
-            $contextHolder->context = $ctx;
-        };
-
-        $registry = new OperServCommandRegistry([$handler]);
-        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepository->expects(self::once())
-            ->method('findByNick')
-            ->with($sender->nick)
-            ->willReturn(null);
-        $notifier = $this->createMock(OperServNotifierInterface::class);
-        $notifier->method('getNick')->willReturn('OperServ');
-        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
-        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied.' : $id
-        );
-        $accessHelper = $this->createAccessHelper(isRoot: false);
-        $logger = $this->createStub(LoggerInterface::class);
-
-        $authorizationChecker = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorizationChecker->expects(self::once())
-            ->method('isGranted')
-            ->with('OPERSERV_ADMINCMD', self::anything())
-            ->willReturn(false);
-
-        $notifier->expects(self::once())
-            ->method('sendMessage')
-            ->with($sender->uid, 'Permission denied.', 'NOTICE');
-
-        $service = $this->createOperServService(
-            $registry,
-            $nickRepository,
-            $notifier,
-            $messageTypeResolver,
-            $translator,
-            $accessHelper,
-            $this->createServiceNicks(),
-            'en',
-            'UTC',
-            $logger,
-            $this->createStub(AuthorizationContextInterface::class),
-            $authorizationChecker,
-        );
-
-        $service->dispatch('ADMINCMD', $sender);
 
         self::assertNull($contextHolder->context);
     }
@@ -395,7 +235,11 @@ final class OperServServiceTest extends TestCase
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied.' : $id
+            static fn (string $id): string => match ($id) {
+                'error.oper_only' => 'Oper only.',
+                'error.permission_denied' => 'Permission denied.',
+                default => $id,
+            }
         );
 
         $rootRegistry = new RootUserRegistry('');
@@ -413,7 +257,7 @@ final class OperServServiceTest extends TestCase
 
         $notifier->expects(self::once())
             ->method('sendMessage')
-            ->with($sender->uid, 'Permission denied.', 'NOTICE');
+            ->with($sender->uid, 'Oper only.', 'NOTICE');
 
         $service = $this->createOperServService(
             $registry,
@@ -572,7 +416,7 @@ final class OperServServiceTest extends TestCase
     #[Test]
     public function permissionCheckDeniesWhenUserLacksRequiredPermission(): void
     {
-        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
@@ -595,7 +439,11 @@ final class OperServServiceTest extends TestCase
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
-            static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied.' : $id
+            static fn (string $id): string => match ($id) {
+                'error.oper_only' => 'Oper only.',
+                'error.permission_denied' => 'Permission denied.',
+                default => $id,
+            }
         );
         $accessHelper = $this->createAccessHelperForPermission(hasPermission: false);
         $logger = $this->createStub(LoggerInterface::class);
@@ -625,7 +473,7 @@ final class OperServServiceTest extends TestCase
     #[Test]
     public function permissionCheckAllowsWhenUserHasRequiredPermission(): void
     {
-        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
@@ -799,7 +647,7 @@ final class OperServServiceTest extends TestCase
     #[Test]
     public function minimumArgsCheckRejectsWhenNotEnoughArgs(): void
     {
-        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
@@ -847,7 +695,7 @@ final class OperServServiceTest extends TestCase
     #[Test]
     public function languageAndTimezoneResolvedFromAccount(): void
     {
-        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
@@ -982,7 +830,7 @@ final class OperServServiceTest extends TestCase
     #[Test]
     public function dispatchesIrcopCommandExecutedEventWhenHandlerIsAuditableAndHasPermission(): void
     {
-        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 

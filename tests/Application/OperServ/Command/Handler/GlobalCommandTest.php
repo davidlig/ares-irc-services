@@ -174,7 +174,7 @@ final class GlobalCommandTest extends TestCase
     #[Test]
     public function getOrderReturnsCorrectOrder(): void
     {
-        self::assertSame(50, $this->createCommand()->getOrder());
+        self::assertSame(35, $this->createCommand()->getOrder());
     }
 
     #[Test]

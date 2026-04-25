@@ -39,6 +39,27 @@ final readonly class OperServHelpFormatterContextAdapter implements HelpFormatte
             return $this->context->isRoot();
         }
 
+        $requiredPermission = $command->getRequiredPermission();
+        if (null !== $requiredPermission) {
+            $sender = $this->context->getSender();
+            if (null === $sender) {
+                return false;
+            }
+
+            $account = $this->context->getSenderAccount();
+            if (null === $account) {
+                return $this->context->isRoot();
+            }
+
+            $nickLower = strtolower($sender->nick);
+
+            return $this->context->getAccessHelper()->hasPermission(
+                $account->getId(),
+                $nickLower,
+                $requiredPermission,
+            );
+        }
+
         return true;
     }
 

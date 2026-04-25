@@ -68,6 +68,13 @@ final readonly class HelpCommand implements OperServCommandInterface
 
     public function execute(OperServContext $context): void
     {
+        $sender = $context->getSender();
+        if (null !== $sender && !$sender->isOper && !$context->isRoot()) {
+            $context->reply('error.oper_only');
+
+            return;
+        }
+
         if (empty($context->args)) {
             $this->showGeneralHelp($context);
 
