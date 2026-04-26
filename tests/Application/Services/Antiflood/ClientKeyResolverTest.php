@@ -133,4 +133,116 @@ final class ClientKeyResolverTest extends TestCase
         self::assertSame('ip:AQID', $resolver->getClientKey($senderWithIp));
         self::assertSame('cloak:cloak.example.com', $resolver->getClientKey($senderWithoutIp));
     }
+
+    #[Test]
+    public function getClientDescriptionDecodesIpFromBase64(): void
+    {
+        $resolver = new ClientKeyResolver();
+        $sender = new SenderView(
+            uid: '002AAAAAB',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example.com',
+            cloakedHost: 'cloak.example.com',
+            ipBase64: base64_encode(inet_pton('5.224.47.252')),
+        );
+
+        self::assertSame('5.224.47.252', $resolver->getClientDescription($sender));
+    }
+
+    #[Test]
+    public function getClientDescriptionDecodesIpv6FromBase64(): void
+    {
+        $resolver = new ClientKeyResolver();
+        $sender = new SenderView(
+            uid: '002AAAAAB',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example.com',
+            cloakedHost: 'cloak.example.com',
+            ipBase64: base64_encode(inet_pton('::1')),
+        );
+
+        self::assertSame('::1', $resolver->getClientDescription($sender));
+    }
+
+    #[Test]
+    public function getClientDescriptionReturnsCloakedHostWhenNoIp(): void
+    {
+        $resolver = new ClientKeyResolver();
+        $sender = new SenderView(
+            uid: '002AAAAAB',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example.com',
+            cloakedHost: 'cloak.example.com',
+            ipBase64: '',
+        );
+
+        self::assertSame('cloak.example.com', $resolver->getClientDescription($sender));
+    }
+
+    #[Test]
+    public function getClientDescriptionReturnsHostnameWhenNoIpAndNoCloak(): void
+    {
+        $resolver = new ClientKeyResolver();
+        $sender = new SenderView(
+            uid: '002AAAAAB',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example.com',
+            cloakedHost: '',
+            ipBase64: '',
+        );
+
+        self::assertSame('host.example.com', $resolver->getClientDescription($sender));
+    }
+
+    #[Test]
+    public function getClientDescriptionReturnsUidWhenNothingElseAvailable(): void
+    {
+        $resolver = new ClientKeyResolver();
+        $sender = new SenderView(
+            uid: '002AAAAAB',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: '',
+            cloakedHost: '',
+            ipBase64: '',
+        );
+
+        self::assertSame('002AAAAAB', $resolver->getClientDescription($sender));
+    }
+
+    #[Test]
+    public function getClientDescriptionReturnsAsteriskWhenIpIsAsterisk(): void
+    {
+        $resolver = new ClientKeyResolver();
+        $sender = new SenderView(
+            uid: '002AAAAAB',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example.com',
+            cloakedHost: 'cloak.example.com',
+            ipBase64: '*',
+        );
+
+        self::assertSame('cloak.example.com', $resolver->getClientDescription($sender));
+    }
+
+    #[Test]
+    public function getClientDescriptionReturnsBase64WhenDecodingFails(): void
+    {
+        $resolver = new ClientKeyResolver();
+        $sender = new SenderView(
+            uid: '002AAAAAB',
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example.com',
+            cloakedHost: '',
+            ipBase64: '!!invalid!!',
+        );
+
+        self::assertSame('!!invalid!!', $resolver->getClientDescription($sender));
+    }
 }

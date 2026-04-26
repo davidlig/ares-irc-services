@@ -28,4 +28,35 @@ final readonly class ClientKeyResolver
 
         return 'uid:' . $user->uid;
     }
+
+    /**
+     * Returns a human-readable description of the client's identification for debug logging.
+     * Decodes the base64 IP to a readable address; falls back to cloaked host or hostname.
+     */
+    public function getClientDescription(SenderView $user): string
+    {
+        if ('' !== $user->ipBase64 && '*' !== $user->ipBase64) {
+            $binary = base64_decode($user->ipBase64, strict: true);
+
+            if (false !== $binary) {
+                $ip = inet_ntop($binary);
+
+                if (false !== $ip) {
+                    return $ip;
+                }
+            }
+
+            return $user->ipBase64;
+        }
+
+        if ('' !== $user->cloakedHost) {
+            return $user->cloakedHost;
+        }
+
+        if ('' !== $user->hostname) {
+            return $user->hostname;
+        }
+
+        return $user->uid;
+    }
 }

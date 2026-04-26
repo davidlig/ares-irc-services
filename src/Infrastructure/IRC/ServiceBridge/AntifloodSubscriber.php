@@ -7,6 +7,7 @@ namespace App\Infrastructure\IRC\ServiceBridge;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Application\Services\Antiflood\AntifloodRegistry;
@@ -116,7 +117,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
                 $notice = $this->translator->trans('antiflood.blocked', ['%seconds%' => (string) $remaining], 'common');
                 $this->sendNotice->sendMessage($serviceUid, $sender->uid, $notice, $messageType);
                 $this->registry->markNotified($clientKey);
-                $this->logToDebugChannel($sender->nick, $clientKey, $remaining);
+                $this->logToDebugChannel($sender, $remaining);
             }
 
             $this->logger->info('Antiflood: blocked {nick} ({uid}), {seconds}s remaining', [
@@ -133,22 +134,22 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         $this->registry->recordCommand($clientKey, $this->windowSeconds);
     }
 
-    private function logToDebugChannel(string $nick, string $clientKey, int $remaining): void
+    private function logToDebugChannel(SenderView $sender, int $remaining): void
     {
         if (null === $this->debugChannel || '' === $this->debugChannel) {
             return;
         }
 
-        $coloredNick = self::COLOR_BLUE . $nick . self::COLOR_RESET;
+        $coloredNick = self::COLOR_BLUE . $sender->nick . self::COLOR_RESET;
         $coloredCommand = self::COLOR_RED . 'ANTIFLOOD' . self::COLOR_RESET;
-        $coloredKey = self::COLOR_BLUE . $clientKey . self::COLOR_RESET;
+        $coloredHost = self::COLOR_BLUE . $this->clientKeyResolver->getClientDescription($sender) . self::COLOR_RESET;
 
         $message = $this->translator->trans(
             'antiflood.debug_channel',
             [
                 '%nick%' => $coloredNick,
                 '%command%' => $coloredCommand,
-                '%key%' => $coloredKey,
+                '%host%' => $coloredHost,
                 '%seconds%' => (string) $remaining,
             ],
             'common',
