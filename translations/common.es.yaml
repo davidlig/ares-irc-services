@@ -3,6 +3,9 @@
 #
 # Shared translations used across all IRC services.
 
+antiflood:
+  blocked: "Has excedido el límite de comandos. Por favor, inténtalo de nuevo en %seconds% segundos."
+
 ctcp:
   version:
     tribute: |

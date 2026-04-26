@@ -23,6 +23,14 @@ parameters:
     ircops.debug_channel_default: null
     ircops.debug_channel: '%env(string:default:ircops.debug_channel_default:IRCOPS_DEBUG_CHANNEL)%'
 
+    # Antiflood: command rate limiting for service bots (IRCops exempt)
+    services.antiflood_max_messages_default: 5
+    services.antiflood_max_messages: '%env(int:default:services.antiflood_max_messages_default:SERVICES_ANTIFLOOD_MAX_MESSAGES)%'
+    services.antiflood_window_seconds_default: 10
+    services.antiflood_window_seconds: '%env(int:default:services.antiflood_window_seconds_default:SERVICES_ANTIFLOOD_WINDOW_SECONDS)%'
+    services.antiflood_cooldown_seconds_default: 60
+    services.antiflood_cooldown_seconds: '%env(int:default:services.antiflood_cooldown_seconds_default:SERVICES_ANTIFLOOD_COOLDOWN_SECONDS)%'
+
     # Maintenance scheduler
     maintenance.interval: '%env(int:MAINTENANCE_INTERVAL)%'
     maintenance.purge_expired_akick_interval: '%env(int:MAINTENANCE_INTERVAL)%'
@@ -351,6 +359,32 @@ services:
     App\Infrastructure\IRC\ServiceBridge\ServiceCommandGateway:
         arguments:
             $listeners: !tagged_iterator service_command_listener
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
+
+    # --- Antiflood: command rate limiting for service bots (IRCops exempt) ---
+
+    App\Application\Services\Antiflood\AntifloodRegistry: ~
+
+    App\Application\Services\Antiflood\ClientKeyResolver: ~
+
+    App\Application\Services\Antiflood\AntifloodPruner:
+        arguments:
+            $windowSeconds: '%services.antiflood_window_seconds%'
+        tags: ['maintenance.prunable']
+
+    App\Infrastructure\IRC\ServiceBridge\AntifloodSubscriber:
+        arguments:
+            $registry: '@App\Application\Services\Antiflood\AntifloodRegistry'
+            $clientKeyResolver: '@App\Application\Services\Antiflood\ClientKeyResolver'
+            $gateway: '@App\Infrastructure\IRC\ServiceBridge\ServiceCommandGateway'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $sendNotice: '@App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter'
+            $messageTypeResolver: '@App\Infrastructure\NickServ\UserMessageTypeResolver'
+            $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $maxMessages: '%services.antiflood_max_messages%'
+            $windowSeconds: '%services.antiflood_window_seconds%'
+            $cooldownSeconds: '%services.antiflood_cooldown_seconds%'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 

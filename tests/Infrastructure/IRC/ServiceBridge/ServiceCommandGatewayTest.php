@@ -275,4 +275,39 @@ final class ServiceCommandGatewayTest extends TestCase
         $this->logger->expects(self::atLeastOnce())->method('debug');
         $gateway->onMessage(new MessageReceivedEvent($message));
     }
+
+    #[Test]
+    public function findListenerForReturnsListenerByLowercaseNick(): void
+    {
+        $this->nickservListener->expects(self::never())->method('onCommand');
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::never())->method('debug');
+
+        $listener = $this->gateway->findListenerFor('nickserv');
+        self::assertSame($this->nickservListener, $listener);
+        self::assertSame('NickServ', $listener->getServiceName());
+    }
+
+    #[Test]
+    public function findListenerForReturnsListenerByUid(): void
+    {
+        $this->nickservListener->expects(self::never())->method('onCommand');
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::never())->method('debug');
+
+        $listener = $this->gateway->findListenerFor('001NICK');
+        self::assertSame($this->nickservListener, $listener);
+        self::assertSame('001NICK', $listener->getServiceUid());
+    }
+
+    #[Test]
+    public function findListenerForReturnsNullForUnknownTarget(): void
+    {
+        $this->nickservListener->expects(self::never())->method('onCommand');
+        $this->chanservListener->expects(self::never())->method('onCommand');
+        $this->logger->expects(self::never())->method('debug');
+
+        $listener = $this->gateway->findListenerFor('UnknownBot');
+        self::assertNull($listener);
+    }
 }

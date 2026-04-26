@@ -60,6 +60,17 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
         ];
     }
 
+    /**
+     * Finds the service command listener for a given target (lowercase nick or raw UID).
+     * Used by AntifloodSubscriber to determine which bot the message targets.
+     */
+    public function findListenerFor(string $target): ?ServiceCommandListenerInterface
+    {
+        $targetKey = strtolower($target);
+
+        return $this->listeners[$targetKey] ?? $this->listeners[$target] ?? null;
+    }
+
     public function onMessage(MessageReceivedEvent $event): void
     {
         $message = $event->message;
