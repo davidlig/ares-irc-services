@@ -36,14 +36,13 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
     }
 
     /**
-     * Runs last (priority -20): apply stored topic only when channel setup is applicable
-     * (link or channel was empty and now has users) and topic is missing or different.
+     * Runs last (priority -20): apply stored topic when the channel is registered.
+     * Always runs (not just on initial setup) because TOPICLOCK must re-apply
+     * the stored topic whenever a registered channel is synced (e.g. after netsplit
+     * or user rejoin).
      */
     public function onChannelSynced(ChannelSyncedEvent $event): void
     {
-        if (!$event->channelSetupApplicable) {
-            return;
-        }
         $channelName = $event->channel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $registered) {

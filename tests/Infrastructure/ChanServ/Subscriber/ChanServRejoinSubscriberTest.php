@@ -177,18 +177,46 @@ final class ChanServRejoinSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function doesNotSetRegisteredWhenChannelSetupNotApplicable(): void
+    public function setsRegisteredEvenWhenChannelSetupNotApplicable(): void
     {
         $channel = new Channel(new ChannelName('#test'));
 
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(false);
+        $registered->method('isForbidden')->willReturn(false);
+
         $this->channelRepository
-            ->expects(self::never())
-            ->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->modeSupportProvider->expects(self::never())->method('getSupport');
-        $this->modeSupport->expects(self::never())->method('getChannelRegisteredModeLetter');
-        $this->channelServiceActions->expects(self::never())->method('setChannelModes');
-        $this->logger->expects(self::never())->method('warning');
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->modeSupportProvider
+            ->expects(self::once())
+            ->method('getSupport')
+            ->willReturn($this->modeSupport);
+
+        $this->modeSupport
+            ->expects(self::once())
+            ->method('getChannelRegisteredModeLetter')
+            ->willReturn('r');
+
+        $view = new ChannelView(name: '#test', modes: '+nt', topic: null, memberCount: 1);
+
+        $this->channelLookup
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($view);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelModes')
+            ->with('#test', '+r', []);
+
+        $this->logger
+            ->expects(self::once())
+            ->method('debug');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: false);
         $this->subscriber->onChannelSyncedSetRegistered($event);

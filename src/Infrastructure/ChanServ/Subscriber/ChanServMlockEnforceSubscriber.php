@@ -51,11 +51,15 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         ];
     }
 
+    /**
+     * Enforce MLOCK on ChannelSyncedEvent — always runs for registered channels.
+     * Modes must be re-applied on every sync (e.g. after netsplit or user rejoin),
+     * not just on initial channel setup.
+     * During the initial burst, do not enforce here; wait for NetworkSyncCompleteEvent
+     * so MLOCK runs with the final protocol sync state.
+     */
     public function onChannelSynced(ChannelSyncedEvent $event): void
     {
-        if (!$event->channelSetupApplicable) {
-            return;
-        }
         // During the initial burst, do not enforce here; wait for NetworkSyncCompleteEvent
         // so MLOCK runs with the final protocol sync state (all SJOINs/MODEs processed).
         if (!$this->burstCompletePort->isComplete()) {

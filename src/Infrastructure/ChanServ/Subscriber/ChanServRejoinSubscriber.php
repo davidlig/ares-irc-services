@@ -43,14 +43,13 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
     }
 
     /**
-     * Set +r on a registered channel when it syncs (first user joins).
+     * Set +r (or +P on UnrealIRCd) on a registered channel when it syncs.
+     * Always runs for registered channels regardless of channelSetupApplicable —
+     * modes must be re-applied on every sync (e.g. after netsplit or user rejoin).
      * Skips if channel already has the registered mode.
      */
     public function onChannelSyncedSetRegistered(ChannelSyncedEvent $event): void
     {
-        if (!$event->channelSetupApplicable) {
-            return;
-        }
         $channelName = $event->channel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $registered) {

@@ -190,13 +190,16 @@ final class ChanServForbiddenChannelJoinSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onChannelSyncedDoesNothingWhenChannelSetupNotApplicable(): void
+    public function onChannelSyncedEnforcesForbiddenEvenWhenChannelSetupNotApplicable(): void
     {
+        $registeredChannel = $this->createStub(RegisteredChannel::class);
+        $registeredChannel->method('isForbidden')->willReturn(true);
+
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $channelRepository->expects(self::never())->method('findByChannelName');
+        $channelRepository->expects(self::once())->method('findByChannelName')->with('#forbidden')->willReturn($registeredChannel);
 
         $forbiddenService = $this->createMock(ChannelForbiddenService::class);
-        $forbiddenService->expects(self::never())->method('enforceForbiddenChannel');
+        $forbiddenService->expects(self::once())->method('enforceForbiddenChannel')->with('#forbidden');
 
         $ircChannel = new Channel(
             name: new ChannelName('#forbidden'),

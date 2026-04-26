@@ -53,14 +53,15 @@ final class ChannelSyncCompletedMarkerSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onChannelSyncedDoesNotMarkWhenSetupNotApplicable(): void
+    public function onChannelSyncedMarksChannelAsCompletedWhenSetupNotApplicable(): void
     {
         $channel = new Channel(new ChannelName('#test'));
 
         $event = new ChannelSyncedEvent($channel, false);
 
-        $this->registry->expects(self::never())
-            ->method('markSyncCompleted');
+        $this->registry->expects(self::once())
+            ->method('markSyncCompleted')
+            ->with('#test');
 
         $this->subscriber->onChannelSynced($event);
     }

@@ -12,6 +12,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Runs last (priority -100) after all ChannelSyncedEvent subscribers (+r, SECURE, MLOCK, topic apply).
  * Marks the channel as "sync completed" so that topic/other DB persistence from the wire
  * is only allowed after our sync has run (avoids race where user with temporary op changes topic).
+ * Always marks on every ChannelSyncedEvent (not just initial setup) to ensure
+ * sync completion is tracked for all channel sync events.
  */
 final readonly class ChannelSyncCompletedMarkerSubscriber implements EventSubscriberInterface
 {
@@ -29,9 +31,6 @@ final readonly class ChannelSyncCompletedMarkerSubscriber implements EventSubscr
 
     public function onChannelSynced(ChannelSyncedEvent $event): void
     {
-        if (!$event->channelSetupApplicable) {
-            return;
-        }
         $this->registry->markSyncCompleted($event->channel->name->value);
     }
 }

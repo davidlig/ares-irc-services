@@ -62,12 +62,12 @@ final readonly class ChanServForbiddenChannelJoinSubscriber implements EventSubs
         ));
     }
 
+    /**
+     * Enforce forbidden channels on ChannelSyncedEvent — always runs because
+     * forbidden channel enforcement must happen on every sync, not just initial setup.
+     */
     public function onChannelSynced(ChannelSyncedEvent $event): void
     {
-        if (!$event->channelSetupApplicable) {
-            return;
-        }
-
         $channelName = $event->channel->name->value;
 
         $channel = $this->channelRepository->findByChannelName($channelName);

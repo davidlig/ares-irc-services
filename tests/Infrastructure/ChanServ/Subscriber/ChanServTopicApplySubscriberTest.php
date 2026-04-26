@@ -162,16 +162,33 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     }
 
     #[Test]
-    public function doesNotApplyTopicWhenChannelSetupNotApplicable(): void
+    public function appliesTopicEvenWhenChannelSetupNotApplicable(): void
     {
         $channel = new Channel(new ChannelName('#test'));
 
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(false);
+        $registered->method('isForbidden')->willReturn(false);
+        $registered->method('getTopic')->willReturn('Stored topic');
+
         $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelLookup
             ->expects(self::never())
             ->method('findByChannelName');
-        $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->channelServiceActions->expects(self::never())->method('setChannelTopic');
-        $this->logger->expects(self::never())->method('warning');
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelTopic')
+            ->with('#test', 'Stored topic');
+
+        $this->logger
+            ->expects(self::once())
+            ->method('debug');
 
         $event = new ChannelSyncedEvent($channel, channelSetupApplicable: false);
         $this->subscriber->onChannelSynced($event);

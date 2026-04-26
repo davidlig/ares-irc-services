@@ -98,11 +98,8 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     public function inviteUserToChannel(string $serverSid, string $channelName, string $targetUid, string $serviceUid = '', ?int $channelTimestamp = null): void
     {
         $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
-        if (null !== $channelTimestamp) {
-            $this->write(sprintf(':%s INVITE %s %s %d', $prefix, $targetUid, $channelName, $channelTimestamp));
-        } else {
-            $this->write(sprintf(':%s INVITE %s %s', $prefix, $targetUid, $channelName));
-        }
+        $timestamp = $channelTimestamp ?? time();
+        $this->write(sprintf(':%s INVITE %s %s %d', $prefix, $targetUid, $channelName, $timestamp));
     }
 
     public function joinChannelAsService(string $serverSid, string $channelName, string $serviceUid, string $maxPrefixLetter, ?int $channelTimestamp = null): void
