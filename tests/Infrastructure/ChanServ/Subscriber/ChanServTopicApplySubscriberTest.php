@@ -137,12 +137,44 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     }
 
     #[Test]
-    public function doesNotApplyTopicWhenTopicsMatch(): void
+    public function appliesTopicWhenSetupApplicableEvenIfTopicsMatch(): void
     {
         $channel = new Channel(new ChannelName('#test'));
         $channel->updateTopic('Same topic');
 
         $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(false);
+        $registered->method('isForbidden')->willReturn(false);
+        $registered->method('getTopic')->willReturn('Same topic');
+
+        $this->channelRepository
+            ->expects(self::once())
+            ->method('findByChannelName')
+            ->with('#test')
+            ->willReturn($registered);
+
+        $this->channelServiceActions
+            ->expects(self::once())
+            ->method('setChannelTopic')
+            ->with('#test', 'Same topic');
+        $this->channelLookup->expects(self::never())->method('findByChannelName');
+        $this->logger
+            ->expects(self::once())
+            ->method('debug');
+
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $this->subscriber->onChannelSynced($event);
+    }
+
+    #[Test]
+    public function doesNotApplyTopicWhenSetupNotApplicableAndTopicsMatch(): void
+    {
+        $channel = new Channel(new ChannelName('#test'));
+        $channel->updateTopic('Same topic');
+
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(false);
+        $registered->method('isForbidden')->willReturn(false);
         $registered->method('getTopic')->willReturn('Same topic');
 
         $this->channelRepository
@@ -155,16 +187,17 @@ final class ChanServTopicApplySubscriberTest extends TestCase
             ->expects(self::never())
             ->method('setChannelTopic');
         $this->channelLookup->expects(self::never())->method('findByChannelName');
-        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
 
-        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: true);
+        $event = new ChannelSyncedEvent($channel, channelSetupApplicable: false);
         $this->subscriber->onChannelSynced($event);
     }
 
     #[Test]
-    public function appliesTopicEvenWhenChannelSetupNotApplicable(): void
+    public function appliesTopicWhenSetupNotApplicableAndTopicsDiffer(): void
     {
         $channel = new Channel(new ChannelName('#test'));
+        $channel->updateTopic('Current topic from network');
 
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isSuspended')->willReturn(false);

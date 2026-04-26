@@ -40,6 +40,11 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
      * Always runs (not just on initial setup) because TOPICLOCK must re-apply
      * the stored topic whenever a registered channel is synced (e.g. after netsplit
      * or user rejoin).
+     *
+     * When channelSetupApplicable is true (channel is new or was empty), the stored
+     * topic is always applied without comparison — the IRCd channel has no topic
+     * but the in-memory Channel object may retain a stale topic from before the
+     * channel became empty, causing a false match that skips topic application.
      */
     public function onChannelSynced(ChannelSyncedEvent $event): void
     {
@@ -55,6 +60,13 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
 
         $storedTopic = $registered->getTopic();
         if (null === $storedTopic) {
+            return;
+        }
+
+        if ($event->channelSetupApplicable) {
+            $this->channelServiceActions->setChannelTopic($channelName, $storedTopic);
+            $this->logger->debug('ChanServ applied stored topic on setup', ['channel' => $channelName]);
+
             return;
         }
 
