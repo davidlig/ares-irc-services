@@ -1628,6 +1628,13 @@ services:
     App\Infrastructure\IRC\Subscriber\DebugChannelJoinSubscriber:
         arguments:
             $debugNotifiers: !tagged_iterator app.debug_notifier
+            $debugChannel: '%ircops.debug_channel%'
+            $registeredChannelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
+            $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
+            $chanservUid: '%chanserv.uid%'
+            $logger: '@monolog.logger.ircops'
         tags: ['kernel.event_subscriber']
 
     # --- IRCop Command Audit ----------------------------------------------------
