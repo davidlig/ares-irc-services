@@ -255,4 +255,47 @@ final class IrcopAccessHelperTest extends TestCase
         self::assertTrue($helper->hasPermission(999, 'admin', 'operserv.any.permission'));
         self::assertFalse($helper->hasPermission(999, 'otheruser', 'operserv.any.permission'));
     }
+
+    #[Test]
+    public function isIrcopReturnsTrueForRootUser(): void
+    {
+        $rootRegistry = new RootUserRegistry('Admin');
+        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $roleRepository = $this->createStub(OperRoleRepositoryInterface::class);
+
+        $helper = new IrcopAccessHelper($rootRegistry, $ircopRepository, $roleRepository);
+
+        self::assertTrue($helper->isIrcop(999, 'admin'));
+    }
+
+    #[Test]
+    public function isIrcopReturnsTrueForRegisteredIrcop(): void
+    {
+        $rootRegistry = new RootUserRegistry('');
+        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $roleRepository = $this->createStub(OperRoleRepositoryInterface::class);
+
+        $role = $this->createStub(OperRole::class);
+        $ircop = OperIrcop::create(nickId: 100, role: $role);
+
+        $ircopRepository->method('findByNickId')->willReturn($ircop);
+
+        $helper = new IrcopAccessHelper($rootRegistry, $ircopRepository, $roleRepository);
+
+        self::assertTrue($helper->isIrcop(100, 'operator'));
+    }
+
+    #[Test]
+    public function isIrcopReturnsFalseForNonRootNonIrcop(): void
+    {
+        $rootRegistry = new RootUserRegistry('');
+        $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $roleRepository = $this->createStub(OperRoleRepositoryInterface::class);
+
+        $ircopRepository->method('findByNickId')->willReturn(null);
+
+        $helper = new IrcopAccessHelper($rootRegistry, $ircopRepository, $roleRepository);
+
+        self::assertFalse($helper->isIrcop(999, 'regularuser'));
+    }
 }

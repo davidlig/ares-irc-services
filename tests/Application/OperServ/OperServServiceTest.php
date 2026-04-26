@@ -212,7 +212,7 @@ final class OperServServiceTest extends TestCase
     }
 
     #[Test]
-    public function operOnlyCommandRejectsNonOperWithRegisteredNonIrcopAccount(): void
+    public function permissionCheckRejectsNonOperWithoutRequiredPermission(): void
     {
         $sender = new SenderView('UID1', 'RegisteredNonIrcop', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
         $contextHolder = new stdClass();
@@ -236,7 +236,6 @@ final class OperServServiceTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator->method('trans')->willReturnCallback(
             static fn (string $id): string => match ($id) {
-                'error.oper_only' => 'Oper only.',
                 'error.permission_denied' => 'Permission denied.',
                 default => $id,
             }
@@ -257,7 +256,7 @@ final class OperServServiceTest extends TestCase
 
         $notifier->expects(self::once())
             ->method('sendMessage')
-            ->with($sender->uid, 'Oper only.', 'NOTICE');
+            ->with($sender->uid, 'Permission denied.', 'NOTICE');
 
         $service = $this->createOperServService(
             $registry,
@@ -411,6 +410,65 @@ final class OperServServiceTest extends TestCase
         $service->dispatch('OPCMD', $sender);
 
         self::assertInstanceOf(OperServContext::class, $contextHolder->context);
+    }
+
+    #[Test]
+    public function operOnlyCommandWithoutPermissionRejectsNonOperNonIrcop(): void
+    {
+        $sender = new SenderView('UID1', 'RegularUser', 'ident', 'host', 'cloak', '127.0.0.1', false, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = $this->createMockCommandHandler('ROLE', true, null, 0);
+        $handler->executeCallback = static function (OperServContext $ctx) use ($contextHolder): void {
+            $contextHolder->context = $ctx;
+        };
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(99);
+
+        $registry = new OperServCommandRegistry([$handler]);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('OperServ');
+        $messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->method('resolve')->willReturn('NOTICE');
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(
+            static fn (string $id): string => match ($id) {
+                'error.oper_only' => 'IRC Operators only.',
+                default => $id,
+            }
+        );
+
+        $rootRegistry = new RootUserRegistry('');
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn(null);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
+        $logger = $this->createStub(LoggerInterface::class);
+
+        $notifier->expects(self::once())
+            ->method('sendMessage')
+            ->with($sender->uid, 'IRC Operators only.', 'NOTICE');
+
+        $service = $this->createOperServService(
+            $registry,
+            $nickRepository,
+            $notifier,
+            $messageTypeResolver,
+            $translator,
+            $accessHelper,
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+            $logger,
+        );
+
+        $service->dispatch('ROLE', $sender);
+
+        self::assertNull($contextHolder->context);
     }
 
     #[Test]

@@ -52,6 +52,12 @@ final readonly class IrcopAccessHelper
         return false;
     }
 
+    public function isIrcop(int $nickId, string $nickLower): bool
+    {
+        return $this->rootUserRegistry->isRoot($nickLower)
+            || null !== $this->ircopRepository->findByNickId($nickId);
+    }
+
     public function getRoleName(int $nickId, string $nickLower): ?string
     {
         if ($this->rootUserRegistry->isRoot($nickLower)) {
