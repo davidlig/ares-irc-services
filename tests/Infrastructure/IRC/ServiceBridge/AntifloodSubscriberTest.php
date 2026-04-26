@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\OperServ\Command\OperServNotifierInterface;
+use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
@@ -40,6 +41,8 @@ final class AntifloodSubscriberTest extends TestCase
 
     private OperServNotifierInterface $notifier;
 
+    private RootUserRegistry $rootRegistry;
+
     private TranslatorInterface $translator;
 
     private ServiceCommandListenerInterface $nickservListener;
@@ -52,6 +55,7 @@ final class AntifloodSubscriberTest extends TestCase
         $this->sendNotice = $this->createStub(SendNoticePort::class);
         $this->messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
         $this->notifier = $this->createStub(OperServNotifierInterface::class);
+        $this->rootRegistry = new RootUserRegistry('');
         $this->translator = $this->createStub(TranslatorInterface::class);
         $this->nickservListener = $this->createStub(ServiceCommandListenerInterface::class);
         $this->nickservListener->method('getServiceName')->willReturn('NickServ');
@@ -63,8 +67,10 @@ final class AntifloodSubscriberTest extends TestCase
         );
     }
 
-    private function createSubscriber(int $maxMessages = 5, int $windowSeconds = 10, int $cooldownSeconds = 60, ?string $debugChannel = null): AntifloodSubscriber
+    private function createSubscriber(int $maxMessages = 5, int $windowSeconds = 10, int $cooldownSeconds = 60, ?string $debugChannel = null, string $rootUsers = ''): AntifloodSubscriber
     {
+        $rootRegistry = '' !== $rootUsers ? new RootUserRegistry($rootUsers) : $this->rootRegistry;
+
         return new AntifloodSubscriber(
             $this->registry,
             $this->clientKeyResolver,
@@ -73,6 +79,7 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
+            $rootRegistry,
             $this->translator,
             'en',
             $debugChannel,
@@ -83,11 +90,11 @@ final class AntifloodSubscriberTest extends TestCase
         );
     }
 
-    private function createSender(bool $isOper = false, string $ipBase64 = 'AQID'): SenderView
+    private function createSender(bool $isOper = false, string $ipBase64 = 'AQID', string $nick = 'TestUser'): SenderView
     {
         return new SenderView(
             uid: '002AAAAAB',
-            nick: 'TestUser',
+            nick: $nick,
             ident: 'test',
             hostname: 'host.example.com',
             cloakedHost: 'cloak.example.com',
@@ -155,6 +162,7 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
+            $this->rootRegistry,
             $this->translator,
             'en',
             null,
@@ -183,6 +191,7 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
+            $this->rootRegistry,
             $this->translator,
             'en',
             null,
@@ -226,6 +235,7 @@ final class AntifloodSubscriberTest extends TestCase
             $sendNotice,
             $messageTypeResolver,
             $notifier,
+            $this->rootRegistry,
             $translator,
             'en',
             '#ircops',
@@ -276,6 +286,7 @@ final class AntifloodSubscriberTest extends TestCase
             $sendNotice,
             $messageTypeResolver,
             $notifier,
+            $this->rootRegistry,
             $translator,
             'en',
             '#ircops',
@@ -312,6 +323,41 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
+            $this->rootRegistry,
+            $this->translator,
+            'en',
+            null,
+            1,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertFalse($event2->isPropagationStopped());
+    }
+
+    #[Test]
+    public function onMessageExemptsRootAdmins(): void
+    {
+        $rootRegistry = new RootUserRegistry('TestUser');
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender(isOper: false, nick: 'TestUser'));
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->notifier,
+            $rootRegistry,
             $this->translator,
             'en',
             null,
@@ -362,6 +408,7 @@ final class AntifloodSubscriberTest extends TestCase
             $sendNotice,
             $messageTypeResolver,
             $notifier,
+            $this->rootRegistry,
             $translator,
             'en',
             '#ircops',
@@ -414,6 +461,7 @@ final class AntifloodSubscriberTest extends TestCase
             $sendNotice,
             $messageTypeResolver,
             $notifier,
+            $this->rootRegistry,
             $translator,
             'en',
             null,
@@ -446,6 +494,7 @@ final class AntifloodSubscriberTest extends TestCase
             $this->sendNotice,
             $this->messageTypeResolver,
             $this->notifier,
+            $this->rootRegistry,
             $this->translator,
             'en',
             null,

@@ -382,6 +382,7 @@ services:
             $sendNotice: '@App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter'
             $messageTypeResolver: '@App\Infrastructure\NickServ\UserMessageTypeResolver'
             $notifier: '@App\Application\OperServ\Command\OperServNotifierInterface'
+            $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'

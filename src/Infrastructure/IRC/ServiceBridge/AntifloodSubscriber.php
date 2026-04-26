@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\OperServ\Command\OperServNotifierInterface;
+use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\UserMessageTypeResolverInterface;
@@ -26,7 +27,7 @@ use function in_array;
  * they receive a single NOTICE informing them of the rate limit. Subsequent commands
  * during the same lockout are silently dropped.
  *
- * IRCops (isOper) are exempt from flood blocking — their commands always pass through.
+ * IRCops (isOper) and root admins are exempt from flood blocking — their commands always pass through.
  *
  * Priority 10 ensures this runs before ServiceCommandGateway (priority 0).
  */
@@ -46,6 +47,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         private SendNoticePort $sendNotice,
         private UserMessageTypeResolverInterface $messageTypeResolver,
         private OperServNotifierInterface $notifier,
+        private RootUserRegistry $rootRegistry,
         private TranslatorInterface $translator,
         private string $defaultLanguage,
         private ?string $debugChannel,
@@ -94,7 +96,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if ($sender->isOper) {
+        if ($sender->isOper || $this->rootRegistry->isRoot($sender->nick)) {
             return;
         }
 
