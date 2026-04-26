@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
+use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\UserMessageTypeResolverInterface;
@@ -31,6 +32,12 @@ use function in_array;
  */
 final readonly class AntifloodSubscriber implements EventSubscriberInterface
 {
+    private const string COLOR_RED = "\x0304";
+
+    private const string COLOR_BLUE = "\x0302";
+
+    private const string COLOR_RESET = "\x03";
+
     public function __construct(
         private AntifloodRegistry $registry,
         private ClientKeyResolver $clientKeyResolver,
@@ -38,7 +45,10 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         private NetworkUserLookupPort $userLookup,
         private SendNoticePort $sendNotice,
         private UserMessageTypeResolverInterface $messageTypeResolver,
+        private OperServNotifierInterface $notifier,
         private TranslatorInterface $translator,
+        private string $defaultLanguage,
+        private ?string $debugChannel,
         private int $maxMessages,
         private int $windowSeconds,
         private int $cooldownSeconds,
@@ -104,6 +114,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
                 $notice = $this->translator->trans('antiflood.blocked', ['%seconds%' => (string) $remaining], 'common');
                 $this->sendNotice->sendMessage($serviceUid, $sender->uid, $notice, $messageType);
                 $this->registry->markNotified($clientKey);
+                $this->logToDebugChannel($sender->nick, $clientKey, $remaining);
             }
 
             $this->logger->info('Antiflood: blocked {nick} ({uid}), {seconds}s remaining', [
@@ -118,5 +129,30 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         }
 
         $this->registry->recordCommand($clientKey, $this->windowSeconds);
+    }
+
+    private function logToDebugChannel(string $nick, string $clientKey, int $remaining): void
+    {
+        if (null === $this->debugChannel || '' === $this->debugChannel) {
+            return;
+        }
+
+        $coloredNick = self::COLOR_BLUE . $nick . self::COLOR_RESET;
+        $coloredCommand = self::COLOR_RED . 'ANTIFLOOD' . self::COLOR_RESET;
+        $coloredKey = self::COLOR_BLUE . $clientKey . self::COLOR_RESET;
+
+        $message = $this->translator->trans(
+            'antiflood.debug_channel',
+            [
+                '%nick%' => $coloredNick,
+                '%command%' => $coloredCommand,
+                '%key%' => $coloredKey,
+                '%seconds%' => (string) $remaining,
+            ],
+            'common',
+            $this->defaultLanguage,
+        );
+
+        $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
     }
 }

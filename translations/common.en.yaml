@@ -5,6 +5,7 @@
 
 antiflood:
   blocked: "You have exceeded the command rate limit. Please try again in %seconds% seconds."
+  debug_channel: "%nick% %command% limit reached for %key% (%seconds%s remaining)"
 
 ctcp:
   version:

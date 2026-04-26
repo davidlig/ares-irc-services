@@ -5,6 +5,7 @@
 
 antiflood:
   blocked: "Has excedido el límite de comandos. Por favor, inténtalo de nuevo en %seconds% segundos."
+  debug_channel: "%nick% %command% límite alcanzado para %key% (%seconds%s restantes)"
 
 ctcp:
   version:

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
+use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
@@ -37,6 +38,8 @@ final class AntifloodSubscriberTest extends TestCase
 
     private UserMessageTypeResolverInterface $messageTypeResolver;
 
+    private OperServNotifierInterface $notifier;
+
     private TranslatorInterface $translator;
 
     private ServiceCommandListenerInterface $nickservListener;
@@ -48,6 +51,7 @@ final class AntifloodSubscriberTest extends TestCase
         $this->userLookup = $this->createStub(NetworkUserLookupPort::class);
         $this->sendNotice = $this->createStub(SendNoticePort::class);
         $this->messageTypeResolver = $this->createStub(UserMessageTypeResolverInterface::class);
+        $this->notifier = $this->createStub(OperServNotifierInterface::class);
         $this->translator = $this->createStub(TranslatorInterface::class);
         $this->nickservListener = $this->createStub(ServiceCommandListenerInterface::class);
         $this->nickservListener->method('getServiceName')->willReturn('NickServ');
@@ -59,7 +63,7 @@ final class AntifloodSubscriberTest extends TestCase
         );
     }
 
-    private function createSubscriber(int $maxMessages = 5, int $windowSeconds = 10, int $cooldownSeconds = 60): AntifloodSubscriber
+    private function createSubscriber(int $maxMessages = 5, int $windowSeconds = 10, int $cooldownSeconds = 60, ?string $debugChannel = null): AntifloodSubscriber
     {
         return new AntifloodSubscriber(
             $this->registry,
@@ -68,7 +72,10 @@ final class AntifloodSubscriberTest extends TestCase
             $this->userLookup,
             $this->sendNotice,
             $this->messageTypeResolver,
+            $this->notifier,
             $this->translator,
+            'en',
+            $debugChannel,
             $maxMessages,
             $windowSeconds,
             $cooldownSeconds,
@@ -147,7 +154,10 @@ final class AntifloodSubscriberTest extends TestCase
             $userLookup,
             $this->sendNotice,
             $this->messageTypeResolver,
+            $this->notifier,
             $this->translator,
+            'en',
+            null,
             5,
             10,
             60,
@@ -172,7 +182,10 @@ final class AntifloodSubscriberTest extends TestCase
             $userLookup,
             $this->sendNotice,
             $this->messageTypeResolver,
+            $this->notifier,
             $this->translator,
+            'en',
+            null,
             3,
             3600,
             60,
@@ -195,10 +208,15 @@ final class AntifloodSubscriberTest extends TestCase
         $messageTypeResolver->expects(self::once())->method('resolveByNick')->with('TestUser')->willReturn('NOTICE');
 
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::once())->method('trans')->with('antiflood.blocked', self::anything(), 'common')->willReturn('Slow down!');
+        $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
+            static fn (string $id) => 'antiflood.debug_channel' === $id ? 'debug msg' : 'Slow down!',
+        );
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::once())->method('sendMessage')->with('002AAAAAA', '002AAAAAB', 'Slow down!', 'NOTICE');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,
@@ -207,7 +225,10 @@ final class AntifloodSubscriberTest extends TestCase
             $userLookup,
             $sendNotice,
             $messageTypeResolver,
+            $notifier,
             $translator,
+            'en',
+            '#ircops',
             2,
             3600,
             60,
@@ -237,10 +258,15 @@ final class AntifloodSubscriberTest extends TestCase
         $messageTypeResolver->expects(self::once())->method('resolveByNick')->with('TestUser')->willReturn('NOTICE');
 
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::once())->method('trans')->with('antiflood.blocked', self::anything(), 'common')->willReturn('Slow down!');
+        $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
+            static fn (string $id) => 'antiflood.debug_channel' === $id ? 'debug msg' : 'Slow down!',
+        );
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::once())->method('sendMessage');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,
@@ -249,7 +275,10 @@ final class AntifloodSubscriberTest extends TestCase
             $userLookup,
             $sendNotice,
             $messageTypeResolver,
+            $notifier,
             $translator,
+            'en',
+            '#ircops',
             1,
             3600,
             60,
@@ -282,7 +311,10 @@ final class AntifloodSubscriberTest extends TestCase
             $userLookup,
             $this->sendNotice,
             $this->messageTypeResolver,
+            $this->notifier,
             $this->translator,
+            'en',
+            null,
             1,
             3600,
             60,
@@ -312,10 +344,15 @@ final class AntifloodSubscriberTest extends TestCase
         $messageTypeResolver->expects(self::once())->method('resolveByNick')->willReturn('NOTICE');
 
         $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::once())->method('trans')->willReturn('Slow down!');
+        $translator->expects(self::exactly(2))->method('trans')->willReturnCallback(
+            static fn (string $id) => 'antiflood.debug_channel' === $id ? 'debug msg' : 'Slow down!',
+        );
 
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::once())->method('sendMessage');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage');
 
         $subscriber = new AntifloodSubscriber(
             $this->registry,
@@ -324,7 +361,10 @@ final class AntifloodSubscriberTest extends TestCase
             $userLookup,
             $sendNotice,
             $messageTypeResolver,
+            $notifier,
             $translator,
+            'en',
+            '#ircops',
             1,
             3600,
             60,
@@ -349,6 +389,50 @@ final class AntifloodSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onMessageSkipsDebugChannelWhenNull(): void
+    {
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(2))->method('findByUid')->willReturn($this->createSender());
+
+        $messageTypeResolver = $this->createMock(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->expects(self::once())->method('resolveByNick')->willReturn('NOTICE');
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->willReturn('Slow down!');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::once())->method('sendMessage');
+
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $sendNotice,
+            $messageTypeResolver,
+            $notifier,
+            $translator,
+            'en',
+            null,
+            1,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertTrue($event2->isPropagationStopped());
+    }
+
+    #[Test]
     public function onMessageHandlesSqueryCommand(): void
     {
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
@@ -361,7 +445,10 @@ final class AntifloodSubscriberTest extends TestCase
             $userLookup,
             $this->sendNotice,
             $this->messageTypeResolver,
+            $this->notifier,
             $this->translator,
+            'en',
+            null,
             5,
             10,
             60,
