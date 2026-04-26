@@ -262,6 +262,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
      * <mode_hint> is a numeric representing the user's prefix modes in the channel.
      * Prefix numeric mapping (protocol 1206): voice=1, halfop=2, op=4, admin=8, owner=16.
      * Multiple modes are OR'd (e.g. op+voice=5).
+     * <creation_ts> is optional; when absent, the channel already exists on our side.
      */
     private function handleIjoin(IRCMessage $message): void
     {
@@ -272,6 +273,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         $uidStr = $message->prefix ?? '';
         $channelStr = $message->params[0];
         $modeHint = (int) ($message->params[1] ?? 0);
+        $creationTs = (int) ($message->params[2] ?? 0);
 
         if ('' === $uidStr || '' === $channelStr) {
             return;
@@ -288,7 +290,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         $members = [['uid' => $uid, 'role' => $role, 'prefixLetters' => self::prefixLettersFromModeHint($modeHint)]];
 
-        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, 0, '', $members));
+        $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $creationTs, '', $members));
     }
 
     private function handlePart(IRCMessage $message): void

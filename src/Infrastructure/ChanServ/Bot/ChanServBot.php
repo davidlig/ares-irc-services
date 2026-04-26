@@ -162,12 +162,16 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         }
     }
 
-    public function inviteToChannel(string $channelName, string $targetUid): void
+    public function inviteToChannel(string $channelName, string $targetUid, ?int $channelTimestamp = null): void
     {
         $module = $this->connectionHolder->getProtocolModule();
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
-            $module->getServiceActions()->inviteUserToChannel($sid, $channelName, $targetUid, $this->chanservUid);
+            if (null === $channelTimestamp) {
+                $view = $this->channelLookup->findByChannelName($channelName);
+                $channelTimestamp = $view?->timestamp;
+            }
+            $module->getServiceActions()->inviteUserToChannel($sid, $channelName, $targetUid, $this->chanservUid, $channelTimestamp);
         }
     }
 

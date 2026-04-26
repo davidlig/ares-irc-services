@@ -9,8 +9,6 @@ use App\Application\NickServ\Security\NickServPermission;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
-use function assert;
-
 /**
  * Grants access when the sender is identified (+r) and is the owner of the account
  * (sender's nick matches the account nickname). Used for SET and other owner-only commands.
@@ -24,8 +22,6 @@ final class NickServIdentifiedOwnerVoter extends Voter
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
-        assert($subject instanceof NickServContext);
-
         $sender = $subject->sender;
         $account = $subject->senderAccount;
 

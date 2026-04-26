@@ -1302,10 +1302,34 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame('#opers', $captured->channelName->value);
+        self::assertSame(0, $captured->timestamp);
         self::assertCount(1, $captured->members);
         self::assertSame('994AAAAAQ', $captured->members[0]['uid']->value);
         self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Op, $captured->members[0]['role']);
         self::assertSame(['o', 'h', 'v'], $captured->members[0]['prefixLetters']);
+    }
+
+    #[Test]
+    public function handleIjoinWithCreationTsParsesTimestamp(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#opers', '4', '1704067200'], null));
+
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertSame('#opers', $captured->channelName->value);
+        self::assertSame(1704067200, $captured->timestamp);
+        self::assertCount(1, $captured->members);
+        self::assertSame('994AAAAAQ', $captured->members[0]['uid']->value);
+        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Op, $captured->members[0]['role']);
     }
 
     #[Test]

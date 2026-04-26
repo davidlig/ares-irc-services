@@ -32,8 +32,10 @@ interface ProtocolServiceActionsInterface
      */
     public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = '', ?int $channelTimestamp = null): void;
 
-    /** Send INVITE for target user to the channel. Source is $serviceUid when non-empty. */
-    public function inviteUserToChannel(string $serverSid, string $channelName, string $targetUid, string $serviceUid = ''): void;
+    /** Send INVITE for target user to the channel. Source is $serviceUid when non-empty.
+     * @param int|null $channelTimestamp Channel creation timestamp (required by InspIRCd for TS validation)
+     */
+    public function inviteUserToChannel(string $serverSid, string $channelName, string $targetUid, string $serviceUid = '', ?int $channelTimestamp = null): void;
 
     /**
      * Service pseudo-client joins the channel with the given max prefix (e.g. q for owner).

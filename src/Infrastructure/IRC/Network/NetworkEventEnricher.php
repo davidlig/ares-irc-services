@@ -174,11 +174,15 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             $channel = new Channel(
                 name: $event->channelName,
                 modes: $event->modeStr,
-                createdAt: new DateTimeImmutable('@' . $event->timestamp),
+                createdAt: new DateTimeImmutable('@' . ($event->timestamp > 0 ? $event->timestamp : time())),
             );
         } else {
-            $channel->updateCreatedAt(new DateTimeImmutable('@' . $event->timestamp));
-            $channel->updateModes($event->modeStr);
+            if ($event->timestamp > 0) {
+                $channel->updateCreatedAt(new DateTimeImmutable('@' . $event->timestamp));
+            }
+            if ('' !== $event->modeStr) {
+                $channel->updateModes($event->modeStr);
+            }
         }
 
         $this->applyModeParamsFromFjoin($channel, $event->modeStr, $event->modeParams);
@@ -338,6 +342,10 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
     /**
      * Applies outgoing channel MODE (sent by us) to Core state so ChannelLookup
      * returns up-to-date modes. Call after sending MODE so SET MLOCK ON etc. see the correct state.
+     * Does NOT dispatch ChannelModesChangedEvent — MLOCK enforcement runs at the
+     * appropriate time via ChannelSyncedEvent, NetworkSyncCompleteEvent, or inbound
+     * mode changes, avoiding premature MLOCK enforcement that would reorder rank
+     * removal (-o) after channel mode application (+M).
      *
      * @param array<int, string> $params Params in wire order for modes that take a param
      */
@@ -394,7 +402,6 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         }
 
         $this->channelRepository->save($channel);
-        $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
     }
 
     public function onUserMetadataReceived(UserMetadataReceivedEvent $event): void

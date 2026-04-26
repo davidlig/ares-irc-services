@@ -6,7 +6,6 @@ namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
-use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\Repository\ChannelRepositoryInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
 use InvalidArgumentException;
@@ -37,7 +36,7 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
 
         $members = [];
         foreach ($channel->getMembers() as $member) {
-            $letter = $this->roleToModeLetter($member->role);
+            $letter = $member->role->toModeLetter();
             $members[] = [
                 'uid' => $member->uid->value,
                 'roleLetter' => $letter,
@@ -66,7 +65,7 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
         foreach ($channels as $channel) {
             $members = [];
             foreach ($channel->getMembers() as $member) {
-                $letter = $this->roleToModeLetter($member->role);
+                $letter = $member->role->toModeLetter();
                 $members[] = [
                     'uid' => $member->uid->value,
                     'roleLetter' => $letter,
@@ -85,17 +84,5 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
         }
 
         return $views;
-    }
-
-    private function roleToModeLetter(ChannelMemberRole $role): string
-    {
-        return match ($role) {
-            ChannelMemberRole::Voice => 'v',
-            ChannelMemberRole::HalfOp => 'h',
-            ChannelMemberRole::Op => 'o',
-            ChannelMemberRole::Admin => 'a',
-            ChannelMemberRole::Owner => 'q',
-            ChannelMemberRole::None => '',
-        };
     }
 }

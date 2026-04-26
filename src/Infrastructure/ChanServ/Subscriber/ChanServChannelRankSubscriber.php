@@ -204,7 +204,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
         $sender = $memberCtx['sender'];
         $desired = $memberCtx['desired'];
-        $currentLetter = $this->roleToLetter($event->role);
+        $currentLetter = $event->role->toModeLetter();
         $hasRole = ChannelMemberRole::None !== $event->role;
 
         if ($this->applySecureStripOnJoin($channel, $channelName, $uid, $currentLetter, $desired, $sender, $hasRole)) {
@@ -546,18 +546,6 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         $desiredRank = self::RANK_ORDER[$desiredLetter] ?? 0;
 
         return $desiredRank > $currentRank;
-    }
-
-    private function roleToLetter(ChannelMemberRole $role): string
-    {
-        return match ($role) {
-            ChannelMemberRole::Owner => 'q',
-            ChannelMemberRole::Admin => 'a',
-            ChannelMemberRole::Op => 'o',
-            ChannelMemberRole::HalfOp => 'h',
-            ChannelMemberRole::Voice => 'v',
-            ChannelMemberRole::None => '',
-        };
     }
 
     /**

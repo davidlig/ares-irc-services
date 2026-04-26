@@ -24,7 +24,10 @@ interface ChanServNotifierInterface
 
     public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add): void;
 
-    public function inviteToChannel(string $channelName, string $targetUid): void;
+    /**
+     * @param int|null $channelTimestamp Channel creation timestamp (required by InspIRCd for TS validation)
+     */
+    public function inviteToChannel(string $channelName, string $targetUid, ?int $channelTimestamp = null): void;
 
     public function joinChannelAsService(string $channelName, ?int $channelTimestamp = null): void;
 

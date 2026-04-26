@@ -13,6 +13,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use stdClass;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
@@ -161,6 +162,16 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
         $token = $this->createStub(TokenInterface::class);
 
         $result = $this->voter->vote($token, $context, ['OTHER_ATTRIBUTE']);
+
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
+    }
+
+    #[Test]
+    public function voteAbstainsForNonNickServContextSubject(): void
+    {
+        $token = $this->createStub(TokenInterface::class);
+
+        $result = $this->voter->vote($token, new stdClass(), [NickServPermission::IDENTIFIED_OWNER]);
 
         self::assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
     }

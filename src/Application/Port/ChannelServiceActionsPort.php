@@ -16,7 +16,12 @@ interface ChannelServiceActionsPort
 
     public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add): void;
 
-    public function inviteToChannel(string $channelName, string $targetUid): void;
+    /**
+     * Invite a user to a channel.
+     *
+     * @param int|null $channelTimestamp Channel creation timestamp (required by InspIRCd for TS validation)
+     */
+    public function inviteToChannel(string $channelName, string $targetUid, ?int $channelTimestamp = null): void;
 
     /**
      * Service pseudo-client joins the channel with maximum level (e.g. +q in Unreal).

@@ -208,14 +208,36 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function inviteUserToChannelSendsInviteWithTimestamp(): void
+    public function inviteUserToChannelSendsInviteWithoutTimestampWhenNull(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->inviteUserToChannel('001', '#test', '001ABCD');
 
         self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:001 INVITE 001ABCD #test \d+$/', $this->written[0]);
+        self::assertSame(':001 INVITE 001ABCD #test', $this->written[0]);
+    }
+
+    #[Test]
+    public function inviteUserToChannelSendsInviteWithChannelTimestamp(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->inviteUserToChannel('001', '#test', '001ABCD', '', 1777168016);
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 INVITE 001ABCD #test 1777168016', $this->written[0]);
+    }
+
+    #[Test]
+    public function inviteUserToChannelSendsInviteWithServiceUidAndTimestamp(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->inviteUserToChannel('001', '#test', '001ABCD', '001CSRV', 1777168016);
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001CSRV INVITE 001ABCD #test 1777168016', $this->written[0]);
     }
 
     #[Test]

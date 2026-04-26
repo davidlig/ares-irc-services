@@ -127,4 +127,33 @@ final class CoreChannelLookupAdapterTest extends TestCase
         self::assertSame('+n', $views[1]->modes);
         self::assertSame(0, $views[1]->memberCount);
     }
+
+    #[Test]
+    public function listAllMapsAllMemberRolesToModeLetters(): void
+    {
+        $name = new ChannelName('#multi');
+        $createdAt = new DateTimeImmutable('2020-01-01 12:00:00');
+        $channel = new Channel($name, '+nt', $createdAt);
+        $channel->syncMember(new Uid('001V'), ChannelMemberRole::Voice);
+        $channel->syncMember(new Uid('002H'), ChannelMemberRole::HalfOp);
+        $channel->syncMember(new Uid('003O'), ChannelMemberRole::Op);
+        $channel->syncMember(new Uid('004A'), ChannelMemberRole::Admin);
+        $channel->syncMember(new Uid('005Q'), ChannelMemberRole::Owner);
+        $channel->syncMember(new Uid('006N'), ChannelMemberRole::None);
+
+        $repo = $this->createMock(ChannelRepositoryInterface::class);
+        $repo->expects(self::once())->method('all')->willReturn([$channel]);
+        $adapter = new CoreChannelLookupAdapter($repo);
+
+        $views = $adapter->listAll();
+
+        self::assertCount(1, $views);
+        $letters = array_column($views[0]->members, 'roleLetter');
+        self::assertContains('v', $letters);
+        self::assertContains('h', $letters);
+        self::assertContains('o', $letters);
+        self::assertContains('a', $letters);
+        self::assertContains('q', $letters);
+        self::assertContains('', $letters);
+    }
 }
