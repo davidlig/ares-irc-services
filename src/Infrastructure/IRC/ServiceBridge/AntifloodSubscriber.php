@@ -84,13 +84,11 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $clientKey = $this->clientKeyResolver->getClientKey($sender);
-
         if ($sender->isOper) {
-            $this->registry->recordCommand($clientKey, $this->windowSeconds);
-
             return;
         }
+
+        $clientKey = $this->clientKeyResolver->getClientKey($sender);
 
         $remaining = $this->registry->getRemainingLockoutSeconds(
             $clientKey,

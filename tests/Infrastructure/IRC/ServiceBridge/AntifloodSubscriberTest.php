@@ -299,6 +299,56 @@ final class AntifloodSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onMessageIrcopNotBlockedBySharedIpWithRegularUser(): void
+    {
+        $regularUser = $this->createSender(isOper: false, ipBase64: 'c2hhcmVk');
+        $ircopUser = $this->createSender(isOper: true, ipBase64: 'c2hhcmVk');
+
+        $userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $userLookup->expects(self::exactly(4))->method('findByUid')
+            ->willReturnOnConsecutiveCalls($regularUser, $regularUser, $ircopUser, $ircopUser);
+
+        $messageTypeResolver = $this->createMock(UserMessageTypeResolverInterface::class);
+        $messageTypeResolver->expects(self::once())->method('resolveByNick')->willReturn('NOTICE');
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->willReturn('Slow down!');
+
+        $sendNotice = $this->createMock(SendNoticePort::class);
+        $sendNotice->expects(self::once())->method('sendMessage');
+
+        $subscriber = new AntifloodSubscriber(
+            $this->registry,
+            $this->clientKeyResolver,
+            $this->gateway,
+            $userLookup,
+            $sendNotice,
+            $messageTypeResolver,
+            $translator,
+            1,
+            3600,
+            60,
+            new NullLogger(),
+        );
+
+        $event1 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event1);
+        self::assertFalse($event1->isPropagationStopped());
+
+        $event2 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event2);
+        self::assertTrue($event2->isPropagationStopped());
+
+        $event3 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event3);
+        self::assertFalse($event3->isPropagationStopped());
+
+        $event4 = $this->createMessage('PRIVMSG', 'NickServ', 'HELP');
+        $subscriber->onMessage($event4);
+        self::assertFalse($event4->isPropagationStopped());
+    }
+
+    #[Test]
     public function onMessageHandlesSqueryCommand(): void
     {
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
