@@ -459,6 +459,9 @@ services:
     App\Application\Port\ChannelLookupPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter
 
+    App\Application\Port\ServiceChannelRegistrationPort:
+        class: App\Infrastructure\IRC\ServiceBridge\CoreServiceChannelRegistrationAdapter
+
     App\Application\Port\ApplyOutgoingChannelModesPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreApplyOutgoingChannelModesAdapter
 

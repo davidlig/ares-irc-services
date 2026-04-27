@@ -10,6 +10,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChanServDispatchPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
@@ -97,11 +98,13 @@ final class ChanServCommandListenerTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $applyOutgoingChannelModes = $this->createStub(ApplyOutgoingChannelModesPort::class);
+        $channelRegistration = $this->createStub(ServiceChannelRegistrationPort::class);
 
         return new ChanServBot(
             $connectionHolder,
             $channelLookup,
             $applyOutgoingChannelModes,
+            $channelRegistration,
             'services.example.com',
             self::CHANSERV_UID,
             self::CHANSERV_NICK,

@@ -10,6 +10,7 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
+use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Message\IRCMessage;
@@ -34,6 +35,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ApplyOutgoingChannelModesPort $applyOutgoingChannelModes,
+        private readonly ServiceChannelRegistrationPort $channelRegistration,
         private readonly string $servicesVhost,
         private readonly string $chanservUid,
         private readonly string $chanservNick = 'ChanServ',
@@ -192,7 +194,20 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
             }
         }
 
-        $module->getServiceActions()->joinChannelAsService($sid, $channelName, $this->chanservUid, $maxPrefix, $channelTimestamp);
+        $actualTimestamp = $channelTimestamp;
+        if (null === $actualTimestamp) {
+            $view = $this->channelLookup->findByChannelName($channelName);
+            $actualTimestamp = $view?->timestamp ?? time();
+        }
+
+        $module->getServiceActions()->joinChannelAsService($sid, $channelName, $this->chanservUid, $maxPrefix, $actualTimestamp);
+
+        $this->channelRegistration->registerServiceChannelJoin(
+            $channelName,
+            $this->chanservUid,
+            $maxPrefix,
+            $actualTimestamp,
+        );
     }
 
     public function setChannelTopic(string $channelName, ?string $topic, ?int $channelCreationTs = null): void
@@ -224,6 +239,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
             $module->getServiceActions()->partChannelAsService($sid, $channelName, $this->chanservUid);
+            $this->channelRegistration->unregisterServiceChannelPart($channelName, $this->chanservUid);
         }
     }
 

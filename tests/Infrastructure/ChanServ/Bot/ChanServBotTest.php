@@ -9,6 +9,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
+use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
@@ -36,11 +37,13 @@ final class ChanServBotTest extends TestCase
         $this->connectionHolder = new ActiveConnectionHolder();
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $applyOutgoingChannelModes = $this->createStub(ApplyOutgoingChannelModesPort::class);
+        $channelRegistration = $this->createStub(ServiceChannelRegistrationPort::class);
 
         $this->bot = new ChanServBot(
             $this->connectionHolder,
             $channelLookup,
             $applyOutgoingChannelModes,
+            $channelRegistration,
             self::HOSTNAME,
             self::CHANSERV_UID,
         );
@@ -148,6 +151,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->createStub(ApplyOutgoingChannelModesPort::class),
+            $this->createStub(ServiceChannelRegistrationPort::class),
             self::HOSTNAME,
             self::CHANSERV_UID,
         );
@@ -214,7 +218,7 @@ final class ChanServBotTest extends TestCase
             '#channel',
             self::CHANSERV_UID,
             'q',
-            null,
+            self::callback(static fn (int $ts): bool => $ts > 0),
         );
 
         $module = $this->createStub(ProtocolModuleInterface::class);
@@ -293,6 +297,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->createStub(ApplyOutgoingChannelModesPort::class),
+            $this->createStub(ServiceChannelRegistrationPort::class),
             self::HOSTNAME,
             self::CHANSERV_UID,
         );
@@ -327,6 +332,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $this->createStub(ChannelLookupPort::class),
             $applyOutgoing,
+            $this->createStub(ServiceChannelRegistrationPort::class),
             self::HOSTNAME,
             self::CHANSERV_UID,
         );
@@ -471,6 +477,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->createStub(ApplyOutgoingChannelModesPort::class),
+            $this->createStub(ServiceChannelRegistrationPort::class),
             self::HOSTNAME,
             self::CHANSERV_UID,
         );
@@ -496,7 +503,7 @@ final class ChanServBotTest extends TestCase
             '#channel',
             self::CHANSERV_UID,
             'o',
-            null,
+            self::callback(static fn (int $ts): bool => $ts > 0),
         );
 
         $module = $this->createStub(ProtocolModuleInterface::class);
@@ -552,6 +559,7 @@ final class ChanServBotTest extends TestCase
             $this->connectionHolder,
             $channelLookup,
             $this->createStub(ApplyOutgoingChannelModesPort::class),
+            $this->createStub(ServiceChannelRegistrationPort::class),
             self::HOSTNAME,
             self::CHANSERV_UID,
         );
@@ -575,6 +583,7 @@ final class ChanServBotTest extends TestCase
             $disconnectedHolder,
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ApplyOutgoingChannelModesPort::class),
+            $this->createStub(ServiceChannelRegistrationPort::class),
             self::HOSTNAME,
             self::CHANSERV_UID,
         );
