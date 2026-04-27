@@ -11,6 +11,11 @@ Supports multiple IRC daemon backends out of the box:
 | [UnrealIRCd](https://www.unrealircd.org/) 6.2.2 | `unreal` |
 | [InspIRCd](https://www.inspircd.org/) 4.9.0 | `inspircd` |
 
+**Try the bots** on our test server:
+
+- **Plain:** [irc://irc.davidlig.net:6667](irc://irc.davidlig.net:6667)
+- **SSL:** [ircs://irc.davidlig.net:6697](ircs://irc.davidlig.net:6697)
+
 ---
 
 ## Requirements
