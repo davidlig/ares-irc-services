@@ -14,6 +14,8 @@ final class OperServPermission
 
     public const string RAW = 'operserv.raw';
 
+    public const string MOTD = 'operserv.motd';
+
     private function __construct()
     {
     }

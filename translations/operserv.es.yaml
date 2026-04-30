@@ -258,3 +258,43 @@ permissions:
   operserv.gline:   "Gestiona G-lines de red (GLINE)"
   operserv.global:  "Envía mensajes globales a todos los usuarios (GLOBAL)"
   operserv.raw:     "Envía líneas de protocolo crudas al IRCd (RAW)"
+  operserv.motd:    "Gestiona los mensajes MOTD al conectar (MOTD)"
+
+# --- MOTD ----------------------------------------------------------------------
+motd:
+  short:            "Gestiona mensajes MOTD que se envían a usuarios al conectar."
+  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args...]"
+  help:             "Gestiona entradas de mensaje del día (MOTD) que se envían cuando un usuario se conecta a la red.\n\n"
+  unknown_sub:      "\x0304✗\x03 Subcomando desconocido. Usa: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
+  add:
+    syntax:         "MOTD ADD {servicio|nick!ident@vhost} {PRIVMSG|NOTICE} <expiración> <mensaje>"
+    syntax_hint:    "\x0304✗\x03 Uso: \x02%syntax%\x02"
+    short:          "Añade una entrada MOTD."
+    help:           "Añade un nuevo mensaje MOTD que se enviará a cada usuario cuando se conecte a la red.\n\n"
+    done:           "\x0303✓\x03 Entrada MOTD #%id% añadida."
+    invalid_type:   "\x0304✗\x03 Tipo de mensaje inválido. Debe ser \x02PRIVMSG\x02 o \x02NOTICE\x02."
+    invalid_expiry: "\x0304✗\x03 Formato de expiración inválido. Usa: \x02<número><s|m|h|d>\x02 o \x020\x02 para indefinido (ej: 30s, 5m, 24h, 7d)."
+  del:
+    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax_hint:    "\x0304✗\x03 Uso: \x02%syntax%\x02"
+    short:          "Elimina una entrada MOTD."
+    help:           "Elimina una entrada MOTD por su ID.\n\n"
+    done:           "\x0303✓\x03 Entrada MOTD #%id% eliminada."
+    not_found:      "\x0304✗\x03 Entrada MOTD no encontrada."
+  list:
+    syntax:         "MOTD LIST"
+    short:          "Lista todas las entradas MOTD."
+    help:           "Lista todas las entradas MOTD configuradas.\n\n"
+    empty:          "No hay entradas MOTD configuradas."
+    header:         "Entradas MOTD:"
+    status_enabled: "\x0303activada\x03"
+    status_disabled: "\x0304desactivada\x03"
+    expired:        "\x0304caducada\x03"
+    no_bot:         "(sin bot)"
+    never:          "nunca"
+  clean:
+    syntax:         "MOTD CLEAN"
+    short:          "Elimina todas las entradas MOTD caducadas."
+    help:           "Elimina todas las entradas MOTD cuyo tiempo de expiración haya pasado.\n\n"
+    done:           "\x0303✓\x03 Eliminadas %count% entradas MOTD caducadas."
+    none:           "\x0303✓\x03 No hay entradas MOTD caducadas para eliminar."

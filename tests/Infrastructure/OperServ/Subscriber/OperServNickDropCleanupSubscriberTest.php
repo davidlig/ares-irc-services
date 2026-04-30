@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
+use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -36,6 +37,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
         $glineRepo = $this->createMock(GlineRepositoryInterface::class);
+        $motdRepo = $this->createMock(MotdRepositoryInterface::class);
 
         $operIrcopRepo
             ->expects(self::once())
@@ -47,7 +49,12 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             ->method('clearCreatorNickId')
             ->with(12345);
 
-        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo);
+        $motdRepo
+            ->expects(self::once())
+            ->method('deleteByNickId')
+            ->with(12345);
+
+        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo);
         $subscriber->onNickDrop($event);
     }
 
@@ -63,6 +70,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
         $glineRepo = $this->createMock(GlineRepositoryInterface::class);
+        $motdRepo = $this->createMock(MotdRepositoryInterface::class);
 
         $operIrcopRepo
             ->expects(self::once())
@@ -74,7 +82,12 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             ->method('clearCreatorNickId')
             ->with(999);
 
-        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo);
+        $motdRepo
+            ->expects(self::once())
+            ->method('deleteByNickId')
+            ->with(999);
+
+        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo);
         $subscriber->onNickDrop($event);
     }
 
@@ -90,6 +103,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
 
         $operIrcopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
         $glineRepo = $this->createMock(GlineRepositoryInterface::class);
+        $motdRepo = $this->createMock(MotdRepositoryInterface::class);
 
         $operIrcopRepo
             ->expects(self::once())
@@ -101,7 +115,12 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
             ->method('clearCreatorNickId')
             ->with(42);
 
-        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo);
+        $motdRepo
+            ->expects(self::once())
+            ->method('deleteByNickId')
+            ->with(42);
+
+        $subscriber = new OperServNickDropCleanupSubscriber($operIrcopRepo, $glineRepo, $motdRepo);
         $subscriber->onNickDrop($event);
     }
 }

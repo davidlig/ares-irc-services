@@ -6,6 +6,7 @@ namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
+use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -19,6 +20,7 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
     public function __construct(
         private OperIrcopRepositoryInterface $operIrcopRepository,
         private GlineRepositoryInterface $glineRepository,
+        private MotdRepositoryInterface $motdRepository,
     ) {
     }
 
@@ -34,5 +36,7 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
         $this->operIrcopRepository->deleteByNickId($event->nickId);
 
         $this->glineRepository->clearCreatorNickId($event->nickId);
+
+        $this->motdRepository->deleteByNickId($event->nickId);
     }
 }

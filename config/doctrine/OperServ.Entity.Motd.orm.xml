@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                            https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\OperServ\Entity\Motd" table="motd">
+    <indexes>
+        <index name="idx_motd_enabled" columns="enabled"/>
+        <index name="idx_motd_creator_nick_id" columns="creator_nick_id"/>
+    </indexes>
+    <id name="id" type="integer" column="id">
+        <generator strategy="IDENTITY"/>
+    </id>
+    <field name="text" type="string" length="400" column="text"/>
+    <field name="enabled" type="boolean" column="enabled"/>
+    <field name="botNickname" type="string" length="128" column="bot_nickname"/>
+    <field name="messageType" type="string" length="10" column="message_type"/>
+    <field name="creatorNickId" type="integer" column="creator_nick_id" nullable="true"/>
+    <field name="createdAt" type="datetime_immutable" column="created_at"/>
+    <field name="expiresAt" type="datetime_immutable" column="expires_at" nullable="true"/>
+    </entity>
+</doctrine-mapping>

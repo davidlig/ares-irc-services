@@ -258,3 +258,43 @@ permissions:
   operserv.gline:   "Manage network-wide G-lines (GLINE)"
   operserv.global:  "Send global messages to all users (GLOBAL)"
   operserv.raw:     "Send raw protocol lines to the IRCd (RAW)"
+  operserv.motd:    "Manage connect MOTD messages (MOTD)"
+
+# --- MOTD ----------------------------------------------------------------------
+motd:
+  short:            "Manage connect MOTD messages sent to users on connect."
+  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args...]"
+  help:             "Manage Message Of The Day entries that are sent to users when they connect to the network.\n\n"
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand. Use: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
+  add:
+    syntax:         "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <expiry> <message>"
+    syntax_hint:    "\x0304✗\x03 Usage: \x02%syntax%\x02"
+    short:          "Add a MOTD entry."
+    help:           "Adds a new MOTD message that will be sent to each user when they connect to the network.\n\n"
+    done:           "\x0303✓\x03 MOTD entry #%id% added."
+    invalid_type:   "\x0304✗\x03 Invalid message type. Must be \x02PRIVMSG\x02 or \x02NOTICE\x02."
+    invalid_expiry: "\x0304✗\x03 Invalid expiry format. Use: \x02<number><s|m|h|d>\x02 (e.g., 30s, 5m, 24h, 7d)."
+  del:
+    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax_hint:    "\x0304✗\x03 Usage: \x02%syntax%\x02"
+    short:          "Delete a MOTD entry."
+    help:           "Deletes a MOTD entry by its ID.\n\n"
+    done:           "\x0303✓\x03 MOTD entry #%id% deleted."
+    not_found:      "\x0304✗\x03 MOTD entry not found."
+  list:
+    syntax:         "MOTD LIST"
+    short:          "List all MOTD entries."
+    help:           "Lists all configured MOTD entries.\n\n"
+    empty:          "No MOTD entries configured."
+    header:         "MOTD entries:"
+    status_enabled: "\x0303enabled\x03"
+    status_disabled: "\x0304disabled\x03"
+    expired:        "\x0304expired\x03"
+    no_bot:         "(no bot)"
+    never:          "never"
+  clean:
+    syntax:         "MOTD CLEAN"
+    short:          "Remove all expired MOTD entries."
+    help:           "Removes all MOTD entries whose expiry time has passed.\n\n"
+    done:           "\x0303✓\x03 Removed %count% expired MOTD entries."
+    none:           "\x0303✓\x03 No expired MOTD entries to remove."
