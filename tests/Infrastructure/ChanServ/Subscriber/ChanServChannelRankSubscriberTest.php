@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidProviderInterface;
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Event\ChannelSecureEnabledEvent;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
@@ -68,6 +70,8 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
     private ChannelRankSyncPendingRegistry $syncPendingRegistry;
 
+    private ServiceUidRegistry $uidRegistry;
+
     private ChanServChannelRankSubscriber $subscriber;
 
     protected function setUp(): void
@@ -90,6 +94,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $this->levelRepository->method('findByChannelAndKey')->willReturn(null);
         $this->accessHelper = new ChanServAccessHelper($this->accessRepository, $this->levelRepository);
         $this->syncPendingRegistry = new ChannelRankSyncPendingRegistry();
+        $this->uidRegistry = $this->createUidRegistry();
 
         $this->subscriber = new ChanServChannelRankSubscriber(
             $this->channelRepository,
@@ -100,8 +105,34 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $this->modeSupportProvider,
             $this->accessHelper,
             $this->syncPendingRegistry,
-            self::CHANSERV_UID,
+            $this->uidRegistry,
         );
+    }
+
+    private function createUidRegistry(string $uid = self::CHANSERV_UID): ServiceUidRegistry
+    {
+        $provider = new class('chanserv', 'ChanServ', $uid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
     }
 
     private function rebuildSubscriber(): void
@@ -116,7 +147,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $this->modeSupportProvider,
             $this->accessHelper,
             $this->syncPendingRegistry,
-            self::CHANSERV_UID,
+            $this->uidRegistry,
         );
     }
 

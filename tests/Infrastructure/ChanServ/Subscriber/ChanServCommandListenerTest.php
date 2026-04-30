@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
@@ -14,6 +15,8 @@ use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
+use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\ChanServ\Bot\ChanServBot;
@@ -99,16 +102,25 @@ final class ChanServCommandListenerTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $applyOutgoingChannelModes = $this->createStub(ApplyOutgoingChannelModesPort::class);
         $channelRegistration = $this->createStub(ServiceChannelRegistrationPort::class);
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
 
-        return new ChanServBot(
+        $bot = new ChanServBot(
             $connectionHolder,
             $channelLookup,
             $applyOutgoingChannelModes,
             $channelRegistration,
+            $uidGenerator,
             'services.example.com',
-            self::CHANSERV_UID,
             self::CHANSERV_NICK,
         );
+
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
+
+        return $bot;
     }
 
     #[Test]

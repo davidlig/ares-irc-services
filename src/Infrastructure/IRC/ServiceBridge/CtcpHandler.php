@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendCtcpPort;
 use App\Application\Port\SendNoticePort;
@@ -19,26 +20,15 @@ final readonly class CtcpHandler implements EventSubscriberInterface
 {
     private const string CTCP_PATTERN = '/^\x01([^\x01]+)\x01$/';
 
-    /** @var array<string, string> Map of lowercase service name to UID */
-    private readonly array $serviceNameToUid;
-
-    /** @var array<string, string> Map of UID to UID (for reverse lookup by UID) */
-    private readonly array $uidToUid;
-
-    /**
-     * @param array<string, string> $serviceUidMap Map of lowercase service name to UID (e.g., ['nickserv' => '002AAAAAA'])
-     */
     public function __construct(
         private SendCtcpPort $sendCtcp,
         private SendNoticePort $sendNotice,
         private CtcpVersionResponder $versionResponder,
         private NetworkUserLookupPort $userLookup,
         private UserLanguageResolver $languageResolver,
-        array $serviceUidMap,
+        private ServiceUidRegistry $uidRegistry,
         private LoggerInterface $logger = new NullLogger(),
     ) {
-        $this->serviceNameToUid = $serviceUidMap;
-        $this->uidToUid = array_combine(array_values($serviceUidMap), array_values($serviceUidMap));
     }
 
     public static function getSubscribedEvents(): array
@@ -93,7 +83,7 @@ final readonly class CtcpHandler implements EventSubscriberInterface
             : $this->languageResolver->getDefault();
 
         $targetLower = strtolower($target);
-        $serviceUid = $this->serviceNameToUid[$targetLower] ?? $this->uidToUid[$target] ?? null;
+        $serviceUid = $this->uidRegistry->getUid($targetLower) ?? $this->uidRegistry->getUidByNickname($target) ?? $this->uidRegistry->getUidByUid($target);
         if (null === $serviceUid) {
             $this->logger->warning('CTCP VERSION: unknown target service', ['target' => $target]);
 

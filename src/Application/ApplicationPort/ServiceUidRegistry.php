@@ -8,7 +8,7 @@ namespace App\Application\ApplicationPort;
  * Registry that provides UID lookup for services.
  * Allows resolving a service nickname to its UID for message sending.
  */
-final readonly class ServiceUidRegistry
+class ServiceUidRegistry
 {
     /**
      * @param array<string, ServiceUidProviderInterface> $providers Map of service key => provider
@@ -63,6 +63,17 @@ final readonly class ServiceUidRegistry
         foreach ($this->providers as $provider) {
             if (strtolower($provider->getNickname()) === $nicknameLower) {
                 return $provider->getUid();
+            }
+        }
+
+        return null;
+    }
+
+    public function getUidByUid(string $uid): ?string
+    {
+        foreach ($this->providers as $provider) {
+            if ($provider->getUid() === $uid) {
+                return $uid;
             }
         }
 

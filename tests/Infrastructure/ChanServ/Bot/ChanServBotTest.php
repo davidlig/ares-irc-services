@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Bot;
 
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
@@ -30,6 +31,8 @@ final class ChanServBotTest extends TestCase
 
     private ActiveConnectionHolder $connectionHolder;
 
+    private ServiceUidGeneratorInterface $uidGenerator;
+
     private ChanServBot $bot;
 
     protected function setUp(): void
@@ -38,15 +41,22 @@ final class ChanServBotTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $applyOutgoingChannelModes = $this->createStub(ApplyOutgoingChannelModesPort::class);
         $channelRegistration = $this->createStub(ServiceChannelRegistrationPort::class);
+        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $this->uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
 
         $this->bot = new ChanServBot(
             $this->connectionHolder,
             $channelLookup,
             $applyOutgoingChannelModes,
             $channelRegistration,
+            $this->uidGenerator,
             self::HOSTNAME,
-            self::CHANSERV_UID,
         );
+
+        $this->bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
     }
 
     #[Test]
@@ -147,13 +157,16 @@ final class ChanServBotTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn(null);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
+
         $bot = new ChanServBot(
             $this->connectionHolder,
             $channelLookup,
             $this->createStub(ApplyOutgoingChannelModesPort::class),
             $this->createStub(ServiceChannelRegistrationPort::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::CHANSERV_UID,
         );
 
         $connection = $this->createMock(ConnectionInterface::class);
@@ -293,13 +306,16 @@ final class ChanServBotTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
+
         $bot = new ChanServBot(
             $this->connectionHolder,
             $channelLookup,
             $this->createStub(ApplyOutgoingChannelModesPort::class),
             $this->createStub(ServiceChannelRegistrationPort::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::CHANSERV_UID,
         );
 
         $connection = $this->createMock(ConnectionInterface::class);
@@ -307,6 +323,10 @@ final class ChanServBotTest extends TestCase
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
         $this->connectionHolder->setProtocolModule($this->createModuleWithHandlerThatReturnsLine('NOTICE #test :Hi'));
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
 
         $bot->sendNoticeToChannel('#test', 'Hi');
     }
@@ -328,15 +348,19 @@ final class ChanServBotTest extends TestCase
         $applyOutgoing = $this->createMock(ApplyOutgoingChannelModesPort::class);
         $applyOutgoing->expects(self::once())->method('applyOutgoingChannelModes');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
+
         $bot = new ChanServBot(
             $this->connectionHolder,
             $this->createStub(ChannelLookupPort::class),
             $applyOutgoing,
             $this->createStub(ServiceChannelRegistrationPort::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::CHANSERV_UID,
         );
 
+        $bot->onBurstComplete($event);
         $bot->setChannelModes('#channel', '+k', ['secretkey']);
     }
 
@@ -473,13 +497,16 @@ final class ChanServBotTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
+
         $bot = new ChanServBot(
             $this->connectionHolder,
             $channelLookup,
             $this->createStub(ApplyOutgoingChannelModesPort::class),
             $this->createStub(ServiceChannelRegistrationPort::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::CHANSERV_UID,
         );
 
         $connection = $this->createMock(ConnectionInterface::class);
@@ -555,13 +582,16 @@ final class ChanServBotTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
+
         $bot = new ChanServBot(
             $this->connectionHolder,
             $channelLookup,
             $this->createStub(ApplyOutgoingChannelModesPort::class),
             $this->createStub(ServiceChannelRegistrationPort::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::CHANSERV_UID,
         );
 
         $connection = $this->createMock(ConnectionInterface::class);
@@ -579,13 +609,16 @@ final class ChanServBotTest extends TestCase
         $disconnectedHolder = new ActiveConnectionHolder();
         $disconnectedHolder->setProtocolModule($this->createModuleWithHandlerThatReturnsLine('test'));
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
+
         $bot = new ChanServBot(
             $disconnectedHolder,
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ApplyOutgoingChannelModesPort::class),
             $this->createStub(ServiceChannelRegistrationPort::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::CHANSERV_UID,
         );
 
         $reflection = new ReflectionClass($bot);

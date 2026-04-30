@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
@@ -40,7 +41,7 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
         private ChannelLookupPort $channelLookup,
         private ChannelServiceActionsPort $channelServiceActions,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
-        private string $chanservUid,
+        private ServiceUidRegistry $uidRegistry,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -204,10 +205,10 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
             }
         }
 
-        $this->channelServiceActions->setChannelMemberMode($channelName, $this->chanservUid, $maxPrefix, true);
+        $this->channelServiceActions->setChannelMemberMode($channelName, $this->uidRegistry->getUid('chanserv'), $maxPrefix, true);
         $this->logger->debug('Debug channel: set ChanServ rank', [
             'channel' => $channelName,
-            'uid' => $this->chanservUid,
+            'uid' => $this->uidRegistry->getUid('chanserv'),
             'mode' => '+' . $maxPrefix,
         ]);
     }

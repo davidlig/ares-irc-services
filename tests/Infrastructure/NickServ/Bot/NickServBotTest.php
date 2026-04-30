@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\NickServ\Bot;
 
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
@@ -30,6 +31,8 @@ final class NickServBotTest extends TestCase
 
     private ActiveConnectionHolder $connectionHolder;
 
+    private ServiceUidGeneratorInterface $uidGenerator;
+
     private NickServBot $bot;
 
     protected function setUp(): void
@@ -39,6 +42,8 @@ final class NickServBotTest extends TestCase
         $sendNoticePort = $this->createStub(SendNoticePort::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
         $localUserModeSync = $this->createStub(LocalUserModeSyncInterface::class);
+        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $this->uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
 
         $this->bot = new NickServBot(
             $this->connectionHolder,
@@ -46,8 +51,8 @@ final class NickServBotTest extends TestCase
             $sendNoticePort,
             $pendingRegistry,
             $localUserModeSync,
+            $this->uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
     }
 
@@ -82,14 +87,17 @@ final class NickServBotTest extends TestCase
         $this->connectionHolder->setProtocolModule($module);
         $connection->expects(self::once())->method('writeLine')->with($introLine);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $sendNoticePort,
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $bot->onBurstComplete($event);
@@ -103,14 +111,17 @@ final class NickServBotTest extends TestCase
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $sendNoticePort,
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $bot->onBurstComplete($event);
@@ -122,15 +133,22 @@ final class NickServBotTest extends TestCase
         $sendNoticePort = $this->createMock(SendNoticePort::class);
         $sendNoticePort->expects(self::once())->method('sendNotice')->with(self::NICKSERV_UID, '001USER', 'Hello');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $sendNoticePort,
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
         $bot->sendNotice('001USER', 'Hello');
     }
 
@@ -141,15 +159,22 @@ final class NickServBotTest extends TestCase
         $sendNoticePort->expects(self::once())->method('sendMessage')
             ->with(self::NICKSERV_UID, '001USER', 'Message', 'NOTICE');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $sendNoticePort,
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
         $bot->sendMessage('001USER', 'Message', 'NOTICE');
     }
 
@@ -169,14 +194,17 @@ final class NickServBotTest extends TestCase
         $localUserModeSync->expects(self::once())->method('apply')
             ->with(self::callback(static fn ($u): bool => '001USER' === $u->value), '+r');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $localUserModeSync,
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->setUserAccount('001USER', 'AccountName');
@@ -199,14 +227,17 @@ final class NickServBotTest extends TestCase
         $localUserModeSync = $this->createMock(LocalUserModeSyncInterface::class);
         $localUserModeSync->expects(self::never())->method('apply');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $localUserModeSync,
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->setUserAccount('001USER', '0');
@@ -232,14 +263,17 @@ final class NickServBotTest extends TestCase
 
         $this->connectionHolder->setProtocolModule($module);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->setUserMode('001USER', '+i');
@@ -268,14 +302,17 @@ final class NickServBotTest extends TestCase
         $pendingRegistry = $this->createMock(PendingNickRestoreRegistryInterface::class);
         $pendingRegistry->expects(self::once())->method('mark')->with('001USER');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $pendingRegistry,
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->forceNick('001USER', 'NewNick');
@@ -287,14 +324,17 @@ final class NickServBotTest extends TestCase
         $pendingRegistry = $this->createMock(PendingNickRestoreRegistryInterface::class);
         $pendingRegistry->expects(self::once())->method('mark')->with('001USER');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $pendingRegistry,
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->forceNick('001USER', 'NewNick');
@@ -312,14 +352,17 @@ final class NickServBotTest extends TestCase
 
         $this->connectionHolder->setProtocolModule($module);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->killUser('001USER', 'Killed');
@@ -356,14 +399,17 @@ final class NickServBotTest extends TestCase
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $userLookup,
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->setUserVhost('001USER', 'new.vhost', '001');
@@ -405,14 +451,17 @@ final class NickServBotTest extends TestCase
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $userLookup,
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->setUserVhost('001USER', '', '001');
@@ -468,14 +517,17 @@ final class NickServBotTest extends TestCase
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $userLookup,
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->setUserVhost('001USER', 'same.vhost', '001');
@@ -517,14 +569,17 @@ final class NickServBotTest extends TestCase
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $userLookup,
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
         );
 
         $bot->setUserVhost('001USER', '', '001');
@@ -539,6 +594,10 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function getUidReturnsConfiguredUid(): void
     {
+        $this->bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
         self::assertSame(self::NICKSERV_UID, $this->bot->getUid());
     }
 
@@ -557,14 +616,17 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function getNicknameReturnsCustomNicknameWhenConfigured(): void
     {
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
+
         $bot = new NickServBot(
             $this->connectionHolder,
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $this->createStub(LocalUserModeSyncInterface::class),
+            $uidGenerator,
             self::HOSTNAME,
-            self::NICKSERV_UID,
             'CustomNS',
         );
 

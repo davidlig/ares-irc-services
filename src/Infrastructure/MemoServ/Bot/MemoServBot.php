@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\MemoServ\Bot;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
@@ -19,12 +20,14 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * MemoServ pseudo-client: introduces on burst, implements MemoServNotifierInterface.
  */
-final readonly class MemoServBot implements MemoServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
+final class MemoServBot implements MemoServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
 {
+    private string $uid = '';
+
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly ServiceUidGeneratorInterface $uidGenerator,
         private readonly string $servicesVhost,
-        private readonly string $memoservUid,
         private readonly string $memoservNick = 'MemoServ',
         private readonly string $memoservIdent = 'MemoServ',
         private readonly string $memoservRealname = 'Memo Service',
@@ -41,6 +44,7 @@ final readonly class MemoServBot implements MemoServNotifierInterface, ServiceNi
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
+        $this->uid = $this->uidGenerator->generateUid('memoserv');
         $this->introduce($event->connection, $event->serverSid);
     }
 
@@ -56,14 +60,14 @@ final readonly class MemoServBot implements MemoServNotifierInterface, ServiceNi
             $this->memoservNick,
             $this->memoservIdent,
             $this->servicesVhost,
-            $this->memoservUid,
+            $this->uid,
             $this->memoservRealname,
         );
 
         $connection->writeLine($line);
 
         $this->logger->info('MemoServ introduced to network.', [
-            'uid' => $this->memoservUid,
+            'uid' => $this->uid,
             'nick' => $this->memoservNick,
         ]);
     }
@@ -91,7 +95,7 @@ final readonly class MemoServBot implements MemoServNotifierInterface, ServiceNi
             }
             $ircMessage = new IRCMessage(
                 command: $command,
-                prefix: $this->memoservUid,
+                prefix: $this->uid,
                 params: [$targetUidOrNick],
                 trailing: $line,
                 direction: MessageDirection::Outgoing,
@@ -108,7 +112,7 @@ final readonly class MemoServBot implements MemoServNotifierInterface, ServiceNi
 
     public function getUid(): string
     {
-        return $this->memoservUid;
+        return $this->uid;
     }
 
     public function getServiceKey(): string

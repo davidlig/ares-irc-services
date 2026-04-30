@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\ChanServ\Bot;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
@@ -26,18 +27,20 @@ use function in_array;
  * ChanServ pseudo-client: introduces on burst, implements ChanServNotifierInterface
  * and ChannelServiceActionsPort. Delegates channel actions to the active protocol module.
  */
-final readonly class ChanServBot implements ChanServNotifierInterface, ChannelServiceActionsPort, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
+final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActionsPort, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
 {
     /** Preferred order of prefix modes (highest first). */
     private const array PREFIX_ORDER = ['q', 'a', 'o', 'h', 'v'];
+
+    private string $uid = '';
 
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ApplyOutgoingChannelModesPort $applyOutgoingChannelModes,
         private readonly ServiceChannelRegistrationPort $channelRegistration,
+        private readonly ServiceUidGeneratorInterface $uidGenerator,
         private readonly string $servicesVhost,
-        private readonly string $chanservUid,
         private readonly string $chanservNick = 'ChanServ',
         private readonly string $chanservIdent = 'ChanServ',
         private readonly string $chanservRealname = 'Channel Registration Services',
@@ -54,6 +57,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
+        $this->uid = $this->uidGenerator->generateUid('chanserv');
         $this->introduce($event->connection, $event->serverSid);
     }
 
@@ -69,14 +73,14 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
             $this->chanservNick,
             $this->chanservIdent,
             $this->servicesVhost,
-            $this->chanservUid,
+            $this->uid,
             $this->chanservRealname,
         );
 
         $connection->writeLine($line);
 
         $this->logger->info('ChanServ introduced to network.', [
-            'uid' => $this->chanservUid,
+            'uid' => $this->uid,
             'nick' => $this->chanservNick,
         ]);
     }
@@ -104,7 +108,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
             }
             $ircMessage = new IRCMessage(
                 command: $command,
-                prefix: $this->chanservUid,
+                prefix: $this->uid,
                 params: [$targetUidOrNick],
                 trailing: $line,
                 direction: MessageDirection::Outgoing,
@@ -132,7 +136,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
 
         $ircMessage = new IRCMessage(
             command: 'NOTICE',
-            prefix: $this->chanservUid,
+            prefix: $this->uid,
             params: [$channelName],
             trailing: $message,
             direction: MessageDirection::Outgoing,
@@ -148,7 +152,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         if (null !== $module && '' !== $sid) {
             $view = $this->channelLookup->findByChannelName($channelName);
             $channelTimestamp = $view?->timestamp;
-            $module->getServiceActions()->setChannelModes($sid, $channelName, $modeStr, $params, $this->chanservUid, $channelTimestamp);
+            $module->getServiceActions()->setChannelModes($sid, $channelName, $modeStr, $params, $this->uid, $channelTimestamp);
             $this->applyOutgoingChannelModes->applyOutgoingChannelModes($channelName, $modeStr, $params);
         }
     }
@@ -160,7 +164,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         if (null !== $module && '' !== $sid) {
             $view = $this->channelLookup->findByChannelName($channelName);
             $channelTimestamp = $view?->timestamp;
-            $module->getServiceActions()->setChannelMemberMode($sid, $channelName, $targetUid, $modeLetter, $add, $this->chanservUid, $channelTimestamp);
+            $module->getServiceActions()->setChannelMemberMode($sid, $channelName, $targetUid, $modeLetter, $add, $this->uid, $channelTimestamp);
         }
     }
 
@@ -173,7 +177,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
                 $view = $this->channelLookup->findByChannelName($channelName);
                 $channelTimestamp = $view?->timestamp;
             }
-            $module->getServiceActions()->inviteUserToChannel($sid, $channelName, $targetUid, $this->chanservUid, $channelTimestamp);
+            $module->getServiceActions()->inviteUserToChannel($sid, $channelName, $targetUid, $this->uid, $channelTimestamp);
         }
     }
 
@@ -200,11 +204,11 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
             $actualTimestamp = $view?->timestamp ?? time();
         }
 
-        $module->getServiceActions()->joinChannelAsService($sid, $channelName, $this->chanservUid, $maxPrefix, $actualTimestamp);
+        $module->getServiceActions()->joinChannelAsService($sid, $channelName, $this->uid, $maxPrefix, $actualTimestamp);
 
         $this->channelRegistration->registerServiceChannelJoin(
             $channelName,
-            $this->chanservUid,
+            $this->uid,
             $maxPrefix,
             $actualTimestamp,
         );
@@ -220,7 +224,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
                 $view = $this->channelLookup->findByChannelName($channelName);
                 $creationTs = $view?->timestamp;
             }
-            $module->getServiceActions()->setChannelTopic($sid, $channelName, $topic, $this->chanservUid, $creationTs);
+            $module->getServiceActions()->setChannelTopic($sid, $channelName, $topic, $this->uid, $creationTs);
         }
     }
 
@@ -229,7 +233,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         $module = $this->connectionHolder->getProtocolModule();
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
-            $module->getServiceActions()->kickFromChannel($sid, $channelName, $targetUid, $reason, $this->chanservUid);
+            $module->getServiceActions()->kickFromChannel($sid, $channelName, $targetUid, $reason, $this->uid);
         }
     }
 
@@ -238,8 +242,8 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
         $module = $this->connectionHolder->getProtocolModule();
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
-            $module->getServiceActions()->partChannelAsService($sid, $channelName, $this->chanservUid);
-            $this->channelRegistration->unregisterServiceChannelPart($channelName, $this->chanservUid);
+            $module->getServiceActions()->partChannelAsService($sid, $channelName, $this->uid);
+            $this->channelRegistration->unregisterServiceChannelPart($channelName, $this->uid);
         }
     }
 
@@ -260,7 +264,7 @@ final readonly class ChanServBot implements ChanServNotifierInterface, ChannelSe
 
     public function getUid(): string
     {
-        return $this->chanservUid;
+        return $this->uid;
     }
 
     public function getServiceKey(): string

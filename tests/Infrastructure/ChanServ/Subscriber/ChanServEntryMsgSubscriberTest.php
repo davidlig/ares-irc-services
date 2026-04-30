@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidProviderInterface;
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -35,8 +37,34 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
         $this->subscriber = new ChanServEntryMsgSubscriber(
             $this->channelRepository,
             $this->notifier,
-            $this->chanservUid,
+            $this->createUidRegistry(),
         );
+    }
+
+    private function createUidRegistry(string $uid = '001CHAN'): ServiceUidRegistry
+    {
+        $provider = new class('chanserv', 'ChanServ', $uid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
     }
 
     #[Test]

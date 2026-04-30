@@ -14,43 +14,37 @@ use function in_array;
 
 /**
  * Single entry point for PRIVMSG and SQUERY targeting a service. Listens to MessageReceivedEvent,
- * matches target to registered service names, and invokes the listener with (senderUid, text).
+ * matches target to registered service names (by nickname at construction, by UID dynamically at runtime),
+ * and invokes the listener with (senderUid, text).
  *
  * Bots register via ServiceCommandListenerInterface (tagged); they never subscribe
  * to MessageReceivedEvent directly.
  */
 final readonly class ServiceCommandGateway implements EventSubscriberInterface
 {
-    /** @var array<string, ServiceCommandListenerInterface> target (lowercase nick or UID) => listener */
-    private array $listeners;
+    /** @var array<string, ServiceCommandListenerInterface> target (lowercase nick) => listener */
+    private array $listenersByNick;
+
+    /** @var ServiceCommandListenerInterface[] */
+    private array $listenersAll;
 
     public function __construct(
         iterable $listeners,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
-        $this->listeners = $this->buildListenerMap($listeners);
-    }
+        $all = [];
+        $byNick = [];
 
-    /**
-     * @param iterable<ServiceCommandListenerInterface> $listeners
-     *
-     * @return array<string, ServiceCommandListenerInterface>
-     */
-    private function buildListenerMap(iterable $listeners): array
-    {
-        $map = [];
         foreach ($listeners as $listener) {
             if (!$listener instanceof ServiceCommandListenerInterface) {
                 continue;
             }
-            $map[strtolower($listener->getServiceName())] = $listener;
-            $uid = $listener->getServiceUid();
-            if (null !== $uid && '' !== $uid) {
-                $map[$uid] = $listener;
-            }
+            $byNick[strtolower($listener->getServiceName())] = $listener;
+            $all[] = $listener;
         }
 
-        return $map;
+        $this->listenersAll = $all;
+        $this->listenersByNick = $byNick;
     }
 
     public static function getSubscribedEvents(): array
@@ -66,9 +60,7 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
      */
     public function findListenerFor(string $target): ?ServiceCommandListenerInterface
     {
-        $targetKey = strtolower($target);
-
-        return $this->listeners[$targetKey] ?? $this->listeners[$target] ?? null;
+        return $this->resolveListener($target);
     }
 
     public function onMessage(MessageReceivedEvent $event): void
@@ -87,8 +79,7 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
             return;
         }
 
-        $targetKey = strtolower($target);
-        $listener = $this->listeners[$targetKey] ?? $this->listeners[$target] ?? null;
+        $listener = $this->resolveListener($target);
 
         if (null === $listener) {
             return;
@@ -100,5 +91,22 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
         ]);
 
         $listener->onCommand($sourceId, $text ?? '');
+    }
+
+    private function resolveListener(string $target): ?ServiceCommandListenerInterface
+    {
+        $lower = strtolower($target);
+
+        if (isset($this->listenersByNick[$lower])) {
+            return $this->listenersByNick[$lower];
+        }
+
+        foreach ($this->listenersAll as $listener) {
+            if ($listener->getServiceUid() === $target) {
+                return $listener;
+            }
+        }
+
+        return null;
     }
 }

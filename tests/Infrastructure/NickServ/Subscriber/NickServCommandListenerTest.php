@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\NickServ\Subscriber;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
@@ -18,6 +19,8 @@ use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
+use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Exception\InvalidCredentialsException;
 use App\Domain\NickServ\Exception\NickAlreadyRegisteredException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -74,16 +77,24 @@ final class NickServCommandListenerTest extends TestCase
 
     protected function setUp(): void
     {
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001NS');
+
         $this->nickServBot = new NickServBot(
             new ActiveConnectionHolder(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $this->createStub(\App\Application\NickServ\PendingNickRestoreRegistryInterface::class),
             $this->createStub(\App\Domain\IRC\LocalUserModeSyncInterface::class),
+            $uidGenerator,
             'services.example.com',
-            '001NS',
             'NickServ',
         );
+
+        $this->nickServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $this->nickServNotifier = $this->createMock(NickServNotifierInterface::class);

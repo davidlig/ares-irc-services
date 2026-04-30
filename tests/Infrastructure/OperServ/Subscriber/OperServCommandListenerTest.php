@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\OperServ\Command\OperServCommandInterface;
@@ -19,6 +20,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -203,14 +205,21 @@ final class OperServCommandListenerTest extends TestCase
     #[Test]
     public function getServiceNameReturnsBotNick(): void
     {
+        $uidGenerator = self::createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001OS');
+
         $operServBot = new OperServBot(
             new ActiveConnectionHolder(),
             self::createStub(NetworkUserLookupPort::class),
             self::createStub(SendNoticePort::class),
+            $uidGenerator,
             'services.example.com',
-            '001OS',
             'OperServ',
         );
+        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            '001',
+        ));
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
@@ -255,14 +264,21 @@ final class OperServCommandListenerTest extends TestCase
     #[Test]
     public function getServiceUidReturnsBotUid(): void
     {
+        $uidGenerator = self::createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001OS');
+
         $operServBot = new OperServBot(
             new ActiveConnectionHolder(),
             self::createStub(NetworkUserLookupPort::class),
             self::createStub(SendNoticePort::class),
+            $uidGenerator,
             'services.example.com',
-            '001OS',
             'OperServ',
         );
+        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            '001',
+        ));
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
@@ -307,14 +323,21 @@ final class OperServCommandListenerTest extends TestCase
     #[Test]
     public function onCommandDoesNothingWhenTextIsEmpty(): void
     {
+        $uidGenerator = self::createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001OS');
+
         $operServBot = new OperServBot(
             new ActiveConnectionHolder(),
             self::createStub(NetworkUserLookupPort::class),
             self::createStub(SendNoticePort::class),
+            $uidGenerator,
             'services.example.com',
-            '001OS',
             'OperServ',
         );
+        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            '001',
+        ));
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
@@ -367,14 +390,21 @@ final class OperServCommandListenerTest extends TestCase
     #[Test]
     public function onCommandLogsWarningAndReturnsWhenSenderNotFound(): void
     {
+        $uidGenerator = self::createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001OS');
+
         $operServBot = new OperServBot(
             new ActiveConnectionHolder(),
             self::createStub(NetworkUserLookupPort::class),
             self::createStub(SendNoticePort::class),
+            $uidGenerator,
             'services.example.com',
-            '001OS',
             'OperServ',
         );
+        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            '001',
+        ));
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
@@ -424,14 +454,21 @@ final class OperServCommandListenerTest extends TestCase
     {
         $sender = self::senderView();
 
+        $uidGenerator = self::createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001OS');
+
         $operServBot = new OperServBot(
             new ActiveConnectionHolder(),
             self::createStub(NetworkUserLookupPort::class),
             self::createStub(SendNoticePort::class),
+            $uidGenerator,
             'services.example.com',
-            '001OS',
             'OperServ',
         );
+        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            '001',
+        ));
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
@@ -482,14 +519,21 @@ final class OperServCommandListenerTest extends TestCase
     {
         $sender = self::senderView();
 
+        $uidGenerator = self::createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001OS');
+
         $operServBot = new OperServBot(
             new ActiveConnectionHolder(),
             self::createStub(NetworkUserLookupPort::class),
             self::createStub(SendNoticePort::class),
+            $uidGenerator,
             'services.example.com',
-            '001OS',
             'OperServ',
         );
+        $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            '001',
+        ));
 
         $nickRepository = self::createStub(RegisteredNickRepositoryInterface::class);
         $operServNotifier = $this->createMock(OperServNotifierInterface::class);
@@ -548,12 +592,15 @@ final class OperServCommandListenerTest extends TestCase
     {
         $sender = self::senderView();
 
+        $uidGenerator = self::createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001OS');
+
         $operServBot = new OperServBot(
             new ActiveConnectionHolder(),
             self::createStub(NetworkUserLookupPort::class),
             self::createStub(SendNoticePort::class),
+            $uidGenerator,
             'services.example.com',
-            '001OS',
             'OperServ',
         );
 

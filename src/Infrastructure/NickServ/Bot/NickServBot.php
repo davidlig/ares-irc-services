@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\NickServ\Bot;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
@@ -23,16 +24,18 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * NickServ pseudo-client: introduces on burst, implements NickServNotifierInterface.
  * Sending NOTICE/PRIVMSG is delegated to SendNoticePort (implemented by Core).
  */
-final readonly class NickServBot implements NickServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
+final class NickServBot implements NickServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
 {
+    private string $uid = '';
+
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly SendNoticePort $sendNoticePort,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly LocalUserModeSyncInterface $localUserModeSync,
+        private readonly ServiceUidGeneratorInterface $uidGenerator,
         private readonly string $servicesVhost,
-        private readonly string $nickservUid,
         private readonly string $nickservNick = 'NickServ',
         private readonly string $nickservIdent = 'NickServ',
         private readonly string $nickservRealname = 'Nickname Registration Services',
@@ -49,6 +52,7 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
+        $this->uid = $this->uidGenerator->generateUid('nickserv');
         $this->introduce($event->connection, $event->serverSid);
     }
 
@@ -64,14 +68,14 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
             $this->nickservNick,
             $this->nickservIdent,
             $this->servicesVhost,
-            $this->nickservUid,
+            $this->uid,
             $this->nickservRealname,
         );
 
         $connection->writeLine($line);
 
         $this->logger->info('NickServ introduced to network.', [
-            'uid' => $this->nickservUid,
+            'uid' => $this->uid,
             'nick' => $this->nickservNick,
             'host' => $this->servicesVhost,
         ]);
@@ -79,12 +83,12 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
 
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
-        $this->sendNoticePort->sendNotice($this->getUid(), $targetUidOrNick, $message);
+        $this->sendNoticePort->sendNotice($this->uid, $targetUidOrNick, $message);
     }
 
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
     {
-        $this->sendNoticePort->sendMessage($this->getUid(), $targetUidOrNick, $message, $messageType);
+        $this->sendNoticePort->sendMessage($this->uid, $targetUidOrNick, $message, $messageType);
     }
 
     public function setUserAccount(string $targetUid, string $accountName): void
@@ -95,9 +99,6 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
         }
         $module->getServiceActions()->setUserAccount($this->getServerSid(), $targetUid, $accountName);
 
-        // Only sync local state for +r (login). For logout (-r), the caller (e.g. NickProtectionService)
-        // or NetworkEventEnricher has already dispatched UserModeChangedEvent('-r').
-        // Dispatching it again would trigger duplicate vhost clears.
         if ('0' !== $accountName) {
             $this->localUserModeSync->apply(new Uid($targetUid), '+r');
         }
@@ -165,9 +166,6 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
         return $this->connectionHolder->getServerSid() ?? '';
     }
 
-    /**
-     * Sends a line to the connection and logs it. Use for protocol commands (SVSNICK, KILL, etc.).
-     */
     private function write(string $line): void
     {
         if (!$this->writeToConnection($line)) {
@@ -179,9 +177,6 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
         $this->logger->debug('> ' . $line);
     }
 
-    /**
-     * Sends a line to the connection without logging. Use for high-volume or user-facing output (e.g. NOTICEs).
-     */
     private function writeToConnection(string $line): bool
     {
         if (!$this->connectionHolder->isConnected()) {
@@ -200,7 +195,7 @@ final readonly class NickServBot implements NickServNotifierInterface, ServiceNi
 
     public function getUid(): string
     {
-        return $this->nickservUid;
+        return $this->uid;
     }
 
     public function getServiceKey(): string

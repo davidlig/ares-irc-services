@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
@@ -21,7 +22,7 @@ final readonly class ChanServEntryMsgSubscriber implements EventSubscriberInterf
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChanServNotifierInterface $notifier,
-        private string $chanservUid,
+        private ServiceUidRegistry $uidRegistry,
     ) {
     }
 
@@ -35,7 +36,7 @@ final readonly class ChanServEntryMsgSubscriber implements EventSubscriberInterf
     public function onUserJoinedChannel(UserJoinedChannelEvent $event): void
     {
         $uid = $event->uid->value;
-        if ($this->chanservUid === $uid) {
+        if ($this->uidRegistry->getUid('chanserv') === $uid) {
             return;
         }
 

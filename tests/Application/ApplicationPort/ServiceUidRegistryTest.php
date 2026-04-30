@@ -141,4 +141,41 @@ final class ServiceUidRegistryTest extends TestCase
         self::assertSame('002AAAAAA', $registry->getUidByNickname('NickServ'));
         self::assertSame('002BBBBBB', $registry->getUidByNickname('ChanServ'));
     }
+
+    #[Test]
+    public function getUidByUidReturnsUidWhenFound(): void
+    {
+        $provider = new class('nickserv', 'NickServ', '002AAAAAA') implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        $registry = ServiceUidRegistry::fromIterable([$provider]);
+
+        self::assertSame('002AAAAAA', $registry->getUidByUid('002AAAAAA'));
+    }
+
+    #[Test]
+    public function getUidByUidReturnsNullForUnknownUid(): void
+    {
+        $registry = ServiceUidRegistry::fromIterable([]);
+
+        self::assertNull($registry->getUidByUid('99999999'));
+    }
 }

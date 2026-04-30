@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\MemoServ\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidProviderInterface;
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
@@ -79,9 +81,35 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
             $this->notifier,
             $this->userLookup,
             $this->translator,
-            self::MEMOSERV_UID,
+            $this->createUidRegistry(),
             'en',
         );
+    }
+
+    private function createUidRegistry(): ServiceUidRegistry
+    {
+        $provider = new class('memoserv', 'MemoServ', self::MEMOSERV_UID) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
     }
 
     #[Test]

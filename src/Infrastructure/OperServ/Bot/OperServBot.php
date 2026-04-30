@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\OperServ\Bot;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
@@ -16,18 +17,20 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final readonly class OperServBot implements OperServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
+final class OperServBot implements OperServNotifierInterface, ServiceNicknameProviderInterface, ServiceUidProviderInterface, EventSubscriberInterface
 {
+    private string $uid = '';
+
     public function __construct(
-        private ActiveConnectionHolder $connectionHolder,
-        private NetworkUserLookupPort $userLookup,
-        private SendNoticePort $sendNoticePort,
-        private string $servicesVhost,
-        private string $operservUid,
-        private string $operservNick = 'OperServ',
-        private string $operservIdent = 'OperServ',
-        private string $operservRealname = 'Network Operations Services',
-        private LoggerInterface $logger = new NullLogger(),
+        private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly NetworkUserLookupPort $userLookup,
+        private readonly SendNoticePort $sendNoticePort,
+        private readonly ServiceUidGeneratorInterface $uidGenerator,
+        private readonly string $servicesVhost,
+        private readonly string $operservNick = 'OperServ',
+        private readonly string $operservIdent = 'OperServ',
+        private readonly string $operservRealname = 'Network Operations Services',
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -40,6 +43,7 @@ final readonly class OperServBot implements OperServNotifierInterface, ServiceNi
 
     public function onBurstComplete(NetworkBurstCompleteEvent $event): void
     {
+        $this->uid = $this->uidGenerator->generateUid('operserv');
         $this->introduce($event->connection, $event->serverSid);
     }
 
@@ -55,26 +59,26 @@ final readonly class OperServBot implements OperServNotifierInterface, ServiceNi
             $this->operservNick,
             $this->operservIdent,
             $this->servicesVhost,
-            $this->operservUid,
+            $this->uid,
             $this->operservRealname,
         );
 
         $connection->writeLine($line);
 
         $this->logger->info('OperServ introduced to network.', [
-            'uid' => $this->operservUid,
+            'uid' => $this->uid,
             'nick' => $this->operservNick,
         ]);
     }
 
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
-        $this->sendNoticePort->sendNotice($this->getUid(), $targetUidOrNick, $message);
+        $this->sendNoticePort->sendNotice($this->uid, $targetUidOrNick, $message);
     }
 
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
     {
-        $this->sendNoticePort->sendMessage($this->getUid(), $targetUidOrNick, $message, $messageType);
+        $this->sendNoticePort->sendMessage($this->uid, $targetUidOrNick, $message, $messageType);
     }
 
     public function getNick(): string
@@ -84,7 +88,7 @@ final readonly class OperServBot implements OperServNotifierInterface, ServiceNi
 
     public function getUid(): string
     {
-        return $this->operservUid;
+        return $this->uid;
     }
 
     public function getServiceKey(): string

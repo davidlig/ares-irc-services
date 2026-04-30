@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
+use App\Application\ApplicationPort\ServiceUidProviderInterface;
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendCtcpPort;
 use App\Application\Port\SenderView;
@@ -71,6 +73,63 @@ final class CtcpHandlerTest extends TestCase
             $this->createTranslator(),
             $this->createLanguageResolver(),
         );
+    }
+
+    private function createUidRegistry(string $nickservUid = '002AAAAAA'): ServiceUidRegistry
+    {
+        $provider = new class('nickserv', 'NickServ', $nickservUid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
+    }
+
+    private function createEmptyUidRegistry(): ServiceUidRegistry
+    {
+        return ServiceUidRegistry::fromIterable([]);
+    }
+
+    private function createUidRegistryWithUid(string $uid): ServiceUidRegistry
+    {
+        $provider = new class('nickserv', 'NickServ', $uid) implements ServiceUidProviderInterface {
+            public function __construct(private string $key, private string $nick, private string $uid)
+            {
+            }
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+
+            public function getUid(): string
+            {
+                return $this->uid;
+            }
+        };
+
+        return ServiceUidRegistry::fromIterable([$provider]);
     }
 
     #[Test]
@@ -389,13 +448,10 @@ final class CtcpHandlerTest extends TestCase
         $sendNotice = $this->createMock(SendNoticePort::class);
         $sendNotice->expects(self::never())->method('sendMessage');
 
-        $handler = new CtcpHandler(
-            $sendCtcp,
-            $sendNotice,
-            $this->versionResponder,
-            $this->createStub(NetworkUserLookupPort::class),
-            $this->createLanguageResolver(),
-            ['nickserv' => '002AAAAAA'],
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+            uidRegistry: $this->createEmptyUidRegistry(),
         );
 
         $handler->onMessage($event);
@@ -431,13 +487,13 @@ final class CtcpHandlerTest extends TestCase
             ->method('sendMessage')
             ->with($serviceUid, $senderUid, self::anything(), 'NOTICE');
 
-        $handler = new CtcpHandler(
-            $sendCtcp,
-            $sendNotice,
-            $this->versionResponder,
-            $userLookup,
-            $this->createLanguageResolver(),
-            ['nickserv' => $serviceUid],
+        $uidRegistry = $this->createUidRegistryWithUid($serviceUid);
+
+        $handler = $this->createHandler(
+            sendCtcp: $sendCtcp,
+            sendNotice: $sendNotice,
+            userLookup: $userLookup,
+            uidRegistry: $uidRegistry,
         );
 
         $handler->onMessage($event);
@@ -448,6 +504,7 @@ final class CtcpHandlerTest extends TestCase
         ?SendCtcpPort $sendCtcp = null,
         ?SendNoticePort $sendNotice = null,
         ?NetworkUserLookupPort $userLookup = null,
+        ?ServiceUidRegistry $uidRegistry = null,
     ): CtcpHandler {
         return new CtcpHandler(
             $sendCtcp ?? $this->createStub(SendCtcpPort::class),
@@ -455,7 +512,7 @@ final class CtcpHandlerTest extends TestCase
             $this->versionResponder,
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $this->createLanguageResolver(),
-            ['nickserv' => '002AAAAAA'],
+            $uidRegistry ?? $this->createUidRegistry(),
         );
     }
 }

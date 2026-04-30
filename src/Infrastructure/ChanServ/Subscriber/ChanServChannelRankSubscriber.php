@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Event\ChannelSecureEnabledEvent;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
@@ -66,7 +67,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ChanServAccessHelper $accessHelper,
         private ChannelRankSyncPendingRegistry $syncPendingRegistry,
-        private string $chanservUid,
+        private ServiceUidRegistry $uidRegistry,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -399,7 +400,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
         foreach ($view->members as $member) {
             $uid = $member['uid'] ?? '';
-            if ('' === $uid || $this->chanservUid === $uid) {
+            if ('' === $uid || $this->uidRegistry->getUid('chanserv') === $uid) {
                 continue;
             }
 

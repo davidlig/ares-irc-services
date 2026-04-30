@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\MemoServ\Bot;
 
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
@@ -24,17 +25,26 @@ final class MemoServBotTest extends TestCase
 
     private ActiveConnectionHolder $connectionHolder;
 
+    private ServiceUidGeneratorInterface $uidGenerator;
+
     private MemoServBot $bot;
 
     protected function setUp(): void
     {
         $this->connectionHolder = new ActiveConnectionHolder();
+        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $this->uidGenerator->method('generateUid')->willReturn(self::MEMOSERV_UID);
 
         $this->bot = new MemoServBot(
             $this->connectionHolder,
+            $this->uidGenerator,
             self::HOSTNAME,
-            self::MEMOSERV_UID,
         );
+
+        $this->bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
     }
 
     #[Test]
@@ -123,7 +133,8 @@ final class MemoServBotTest extends TestCase
         $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
             $lines[] = $line;
         });
-        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturn('PRIVMSG 001U :Hi');
         $module = $this->createStub(ProtocolModuleInterface::class);
@@ -142,7 +153,8 @@ final class MemoServBotTest extends TestCase
         $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
             $lines[] = $line;
         });
-        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturnCallback(static fn (): string => 'NOTICE 001U :x');
         $module = $this->createStub(ProtocolModuleInterface::class);
@@ -160,7 +172,8 @@ final class MemoServBotTest extends TestCase
         $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
             $lines[] = $line;
         });
-        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $this->connectionHolder->onBurstComplete($event);
         $handler = $this->createMock(ProtocolHandlerInterface::class);
         $handler->expects(self::once())->method('formatMessage')
             ->with(self::callback(static fn ($msg): bool => 'NOTICE' === $msg->command));
@@ -188,10 +201,13 @@ final class MemoServBotTest extends TestCase
                 'nick' => 'MemoServ',
             ]);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::MEMOSERV_UID);
+
         $bot = new MemoServBot(
             $this->connectionHolder,
+            $uidGenerator,
             self::HOSTNAME,
-            self::MEMOSERV_UID,
             'MemoServ',
             'MemoServ',
             'Memo Service',

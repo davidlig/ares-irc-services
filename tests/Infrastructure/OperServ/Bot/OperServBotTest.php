@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Bot;
 
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
@@ -28,6 +29,8 @@ final class OperServBotTest extends TestCase
 
     private SendNoticePort $sendNoticePort;
 
+    private ServiceUidGeneratorInterface $uidGenerator;
+
     private LoggerInterface $logger;
 
     private string $servicesVhost = 'services.example.com';
@@ -45,6 +48,8 @@ final class OperServBotTest extends TestCase
         $this->connectionHolder = new ActiveConnectionHolder();
         $this->userLookup = $this->createStub(NetworkUserLookupPort::class);
         $this->sendNoticePort = $this->createStub(SendNoticePort::class);
+        $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $this->uidGenerator->method('generateUid')->willReturn($this->operservUid);
         $this->logger = $this->createStub(LoggerInterface::class);
     }
 
@@ -54,8 +59,8 @@ final class OperServBotTest extends TestCase
             $this->connectionHolder,
             $this->userLookup,
             $this->sendNoticePort,
+            $this->uidGenerator,
             $this->servicesVhost,
-            $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
             $this->operservRealname,
@@ -109,12 +114,15 @@ final class OperServBotTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn($this->operservUid);
+
         $bot = new OperServBot(
             $this->connectionHolder,
             $this->userLookup,
             $this->sendNoticePort,
+            $uidGenerator,
             $this->servicesVhost,
-            $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
             $this->operservRealname,
@@ -137,12 +145,15 @@ final class OperServBotTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('info');
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn($this->operservUid);
+
         $bot = new OperServBot(
             $this->connectionHolder,
             $this->userLookup,
             $this->sendNoticePort,
+            $uidGenerator,
             $this->servicesVhost,
-            $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
             $this->operservRealname,
@@ -166,18 +177,25 @@ final class OperServBotTest extends TestCase
             ->method('sendNotice')
             ->with($this->operservUid, $targetUidOrNick, $message);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn($this->operservUid);
+
         $bot = new OperServBot(
             $this->connectionHolder,
             $this->userLookup,
             $sendNoticePort,
+            $uidGenerator,
             $this->servicesVhost,
-            $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
             $this->operservRealname,
             $this->logger,
         );
 
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
         $bot->sendNotice($targetUidOrNick, $message);
     }
 
@@ -194,18 +212,25 @@ final class OperServBotTest extends TestCase
             ->method('sendMessage')
             ->with($this->operservUid, $targetUidOrNick, $message, $messageType);
 
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn($this->operservUid);
+
         $bot = new OperServBot(
             $this->connectionHolder,
             $this->userLookup,
             $sendNoticePort,
+            $uidGenerator,
             $this->servicesVhost,
-            $this->operservUid,
             $this->operservNick,
             $this->operservIdent,
             $this->operservRealname,
             $this->logger,
         );
 
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
         $bot->sendMessage($targetUidOrNick, $message, $messageType);
     }
 
@@ -222,6 +247,10 @@ final class OperServBotTest extends TestCase
     {
         $bot = $this->createBot();
 
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
         self::assertSame($this->operservUid, $bot->getUid());
     }
 

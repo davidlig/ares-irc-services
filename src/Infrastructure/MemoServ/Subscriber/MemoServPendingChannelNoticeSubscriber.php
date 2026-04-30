@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\MemoServ\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
@@ -31,7 +32,7 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
         private MemoServNotifierInterface $notifier,
         private NetworkUserLookupPort $userLookup,
         private TranslatorInterface $translator,
-        private string $memoservUid,
+        private ServiceUidRegistry $uidRegistry,
         private string $defaultLanguage = 'en',
     ) {
     }
@@ -45,7 +46,7 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
 
     public function onUserJoinedChannel(UserJoinedChannelEvent $event): void
     {
-        if ($event->uid->value === $this->memoservUid) {
+        if ($event->uid->value === $this->uidRegistry->getUid('memoserv')) {
             return;
         }
 

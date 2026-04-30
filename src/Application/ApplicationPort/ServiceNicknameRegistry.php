@@ -10,7 +10,7 @@ namespace App\Application\ApplicationPort;
  *
  * Services are registered via Symfony tagged services and keyed by their service key.
  */
-final readonly class ServiceNicknameRegistry
+class ServiceNicknameRegistry
 {
     /** @var array<string, string> Map of service key => nickname (e.g., 'nickserv' => 'NickServ') */
     private array $nicknames;

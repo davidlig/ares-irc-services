@@ -40,8 +40,6 @@ parameters:
     nickserv.nick:     '%env(NICKSERV_NICK)%'
     nickserv.ident:    '%env(NICKSERV_IDENT)%'
     nickserv.realname: '%env(NICKSERV_REALNAME)%'
-    # UID = SID (3 chars) + suffix — must be unique on the network (see IRC_SERVER_SID)
-    nickserv.uid:      '%env(NICKSERV_UID)%'
     # Minimum seconds between RESEND requests per nick (default 600 = 10 minutes)
     nickserv.resend_min_interval_default: 600
     nickserv.resend_min_interval: '%env(int:default:nickserv.resend_min_interval_default:NICKSERV_RESEND_MIN_INTERVAL)%'
@@ -81,7 +79,6 @@ parameters:
     chanserv.nick:     '%env(CHANSERV_NICK)%'
     chanserv.ident:    '%env(CHANSERV_IDENT)%'
     chanserv.realname: '%env(CHANSERV_REALNAME)%'
-    chanserv.uid:      '%env(CHANSERV_UID)%'
     # Maximum registered channels per nick (default: 3)
     chanserv.max_channels_per_nick_default: 3
     chanserv.max_channels_per_nick: '%env(int:default:chanserv.max_channels_per_nick_default:CHANSERV_MAX_CHANNELS_PER_NICK)%'
@@ -104,7 +101,6 @@ parameters:
     memoserv.ident: '%env(string:default:memoserv.ident_default:MEMOSERV_IDENT)%'
     memoserv.realname_default: 'Memo Services'
     memoserv.realname: '%env(string:default:memoserv.realname_default:MEMOSERV_REALNAME)%'
-    memoserv.uid: '%env(MEMOSERV_UID)%'
     memoserv.send_min_interval_seconds_default: 30
     memoserv.send_min_interval_seconds: '%env(int:default:memoserv.send_min_interval_seconds_default:MEMOSERV_SEND_MIN_INTERVAL)%'
     memoserv.max_memos_per_nick_default: 50
@@ -117,7 +113,6 @@ parameters:
     memoserv.ignore_list_limit_channel: '%env(int:default:memoserv.ignore_list_limit_channel_default:MEMOSERV_IGNORE_LIST_LIMIT_CHANNEL)%'
 
     # OperServ pseudo-client
-    operserv.uid: '%env(OPERSERV_UID)%'
     operserv.nick_default: 'OperServ'
     operserv.nick: '%env(string:default:operserv.nick_default:OPERSERV_NICK)%'
     operserv.ident_default: 'OperServ'
@@ -180,6 +175,11 @@ services:
         factory: ['App\Application\ApplicationPort\ServiceUidRegistry', 'fromIterable']
         arguments: [!tagged_iterator app.service_uid_provider]
 
+    # --- Service UID Generator (auto-generates UIDs on burst) --------------------
+
+    App\Application\ApplicationPort\ServiceUidGeneratorInterface:
+        class: App\Application\ApplicationPort\ServiceUidGenerator
+
     # --- Application services — inject the irc Monolog channel ---------------
 
     App\Application\IRC\IRCClientFactoryInterface: '@App\Application\IRC\IRCClientFactory'
@@ -212,12 +212,6 @@ services:
             $defaultDescription: '%irc.description%'
             $defaultProtocol:    '%irc.protocol%'
             $defaultUseTls:      '%irc.use_tls%'
-            $serverSid:          '%irc.server_sid%'
-            $serviceUids:
-                nickserv: '%nickserv.uid%'
-                chanserv: '%chanserv.uid%'
-                memoserv: '%memoserv.uid%'
-                operserv: '%operserv.uid%'
 
     # --- Protocol modules (one per IRCd type: Unreal, InspIRCd, etc.) ---
 
@@ -415,12 +409,12 @@ services:
 
     App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
         arguments:
-            $chanservUid: '%chanserv.uid%'
+            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
         arguments:
-            $chanservUid: '%chanserv.uid%'
+            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
 
     App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber:
         arguments:
@@ -498,11 +492,7 @@ services:
             $versionResponder: '@App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
-            $serviceUidMap:
-                nickserv: '%nickserv.uid%'
-                chanserv: '%chanserv.uid%'
-                memoserv: '%memoserv.uid%'
-                operserv: '%operserv.uid%'
+            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
@@ -623,8 +613,8 @@ services:
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
             $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
+            $uidGenerator: '@App\Application\ApplicationPort\ServiceUidGeneratorInterface'
             $servicesVhost:   '%services.vhost%'
-            $nickservUid:        '%nickserv.uid%'
             $nickservNick:       '%nickserv.nick%'
             $nickservIdent:      '%nickserv.ident%'
             $nickservRealname:   '%nickserv.realname%'
@@ -638,8 +628,8 @@ services:
 
     App\Infrastructure\ChanServ\Bot\ChanServBot:
         arguments:
+            $uidGenerator: '@App\Application\ApplicationPort\ServiceUidGeneratorInterface'
             $servicesVhost:   '%services.vhost%'
-            $chanservUid:        '%chanserv.uid%'
             $chanservNick:      '%chanserv.nick%'
             $chanservIdent:     '%chanserv.ident%'
             $chanservRealname:  '%chanserv.realname%'
@@ -656,8 +646,8 @@ services:
 
     App\Infrastructure\MemoServ\Bot\MemoServBot:
         arguments:
+            $uidGenerator: '@App\Application\ApplicationPort\ServiceUidGeneratorInterface'
             $servicesVhost: '%services.vhost%'
-            $memoservUid: '%memoserv.uid%'
             $memoservNick: '%memoserv.nick%'
             $memoservIdent: '%memoserv.ident%'
             $memoservRealname: '%memoserv.realname%'
@@ -977,7 +967,7 @@ services:
 
     App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber:
         arguments:
-            $memoservUid: '%memoserv.uid%'
+            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
             $defaultLanguage: '%services.default_language%'
 
     App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber:
@@ -1013,6 +1003,7 @@ services:
         arguments:
             $operIrcopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
+            $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
         tags: ['kernel.event_subscriber']
 
     # --- NickServ Command Registry — auto-collects all tagged commands ----------
@@ -1431,6 +1422,9 @@ services:
     App\Domain\OperServ\Repository\GlineRepositoryInterface:
         class: App\Infrastructure\OperServ\Doctrine\GlineDoctrineRepository
 
+    App\Domain\OperServ\Repository\MotdRepositoryInterface:
+        class: App\Infrastructure\OperServ\Doctrine\MotdDoctrineRepository
+
     # --- OperServ Application ---------------------------------------------------
 
     App\Application\OperServ\RootUserRegistry:
@@ -1472,6 +1466,11 @@ services:
     App\Application\OperServ\Command\Handler\HelpCommand:
         tags: ['operserv.command']
 
+    App\Application\OperServ\Command\Handler\MotdCommand:
+        arguments:
+            $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
+        tags: ['operserv.command']
+
     # --- OperServ Infrastructure -------------------------------------------------
 
     App\Infrastructure\IRC\ServiceBridge\OperServSendNoticeAdapter:
@@ -1479,8 +1478,8 @@ services:
 
     App\Infrastructure\OperServ\Bot\OperServBot:
         arguments:
+            $uidGenerator: '@App\Application\ApplicationPort\ServiceUidGeneratorInterface'
             $servicesVhost: '%services.vhost%'
-            $operservUid: '%operserv.uid%'
             $operservNick: '%operserv.nick%'
             $operservIdent: '%operserv.ident%'
             $operservRealname: '%operserv.realname%'
@@ -1495,6 +1494,18 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
+
+    App\Infrastructure\OperServ\Subscriber\MotdOnConnectSubscriber:
+        arguments:
+            $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
+            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $pseudoUidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
+            $userLookup: '@App\Application\Port\NetworkUserLookupPort'
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $sendNoticePort: '@App\Application\Port\SendNoticePort'
+            $logger: '@monolog.logger.irc'
+        tags: ['kernel.event_subscriber']
 
     App\Infrastructure\OperServ\Subscriber\OperRoleModesDeidentifiedSubscriber:
         arguments:
@@ -1636,7 +1647,7 @@ services:
             $channelLookup: '@App\Application\Port\ChannelLookupPort'
             $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
             $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
-            $chanservUid: '%chanserv.uid%'
+            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
             $logger: '@monolog.logger.ircops'
         tags: ['kernel.event_subscriber']
 

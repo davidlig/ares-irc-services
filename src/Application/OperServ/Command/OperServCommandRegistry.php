@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command;
 
-final readonly class OperServCommandRegistry
+class OperServCommandRegistry
 {
     /** @var array<string, OperServCommandInterface> */
     private array $map;

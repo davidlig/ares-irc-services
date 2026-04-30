@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Subscriber;
 
+use App\Application\ApplicationPort\ServiceUidProviderInterface;
+use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
@@ -700,8 +702,32 @@ final class DebugChannelJoinSubscriberTest extends TestCase
         ?ChannelLookupPort $channelLookup = null,
         ?ChannelServiceActionsPort $channelServiceActions = null,
         ?ActiveChannelModeSupportProviderInterface $modeSupportProvider = null,
-        string $chanservUid = '0A0BBBBBB',
+        ?ServiceUidRegistry $uidRegistry = null,
     ): DebugChannelJoinSubscriber {
+        if (null === $uidRegistry) {
+            $provider = new class('chanserv', 'ChanServ', '0A0BBBBBB') implements ServiceUidProviderInterface {
+                public function __construct(private string $key, private string $nick, private string $uid)
+                {
+                }
+
+                public function getServiceKey(): string
+                {
+                    return $this->key;
+                }
+
+                public function getNickname(): string
+                {
+                    return $this->nick;
+                }
+
+                public function getUid(): string
+                {
+                    return $this->uid;
+                }
+            };
+            $uidRegistry = ServiceUidRegistry::fromIterable([$provider]);
+        }
+
         return new DebugChannelJoinSubscriber(
             debugNotifiers: $debugNotifiers ?? [],
             debugChannel: $debugChannel,
@@ -709,7 +735,7 @@ final class DebugChannelJoinSubscriberTest extends TestCase
             channelLookup: $channelLookup ?? $this->createStub(ChannelLookupPort::class),
             channelServiceActions: $channelServiceActions ?? $this->createStub(ChannelServiceActionsPort::class),
             modeSupportProvider: $modeSupportProvider ?? $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            chanservUid: $chanservUid,
+            uidRegistry: $uidRegistry,
         );
     }
 }

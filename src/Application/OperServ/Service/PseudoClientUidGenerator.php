@@ -8,7 +8,7 @@ use App\Application\Port\ActiveConnectionHolderInterface;
 
 use const STR_PAD_LEFT;
 
-final class PseudoClientUidGenerator
+class PseudoClientUidGenerator
 {
     private int $counter = 1;
 

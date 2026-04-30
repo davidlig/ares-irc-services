@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\MemoServ\Subscriber;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
@@ -17,6 +18,8 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
+use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
@@ -73,11 +76,19 @@ final class MemoServCommandListenerTest extends TestCase
 
     protected function setUp(): void
     {
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn(self::MEMOSERV_UID);
+
         $this->memoServBot = new MemoServBot(
             new ActiveConnectionHolder(),
+            $uidGenerator,
             'services.example.com',
-            self::MEMOSERV_UID,
         );
+
+        $this->memoServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
 
         $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->memoServNotifier = $this->createMock(MemoServNotifierInterface::class);
