@@ -316,6 +316,9 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
+        $channel->touchLastUsed();
+        $this->channelRepository->save($channel);
+
         $this->syncRanksForChannel($channel);
     }
 

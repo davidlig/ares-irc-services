@@ -2491,6 +2491,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
+        $channel->expects(self::once())->method('touchLastUsed');
         $channel->method('isSecure')->willReturn(true);
 
         $coreChannel = new \App\Domain\IRC\Network\Channel(new ChannelName('#test'));
@@ -2518,6 +2519,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
+        $this->channelRepository->expects(self::once())->method('save')->with($channel);
         $this->channelLookup = $this->createMock(ChannelLookupPort::class);
         $this->channelLookup->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($view);
         $this->modeSupportProvider = $this->createMock(ActiveChannelModeSupportProviderInterface::class);
