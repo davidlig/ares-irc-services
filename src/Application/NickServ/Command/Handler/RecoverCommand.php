@@ -70,7 +70,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
 
     public function getOrder(): int
     {
-        return 5;
+        return 7;
     }
 
     public function getShortDescKey(): string

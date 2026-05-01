@@ -60,7 +60,7 @@ final readonly class InfoCommand implements NickServCommandInterface
 
     public function getOrder(): int
     {
-        return 6;
+        return 5;
     }
 
     public function getShortDescKey(): string

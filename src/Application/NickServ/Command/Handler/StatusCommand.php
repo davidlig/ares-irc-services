@@ -56,7 +56,7 @@ final readonly class StatusCommand implements NickServCommandInterface
 
     public function getOrder(): int
     {
-        return 5;
+        return 6;
     }
 
     public function getShortDescKey(): string
