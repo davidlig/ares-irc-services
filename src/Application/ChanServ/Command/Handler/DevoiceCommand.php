@@ -54,7 +54,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
 
     public function getOrder(): int
     {
-        return 23;
+        return 25;
     }
 
     public function getShortDescKey(): string

@@ -53,7 +53,7 @@ final readonly class HalfopCommand implements ChanServCommandInterface
 
     public function getOrder(): int
     {
-        return 25;
+        return 22;
     }
 
     public function getShortDescKey(): string

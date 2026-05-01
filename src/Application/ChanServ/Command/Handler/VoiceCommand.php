@@ -55,7 +55,7 @@ final readonly class VoiceCommand implements ChanServCommandInterface
 
     public function getOrder(): int
     {
-        return 22;
+        return 24;
     }
 
     public function getShortDescKey(): string

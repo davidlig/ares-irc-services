@@ -54,7 +54,7 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
 
     public function getOrder(): int
     {
-        return 26;
+        return 23;
     }
 
     public function getShortDescKey(): string
