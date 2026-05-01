@@ -169,7 +169,7 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     {
         $ts = time();
         $line = sprintf(
-            ':%s UID %s %d %s %s %s %s %s 0.0.0.0 %d +B :%s',
+            ':%s UID %s %d %s %s %s %s %s 0.0.0.0 %d +oBIkNR :%s',
             $serverSid,
             $uid,
             $ts,

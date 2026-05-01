@@ -283,7 +283,7 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
         $actions->introducePseudoClient('001', 'GlobalBot', 'global', 'services.red', '001Z00001', 'Global Message Bot');
 
         self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:001 UID GlobalBot 1 \d+ global services\.red 001Z00001 0 \+B services\.red \* \* \* :Global Message Bot$/', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:001 UID GlobalBot 1 \d+ global services\.red 001Z00001 0 \+BDIopqR services\.red \* \* \* :Global Message Bot$/', $this->written[0]);
     }
 
     #[Test]
@@ -294,7 +294,7 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
         $actions->introducePseudoClient('002', 'Announce', 'announce', 'irc.example.net', '002Z00005', 'Network Announcements');
 
         self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:002 UID Announce 1 \d+ announce irc\.example\.net 002Z00005 0 \+B irc\.example\.net \* \* \* :Network Announcements$/', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:002 UID Announce 1 \d+ announce irc\.example\.net 002Z00005 0 \+BDIopqR irc\.example\.net \* \* \* :Network Announcements$/', $this->written[0]);
     }
 
     #[Test]

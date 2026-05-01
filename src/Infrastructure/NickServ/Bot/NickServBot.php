@@ -70,6 +70,7 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
             $this->servicesVhost,
             $this->uid,
             $this->nickservRealname,
+            $this->getServiceKey(),
         );
 
         $connection->writeLine($line);

@@ -98,7 +98,7 @@ class SocketConnection implements ConnectionInterface
             throw new RuntimeException('Cannot write: connection is not open.');
         }
 
-        fwrite($this->socket, $data . "\r\n");
+        @fwrite($this->socket, $data . "\r\n");
     }
 
     public function readLine(): ?string

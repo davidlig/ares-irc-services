@@ -80,6 +80,7 @@ final class NickServBotTest extends TestCase
             self::HOSTNAME,
             self::NICKSERV_UID,
             'Nickname Registration Services',
+            'nickserv',
         )->willReturn($introLine);
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getIntroductionFormatter')->willReturn($formatter);

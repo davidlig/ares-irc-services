@@ -81,6 +81,7 @@ final class ChanServBotTest extends TestCase
             self::HOSTNAME,
             self::CHANSERV_UID,
             'Channel Registration Services',
+            'chanserv',
         )->willReturn($introLine);
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getIntroductionFormatter')->willReturn($formatter);

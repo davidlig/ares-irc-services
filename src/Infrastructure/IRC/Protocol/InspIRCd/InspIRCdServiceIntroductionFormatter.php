@@ -11,11 +11,15 @@ use function sprintf;
 /**
  * InspIRCd SpanTree: introduce a service pseudo-client with a UID line.
  * Format (1206+): :serverSid UID uuid ts nick real_host displayed_host real_user displayed_user ip connect_time modes :realname.
- * Modes: o=oper, I=hidechans, k=servprotect (standard service pseudo-client modes).
  */
 final readonly class InspIRCdServiceIntroductionFormatter implements ServiceIntroductionFormatterInterface
 {
-    private const string SERVICE_UMODES = '+oIk';
+    private const array SERVICE_UMODES = [
+        'nickserv' => '+oBIkN',
+        'chanserv' => '+oBIkN',
+        'memoserv' => '+oBIkNR',
+        'operserv' => '+oBIkNR',
+    ];
 
     public function formatIntroduction(
         string $serverSid,
@@ -24,8 +28,10 @@ final readonly class InspIRCdServiceIntroductionFormatter implements ServiceIntr
         string $host,
         string $uid,
         string $realname,
+        string $serviceName,
     ): string {
         $ts = time();
+        $umodes = self::SERVICE_UMODES[$serviceName] ?? '+oIk';
 
         return sprintf(
             ':%s UID %s %d %s %s %s %s %s 0.0.0.0 %d %s :%s',
@@ -38,7 +44,7 @@ final readonly class InspIRCdServiceIntroductionFormatter implements ServiceIntr
             $ident,
             $ident,
             $ts,
-            self::SERVICE_UMODES,
+            $umodes,
             $realname,
         );
     }

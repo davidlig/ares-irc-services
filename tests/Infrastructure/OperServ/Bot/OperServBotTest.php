@@ -103,6 +103,7 @@ final class OperServBotTest extends TestCase
                 $this->servicesVhost,
                 $this->operservUid,
                 $this->operservRealname,
+                'operserv',
             )
             ->willReturn($expectedLine);
 

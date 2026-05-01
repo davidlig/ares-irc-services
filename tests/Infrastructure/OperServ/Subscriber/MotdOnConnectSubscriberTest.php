@@ -6,11 +6,13 @@ namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
 use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Event\UserJoinedNetworkAppEvent;
+use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
+use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UserJoinedNetworkDTO;
@@ -48,6 +50,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         ?NetworkUserLookupPort $l = null,
         ?RegisteredNickRepositoryInterface $n = null,
         ?SendNoticePort $s = null,
+        ?NickForceService $f = null,
     ): MotdOnConnectSubscriber {
         return new MotdOnConnectSubscriber(
             $r ?? $this->createStub(MotdRepositoryInterface::class),
@@ -57,6 +60,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
             $l ?? $this->createStub(NetworkUserLookupPort::class),
             $n ?? $this->createStub(RegisteredNickRepositoryInterface::class),
             $s ?? $this->createStub(SendNoticePort::class),
+            $f ?? $this->createStub(NickForceService::class),
         );
     }
 
@@ -325,38 +329,48 @@ final class MotdOnConnectSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function skipWhenNickConnected(): void
+    public function renameConnectedUserAndIntroducePseudoClient(): void
     {
-        $m = Motd::create('Hi', 'test!bot@h.com', 'PRIVMSG');
+        $m = Motd::create('Hi', 'test!bot@h.example', 'PRIVMSG');
         $r = $this->createStub(MotdRepositoryInterface::class);
+        $r->method('findAll')->willReturn([$m]);
         $r->method('findActive')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
         $u->method('getUidByNickname')->willReturn(null);
 
-        $l = $this->createStub(NetworkUserLookupPort::class);
-        $l->method('findByNick')->willReturn(
-            new \App\Application\Port\SenderView(
-                uid: 'X',
-                nick: 'test',
-                ident: 'x',
-                hostname: 'x',
-                cloakedHost: 'x',
-                ipBase64: 'dA==',
-                isIdentified: false,
-                isOper: false,
-                serverSid: '001',
-            )
+        $existingUser = new SenderView(
+            uid: 'X',
+            nick: 'test',
+            ident: 'x',
+            hostname: 'x',
+            cloakedHost: 'x',
+            ipBase64: 'dA==',
+            isIdentified: false,
+            isOper: false,
+            serverSid: '001',
         );
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn($existingUser);
+
+        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $n->method('findByNick')->willReturn(null);
+
+        $f = $this->createMock(NickForceService::class);
+        $f->expects(self::once())->method('forceGuestNick')
+            ->with('X', null, 'motd-collision');
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
-        $sa->expects(self::never())->method('introducePseudoClient');
+        $sa->expects(self::once())->method('introducePseudoClient');
 
         $c = $this->createStub(ActiveConnectionHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($this->mod($sa));
         $c->method('getServerSid')->willReturn('0A0');
 
-        $x = $this->sub(r: $r, u: $u, c: $c, l: $l);
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturn('0A0Z00001');
+
+        $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, f: $f);
         $x->onSyncComplete();
     }
 

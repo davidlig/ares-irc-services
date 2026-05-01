@@ -61,6 +61,7 @@ final class OperServBot implements OperServNotifierInterface, ServiceNicknamePro
             $this->servicesVhost,
             $this->uid,
             $this->operservRealname,
+            $this->getServiceKey(),
         );
 
         $connection->writeLine($line);

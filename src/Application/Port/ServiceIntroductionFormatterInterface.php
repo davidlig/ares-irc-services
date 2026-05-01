@@ -24,5 +24,6 @@ interface ServiceIntroductionFormatterInterface
         string $host,
         string $uid,
         string $realname,
+        string $serviceName,
     ): string;
 }

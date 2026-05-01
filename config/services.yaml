@@ -1504,6 +1504,7 @@ services:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
             $sendNoticePort: '@App\Application\Port\SendNoticePort'
+            $nickForce: '@App\Application\NickServ\Service\NickForceService'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 

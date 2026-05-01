@@ -145,7 +145,7 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
     {
         $ts = time();
         $line = sprintf(
-            ':%s UID %s 1 %d %s %s %s 0 +B %s * * * :%s',
+            ':%s UID %s 1 %d %s %s %s 0 +BDIopqR %s * * * :%s',
             $serverSid,
             $nick,
             $ts,

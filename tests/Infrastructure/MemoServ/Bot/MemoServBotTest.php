@@ -69,6 +69,7 @@ final class MemoServBotTest extends TestCase
             self::HOSTNAME,
             self::MEMOSERV_UID,
             'Memo Service',
+            'memoserv',
         )->willReturn($introLine);
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getIntroductionFormatter')->willReturn($formatter);

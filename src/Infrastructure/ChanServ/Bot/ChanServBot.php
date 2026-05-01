@@ -75,6 +75,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
             $this->servicesVhost,
             $this->uid,
             $this->chanservRealname,
+            $this->getServiceKey(),
         );
 
         $connection->writeLine($line);

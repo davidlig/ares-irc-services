@@ -28,7 +28,8 @@ final class UnrealIRCdServiceIntroductionFormatterTest extends TestCase
             ident: 'services',
             host: 'services.test.local',
             uid: '001ABCD',
-            realname: 'Nickname Service'
+            realname: 'Nickname Service',
+            serviceName: 'nickserv',
         );
 
         self::assertStringStartsWith(':001 UID ', $line);
@@ -36,7 +37,7 @@ final class UnrealIRCdServiceIntroductionFormatterTest extends TestCase
         self::assertStringContainsString('services', $line);
         self::assertStringContainsString('services.test.local', $line);
         self::assertStringContainsString('001ABCD', $line);
-        self::assertStringContainsString('+Siod', $line);
+        self::assertStringContainsString('+dIopqS', $line);
         self::assertStringContainsString(':Nickname Service', $line);
     }
 
@@ -49,7 +50,8 @@ final class UnrealIRCdServiceIntroductionFormatterTest extends TestCase
             ident: 'services',
             host: 'services.test.local',
             uid: '002EFGH',
-            realname: 'Channel Service'
+            realname: 'Channel Service',
+            serviceName: 'chanserv',
         );
 
         self::assertMatchesRegularExpression('/:002 UID ChanServ 1 \d+/', $line);
@@ -64,11 +66,12 @@ final class UnrealIRCdServiceIntroductionFormatterTest extends TestCase
             ident: 'services',
             host: 'services.test.local',
             uid: '003IJKL',
-            realname: 'Memo Service'
+            realname: 'Memo Service',
+            serviceName: 'memoserv',
         );
 
         self::assertMatchesRegularExpression(
-            '/^:003 UID MemoServ 1 \d+ services services\.test\.local 003IJKL 0 \+Siod \* \* \* :Memo Service$/',
+            '/^:003 UID MemoServ 1 \d+ services services\.test\.local 003IJKL 0 \+dIopqRS \* \* \* :Memo Service$/',
             $line
         );
     }
@@ -82,7 +85,8 @@ final class UnrealIRCdServiceIntroductionFormatterTest extends TestCase
             ident: 'test',
             host: 'test.local',
             uid: '001TEST',
-            realname: 'Test Bot Service'
+            realname: 'Test Bot Service',
+            serviceName: 'nickserv',
         );
 
         self::assertStringEndsWith(':Test Bot Service', $line);

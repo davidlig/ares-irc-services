@@ -62,6 +62,7 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
             $this->servicesVhost,
             $this->uid,
             $this->memoservRealname,
+            $this->getServiceKey(),
         );
 
         $connection->writeLine($line);

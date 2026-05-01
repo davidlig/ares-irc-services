@@ -6,6 +6,7 @@ namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Event\UserJoinedNetworkAppEvent;
+use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
@@ -55,6 +56,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         private readonly NetworkUserLookupPort $userLookup,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly SendNoticePort $sendNoticePort,
+        private readonly NickForceService $nickForce,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -115,8 +117,15 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 continue;
             }
 
-            if (null !== $this->userLookup->findByNick($mask->nickname)) {
-                continue;
+            $existingUser = $this->userLookup->findByNick($mask->nickname);
+            if (null !== $existingUser) {
+                $this->nickForce->forceGuestNick($existingUser->uid, null, 'motd-collision');
+
+                $this->logger->info('MotdOnConnect: renamed colliding user for MOTD pseudo-client.', [
+                    'motd_id' => $motd->getId(),
+                    'nickname' => $mask->nickname,
+                    'uid' => $existingUser->uid,
+                ]);
             }
 
             if (null !== $this->nickRepository->findByNick($nickLower)) {
