@@ -263,7 +263,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Manage connect MOTD messages sent to users on connect."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args...]"
+  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args]"
   help:             "Manage Message Of The Day entries that are sent to users when they connect to the network.\n\n"
   unknown_sub:      "\x0304✗\x03 Unknown subcommand. Use: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
