@@ -457,7 +457,7 @@ final class DehalfopCommandTest extends TestCase
     }
 
     #[Test]
-    public function getOrderReturnsTwentySix(): void
+    public function getOrderReturnsTwentyThree(): void
     {
         $cmd = new DehalfopCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
@@ -469,7 +469,7 @@ final class DehalfopCommandTest extends TestCase
             ),
         );
 
-        self::assertSame(26, $cmd->getOrder());
+        self::assertSame(23, $cmd->getOrder());
     }
 
     #[Test]

@@ -706,7 +706,7 @@ final class RecoverCommandTest extends TestCase
     }
 
     #[Test]
-    public function getOrderReturnsFive(): void
+    public function getOrderReturnsSeven(): void
     {
         $cmd = new RecoverCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -718,7 +718,7 @@ final class RecoverCommandTest extends TestCase
             3600,
             0,
         );
-        self::assertSame(5, $cmd->getOrder());
+        self::assertSame(7, $cmd->getOrder());
     }
 
     #[Test]

@@ -278,7 +278,7 @@ final class InviteCommandTest extends TestCase
     }
 
     #[Test]
-    public function getOrderReturns24(): void
+    public function getOrderReturnsTen(): void
     {
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
@@ -286,7 +286,7 @@ final class InviteCommandTest extends TestCase
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
         $cmd = new InviteCommand($channelRepo, $accessHelper);
-        self::assertSame(24, $cmd->getOrder());
+        self::assertSame(10, $cmd->getOrder());
     }
 
     #[Test]

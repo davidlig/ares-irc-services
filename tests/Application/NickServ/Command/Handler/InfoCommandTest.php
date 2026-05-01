@@ -1160,7 +1160,7 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
-    public function getOrderReturnsSix(): void
+    public function getOrderReturnsFive(): void
     {
         $cmd = new InfoCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -1169,7 +1169,7 @@ final class InfoCommandTest extends TestCase
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(RegisteredChannelRepositoryInterface::class),
         );
-        self::assertSame(6, $cmd->getOrder());
+        self::assertSame(5, $cmd->getOrder());
     }
 
     #[Test]

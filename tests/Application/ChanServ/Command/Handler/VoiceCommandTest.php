@@ -477,7 +477,7 @@ final class VoiceCommandTest extends TestCase
     }
 
     #[Test]
-    public function getOrderReturnsTwentyTwo(): void
+    public function getOrderReturnsTwentyFour(): void
     {
         $cmd = new VoiceCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
@@ -488,7 +488,7 @@ final class VoiceCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
         );
-        self::assertSame(22, $cmd->getOrder());
+        self::assertSame(24, $cmd->getOrder());
     }
 
     #[Test]

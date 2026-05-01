@@ -376,7 +376,7 @@ final class DevoiceCommandTest extends TestCase
     }
 
     #[Test]
-    public function getOrderReturnsTwentyThree(): void
+    public function getOrderReturnsTwentyFive(): void
     {
         $cmd = new DevoiceCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
@@ -388,7 +388,7 @@ final class DevoiceCommandTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
         );
 
-        self::assertSame(23, $cmd->getOrder());
+        self::assertSame(25, $cmd->getOrder());
     }
 
     #[Test]

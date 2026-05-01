@@ -452,7 +452,7 @@ final class HalfopCommandTest extends TestCase
     }
 
     #[Test]
-    public function getOrderReturnsTwentyFive(): void
+    public function getOrderReturnsTwentyTwo(): void
     {
         $cmd = new HalfopCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
@@ -463,7 +463,7 @@ final class HalfopCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
         );
-        self::assertSame(25, $cmd->getOrder());
+        self::assertSame(22, $cmd->getOrder());
     }
 
     #[Test]

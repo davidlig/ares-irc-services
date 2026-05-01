@@ -355,13 +355,13 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
-    public function getOrderReturnsFive(): void
+    public function getOrderReturnsTwo(): void
     {
         $cmd = new InfoCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(RegisteredNickRepositoryInterface::class),
         );
-        self::assertSame(5, $cmd->getOrder());
+        self::assertSame(2, $cmd->getOrder());
     }
 
     #[Test]
