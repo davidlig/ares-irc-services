@@ -4,34 +4,22 @@ Use this skill when implementing new services, bots, or modifying Core/Services 
 
 ## Overview
 
-The codebase is split into **Core** (IRCd simulation) and **Services** (NickServ, ChanServ, MemoServ, etc.). They MUST remain fully decoupled.
+The codebase has **5 bounded contexts**: IRC (Core), NickServ, ChanServ, MemoServ, OperServ.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         SERVICES LAYER                              │
-│  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐                 │
-│  │   NickServ   │ │   ChanServ   │ │   MemoServ   │ ...             │
-│  │(Domain/Application)            │(Domain/Application)              │
-│  └──────┬───────┘ └──────┬───────┘ └──────┬───────┘                 │
-│         │                │                │                          │
-│         └────────────────┼────────────────┘                          │
+│                         SERVICES (4 contexts)                        │
+│  NickServ (reg/identify/suspend)    ChanServ (channels/access/akick)│
+│  MemoServ (memos/ignore)            OperServ (gline/kill/ircop)     │
 │                          │                                           │
 │                    ┌─────▼─────┐                                     │
-│                    │   PORTS   │ (Interfaces + DTOs)                 │
+│                    │   PORTS   │  Application/Port/ (28 interfaces)  │
 │                    └─────┬─────┘                                     │
 └──────────────────────────┼───────────────────────────────────────────┘
                            │
 ┌──────────────────────────┼───────────────────────────────────────────┐
-│                      CORE LAYER                                       │
-│                    ┌─────▼─────┐                                      │
-│                    │ Adapters  │ (Infrastructure/IRC)                 │
-│                    └─────┬─────┘                                      │
-│         ┌──────────────┬─┴──────────────┐                             │
-│         │              │                │                              │
-│    ┌────▼────┐    ┌────▼────┐    ┌────▼────┐                        │
-│    │Network │    │ Channel │    │ Protocol│                        │
-│    │ User   │    │ Repo    │    │ Handler │ ...                    │
-│    └────────┘    └─────────┘    └─────────┘                         │
+│                      CORE — IRC (1 context)                           │
+│  Connections, Users, Channels, Protocol parsing, Domain events       │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -39,200 +27,81 @@ The codebase is split into **Core** (IRCd simulation) and **Services** (NickServ
 
 **Location**: `Domain/IRC`, `Application/IRC`, `Infrastructure/IRC`
 
-**Responsibilities**:
-- Servers: link/unlink, SID management
-- Users: connect, quit, nick change, modes, account
-- Channels: join, part, modes, topics
-- Protocol: parse wire format, dispatch domain events
-
-**Rules**:
-- Core MUST NOT import anything from Services (`Domain\NickServ`, `Application\ChanServ`, etc.)
-- Core exposes **Ports** (interfaces) that Services use
+- Core MUST NOT import anything from Services
+- Core exposes **Ports** (interfaces in `Application/Port/`) that Services consume
 - Core dispatches domain events (`NetworkBurstCompleteEvent`, `UserQuitEvent`, etc.)
 
 ## Ports (Core ↔ Services Contract)
 
-**Location**: `Application/Port/`
+**Location**: `Application/Port/` — 28 interfaces + DTOs
 
-Ports are interfaces implemented by Core, consumed by Services:
+Key ports:
 
-| Port | Method | Purpose |
-|------|--------|---------|
-| `NetworkUserLookupPort` | `findByUid(string $uid): ?SenderView` | Resolve connected user |
-| `SendNoticePort` | `sendNotice(string $targetUid, string $message): void` | Send NOTICE |
-| `ChannelLookupPort` | `findByChannelName(string $name): ?ChannelView` | Channel info |
-| `ChannelServiceActionsPort` | `setChannelModes(...)`, `joinChannelAsService(...)` | ChanServ actions |
+| Port | Purpose |
+|------|---------|
+| `NetworkUserLookupPort` | Resolve connected user → `SenderView` |
+| `SendNoticePort` | Send NOTICE to user |
+| `ChannelLookupPort` | Get channel info → `ChannelView` |
+| `ChannelServiceActionsPort` | Set modes, join, topic for ChanServ |
+| `ProtocolModuleInterface` | Active IRCd protocol module |
+| `ServiceCommandListenerInterface` | Bot receives commands from Gateway |
 
-### DTOs Crossing Boundaries
-
-DTOs MUST be `readonly` and contain only data needed by Services:
-
+DTOs crossing the boundary must be `readonly`:
 ```php
-// GOOD: DTO in Application/Port/
-readonly class SenderView {
-    public function __construct(
-        public string $uid,
-        public string $nick,
-        public string $ident,
-        public string $hostname,
-        public string $cloakedHost,
-        public string $ipBase64,
-        public string $displayHost,
-    ) {}
-}
-
-// BAD: Passing Domain entity to Services
-function dispatch(NetworkUser $user)  // WRONG - Core entity in Service
-function dispatch(SenderView $sender)  // CORRECT - DTO crossing boundary
+// CORRECT: DTO
+function dispatch(SenderView $sender): void {}
+// WRONG: Core entity
+function dispatch(NetworkUser $user): void {}
 ```
 
-## Services (NickServ, ChanServ, MemoServ)
+## Services
 
-**Location**: `Domain/<ServiceName>/`, `Application/<ServiceName>/`, `Infrastructure/<ServiceName>/`
+Each service follows the same structure:
+```
+Domain/<Service>/          — Entities, Repository Interfaces, VOs, Events
+Application/<Service>/     — Service dispatcher, Commands, Handlers, Security
+Infrastructure/<Service>/  — Bot, Doctrine Repositories, Subscribers
+```
 
-**Domain Layer**:
-- Entities: `RegisteredNick`, `RegisteredChannel`, `Memo`, etc.
-- Repository Interfaces
-- Value Objects
-- Domain Events (service-specific, not Core events)
-- Domain Exceptions
-
-**Application Layer**:
-- `XxxService.php`: Main dispatcher (e.g., `NickServService::dispatch()`)
-- `Command/XxxContext.php`: Readonly context for handlers
-- `Command/XxxCommandRegistry.php`: Tagged service collector
-- `Command/XxxCommandInterface.php`: Command contract
-- `Command/XxxNotifierInterface.php`: Interface for Bot to implement
-- Command Handlers: One per command
-
-**Infrastructure Layer**:
-- `Bot/XxxBot.php`: Network entry point
-- Doctrine Repositories
-- Subscribers (listening to Core domain events if needed)
-
-### Forbidden Imports in Application Layer
+### Forbidden in Application Layer
 
 ```php
-// WRONG - Core entities in Service
+// WRONG
 use App\Domain\IRC\NetworkUser;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 
-// CORRECT - Use Ports and DTOs
+// CORRECT
 use App\Application\Port\SenderView;
 use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SendNoticePort;
 ```
 
-## Bots (modular)
+## Bots
 
 **Purpose**: Bridge between network and Service business logic.
 
-**Location**: `Infrastructure/<ServiceName>/Bot/XxxBot.php`
-
-### Bot Responsibilities (minimal)
-
-1. Implement `ServiceCommandListenerInterface` (receive commands from Gateway)
+### Bot responsibilities (minimal):
+1. Implement `ServiceCommandListenerInterface` (receive PRIVMSG from Gateway)
 2. On `NetworkBurstCompleteEvent`: introduce the pseudo-client
-3. Implement `XxxNotifierInterface` (send NOTICE/PRIVMSG via port)
+3. Implement `XxxNotifierInterface` (send NOTICE/PRIVMSG via ports)
 4. Delegate ALL business logic to the Service
 
-### Bot Template
+### Rules:
+- **Never** put business logic in Bots
+- **Never** subscribe to `MessageReceivedEvent` directly — use `ServiceCommandGateway`
+- **Never** import Core entities in Bot
 
-```php
-final readonly class XxxBot implements
-    XxxNotifierInterface,
-    ServiceCommandListenerInterface,
-    EventSubscriberInterface
-{
-    public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly SendNoticePort $sendNotice,
-        // ... other ports
-    ) {}
+## File Checklist for New Service
 
-    // ServiceCommandListenerInterface
-    public function getServiceName(): string { return 'XxxServ'; }
-    public function getServiceUid(): ?string { return $this->xxxServUid; }
-    public function onCommand(string $senderUid, string $text): void {
-        $sender = $this->userLookup->findByUid($senderUid);
-        if (null === $sender) { return; }
-        $this->xxxService->dispatch($text, $sender);  // Delegate to Service
-    }
+1. **Environment variables** (`.env`): `<SERVICE>_UID`, `<SERVICE>_NICK`
+2. **Parameters** (`config/services.yaml`): service nick, UID, ident, realname
+3. **CtcpHandler** `$serviceUidMap`: add new service UID
+4. **Bot class**: implement `ServiceCommandListenerInterface`
+5. **Bot registration**: tag with `app.service_command_listener`
 
-    // EventSubscriberInterface (burst introduction)
-    public static function getSubscribedEvents(): array {
-        return [NetworkBurstCompleteEvent::class => ['onBurstComplete', 100]];
-    }
-    public function onBurstComplete(NetworkBurstCompleteEvent $event): void {
-        $module = $this->connectionHolder->getProtocolModule();
-        $line = $module->getIntroductionFormatter()->formatIntroduction(...);
-        $event->connection->writeLine($line);
-    }
+Full checklist: `.agents/services/bots.md`.
 
-    // XxxNotifierInterface
-    public function sendNotice(string $targetUid, string $message): void {
-        $this->sendNotice->sendNotice($targetUid, $message);
-    }
-}
-```
+## Related Skills
 
-### Service Command Gateway
-
-The **single entry point** for PRIVMSG to services:
-
-```php
-// Infrastructure/IRC/ServiceBridge/ServiceCommandGateway.php
-final class ServiceCommandGateway implements EventSubscriberInterface {
-    public function onMessage(MessageReceivedEvent $event): void {
-        if ('PRIVMSG' !== $event->message->command) { return; }
-        $target = strtolower($event->message->params[0]);
-        $listener = $this->listeners[$target] ?? null;
-        $listener?->onCommand($sourceId, $event->message->trailing);
-    }
-}
-```
-
-Bots register via `ServiceCommandListenerInterface` (tagged service). **Never** subscribe to `MessageReceivedEvent` directly in a Service.
-
-## Quick Reference
-
-| Layer | Imports | Exports |
-|-------|---------|---------|
-| Core (`Domain/IRC`) | Nothing from Services | Domain events, Ports |
-| Services (`Application/NickServ`) | Ports, DTOs | Service classes |
-| Bots (`Infrastructure/NickServ/Bot`) | Core events (burst), Ports | Implements Notifier |
-
-## Files Affected
-
-- `src/Application/Port/*.php` (interfaces, DTOs)
-- `src/Domain/<ServiceName>/`
-- `src/Application/<ServiceName>/`
-- `src/Infrastructure/<ServiceName>/`
-- `src/Infrastructure/IRC/ServiceBridge/ServiceCommandGateway.php`
-- `config/services.yaml` (DI configuration)
-
-## Adding a New Service: Checklist
-
-When adding a new service (e.g., `BotServ`), update these locations:
-
-1. **Environment variables**: Add to `.env`:
-   - `<SERVICE>_UID=<value>` (e.g., `BOTSERV_UID=002GGGGGG`)
-
-2. **Services config** (`config/services.yaml`):
-   - Add `<service>.uid: '%env(<SERVICE>_UID)%'` under parameters
-   - Add service UID to `CtcpHandler` `$serviceUidMap`:
-     ```yaml
-     $serviceUidMap:
-         nickserv: '%nickserv.uid%'
-         chanserv: '%chanserv.uid%'
-         memoserv: '%memoserv.uid%'
-         operserv: '%operserv.uid%'
-         botserv: '%botserv.uid%'  # <-- add new service here
-     ```
-
-3. **Bot class**: Implement `ServiceCommandListenerInterface` with:
-   - `getServiceName(): string` → returns `'BotServ'`
-   - `getServiceUid(): ?string` → returns `$this->botServUid`
-
-4. **Service registration**: Tag the bot with `app.service_command_listener`
+- `.agents/architecture/README.md` — Full architecture map
+- `.agents/services/commands.md` — Command handler structure
+- `.agents/services/bots.md` — New bot implementation
