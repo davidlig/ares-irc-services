@@ -49,7 +49,7 @@ final readonly class InviteCommand implements ChanServCommandInterface
 
     public function getOrder(): int
     {
-        return 24;
+        return 10;
     }
 
     public function getShortDescKey(): string
