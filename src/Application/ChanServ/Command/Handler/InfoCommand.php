@@ -53,7 +53,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
 
     public function getOrder(): int
     {
-        return 5;
+        return 2;
     }
 
     public function getShortDescKey(): string
