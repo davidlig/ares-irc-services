@@ -1225,6 +1225,49 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function showLanguageInInfoOutput(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('isPrivate')->willReturn(false);
+        $account->method('getNickname')->willReturn('LangUser');
+        $account->method('getStatus')->willReturn(NickStatus::Registered);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('getRegisteredAt')->willReturn(new DateTimeImmutable());
+        $account->method('getLastSeenAt')->willReturn(null);
+        $account->method('getLastQuitMessage')->willReturn(null);
+        $account->method('getEmail')->willReturn(null);
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getLanguage')->willReturn('es');
+        $account->method('getId')->willReturn(1);
+
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+        $vhostResolver = new VhostDisplayResolver('');
+        $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
+        $accessRepo->method('findByNick')->willReturn([]);
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByFounderNickId')->willReturn([]);
+        $channelRepo->method('findBySuccessorNickId')->willReturn([]);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($nickRepo, $userLookup, $vhostResolver, $accessRepo, $channelRepo);
+        $cmd->execute($this->createContext(new SenderView('UID1', 'Caller', 'i', 'h', 'c', 'ip'), ['LangUser'], $notifier, $translator));
+
+        self::assertContains('info.language', $messages);
+    }
+
+    #[Test]
     public function getHelpParamsReturnsEmptyArray(): void
     {
         $cmd = new InfoCommand(

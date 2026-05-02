@@ -237,6 +237,8 @@ final readonly class InfoCommand implements NickServCommandInterface
             $this->replyLastConnection($context, $account);
         }
 
+        $context->reply('info.language', ['language' => $account->getLanguage()]);
+
         if ($isOwnerIdentified && null !== $account->getEmail()) {
             $context->reply('info.email', ['email' => $account->getEmail()]);
         }
