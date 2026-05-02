@@ -169,7 +169,7 @@ All variables live in `.env.local`. Required variables are marked with ⚠.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `IRC_SERVICES_VHOST` | `services.davidlig.net` | Virtual host for service pseudo-clients |
-| `SERVICES_DEFAULT_LANGUAGE` | `es` | Default language for service replies (`ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`) |
+| `SERVICES_DEFAULT_LANGUAGE` | `en` | Default language for service replies (`ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`) |
 | `SERVICES_DEFAULT_TIMEZONE` | `UTC` | Default timezone for date display |
 
 ### Antiflood
