@@ -1,0 +1,79 @@
+# Email content — domain: mail (plain text, no IRC codes)
+# Contido de correo electrónico — dominio: mail (texto simple, sen códigos IRC)
+# Placeholders: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — verification token
+# REGISTER / VERIFY — token de verificación
+register_verification_subject: "%bot%: verifique o seu rexistro de alcume"
+register_verification_body: |
+  Ola,
+
+  Solicitou rexistrar o alcume "%nickname%" na rede de IRC.
+
+  O seu token de verificación é: %token%
+
+  Para completar o rexistro, envíe este comando a %bot% (substitúa <token> polo token anterior):
+    /msg %bot% VERIFY %token%
+
+  O token caduca en 1 hora. Se non solicitou isto, ignore este correo.
+
+# RESEND — same as register, resend of token
+# RESEND — igual que register, reenvío do token
+resend_verification_subject: "%bot%: o seu token de verificación (reenvío)"
+resend_verification_body: |
+  Ola,
+
+  Solicitou un novo token de verificación para o alcume "%nickname%".
+
+  O seu token de verificación é: %token%
+
+  Para completar o rexistro, envíe a %bot%:
+    /msg %bot% VERIFY %token%
+
+  O token caduca en 1 hora. Se non solicitou isto, ignore este correo.
+
+# SET EMAIL — confirmation token sent to current email
+# SET EMAIL — token de confirmación enviado ao correo electrónico actual
+email_change_token_subject: "%bot%: confirme o seu novo enderezo de correo electrónico"
+email_change_token_body: |
+  Ola,
+
+  Solicitou cambiar o enderezo de correo electrónico do seu alcume de %bot% a: %new_email%
+
+  O seu token de confirmación é: %token%
+
+  Para confirmar o cambio, envíe a %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  O token caduca en 1 hora. Se non solicitou este cambio, ignore este correo.
+
+# RECOVER — password recovery token
+# RECOVER — token de recuperación de contrasinal
+recovery_token_subject: "%bot%: recuperación de contrasinal"
+recovery_token_body: |
+  Ola,
+
+  Solicitouse unha recuperación de contrasinal para o alcume "%nickname%".
+
+  O seu token de recuperación é: %token%
+
+  Para restablecer o seu contrasinal, envíe a %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  O token caduca en 1 hora. Se non solicitou isto, ignore este correo.
+
+# ChanServ SET FOUNDER — founder change token
+# ChanServ SET FOUNDER — token de cambio de fundador
+founder_change_token_subject: "%bot%: token de cambio de fundador para %channel%"
+founder_change_token_body: |
+  Ola,
+
+  Solicitouse un cambio de fundador para a canle "%channel%" ao alcume "%new_nick%".
+
+  O seu token de confirmación é: %token%
+
+  Para completar o cambio, envíe a %bot% este comando (pode copialo e pegalo):
+
+    /msg %bot% %command%
+
+  O token caduca en 1 hora. Se non solicitou isto, ignore este correo.

@@ -1,0 +1,571 @@
+# NickServ translations — Français
+# Domaine : nickserv
+#
+# Codes de formatage IRC (dans les chaînes entre guillemets, utilisez les échappements hex \xNN) :
+#   \x02        gras on/off
+#   \x03NN      couleur (DÉCIMAL : 03=vert, 04=rouge, 07=orange, 14=gris foncé)
+#   \x03        réinitialiser couleur
+#   \x0F        réinitialiser tout formatage
+#
+# NOTE : Les couleurs IRC utilisent des nombres DÉCIMAUX (0-15), pas hexadécimaux.
+#   \x0314 = gris foncé (14 décimal)  ← CORRECT
+#   \x030F = couleur 0 + lettre "F"   ← INCORRECT (0F est hex, pas décimal)
+
+unknown_command: "\x0304✗\x03 Commande inconnue \x02%command%\x02. Utilisez \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:            "\x0304✗\x03 Syntaxe incorrecte. Usage : \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 Cette commande est réservée aux opérateurs IRC."
+  not_identified:    "\x0304✗\x03 Vous n'êtes pas identifié. Utilisez \x0303/msg %bot% IDENTIFY <surnom> <motdepasse>\x03"
+  permission_denied: "\x0304✗\x03 Permission refusée. Vous n'avez pas accès à cette commande."
+  mail_failed:       "\x0304✗\x03 L'e-mail n'a pas pu être envoyé. Vérifiez votre adresse ou réessayez plus tard."
+
+# --- REGISTER ---------------------------------------------------------------
+register:
+  syntax:           "REGISTER <motdepasse> <e-mail>"
+  short:            "Enregistrer votre surnom auprès des services."
+  help:             "Démarre l'enregistrement de votre surnom actuel. Un jeton de vérification\nsera envoyé à l'adresse e-mail fournie. Terminez l'enregistrement\nen exécutant \x0303/msg %bot% VERIFY <jeton>\x03. Le jeton expire dans 1 heure.\nS'il n'arrive pas, vérifiez vos spams ou utilisez \x0303RESEND\x03."
+  pending:          "\x0307→\x03 Un jeton de vérification a été envoyé à \x02%email%\x02.\n  Exécutez \x0303/msg %bot% VERIFY <jeton>\x03 pour terminer l'enregistrement.\n  Vous ne l'avez pas reçu ? Vérifiez vos spams ou utilisez \x0303/msg %bot% RESEND\x03\n  Le jeton expirera dans \x021 heure\x02."
+  already_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est déjà enregistré."
+  already_pending:  "\x0304✗\x03 Le surnom \x02%nickname%\x02 a déjà une vérification en attente.\n  Utilisez \x0303/msg %bot% VERIFY <jeton>\x03 ou \x0303/msg %bot% RESEND\x03."
+  forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être enregistré sur ce réseau."
+  invalid_email:    "\x0304✗\x03 L'adresse e-mail fournie n'est pas valide."
+  email_already_used: "\x0304✗\x03 L'e-mail \x02%email%\x02 est déjà utilisé par un autre surnom. Utilisez une adresse différente."
+  throttled:          "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de réessayer l'enregistrement."
+  guest_prefix_forbidden: "\x0304✗\x03 Vous ne pouvez pas enregistrer un surnom commençant par \x02%prefix%\x02."
+
+# --- VERIFY -----------------------------------------------------------------
+verify:
+  syntax:           "VERIFY <jeton>"
+  short:            "Confirmer votre adresse e-mail et activer votre surnom."
+  help:             "Termine l'enregistrement en vérifiant le jeton envoyé à votre e-mail.\nLe jeton est valable 1 heure à partir du moment de l'enregistrement."
+  success:          "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été enregistré avec succès et vous êtes maintenant identifié."
+  invalid_token:    "\x0304✗\x03 Le jeton est invalide ou a expiré. Utilisez \x0303/msg %bot% REGISTER\x03 pour recommencer."
+  no_pending:       "\x0304✗\x03 Vous n'avez aucun enregistrement en attente à vérifier."
+
+# --- RESEND -----------------------------------------------------------------
+resend:
+  syntax:           "RESEND"
+  short:            "Renvoyer le jeton de vérification à votre e-mail."
+  help:             "Renvoie le jeton de vérification à l'adresse e-mail fournie lors de\nl'enregistrement. Ne fonctionne que si vous avez un enregistrement en attente."
+  success:          "\x0307→\x03 Jeton de vérification renvoyé à \x02%email%\x02."
+  no_pending:       "\x0304✗\x03 Vous n'avez aucun enregistrement en attente pour renvoyer un jeton."
+  throttled:        "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre e-mail de vérification."
+
+# --- RECOVER -----------------------------------------------------------------
+recover:
+  syntax:           "RECOVER <surnom> [jeton]"
+  short:            "Récupérer votre surnom si vous avez perdu votre mot de passe."
+  help:             "Récupère l'accès à un surnom enregistré lorsque vous avez perdu votre mot de passe.\n1) \x0303RECOVER <surnom>\x03 — un jeton est envoyé à l'e-mail du surnom.\n2) \x0303RECOVER <surnom> <jeton>\x03 — saisissez le jeton de l'e-mail pour réinitialiser votre mot de passe.\nVous recevrez alors un mot de passe temporaire et la commande pour le changer."
+  email_sent:       "\x0307→\x03 Un jeton de récupération a été envoyé à \x02%email_hint%\x02. Vérifiez votre boîte de réception (et vos spams)."
+  not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  pending:          "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de vérification e-mail."
+  suspended:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Raison : %reason%"
+  forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être utilisé sur ce réseau."
+  no_email:         "\x0304✗\x03 Aucun e-mail n'est défini pour le surnom \x02%nickname%\x02. La récupération n'est pas disponible."
+  throttled:        "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre e-mail de récupération."
+  invalid_token:    "\x0304✗\x03 Le jeton est invalide ou a expiré. Demandez-en un nouveau avec \x0303RECOVER %nickname%\x03."
+  success_identify: "\x0303✔\x03 Mot de passe réinitialisé. Identifiez-vous maintenant : \x0303%identify_cmd%\x03"
+  success_then_change: "Puis changez votre mot de passe : \x0303/msg %bot% SET PASSWORD <nouveau_motdepasse>\x03"
+
+# --- IDENTIFY ---------------------------------------------------------------
+identify:
+  syntax:           "IDENTIFY <surnom> <motdepasse>"
+  short:            "S'identifier comme le propriétaire d'un surnom."
+  help:             "Authentifie votre session auprès de %nickserv% avec votre surnom et mot de passe.\nAprès une identification réussie, vous recevrez le mode enregistré \x02+r\x02\net, si vous utilisiez un surnom invité, votre surnom enregistré sera restauré."
+  success:          "\x0303✔\x03 Vous êtes maintenant identifié en tant que \x02%nickname%\x02."
+  already_identified: "\x0307ℹ\x03 Vous êtes déjà identifié en tant que \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  invalid_credentials: "\x0304✗\x03 Mot de passe incorrect. Veuillez réessayer."
+  locked_out:         "\x0304✗\x03 Trop de tentatives échouées. Réessayez dans \x02%minutes%\x02 minute(s)."
+  ghost_released:   "\x0307⚡\x03 La session fantôme qui occupait \x02%nickname%\x02 a été déconnectée."
+  kill_reason:      "Surnom %nickname% récupéré par %source% (le propriétaire enregistré s'est identifié)"
+  pending:          "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de vérification e-mail.\n  Exécutez \x0303/msg %bot% VERIFY <jeton>\x03 ou \x0303/msg %bot% RESEND\x03."
+  suspended:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Raison : %reason%"
+  forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être utilisé sur ce réseau."
+
+# --- STATUS -----------------------------------------------------------------
+status:
+  syntax:           "STATUS <surnom>"
+  short:            "Afficher le statut d'enregistrement d'un surnom."
+  help:             "Affiche le statut actuel d'un surnom : enregistré, en attente de vérification,\nsuspendu ou interdit."
+  header:           "\x02Statut du surnom \x0307%nickname%\x03 :\x02"
+  unregistered:     "  Statut          : Non enregistré"
+  not_registered_offline: "  Statut          : \x0315Non enregistré\x03"
+  pending:          "  Statut          : \x0307En attente de vérification\x03"
+  pending_expires:  "  Expire dans     : %minutes% minute(s)"
+  pending_expires_at: "  Expire le       : %date%"
+  not_connected:    "  Statut          : \x0315Non connecté\x03"
+  not_identified:   "  Statut          : \x0307Non identifié\x03"
+  identified:       "  Statut          : \x0303Identifié\x03"
+  suspended:        "  Statut          : \x0304Suspendu\x03"
+  suspended_reason: "  Raison          : %reason%"
+  suspended_until:  "  Fin le          : %date%"
+  suspended_permanent: "  Fin le          : Permanent"
+  forbidden:        "  Statut          : \x0304Interdit\x03"
+  forbidden_reason: "  Raison          : %reason%"
+  footer:           "\x0314─────────────────────────────\x03"
+
+# --- INFO -------------------------------------------------------------------
+info:
+  syntax:           "INFO <surnom>"
+  short:            "Afficher les informations d'un surnom enregistré."
+  help:             "Affiche les détails d'enregistrement d'un surnom : date d'enregistrement,\nstatut de connexion, dernier message de départ et adresse e-mail.\nL'e-mail n'est visible que par le propriétaire lorsqu'il est identifié.\nAvec PRIVATE ON, seuls le propriétaire et les opérateurs IRC\npeuvent voir les informations."
+  not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  private:          "\x0304✗\x03 Les informations du surnom \x02%nickname%\x02 sont privées."
+  header:           "\x02Informations pour le surnom \x0307%nickname%\x03 :\x02"
+  status:           "  \x0314Statut\x03          : %status%"
+  status_registered:  "\x0303Enregistré\x03"
+  status_suspended:   "\x0304Suspendu\x03"
+  status_forbidden:   "\x0304Interdit\x03"
+  reason:           "  \x0314Raison\x03          : %reason%"
+  suspended_until:  "  \x0314Fin le\x03           : %date%"
+  suspended_permanent: "  \x0314Fin le\x03           : Permanent"
+  registered_at:    "  \x0314Enregistré\x03      : %date%"
+  last_seen_online: "  \x0314Dernière vue\x03    : \x0303● EN LIGNE\x03"
+  last_seen_at:     "  \x0314Dernière vue\x03    : %date%"
+  last_seen_never:  "  \x0314Dernière vue\x03    : Jamais"
+  last_quit:        "  \x0314Dernier départ\x03  : %message%"
+  last_connect:     "  \x0314Dernière vue de\x03 : %ip% (%host%)"
+  email:            "  \x0314E-mail\x03          : %email%"
+  vhost:            "  \x0314VHost\x03           : %vhost%"
+  no_expire:        "  \x0314N'expire jamais\x03 : Oui"
+  footer:           "\x0314─────────────────────────────\x03"
+  channels_header:  "\x0314\x0ACanaux avec accès :\x03"
+  channels_entry_founder:   "  %channel% (\x0303Fondateur\x03)"
+  channels_entry_successor: "  %channel% (\x0303Successeur\x03)"
+  channels_entry_access:    "  %channel% (%level%)"
+
+# --- SET --------------------------------------------------------------------
+set:
+  syntax:           "SET <option> <valeur>"
+  short:            "Modifier vos paramètres de surnom %nickserv%."
+  help:             "Modifie vos paramètres de surnom %nickserv%.\nVous devez être identifié pour utiliser cette commande."
+  unknown_option:   "\x0304✗\x03 Option inconnue \x02%option%\x02. Options disponibles : %options%."
+
+  password:
+    syntax:         "SET PASSWORD <nouveau_motdepasse>"
+    short:          "Changer le mot de passe de votre surnom."
+    help:           "Change le mot de passe de votre surnom NickServ. Le nouveau mot de passe\nprend effet immédiatement. Choisissez un mot de passe robuste d'au moins\n6 caractères que vous n'utilisez pas sur d'autres services."
+    success:        "\x0303✔\x03 Votre mot de passe a été mis à jour avec succès."
+
+  email:
+    syntax:         "SET EMAIL <nouvel_e-mail> [jeton]"
+    short:          "Changer l'adresse e-mail liée à votre surnom (confirmation en deux étapes)."
+    help:           "Changement d'e-mail en deux étapes pour la sécurité.\n1) \x0303SET EMAIL <nouvel_e-mail>\x03 — un jeton est envoyé à votre e-mail actuel.\n2) \x0303SET EMAIL <nouvel_e-mail> <jeton>\x03 — confirmez avec le jeton reçu.\nLe jeton expire dans 1 heure."
+    success:        "\x0303✔\x03 Votre e-mail a été mis à jour en \x02%email%\x02."
+    pending_sent:   "\x0307→\x03 Un jeton de confirmation a été envoyé à \x02%current_email%\x02.\n  Pour confirmer le changement vers \x02%new_email%\x02, exécutez :\n  \x0303/msg %bot% SET EMAIL %new_email% <jeton>\x03\n  Le jeton expire dans 1 heure."
+    invalid_token:  "\x0304✗\x03 Le jeton est invalide ou a expiré. Demandez-en un nouveau avec \x0303SET EMAIL <nouvel_e-mail>\x03."
+
+  language:
+    syntax:         "SET LANGUAGE <code>"
+    short:          "Changer la langue que les services utilisent pour communiquer avec vous."
+    help:           "Change la langue que %nickserv% et les autres services utilisent pour vous parler.\nLangues disponibles : \x02es\x02 (espagnol), \x02en\x02 (anglais)."
+    success:        "\x0303✔\x03 Langue changée en \x02%language%\x02."
+    invalid:        "\x0304✗\x03 Langue non prise en charge. Langues disponibles : %languages%."
+
+  timezone:
+    syntax:         "SET TIMEZONE <fuseau_horaire>"
+    short:          "Définir le fuseau horaire utilisé pour l'affichage des dates."
+    help:           "Définit le fuseau horaire utilisé lorsque %nickserv% affiche des dates.\nUtilisez \x02HELP SET TIMEZONE\x02 pour l'index des régions ; \x02HELP SET TIMEZONE <région>\x02 (ex. Europe) pour les fuseaux de cette région. Utilisez \x02OFF\x02 pour effacer."
+    success:        "\x0303✔\x03 Fuseau horaire défini sur \x02%timezone%\x02. Les dates seront affichées dans ce fuseau."
+    cleared:        "\x0303✔\x03 Fuseau horaire effacé. Les dates utiliseront le fuseau par défaut du réseau."
+    invalid:        "\x0304✗\x03 Fuseau horaire invalide \x02%timezone%\x02. Utilisez un identifiant valide (ex. UTC, Europe/Paris)."
+
+  private:
+    syntax:         "SET PRIVATE {ON|OFF}"
+    short:          "Activer ou désactiver la confidentialité des informations de votre surnom."
+    help:           "Contrôle la visibilité des informations de votre surnom dans la commande INFO.\nAvec \x02PRIVATE ON\x02, seuls vous et les opérateurs IRC peuvent voir vos détails.\nAvec \x02PRIVATE OFF\x02, vos informations sont publiques pour tous."
+    on:             "\x0303✔\x03 Les informations de votre surnom sont maintenant \x02privées\x02."
+    off:            "\x0303✔\x03 Les informations de votre surnom sont maintenant \x02publiques\x02."
+
+  msg:
+    syntax:         "SET MSG {ON|OFF}"
+    short:          "Utiliser PRIVMSG (ON) ou NOTICE (OFF) pour les réponses des services."
+    help:           "Contrôle comment %nickserv% et les autres services vous envoient les messages.\nAvec \x02MSG ON\x02, les réponses sont envoyées en \x02PRIVMSG\x02 (certains clients peuvent déclencher des réponses ou notifications).\nAvec \x02MSG OFF\x02, les réponses sont envoyées en \x02NOTICE\x02 (par défaut ; généralement sans réponse automatique)."
+    on:             "\x0303✔\x03 Les messages des services seront maintenant envoyés en \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 Les messages des services seront maintenant envoyés en \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SET VHOST <vhost>"
+    short:          "Définir ou effacer votre hôte virtuel personnalisé (hostname affiché)."
+    help:           "Définit un nom d'hôte personnalisé que les autres voient lorsque vous êtes identifié.\nUtilisez \x02SET VHOST OFF\x02 pour effacer. Uniquement lettres (a-z, A-Z), chiffres,\ntrait d'union et point ; pas de tiret/point au début/fin d'un bloc ; max 48 caractères. Unique par surnom."
+    success:        "\x0303✔\x03 Votre hôte virtuel a été défini sur \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 Votre hôte virtuel a été effacé."
+    invalid:        "\x0304✗\x03 Vhost invalide. Uniquement lettres, chiffres, trait d'union et point (pas au début/fin de bloc) ; max 48 caractères."
+    taken:          "\x0304✗\x03 Ce vhost est déjà utilisé par un autre surnom."
+    forced:         "\x0304✗\x03 Votre vhost est configuré automatiquement et ne peut pas être modifié avec SET VHOST."
+
+# --- HELP -------------------------------------------------------------------
+help:
+  syntax:           "HELP [commande]"
+  short:            "Afficher l'aide des commandes %nickserv%."
+  help:             "Affiche l'aide générale de %nickserv% ou des informations détaillées\npour une commande spécifique."
+  header_title:     "%bot%"
+  intro:            "Service d'enregistrement et de protection des surnoms du réseau IRC."
+  intro_expiration: "NOTE : Les surnoms \x0304\x1Finutilisés\x0F depuis plus de %days% jours sont automatiquement supprimés."
+  general_header:   "\x02\x0314Commandes disponibles :\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Options :\x03\x0F"
+  general_footer:   "Utilisez \x0303/msg %bot% HELP <commande>\x03 pour plus d'informations."
+  set_sub_footer:   "Utilisez \x0303/msg %bot% HELP %command% <option>\x03 pour plus d'informations."
+  command_header:   "\x02Aide pour %command% :\x02"
+  syntax_label:     "\x0307Syntaxe :\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  unknown_command:  "\x0304✗\x03 Aucune aide disponible pour \x02%command%\x02."
+  ircop_header:     "\x02\x0314Commandes disponibles pour les IRCOPS :\x03\x0F"
+
+  set_timezone:
+    index_label:    "\x0314Régions\x03 (utilisez \x02HELP SET TIMEZONE <région>\x02 pour la liste) :"
+    region_header:  "\x0314Fuseaux horaires pour %region% :\x03"
+    region_unknown: "\x0304✗\x03 Région inconnue. Utilisez \x02HELP SET TIMEZONE\x02 pour l'index."
+
+# --- Protection de surnom --------------------------------------------------------
+protection:
+  nick_in_use:      "\x0304⚠\x03 Le surnom \x02%nickname%\x02 est enregistré. Vous serez renommé si vous ne vous identifiez pas."
+  renamed_to:       "\x0307→\x03 Vous avez été renommé en \x02%guest_nick%\x02. Pour récupérer votre surnom :\n\x0303/msg %bot% IDENTIFY %nickname% <motdepasse>\x03"
+  nick_forbidden:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 est interdit : %reason%"
+
+# --- Commandes IRCop ---------------------------------------------------------
+userip:
+  syntax:           "USERIP <surnom>"
+  short:            "Obtenir l'adresse IP réelle et le nom d'hôte du surnom."
+  help:             |
+    Affiche l'adresse IP réelle et le nom d'hôte du surnom spécifié.
+    Uniquement disponible pour les IRCops avec la permission 'nickserv.userip'.
+
+    Cette commande affiche des informations sensibles sur le surnom.
+    À utiliser de manière responsable.
+
+    Syntaxe : USERIP <surnom>
+    Exemple : USERIP Utilisateur123
+  not_online:       "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas connecté."
+  result:           "\x0307ℹ\x03 Surnom : \x02%nickname%\x02 | IP : \x0307%ip%\x03 | Hôte : \x0307%host%\x03"
+
+permissions:
+  nickserv.userip: "Voir l'adresse IP/nom d'hôte réel d'un surnom (USERIP)"
+  nickserv.suspend: "Suspendre ou lever la suspension d'un surnom (SUSPEND/UNSUSPEND)"
+  nickserv.rename: "Forcer le renommage d'un surnom connecté en un surnom aléatoire (RENAME)"
+  nickserv.drop: "Abandonner un surnom enregistré (DROP)"
+  nickserv.forbid: "Interdire ou lever l'interdiction d'un surnom (FORBID/UNFORBID)"
+  nickserv.forbidvhost: "Interdire ou autoriser les motifs de vhost (FORBIDVHOST)"
+  nickserv.saset: "Modifier les paramètres d'un autre surnom (SASET)"
+  nickserv.noexpire: "Définir ou retirer la protection contre l'expiration d'un surnom (NOEXPIRE)"
+  nickserv.history: "Consulter et gérer l'historique des actions du surnom (HISTORY)"
+
+# --- SUSPEND (IRCop) ---------------------------------------------------------
+suspend:
+  syntax:           "SUSPEND <surnom> <durée> <raison>"
+  short:            "Suspendre un surnom."
+  help:             |
+    Suspend un surnom, empêchant le propriétaire de s'identifier.
+    La suspension peut être temporaire ou permanente.
+
+    Formats de durée : \x0303%j\x03 (jours), \x0303%h\x03 (heures), \x0303%m\x03 (minutes) ou \x03030\x03 (permanent).
+
+    Les utilisateurs suspendus ne peuvent pas s'identifier à leur surnom.
+    Les opérateurs IRC et les utilisateurs root ne peuvent pas être suspendus.
+
+    Syntaxe : SUSPEND <surnom> <durée> <raison>
+    Exemples :
+      SUSPEND MauvaisUtil 7j Spam dans #aide
+      SUSPEND Abuseur 30j Flood répété
+      SUSPEND ProblèmeUtil 0 Contournement de bannissement permanent
+  success:            "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été suspendu jusqu'à \x02%duration%\x02."
+  already_suspended:  "\x0304✗\x03 Le surnom \x02%nickname%\x02 est déjà suspendu."
+  not_registered:     "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  forbidden:          "\x0304✗\x03 Le surnom \x02%nickname%\x02 est interdit et ne peut pas être suspendu."
+  cannot_suspend_oper: "\x0304✗\x03 Impossible de suspendre l'opérateur IRC \x02%nickname%\x02."
+  cannot_suspend_root: "\x0304✗\x03 Impossible de suspendre l'utilisateur root \x02%nickname%\x02."
+  cannot_suspend_service: "\x0304✗\x03 Impossible de suspendre le surnom de service \x02%nickname%\x02."
+  invalid_duration:   "\x0304✗\x03 Durée invalide. Utilisez : \x0303<j><h><m>\x03 (ex., 7j, 12h, 30m) ou \x03030\x03 pour permanent."
+  permanent:          "permanent"
+
+# --- UNSUSPEND (IRCop) -------------------------------------------------------
+unsuspend:
+  syntax:           "UNSUSPEND <surnom>"
+  short:            "Lever la suspension d'un surnom."
+  help:             |
+    Lève une suspension active d'un surnom, permettant au propriétaire de s'identifier à nouveau.
+
+    Syntaxe : UNSUSPEND <surnom>
+    Exemple : UNSUSPEND UnUtilisateur
+  success:          "\x0303✔\x03 La suspension a été levée pour \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  not_suspended:    "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas suspendu."
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax:           "RENAME <surnom>"
+  short:            "Forcer le renommage d'un surnom connecté en un surnom aléatoire."
+  help:             |
+    Force un surnom connecté à changer son surnom pour un surnom généré aléatoirement.
+    Utile pour appliquer les règles du réseau sans déconnecter l'utilisateur.
+
+    Le nouveau format de surnom utilise le préfixe invité configuré (%prefix%).
+
+    Cette commande nécessite la permission IRCop : nickserv.rename
+
+    Syntaxe : RENAME <surnom>
+    Exemple : RENAME FauteurDeTrouble
+  not_online:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas connecté."
+  cannot_rename_root: "\x0304✗\x03 Impossible de renommer l'utilisateur root \x02%nickname%\x02."
+  cannot_rename_oper: "\x0304✗\x03 Impossible de renommer l'opérateur IRC \x02%nickname%\x02."
+  cannot_rename_service: "\x0304✗\x03 Impossible de renommer le surnom de service \x02%nickname%\x02."
+  success:           "\x0303✓\x03 Le surnom \x02%nickname%\x02 a été renommé en \x02%new_nick%\x02."
+
+# --- DROP (IRCop) --------------------------------------------------------------
+drop:
+  syntax:           "DROP <surnom>"
+  short:            "Abandonner un surnom enregistré."
+  help:             |
+    Supprime un surnom enregistré de la base de données.
+    Cette action est irréversible.
+
+    Si l'utilisateur est en ligne, il sera renommé en un surnom Invité-.
+    Les utilisateurs root et les opérateurs IRC ne peuvent pas être abandonnés.
+    Vous ne pouvez pas abandonner votre propre surnom.
+
+    Cette commande nécessite la permission IRCop : nickserv.drop
+
+    Syntaxe : DROP <surnom>
+    Exemple : DROP AncienCompte
+  not_registered:     "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  suspended:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Levez d'abord la suspension."
+  forbidden:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est interdit."
+  cannot_drop_root:   "\x0304✗\x03 Impossible d'abandonner l'utilisateur root \x02%nickname%\x02."
+  cannot_drop_oper:   "\x0304✗\x03 Impossible d'abandonner l'opérateur IRC \x02%nickname%\x02."
+  cannot_drop_self:    "\x0304✗\x03 Vous ne pouvez pas abandonner votre propre surnom."
+  success:            "\x0303✓\x03 Le surnom \x02%nickname%\x02 a été abandonné."
+  cannot_drop_service: "\x0304✗\x03 Impossible d'abandonner le surnom de service \x02%nickname%\x02."
+
+# --- FORBID (IRCop) --------------------------------------------------------------
+forbid:
+  syntax:           "FORBID <surnom> <raison>"
+  short:            "Bloquer définitivement l'utilisation d'un surnom."
+  help:             |
+    Interdit l'utilisation d'un surnom sur le réseau.
+    Le surnom ne peut être enregistré ni utilisé par quiconque.
+
+    Si le surnom est actuellement enregistré, il sera d'abord abandonné.
+    Si quelqu'un l'utilise, il sera forcé de changer pour un surnom Invité-.
+
+    Les utilisateurs root, les opérateurs IRC et les surnoms de service ne peuvent pas être interdits.
+
+    Cette commande nécessite la permission IRCop : nickserv.forbid
+
+    Syntaxe : FORBID <surnom> <raison>
+    Exemple : FORBID MauvaisSurnom Violations répétées des règles
+  success:            "\x0303✔\x03 Le surnom \x02%nickname%\x02 a été interdit."
+  updated:            "\x0303✔\x03 La raison d'interdiction pour \x02%nickname%\x02 a été mise à jour."
+  reason_required:    "\x0304✗\x03 Vous devez fournir une raison pour l'interdiction."
+  cannot_forbid_root:  "\x0304✗\x03 Impossible d'interdire l'utilisateur root \x02%nickname%\x02."
+  cannot_forbid_oper:  "\x0304✗\x03 Impossible d'interdire l'opérateur IRC \x02%nickname%\x02."
+  cannot_forbid_service: "\x0304✗\x03 Impossible d'interdire le surnom de service \x02%nickname%\x02."
+
+# --- UNFORBID (IRCop) ------------------------------------------------------------
+unforbid:
+  syntax:           "UNFORBID <surnom>"
+  short:            "Lever l'interdiction d'un surnom."
+  help:             |
+    Lève l'interdiction d'un surnom, permettant de le réutiliser.
+
+    Cette commande nécessite la permission IRCop : nickserv.forbid
+
+    Syntaxe : UNFORBID <surnom>
+    Exemple : UNFORBID UnSurnom
+  success:          "\x0303✔\x03 Le surnom \x02%nickname%\x02 n'est plus interdit."
+  not_forbidden:    "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas interdit."
+
+# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
+forbidvhost:
+  syntax:           "FORBIDVHOST ADD|DEL|LIST [motif]"
+  short:            "Gérer les motifs de vhost interdits."
+  help:             |
+    Gère les motifs qui empêchent les utilisateurs de définir des vhosts
+    correspondants via NickServ SET VHOST.
+
+    Jokers : * correspond à toute séquence, ? correspond à un seul caractère.
+    Exemple : *.pirate.com bloque tout vhost se terminant par .pirate.com
+
+    Cette commande nécessite la permission IRCop : nickserv.forbidvhost
+
+    Sous-commandes :
+      ADD <motif>    Ajouter un motif interdit
+      DEL <motif>    Supprimer un motif interdit
+      LIST           Afficher tous les motifs interdits
+
+  unknown_sub: "\x0304✗\x03 Sous-commande inconnue \x02%sub%\x02. Utilisez ADD, DEL ou LIST."
+
+  add:
+    syntax:      "FORBIDVHOST ADD <motif>"
+    short:       "Ajouter un motif de vhost interdit."
+    help:        |
+      Ajoute un motif à la liste des vhosts interdits. Les utilisateurs
+      ne pourront pas définir de vhosts correspondant à ce motif via SET VHOST.
+
+      Jokers : * correspond à toute séquence, ? correspond à un seul caractère.
+
+      Syntaxe : FORBIDVHOST ADD <motif>
+      Exemple : FORBIDVHOST ADD *.pirate.com
+    done:            "\x0303✓\x03 Motif de vhost interdit ajouté : \x02%pattern%\x02"
+    already_exists:  "\x0304✗\x03 Le motif \x02%pattern%\x02 existe déjà."
+    invalid:          "\x0304✗\x03 Format de motif vhost invalide."
+
+  del:
+    syntax:      "FORBIDVHOST DEL <motif>"
+    short:       "Supprimer un motif de vhost interdit."
+    help:        |
+      Supprime un motif de la liste des vhosts interdits.
+
+      Syntaxe : FORBIDVHOST DEL <motif>
+      Exemple : FORBIDVHOST DEL *.pirate.com
+    done:        "\x0303✓\x03 Motif de vhost interdit supprimé : \x02%pattern%\x02"
+    not_found:   "\x0304✗\x03 Motif \x02%pattern%\x02 introuvable."
+
+  list:
+    short:       "Lister tous les motifs de vhost interdits."
+    syntax:      "FORBIDVHOST LIST"
+    help:        |
+      Affiche tous les motifs de vhost interdits.
+
+      Syntaxe : FORBIDVHOST LIST
+    header:      "\x0307ℹ\x03 Motifs de vhost interdits (\x02%count%\x02) :"
+    entry:       "  %index%. \x0304%pattern%\x03 — par %nickname% (%date%)"
+    empty:       "\x0307ℹ\x03 Aucun motif de vhost interdit."
+    unknown_creator: "inconnu"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <surnom> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Consulter ou gérer l'historique des actions du surnom."
+  help:             |
+    Gère l'historique des actions d'un surnom.
+    Seuls les IRCops avec la permission 'nickserv.history' peuvent utiliser cette commande.
+
+    Actions enregistrées automatiquement :
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+
+    Syntaxe : HISTORY <surnom> ADD <message>
+              HISTORY <surnom> DEL <id>
+              HISTORY <surnom> VIEW [PAGE|ALL]
+              HISTORY <surnom> CLEAR
+
+    Exemples :
+      HISTORY UnSurnom VIEW
+      HISTORY UnSurnom ADD Note manuelle sur cet utilisateur
+      HISTORY UnSurnom VIEW 2
+      HISTORY UnSurnom VIEW ALL
+      HISTORY UnSurnom DEL 123
+      HISTORY UnSurnom CLEAR
+
+    Utilisez VIEW pour voir l'historique (affiche 3 entrées par défaut).
+    Utilisez VIEW PAGE 2 pour voir la page suivante.
+    Utilisez VIEW ALL pour voir l'historique complet.
+    Utilisez ADD pour ajouter une entrée manuelle.
+    Utilisez DEL pour supprimer une entrée spécifique par ID.
+    Utilisez CLEAR pour supprimer toutes les entrées d'historique.
+  not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  unknown_operator: "(inconnu)"
+
+  add:
+    syntax:     "HISTORY <surnom> ADD <message>"
+    short:      "Ajouter une entrée manuelle à l'historique."
+    help:        |
+      Ajoute une entrée manuelle à l'historique du surnom.
+
+      Syntaxe : HISTORY <surnom> ADD <message>
+      Exemple : HISTORY UnSurnom ADD Utilisateur signalé pour spam
+    success:    "\x0303✔\x03 Entrée d'historique ajoutée pour \x02%nickname%\x02."
+
+  del:
+    syntax:     "HISTORY <surnom> DEL <id>"
+    short:      "Supprimer une entrée d'historique par ID."
+    help:        |
+      Supprime une entrée d'historique spécifique par son ID.
+
+      Syntaxe : HISTORY <surnom> DEL <id>
+      Exemple : HISTORY UnSurnom DEL 42
+    success:    "\x0303✔\x03 Entrée d'historique \x02%id%\x02 supprimée."
+    not_found:  "\x0304✗\x03 Entrée d'historique \x02%id%\x02 introuvable."
+    invalid_id: "\x0304✗\x03 ID d'entrée invalide : \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <surnom> VIEW [PAGE|ALL]"
+    short:      "Afficher l'historique des actions du surnom."
+    help:        |
+      Affiche l'historique des actions du surnom.
+
+      Syntaxe : HISTORY <surnom> VIEW
+                HISTORY <surnom> VIEW PAGE
+                HISTORY <surnom> VIEW ALL
+
+      Par défaut, affiche 3 entrées à la fois.
+      Utilisez VIEW 2 pour voir la deuxième page.
+      Utilisez VIEW ALL pour voir l'historique complet.
+    header:     "\x02Historique pour \x0307%nickname%\x03\x02 (affichage %start%-%end% sur %total%) :"
+    entry:       "#%id% [%date%] \x0303%action%\x03 par %operator% — %message%"
+    extra:       "  Extra \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 Aucune entrée d'historique trouvée pour \x02%nickname%\x02."
+    page_hint:   "Utilisez \x0303HISTORY %nickname% VIEW %next_page%\x03 pour plus d'entrées."
+
+  clear:
+    syntax:     "HISTORY <surnom> CLEAR"
+    short:      "Supprimer toutes les entrées d'historique d'un surnom."
+    help:        |
+      Supprime toutes les entrées d'historique du surnom spécifié.
+      Cette action est irréversible.
+
+      Syntaxe : HISTORY <surnom> CLEAR
+      Exemple : HISTORY UnSurnom CLEAR
+    success:    "\x0303✔\x03 \x02%count%\x02 entrées d'historique effacées pour \x02%nickname%\x02."
+
+# --- Traductions des messages d'historique (utilisées lors de l'affichage) ---
+history.message:
+  unsuspend:                  "Suspension levée"
+  password_changed_owner:     "Mot de passe changé par le propriétaire"
+  password_changed_operator:  "Mot de passe changé par l'opérateur"
+  email_changed_owner:        "E-mail changé de %old_email% à %new_email%"
+  email_changed_operator:     "E-mail changé en %new_email% par l'opérateur"
+  recover:                    "Mot de passe réinitialisé via jeton e-mail"
+
+# --- Traductions des champs extra d'historique ---
+history.extra:
+  duration:      "Durée : %value%"
+  expires_at:    "Expire : %value%"
+  old_email:     "Ancien e-mail : %value%"
+  new_email:     "Nouvel e-mail : %value%"
+  method:        "Méthode : %value%"
+  ip:            "IP : %value%"
+  host:          "Hôte : %value%"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax:           "NOEXPIRE <surnom> {ON|OFF}"
+  short:            "Définir ou retirer la protection contre l'expiration d'un surnom."
+  help:             |
+    Contrôle si un surnom expirera en raison de l'inactivité.
+    Lorsque ON, le surnom n'expire jamais, quelle que soit la dernière activité.
+    Lorsque OFF, les règles normales d'expiration s'appliquent.
+
+    Seuls les IRCops avec la permission 'nickserv.noexpire' peuvent utiliser cette commande.
+
+    Syntaxe : NOEXPIRE <surnom> {ON|OFF}
+    Exemples :
+      NOEXPIRE UtilisateurImportant ON
+      NOEXPIRE UtilisateurImportant OFF
+  success_on:       "\x0303✔\x03 Le surnom \x02%nickname%\x02 est maintenant protégé contre l'expiration."
+  success_off:      "\x0303✔\x03 Le surnom \x02%nickname%\x02 expirera maintenant normalement."
+  not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  forbidden:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est interdit."
+  suspended:         "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu."
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator% exécute la commande %command% sur %target%. %reason%"
+  action_with_option: "%operator% exécute la commande %command% sur %target%. Option : %option%. %reason%"
+  action_with_value: "%operator% exécute la commande %command% sur %target%. Option : %option%=%value%. %reason%"
+  action_duration: "%operator% exécute la commande %command% sur %target%. Durée : %duration%. %reason%"
+  prefix_reason: "Raison : %reason%"

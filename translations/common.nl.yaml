@@ -1,0 +1,27 @@
+# Common translations — Dutch
+# Domain: common
+#
+# Shared translations used across all IRC services.
+
+antiflood:
+  blocked: "U heeft de commandosnelheidslimiet overschreden. Probeer het opnieuw over %seconds% seconden."
+  debug_channel: "%nick% %command% limiet bereikt voor %host% (nog %seconds%s)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Voor mijn trouwe en eeuwige vriend,\x02
+      
+      Hoewel 2023 het jaar was waarin we afscheid moesten nemen, heeft de tijd geen enkel
+      detail van jou uitgewist. Ik herinner me nog jouw grenzeloze energie, jouw nobele blik en die
+      enorme en aanstekelijke vreugde die alleen jij wist te geven.
+      
+      Je vulde mijn huis met leven en mijn leven met onvoorwaardelijke liefde die ik nooit
+      zal vergeten. Hoewel ik je voetstappen niet meer hoor rennen om me te begroeten of je
+      hoofd niet meer voel leunen op mij op zoek naar genegenheid, weet ik dat jouw speelse geest nog
+      steeds met me meegaat.
+      
+      Dank je voor elk moment, elke streek, en voor het zijn van de beste metgezel die ik
+      had kunnen wensen. De ruimte die je naast me achterliet is nu gevuld met de gelukkigste
+      herinneringen. Je zult altijd mijn lieve vriend zijn en je zult altijd een enorme
+      plaats in mijn hart hebben.

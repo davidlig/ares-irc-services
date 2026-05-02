@@ -1,0 +1,73 @@
+# Email content — domain: mail (plain text, no IRC codes)
+# Placeholders: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — verification token
+register_verification_subject: "%bot%: zweryfikuj rejestrację swojego nicka"
+register_verification_body: |
+  Witaj,
+
+  Poprosiłeś o rejestrację nicka "%nickname%" w sieci IRC.
+
+  Twój token weryfikacyjny to: %token%
+
+  Aby zakończyć rejestrację, wyślij tę komendę do %bot% (zastąp <token> tokenem powyżej):
+    /msg %bot% VERIFY %token%
+
+  Token wygasa za 1 godzinę. Jeśli to nie Ty wysłałeś to żądanie, zignoruj tę wiadomość.
+
+# RESEND — same as register, resend of token
+resend_verification_subject: "%bot%: Twój token weryfikacyjny (ponowne wysłanie)"
+resend_verification_body: |
+  Witaj,
+
+  Poprosiłeś o nowy token weryfikacyjny dla nicka "%nickname%".
+
+  Twój token weryfikacyjny to: %token%
+
+  Aby zakończyć rejestrację, wyślij do %bot%:
+    /msg %bot% VERIFY %token%
+
+  Token wygasa za 1 godzinę. Jeśli to nie Ty wysłałeś to żądanie, zignoruj tę wiadomość.
+
+# SET EMAIL — confirmation token sent to current email
+email_change_token_subject: "%bot%: potwierdź swój nowy adres e-mail"
+email_change_token_body: |
+  Witaj,
+
+  Poprosiłeś o zmianę adresu e-mail dla Twojego nicka %bot% na: %new_email%
+
+  Twój token potwierdzający to: %token%
+
+  Aby potwierdzić zmianę, wyślij do %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  Token wygasa za 1 godzinę. Jeśli to nie Ty wysłałeś to żądanie, zignoruj tę wiadomość.
+
+# RECOVER — password recovery token
+recovery_token_subject: "%bot%: odzyskiwanie hasła"
+recovery_token_body: |
+  Witaj,
+
+  Zażądano odzyskiwania hasła dla nicka "%nickname%".
+
+  Twój token odzyskiwania to: %token%
+
+  Aby zresetować hasło, wyślij do %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  Token wygasa za 1 godzinę. Jeśli to nie Ty wysłałeś to żądanie, zignoruj tę wiadomość.
+
+# ChanServ SET FOUNDER — founder change token
+founder_change_token_subject: "%bot%: token zmiany założyciela dla %channel%"
+founder_change_token_body: |
+  Witaj,
+
+  Zażądano zmiany założyciela dla kanału "%channel%" na nick "%new_nick%".
+
+  Twój token potwierdzający to: %token%
+
+  Aby zakończyć zmianę, wyślij do %bot% tę komendę (możesz ją skopiować i wkleić):
+
+    /msg %bot% %command%
+
+  Token wygasa za 1 godzinę. Jeśli to nie Ty wysłałeś to żądanie, zignoruj tę wiadomość.

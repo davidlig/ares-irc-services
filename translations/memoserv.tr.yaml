@@ -1,0 +1,122 @@
+# MemoServ translations — Turkish
+# Domain: memoserv
+
+unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
+
+error:
+  syntax: "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
+  not_identified: "\x0304✗\x03 Kimliğiniz doğrulanmamış. \x0303/msg %nickserv% IDENTIFY\x03 kullanın."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  insufficient_access: "\x0304✗\x03 \x02%channel%\x02 kanalında \x02%operation%\x02 işlemi için yetersiz yetki."
+
+send:
+  syntax: "SEND {nickname|#channel} <mesaj>"
+  short: "Bir rumuza veya kanala mesaj gönderin."
+  help: "Kayıtlı bir rumuza veya kanala mesaj gönderir. Alıcının mesaj hizmeti etkin olmalıdır (ENABLE)."
+  sent_nick: "\x0303✔\x03 Mesaj \x02%nickname%\x02 adlı kullanıcıya gönderildi."
+  sent_channel: "\x0303✔\x03 Mesaj \x02%channel%\x02 kanalına gönderildi."
+  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  throttled: "\x0304✗\x03 Başka bir mesaj göndermeden önce \x02%seconds%\x02 saniye beklemelisiniz."
+  limit_reached: "\x0304✗\x03 \x02%target%\x02 için mesaj sınırına ulaşıldı."
+  ignored: "\x0304✗\x03 Bu hedefe mesaj gönderemezsiniz, yoksayma listesindesiniz."
+  cannot_send_to_self: "\x0304✗\x03 Kendinize mesaj gönderemezsiniz."
+  message_too_long: "\x0304✗\x03 Mesaj çok uzun. Maksimum \x02%max%\x02 karakter."
+  service_disabled_for_target: "\x0304✗\x03 \x02%target%\x02 için mesaj hizmeti devre dışı."
+
+read:
+  syntax: "READ [#channel] <numara>"
+  short: "Numarasına göre bir mesajı okuyun."
+  help: "Verilen numaradaki mesajı okur. #channel olmadan, rumuz gelen kutunuzdan okur. #channel ile, MEMOREAD seviyesi gerektirir."
+  header: "\x02\x0307Mesaj #%index%\x03, gönderen: \x02%from%\x02:\x0F"
+  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  not_found: "\x0304✗\x03 #%index% numaralı mesaj bulunamadı."
+
+list:
+  syntax: "LIST [#channel]"
+  short: "Mesajları listeleyin (okunmamış olanlar kırmızı * ile işaretlenir)."
+  help: "Mesajlarınızı veya kanal mesajlarını listeler. Okunmamış mesajlar kırmızı yıldız ve bir önizleme (maks 50 karakter) ile gösterilir. #channel olmadan = rumuz gelen kutunuz; #channel ile MEMOREAD gerektirir."
+  header: "\x02\x0307%target% için mesajlar\x03:\x0F"
+  footer: "\x0314─────────────────────────────\x03"
+  empty: "\x0307ℹ\x03 \x02%target%\x02 için mesaj yok."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+
+del:
+  syntax: "DEL [#channel] <numara>"
+  short: "Numarasına göre bir mesajı silin."
+  help: "Verilen numaradaki mesajı siler. Kanallar için MEMOCHANGE seviyesi gerektirir."
+  deleted: "\x0303✔\x03 #%index% numaralı mesaj silindi."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  not_found: "\x0304✗\x03 #%index% numaralı mesaj bulunamadı."
+
+ignore:
+  syntax: "IGNORE {ADD|DEL|LIST} [#channel] [nickname]"
+  short: "Mesajlar için yoksayma listesini yönetin."
+  help: "ADD bir rumuzu sizin (veya kanalın) yoksayma listesine ekler; DEL kaldırır; LIST listeyi gösterir. Kanallar için ADD/DEL, MEMOCHANGE gerektirir."
+  add:
+    syntax: "IGNORE ADD [#channel] <nickname>"
+    short: "Yoksayma listesine rumuz ekleyin."
+    help: "Bu rumuzdan gelen mesajlar gelen kutunuz (veya kanalın) için kabul edilmeyecektir."
+  del:
+    syntax: "IGNORE DEL [#channel] <nickname>"
+    short: "Yoksayma listesinden rumuzu kaldırın."
+    help: "Rumuzu yoksayma listesinden kaldırır."
+  list:
+    syntax: "IGNORE LIST [#channel]"
+    short: "Yoksayılan rumuzları listeleyin."
+    help: "Mesajlar için sizin (veya kanalın) yoksaydığı rumuzların listesini gösterir."
+  added: "\x0303✔\x03 \x02%nickname%\x02 yoksayma listesine eklendi."
+  removed: "\x0303✔\x03 \x02%nickname%\x02 yoksayma listesinden kaldırıldı."
+  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 zaten yoksayma listesinde."
+  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 yoksayma listesinde değil."
+  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  limit_reached_nick: "\x0304✗\x03 Rumuzunuz için yoksayma listesi sınırına ulaşıldı (maks \x02%limit%\x02)."
+  limit_reached_channel: "\x0304✗\x03 \x02%channel%\x02 için yoksayma listesi sınırına ulaşıldı (maks \x02%limit%\x02)."
+  list_empty: "\x0307ℹ\x03 Yoksayma listesi boş."
+  list_header: "\x02\x0307Yoksayma listesi:\x03\x0F"
+  list_footer: "\x0314─────────────────────────────\x03"
+
+enable:
+  syntax: "ENABLE [#channel]"
+  short: "Mesaj almayı etkinleştirin."
+  help: "Rumuzunuz için mesaj almayı etkinleştirir veya kanallar için yalnızca kurucu etkinleştirebilir."
+  enabled_nick: "\x0303✔\x03 Rumuzunuz için mesaj hizmeti etkinleştirildi."
+  enabled_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı için mesaj hizmeti etkinleştirildi."
+  already_enabled_nick: "\x0307ℹ\x03 Rumuzunuz için mesaj hizmeti zaten etkin."
+  already_enabled_channel: "\x0307ℹ\x03 \x02%channel%\x02 için mesaj hizmeti zaten etkin."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  founder_only: "\x0304✗\x03 \x02%channel%\x02 için mesajları yalnızca kanal kurucusu etkinleştirebilir."
+
+disable:
+  syntax: "DISABLE [#channel]"
+  short: "Mesaj almayı devre dışı bırakın."
+  help: "Rumuzunuz veya kanal için mesaj almayı devre dışı bırakır. Kanallar için yalnızca kurucu devre dışı bırakabilir."
+  disabled_nick: "\x0303✔\x03 Rumuzunuz için mesaj hizmeti devre dışı bırakıldı."
+  disabled_channel: "\x0303✔\x03 \x02%channel%\x02 kanalı için mesaj hizmeti devre dışı bırakıldı."
+  already_disabled_nick: "\x0307ℹ\x03 Rumuzunuz için mesaj hizmeti zaten devre dışı."
+  already_disabled_channel: "\x0307ℹ\x03 \x02%channel%\x02 için mesaj hizmeti zaten devre dışı."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  founder_only: "\x0304✗\x03 \x02%channel%\x02 için mesajları yalnızca kanal kurucusu devre dışı bırakabilir."
+
+help:
+  syntax: "HELP [komut [alt-seçenek]]"
+  short: "Komutları listeleyin veya bir komut için yardım gösterin."
+  help: "Argüman olmadan tüm komutları listeler. Tam yardım için \x0303HELP <komut>\x03 kullanın."
+  header_title: "%bot%"
+  intro: "Rumuzlar ve kanallar için mesaj hizmeti."
+  general_header: "\x02\x0314Kullanılabilir komutlar:\x03\x0F"
+  command_line: "  \x0307%command%\x03%description%"
+  subcommand_line: "  \x0307%command%\x03%description%"
+  options_header: "\x02\x0314Seçenekler:\x03\x0F"
+  general_footer: "Daha fazla bilgi için \x0303/msg %bot% HELP <komut>\x03 kullanın."
+  set_sub_footer: "Daha fazla bilgi için \x0303/msg %bot% HELP %command% <seçenek>\x03 kullanın."
+  syntax_label: "\x0307Sözdizimi:\x03 \x02%syntax%\x02"
+  footer: "\x0314─────────────────────────────\x03"
+  unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
+
+notify:
+  nick_pending: "\x02%count%\x02 okunmamış mesajınız var. Listelemek için: \x0309/msg %bot% LIST\x03"
+  channel_pending: "\x02%channel%\x02 kanalında \x02%count%\x02 okunmamış mesaj var. Listelemek için \x0309/msg %bot% LIST %channel%\x03 kullanın."

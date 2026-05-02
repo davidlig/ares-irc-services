@@ -1,0 +1,27 @@
+# Common translations — Catalan
+# Domain: common
+#
+# Shared translations used across all IRC services.
+
+antiflood:
+  blocked: "Heu superat el límit de velocitat d'ordres. Torneu-ho a provar en %seconds% segons."
+  debug_channel: "%nick% límit de %command% assolit per a %host% (%seconds%s restants)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Per al meu lleial i etern amic,\x02
+      
+      Tot i que el 2023 va ser l'any en què vam haver de dir adeu, el temps no ha esborrat
+      ni un sol detall de tu. Encara recordo la teva energia sense límits, la teva mirada
+      noble i aquella alegria immensa i contagiosa que només tu sabies donar.
+      
+      Vas omplir la meva llar de vida i la meva vida d'un amor incondicional que mai
+      oblidaré. Tot i que ja no sento les teves passes corrent a saludar-me ni noto el
+      teu cap recolzant-se en mi buscant afecte, sé que el teu esperit juganer encara
+      m'acompanya.
+      
+      Gràcies per cada moment, per cada entremaliadura i per ser el millor company que
+      podia haver demanat. L'espai que vas deixar al meu costat s'omple ara amb els
+      records més feliços. Seràs sempre el meu estimat amic i sempre tindràs un lloc
+      immens al meu cor.

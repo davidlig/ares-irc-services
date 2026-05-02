@@ -1,0 +1,73 @@
+# Email content — domain: mail (plain text, no IRC codes)
+# Placeholders: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — verification token
+register_verification_subject: "%bot%: επαληθεύστε την καταχώρηση του ψευδωνύμου σας"
+register_verification_body: |
+  Γεια σας,
+
+  Ζητήσατε την καταχώρηση του ψευδωνύμου "%nickname%" στο δίκτυο IRC.
+
+  Το token επαλήθευσής σας είναι: %token%
+
+  Για να ολοκληρώσετε την καταχώρηση, στείλτε αυτήν την εντολή στο %bot% (αντικαταστήστε το <token> με το παραπάνω):
+    /msg %bot% VERIFY %token%
+
+  Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτό, παρακαλώ αγνοήστε αυτό το email.
+
+# RESEND — same as register, resend of token
+resend_verification_subject: "%bot%: το token επαλήθευσής σας (επανάληψη αποστολής)"
+resend_verification_body: |
+  Γεια σας,
+
+  Ζητήσατε ένα νέο token επαλήθευσης για το ψευδώνυμο "%nickname%".
+
+  Το token επαλήθευσής σας είναι: %token%
+
+  Για να ολοκληρώσετε την καταχώρηση, στείλτε στο %bot%:
+    /msg %bot% VERIFY %token%
+
+  Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτό, παρακαλώ αγνοήστε αυτό το email.
+
+# SET EMAIL — confirmation token sent to current email
+email_change_token_subject: "%bot%: επιβεβαιώστε τη νέα σας διεύθυνση email"
+email_change_token_body: |
+  Γεια σας,
+
+  Ζητήσατε να αλλάξετε τη διεύθυνση email για το ψευδώνυμό σας στο %bot% σε: %new_email%
+
+  Το token επιβεβαίωσής σας είναι: %token%
+
+  Για να επιβεβαιώσετε την αλλαγή, στείλτε στο %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτήν την αλλαγή, παρακαλώ αγνοήστε αυτό το email.
+
+# RECOVER — password recovery token
+recovery_token_subject: "%bot%: ανάκτηση κωδικού πρόσβασης"
+recovery_token_body: |
+  Γεια σας,
+
+  Ζητήθηκε ανάκτηση κωδικού πρόσβασης για το ψευδώνυμο "%nickname%".
+
+  Το token ανάκτησής σας είναι: %token%
+
+  Για να επαναφέρετε τον κωδικό σας, στείλτε στο %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτό, παρακαλώ αγνοήστε αυτό το email.
+
+# ChanServ SET FOUNDER — founder change token
+founder_change_token_subject: "%bot%: token αλλαγής ιδρυτή για %channel%"
+founder_change_token_body: |
+  Γεια σας,
+
+  Ζητήθηκε αλλαγή ιδρυτή για το κανάλι "%channel%" στο ψευδώνυμο "%new_nick%".
+
+  Το token επιβεβαίωσής σας είναι: %token%
+
+  Για να ολοκληρώσετε την αλλαγή, στείλτε στο %bot% αυτήν την εντολή (μπορείτε να την αντιγράψετε και να την επικολλήσετε):
+
+    /msg %bot% %command%
+
+  Το token λήγει σε 1 ώρα. Αν δεν ζητήσατε εσείς αυτό, παρακαλώ αγνοήστε αυτό το email.

@@ -1,0 +1,27 @@
+# Common translations — Romanian
+# Domain: common
+#
+# Shared translations used across all IRC services.
+
+antiflood:
+  blocked: "Ați depășit limita de rată a comenzilor. Vă rugăm să încercați din nou în %seconds% secunde."
+  debug_channel: "%nick% %command% limită atinsă pentru %host% (mai sunt %seconds%s)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Pentru loialul și eternul meu prieten,\x02
+
+      Deși 2023 a fost anul în care a trebuit să ne luăm rămas bun, timpul nu a șters niciun
+      detaliu despre tine. Încă îmi amintesc energia ta nemărginită, privirea ta nobilă și acea
+      bucurie imensă și molipsitoare pe care doar tu știai să o oferi.
+
+      Mi-ai umplut casa de viață și viața mea de o iubire necondiționată pe care nu o voi uita
+      niciodată. Deși nu îți mai aud pașii alergând să mă întâmpine și nici nu îți mai simt
+      capul sprijinindu-se de mine în căutare de afecțiune, știu că spiritul tău jucăuș încă
+      mă însoțește.
+
+      Îți mulțumesc pentru fiecare clipă, pentru fiecare poznă și pentru că ai fost cel mai bun
+      companion pe care l-aș fi putut cere. Spațiul pe care l-ai lăsat lângă mine este acum
+      umplut de cele mai fericite amintiri. Vei fi mereu dragul meu prieten și vei avea
+      întotdeauna un loc imens în inima mea.

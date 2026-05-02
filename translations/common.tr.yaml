@@ -1,0 +1,27 @@
+# Common translations — Turkish
+# Domain: common
+#
+# Shared translations used across all IRC services.
+
+antiflood:
+  blocked: "Komut hız sınırını aştınız. Lütfen %seconds% saniye sonra tekrar deneyin."
+  debug_channel: "%nick% %command% sınırı %host% için aşıldı (%seconds%s kaldı)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Sadık ve sonsuza dek dostum,\x02
+
+      2023 seninle vedalaşmak zorunda kaldığımız yıl olsa da, zaman senden
+      tek bir ayrıntıyı bile silmedi. Sınırsız enerjini, asil bakışını ve
+      yalnızca senin verebileceğin o engin ve bulaşıcı neşeyi hâlâ hatırlıyorum.
+
+      Evimi hayatla ve hayatımı asla unutmayacağım koşulsuz bir sevgiyle doldurdun.
+      Artık beni karşılamak için koşan ayak seslerini duymasam ya da sevgi arayan
+      başının bana yaslandığını hissetmesem de, oyuncu ruhunun hâlâ bana eşlik
+      ettiğini biliyorum.
+
+      Her anın, her yaramazlığın ve isteyebileceğim en iyi dost olduğun için
+      teşekkür ederim. Yanımda bıraktığın boşluk artık en mutlu anılarla dolu.
+      Her zaman sevgili dostum olacaksın ve kalbimde her zaman kocaman bir
+      yerin olacak.

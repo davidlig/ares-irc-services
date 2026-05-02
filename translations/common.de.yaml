@@ -1,0 +1,27 @@
+# Allgemeine Übersetzungen — Deutsch
+# Domain: common
+#
+# Gemeinsam genutzte Übersetzungen für alle IRC-Dienste.
+
+antiflood:
+  blocked: "Sie haben das Befehlsratenlimit überschritten. Bitte versuchen Sie es in %seconds% Sekunden erneut."
+  debug_channel: "%nick% %command%-Limit erreicht für %host% (noch %seconds%s)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Für meinen treuen und ewigen Freund,\x02
+      
+      Obwohl 2023 das Jahr war, in dem wir uns verabschieden mussten, hat die Zeit kein einziges
+      Detail von dir ausgelöscht. Ich erinnere mich noch an deine grenzenlose Energie, deinen edlen
+      Blick und diese immense und ansteckende Freude, die nur du zu geben wusstest.
+      
+      Du hast mein Zuhause mit Leben und mein Leben mit bedingungsloser Liebe erfüllt, die ich
+      niemals vergessen werde. Auch wenn ich deine Schritte nicht mehr höre, wie sie mir entgegenlaufen,
+      oder deinen Kopf nicht mehr spüre, wie er sich an mich lehnt und Zuneigung sucht, weiß ich,
+      dass dein verspielter Geist mich noch immer begleitet.
+      
+      Danke für jeden Moment, jeden Unfug und dafür, dass du der beste Gefährte warst, den ich mir
+      hätte wünschen können. Der Raum, den du an meiner Seite hinterlassen hast, ist jetzt mit den
+      glücklichsten Erinnerungen gefüllt. Du wirst immer mein lieber Freund sein und du wirst immer
+      einen unermesslichen Platz in meinem Herzen haben.

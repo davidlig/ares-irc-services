@@ -1,0 +1,571 @@
+# NickServ translations — Portuguese
+# Domain: nickserv
+#
+# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
+#   \x02        bold on/off
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
+#   \x03        reset color
+#   \x0F        reset all formatting
+#
+# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark grey (14 decimal)  ← CORRECT
+#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
+
+unknown_command: "\x0304✗\x03 Comando desconhecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:            "\x0304✗\x03 Sintaxe incorreta. Uso: \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 Este comando é restrito a Operadores de IRC."
+  not_identified:    "\x0304✗\x03 Não está identificado. Use \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
+  permission_denied: "\x0304✗\x03 Permissão negada. Não tem acesso a este comando."
+  mail_failed:       "\x0304✗\x03 O email não pôde ser enviado. Verifique o seu endereço ou tente novamente mais tarde."
+
+# --- REGISTER ---------------------------------------------------------------
+register:
+  syntax:           "REGISTER <palavra-passe> <email>"
+  short:            "Registe o seu nickname nos serviços."
+  help:             "Inicia o registo do seu nickname atual. Um token de verificação\nserá enviado para o endereço de email fornecido. Conclua o registo\nexecutando \x0303/msg %bot% VERIFY <token>\x03. O token expira em 1 hora.\nSe não chegar, verifique a sua pasta de spam ou use \x0303RESEND\x03."
+  pending:          "\x0307→\x03 Um token de verificação foi enviado para \x02%email%\x02.\n  Execute \x0303/msg %bot% VERIFY <token>\x03 para concluir o registo.\n  Não recebeu? Verifique o spam ou use \x0303/msg %bot% RESEND\x03\n  O token expira em \x021 hora\x02."
+  already_registered: "\x0304✗\x03 O nickname \x02%nickname%\x02 já está registado."
+  already_pending:  "\x0304✗\x03 O nickname \x02%nickname%\x02 já tem uma verificação pendente.\n  Use \x0303/msg %bot% VERIFY <token>\x03 ou \x0303/msg %bot% RESEND\x03."
+  forbidden:        "\x0304✗\x03 O nickname \x02%nickname%\x02 não pode ser registado nesta rede."
+  invalid_email:    "\x0304✗\x03 O endereço de email fornecido não é válido."
+  email_already_used: "\x0304✗\x03 O email \x02%email%\x02 já está em uso por outro nickname. Use um endereço diferente."
+  throttled:          "\x0304✗\x03 Deve aguardar \x02%minutes%\x02 minuto(s) antes de tentar registar novamente."
+  guest_prefix_forbidden: "\x0304✗\x03 Não pode registar um nick que começa com \x02%prefix%\x02."
+
+# --- VERIFY -----------------------------------------------------------------
+verify:
+  syntax:           "VERIFY <token>"
+  short:            "Confirme o seu endereço de email e ative o seu nickname."
+  help:             "Conclui o registo verificando o token enviado para o seu email.\nO token é válido por 1 hora a partir do momento do registo."
+  success:          "\x0303✔\x03 O nickname \x02%nickname%\x02 foi registado com sucesso e agora está identificado."
+  invalid_token:    "\x0304✗\x03 O token é inválido ou expirou. Use \x0303/msg %bot% REGISTER\x03 para recomeçar."
+  no_pending:       "\x0304✗\x03 Não tem nenhum registo pendente para verificar."
+
+# --- RESEND -----------------------------------------------------------------
+resend:
+  syntax:           "RESEND"
+  short:            "Reenviar o token de verificação para o seu email."
+  help:             "Reenvia o token de verificação para o endereço de email fornecido durante\no registo. Só funciona se tiver um registo pendente."
+  success:          "\x0307→\x03 Token de verificação reenviado para \x02%email%\x02."
+  no_pending:       "\x0304✗\x03 Não tem nenhum registo pendente para reenviar um token."
+  throttled:        "\x0304✗\x03 Deve aguardar \x02%minutes%\x02 minuto(s) antes de solicitar outro email de verificação."
+
+# --- RECOVER -----------------------------------------------------------------
+recover:
+  syntax:           "RECOVER <nickname> [token]"
+  short:            "Recupere o seu nickname se perdeu a sua palavra-passe."
+  help:             "Recupera o acesso a um nickname registado quando perdeu a palavra-passe.\n1) \x0303RECOVER <nickname>\x03 — um token é enviado para o email do nickname.\n2) \x0303RECOVER <nickname> <token>\x03 — insira o token do email para redefinir a sua palavra-passe.\nReceberá então uma palavra-passe temporária e o comando para a alterar."
+  email_sent:       "\x0307→\x03 Um token de recuperação foi enviado para \x02%email_hint%\x02. Verifique a sua caixa de entrada (e a pasta de spam)."
+  not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  pending:          "\x0304✗\x03 O nickname \x02%nickname%\x02 está pendente de verificação de email."
+  suspended:        "\x0304✗\x03 O nickname \x02%nickname%\x02 está suspenso. Motivo: %reason%"
+  forbidden:        "\x0304✗\x03 O nickname \x02%nickname%\x02 não pode ser usado nesta rede."
+  no_email:         "\x0304✗\x03 Não está definido nenhum email para o nickname \x02%nickname%\x02. A recuperação não está disponível."
+  throttled:        "\x0304✗\x03 Deve aguardar \x02%minutes%\x02 minuto(s) antes de solicitar outro email de recuperação."
+  invalid_token:    "\x0304✗\x03 O token é inválido ou expirou. Solicite um novo com \x0303RECOVER %nickname%\x03."
+  success_identify: "\x0303✔\x03 Palavra-passe redefinida. Identifique-se agora: \x0303%identify_cmd%\x03"
+  success_then_change: "Depois altere a sua palavra-passe: \x0303/msg %bot% SET PASSWORD <nova_palavra-passe>\x03"
+
+# --- IDENTIFY ---------------------------------------------------------------
+identify:
+  syntax:           "IDENTIFY <nickname> <palavra-passe>"
+  short:            "Identifique-se como proprietário de um nickname."
+  help:             "Autentica a sua sessão com %nickserv% usando o seu nickname e palavra-passe.\nApós uma identificação bem-sucedida receberá o modo registado \x02+r\x02\ne, se estava a usar um nick de convidado, o seu nick registado será restaurado."
+  success:          "\x0303✔\x03 Está agora identificado como \x02%nickname%\x02."
+  already_identified: "\x0307ℹ\x03 Já está identificado como \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  invalid_credentials: "\x0304✗\x03 Palavra-passe incorreta. Tente novamente."
+  locked_out:         "\x0304✗\x03 Demasiadas tentativas falhadas. Tente novamente dentro de \x02%minutes%\x02 minuto(s)."
+  ghost_released:   "\x0307⚡\x03 A sessão fantasma que ocupava \x02%nickname%\x02 foi desligada."
+  kill_reason:      "Nick %nickname% recuperado por %source% (o proprietário registado identificou-se)"
+  pending:          "\x0304✗\x03 O nickname \x02%nickname%\x02 está pendente de verificação de email.\n  Execute \x0303/msg %bot% VERIFY <token>\x03 ou \x0303/msg %bot% RESEND\x03."
+  suspended:        "\x0304✗\x03 O nickname \x02%nickname%\x02 está suspenso. Motivo: %reason%"
+  forbidden:        "\x0304✗\x03 O nickname \x02%nickname%\x02 não pode ser usado nesta rede."
+
+# --- STATUS -----------------------------------------------------------------
+status:
+  syntax:           "STATUS <nickname>"
+  short:            "Mostrar o estado de registo de um nickname."
+  help:             "Mostra o estado atual de um nickname: registado, pendente de verificação,\nsuspenso ou proibido."
+  header:           "\x02Estado do nick \x0307%nickname%\x03:\x02"
+  unregistered:     "  Estado          : Não registado"
+  not_registered_offline: "  Estado          : \x0315Não registado\x03"
+  pending:          "  Estado          : \x0307Pendente de verificação\x03"
+  pending_expires:  "  Expira em       : %minutes% minuto(s)"
+  pending_expires_at: "  Expira em       : %date%"
+  not_connected:    "  Estado          : \x0315Não ligado\x03"
+  not_identified:   "  Estado          : \x0307Não identificado\x03"
+  identified:       "  Estado          : \x0303Identificado\x03"
+  suspended:        "  Estado          : \x0304Suspenso\x03"
+  suspended_reason: "  Motivo          : %reason%"
+  suspended_until:  "  Termina em      : %date%"
+  suspended_permanent: "  Termina em      : Permanente"
+  forbidden:        "  Estado          : \x0304Proibido\x03"
+  forbidden_reason: "  Motivo          : %reason%"
+  footer:           "\x0314─────────────────────────────\x03"
+
+# --- INFO -------------------------------------------------------------------
+info:
+  syntax:           "INFO <nickname>"
+  short:            "Mostrar informações sobre um nickname registado."
+  help:             "Mostra detalhes de registo de um nickname: data de registo, estado\nde ligação, última mensagem de saída e endereço de email. O email só é visível para\no proprietário quando identificado. Com PRIVATE ON apenas o proprietário e Operadores de IRC\npodem ver as informações."
+  not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  private:          "\x0304✗\x03 As informações do nickname \x02%nickname%\x02 são privadas."
+  header:           "\x02Informações do nickname \x0307%nickname%\x03:\x02"
+  status:           "  \x0314Estado\x03           : %status%"
+  status_registered:  "\x0303Registado\x03"
+  status_suspended:   "\x0304Suspenso\x03"
+  status_forbidden:   "\x0304Proibido\x03"
+  reason:           "  \x0314Motivo\x03           : %reason%"
+  suspended_until:  "  \x0314Termina em\x03       : %date%"
+  suspended_permanent: "  \x0314Termina em\x03       : Permanente"
+  registered_at:    "  \x0314Registado\x03        : %date%"
+  last_seen_online: "  \x0314Última vez\x03       : \x0303● ONLINE AGORA\x03"
+  last_seen_at:     "  \x0314Última vez\x03       : %date%"
+  last_seen_never:  "  \x0314Última vez\x03       : Nunca"
+  last_quit:        "  \x0314Última msg saída\x03 : %message%"
+  last_connect:     "  \x0314Última vez de\x03    : %ip% (%host%)"
+  email:            "  \x0314Email\x03            : %email%"
+  vhost:            "  \x0314VHost\x03            : %vhost%"
+  no_expire:        "  \x0314Nunca expira\x03     : Sim"
+  footer:           "\x0314─────────────────────────────\x03"
+  channels_header:  "\x0314\x0ACanais com acesso:\x03"
+  channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
+  channels_entry_successor: "  %channel% (\x0303Sucessor\x03)"
+  channels_entry_access:    "  %channel% (%level%)"
+
+# --- SET --------------------------------------------------------------------
+set:
+  syntax:           "SET <opção> <valor>"
+  short:            "Alterar as configurações do seu nickname %nickserv%."
+  help:             "Modifica as configurações do seu nickname %nickserv%.\nDeve estar identificado para usar este comando."
+  unknown_option:   "\x0304✗\x03 Opção desconhecida \x02%option%\x02. Opções disponíveis: %options%."
+
+  password:
+    syntax:         "SET PASSWORD <nova_palavra-passe>"
+    short:          "Alterar a sua palavra-passe do nickname."
+    help:           "Altera a palavra-passe do seu nickname NickServ. A nova palavra-passe tem\nefeito imediato. Escolha uma palavra-passe forte de pelo menos 6 caracteres\nque não use noutros serviços."
+    success:        "\x0303✔\x03 A sua palavra-passe foi atualizada com sucesso."
+
+  email:
+    syntax:         "SET EMAIL <novo_email> [token]"
+    short:          "Alterar o endereço de email associado ao seu nickname (confirmação em dois passos)."
+    help:           "Alteração de email em dois passos por segurança.\n1) \x0303SET EMAIL <novo_email>\x03 — um token é enviado para o seu email atual.\n2) \x0303SET EMAIL <novo_email> <token>\x03 — confirme com o token recebido.\nO token expira em 1 hora."
+    success:        "\x0303✔\x03 O seu email foi atualizado para \x02%email%\x02."
+    pending_sent:   "\x0307→\x03 Um token de confirmação foi enviado para \x02%current_email%\x02.\n  Para confirmar a alteração para \x02%new_email%\x02 execute:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  O token expira em 1 hora."
+    invalid_token:  "\x0304✗\x03 O token é inválido ou expirou. Solicite um novo com \x0303SET EMAIL <novo_email>\x03."
+
+  language:
+    syntax:         "SET LANGUAGE <código>"
+    short:          "Alterar o idioma que os serviços usam para comunicar consigo."
+    help:           "Altera o idioma que %nickserv% e outros serviços usam quando falam consigo.\nIdiomas disponíveis: \x02es\x02 (Espanhol), \x02en\x02 (Inglês)."
+    success:        "\x0303✔\x03 Idioma alterado para \x02%language%\x02."
+    invalid:        "\x0304✗\x03 Idioma não suportado. Idiomas disponíveis: %languages%."
+
+  timezone:
+    syntax:         "SET TIMEZONE <fuso_horário>"
+    short:          "Definir o fuso horário usado ao mostrar datas."
+    help:           "Define o fuso horário usado quando %nickserv% mostra datas.\nUse \x02HELP SET TIMEZONE\x02 para o índice de regiões; \x02HELP SET TIMEZONE <região>\x02 (ex: Europe) para os fusos dessa região. Use \x02OFF\x02 para limpar."
+    success:        "\x0303✔\x03 Fuso horário definido como \x02%timezone%\x02. As datas serão mostradas neste fuso."
+    cleared:        "\x0303✔\x03 Fuso horário removido. As datas usarão o padrão da rede."
+    invalid:        "\x0304✗\x03 Fuso horário inválido \x02%timezone%\x02. Use um identificador válido (ex: UTC, Europe/Lisbon)."
+
+  private:
+    syntax:         "SET PRIVATE {ON|OFF}"
+    short:          "Ativar ou desativar a privacidade das informações do seu nickname."
+    help:           "Controla a visibilidade das informações do seu nickname no comando INFO.\nCom \x02PRIVATE ON\x02 apenas você e Operadores de IRC podem ver os seus detalhes.\nCom \x02PRIVATE OFF\x02 as suas informações são públicas para todos."
+    on:             "\x0303✔\x03 As informações do seu nickname são agora \x02privadas\x02."
+    off:            "\x0303✔\x03 As informações do seu nickname são agora \x02públicas\x02."
+
+  msg:
+    syntax:         "SET MSG {ON|OFF}"
+    short:          "Usar PRIVMSG (ON) ou NOTICE (OFF) para as respostas dos serviços."
+    help:           "Controla como %nickserv% e outros serviços lhe enviam mensagens.\nCom \x02MSG ON\x02 as respostas são enviadas como \x02PRIVMSG\x02 (alguns clientes podem disparar respostas ou notificações).\nCom \x02MSG OFF\x02 as respostas são enviadas como \x02NOTICE\x02 (padrão; normalmente sem resposta automática)."
+    on:             "\x0303✔\x03 As mensagens dos serviços serão agora enviadas como \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 As mensagens dos serviços serão agora enviadas como \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SET VHOST <vhost>"
+    short:          "Definir ou remover o seu host virtual personalizado (hostname exibido)."
+    help:           "Define um hostname personalizado que outros veem quando está identificado.\nUse \x02SET VHOST OFF\x02 para o limpar. Apenas letras (a-z, A-Z), dígitos, hífen e ponto;\nnenhum hífen ou ponto no início/fim de qualquer bloco; máx. 48 caracteres. Único por nickname."
+    success:        "\x0303✔\x03 O seu host virtual foi definido como \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 O seu host virtual foi removido."
+    invalid:        "\x0304✗\x03 Vhost inválido. Apenas letras, dígitos, hífen e ponto (não no início/fim de bloco); máx. 48 caracteres."
+    taken:          "\x0304✗\x03 Esse vhost já está em uso por outro nickname."
+    forced:         "\x0304✗\x03 O seu vhost é configurado automaticamente e não pode ser alterado com SET VHOST."
+
+# --- HELP -------------------------------------------------------------------
+help:
+  syntax:           "HELP [comando]"
+  short:            "Mostrar ajuda para os comandos %nickserv%."
+  help:             "Mostra ajuda geral de %nickserv% ou informações detalhadas\npara um comando específico."
+  header_title:     "%bot%"
+  intro:            "Serviço de registo e proteção de nicknames para a rede IRC."
+  intro_expiration: "NOTA: Nicknames \x0304\x1Fnão utilizados\x0F há mais de %days% dias são removidos automaticamente."
+  general_header:   "\x02\x0314Comandos disponíveis:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Opções:\x03\x0F"
+  general_footer:   "Use \x0303/msg %bot% HELP <comando>\x03 para mais informações."
+  set_sub_footer:   "Use \x0303/msg %bot% HELP %command% <opção>\x03 para mais informações."
+  command_header:   "\x02Ajuda para %command%:\x02"
+  syntax_label:     "\x0307Sintaxe:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  unknown_command:  "\x0304✗\x03 Nenhuma ajuda disponível para \x02%command%\x02."
+  ircop_header:     "\x02\x0314Comandos disponíveis para IRCOPS:\x03\x0F"
+
+  set_timezone:
+    index_label:    "\x0314Regiões\x03 (use \x02HELP SET TIMEZONE <região>\x02 para a lista):"
+    region_header:  "\x0314Fusos horários de %region%:\x03"
+    region_unknown: "\x0304✗\x03 Região desconhecida. Use \x02HELP SET TIMEZONE\x02 para o índice."
+
+# --- Nick Protection --------------------------------------------------------
+protection:
+  nick_in_use:      "\x0304⚠\x03 O nick \x02%nickname%\x02 está registado. Será renomeado se não se identificar."
+  renamed_to:       "\x0307→\x03 Foi renomeado para \x02%guest_nick%\x02. Para recuperar o seu nick:\n\x0303/msg %bot% IDENTIFY %nickname% <palavra-passe>\x03"
+  nick_forbidden:   "\x0304✗\x03 O nickname \x02%nickname%\x02 está proibido: %reason%"
+
+# --- IRCop Commands ---------------------------------------------------------
+userip:
+  syntax:           "USERIP <nickname>"
+  short:            "Obter o endereço IP real e hostname do nickname."
+  help:             |
+    Mostra o endereço IP real e o hostname do nickname especificado.
+    Disponível apenas para IRCops com permissão 'nickserv.userip'.
+
+    Este comando mostra informações sensíveis do nickname.
+    Use com responsabilidade.
+
+    Sintaxe: USERIP <nickname>
+    Exemplo: USERIP SomeUser
+  not_online:       "\x0304✗\x03 O nickname \x02%nickname%\x02 não está ligado."
+  result:           "\x0307ℹ\x03 Nickname: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+
+permissions:
+  nickserv.userip: "Ver o endereço IP/hostname real de um nickname (USERIP)"
+  nickserv.suspend: "Suspender ou remover suspensão de um nickname (SUSPEND/UNSUSPEND)"
+  nickserv.rename: "Forçar renomeação de um nickname ligado para um nick aleatório (RENAME)"
+  nickserv.drop: "Remover um nickname registado (DROP)"
+  nickserv.forbid: "Proibir ou remover proibição de um nickname (FORBID/UNFORBID)"
+  nickserv.forbidvhost: "Proibir ou permitir padrões de vhost (FORBIDVHOST)"
+  nickserv.saset: "Modificar as configurações de outro nickname (SASET)"
+  nickserv.noexpire: "Definir ou remover proteção de expiração para um nickname (NOEXPIRE)"
+  nickserv.history: "Ver e gerir o histórico de ações do nickname (HISTORY)"
+
+# --- SUSPEND (IRCop) ---------------------------------------------------------
+suspend:
+  syntax:           "SUSPEND <nickname> <duração> <motivo>"
+  short:            "Suspender um nickname."
+  help:             |
+    Suspende um nickname, impedindo o proprietário de se identificar.
+    A suspensão pode ser temporária ou permanente.
+
+    Formatos de duração: \x0303%d\x03 (dias), \x0303%h\x03 (horas), \x0303%m\x03 (minutos), ou \x03030\x03 (permanente).
+
+    Utilizadores suspensos não podem identificar-se com o seu nickname.
+    Operadores de IRC e utilizadores root não podem ser suspensos.
+
+    Sintaxe: SUSPEND <nickname> <duração> <motivo>
+    Exemplos:
+      SUSPEND BadUser 7d Spam em #help
+      SUSPEND Abuser 30d Flood repetido
+      SUSPEND ProblemUser 0 Evasão de permaban
+  success:            "\x0303✔\x03 O nickname \x02%nickname%\x02 foi suspenso até \x02%duration%\x02."
+  already_suspended:  "\x0304✗\x03 O nickname \x02%nickname%\x02 já está suspenso."
+  not_registered:     "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  forbidden:          "\x0304✗\x03 O nickname \x02%nickname%\x02 está proibido e não pode ser suspenso."
+  cannot_suspend_oper: "\x0304✗\x03 Não é possível suspender o operador de IRC \x02%nickname%\x02."
+  cannot_suspend_root: "\x0304✗\x03 Não é possível suspender o utilizador root \x02%nickname%\x02."
+  cannot_suspend_service: "\x0304✗\x03 Não é possível suspender o nickname de serviço \x02%nickname%\x02."
+  invalid_duration:   "\x0304✗\x03 Duração inválida. Use: \x0303<d><h><m>\x03 (ex: 7d, 12h, 30m) ou \x03030\x03 para permanente."
+  permanent:          "permanente"
+
+# --- UNSUSPEND (IRCop) -------------------------------------------------------
+unsuspend:
+  syntax:           "UNSUSPEND <nickname>"
+  short:            "Remover a suspensão de um nickname."
+  help:             |
+    Remove uma suspensão ativa de um nickname, permitindo que o proprietário se identifique novamente.
+
+    Sintaxe: UNSUSPEND <nickname>
+    Exemplo: UNSUSPEND SomeUser
+  success:          "\x0303✔\x03 A suspensão foi levantada de \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  not_suspended:    "\x0304✗\x03 O nickname \x02%nickname%\x02 não está suspenso."
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax:           "RENAME <nickname>"
+  short:            "Forçar renomeação de um nickname ligado para um nickname aleatório."
+  help:             |
+    Força um nickname ligado a alterar o seu nick para um gerado aleatoriamente.
+    Útil para aplicar políticas de rede sem desligar o utilizador.
+
+    O formato do novo nickname usa o prefixo de convidado configurado (%prefix%).
+
+    Este comando requer permissão IRCop: nickserv.rename
+
+    Sintaxe: RENAME <nickname>
+    Exemplo: RENAME Troublemaker
+  not_online:        "\x0304✗\x03 O nickname \x02%nickname%\x02 não está ligado."
+  cannot_rename_root: "\x0304✗\x03 Não é possível renomear o utilizador root \x02%nickname%\x02."
+  cannot_rename_oper: "\x0304✗\x03 Não é possível renomear o operador de IRC \x02%nickname%\x02."
+  cannot_rename_service: "\x0304✗\x03 Não é possível renomear o nickname de serviço \x02%nickname%\x02."
+  success:           "\x0303✓\x03 O nickname \x02%nickname%\x02 foi renomeado para \x02%new_nick%\x02."
+
+# --- DROP (IRCop) --------------------------------------------------------------
+drop:
+  syntax:           "DROP <nickname>"
+  short:            "Remover um nickname registado."
+  help:             |
+    Remove um nickname registado da base de dados.
+    Esta ação não pode ser desfeita.
+
+    Se o utilizador estiver online, será renomeado para um nickname Guest-.
+    Utilizadores root e operadores de IRC não podem ser removidos.
+    Não pode remover o seu próprio nickname.
+
+    Este comando requer permissão IRCop: nickserv.drop
+
+    Sintaxe: DROP <nickname>
+    Exemplo: DROP OldAccount
+  not_registered:     "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  suspended:         "\x0304✗\x03 O nickname \x02%nickname%\x02 está suspenso. Remova a suspensão primeiro."
+  forbidden:         "\x0304✗\x03 O nickname \x02%nickname%\x02 está proibido."
+  cannot_drop_root:   "\x0304✗\x03 Não é possível remover o utilizador root \x02%nickname%\x02."
+  cannot_drop_oper:   "\x0304✗\x03 Não é possível remover o operador de IRC \x02%nickname%\x02."
+  cannot_drop_self:    "\x0304✗\x03 Não pode remover o seu próprio nickname."
+  success:            "\x0303✓\x03 O nickname \x02%nickname%\x02 foi removido."
+  cannot_drop_service: "\x0304✗\x03 Não é possível remover o nickname de serviço \x02%nickname%\x02."
+
+# --- FORBID (IRCop) --------------------------------------------------------------
+forbid:
+  syntax:           "FORBID <nickname> <motivo>"
+  short:            "Bloquear permanentemente um nickname de ser usado."
+  help:             |
+    Proíbe um nickname de ser usado na rede.
+    O nickname não pode ser registado ou usado por ninguém.
+
+    Se o nickname estiver atualmente registado, será removido primeiro.
+    Se alguém o estiver a usar, será forçado a mudar para um nickname Guest-.
+
+    Utilizadores root, operadores de IRC e nicknames de serviço não podem ser proibidos.
+
+    Este comando requer permissão IRCop: nickserv.forbid
+
+    Sintaxe: FORBID <nickname> <motivo>
+    Exemplo: FORBID BadNick Violações repetidas de políticas
+  success:            "\x0303✔\x03 O nickname \x02%nickname%\x02 foi proibido."
+  updated:            "\x0303✔\x03 O motivo de proibição de \x02%nickname%\x02 foi atualizado."
+  reason_required:    "\x0304✗\x03 Deve fornecer um motivo para a proibição."
+  cannot_forbid_root:  "\x0304✗\x03 Não é possível proibir o utilizador root \x02%nickname%\x02."
+  cannot_forbid_oper:  "\x0304✗\x03 Não é possível proibir o operador de IRC \x02%nickname%\x02."
+  cannot_forbid_service: "\x0304✗\x03 Não é possível proibir o nickname de serviço \x02%nickname%\x02."
+
+# --- UNFORBID (IRCop) ------------------------------------------------------------
+unforbid:
+  syntax:           "UNFORBID <nickname>"
+  short:            "Remover uma proibição de nickname."
+  help:             |
+    Remove uma proibição de nickname, permitindo que o nickname seja usado novamente.
+
+    Este comando requer permissão IRCop: nickserv.forbid
+
+    Sintaxe: UNFORBID <nickname>
+    Exemplo: UNFORBID SomeNick
+  success:          "\x0303✔\x03 O nickname \x02%nickname%\x02 já não está proibido."
+  not_forbidden:    "\x0304✗\x03 O nickname \x02%nickname%\x02 não está proibido."
+
+# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
+forbidvhost:
+  syntax:           "FORBIDVHOST ADD|DEL|LIST [padrão]"
+  short:            "Gerir padrões de vhost proibidos."
+  help:             |
+    Gere padrões que impedem os utilizadores de definir vhosts correspondentes
+    via NickServ SET VHOST.
+
+    Caracteres universais: * corresponde a qualquer sequência, ? corresponde a um único caractere.
+    Exemplo: *.pirated.com bloqueia qualquer vhost que termine com .pirated.com
+
+    Este comando requer permissão IRCop: nickserv.forbidvhost
+
+    Subcomandos:
+      ADD <padrão>    Adiciona um padrão proibido
+      DEL <padrão>    Remove um padrão proibido
+      LIST            Mostra todos os padrões proibidos
+
+  unknown_sub: "\x0304✗\x03 Subcomando desconhecido \x02%sub%\x02. Use ADD, DEL ou LIST."
+
+  add:
+    syntax:      "FORBIDVHOST ADD <padrão>"
+    short:       "Adicionar um padrão de vhost proibido."
+    help:        |
+      Adiciona um padrão à lista de vhosts proibidos. Os utilizadores não poderão
+      definir vhosts que correspondam a este padrão via SET VHOST.
+
+      Caracteres universais: * corresponde a qualquer sequência, ? corresponde a um único caractere.
+
+      Sintaxe: FORBIDVHOST ADD <padrão>
+      Exemplo: FORBIDVHOST ADD *.pirated.com
+    done:            "\x0303✓\x03 Padrão de vhost proibido adicionado: \x02%pattern%\x02"
+    already_exists:  "\x0304✗\x03 O padrão \x02%pattern%\x02 já existe."
+    invalid:          "\x0304✗\x03 Formato de padrão de vhost inválido."
+
+  del:
+    syntax:      "FORBIDVHOST DEL <padrão>"
+    short:       "Remover um padrão de vhost proibido."
+    help:        |
+      Remove um padrão da lista de vhosts proibidos.
+
+      Sintaxe: FORBIDVHOST DEL <padrão>
+      Exemplo: FORBIDVHOST DEL *.pirated.com
+    done:        "\x0303✓\x03 Padrão de vhost proibido removido: \x02%pattern%\x02"
+    not_found:   "\x0304✗\x03 Padrão \x02%pattern%\x02 não encontrado."
+
+  list:
+    short:       "Listar todos os padrões de vhost proibidos."
+    syntax:      "FORBIDVHOST LIST"
+    help:        |
+      Mostra todos os padrões de vhost proibidos.
+
+      Sintaxe: FORBIDVHOST LIST
+    header:      "\x0307ℹ\x03 Padrões de vhost proibidos (\x02%count%\x02):"
+    entry:       "  %index%. \x0304%pattern%\x03 — por %nickname% (%date%)"
+    empty:       "\x0307ℹ\x03 Nenhum padrão de vhost proibido."
+    unknown_creator: "desconhecido"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Ver ou gerir histórico de ações do nickname."
+  help:             |
+    Gere o histórico de ações de um nickname.
+    Apenas IRCops com permissão 'nickserv.history' podem usar este comando.
+
+    Ações registadas automaticamente:
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+
+    Sintaxe: HISTORY <nickname> ADD <mensagem>
+            HISTORY <nickname> DEL <id>
+            HISTORY <nickname> VIEW [PÁGINA|ALL]
+            HISTORY <nickname> CLEAR
+
+    Exemplos:
+      HISTORY SomeNick VIEW
+      HISTORY SomeNick ADD Nota manual sobre este utilizador
+      HISTORY SomeNick VIEW 2
+      HISTORY SomeNick VIEW ALL
+      HISTORY SomeNick DEL 123
+      HISTORY SomeNick CLEAR
+
+    Use VIEW para ver o histórico (mostra 3 entradas por padrão).
+    Use VIEW PAGE 2 para ver a página seguinte.
+    Use VIEW ALL para ver o histórico completo.
+    Use ADD para adicionar uma entrada manual.
+    Use DEL para eliminar uma entrada específica por ID.
+    Use CLEAR para eliminar todas as entradas do histórico.
+  not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  unknown_operator: "(desconhecido)"
+
+  add:
+    syntax:     "HISTORY <nickname> ADD <mensagem>"
+    short:      "Adicionar uma entrada manual ao histórico."
+    help:        |
+      Adiciona uma entrada manual ao histórico do nickname.
+
+      Sintaxe: HISTORY <nickname> ADD <mensagem>
+      Exemplo: HISTORY SomeNick ADD Utilizador reportado por spam
+    success:    "\x0303✔\x03 Entrada de histórico adicionada para \x02%nickname%\x02."
+
+  del:
+    syntax:     "HISTORY <nickname> DEL <id>"
+    short:      "Eliminar uma entrada de histórico por ID."
+    help:        |
+      Elimina uma entrada específica do histórico pelo seu ID.
+
+      Sintaxe: HISTORY <nickname> DEL <id>
+      Exemplo: HISTORY SomeNick DEL 42
+    success:    "\x0303✔\x03 Entrada de histórico \x02%id%\x02 eliminada."
+    not_found:  "\x0304✗\x03 Entrada de histórico \x02%id%\x02 não encontrada."
+    invalid_id: "\x0304✗\x03 ID de entrada inválido: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <nickname> VIEW [PÁGINA|ALL]"
+    short:      "Ver histórico de ações do nickname."
+    help:        |
+      Mostra o histórico de ações do nickname.
+
+      Sintaxe: HISTORY <nickname> VIEW
+              HISTORY <nickname> VIEW PÁGINA
+              HISTORY <nickname> VIEW ALL
+
+      Por padrão mostra 3 entradas de cada vez.
+      Use VIEW 2 para ver a segunda página.
+      Use VIEW ALL para ver o histórico completo.
+    header:     "\x02Histórico de \x0307%nickname%\x03\x02 (a mostrar %start%-%end% de %total%):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 por %operator% — %message%"
+    extra:       "  Extra \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 Nenhuma entrada de histórico encontrada para \x02%nickname%\x02."
+    page_hint:   "Use \x0303HISTORY %nickname% VIEW %next_page%\x03 para mais entradas."
+
+  clear:
+    syntax:     "HISTORY <nickname> CLEAR"
+    short:      "Eliminar todas as entradas de histórico de um nickname."
+    help:        |
+      Remove todas as entradas de histórico do nickname especificado.
+      Esta ação não pode ser desfeita.
+
+      Sintaxe: HISTORY <nickname> CLEAR
+      Exemplo: HISTORY SomeNick CLEAR
+    success:    "\x0303✔\x03 Eliminadas \x02%count%\x02 entradas de histórico de \x02%nickname%\x02."
+
+# --- History message translations (used when viewing history) ---
+history.message:
+  unsuspend:                  "Suspensão levantada"
+  password_changed_owner:     "Palavra-passe alterada pelo proprietário"
+  password_changed_operator:  "Palavra-passe alterada pelo operador"
+  email_changed_owner:        "Email alterado de %old_email% para %new_email%"
+  email_changed_operator:     "Email alterado para %new_email% pelo operador"
+  recover:                    "Palavra-passe redefinida via token de email"
+
+# --- History extra field translations ---
+history.extra:
+  duration:      "Duração: %value%"
+  expires_at:    "Expira: %value%"
+  old_email:     "Email anterior: %value%"
+  new_email:     "Novo email: %value%"
+  method:        "Método: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax:           "NOEXPIRE <nickname> {ON|OFF}"
+  short:            "Definir ou remover proteção de expiração para um nickname."
+  help:             |
+    Controla se um nickname irá expirar devido a inatividade.
+    Quando ON, o nickname nunca expira independentemente da última atividade.
+    Quando OFF, aplicam-se as regras normais de expiração.
+
+    Apenas IRCops com permissão 'nickserv.noexpire' podem usar este comando.
+
+    Sintaxe: NOEXPIRE <nickname> {ON|OFF}
+    Exemplos:
+      NOEXPIRE ImportantUser ON
+      NOEXPIRE ImportantUser OFF
+  success_on:       "\x0303✔\x03 O nickname \x02%nickname%\x02 está agora protegido contra expiração."
+  success_off:      "\x0303✔\x03 O nickname \x02%nickname%\x02 irá agora expirar normalmente."
+  not_registered:   "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  forbidden:         "\x0304✗\x03 O nickname \x02%nickname%\x02 está proibido."
+  suspended:         "\x0304✗\x03 O nickname \x02%nickname%\x02 está suspenso."
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator% executa o comando %command% em %target%. %reason%"
+  action_with_option: "%operator% executa o comando %command% em %target%. Opção: %option%. %reason%"
+  action_with_value: "%operator% executa o comando %command% em %target%. Opção: %option%=%value%. %reason%"
+  action_duration: "%operator% executa o comando %command% em %target%. Duração: %duration%. %reason%"
+  prefix_reason: "Motivo: %reason%"

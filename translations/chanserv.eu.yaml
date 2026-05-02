@@ -1,0 +1,518 @@
+# ChanServ itzulpenak — Euskara
+# Eremua: chanserv
+
+unknown_command: "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:         "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
+  oper_only:      "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
+  not_identified: "\x0304✗\x03 Ez zaude identifikatuta. Erabili \x0303/msg %nickserv% IDENTIFY\x03."
+  invalid_channel: "\x0304✗\x03 Kanal izen baliogabea. Erabili \x02#kanala\x02."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  generic:        "\x0304✗\x03 Errore bat gertatu da. Saiatu berriro."
+  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
+  insufficient_access: "\x0304✗\x03 Ez duzu nahikoa sarbide \x02%operation%\x02 egiteko \x02%channel%\x02 kanalean."
+  mail_failed: "\x0304✗\x03 Ezin izan da posta elektronikoa bidali. Saiatu berriro geroago."
+
+register:
+  syntax:           "REGISTER <#kanala> <deskribapena>"
+  short:            "Erregistratu kanal bat."
+  help:             "Erregistratu eta lotu kanal bat zure ezizenarekin. %nickserv% zerbitzuan identifikatuta egon behar duzu."
+  success:          "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da."
+  channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago sarean."
+  limit_exceeded: "\x0304✗\x03 Erregistratutako kanalen gehieneko kopurura iritsi zara: %max%."
+  throttled: "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu beste kanal bat erregistratu aurretik."
+
+info:
+  syntax:           "INFO <#kanala>"
+  short:            "Erakutsi kanalaren informazioa."
+  help:             "Sortzailea, erregistro data, ondorengoa, URLa, posta elektronikoa, deskribapena, azken erabilera, gaia eta aukerak (TOPICLOCK, MLOCK, SECURE) erakusten ditu."
+  header:          "\x02\x0307%channel%\x03 kanalaren informazioa:\x02"
+  footer:          "\x0314─────────────────────────────\x03"
+  founder:         "  \x0314Sortzailea\x03     : \x02%nickname%\x02"
+  registered:      "  \x0314Erregistratua\x03  : %date%"
+  successor:       "  \x0314Ondorengoa\x03     : \x02%nickname%\x02"
+  description:     "  \x0314Deskribapena\x03 : %desc%"
+  url:             "  \x0314URLa\x03          : %url%"
+  email:           "  \x0314Posta\x03          : %email%"
+  last_used:       "  \x0314Azken erabilera\x03 : %date%"
+  topic:           "  \x0314Azken gaia\x03     : %topic%"
+  topic_set_by:    "  \x0314Gaia ezarlea\x03  : %nickname%"
+  options:         "  \x0314Aukerak\x03       : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  no_expire:       "  \x0314Iraungitzen ez da\x03 : Bai"
+  mlock_modes:     "  \x0314Modu blokeoa\x03    : %modes%"
+  suspended_status: "  \x0314Egoera\x03        : \x0304Etenda\x03"
+  suspended_reason: "  \x0314Arrazoia\x03       : %reason%"
+  suspended_until:  "  \x0314Amaiera\x03        : %date%"
+  suspended_permanent: "  \x0314Amaiera\x03        : Iraunkorra"
+  forbidden_status: "  \x0314Egoera\x03       : \x0304Debekatua\x03"
+  forbidden_reason: "  \x0314Arrazoia\x03       : %reason%"
+
+help:
+  syntax:           "HELP [komandoa [azpi-aukera]]"
+  short:            "Zerrendatu komandoak edo erakutsi komando baten laguntza."
+  help:             "Argumenturik gabe komando guztiak zerrendatzen ditu. Erabili \x0303HELP <komandoa>\x03 laguntza osorako, edo \x0303HELP <komandoa> <aukera>\x03 SET azpi-aukertarako."
+  header_title:     "%bot%"
+  intro:            "IRC sarearentzako kanal erregistro eta kudeaketa zerbitzua."
+  general_header:   "\x02\x0314Komando erabilgarriak:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Aukerak:\x03\x0F"
+  general_footer:   "Erabili \x0303/msg %bot% HELP <komandoa>\x03 informazio gehiagorako."
+  set_sub_footer:   "Erabili \x0303/msg %bot% HELP %command% <aukera>\x03 informazio gehiagorako."
+  syntax_label:     "\x0307Sintaxia:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "OHARRA: %days% egun baino gehiagoz \x0304\x1Ferabili gabeko\x0F kanalak automatikoki ezabatzen dira."
+  unknown_command:  "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
+  ircop_header:     "\x02\x0314IRC Operadoreentzako komando erabilgarriak:\x03\x0F"
+  suboptions:       "Azpi-aukeraK:"
+
+op:
+  syntax:           "OP <#kanala> <ezizena>"
+  short:            "Eman kanal operadore modua."
+  help:             "Eman kanal operadore modua."
+  done:             "\x0303✔\x03 \x02%nickname%\x02(r)i kanal operadore estatusa eman zaio."
+  user_not_on_channel: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago sarean."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03(e)k \x0304%mode%\x03 ematen dio \x0314%to%\x03(r)i"
+
+deop:
+  syntax:           "DEOP <#kanala> <ezizena>"
+  short:            "Kendu kanal operadore modua."
+  help:             "Kendu kanal operadore modua."
+  done:             "\x0303✔\x03 \x02%nickname%\x02(r)i operadore modua kendu zaio."
+
+secure:
+  requires_access: "\x0304✗\x03 SECURE aktiboarekin, \x02%nickname%\x02 sarbide zerrendan egon behar da maila bat jasotzeko."
+  requires_min_level: "\x0304✗\x03 SECURE aktiboarekin, \x02%nickname%\x02(e)k gutxienez \x02%level%\x02 maila eduki behar du \x02%mode%\x02 jasotzeko."
+
+set:
+  syntax:           "SET <#kanala> <aukera> [balioa]"
+  short:            "Aldatu kanalaren aukerak."
+  help:             "Aldatu kanalaren aukerak. Erabili \x0303HELP SET <aukera>\x03 bakoitzerako: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  unknown_option:    "\x0304✗\x03 Aukera ezezaguna \x02%option%\x02. Erabili hauetako bat: %options%."
+  founder:
+    syntax:         "SET <#kanala> FOUNDER <ezizena> [tokena]"
+    short:          "Transferitu kanala beste ezizen erregistratu batera."
+    help:           "Tokenik gabe: token bat bidaltzen dio egungo sortzailearen posta elektronikora. Tokenarekin: transferentzia osatzen du."
+    token_sent:     "\x0303✔\x03 Sortzaile aldaketa token bat bidali da %email_hint% helbidera."
+    invalid_token:  "\x0304✗\x03 Token baliogabea edo iraungia."
+    updated:        "\x0303✔\x03 Sortzailea \x02%nickname%\x02(e)ra aldatu da."
+    no_email:       "\x0304✗\x03 Egungo sortzaileak ez du posta elektronikorik ezarrita. Ezin da tokenik bidali."
+    throttled:      "\x0304✗\x03 Itxaron mesedez beste token bat eskatu aurretik."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 erregistratuta eta aktibatuta egon behar da."
+    suspended:         "\x0304✗\x03 \x02%nickname%\x02 etenda dago eta ezin da sortzaile gisa ezarri."
+    cannot_be_self:   "\x0304✗\x03 Sortzaile berria ezin da egungo sortzailea izan."
+    cannot_be_successor: "\x0304✗\x03 Sortzaile berria ezin da kanalaren ondorengoa izan."
+    limit_exceeded: "\x0304✗\x03 \x02%nickname%\x02 erregistratutako kanalen gehieneko kopurura iritsi da: %max%."
+    notice_channel:   "\x02%from%\x02(e)k \x02%nickname%\x02 ezartzen du kanal sortzaile gisa."
+  successor:
+    syntax:         "SET <#kanala> SUCCESSOR [ezizena]"
+    short:          "Ezarri kanalaren ondorengoa."
+    help:           "Ezizen bat kanal ondorengo gisa ezartzen du. Utzi ezizena hutsik garbitzeko. Ezizenak erregistratuta eta aktibatuta egon behar du."
+    cleared:        "\x0303✔\x03 Ondorengoa garbitu da."
+    updated:        "\x0303✔\x03 Ondorengoa \x02%nickname%\x02 gisa ezarri da."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 erregistratuta eta aktibatuta egon behar da."
+    suspended:      "\x0304✗\x03 \x02%nickname%\x02 etenda dago eta ezin da ondorengo gisa ezarri."
+    cannot_be_founder: "\x0304✗\x03 Sortzailea ezin da ondorengo gisa ezarri."
+    notice_channel:   "\x02%from%\x02(e)k \x02%nickname%\x02 ezartzen du kanal ondorengo gisa."
+    notice_channel_cleared: "\x02%from%\x02(e)k kanalaren ondorengoa garbitu du."
+  desc:
+    syntax:         "SET <#kanala> DESC <deskribapena>"
+    short:          "Aldatu kanalaren deskribapena."
+    help:           "Aldatu kanalaren deskribapena (derrigorrezkoa)."
+    updated:        "\x0303✔\x03 Deskribapena eguneratu da."
+  url:
+    syntax:         "SET <#kanala> URL [urla]"
+    short:          "Ezarri kanalaren URLa."
+    help:           "Aldatu kanalaren webgunea (URLa). Utzi urla hutsik garbitzeko."
+    updated:        "\x0303✔\x03 URLa eguneratu da."
+    cleared:        "\x0303✔\x03 URLa garbitu da."
+  email:
+    syntax:         "SET <#kanala> EMAIL <posta|none>"
+    short:          "Ezarri kanalaren posta elektronikoa."
+    help:           "Aldatu kanalaren posta elektronikoko helbidea. Erabili \x02none\x02 garbitzeko."
+    updated:        "\x0303✔\x03 Posta eguneratu da."
+    cleared:        "\x0303✔\x03 Posta garbitu da."
+  entrymsg:
+    syntax:         "SET <#kanala> ENTRYMSG <mezua|none>"
+    short:          "Ezarri kanalaren sarrera mezua."
+    help:           "Ezarri erabiltzaileak kanalean sartzean erakusten den mezua (NOTICE). Erabili \x02none\x02 garbitzeko."
+    updated:        "\x0303✔\x03 Sarrera mezua eguneratu da."
+    cleared:        "\x0303✔\x03 Sarrera mezua garbitu da."
+    too_long:       "\x0304✗\x03 Sarrera mezuak ezin du %max% karaktere baino gehiago izan."
+  topiclock:
+    syntax:         "SET <#kanala> TOPICLOCK {ON|OFF}"
+    short:          "Blokeatu kanalaren gaia."
+    help:           "Kanalaren gaia aldatzea eragozten du. ON dagoenean, uneko gaia gorde eta blokeatu egiten da."
+    on:             "\x0303✔\x03 Gaiaren blokeoa orain ON dago."
+    off:            "\x0303✔\x03 Gaiaren blokeoa orain OFF dago."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03(e)k TOPICLOCK gaitzen du."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03(e)k TOPICLOCK desgaitzen du."
+  mlock:
+    syntax:         "SET <#kanala> MLOCK {ON|OFF}"
+    short:          "Blokeatu kanalaren moduak."
+    help:           "Uneko kanal moduak blokeatzen ditu (adib. +nt). ON dagoenean, moduak ezin dira aldatu."
+    no_modes:       "modurik ez"
+    on:             "\x0303✔\x03 MLOCK orain ON dago (%modes%)."
+    off:            "\x0303✔\x03 MLOCK orain OFF dago."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03(e)k MLOCK gaitzen du (%modes%)."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03(e)k MLOCK desgaitzen du."
+  secure:
+    syntax:         "SET <#kanala> SECURE {ON|OFF}"
+    short:          "Eskatu sarbide zerrenda kanal mailetarako."
+    help:           "ON dagoenean, sarbide zerrendako erabiltzaileek soilik jaso ditzakete kanal mailak (OP, VOICE, etab.)."
+    on:             "\x0303✔\x03 SECURE orain ON dago."
+    off:            "\x0303✔\x03 SECURE orain OFF dago."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03(e)k SECURE modua gaitzen du."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03(e)k SECURE modua desgaitzen du."
+
+access:
+  syntax:           "ACCESS <#kanala> {ADD|DEL|LIST} [ezizena] [maila]"
+  short:            "Kudeatu sarbide zerrenda."
+  help:             "LIST: erakutsi sarbide zerrenda (ezizena eta maila sarrera bakoitzeko). ADD: gehitu edo eguneratu ezizen baten maila (1-499). DEL: kendu ezizen bat zerrendatik. Erabili \x0303HELP ACCESS <aukera>\x03 bakoitzerako."
+  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili LIST, ADD edo DEL."
+  level_range:      "\x0304✗\x03 Sarbide mailak %min% eta %max% artean egon behar du."
+  cannot_manage_level: "\x0304✗\x03 Zurea baino maila hertsiki baxuagoa duten ezizenak soilik kudea ditzakezu."
+  founder_not_in_list: "\x0304✗\x03 Sortzailea ez dago sarbide zerrendan."
+  max_entries:      "\x0304✗\x03 Gehienez %max% sarbide sarrera kanal bakoitzeko."
+  list:
+    syntax:         "ACCESS <#kanala> LIST"
+    short:          "Zerrendatu sarbide zerrenda (ACCESSLIST maila behar da)."
+    help:           "Ezizena eta maila erakusten ditu sarrera bakoitzeko."
+    header:         "\x0303\x02%channel%\x02 kanalaren sarbide zerrenda\x03"
+    empty:          "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du sarbide sarrerarik."
+    entry:          "  #%index%: %nickname% (%level% maila)"
+  add:
+    syntax:         "ACCESS <#kanala> ADD <ezizena> <maila>"
+    short:          "Gehitu edo eguneratu sarbide maila (ACCESSCHANGE maila behar da)."
+    help:           "Maila 1-499. Zurea baino maila baxuagoak soilik ezar ditzakezu."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 %level% mailara ezarri da."
+    notice_channel: "\x0303✔\x03 \x0302%from%\x03(e)k \x0314%to%\x03 \x0304%level%\x03 mailara ezartzen du"
+  del:
+    syntax:         "ACCESS <#kanala> DEL <ezizena>"
+    short:          "Kendu sarbide zerrendatik (ACCESSCHANGE maila behar da)."
+    help:           "Zurea baino maila baxuagoa duten ezizenak soilik ken ditzakezu."
+    not_in_list:    "\x0304✗\x03 \x02%nickname%\x02 ez dago sarbide zerrendan."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 sarbide zerrendatik kendu da."
+    notice_channel: "\x0304✗\x03 \x0302%from%\x03(e)k \x0314%to%\x03 sarbide zerrendatik kentzen du"
+
+delaccess:
+  syntax:           "DELACCESS <#kanala>"
+  short:            "Kendu zure sarbidea kanal batetik."
+  help:             "Zure sarbide sarrera kentzen du kanalaren sarbide zerrendatik. Identifikatuta egon behar duzu. Sortzaileak ezin du komando hau erabili."
+  done:             "\x0303✔\x03 Zure sarbidea \x02%channel%\x02 kanaletik kendu da."
+  not_in_list:      "\x0304✗\x03 Ez duzu sarbiderik \x02%channel%\x02 kanalean."
+  founder_not_in_access: "\x0304✗\x03 \x02%channel%\x02 kanalaren sortzailea zara eta ez zaude sarbide zerrendan."
+  notice_channel: "\x0304✗\x03 \x0302%nickname%\x03(e)k kanaletik bere sarbidea kentzen du"
+
+levels:
+  syntax:           "LEVELS <#kanala> {LIST|SET|RESET} [maila] [balioa]"
+  short:            "Konfiguratu kanal mailak."
+  help:             "LIST: erakutsi maila eskakizunak (OPDEOP, VOICEDEVOICE, etab.). SET: ezarri gutxieneko maila ekintza baterako (-1 eta 499 artean). RESET: leheneratu lehenetsiak. SET/RESET sortzailearentzat soilik."
+  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili LIST, SET edo RESET."
+  unknown_key:      "\x0304✗\x03 Maila giltza ezezaguna \x02%key%\x02 edo IRCd honek ez du onartzen."
+  value_range:      "\x0304✗\x03 Maila balioak %min% eta %max% artean egon behar du."
+  list:
+    syntax:         "LEVELS <#kanala> LIST"
+    short:          "Zerrendatu maila eskakizunak."
+    help:           "Maila giltza bakoitza eta bere balioa erakusten ditu (lehenetsiak ezarrita ez badaude)."
+    header:         "\x0303Mailak\x03"
+  set:
+    syntax:         "LEVELS <#kanala> SET <maila> <balioa>"
+    short:          "Ezarri maila eskakizun bat."
+    help:           "Balioa -1etik 499ra. Sortzailearentzat soilik."
+    done:           "\x0303✔\x03 \x02%key%\x02 %value%(e)ra ezarri da."
+  reset:
+    syntax:         "LEVELS <#kanala> RESET"
+    short:          "Leheneratu maila guztiak lehenetsitara."
+    help:           "Baliogabetze guztiak kentzen ditu. Sortzailearentzat soilik."
+    done:           "\x0303✔\x03 Maila guztiak lehenetsitara leheneratu dira."
+
+voice:
+  syntax:           "VOICE <#kanala> <ezizena>"
+  short:            "Eman voice modua kanalean."
+  help:             "Eman voice modua kanalean."
+  done:             "\x0303✔\x03 \x02%nickname%\x02(r)i voice eman zaio."
+  user_not_on_channel: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago sarean."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03(e)k \x0304%mode%\x03 ematen dio \x0314%to%\x03(r)i"
+
+devoice:
+  syntax:           "DEVOICE <#kanala> <ezizena>"
+  short:            "Kendu voice modua kanalean."
+  help:             "Kendu voice modua kanalean."
+  done:             "\x0303✔\x03 \x02%nickname%\x02(r)i voice kendu zaio."
+
+invite:
+  syntax:           "INVITE <#kanala>"
+  short:            "Gonbidatu zeure burua kanalera."
+  help:             "Gonbidatu zeure burua kanalera."
+  done:             "\x0303✔\x03 \x02%channel%\x02 kanalera gonbidatua izan zara."
+  notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03(e)k bere burua gonbidatzen du kanalera."
+
+admin:
+  syntax:           "ADMIN <#kanala> <ezizena>"
+  short:            "Eman kanal admin modua."
+  help:             "Eman kanal admin modua. IRCdk +a onartzen badu soilik."
+  done:             "\x0303✔\x03 \x02%nickname%\x02(r)i kanal admin eman zaio."
+  user_not_on_channel: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago sarean."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03(e)k \x0304%mode%\x03 ematen dio \x0314%to%\x03(r)i"
+  not_supported:    "\x0304✗\x03 Sare honek ez du kanal admin (+a) modua onartzen."
+
+deadmin:
+  syntax:           "DEADMIN <#kanala> <ezizena>"
+  short:            "Kendu kanal admin modua."
+  help:             "Kendu kanal admin modua."
+  done:             "\x0303✔\x03 \x02%nickname%\x02(r)i admin modua kendu zaio."
+
+halfop:
+  syntax:           "HALFOP <#kanala> <ezizena>"
+  short:            "Eman erdi-operadore modua kanalean."
+  help:             "Eman erdi-operadore modua kanalean. IRCdk +h onartzen badu soilik."
+  done:             "\x0303✔\x03 \x02%nickname%\x02(r)i halfop eman zaio."
+  user_not_on_channel: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago sarean."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03(e)k \x0304%mode%\x03 ematen dio \x0314%to%\x03(r)i"
+  not_supported:    "\x0304✗\x03 Sare honek ez du halfop (+h) modua onartzen."
+
+dehalfop:
+  syntax:           "DEHALFOP <#kanala> <ezizena>"
+  short:            "Kendu erdi-operadore modua kanalean."
+  help:             "Kendu erdi-operadore modua kanalean."
+  done:             "\x0303✔\x03 \x02%nickname%\x02(r)i halfop modua kendu zaio."
+
+akick:
+  syntax:           "AKICK <#kanala> {ADD|DEL|LIST|ENFORCE} [maskara] [iraungitzea] [arrazoia]"
+  short:            "Kudeatu auto-kick zerrenda."
+  help:             "ADD <maskara> [iraungitzea] [arrazoia]: gehitu sarrera. DEL <maskara|zkia>: kendu. LIST: zerrendatu sarrerak. ENFORCE <maskara>: kick egin bat datozen erabiltzaileei."
+  unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST edo ENFORCE."
+  invalid_mask:     "\x0304✗\x03 Maskara formatu baliogabea. Erabili \x02nick!ident@host\x02 komodinak erabiliz (*)."
+  dangerous_mask:   "\x0304✗\x03 \x02%mask%\x02 maskara zabalegia da. Gutxienez 4 karaktere alfanumeriko eduki behar ditu."
+  protected_user:   "\x0304✗\x03 \x02%nickname%\x02 ezizenak sarbidea du kanal honetan."
+  max_entries:      "\x0304✗\x03 Gehienez %max% AKICK sarrera kanal bakoitzeko."
+  add:
+    syntax:         "AKICK <#kanala> ADD <maskara> [iraungitzea] [arrazoia]"
+    short:          "Gehitu AKICK sarrera."
+    help:           "Iraungitzea beharrezkoa da arrazoia zehazten bada. Formatuak: 0 (iraunkorra), 1d, 7d, 30d, 12h, 60m. Adibideak: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'."
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 gehitu da."
+    already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 jada existitzen da."
+    notice_channel: "\x02%from%\x02(e)k AKICK gehitzen du: \x02%mask%\x02 (%reason%)"
+  del:
+    syntax:         "AKICK <#kanala> DEL <maskara|zenbakia>"
+    short:          "Kendu AKICK sarrera."
+    help:           "Kendu maskara zehatzaren edo LISTeko sarrera zenbakiaren arabera."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 ez da aurkitu."
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 kendu da."
+    notice_channel: "\x02%from%\x02(e)k AKICK kentzen du: \x02%mask%\x02"
+  list:
+    syntax:         "AKICK <#kanala> LIST"
+    short:          "Zerrendatu AKICK sarrerak."
+    help:           "Maskara, arrazoia, iraungitzea eta nork gehitu zuen erakusten ditu."
+    header:         "\x0303\x02%channel%\x02 kanalaren AKICK zerrenda\x03"
+    empty:          "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du AKICK sarrerarik."
+    entry:          "  #%index% %mask% %reason% (%nickname%-(e)k gehituta, iraungitzea: %expiration%)"
+    no_reason:      "Arrazoirik ez"
+    never_expires:  "inoiz ez"
+    unknown_creator: "ezezaguna"
+
+drop:
+  syntax:           "DROP <#kanala>"
+  short:            "Ezabatu erregistratutako kanal bat."
+  help:             "Erregistratutako kanal bat datu-basetik kentzen du."
+  success:          "\x0303✔\x03 \x02%channel%\x02 kanala ezabatu da."
+  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+
+suspend:
+  syntax:           "SUSPEND <#kanala> <iraupena> <arrazoia>"
+  short:            "Etten du kanal bat."
+  help:             "Aldi baterako erregistratutako kanal bat desgaitzen du. Iraupen formatuak: 0 = iraunkorra, 1d, 12h, 60m.\nEtenda dagoen bitartean, kanal moduak, sarbidea eta betearazpena desgaituta daude.\nKomando honek IRCop baimena behar du: chanserv.suspend"
+  success:          "\x0303✔\x03 \x02%channel%\x02 kanala \x02%duration%\x02 arte eten da."
+  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  already_suspended: "\x0304✗\x03 \x02%channel%\x02 kanala jada etenda dago."
+  invalid_duration:  "\x0304✗\x03 Iraupen baliogabea. Erabili: 0 (iraunkorra), 1d, 12h edo 60m."
+  permanent:         "Iraunkorra"
+  channel_suspended: "\x0304✗\x03 \x02%channel%\x02 kanala etenda dago eta ezin da erabili."
+  channel_forbidden: "\x0304✗\x03 \x02%channel%\x02 kanala debekatua dago eta ezin da erabili."
+  notice_channel:    "\x0304⚠\x03 Kanala eten da. Arrazoia: %reason%"
+
+unsuspend:
+  syntax:           "UNSUSPEND <#kanala>"
+  short:            "Kendu kanalaren etenaldia."
+  help:             "Etenda dagoen kanal bat berraktibatzen du, bere moduak eta betearazpena berrezarriz.\nKomando honek IRCop baimena behar du: chanserv.suspend"
+  success:          "\x0303✔\x03 \x02%channel%\x02 kanala jada ez dago etenda."
+  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  not_suspended:    "\x0304✗\x03 \x02%channel%\x02 kanala ez dago etenda."
+  reason_expired:   "iraungitako etenaldia"
+
+# NOJOIN dokumentazioa LEVELSentzat:
+# NOJOIN: Kanalean sartzeko behar den gutxieneko sarbide maila. NOJOIN baino maila < duten erabiltzaileak kanporatuak izango dira.
+# Lehenetsia: -1 (desgaituta). Ezarri 0 erabiltzaile erregistratuak soilik onartzeko, 50 50+ mailarako, etab.
+
+nojoin:
+  reason: "NOJOIN maila murrizketa"
+
+# --- DEBUG KANALA -----------------------------------------------------------
+debug_channel:
+  kick_reason: "Ez duzu baimenik kanal honetan sartzeko."
+
+permissions:
+  chanserv.drop: "Ezabatu erregistratutako kanal bat (DROP)"
+  chanserv.suspend: "Etten du edo etenaldia kendu kanal bati (SUSPEND/UNSUSPEND)"
+  chanserv.forbid: "Debekatu edo des-debekatu kanal bat (FORBID/UNFORBID)"
+  chanserv.noexpire: "Ezarri edo kendu iraungitze babesa kanal batentzat (NOEXPIRE)"
+  chanserv.history: "Ikusi eta kudeatu kanalaren ekintza historia (HISTORY)"
+  chanserv.clearaccess: "Garbitu kanal baten sarbide zerrenda osoa (CLEARACCESS)"
+  chanserv.clearusers: "Kanporatu erabiltzaile guztiak kanal batetik (CLEARUSERS)"
+
+noexpire:
+  syntax:           "NOEXPIRE <#kanala> {ON|OFF}"
+  short:            "Ezarri edo kendu iraungitze babesa kanal batentzat."
+  help:             |
+    Kanal bat jarduerarik ezagatik iraungiko den kontrolatzen du.
+    ON dagoenean, kanala ez da inoiz iraungitzen azken jarduera edozein dela ere.
+    OFF dagoenean, iraungitze arau normalak aplikatzen dira.
+
+    'chanserv.noexpire' baimena duten IRCopek soilik erabil dezakete komando hau.
+
+    Sintaxia: NOEXPIRE <#kanala> {ON|OFF}
+    Adibideak:
+      NOEXPIRE #Garrantzitsua ON
+      NOEXPIRE #Garrantzitsua OFF
+  success_on:       "\x0303✔\x03 \x02%channel%\x02 kanala iraungitzetik babestuta dago orain."
+  success_off:      "\x0303✔\x03 \x02%channel%\x02 kanala normal iraungiko da orain."
+  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  forbidden:         "\x0304✗\x03 \x02%channel%\x02 kanala debekatua dago."
+  suspended:         "\x0304✗\x03 \x02%channel%\x02 kanala etenda dago."
+
+forbid:
+  syntax:           "FORBID <#kanala> <arrazoia>"
+  short:             "Debekatu kanal bat erabilia izatea."
+  help:              "Kanal bat inork erabiltzea eragozten du.\nKanala unean erregistratuta badago, lehenik ezabatua izango da.\nKanaleko erabiltzaile guztiak kanporatuak izango dira eta kanala blokeatu egingo da.\nKomando honek IRCop baimena behar du: chanserv.forbid"
+  reason_required:  "\x0304✗\x03 Arrazoi bat zehaztu behar duzu."
+  success:          "\x0303✔\x03 \x02%channel%\x02 kanala debekatu da."
+  updated:          "\x0303✔\x03 \x02%channel%\x02 kanalaren debeku arrazoia eguneratu da."
+  channel_forbidden: "\x0304✗\x03 \x02%channel%\x02 kanala debekatua dago eta ezin da erabili."
+
+unforbid:
+  syntax:           "UNFORBID <#kanala>"
+  short:             "Kendu kanal debekua."
+  help:              "Kanal debekua kentzen du, kanala berriro erregistratua izatea ahalbidetuz.\nKomando honek IRCop baimena behar du: chanserv.forbid"
+  success:          "\x0303✔\x03 \x02%channel%\x02 kanala jada ez dago debekatuta."
+  not_forbidden:    "\x0304✗\x03 \x02%channel%\x02 kanala ez dago debekatuta."
+
+debug:
+  action_message: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. %reason%"
+  action_with_option: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%. %reason%"
+  action_with_value: "%operator%(e)k %command% komandoa exekutatzen du %target% helburuan. Aukera: %option%=%value%. %reason%"
+  founder_action: "Sortzaile mailako ekintza"
+  prefix_reason:  "Arrazoia: %reason%"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <#kanala> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Ikusi edo kudeatu kanalaren ekintza historia."
+  help:             |
+    Kanal baten ekintza historia kudeatzen du.
+    'chanserv.history' baimena duten IRCopek soilik erabil dezakete komando hau.
+
+    Azpikomandoak:
+      ADD   — Gehitu eskuzko sarrera bat kanalaren historiara.
+      DEL   — Ezabatu sarrera zehatz bat IDaren arabera.
+      VIEW  — Ikusi historia sarrerak (orrikatua, 3 orrialdeko).
+      CLEAR — Ezabatu historiako sarrera guztiak kanalarentzat.
+
+    Sintaxia: HISTORY <#kanala> {ADD|DEL|VIEW|CLEAR} [argumentuak]
+    Adibideak:
+      HISTORY #kanala VIEW
+      HISTORY #kanala VIEW 2
+      HISTORY #kanala VIEW ALL
+      HISTORY #kanala ADD Suspected takeover attempt
+      HISTORY #kanala DEL 42
+      HISTORY #kanala CLEAR
+  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  unknown_operator: "(ezezaguna)"
+
+  add:
+    syntax:     "HISTORY <#kanala> ADD <mezua>"
+    short:      "Gehitu eskuzko historia sarrera bat."
+    help:        |
+      Eskuzko sarrera bat gehitzen du kanalaren historiara.
+    success:    "\x0303✔\x03 Historia sarrera gehitu da \x02%channel%\x02 kanalean."
+
+  del:
+    syntax:     "HISTORY <#kanala> DEL <ida>"
+    short:      "Ezabatu historia sarrera bat IDaren arabera."
+    success:    "\x0303✔\x03 \x02%id%\x02 historia sarrera ezabatu da."
+    not_found:  "\x0304✗\x03 \x02%id%\x02 historia sarrera ez da aurkitu."
+    invalid_id: "\x0304✗\x03 Sarrera ID baliogabea: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <#kanala> VIEW [ORRIA|ALL]"
+    short:      "Ikusi kanalaren ekintza historia."
+    header:     "\x02\x0307%channel%\x03 kanalaren historia\x02 (%total%etik %start%-%end% erakusten):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 - \x02%operator%\x02 — %message%"
+    extra:       "  Gehigarria \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 Ez da historia sarrerarik aurkitu \x02%channel%\x02 kanalean."
+    page_hint:   "Erabili \x0303HISTORY %channel% VIEW %next_page%\x03 sarrera gehiagotarako."
+
+  clear:
+    syntax:     "HISTORY <#kanala> CLEAR"
+    short:      "Ezabatu kanal baten historia sarrera guztiak."
+    success:    "\x0303✔\x03 \x02%count%\x02 historia sarrera garbitu dira \x02%channel%\x02 kanalean."
+
+# --- Historia mezuen itzulpenak ---
+history.message:
+  unsuspend:                  "Etenaldia kendua"
+  founder_changed:            "Sortzailea %old_founder%-(e)tik %new_founder%-(e)ra aldatua"
+  successor_changed:          "Ondorengoa %old_successor%-(e)tik %new_successor%-(e)ra aldatua"
+  successor_cleared:          "Ondorengoa garbitua"
+  access_add:                 "Sarbidea gehitua %target_nickname%-(r)entzat (%level% maila)"
+  access_del:                 "Sarbidea kendua %target_nickname%-(r)entzat"
+  akick_add:                  "AKICK gehitua: %mask%"
+  akick_del:                  "AKICK kendua: %mask%"
+
+# --- Historia eremu gehigarrien itzulpenak ---
+history.extra:
+  duration:      "Iraupena: %value%"
+  expires_at:    "Iraungitzea: %value%"
+  old_founder:     "Sortzaile zaharra: %value%"
+  new_founder:     "Sortzaile berria: %value%"
+  old_successor:   "Ondorengo zaharra: %value%"
+  new_successor:   "Ondorengo berria: %value%"
+  target_nickname: "Helburua: %value%"
+  level:           "Maila: %value%"
+  mask:            "Maskara: %value%"
+  ip:            "IPa: %value%"
+  host:          "Host-a: %value%"
+
+# --- CLEARACCESS (IRCop) ---------------------------------------------------------
+clearaccess:
+  syntax:           "CLEARACCESS <#kanala>"
+  short:            "Garbitu kanal baten sarbide zerrenda osoa."
+  help:             |
+    Kanal baten sarbide zerrendako sarrera guztiak kentzen ditu.
+    Ekintza hau atzeraezina da eta ezin da desegin.
+    'chanserv.clearaccess' baimena duten IRCopek soilik erabil dezakete komando hau.
+
+    Sintaxia: CLEARACCESS <#kanala>
+    Adibideak:
+      CLEARACCESS #kanala
+  success:          "\x0303✔\x03 \x02%count%\x02 sarbide sarrera garbitu dira \x02%channel%\x02 kanaletik."
+  empty:            "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du sarbide sarrerarik."
+
+clearusers:
+  syntax:           "CLEARUSERS <#kanala> [arrazoia]"
+  short:            "Kanporatu erabiltzaile guztiak kanal batetik."
+  help:             |
+    Erabiltzaile guztiak kanporatzen ditu zehaztutako kanaletik.
+    Hau IRCop-en soilik komando bat da, kanal kudeaketarako erabilia.
+    Arrazoi bat aukeran eman daiteke; saltatzen bada, arrazoi lehenetsi bat erabiltzen da.
+
+    'chanserv.clearusers' baimena duten IRCopek soilik erabil dezakete komando hau.
+
+    Sintaxia: CLEARUSERS <#kanala> [arrazoia]
+    Adibideak:
+      CLEARUSERS #kanala
+      CLEARUSERS #kanala flooding
+  not_on_network:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago unean sarean."
+  empty:            "\x0307ℹ\x03 \x02%channel%\x02 kanalak ez du kanporatzeko erabiltzailerik."
+  success:          "\x0303✔\x03 \x02%count%\x02 erabiltzaile kanporatu dira \x02%channel%\x02 kanaletik."
+  default_reason:   "CLEARUSERS komandoa"

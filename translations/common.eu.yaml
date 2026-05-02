@@ -1,0 +1,28 @@
+# Itzulpen komunak — Euskara
+# Eremua: common
+#
+# IRC zerbitzu guztietan erabilitako itzulpen partekatuak.
+
+antiflood:
+  blocked: "Komando tasa muga gainditu duzu. Saiatu berriro %seconds% segundotan."
+  debug_channel: "%nick%-(r)en %command% muga iritsi da %host%-(e)ntzat (%seconds%s geratzen dira)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Nire lagun leial eta betierekoarentzat,\x02
+
+      2023a agur esan behar izan genuen urtea izan zen arren, denborak ez du zure
+      xehetasun bakar bat ere ezabatu. Oraindik gogoratzen ditut zure mugagabeko
+      energia, zure begirada noblea eta zuk bakarrik ematen zenekien poz izugarri
+      eta kutsakor hura.
+
+      Nire etxea bizitzaz eta nire bizitza inoiz ahaztuko ez dudan baldintzarik
+      gabeko maitasunez bete zenituen. Jada ez ditudan arren zure oin urratsak
+      entzuten agurtzera korrika nentorrela, ezta zure burua nigan makurtzen sentitzen
+      laztana bilatuz, badakit zure izpiritu jostalariak oraindik laguntzen nauela.
+
+      Eskerrik asko une bakoitzagatik, bihurrikeria bakoitzagatik eta eskatu ahal
+      izan dudan lagunik onena izateagatik. Nire ondoan utzi zenuen lekua
+      oroitzapenik zoriontsuenez beteta dago orain. Beti izango zara nire lagun
+      maitea eta beti izango duzu leku izugarri bat nire bihotzean.

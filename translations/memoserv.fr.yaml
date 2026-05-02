@@ -1,0 +1,122 @@
+# MemoServ translations — Français
+# Domaine : memoserv
+
+unknown_command: "\x0304✗\x03 Commande inconnue \x02%command%\x02. Utilisez \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Syntaxe incorrecte. Usage : \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Cette commande est réservée aux opérateurs IRC."
+  not_identified: "\x0304✗\x03 Vous n'êtes pas identifié. Utilisez \x0303/msg %nickserv% IDENTIFY\x03."
+  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+  insufficient_access: "\x0304✗\x03 Accès insuffisant pour \x02%operation%\x02 sur le canal \x02%channel%\x02."
+
+send:
+  syntax: "SEND {surnom|#canal} <message>"
+  short: "Envoyer un message à un surnom ou un canal."
+  help: "Envoie un message à un surnom ou un canal enregistré. Le destinataire doit avoir le service de messages activé (ENABLE)."
+  sent_nick: "\x0303✔\x03 Message envoyé à \x02%nickname%\x02."
+  sent_channel: "\x0303✔\x03 Message envoyé au canal \x02%channel%\x02."
+  nick_not_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+  throttled: "\x0304✗\x03 Vous devez attendre \x02%seconds%\x02 seconde(s) avant d'envoyer un autre message."
+  limit_reached: "\x0304✗\x03 Limite de messages atteinte pour \x02%target%\x02."
+  ignored: "\x0304✗\x03 Vous ne pouvez pas envoyer de messages à cette cible, vous êtes sur sa liste d'ignorés."
+  cannot_send_to_self: "\x0304✗\x03 Vous ne pouvez pas vous envoyer un message à vous-même."
+  message_too_long: "\x0304✗\x03 Message trop long. Le maximum est de \x02%max%\x02 caractères."
+  service_disabled_for_target: "\x0304✗\x03 Le service de messages est désactivé pour \x02%target%\x02."
+
+read:
+  syntax: "READ [#canal] <numéro>"
+  short: "Lire un message par son numéro."
+  help: "Lit le message avec le numéro indiqué. Sans #canal, lit depuis votre boîte de surnom. Avec #canal, nécessite le niveau MEMOREAD."
+  header: "\x02\x0307Message n°%index%\x03 de \x02%from%\x02 :\x0F"
+  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
+  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+  not_found: "\x0304✗\x03 Message n°%index% introuvable."
+
+list:
+  syntax: "LIST [#canal]"
+  short: "Lister les messages (non lus marqués par une * rouge)."
+  help: "Liste vos messages ou les messages du canal. Les messages non lus sont affichés avec un astérisque rouge et un aperçu (max 50 caractères). Sans #canal = votre boîte de surnom ; avec #canal nécessite MEMOREAD."
+  header: "\x02\x0307Messages pour %target%\x03 :\x0F"
+  footer: "\x0314─────────────────────────────\x03"
+  empty: "\x0307ℹ\x03 Aucun message pour \x02%target%\x02."
+  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+
+del:
+  syntax: "DEL [#canal] <numéro>"
+  short: "Supprimer un message par son numéro."
+  help: "Supprime le message avec le numéro indiqué. Pour les canaux, nécessite le niveau MEMOCHANGE."
+  deleted: "\x0303✔\x03 Message n°%index% supprimé."
+  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+  not_found: "\x0304✗\x03 Message n°%index% introuvable."
+
+ignore:
+  syntax: "IGNORE {ADD|DEL|LIST} [#canal] [surnom]"
+  short: "Gérer la liste d'ignorés pour les messages."
+  help: "ADD ajoute un surnom à votre liste d'ignorés (ou celle du canal) ; DEL le retire ; LIST affiche la liste. Pour les canaux, ADD/DEL nécessitent MEMOCHANGE."
+  add:
+    syntax: "IGNORE ADD [#canal] <surnom>"
+    short: "Ajouter un surnom à la liste d'ignorés."
+    help: "Les messages de ce surnom ne seront pas acceptés pour votre boîte (ou celle du canal)."
+  del:
+    syntax: "IGNORE DEL [#canal] <surnom>"
+    short: "Retirer un surnom de la liste d'ignorés."
+    help: "Retire le surnom de la liste d'ignorés."
+  list:
+    syntax: "IGNORE LIST [#canal]"
+    short: "Lister les surnoms ignorés."
+    help: "Affiche la liste des surnoms que vous (ou le canal) ignorez pour les messages."
+  added: "\x0303✔\x03 \x02%nickname%\x02 ajouté à la liste d'ignorés."
+  removed: "\x0303✔\x03 \x02%nickname%\x02 retiré de la liste d'ignorés."
+  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 est déjà sur la liste d'ignorés."
+  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 n'est pas sur la liste d'ignorés."
+  nick_not_registered: "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+  limit_reached_nick: "\x0304✗\x03 Limite de la liste d'ignorés atteinte pour votre surnom (max \x02%limit%\x02)."
+  limit_reached_channel: "\x0304✗\x03 Limite de la liste d'ignorés atteinte pour \x02%channel%\x02 (max \x02%limit%\x02)."
+  list_empty: "\x0307ℹ\x03 La liste d'ignorés est vide."
+  list_header: "\x02\x0307Liste d'ignorés :\x03\x0F"
+  list_footer: "\x0314─────────────────────────────\x03"
+
+enable:
+  syntax: "ENABLE [#canal]"
+  short: "Activer la réception de messages."
+  help: "Active la réception de messages pour votre surnom ou, pour les canaux, seul le fondateur peut activer."
+  enabled_nick: "\x0303✔\x03 Service de messages activé pour votre surnom."
+  enabled_channel: "\x0303✔\x03 Service de messages activé pour le canal \x02%channel%\x02."
+  already_enabled_nick: "\x0307ℹ\x03 Le service de messages est déjà activé pour votre surnom."
+  already_enabled_channel: "\x0307ℹ\x03 Le service de messages est déjà activé pour \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+  founder_only: "\x0304✗\x03 Seul le fondateur du canal peut activer les messages pour \x02%channel%\x02."
+
+disable:
+  syntax: "DISABLE [#canal]"
+  short: "Désactiver la réception de messages."
+  help: "Désactive la réception de messages pour votre surnom ou canal. Pour les canaux, seul le fondateur peut désactiver."
+  disabled_nick: "\x0303✔\x03 Service de messages désactivé pour votre surnom."
+  disabled_channel: "\x0303✔\x03 Service de messages désactivé pour le canal \x02%channel%\x02."
+  already_disabled_nick: "\x0307ℹ\x03 Le service de messages est déjà désactivé pour votre surnom."
+  already_disabled_channel: "\x0307ℹ\x03 Le service de messages est déjà désactivé pour \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 Le canal \x02%channel%\x02 n'est pas enregistré."
+  founder_only: "\x0304✗\x03 Seul le fondateur du canal peut désactiver les messages pour \x02%channel%\x02."
+
+help:
+  syntax: "HELP [commande [sous-option]]"
+  short: "Lister les commandes ou afficher l'aide d'une commande."
+  help: "Sans arguments, liste toutes les commandes. Utilisez \x0303HELP <commande>\x03 pour l'aide complète."
+  header_title: "%bot%"
+  intro: "Service de messagerie pour les surnoms et les canaux."
+  general_header: "\x02\x0314Commandes disponibles :\x03\x0F"
+  command_line: "  \x0307%command%\x03%description%"
+  subcommand_line: "  \x0307%command%\x03%description%"
+  options_header: "\x02\x0314Options :\x03\x0F"
+  general_footer: "Utilisez \x0303/msg %bot% HELP <commande>\x03 pour plus d'informations."
+  set_sub_footer: "Utilisez \x0303/msg %bot% HELP %command% <option>\x03 pour plus d'informations."
+  syntax_label: "\x0307Syntaxe :\x03 \x02%syntax%\x02"
+  footer: "\x0314─────────────────────────────\x03"
+  unknown_command: "\x0304✗\x03 Commande inconnue \x02%command%\x02. Utilisez \x0303/msg %bot% HELP\x03."
+
+notify:
+  nick_pending: "Vous avez \x02%count%\x02 message(s) non lu(s). Pour les lister : \x0309/msg %bot% LIST\x03"
+  channel_pending: "Le canal \x02%channel%\x02 a \x02%count%\x02 message(s) non lu(s). Utilisez \x0309/msg %bot% LIST %channel%\x03 pour les lister."

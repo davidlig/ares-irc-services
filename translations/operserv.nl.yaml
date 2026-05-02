@@ -1,0 +1,300 @@
+# OperServ translations — Dutch
+# Domain: operserv
+
+unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:           "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
+  permission_denied: "\x0304✗\x03 U heeft onvoldoende rechten om dit commando uit te voeren."
+  root_only:        "\x0304✗\x03 Dit commando is voorbehouden aan netwerk-rootbeheerders."
+  nick_not_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+
+# --- HELP --------------------------------------------------------------------
+help:
+  syntax:           "HELP [commando [sub-optie]]"
+  short:            "Toon commando's of hulp voor een commando."
+  help:             "Zonder argumenten toont alle commando's. Gebruik \x0303HELP <commando>\x03 voor volledige hulp, of \x0303HELP <commando> <optie>\x03 voor sub-opties."
+  header_title:     "%bot%"
+  intro:            "Netwerkbeheerservice voor IRC-operators."
+  general_header:   "\x02\x0314Beschikbare commando's:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Opties:\x03\x0F"
+  general_footer:   "Gebruik \x0303/msg %bot% HELP <commando>\x03 voor meer informatie."
+  set_sub_footer:   "Gebruik \x0303/msg %bot% HELP %command% <optie>\x03 voor meer informatie."
+  syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "LET OP: Bijnamen die langer dan %days% dagen \x0304\x1Fniet gebruikt\x0F zijn, worden automatisch verwijderd."
+  unknown_command:  "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
+  suboptions:       "Sub-opties:"
+
+# --- IRCOP --------------------------------------------------------------------
+ircop:
+  syntax:           "IRCOP <bijnaam> {ADD|DEL|LIST} <rol>"
+  short:            "Beheer netwerk IRC-operators."
+  help:             "Beheer netwerk IRC-operators. ADD voegt een geregistreerde bijnaam toe\nals operator met de opgegeven rol.\nDEL verwijdert een operator. LIST toont alle operators.\nGebruik ROLE LIST om beschikbare rollen te zien.\nDit commando is voorbehouden aan Root-gebruikers die in de services zijn geconfigureerd."
+
+  unknown_sub:      "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
+  unknown_role:     "\x0304✗\x03 Rol \x02%role%\x02 bestaat niet. Gebruik \x0303/msg %bot% ROLE LIST\x03 om beschikbare rollen te zien."
+  already_admin:    "\x0304✗\x03 \x02%nickname%\x02 is al een IRC-operator (rol: %role%)."
+  not_admin:       "\x0304✗\x03 \x02%nickname%\x02 is geen IRC-operator."
+  role_changed:     "\x0303✓\x03 Rol gewijzigd voor \x02%nickname%\x02 van %old% naar %new%."
+
+  add:
+    syntax:         "IRCOP <bijnaam> ADD <rol>"
+    short:          "Voeg een netwerk IRC-operator toe."
+    help:           "Voegt een geregistreerde bijnaam toe als netwerk IRC-operator.\nGebruik ROLE LIST om beschikbare rollen te zien.\nDit commando is voorbehouden aan Root-gebruikers."
+    done:           "\x0303✓\x03 \x02%nickname%\x02 toegevoegd als \x02%role%\x02."
+    nick_not_active: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geen actieve geregistreerde bijnaam."
+
+  del:
+    syntax:         "IRCOP <bijnaam> DEL"
+    short:          "Verwijder een netwerk IRC-operator."
+    help:            "Verwijdert een netwerk IRC-operator uit de lijst.\nDit commando is voorbehouden aan Root-gebruikers."
+    done:           "\x0303✓\x03 \x02%nickname%\x02 verwijderd uit IRC-operators."
+
+  list:
+    syntax:         "IRCOP LIST"
+    short:          "Toon alle netwerk IRC-operators."
+    help:            "Toont alle netwerk IRC-operators met hun rollen en registratiedatum.\nDit commando is voorbehouden aan Root-gebruikers."
+    header:         "\x0307---\x03 \x02Netwerk IRC Operators\x02 \x0307---\x03"
+    empty:          "Er zijn geen IRC-operators."
+
+# --- ROLE --------------------------------------------------------------------
+role:
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <naam> ..."
+  short:            "Beheer operatorrollen."
+  help:             "Beheer operatorrollen. ADD maakt een nieuwe rol aan, DEL verwijdert deze,\nLIST toont alle rollen, PERMS beheert permissies voor een rol, MODES beheert IRCOP-modi,\nVHOST beheert het geforceerde vhost-patroon voor een rol.\nBeschermde rollen (ADMIN, OPER, PREOPER) kunnen niet worden verwijderd.\nDit commando is voorbehouden aan Root-gebruikers."
+
+  unknown_sub:      "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL, LIST, PERMS, MODES of VHOST."
+  not_found:        "\x0304✗\x03 Rol \x02%role%\x02 bestaat niet."
+  already_exists:   "\x0304✗\x03 Rol \x02%role%\x02 bestaat al."
+  protected:        "\x0304✗\x03 Rol \x02%role%\x02 is beschermd en kan niet worden verwijderd."
+
+  add:
+    syntax:         "ROLE ADD <naam> [beschrijving]"
+    short:          "Maak een nieuwe rol aan."
+    help:            "Maakt een nieuwe aangepaste rol aan. Beschrijving is optioneel.\nDit commando is voorbehouden aan Root-gebruikers."
+    done:           "\x0303✓\x03 Rol \x02%role%\x02 aangemaakt."
+
+  del:
+    syntax:         "ROLE DEL <naam>"
+    short:          "Verwijder een rol."
+    help:            "Verwijdert een aangepaste rol. Beschermde rollen (ADMIN, OPER, PREOPER)\nkunnen niet worden verwijderd. Als de rol operators toegewezen heeft,\nmoet u deze eerst opnieuw toewijzen.\nDit commando is voorbehouden aan Root-gebruikers."
+    done:           "\x0303✓\x03 Rol \x02%role%\x02 verwijderd."
+
+  list:
+    syntax:         "ROLE LIST"
+    short:          "Toon alle rollen."
+    help:            "Toont alle rollen. Beschermde rollen zijn gemarkeerd met [PROTECTED].\nDit commando is voorbehouden aan Root-gebruikers."
+    header:         "\x0307---\x03 \x02Operatorrollen\x02 \x0307---\x03"
+    empty:          "Er zijn geen operatorrollen."
+
+  perms:
+    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL} [permissie]"
+    short:          "Beheer rolpermissies."
+    help:            "Beheer permissies die aan een rol zijn toegewezen.\nLIST toont alle permissies voor de rol.\nADD wijst een permissie toe aan de rol.\nDEL verwijdert een permissie uit de rol (niet voor beschermde rollen).\nDit commando is voorbehouden aan Root-gebruikers."
+    unknown_action:  "\x0304✗\x03 Onbekende actie \x02%action%\x02. Gebruik LIST, ADD of DEL."
+    not_found:       "\x0304✗\x03 Permissie \x02%perm%\x02 bestaat niet."
+    already_has:     "\x0304✗\x03 Rol \x02%role%\x02 heeft al permissie \x02%perm%\x02."
+    does_not_have:   "\x0304✗\x03 Rol \x02%role%\x02 heeft permissie \x02%perm%\x02 niet."
+    protected:      "\x0304✗\x03 Kan permissies voor beschermde rol \x02%role%\x02 niet wijzigen."
+
+    list:
+      syntax:       "ROLE PERMS <rol> LIST"
+      short:        "Toon permissies voor een rol."
+      help:         "Toont alle permissies die aan een rol zijn toegewezen.\nDit commando is voorbehouden aan Root-gebruikers."
+      header:        "\x0307---\x03 \x02Permissies voor %role%\x02 \x0307---\x03"
+      empty:        "Rol \x02%role%\x02 heeft geen permissies toegewezen."
+      assigned:     "\x0310Toegewezen:\x03"
+      none_assigned: "\x0314Geen permissies toegewezen.\x03"
+      available:    "\x0310Beschikbaar:\x03"
+      all_assigned: "\x0314Alle permissies zijn aan deze rol toegewezen.\x03"
+
+    add:
+      syntax:       "ROLE PERMS <rol> ADD <permissie>"
+      short:        "Voeg een permissie toe aan een rol."
+      help:         "Voegt een permissie toe aan een rol.\nDit commando is voorbehouden aan Root-gebruikers."
+      done:         "\x0303✓\x03 Permissie \x02%perm%\x02 toegevoegd aan rol \x02%role%\x02."
+
+    del:
+      syntax:       "ROLE PERMS <rol> DEL <permissie>"
+      short:        "Verwijder een permissie uit een rol."
+      help:         "Verwijdert een permissie uit een rol.\nKan beschermde rollen niet wijzigen.\nDit commando is voorbehouden aan Root-gebruikers."
+      done:         "\x0303✓\x03 Permissie \x02%perm%\x02 verwijderd uit rol \x02%role%\x02."
+
+  modes:
+    syntax:         "ROLE MODES <rol> {VIEW|SET} [modi]"
+    short:          "Beheer IRCOP-gebruikersmodi voor de rol."
+    help:            "Beheer IRCOP-gebruikersmodi die aan een rol zijn toegewezen.\nVIEW toont de huidige modi van de rol.\nSET stelt de IRCOP-modi in (bijv. oH voor +oH).\nGebruikers met deze rol ontvangen deze modi bij identificatie.\nBeschikbare modi per IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nDit commando is voorbehouden aan Root-gebruikers."
+    unknown_action:  "\x0304✗\x03 Onbekende actie \x02%action%\x02. Gebruik VIEW of SET."
+
+    view:
+      syntax:       "ROLE MODES <rol> VIEW"
+      short:        "Toont de modi van de rol."
+      help:          "Toont de IRCOP-gebruikersmodi die aan een rol zijn toegewezen.\nDit commando is voorbehouden aan Root-gebruikers."
+      header:        "\x0307---\x03 \x02Modi voor %role%\x02 \x0307---\x03"
+      empty:        "De rol \x02%role%\x02 heeft geen modi toegewezen."
+      line:         "  Modi: \x0303%modes%\x03"
+
+    set:
+      syntax:       "ROLE MODES <rol> SET [modi]"
+      short:        "Stel IRCOP-gebruikersmodi in."
+      help:          "Stel de IRCOP-gebruikersmodi voor de rol in.\nZonder argumenten worden alle modi uit de rol verwijderd.\nAlleen geldige IRCOP-modi voor de actieve IRCD.\nGeïdentificeerde gebruikers met deze rol ontvangen de wijzigingen.\nDit commando is voorbehouden aan Root-gebruikers."
+      done:         "\x0303✓\x03 Modi \x02%modes%\x02 ingesteld voor rol \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Alle modi verwijderd uit rol \x02%role%\x02."
+      invalid_mode: "\x0304✗\x03 De modus \x02%mode%\x02 is geen geldige IRCOP-modus."
+      invalid_modes: "\x0304✗\x03 Ongeldige modi: %invalid%. Geldige modi: %valid%."
+      no_irc_user_modes: "\x0304✗\x03 De huidige IRCD heeft geen IRCOP-modi geconfigureerd."
+
+  vhost:
+    syntax:         "ROLE VHOST <rol> {VIEW|SET} [patroon]"
+    short:          "Beheer geforceerd vhost-patroon voor een rol."
+    help:           "Beheer geforceerde vhost die aan een rol is toegewezen.\nVIEW toont het huidige geforceerde vhost-patroon.\nSET wijst een geforceerd vhost-patroon toe (gebruikers met deze rol zullen\ndeze vhost ontvangen bij identificatie, met voorrang op persoonlijke vhost).\nHet patroon wordt toegevoegd na de opgeschoonde bijnaam, bijv.:\n  Nick: _davidlig_ → Patroon: admin.ares → VHost: davidlig.admin.ares\nGeldige tekens: a-z, A-Z, 0-9, koppelteken (-) en punt (.).\nMoet ten minste één punt bevatten, mag niet beginnen/eindigen met - of . of .. hebben\nGebruik OFF om het geforceerde vhost-patroon te wissen.\nDit commando is voorbehouden aan Root-gebruikers."
+    unknown_action:  "\x0304✗\x03 Onbekende actie \x02%action%\x02. Gebruik VIEW of SET."
+
+    view:
+      syntax:       "ROLE VHOST <rol> VIEW"
+      short:         "Toont het geforceerde vhost-patroon van de rol."
+      help:          "Toont het geforceerde vhost-patroon dat aan een rol is toegewezen.\nDit commando is voorbehouden aan Root-gebruikers."
+      header:        "\x0307---\x03 \x02Geforceerde vhost voor %role%\x02 \x0307---\x03"
+      empty:        "De rol \x02%role%\x02 heeft geen geforceerd vhost-patroon ingesteld."
+      line:         "  Patroon: \x0303%pattern%\x03"
+      example:      "  Voorbeeld: \x02bijnaam\x02.%pattern%"
+
+    set:
+      syntax:       "ROLE VHOST <rol> SET <patroon>"
+      short:         "Stel het geforceerde vhost-patroon voor de rol in."
+      help:          "Stelt het geforceerde vhost-patroon voor de rol in.\nGebruikers die zich identificeren met deze rol ontvangen de geforceerde vhost,\ndie voorrang heeft op de persoonlijke vhost.\nHet patroon wordt toegevoegd na de opgeschoonde bijnaam.\nGebruik OFF of laat het argument weg om de geforceerde vhost te wissen.\nDit commando is voorbehouden aan Root-gebruikers."
+      done:         "\x0303✓\x03 Geforceerd vhost-patroon ingesteld voor rol \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Geforceerd vhost-patroon verwijderd uit rol \x02%role%\x02."
+      invalid:      "\x0304✗\x03 Ongeldig vhost-patroon. Geldige tekens: a-z, A-Z, 0-9, - en .. Moet ten minste één punt bevatten, mag niet beginnen/eindigen met - of . of .. hebben"
+
+# --- KILL --------------------------------------------------------------------
+kill:
+  syntax:           "KILL <bijnaam> <reden>"
+  short:            "Verbreek geforceerd de verbinding van een gebruiker met het netwerk."
+  help:             "Verbreekt de verbinding van een gebruiker met het IRC-netwerk.\nIRCops en Root-gebruikers kunnen niet worden gekilld.\nDit commando vereist de operserv.kill-permissie.\n\nSyntax: KILL <bijnaam> <reden>\nVoorbeeld: KILL SlechteGebr Kanalen flooden"
+  user_not_online:  "\x0304✗\x03 Nick \x02%nickname%\x02 is niet verbonden."
+  protected_root:   "\x0304✗\x03 Kan Root-gebruiker \x02%nickname%\x02 niet killen."
+  protected_ircop:  "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet killen."
+  done:             "\x0303✓\x03 Gebruiker \x02%nickname%\x02 is gekilld (%reason%)."
+  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft de operserv.kill-permissie nodig."
+
+# --- GLINE --------------------------------------------------------------------
+gline:
+  syntax:           "GLINE <ADD|DEL|LIST> [masker] [verloop] [reden]"
+  short:            "Beheer netwerkbrede G-lines."
+  help:             "Beheer netwerkbrede G-lines (globale bans).\nADD voegt een nieuwe G-line toe met masker, verloop en reden.\nDEL verwijdert een G-line op masker of vermeldingsnummer.\nLIST toont alle G-lines, optioneel gefilterd op masker.\n\nVerloopformaat: 0=permanent, of gebruik d, h, m suffix (bijv. 7d, 12h, 30m).\nGLINEs die overeenkomen met Root- of IRCop-gebruikers worden geweigerd.\nDit commando vereist de operserv.gline-permissie."
+  unknown_sub:      "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
+  invalid_mask:     "\x0304✗\x03 Ongeldig maskerformaat. Moet in formaat gebruiker@host zijn (bijv. *@192.168.*)."
+  global_mask:      "\x0304✗\x03 G-line masker \x02%mask%\x02 is te breed. Globale maskers zijn niet toegestaan."
+  dangerous_mask:   "\x0304✗\x03 G-line masker \x02%mask%\x02 is te breed. Het hostdeel heeft ten minste 4 alfanumerieke tekens nodig."
+  protected_user:   "\x0304✗\x03 Kan beschermde gebruiker \x02%nickname%\x02 niet G-linen."
+  invalid_expiry:   "\x0304✗\x03 Ongeldig verloopformaat. Gebruik 0 voor permanent, of een waarde zoals 7d, 12h, 30m."
+  already_exists:   "\x0304✗\x03 G-line voor \x02%mask%\x02 bestaat al."
+  max_entries:      "\x0304✗\x03 Maximaal aantal G-lines (%max%) bereikt."
+  not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 niet gevonden."
+  user_not_found:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet online."
+  permanent:        "permanent"
+
+  add:
+    syntax:         "GLINE ADD <masker> <verloop> <reden>"
+    short:          "Voeg een netwerkbrede G-line toe."
+    help:           "Voegt een netwerkbrede G-line (globale ban) toe.\nHet masker moet in formaat gebruiker@host zijn.\nVerloop: 0=permanent, of gebruik d, h, m suffix (bijv. 7d, 12h, 30m).\nGLINE's die overeenkomen met Root- of IRCop-gebruikers worden geweigerd.\nDit commando vereist de operserv.gline-permissie."
+    done:           "\x0303✓\x03 G-line toegevoegd: \x02%mask%\x02 (%duration%) - %reason%"
+
+  del:
+    syntax:         "GLINE DEL <masker|nummer>"
+    short:          "Verwijder een G-line."
+    help:           "Verwijdert een G-line uit de lijst.\nU kunt het masker of het vermeldingsnummer van LIST opgeven.\nDit commando vereist de operserv.gline-permissie."
+    done:           "\x0303✓\x03 G-line \x02%mask%\x02 verwijderd."
+
+  list:
+    syntax:         "GLINE LIST [masker]"
+    short:          "Toon alle G-lines."
+    help:           "Toont alle G-lines. Optioneel filteren op maskerpatroon.\nDit commando vereist de operserv.gline-permissie."
+    header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
+    empty:          "Er zijn geen G-lines."
+    no_reason:      "Geen reden"
+    never_expires:  "Permanent"
+    unknown_creator: "onbekend"
+    entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, verloopt: %expiration%)"
+
+# --- GLOBAL -------------------------------------------------------------------
+global:
+  syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <bericht>"
+  short:            "Stuur een globaal bericht naar alle verbonden gebruikers."
+  help:             "Stuurt een bericht naar alle verbonden gebruikers.\n\nAls het eerste argument een servicenaam is, wordt het bericht verzonden via die bestaande service.\n\nAls het geen service is, wordt een tijdelijke pseudo-client aangemaakt met het\nopgegeven masker. Het masker moet in formaat zijn: nick!ident@vhost\n- nick: IRC-geldige bijnaam (letters, []{}|\\`, cijfers, begint met letter)\n- ident: alfanumeriek met . _ ~ -\n- vhost: geldige hostnaam\n\nVoor pseudo-clients mag de bijnaam niet verbonden of geregistreerd zijn.\nDe pseudo-client blijft verbonden tijdens het verzenden en verbreekt\nautomatisch (de nick wordt 24u geblokkeerd via SQLINE/QLINE).\n\nPRIVMSG verzendt als privébericht, NOTICE verzendt als notice.\nDit commando vereist de operserv.global-permissie."
+  mask_invalid:    "\x0304✗\x03 Ongeldig maskerformaat: %error%"
+  nick_service:    "\x0304✗\x03 Kan geen service-bijnaam gebruiken."
+  nick_connected: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is momenteel verbonden."
+  nick_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geregistreerd."
+  type_invalid:    "\x0304✗\x03 Berichttype moet PRIVMSG of NOTICE zijn."
+  done:            "\x0303✓\x03 Globaal bericht verzonden van \x02%nickname%\x02 naar %count% gebruikers."
+
+# --- RAW ---------------------------------------------------------------------
+raw:
+  syntax:           "RAW <regel>"
+  short:            "Stuur een rauwe protocolregel naar de IRCd."
+  help:             "Stuurt de opgegeven regel rechtstreeks naar de uplink IRCd-socket.\nGebruik met uiterste voorzichtigheid. Ongeldige protocolregels kunnen het netwerk laten crashen.\nDit commando vereist de operserv.raw-permissie."
+  empty:            "\x0304✗\x03 U moet een niet-lege regel opgeven om te verzenden."
+  too_long:         "\x0304✗\x03 Regel is te lang. Maximum 510 tekens."
+  not_connected:    "\x0304✗\x03 Niet verbonden met IRCd."
+  done:             "\x0303✓\x03 Rauwe regel verzonden."
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message:   "%operator% voert commando %command% uit op %target%. %reason%"
+  actionWithDuration: "%operator% voert commando %command% uit op %target%. Duur: %duration%. %reason%"
+  action_global:    "%operator% voert commando GLOBAL uit met bijnaam %target% via %type% naar %count% gebruikers. Bericht: %message%"
+  prefix_reason:    "Reden: %reason%"
+  prefix_message:   "Bericht: %reason%"
+
+# --- PERMISSIONS --------------------------------------------------------------
+permissions:
+  operserv.kill:    "Verbreek verbinding van een bijnaam met het netwerk (KILL)"
+  operserv.gline:   "Beheer netwerkbrede G-lines (GLINE)"
+  operserv.global:  "Stuur globale berichten naar alle gebruikers (GLOBAL)"
+  operserv.raw:     "Stuur rauwe protocolregels naar de IRCd (RAW)"
+  operserv.motd:    "Beheer connect MOTD-berichten (MOTD)"
+
+# --- MOTD ----------------------------------------------------------------------
+motd:
+  short:            "Beheer connect MOTD-berichten die naar gebruikers worden gestuurd bij verbinding."
+  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args]"
+  help:             "Beheer Message Of The Day-vermeldingen die naar gebruikers worden gestuurd wanneer ze verbinding maken met het netwerk.\n\n"
+  unknown_sub:      "\x0304✗\x03 Onbekende subopdracht. Gebruik: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
+  add:
+    syntax:         "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <verloop> <bericht>"
+    syntax_hint:    "\x0304✗\x03 Gebruik: \x02%syntax%\x02"
+    short:          "Voeg een MOTD-vermelding toe."
+    help:           "Voegt een nieuwe MOTD-vermelding toe die naar elke gebruiker wordt gestuurd wanneer deze verbinding maakt met het netwerk.\n\n"
+    done:           "\x0303✓\x03 MOTD-vermelding #%id% toegevoegd."
+    invalid_type:   "\x0304✗\x03 Ongeldig berichttype. Moet \x02PRIVMSG\x02 of \x02NOTICE\x02 zijn."
+    invalid_expiry: "\x0304✗\x03 Ongeldig verloopformaat. Gebruik: \x02<getal><s|m|h|d>\x02 (bijv. 30s, 5m, 24h, 7d)."
+  del:
+    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax_hint:    "\x0304✗\x03 Gebruik: \x02%syntax%\x02"
+    short:          "Verwijder een MOTD-vermelding."
+    help:           "Verwijdert een MOTD-vermelding op basis van zijn ID.\n\n"
+    done:           "\x0303✓\x03 MOTD-vermelding #%id% verwijderd."
+    not_found:      "\x0304✗\x03 MOTD-vermelding niet gevonden."
+  list:
+    syntax:         "MOTD LIST"
+    short:          "Toon alle MOTD-vermeldingen."
+    help:           "Toont alle geconfigureerde MOTD-vermeldingen.\n\n"
+    empty:          "Geen MOTD-vermeldingen geconfigureerd."
+    header:         "MOTD-vermeldingen:"
+    status_enabled: "\x0303ingeschakeld\x03"
+    status_disabled: "\x0304uitgeschakeld\x03"
+    expired:        "\x0304verlopen\x03"
+    no_bot:         "(geen bot)"
+    never:          "nooit"
+  clean:
+    syntax:         "MOTD CLEAN"
+    short:          "Verwijder alle verlopen MOTD-vermeldingen."
+    help:           "Verwijdert alle MOTD-vermeldingen waarvan de verlooptijd is verstreken.\n\n"
+    done:           "\x0303✓\x03 %count% verlopen MOTD-vermeldingen verwijderd."
+    none:           "\x0303✓\x03 Geen verlopen MOTD-vermeldingen om te verwijderen."

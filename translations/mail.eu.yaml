@@ -1,0 +1,73 @@
+# Posta edukia — eremua: mail (testu laua, IRC koderik gabe)
+# Markagailuak: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — egiaztapen tokena
+register_verification_subject: "%bot%: egiaztatu zure ezizenaren erregistroa"
+register_verification_body: |
+  Kaixo,
+
+  "%nickname%" ezizena IRC sarean erregistratzeko eskatu duzu.
+
+  Zure egiaztapen tokena hau da: %token%
+
+  Erregistroa osatzeko, bidali komando hau %bot% zerbitzura (ordezkatu <token> goiko tokenarekin):
+    /msg %bot% VERIFY %token%
+
+  Tokena ordubetean iraungitzen da. Zuk eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
+
+# RESEND — erregistroaren berdina, tokenaren berbidalketa
+resend_verification_subject: "%bot%: zure egiaztapen tokena (berbidalita)"
+resend_verification_body: |
+  Kaixo,
+
+  "%nickname%" ezizenarentzat egiaztapen token berri bat eskatu duzu.
+
+  Zure egiaztapen tokena hau da: %token%
+
+  Erregistroa osatzeko, bidali %bot% zerbitzura:
+    /msg %bot% VERIFY %token%
+
+  Tokena ordubetean iraungitzen da. Zuk eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
+
+# SET EMAIL — baieztapen tokena uneko posta elektronikora bidalia
+email_change_token_subject: "%bot%: baieztatu zure posta elektronikoko helbide berria"
+email_change_token_body: |
+  Kaixo,
+
+  Zure %bot% ezizenaren posta elektronikoko helbidea honetara aldatzeko eskatu duzu: %new_email%
+
+  Zure baieztapen tokena hau da: %token%
+
+  Aldaketa baieztatzeko, bidali %bot% zerbitzura:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  Tokena ordubetean iraungitzen da. Zuk aldaketa hau eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
+
+# RECOVER — pasahitza berreskuratzeko tokena
+recovery_token_subject: "%bot%: pasahitza berreskuratzea"
+recovery_token_body: |
+  Kaixo,
+
+  "%nickname%" ezizenarentzat pasahitza berreskuratzea eskatu da.
+
+  Zure berreskuratze tokena hau da: %token%
+
+  Pasahitza berrezartzeko, bidali %bot% zerbitzura:
+    /msg %bot% RECOVER %nickname% %token%
+
+  Tokena ordubetean iraungitzen da. Zuk eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.
+
+# ChanServ SET FOUNDER — sortzaile aldaketa tokena
+founder_change_token_subject: "%bot%: sortzaile aldaketa tokena %channel% kanalerako"
+founder_change_token_body: |
+  Kaixo,
+
+  "%channel%" kanalarentzat sortzaile aldaketa eskatu da "%new_nick%" ezizenera.
+
+  Zure baieztapen tokena hau da: %token%
+
+  Aldaketa osatzeko, bidali %bot% zerbitzura komando hau (kopia eta itsats dezakezu):
+
+    /msg %bot% %command%
+
+  Tokena ordubetean iraungitzen da. Zuk eskatu ez baduzu, mesedez ez ikusi egin mezu elektroniko honi.

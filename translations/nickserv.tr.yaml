@@ -1,0 +1,571 @@
+# NickServ translations — Turkish
+# Domain: nickserv
+#
+# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
+#   \x02        bold on/off
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
+#   \x03        reset color
+#   \x0F        reset all formatting
+#
+# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark grey (14 decimal)  ← CORRECT
+#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
+
+unknown_command: "\x0304✗\x03 Bilinmeyen komut \x02%command%\x02. \x0303/msg %bot% HELP\x03 kullanın."
+
+error:
+  syntax:            "\x0304✗\x03 Hatalı sözdizimi. Kullanım: \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 Bu komut yalnızca IRC Operatörleri içindir."
+  not_identified:    "\x0304✗\x03 Kimliğiniz doğrulanmamış. \x0303/msg %bot% IDENTIFY <nickname> <password>\x03 kullanın"
+  permission_denied: "\x0304✗\x03 Erişim reddedildi. Bu komuta erişim yetkiniz yok."
+  mail_failed:       "\x0304✗\x03 E-posta gönderilemedi. Adresinizi kontrol edin veya daha sonra tekrar deneyin."
+
+# --- REGISTER ---------------------------------------------------------------
+register:
+  syntax:           "REGISTER <şifre> <e-posta>"
+  short:            "Rumuzunuzu hizmetlere kaydedin."
+  help:             "Mevcut rumuzunuzun kaydını başlatır. Sağlanan e-posta adresine bir doğrulama tokenı\ngönderilecektir. Kaydı \x0303/msg %bot% VERIFY <token>\x03 komutunu çalıştırarak\ntamamlayın. Token 1 saat içinde sona erer.\nGelmezse, spam klasörünüzü kontrol edin veya \x0303RESEND\x03 kullanın."
+  pending:          "\x0307→\x03 \x02%email%\x02 adresine bir doğrulama tokenı gönderildi.\n  Kaydı tamamlamak için \x0303/msg %bot% VERIFY <token>\x03 komutunu çalıştırın.\n  Almadınız mı? Spam'i kontrol edin veya \x0303/msg %bot% RESEND\x03 kullanın.\n  Token \x021 saat\x02 içinde sona erecek."
+  already_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu zaten kayıtlı."
+  already_pending:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu için zaten bekleyen bir doğrulama var.\n  \x0303/msg %bot% VERIFY <token>\x03 veya \x0303/msg %bot% RESEND\x03 kullanın."
+  forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kaydedilemez."
+  invalid_email:    "\x0304✗\x03 Sağlanan e-posta adresi geçerli değil."
+  email_already_used: "\x0304✗\x03 \x02%email%\x02 e-postası zaten başka bir rumuz tarafından kullanılıyor. Farklı bir adres kullanın."
+  throttled:          "\x0304✗\x03 Tekrar kayıt olmayı denemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
+  guest_prefix_forbidden: "\x0304✗\x03 \x02%prefix%\x02 ile başlayan bir rumuzu kaydedemezsiniz."
+
+# --- VERIFY -----------------------------------------------------------------
+verify:
+  syntax:           "VERIFY <token>"
+  short:            "E-posta adresinizi onaylayın ve rumuzunuzu etkinleştirin."
+  help:             "E-postanıza gönderilen tokenı doğrulayarak kaydı tamamlar.\nToken, kayıt anından itibaren 1 saat geçerlidir."
+  success:          "\x0303✔\x03 \x02%nickname%\x02 rumuzu başarıyla kaydedildi ve artık kimliğiniz doğrulandı."
+  invalid_token:    "\x0304✗\x03 Token geçersiz veya süresi dolmuş. Yeniden başlamak için \x0303/msg %bot% REGISTER\x03 kullanın."
+  no_pending:       "\x0304✗\x03 Doğrulayacak bekleyen bir kaydınız yok."
+
+# --- RESEND -----------------------------------------------------------------
+resend:
+  syntax:           "RESEND"
+  short:            "Doğrulama tokenını e-postanıza yeniden gönderin."
+  help:             "Kayıt sırasında sağlanan e-posta adresine doğrulama tokenını yeniden gönderir.\nYalnızca bekleyen bir kaydınız varsa çalışır."
+  success:          "\x0307→\x03 Doğrulama tokenı \x02%email%\x02 adresine yeniden gönderildi."
+  no_pending:       "\x0304✗\x03 Token göndermek için bekleyen bir kaydınız yok."
+  throttled:        "\x0304✗\x03 Başka bir doğrulama e-postası istemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
+
+# --- RECOVER -----------------------------------------------------------------
+recover:
+  syntax:           "RECOVER <nickname> [token]"
+  short:            "Şifrenizi kaybettiyseniz rumuzunuzu kurtarın."
+  help:             "Şifrenizi kaybettiğinizde kayıtlı bir rumuza erişimi kurtarır.\n1) \x0303RECOVER <nickname>\x03 — rumuzun e-postasına bir token gönderilir.\n2) \x0303RECOVER <nickname> <token>\x03 — şifrenizi sıfırlamak için e-postadan gelen tokenı girin.\nArdından geçici bir şifre ve değiştirme komutunu alacaksınız."
+  email_sent:       "\x0307→\x03 \x02%email_hint%\x02 adresine bir kurtarma tokenı gönderildi. Gelen kutunuzu (ve spam klasörünü) kontrol edin."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  pending:          "\x0304✗\x03 \x02%nickname%\x02 rumuzu e-posta doğrulaması bekliyor."
+  suspended:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Sebep: %reason%"
+  forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kullanılamaz."
+  no_email:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu için e-posta ayarlanmamış. Kurtarma kullanılamaz."
+  throttled:        "\x0304✗\x03 Başka bir kurtarma e-postası istemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
+  invalid_token:    "\x0304✗\x03 Token geçersiz veya süresi dolmuş. \x0303RECOVER %nickname%\x03 ile yeni bir tane isteyin."
+  success_identify: "\x0303✔\x03 Şifre sıfırlandı. Şimdi kimlik doğrulayın: \x0303%identify_cmd%\x03"
+  success_then_change: "Ardından şifrenizi değiştirin: \x0303/msg %bot% SET PASSWORD <yeni_şifre>\x03"
+
+# --- IDENTIFY ---------------------------------------------------------------
+identify:
+  syntax:           "IDENTIFY <nickname> <şifre>"
+  short:            "Kendinizi bir rumuzun sahibi olarak tanımlayın."
+  help:             "Rumuz ve şifrenizi kullanarak oturumunuzu %nickserv% ile doğrular.\nBaşarılı bir kimlik doğrulamadan sonra \x02+r\x02 kayıtlı modunu alacaksınız\nve, misafir rumuzu kullanıyorsanız, kayıtlı rumuzunuz geri yüklenecektir."
+  success:          "\x0303✔\x03 Artık \x02%nickname%\x02 olarak tanımlandınız."
+  already_identified: "\x0307ℹ\x03 Zaten \x02%nickname%\x02 olarak tanımlısınız."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  invalid_credentials: "\x0304✗\x03 Hatalı şifre. Lütfen tekrar deneyin."
+  locked_out:         "\x0304✗\x03 Çok fazla başarısız deneme. \x02%minutes%\x02 dakika sonra tekrar deneyin."
+  ghost_released:   "\x0307⚡\x03 \x02%nickname%\x02 adlı rumuzu tutan hayalet oturum bağlantısı kesildi."
+  kill_reason:      "%nickname% rumuzu %source% tarafından geri alındı (kayıtlı sahibi kimlik doğruladı)"
+  pending:          "\x0304✗\x03 \x02%nickname%\x02 rumuzu e-posta doğrulaması bekliyor.\n  \x0303/msg %bot% VERIFY <token>\x03 veya \x0303/msg %bot% RESEND\x03 komutunu çalıştırın."
+  suspended:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Sebep: %reason%"
+  forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kullanılamaz."
+
+# --- STATUS -----------------------------------------------------------------
+status:
+  syntax:           "STATUS <nickname>"
+  short:            "Bir rumuzun kayıt durumunu gösterin."
+  help:             "Bir rumuzun mevcut durumunu gösterir: kayıtlı, doğrulama bekliyor,\naskıya alınmış veya yasaklanmış."
+  header:           "\x02\x0307%nickname%\x03 rumuzunun durumu:\x02"
+  unregistered:     "  Durum           : Kayıtlı değil"
+  not_registered_offline: "  Durum           : \x0315Kayıtlı değil\x03"
+  pending:          "  Durum           : \x0307Doğrulama bekliyor\x03"
+  pending_expires:  "  Sona erme        : %minutes% dakika"
+  pending_expires_at: "  Sona erme tarihi : %date%"
+  not_connected:    "  Durum           : \x0315Bağlı değil\x03"
+  not_identified:   "  Durum           : \x0307Kimlik doğrulanmamış\x03"
+  identified:       "  Durum           : \x0303Kimlik doğrulandı\x03"
+  suspended:        "  Durum           : \x0304Askıya alındı\x03"
+  suspended_reason: "  Sebep           : %reason%"
+  suspended_until:  "  Bitiş tarihi     : %date%"
+  suspended_permanent: "  Bitiş tarihi     : Kalıcı"
+  forbidden:        "  Durum           : \x0304Yasaklandı\x03"
+  forbidden_reason: "  Sebep           : %reason%"
+  footer:           "\x0314─────────────────────────────\x03"
+
+# --- INFO -------------------------------------------------------------------
+info:
+  syntax:           "INFO <nickname>"
+  short:            "Kayıtlı bir rumuz hakkında bilgi gösterin."
+  help:             "Bir rumuz için kayıt bilgilerini gösterir: kayıt tarihi, bağlantı\ndurumu, son çıkış mesajı ve e-posta adresi. E-posta yalnızca\nkimlik doğrulandığında sahibine görünür. PRIVATE AÇIK olduğunda\nbilgileri yalnızca sahibi ve IRC Operatörleri görebilir."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  private:          "\x0304✗\x03 \x02%nickname%\x02 rumuzunun bilgileri gizlidir."
+  header:           "\x02\x0307%nickname%\x03 rumuzu için bilgi:\x02"
+  status:           "  \x0314Durum\x03            : %status%"
+  status_registered:  "\x0303Kayıtlı\x03"
+  status_suspended:   "\x0304Askıya alındı\x03"
+  status_forbidden:   "\x0304Yasaklandı\x03"
+  reason:           "  \x0314Sebep\x03            : %reason%"
+  suspended_until:  "  \x0314Bitiş tarihi\x03      : %date%"
+  suspended_permanent: "  \x0314Bitiş tarihi\x03      : Kalıcı"
+  registered_at:    "  \x0314Kayıt\x03            : %date%"
+  last_seen_online: "  \x0314Son görülme\x03      : \x0303● ŞİMDİ ÇEVRİMİÇİ\x03"
+  last_seen_at:     "  \x0314Son görülme\x03      : %date%"
+  last_seen_never:  "  \x0314Son görülme\x03      : Hiç"
+  last_quit:        "  \x0314Son çıkış msj\x03    : %message%"
+  last_connect:     "  \x0314Son görülme (adr)\x03: %ip% (%host%)"
+  email:            "  \x0314E-posta\x03          : %email%"
+  vhost:            "  \x0314VHost\x03            : %vhost%"
+  no_expire:        "  \x0314Hiç Sona Ermez\x03   : Evet"
+  footer:           "\x0314─────────────────────────────\x03"
+  channels_header:  "\x0314\x0AErişim sahibi olunan kanallar:\x03"
+  channels_entry_founder:   "  %channel% (\x0303Kurucu\x03)"
+  channels_entry_successor: "  %channel% (\x0303Halef\x03)"
+  channels_entry_access:    "  %channel% (%level%)"
+
+# --- SET --------------------------------------------------------------------
+set:
+  syntax:           "SET <seçenek> <değer>"
+  short:            "%nickserv% rumuz ayarlarınızı değiştirin."
+  help:             "%nickserv% rumuz ayarlarınızı değiştirir.\nBu komutu kullanmak için kimliğiniz doğrulanmış olmalıdır."
+  unknown_option:   "\x0304✗\x03 Bilinmeyen seçenek \x02%option%\x02. Kullanılabilir seçenekler: %options%."
+
+  password:
+    syntax:         "SET PASSWORD <yeni_şifre>"
+    short:          "Rumuz şifrenizi değiştirin."
+    help:           "NickServ rumuzunuzun şifresini değiştirir. Yeni şifre hemen geçerli olur.\nEn az 6 karakterden oluşan, başka hizmetlerde kullanmadığınız\ngüçlü bir şifre seçin."
+    success:        "\x0303✔\x03 Şifreniz başarıyla güncellendi."
+
+  email:
+    syntax:         "SET EMAIL <yeni_e-posta> [token]"
+    short:          "Rumuzunuza bağlı e-posta adresini değiştirin (iki aşamalı onay)."
+    help:           "Güvenlik için iki aşamada e-posta değişikliği.\n1) \x0303SET EMAIL <yeni_e-posta>\x03 — mevcut e-postanıza bir token gönderilir.\n2) \x0303SET EMAIL <yeni_e-posta> <token>\x03 — alınan token ile onaylayın.\nToken 1 saat içinde sona erer."
+    success:        "\x0303✔\x03 E-postanız \x02%email%\x02 olarak güncellendi."
+    pending_sent:   "\x0307→\x03 \x02%current_email%\x02 adresine bir onay tokenı gönderildi.\n  \x02%new_email%\x02 adresine değişikliği onaylamak için çalıştırın:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Token 1 saat içinde sona erer."
+    invalid_token:  "\x0304✗\x03 Token geçersiz veya süresi dolmuş. \x0303SET EMAIL <yeni_e-posta>\x03 ile yeni bir tane isteyin."
+
+  language:
+    syntax:         "SET LANGUAGE <kod>"
+    short:          "Hizmetlerin sizinle iletişim kurarken kullandığı dili değiştirin."
+    help:           "%nickserv% ve diğer hizmetlerin sizinle konuşurken kullandığı dili değiştirir.\nKullanılabilir diller: \x02es\x02 (İspanyolca), \x02en\x02 (İngilizce)."
+    success:        "\x0303✔\x03 Dil \x02%language%\x02 olarak değiştirildi."
+    invalid:        "\x0304✗\x03 Desteklenmeyen dil. Kullanılabilir diller: %languages%."
+
+  timezone:
+    syntax:         "SET TIMEZONE <zaman_dilimi>"
+    short:          "Tarihleri görüntülerken kullanılacak zaman dilimini ayarlayın."
+    help:           "%nickserv% tarihleri gösterirken kullanılacak zaman dilimini ayarlar.\nBölge dizini için \x02HELP SET TIMEZONE\x02; bölgenin zaman dilimleri için \x02HELP SET TIMEZONE <bölge>\x02 (örn. Europe) kullanın. Temizlemek için \x02OFF\x02 kullanın."
+    success:        "\x0303✔\x03 Zaman dilimi \x02%timezone%\x02 olarak ayarlandı. Tarihler bu zaman diliminde gösterilecek."
+    cleared:        "\x0303✔\x03 Zaman dilimi temizlendi. Tarihler ağ varsayılanını kullanacak."
+    invalid:        "\x0304✗\x03 Geçersiz zaman dilimi \x02%timezone%\x02. Geçerli bir tanımlayıcı kullanın (örn. UTC, Europe/Istanbul)."
+
+  private:
+    syntax:         "SET PRIVATE {ON|OFF}"
+    short:          "Rumuz bilgilerinizin gizliliğini etkinleştirin veya devre dışı bırakın."
+    help:           "INFO komutunda rumuz bilgilerinizin görünürlüğünü kontrol eder.\n\x02PRIVATE AÇIK\x02 ile bilgilerinizi yalnızca siz ve IRC Operatörleri görebilir.\n\x02PRIVATE KAPALI\x02 ile bilgileriniz herkese açıktır."
+    on:             "\x0303✔\x03 Rumuz bilgileriniz artık \x02gizlidir\x02."
+    off:            "\x0303✔\x03 Rumuz bilgileriniz artık \x02herkese açıktır\x02."
+
+  msg:
+    syntax:         "SET MSG {ON|OFF}"
+    short:          "Hizmet yanıtları için PRIVMSG (AÇIK) veya NOTICE (KAPALI) kullanın."
+    help:           "%nickserv% ve diğer hizmetlerin size nasıl mesaj göndereceğini kontrol eder.\n\x02MSG AÇIK\x02 ile yanıtlar \x02PRIVMSG\x02 olarak gönderilir (bazı istemciler otomatik yanıt/uyarı tetikleyebilir).\n\x02MSG KAPALI\x02 ile yanıtlar \x02NOTICE\x02 olarak gönderilir (varsayılan; genellikle otomatik yanıt olmaz)."
+    on:             "\x0303✔\x03 Hizmet mesajları artık \x02PRIVMSG\x02 olarak gönderilecek."
+    off:            "\x0303✔\x03 Hizmet mesajları artık \x02NOTICE\x02 olarak gönderilecek."
+
+  vhost:
+    syntax:         "SET VHOST <vhost>"
+    short:          "Özel sanal ana makinenizi (görüntülenen host adı) ayarlayın veya temizleyin."
+    help:           "Kimlik doğrulandığınızda başkalarının gördüğü özel bir host adı ayarlar.\nTemizlemek için \x02SET VHOST OFF\x02 kullanın. Yalnızca harfler (a-z, A-Z), rakamlar, tire ve nokta;\nher bloğun başında/sonunda tire veya nokta olmaz; maks 48 karakter. Her rumuz için benzersiz."
+    success:        "\x0303✔\x03 Sanal host'unuz \x02%vhost%\x02 olarak ayarlandı."
+    cleared:        "\x0303✔\x03 Sanal host'unuz temizlendi."
+    invalid:        "\x0304✗\x03 Geçersiz vhost. Yalnızca harfler, rakamlar, tire ve nokta (blok başında/sonunda olamaz); maks 48 karakter."
+    taken:          "\x0304✗\x03 Bu vhost zaten başka bir rumuz tarafından kullanılıyor."
+    forced:         "\x0304✗\x03 Vhost'unuz otomatik olarak yapılandırılmıştır ve SET VHOST ile değiştirilemez."
+
+# --- HELP -------------------------------------------------------------------
+help:
+  syntax:           "HELP [komut]"
+  short:            "%nickserv% komutları için yardım gösterin."
+  help:             "Genel %nickserv% yardımını veya belirli bir komut için\nayrıntılı bilgi gösterir."
+  header_title:     "%bot%"
+  intro:            "IRC ağı için rumuz kaydı ve koruma hizmeti."
+  intro_expiration: "NOT: %days% günden fazla \x0304\x1Fkullanılmayan\x0F rumuzlar otomatik olarak kaldırılır."
+  general_header:   "\x02\x0314Kullanılabilir komutlar:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Seçenekler:\x03\x0F"
+  general_footer:   "Daha fazla bilgi için \x0303/msg %bot% HELP <komut>\x03 kullanın."
+  set_sub_footer:   "Daha fazla bilgi için \x0303/msg %bot% HELP %command% <seçenek>\x03 kullanın."
+  command_header:   "\x02%command% için yardım:\x02"
+  syntax_label:     "\x0307Sözdizimi:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  unknown_command:  "\x0304✗\x03 \x02%command%\x02 için yardım bulunamadı."
+  ircop_header:     "\x02\x0314IRCOPS için kullanılabilir komutlar:\x03\x0F"
+
+  set_timezone:
+    index_label:    "\x0314Bölgeler\x03 (\x02HELP SET TIMEZONE <bölge>\x02 ile listeleyin):"
+    region_header:  "\x0314%region% için zaman dilimleri:\x03"
+    region_unknown: "\x0304✗\x03 Bilinmeyen bölge. Dizin için \x02HELP SET TIMEZONE\x02 kullanın."
+
+# --- Nick Protection --------------------------------------------------------
+protection:
+  nick_in_use:      "\x0304⚠\x03 \x02%nickname%\x02 rumuzu kayıtlıdır. Kimlik doğrulamazsanız adınız değiştirilecektir."
+  renamed_to:       "\x0307→\x03 Rumuzunuz \x02%guest_nick%\x02 olarak değiştirildi. Rumuzunuzu kurtarmak için:\n\x0303/msg %bot% IDENTIFY %nickname% <şifre>\x03"
+  nick_forbidden:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmıştır: %reason%"
+
+# --- IRCop Commands ---------------------------------------------------------
+userip:
+  syntax:           "USERIP <nickname>"
+  short:            "Rumuzun gerçek IP adresini ve host adını öğrenin."
+  help:             |
+    Belirtilen rumuzun gerçek IP adresini ve hostname'ini gösterir.
+    Yalnızca 'nickserv.userip' iznine sahip IRCop'lere açıktır.
+
+    Bu komut hassas rumuz bilgilerini gösterir.
+    Sorumlu bir şekilde kullanın.
+
+    Sözdizimi: USERIP <nickname>
+    Örnek: USERIP BaziKullanici
+  not_online:       "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
+  result:           "\x0307ℹ\x03 Rumuz: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+
+permissions:
+  nickserv.userip: "Bir rumuzun gerçek IP adresini/hostname'ini görüntüleyin (USERIP)"
+  nickserv.suspend: "Bir rumuzu askıya alın veya askıyı kaldırın (SUSPEND/UNSUSPEND)"
+  nickserv.rename: "Bağlı bir rumuzu rastgele bir rumuza zorla değiştirin (RENAME)"
+  nickserv.drop: "Kayıtlı bir rumuzu bırakın (DROP)"
+  nickserv.forbid: "Bir rumuzu yasaklayın veya yasağı kaldırın (FORBID/UNFORBID)"
+  nickserv.forbidvhost: "Vhost kalıplarını yasaklayın veya izin verin (FORBIDVHOST)"
+  nickserv.saset: "Başka bir rumuzun ayarlarını değiştirin (SASET)"
+  nickserv.noexpire: "Bir rumuz için süre sonu korumasını ayarlayın veya kaldırın (NOEXPIRE)"
+  nickserv.history: "Rumuz eylem geçmişini görüntüleyin ve yönetin (HISTORY)"
+
+# --- SUSPEND (IRCop) ---------------------------------------------------------
+suspend:
+  syntax:           "SUSPEND <nickname> <süre> <sebep>"
+  short:            "Bir rumuzu askıya alın."
+  help:             |
+    Bir rumuzu askıya alarak sahibinin kimlik doğrulamasını engeller.
+    Askıya alma geçici veya kalıcı olabilir.
+
+    Süre formatları: \x0303%d\x03 (gün), \x0303%h\x03 (saat), \x0303%m\x03 (dakika), veya \x03030\x03 (kalıcı).
+
+    Askıya alınan kullanıcılar rumuzlarına kimlik doğrulayamaz.
+    IRC operatörleri ve root kullanıcılar askıya alınamaz.
+
+    Sözdizimi: SUSPEND <nickname> <süre> <sebep>
+    Örnekler:
+      SUSPEND KtUye 7g #help kanalında spam
+      SUSPEND Suistlm 30g Tekrarlanan flood
+      SUSPEND Sorunlu 0 Permaban kaçakçılığı
+  success:            "\x0303✔\x03 \x02%nickname%\x02 rumuzu \x02%duration%\x02 tarihine kadar askıya alındı."
+  already_suspended:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu zaten askıya alınmış."
+  not_registered:     "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  forbidden:          "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış ve askıya alınamaz."
+  cannot_suspend_oper: "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 askıya alınamaz."
+  cannot_suspend_root: "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 askıya alınamaz."
+  cannot_suspend_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 askıya alınamaz."
+  invalid_duration:   "\x0304✗\x03 Geçersiz süre. Kullanın: \x0303<g><s><d>\x03 (örn. 7g, 12s, 30d) veya kalıcı için \x03030\x03."
+  permanent:          "kalıcı"
+
+# --- UNSUSPEND (IRCop) -------------------------------------------------------
+unsuspend:
+  syntax:           "UNSUSPEND <nickname>"
+  short:            "Bir rumuzun askısını kaldırın."
+  help:             |
+    Bir rumuzun aktif askısını kaldırarak sahibinin tekrar kimlik doğrulayabilmesini sağlar.
+
+    Sözdizimi: UNSUSPEND <nickname>
+    Örnek: UNSUSPEND BaziKullanici
+  success:          "\x0303✔\x03 \x02%nickname%\x02 adlı kullanıcının askısı kaldırıldı."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  not_suspended:    "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmamış."
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax:           "RENAME <nickname>"
+  short:            "Bağlı bir rumuzu rastgele bir rumuza zorla değiştirin."
+  help:             |
+    Bağlı bir rumuzu rastgele oluşturulmuş bir rumuza değiştirmeye zorlar.
+    Kullanıcıyı bağlantıdan atmadan ağ politikalarını uygulamak için kullanışlıdır.
+
+    Yeni rumuz formatı yapılandırılmış misafir önekinde (%prefix%) oluşturulur.
+
+    Bu komut IRCop izni gerektirir: nickserv.rename
+
+    Sözdizimi: RENAME <nickname>
+    Örnek: RENAME SorunluKisi
+  not_online:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bağlı değil."
+  cannot_rename_root: "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 yeniden adlandırılamaz."
+  cannot_rename_oper: "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 yeniden adlandırılamaz."
+  cannot_rename_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 yeniden adlandırılamaz."
+  success:           "\x0303✓\x03 \x02%nickname%\x02 rumuzu \x02%new_nick%\x02 olarak değiştirildi."
+
+# --- DROP (IRCop) --------------------------------------------------------------
+drop:
+  syntax:           "DROP <nickname>"
+  short:            "Kayıtlı bir rumuzu bırakın."
+  help:             |
+    Veritabanından kayıtlı bir rumuzu bırakır.
+    Bu eylem geri alınamaz.
+
+    Kullanıcı çevrimiçiyse, Guest- rumuzuna yeniden adlandırılacaktır.
+    Root kullanıcılar ve IRC operatörleri bırakılamaz.
+    Kendi rumuzunuzu bırakamazsınız.
+
+    Bu komut IRCop izni gerektirir: nickserv.drop
+
+    Sözdizimi: DROP <nickname>
+    Örnek: DROP EskiHesap
+  not_registered:     "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  suspended:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Önce askıyı kaldırın."
+  forbidden:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış."
+  cannot_drop_root:   "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 bırakılamaz."
+  cannot_drop_oper:   "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 bırakılamaz."
+  cannot_drop_self:    "\x0304✗\x03 Kendi rumuzunuzu bırakamazsınız."
+  success:            "\x0303✓\x03 \x02%nickname%\x02 rumuzu bırakıldı."
+  cannot_drop_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 bırakılamaz."
+
+# --- FORBID (IRCop) --------------------------------------------------------------
+forbid:
+  syntax:           "FORBID <nickname> <sebep>"
+  short:            "Bir rumuzu kalıcı olarak kullanımdan engelleyin."
+  help:             |
+    Bir rumuzun ağda kullanılmasını yasaklar.
+    Rumuz hiç kimse tarafından kaydedilemez veya kullanılamaz.
+
+    Rumuz şu anda kayıtlıysa, önce bırakılacaktır.
+    Birisi kullanıyorsa, Guest- rumuzuna değiştirilmeye zorlanacaktır.
+
+    Root kullanıcılar, IRC operatörleri ve hizmet rumuzları yasaklanamaz.
+
+    Bu komut IRCop izni gerektirir: nickserv.forbid
+
+    Sözdizimi: FORBID <nickname> <sebep>
+    Örnek: FORBID KtRumuz Tekrarlanan politika ihlalleri
+  success:            "\x0303✔\x03 \x02%nickname%\x02 rumuzu yasaklandı."
+  updated:            "\x0303✔\x03 \x02%nickname%\x02 için yasaklama sebebi güncellendi."
+  reason_required:    "\x0304✗\x03 Yasaklama için bir sebep belirtmelisiniz."
+  cannot_forbid_root:  "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 yasaklanamaz."
+  cannot_forbid_oper:  "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 yasaklanamaz."
+  cannot_forbid_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 yasaklanamaz."
+
+# --- UNFORBID (IRCop) ------------------------------------------------------------
+unforbid:
+  syntax:           "UNFORBID <nickname>"
+  short:            "Bir rumuz yasağını kaldırın."
+  help:             |
+    Bir rumuz yasağını kaldırarak rumuzun tekrar kullanılabilmesini sağlar.
+
+    Bu komut IRCop izni gerektirir: nickserv.forbid
+
+    Sözdizimi: UNFORBID <nickname>
+    Örnek: UNFORBID BaziRumuz
+  success:          "\x0303✔\x03 \x02%nickname%\x02 rumuzu artık yasaklı değil."
+  not_forbidden:    "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklı değil."
+
+# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
+forbidvhost:
+  syntax:           "FORBIDVHOST ADD|DEL|LIST [kalıp]"
+  short:            "Yasaklı vhost kalıplarını yönetin."
+  help:             |
+    Kullanıcıların NickServ SET VHOST ile eşleşen vhost'ları
+    ayarlamalarını engelleyen kalıpları yönetir.
+
+    Jokerler: * herhangi bir diziyi eşler, ? tek karakteri eşler.
+    Örnek: *.korsan.com, .korsan.com ile biten tüm vhost'ları engeller.
+
+    Bu komut IRCop izni gerektirir: nickserv.forbidvhost
+
+    Alt komutlar:
+      ADD <kalıp>    Yasaklı bir kalıp ekleyin
+      DEL <kalıp>    Yasaklı bir kalıbı kaldırın
+      LIST             Tüm yasaklı kalıpları gösterin
+
+  unknown_sub: "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
+
+  add:
+    syntax:      "FORBIDVHOST ADD <kalıp>"
+    short:       "Yasaklı bir vhost kalıbı ekleyin."
+    help:        |
+      Yasaklı vhost listesine bir kalıp ekler. Kullanıcılar
+      SET VHOST ile bu kalıpla eşleşen vhost'ları ayarlayamaz.
+
+      Jokerler: * herhangi bir diziyi eşler, ? tek karakteri eşler.
+
+      Sözdizimi: FORBIDVHOST ADD <kalıp>
+      Örnek: FORBIDVHOST ADD *.korsan.com
+    done:            "\x0303✓\x03 Yasaklı vhost kalıbı eklendi: \x02%pattern%\x02"
+    already_exists:  "\x0304✗\x03 \x02%pattern%\x02 kalıbı zaten mevcut."
+    invalid:          "\x0304✗\x03 Geçersiz vhost kalıbı formatı."
+
+  del:
+    syntax:      "FORBIDVHOST DEL <kalıp>"
+    short:       "Yasaklı bir vhost kalıbını kaldırın."
+    help:        |
+      Yasaklı vhost listesinden bir kalıbı kaldırır.
+
+      Sözdizimi: FORBIDVHOST DEL <kalıp>
+      Örnek: FORBIDVHOST DEL *.korsan.com
+    done:        "\x0303✓\x03 Yasaklı vhost kalıbı kaldırıldı: \x02%pattern%\x02"
+    not_found:   "\x0304✗\x03 \x02%pattern%\x02 kalıbı bulunamadı."
+
+  list:
+    short:       "Tüm yasaklı vhost kalıplarını listeleyin."
+    syntax:      "FORBIDVHOST LIST"
+    help:        |
+      Tüm yasaklı vhost kalıplarını gösterir.
+
+      Sözdizimi: FORBIDVHOST LIST
+    header:      "\x0307ℹ\x03 Yasaklı vhost kalıpları (\x02%count%\x02):"
+    entry:       "  %index%. \x0304%pattern%\x03 — ekleyen: %nickname% (%date%)"
+    empty:       "\x0307ℹ\x03 Yasaklı vhost kalıbı yok."
+    unknown_creator: "bilinmiyor"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Rumuz eylem geçmişini görüntüleyin veya yönetin."
+  help:             |
+    Bir rumuzun eylem geçmişini yönetin.
+    Bu komutu yalnızca 'nickserv.history' iznine sahip IRCop'ler kullanabilir.
+
+    Otomatik olarak kaydedilen eylemler:
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+
+    Sözdizimi: HISTORY <nickname> ADD <mesaj>
+            HISTORY <nickname> DEL <id>
+            HISTORY <nickname> VIEW [SAYFA|ALL]
+            HISTORY <nickname> CLEAR
+
+    Örnekler:
+      HISTORY BaziRumuz VIEW
+      HISTORY BaziRumuz ADD Bu kullanıcı hakkında manuel not
+      HISTORY BaziRumuz VIEW 2
+      HISTORY BaziRumuz VIEW ALL
+      HISTORY BaziRumuz DEL 123
+      HISTORY BaziRumuz CLEAR
+
+    Geçmişi görmek için VIEW kullanın (varsayılan 3 giriş).
+    Sonraki sayfayı görmek için VIEW SAYFA 2 kullanın.
+    Tam geçmişi görmek için VIEW ALL kullanın.
+    Manuel giriş eklemek için ADD kullanın.
+    Belirli bir girişi ID ile silmek için DEL kullanın.
+    Tüm geçmiş girişlerini silmek için CLEAR kullanın.
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  unknown_operator: "(bilinmiyor)"
+
+  add:
+    syntax:     "HISTORY <nickname> ADD <mesaj>"
+    short:      "Manuel bir geçmiş girişi ekleyin."
+    help:        |
+      Rumuzun geçmişine manuel bir giriş ekler.
+
+      Sözdizimi: HISTORY <nickname> ADD <mesaj>
+      Örnek: HISTORY BaziRumuz ADD Kullanıcı spam için raporlandı
+    success:    "\x0303✔\x03 \x02%nickname%\x02 için geçmiş girişi eklendi."
+
+  del:
+    syntax:     "HISTORY <nickname> DEL <id>"
+    short:      "ID ile bir geçmiş girişini silin."
+    help:        |
+      Belirli bir geçmiş girişini ID'sine göre siler.
+
+      Sözdizimi: HISTORY <nickname> DEL <id>
+      Örnek: HISTORY BaziRumuz DEL 42
+    success:    "\x0303✔\x03 Geçmiş girişi \x02%id%\x02 silindi."
+    not_found:  "\x0304✗\x03 Geçmiş girişi \x02%id%\x02 bulunamadı."
+    invalid_id: "\x0304✗\x03 Geçersiz giriş ID'si: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <nickname> VIEW [SAYFA|ALL]"
+    short:      "Rumuz eylem geçmişini görüntüleyin."
+    help:        |
+      Rumuzun eylem geçmişini gösterir.
+
+      Sözdizimi: HISTORY <nickname> VIEW
+              HISTORY <nickname> VIEW SAYFA
+              HISTORY <nickname> VIEW ALL
+
+      Varsayılan olarak her defasında 3 giriş gösterir.
+      İkinci sayfayı görmek için VIEW 2 kullanın.
+      Tam geçmişi görmek için VIEW ALL kullanın.
+    header:     "\x02\x0307%nickname%\x03\x02 için geçmiş (%start%-%end% / %total% gösteriliyor):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 - %operator% tarafından — %message%"
+    extra:       "  Ekstra \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 \x02%nickname%\x02 için geçmiş girişi bulunamadı."
+    page_hint:   "Daha fazla giriş için \x0303HISTORY %nickname% VIEW %next_page%\x03 kullanın."
+
+  clear:
+    syntax:     "HISTORY <nickname> CLEAR"
+    short:      "Bir rumuz için tüm geçmiş girişlerini silin."
+    help:        |
+      Belirtilen rumuz için tüm geçmiş girişlerini kaldırır.
+      Bu eylem geri alınamaz.
+
+      Sözdizimi: HISTORY <nickname> CLEAR
+      Örnek: HISTORY BaziRumuz CLEAR
+    success:    "\x0303✔\x03 \x02%nickname%\x02 için \x02%count%\x02 geçmiş girişi temizlendi."
+
+# --- Geçmiş mesaj çevirileri (geçmiş görüntülenirken kullanılır) ---
+history.message:
+  unsuspend:                  "Askı kaldırıldı"
+  password_changed_owner:     "Şifre sahibi tarafından değiştirildi"
+  password_changed_operator:  "Şifre operatör tarafından değiştirildi"
+  email_changed_owner:        "E-posta %old_email% yerine %new_email% olarak değiştirildi"
+  email_changed_operator:     "E-posta operatör tarafından %new_email% olarak değiştirildi"
+  recover:                    "Şifre e-posta tokenı ile sıfırlandı"
+
+# --- Geçmiş ekstra alan çevirileri ---
+history.extra:
+  duration:      "Süre: %value%"
+  expires_at:    "Bitiş: %value%"
+  old_email:     "Eski e-posta: %value%"
+  new_email:     "Yeni e-posta: %value%"
+  method:        "Yöntem: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax:           "NOEXPIRE <nickname> {ON|OFF}"
+  short:            "Bir rumuz için süre sonu korumasını ayarlayın veya kaldırın."
+  help:             |
+    Bir rumuzun hareketsizlik nedeniyle süresinin dolup dolmayacağını kontrol eder.
+    AÇIK olduğunda, rumuz son etkinlikten bağımsız olarak asla sona ermez.
+    KAPALI olduğunda, normal süre sonu kuralları uygulanır.
+
+    Bu komutu yalnızca 'nickserv.noexpire' iznine sahip IRCop'ler kullanabilir.
+
+    Sözdizimi: NOEXPIRE <nickname> {ON|OFF}
+    Örnekler:
+      NOEXPIRE OnemliKullanici ON
+      NOEXPIRE OnemliKullanici OFF
+  success_on:       "\x0303✔\x03 \x02%nickname%\x02 rumuzu artık süre sonuna karşı korunuyor."
+  success_off:      "\x0303✔\x03 \x02%nickname%\x02 rumuzu artık normal şekilde sona erecek."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  forbidden:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu yasaklanmış."
+  suspended:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış."
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. %reason%"
+  action_with_option: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%. %reason%"
+  action_with_value: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Seçenek: %option%=%value%. %reason%"
+  action_duration: "%operator%, %target% üzerinde %command% komutunu çalıştırıyor. Süre: %duration%. %reason%"
+  prefix_reason: "Sebep: %reason%"

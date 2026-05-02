@@ -1,0 +1,73 @@
+# E-mailinhoud — domein: mail (platte tekst, geen IRC-codes)
+# Placeholders: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — verificatietoken
+register_verification_subject: "%bot%: verifieer uw bijnaamregistratie"
+register_verification_body: |
+  Hallo,
+
+  U heeft verzocht om registratie van de bijnaam "%nickname%" op het IRC-netwerk.
+
+  Uw verificatietoken is: %token%
+
+  Om de registratie te voltooien, stuur dit commando naar %bot% (vervang <token> door de bovenstaande token):
+    /msg %bot% VERIFY %token%
+
+  De token verloopt binnen 1 uur. Als u dit niet heeft aangevraagd, negeer deze e-mail dan.
+
+# RESEND — hetzelfde als registratie, opnieuw verzenden van token
+resend_verification_subject: "%bot%: uw verificatietoken (opnieuw verzonden)"
+resend_verification_body: |
+  Hallo,
+
+  U heeft een nieuwe verificatietoken aangevraagd voor de bijnaam "%nickname%".
+
+  Uw verificatietoken is: %token%
+
+  Om de registratie te voltooien, stuur naar %bot%:
+    /msg %bot% VERIFY %token%
+
+  De token verloopt binnen 1 uur. Als u dit niet heeft aangevraagd, negeer deze e-mail dan.
+
+# SET EMAIL — bevestigingstoken verzonden naar huidig e-mailadres
+email_change_token_subject: "%bot%: bevestig uw nieuwe e-mailadres"
+email_change_token_body: |
+  Hallo,
+
+  U heeft verzocht om het e-mailadres voor uw %bot%-bijnaam te wijzigen naar: %new_email%
+
+  Uw bevestigingstoken is: %token%
+
+  Om de wijziging te bevestigen, stuur naar %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  De token verloopt binnen 1 uur. Als u deze wijziging niet heeft aangevraagd, negeer deze e-mail dan.
+
+# RECOVER — wachtwoordhersteltoken
+recovery_token_subject: "%bot%: wachtwoordherstel"
+recovery_token_body: |
+  Hallo,
+
+  Er is wachtwoordherstel aangevraagd voor de bijnaam "%nickname%".
+
+  Uw hersteltoken is: %token%
+
+  Om uw wachtwoord opnieuw in te stellen, stuur naar %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  De token verloopt binnen 1 uur. Als u dit niet heeft aangevraagd, negeer deze e-mail dan.
+
+# ChanServ SET FOUNDER — oprichter-wijzigingstoken
+founder_change_token_subject: "%bot%: oprichter-wijzigingstoken voor %channel%"
+founder_change_token_body: |
+  Hallo,
+
+  Er is een oprichterwijziging aangevraagd voor het kanaal "%channel%" naar de bijnaam "%new_nick%".
+
+  Uw bevestigingstoken is: %token%
+
+  Om de wijziging te voltooien, stuur dit commando naar %bot% (u kunt het kopiëren en plakken):
+
+    /msg %bot% %command%
+
+  De token verloopt binnen 1 uur. Als u dit niet heeft aangevraagd, negeer deze e-mail dan.

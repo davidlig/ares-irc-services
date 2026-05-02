@@ -1,0 +1,122 @@
+# MemoServ itzulpenak — Euskara
+# Eremua: memoserv
+
+unknown_command: "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Sintaxi okerra. Erabilera: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Komando hau IRC Operadoreentzat mugatuta dago."
+  not_identified: "\x0304✗\x03 Ez zaude identifikatuta. Erabili \x0303/msg %nickserv% IDENTIFY\x03."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  insufficient_access: "\x0304✗\x03 Ez duzu nahikoa sarbide \x02%operation%\x02 egiteko \x02%channel%\x02 kanalean."
+
+send:
+  syntax: "SEND {ezizena|#kanala} <mezua>"
+  short: "Bidali mezu bat ezizen edo kanal batera."
+  help: "Mezu bat bidaltzen dio ezizen erregistratu edo kanal bati. Hartzaileak mezu zerbitzua gaituta eduki behar du (ENABLE)."
+  sent_nick: "\x0303✔\x03 Mezua \x02%nickname%\x02(r)i bidali zaio."
+  sent_channel: "\x0303✔\x03 Mezua \x02%channel%\x02 kanalera bidali da."
+  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  throttled: "\x0304✗\x03 \x02%seconds%\x02 segundo itxaron behar duzu beste mezu bat bidali aurretik."
+  limit_reached: "\x0304✗\x03 \x02%target%\x02(r)entzako mezu muga iritsi da."
+  ignored: "\x0304✗\x03 Ezin diozu mezu bidali helburu honi, bere baztertze zerrendan zaude."
+  cannot_send_to_self: "\x0304✗\x03 Ezin diozu mezu bat bidali zeure buruari."
+  message_too_long: "\x0304✗\x03 Mezua luzeegia da. Gehienez \x02%max%\x02 karaktere onartzen dira."
+  service_disabled_for_target: "\x0304✗\x03 Mezu zerbitzua desgaituta dago \x02%target%\x02(r)entzat."
+
+read:
+  syntax: "READ [#kanala] <zenbakia>"
+  short: "Irakurri mezu bat zenbakiaren arabera."
+  help: "Emandako zenbakiko mezua irakurtzen du. #kanalik gabe, zure ezizenaren sarrera-ontzitik irakurtzen du. #kanalarekin, MEMOREAD maila behar du."
+  header: "\x02\x0307#%index% mezua\x03 \x02%from%\x02(e)k bidalia:\x0F"
+  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  not_found: "\x0304✗\x03 #%index% mezua ez da aurkitu."
+
+list:
+  syntax: "LIST [#kanala]"
+  short: "Zerrendatu mezuak (irakurri gabeak * gorriaz markatuta)."
+  help: "Zure mezuak edo kanaleko mezuak zerrendatzen ditu. Irakurri gabeko mezuak izartxo gorri batekin eta aurrebista batekin erakusten dira (gehienez 50 karaktere). #kanalik gabe = zure ezizenaren sarrera-ontzia; #kanalarekin MEMOREAD behar da."
+  header: "\x02\x0307%target%(r)en mezuak\x03:\x0F"
+  footer: "\x0314─────────────────────────────\x03"
+  empty: "\x0307ℹ\x03 Ez dago mezurik \x02%target%\x02(r)entzat."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+
+del:
+  syntax: "DEL [#kanala] <zenbakia>"
+  short: "Ezabatu mezu bat zenbakiaren arabera."
+  help: "Emandako zenbakiko mezua ezabatzen du. Kanalentzat MEMOCHANGE maila behar du."
+  deleted: "\x0303✔\x03 #%index% mezua ezabatu da."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  not_found: "\x0304✗\x03 #%index% mezua ez da aurkitu."
+
+ignore:
+  syntax: "IGNORE {ADD|DEL|LIST} [#kanala] [ezizena]"
+  short: "Kudeatu mezuetarako baztertze zerrenda."
+  help: "ADDk ezizen bat zure (edo kanalaren) baztertze zerrendara gehitzen du; DELek kendu; LISTek zerrenda erakusten du. Kanalentzat, ADD/DELek MEMOCHANGE behar dute."
+  add:
+    syntax: "IGNORE ADD [#kanala] <ezizena>"
+    short: "Gehitu ezizena baztertze zerrendara."
+    help: "Ezizen honen mezuak ez dira onartuko zure sarrera-ontzirako (edo kanalarenak)."
+  del:
+    syntax: "IGNORE DEL [#kanala] <ezizena>"
+    short: "Kendu ezizena baztertze zerrendatik."
+    help: "Ezizena baztertze zerrendatik kentzen du."
+  list:
+    syntax: "IGNORE LIST [#kanala]"
+    short: "Zerrendatu baztertutako ezizenak."
+    help: "Zuk (edo kanalak) mezuetarako baztertzen dituzun ezizenen zerrenda erakusten du."
+  added: "\x0303✔\x03 \x02%nickname%\x02 baztertze zerrendara gehitu da."
+  removed: "\x0303✔\x03 \x02%nickname%\x02 baztertze zerrendatik kendu da."
+  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 jada baztertze zerrendan dago."
+  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 ez dago baztertze zerrendan."
+  nick_not_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  limit_reached_nick: "\x0304✗\x03 Zure ezizenarentzat baztertze zerrendaren muga iritsi da (gehienez \x02%limit%\x02)."
+  limit_reached_channel: "\x0304✗\x03 \x02%channel%\x02 kanalarentzat baztertze zerrendaren muga iritsi da (gehienez \x02%limit%\x02)."
+  list_empty: "\x0307ℹ\x03 Baztertze zerrenda hutsik dago."
+  list_header: "\x02\x0307Baztertze zerrenda:\x03\x0F"
+  list_footer: "\x0314─────────────────────────────\x03"
+
+enable:
+  syntax: "ENABLE [#kanala]"
+  short: "Gaitu mezuen harrera."
+  help: "Mezuak jasotzea gaitzen du zure ezizenarentzat edo, kanalentzat, sortzaileak soilik gaitu dezake."
+  enabled_nick: "\x0303✔\x03 Mezu zerbitzua gaituta zure ezizenarentzat."
+  enabled_channel: "\x0303✔\x03 Mezu zerbitzua gaituta \x02%channel%\x02 kanalerako."
+  already_enabled_nick: "\x0307ℹ\x03 Mezu zerbitzua jada gaituta dago zure ezizenarentzat."
+  already_enabled_channel: "\x0307ℹ\x03 Mezu zerbitzua jada gaituta dago \x02%channel%\x02 kanalerako."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  founder_only: "\x0304✗\x03 Kanal sortzaileak soilik gaitu ditzake mezuak \x02%channel%\x02 kanalerako."
+
+disable:
+  syntax: "DISABLE [#kanala]"
+  short: "Desgaitu mezuen harrera."
+  help: "Mezuak jasotzea desgaitzen du zure ezizenarentzat edo kanalarentzat. Kanalentzat, sortzaileak soilik desgaitu dezake."
+  disabled_nick: "\x0303✔\x03 Mezu zerbitzua desgaituta zure ezizenarentzat."
+  disabled_channel: "\x0303✔\x03 Mezu zerbitzua desgaituta \x02%channel%\x02 kanalerako."
+  already_disabled_nick: "\x0307ℹ\x03 Mezu zerbitzua jada desgaituta dago zure ezizenarentzat."
+  already_disabled_channel: "\x0307ℹ\x03 Mezu zerbitzua jada desgaituta dago \x02%channel%\x02 kanalerako."
+  channel_not_registered: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  founder_only: "\x0304✗\x03 Kanal sortzaileak soilik desgaitu ditzake mezuak \x02%channel%\x02 kanalerako."
+
+help:
+  syntax: "HELP [komandoa [azpi-aukera]]"
+  short: "Zerrendatu komandoak edo erakutsi komando baten laguntza."
+  help: "Argumenturik gabe komando guztiak zerrendatzen ditu. Erabili \x0303HELP <komandoa>\x03 laguntza osorako."
+  header_title: "%bot%"
+  intro: "Mezu zerbitzua ezizen eta kanalentzat."
+  general_header: "\x02\x0314Komando erabilgarriak:\x03\x0F"
+  command_line: "  \x0307%command%\x03%description%"
+  subcommand_line: "  \x0307%command%\x03%description%"
+  options_header: "\x02\x0314Aukerak:\x03\x0F"
+  general_footer: "Erabili \x0303/msg %bot% HELP <komandoa>\x03 informazio gehiagorako."
+  set_sub_footer: "Erabili \x0303/msg %bot% HELP %command% <aukera>\x03 informazio gehiagorako."
+  syntax_label: "\x0307Sintaxia:\x03 \x02%syntax%\x02"
+  footer: "\x0314─────────────────────────────\x03"
+  unknown_command: "\x0304✗\x03 Komando ezezaguna \x02%command%\x02. Erabili \x0303/msg %bot% HELP\x03."
+
+notify:
+  nick_pending: "\x02%count%\x02 irakurri gabeko mezu d(it)uzu. Zerrendatzeko: \x0309/msg %bot% LIST\x03"
+  channel_pending: "\x02%channel%\x02 kanalak \x02%count%\x02 irakurri gabeko mezu d(it)u. Erabili \x0309/msg %bot% LIST %channel%\x03 zerrendatzeko."

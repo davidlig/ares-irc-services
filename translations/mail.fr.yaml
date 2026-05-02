@@ -1,0 +1,73 @@
+# Contenu des e-mails — domaine : mail (texte brut, sans codes IRC)
+# Variables : %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — jeton de vérification
+register_verification_subject: "%bot% : vérifiez votre enregistrement de surnom"
+register_verification_body: |
+  Bonjour,
+
+  Vous avez demandé l'enregistrement du surnom « %nickname% » sur le réseau IRC.
+
+  Votre jeton de vérification est : %token%
+
+  Pour terminer l'enregistrement, envoyez cette commande à %bot% (remplacez <jeton> par le jeton ci-dessus) :
+    /msg %bot% VERIFY %token%
+
+  Le jeton expire dans 1 heure. Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail.
+
+# RESEND — identique à register, renvoi du jeton
+resend_verification_subject: "%bot% : votre jeton de vérification (renvoi)"
+resend_verification_body: |
+  Bonjour,
+
+  Vous avez demandé un nouveau jeton de vérification pour le surnom « %nickname% ».
+
+  Votre jeton de vérification est : %token%
+
+  Pour terminer l'enregistrement, envoyez à %bot% :
+    /msg %bot% VERIFY %token%
+
+  Le jeton expire dans 1 heure. Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail.
+
+# SET EMAIL — jeton de confirmation envoyé à l'e-mail actuel
+email_change_token_subject: "%bot% : confirmez votre nouvelle adresse e-mail"
+email_change_token_body: |
+  Bonjour,
+
+  Vous avez demandé de changer l'adresse e-mail de votre surnom %bot% pour : %new_email%
+
+  Votre jeton de confirmation est : %token%
+
+  Pour confirmer le changement, envoyez à %bot% :
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  Le jeton expire dans 1 heure. Si vous n'avez pas demandé ce changement, veuillez ignorer cet e-mail.
+
+# RECOVER — jeton de récupération de mot de passe
+recovery_token_subject: "%bot% : récupération de mot de passe"
+recovery_token_body: |
+  Bonjour,
+
+  Une récupération de mot de passe a été demandée pour le surnom « %nickname% ».
+
+  Votre jeton de récupération est : %token%
+
+  Pour réinitialiser votre mot de passe, envoyez à %bot% :
+    /msg %bot% RECOVER %nickname% %token%
+
+  Le jeton expire dans 1 heure. Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail.
+
+# ChanServ SET FOUNDER — jeton de changement de fondateur
+founder_change_token_subject: "%bot% : jeton de changement de fondateur pour %channel%"
+founder_change_token_body: |
+  Bonjour,
+
+  Un changement de fondateur a été demandé pour le canal « %channel% » vers le surnom « %new_nick% ».
+
+  Votre jeton de confirmation est : %token%
+
+  Pour finaliser le changement, envoyez à %bot% cette commande (vous pouvez la copier-coller) :
+
+    /msg %bot% %command%
+
+  Le jeton expire dans 1 heure. Si vous n'avez pas fait cette demande, veuillez ignorer cet e-mail.

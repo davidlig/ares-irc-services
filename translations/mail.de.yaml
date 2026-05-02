@@ -1,0 +1,73 @@
+# E-Mail-Inhalt — Domain: mail (Klartext, keine IRC-Codes)
+# Platzhalter: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — Verifizierungs-Token
+register_verification_subject: "%bot%: Bestätigen Sie Ihre Nickname-Registrierung"
+register_verification_body: |
+  Hallo,
+
+  Sie haben die Registrierung des Nicknames „%nickname%“ im IRC-Netzwerk angefordert.
+
+  Ihr Verifizierungs-Token lautet: %token%
+
+  Um die Registrierung abzuschließen, senden Sie diesen Befehl an %bot% (ersetzen Sie <token> durch das obige Token):
+    /msg %bot% VERIFY %token%
+
+  Das Token läuft in 1 Stunde ab. Falls Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
+
+# RESEND — wie REGISTER, erneutes Senden des Tokens
+resend_verification_subject: "%bot%: Ihr Verifizierungs-Token (erneut gesendet)"
+resend_verification_body: |
+  Hallo,
+
+  Sie haben ein neues Verifizierungs-Token für den Nickname „%nickname%“ angefordert.
+
+  Ihr Verifizierungs-Token lautet: %token%
+
+  Um die Registrierung abzuschließen, senden Sie an %bot%:
+    /msg %bot% VERIFY %token%
+
+  Das Token läuft in 1 Stunde ab. Falls Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
+
+# SET EMAIL — Bestätigungs-Token an aktuelle E-Mail gesendet
+email_change_token_subject: "%bot%: Bestätigen Sie Ihre neue E-Mail-Adresse"
+email_change_token_body: |
+  Hallo,
+
+  Sie haben die Änderung der E-Mail-Adresse für Ihren %bot%-Nickname angefordert auf: %new_email%
+
+  Ihr Bestätigungs-Token lautet: %token%
+
+  Um die Änderung zu bestätigen, senden Sie an %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  Das Token läuft in 1 Stunde ab. Falls Sie diese Änderung nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
+
+# RECOVER — Passwort-Wiederherstellungs-Token
+recovery_token_subject: "%bot%: Passwort-Wiederherstellung"
+recovery_token_body: |
+  Hallo,
+
+  Eine Passwort-Wiederherstellung wurde für den Nickname „%nickname%“ angefordert.
+
+  Ihr Wiederherstellungs-Token lautet: %token%
+
+  Um Ihr Passwort zurückzusetzen, senden Sie an %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  Das Token läuft in 1 Stunde ab. Falls Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.
+
+# ChanServ SET FOUNDER — Founder-Wechsel-Token
+founder_change_token_subject: "%bot%: Founder-Wechsel-Token für %channel%"
+founder_change_token_body: |
+  Hallo,
+
+  Ein Founder-Wechsel wurde für den Channel „%channel%“ zum Nickname „%new_nick%“ angefordert.
+
+  Ihr Bestätigungs-Token lautet: %token%
+
+  Um den Wechsel abzuschließen, senden Sie diesen Befehl an %bot% (Sie können ihn kopieren und einfügen):
+
+    /msg %bot% %command%
+
+  Das Token läuft in 1 Stunde ab. Falls Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail.

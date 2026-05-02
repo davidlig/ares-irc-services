@@ -1,0 +1,122 @@
+# MemoServ-Übersetzungen — Deutsch
+# Domain: memoserv
+
+unknown_command: "\x0304✗\x03 Unbekannter Befehl \x02%command%\x02. Verwenden Sie \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Falsche Syntax. Verwendung: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Dieser Befehl ist IRC-Operatoren vorbehalten."
+  not_identified: "\x0304✗\x03 Sie sind nicht identifiziert. Verwenden Sie \x0303/msg %nickserv% IDENTIFY\x03."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+  insufficient_access: "\x0304✗\x03 Unzureichender Zugriff für \x02%operation%\x02 auf Channel \x02%channel%\x02."
+
+send:
+  syntax: "SEND {nickname|#channel} <Nachricht>"
+  short: "Eine Nachricht an einen Nickname oder Channel senden."
+  help: "Sendet eine Nachricht an einen registrierten Nickname oder Channel. Der Empfänger muss den Nachrichtendienst aktiviert haben (ENABLE)."
+  sent_nick: "\x0303✔\x03 Nachricht an \x02%nickname%\x02 gesendet."
+  sent_channel: "\x0303✔\x03 Nachricht an Channel \x02%channel%\x02 gesendet."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+  throttled: "\x0304✗\x03 Sie müssen \x02%seconds%\x02 Sekunde(n) warten, bevor Sie eine weitere Nachricht senden."
+  limit_reached: "\x0304✗\x03 Nachrichtenlimit für \x02%target%\x02 erreicht."
+  ignored: "\x0304✗\x03 Sie können keine Nachrichten an dieses Ziel senden, Sie stehen auf dessen Ignorierliste."
+  cannot_send_to_self: "\x0304✗\x03 Sie können keine Nachricht an sich selbst senden."
+  message_too_long: "\x0304✗\x03 Nachricht zu lang. Maximum sind \x02%max%\x02 Zeichen."
+  service_disabled_for_target: "\x0304✗\x03 Nachrichtendienst ist für \x02%target%\x02 deaktiviert."
+
+read:
+  syntax: "READ [#channel] <Nummer>"
+  short: "Eine Nachricht anhand der Nummer lesen."
+  help: "Liest die Nachricht mit der angegebenen Nummer. Ohne #channel aus Ihrem Nickname-Posteingang. Mit #channel ist MEMOREAD-Level erforderlich."
+  header: "\x02\x0307Nachricht #%index%\x03 von \x02%from%\x02:\x0F"
+  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+  not_found: "\x0304✗\x03 Nachricht #%index% nicht gefunden."
+
+list:
+  syntax: "LIST [#channel]"
+  short: "Nachrichten auflisten (ungelesen mit rotem * markiert)."
+  help: "Listet Ihre Nachrichten oder Channel-Nachrichten auf. Ungelesene Nachrichten werden mit einem roten Sternchen und einer Vorschau (max. 50 Zeichen) angezeigt. Ohne #channel = Ihr Nickname-Posteingang; mit #channel ist MEMOREAD erforderlich."
+  header: "\x02\x0307Nachrichten für %target%\x03:\x0F"
+  footer: "\x0314─────────────────────────────\x03"
+  empty: "\x0307ℹ\x03 Keine Nachrichten für \x02%target%\x02."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+
+del:
+  syntax: "DEL [#channel] <Nummer>"
+  short: "Eine Nachricht anhand der Nummer löschen."
+  help: "Löscht die Nachricht mit der angegebenen Nummer. Für Channels ist MEMOCHANGE-Level erforderlich."
+  deleted: "\x0303✔\x03 Nachricht #%index% gelöscht."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+  not_found: "\x0304✗\x03 Nachricht #%index% nicht gefunden."
+
+ignore:
+  syntax: "IGNORE {ADD|DEL|LIST} [#channel] [nickname]"
+  short: "Ignorierliste für Nachrichten verwalten."
+  help: "ADD fügt einen Nickname zu Ihrer (oder der Channel-) Ignorierliste hinzu; DEL entfernt; LIST zeigt die Liste. Für Channels benötigen ADD/DEL MEMOCHANGE."
+  add:
+    syntax: "IGNORE ADD [#channel] <nickname>"
+    short: "Nickname zur Ignorierliste hinzufügen."
+    help: "Nachrichten von diesem Nickname werden für Ihren Posteingang (oder den des Channels) nicht akzeptiert."
+  del:
+    syntax: "IGNORE DEL [#channel] <nickname>"
+    short: "Nickname von der Ignorierliste entfernen."
+    help: "Entfernt den Nickname von der Ignorierliste."
+  list:
+    syntax: "IGNORE LIST [#channel]"
+    short: "Ignorierte Nicknames auflisten."
+    help: "Zeigt die Liste der Nicknames, die Sie (oder der Channel) für Nachrichten ignorieren."
+  added: "\x0303✔\x03 \x02%nickname%\x02 zur Ignorierliste hinzugefügt."
+  removed: "\x0303✔\x03 \x02%nickname%\x02 von der Ignorierliste entfernt."
+  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 steht bereits auf der Ignorierliste."
+  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 steht nicht auf der Ignorierliste."
+  nick_not_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 ist nicht registriert."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+  limit_reached_nick: "\x0304✗\x03 Ignorierlisten-Limit für Ihren Nickname erreicht (max. \x02%limit%\x02)."
+  limit_reached_channel: "\x0304✗\x03 Ignorierlisten-Limit für \x02%channel%\x02 erreicht (max. \x02%limit%\x02)."
+  list_empty: "\x0307ℹ\x03 Ignorierliste ist leer."
+  list_header: "\x02\x0307Ignorierliste:\x03\x0F"
+  list_footer: "\x0314─────────────────────────────\x03"
+
+enable:
+  syntax: "ENABLE [#channel]"
+  short: "Nachrichtenempfang aktivieren."
+  help: "Aktiviert den Empfang von Nachrichten für Ihren Nickname oder, bei Channels, kann nur der Founder aktivieren."
+  enabled_nick: "\x0303✔\x03 Nachrichtendienst für Ihren Nickname aktiviert."
+  enabled_channel: "\x0303✔\x03 Nachrichtendienst für Channel \x02%channel%\x02 aktiviert."
+  already_enabled_nick: "\x0307ℹ\x03 Nachrichtendienst ist für Ihren Nickname bereits aktiviert."
+  already_enabled_channel: "\x0307ℹ\x03 Nachrichtendienst ist für \x02%channel%\x02 bereits aktiviert."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+  founder_only: "\x0304✗\x03 Nur der Channel-Founder kann Nachrichten für \x02%channel%\x02 aktivieren."
+
+disable:
+  syntax: "DISABLE [#channel]"
+  short: "Nachrichtenempfang deaktivieren."
+  help: "Deaktiviert den Empfang von Nachrichten für Ihren Nickname oder Channel. Bei Channels kann nur der Founder deaktivieren."
+  disabled_nick: "\x0303✔\x03 Nachrichtendienst für Ihren Nickname deaktiviert."
+  disabled_channel: "\x0303✔\x03 Nachrichtendienst für Channel \x02%channel%\x02 deaktiviert."
+  already_disabled_nick: "\x0307ℹ\x03 Nachrichtendienst ist für Ihren Nickname bereits deaktiviert."
+  already_disabled_channel: "\x0307ℹ\x03 Nachrichtendienst ist für \x02%channel%\x02 bereits deaktiviert."
+  channel_not_registered: "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+  founder_only: "\x0304✗\x03 Nur der Channel-Founder kann Nachrichten für \x02%channel%\x02 deaktivieren."
+
+help:
+  syntax: "HELP [Befehl [Unteroption]]"
+  short: "Befehle auflisten oder Hilfe für einen Befehl anzeigen."
+  help: "Ohne Argumente werden alle Befehle aufgelistet. Verwenden Sie \x0303HELP <Befehl>\x03 für vollständige Hilfe."
+  header_title: "%bot%"
+  intro: "Nachrichtendienst für Nicknames und Channels."
+  general_header: "\x02\x0314Verfügbare Befehle:\x03\x0F"
+  command_line: "  \x0307%command%\x03%description%"
+  subcommand_line: "  \x0307%command%\x03%description%"
+  options_header: "\x02\x0314Optionen:\x03\x0F"
+  general_footer: "Verwenden Sie \x0303/msg %bot% HELP <Befehl>\x03 für weitere Informationen."
+  set_sub_footer: "Verwenden Sie \x0303/msg %bot% HELP %command% <Option>\x03 für weitere Informationen."
+  syntax_label: "\x0307Syntax:\x03 \x02%syntax%\x02"
+  footer: "\x0314─────────────────────────────\x03"
+  unknown_command: "\x0304✗\x03 Unbekannter Befehl \x02%command%\x02. Verwenden Sie \x0303/msg %bot% HELP\x03."
+
+notify:
+  nick_pending: "Sie haben \x02%count%\x02 ungelesene Nachricht(en). Zum Auflisten: \x0309/msg %bot% LIST\x03"
+  channel_pending: "Der Channel \x02%channel%\x02 hat \x02%count%\x02 ungelesene Nachricht(en). Verwenden Sie \x0309/msg %bot% LIST %channel%\x03 zum Auflisten."

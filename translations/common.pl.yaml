@@ -1,0 +1,27 @@
+# Common translations — Polski
+# Domain: common
+#
+# Współdzielone tłumaczenia używane przez wszystkie usługi IRC.
+
+antiflood:
+  blocked: "Przekroczyłeś limit wysyłania komend. Spróbuj ponownie za %seconds% sekund."
+  debug_channel: "%nick% limit %command% osiągnięty dla %host% (pozostało %seconds%s)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Dla mojego wiernego i wiecznego przyjaciela,\x02
+
+      Chociaż rok 2023 był rokiem, w którym musieliśmy się pożegnać, czas nie wymazał ani
+      jednego szczegółu o Tobie. Wciąż pamiętam Twoją bezgraniczną energię, Twoje szlachetne
+      spojrzenie i tę ogromną i zaraźliwą radość, którą tylko Ty potrafiłeś dawać.
+
+      Wypełniłeś mój dom życiem, a moje życie bezwarunkową miłością, której nigdy nie
+      zapomnę. Choć już nie słyszę Twoich kroków biegnących, by mnie przywitać, ani nie
+      czuję Twojej głowy opierającej się o mnie w poszukiwaniu czułości, wiem, że Twój
+      figlarny duch wciąż mi towarzyszy.
+
+      Dziękuję za każdą chwilę, każde psoty i za to, że byłeś najlepszym towarzyszem,
+      jakiego mogłem sobie wymarzyć. Przestrzeń, którą pozostawiłeś u mego boku, jest teraz
+      wypełniona najszczęśliwszymi wspomnieniami. Zawsze będziesz moim drogim przyjacielem
+      i zawsze będziesz miał ogromne miejsce w moim sercu.

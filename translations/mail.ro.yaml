@@ -1,0 +1,73 @@
+# Conținut e-mail — domeniu: mail (text simplu, fără coduri IRC)
+# Substituiri: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — token de verificare
+register_verification_subject: "%bot%: verificați înregistrarea poreclei dumneavoastră"
+register_verification_body: |
+  Bună ziua,
+
+  Ați solicitat înregistrarea poreclei „%nickname%” în rețeaua IRC.
+
+  Tokenul dumneavoastră de verificare este: %token%
+
+  Pentru a finaliza înregistrarea, trimiteți această comandă către %bot% (înlocuiți <token> cu tokenul de mai sus):
+    /msg %bot% VERIFY %token%
+
+  Tokenul expiră într-o oră. Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest e-mail.
+
+# RESEND — la fel ca register, retrimiterea tokenului
+resend_verification_subject: "%bot%: tokenul dumneavoastră de verificare (retrimitere)"
+resend_verification_body: |
+  Bună ziua,
+
+  Ați solicitat un nou token de verificare pentru porecla „%nickname%”.
+
+  Tokenul dumneavoastră de verificare este: %token%
+
+  Pentru a finaliza înregistrarea, trimiteți către %bot%:
+    /msg %bot% VERIFY %token%
+
+  Tokenul expiră într-o oră. Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest e-mail.
+
+# SET EMAIL — token de confirmare trimis la e-mailul actual
+email_change_token_subject: "%bot%: confirmați noua dumneavoastră adresă de e-mail"
+email_change_token_body: |
+  Bună ziua,
+
+  Ați solicitat schimbarea adresei de e-mail pentru porecla dumneavoastră %bot% la: %new_email%
+
+  Tokenul dumneavoastră de confirmare este: %token%
+
+  Pentru a confirma schimbarea, trimiteți către %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  Tokenul expiră într-o oră. Dacă nu ați solicitat această schimbare, vă rugăm să ignorați acest e-mail.
+
+# RECOVER — token de recuperare a parolei
+recovery_token_subject: "%bot%: recuperare parolă"
+recovery_token_body: |
+  Bună ziua,
+
+  S-a solicitat o recuperare a parolei pentru porecla „%nickname%”.
+
+  Tokenul dumneavoastră de recuperare este: %token%
+
+  Pentru a vă reseta parola, trimiteți către %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  Tokenul expiră într-o oră. Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest e-mail.
+
+# ChanServ SET FOUNDER — token de schimbare a fondatorului
+founder_change_token_subject: "%bot%: token de schimbare a fondatorului pentru %channel%"
+founder_change_token_body: |
+  Bună ziua,
+
+  S-a solicitat o schimbare a fondatorului pentru canalul „%channel%” către porecla „%new_nick%”.
+
+  Tokenul dumneavoastră de confirmare este: %token%
+
+  Pentru a finaliza schimbarea, trimiteți către %bot% această comandă (o puteți copia și lipi):
+
+    /msg %bot% %command%
+
+  Tokenul expiră într-o oră. Dacă nu ați solicitat acest lucru, vă rugăm să ignorați acest e-mail.

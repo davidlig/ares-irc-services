@@ -1,0 +1,73 @@
+# Email content — domain: mail (plain text, no IRC codes)
+# Placeholders: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — verification token
+register_verification_subject: "%bot%: verifiqueu el registre del vostre sobrenom"
+register_verification_body: |
+  Hola,
+
+  Heu sol·licitat registrar el sobrenom "%nickname%" a la xarxa IRC.
+
+  El vostre token de verificació és: %token%
+
+  Per completar el registre, envieu aquesta ordre a %bot% (substituïu <token> pel token anterior):
+    /msg %bot% VERIFY %token%
+
+  El token expira en 1 hora. Si no heu sol·licitat això, ignoreu aquest correu.
+
+# RESEND — same as register, resend of token
+resend_verification_subject: "%bot%: el vostre token de verificació (reenviament)"
+resend_verification_body: |
+  Hola,
+
+  Heu sol·licitat un nou token de verificació per al sobrenom "%nickname%".
+
+  El vostre token de verificació és: %token%
+
+  Per completar el registre, envieu a %bot%:
+    /msg %bot% VERIFY %token%
+
+  El token expira en 1 hora. Si no heu sol·licitat això, ignoreu aquest correu.
+
+# SET EMAIL — confirmation token sent to current email
+email_change_token_subject: "%bot%: confirmeu la vostra nova adreça de correu electrònic"
+email_change_token_body: |
+  Hola,
+
+  Heu sol·licitat canviar l'adreça de correu electrònic del vostre sobrenom de %bot% a: %new_email%
+
+  El vostre token de confirmació és: %token%
+
+  Per confirmar el canvi, envieu a %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  El token expira en 1 hora. Si no heu sol·licitat aquest canvi, ignoreu aquest correu.
+
+# RECOVER — password recovery token
+recovery_token_subject: "%bot%: recuperació de contrasenya"
+recovery_token_body: |
+  Hola,
+
+  S'ha sol·licitat una recuperació de contrasenya per al sobrenom "%nickname%".
+
+  El vostre token de recuperació és: %token%
+
+  Per restablir la vostra contrasenya, envieu a %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  El token expira en 1 hora. Si no heu sol·licitat això, ignoreu aquest correu.
+
+# ChanServ SET FOUNDER — founder change token
+founder_change_token_subject: "%bot%: token de canvi de fundador per a %channel%"
+founder_change_token_body: |
+  Hola,
+
+  S'ha sol·licitat un canvi de fundador per al canal "%channel%" al sobrenom "%new_nick%".
+
+  El vostre token de confirmació és: %token%
+
+  Per completar el canvi, envieu a %bot% aquesta ordre (podeu copiar i enganxar-la):
+
+    /msg %bot% %command%
+
+  El token expira en 1 hora. Si no heu sol·licitat això, ignoreu aquest correu.

@@ -1,0 +1,520 @@
+# ChanServ translations — Galician
+# Domain: chanserv
+
+unknown_command: "\x0304✗\x03 Comando descoñecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:         "\x0304✗\x03 Sintaxe incorrecta. Uso: \x02%syntax%\x02"
+  oper_only:      "\x0304✗\x03 Este comando está restrinxido a operadores de IRC."
+  not_identified: "\x0304✗\x03 Non está identificado. Use \x0303/msg %nickserv% IDENTIFY\x03."
+  invalid_channel: "\x0304✗\x03 Nome de canle non válido. Use \x02#canle\x02."
+  channel_not_registered: "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
+  generic:        "\x0304✗\x03 Produciuse un erro. Tenteo de novo."
+  nick_not_registered: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
+  insufficient_access: "\x0304✗\x03 Acceso insuficiente para \x02%operation%\x02 na canle \x02%channel%\x02."
+  mail_failed: "\x0304✗\x03 Non se puido enviar o correo electrónico. Tenteo de novo máis tarde."
+
+register:
+  syntax:           "REGISTER <#canle> <descrición>"
+  short:            "Rexistrar unha canle."
+  help:             "Rexistra e asocia unha canle ao seu alcume. Debe estar identificado con %nickserv%."
+  success:          "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."
+  channel_not_on_network: "\x0304✗\x03 A canle \x02%channel%\x02 non existe na rede."
+  limit_exceeded: "\x0304✗\x03 Alcanzou o máximo de %max% canles rexistradas."
+  throttled: "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de rexistrar outra canle."
+
+info:
+  syntax:           "INFO <#canle>"
+  short:            "Mostrar información da canle."
+  help:             "Mostra fundador, data de rexistro, sucesor, URL, correo electrónico, descrición, último uso, tema e opcións (TOPICLOCK, MLOCK, SECURE)."
+  header:          "\x02Información da canle \x0307%channel%\x03:\x02"
+  footer:          "\x0314─────────────────────────────\x03"
+  founder:         "  \x0314Fundador\x03       : \x02%nickname%\x02"
+  registered:      "  \x0314Rexistrada\x03    : %date%"
+  successor:       "  \x0314Sucesor\x03      : \x02%nickname%\x02"
+  description:     "  \x0314Descrición\x03   : %desc%"
+  url:             "  \x0314URL\x03           : %url%"
+  email:           "  \x0314Correo-e\x03      : %email%"
+  last_used:       "  \x0314Último uso\x03    : %date%"
+  topic:           "  \x0314Último tema\x03   : %topic%"
+  topic_set_by:    "  \x0314Tema posto por\x03 : %nickname%"
+  options:         "  \x0314Opcións\x03       : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  no_expire:       "  \x0314Nunca caduca\x03  : Si"
+  mlock_modes:     "  \x0314Bloqueo modos\x03 : %modes%"
+  suspended_status: "  \x0314Estado\x03        : \x0304Suspendida\x03"
+  suspended_reason: "  \x0314Motivo\x03        : %reason%"
+  suspended_until:  "  \x0314Finaliza o\x03    : %date%"
+  suspended_permanent: "  \x0314Finaliza o\x03    : Permanente"
+  forbidden_status: "  \x0314Estado\x03       : \x0304Prohibida\x03"
+  forbidden_reason: "  \x0314Motivo\x03       : %reason%"
+
+help:
+  syntax:           "HELP [comando [subopción]]"
+  short:            "Listar comandos ou mostrar axuda dun comando."
+  help:             "Sen argumentos lista todos os comandos. Use \x0303HELP <comando>\x03 para axuda completa, ou \x0303HELP <comando> <opción>\x03 para subopcións de SET."
+  header_title:     "%bot%"
+  intro:            "Servizo de rexistro e xestión de canles para a rede de IRC."
+  general_header:   "\x02\x0314Comandos dispoñibles:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Opcións:\x03\x0F"
+  general_footer:   "Use \x0303/msg %bot% HELP <comando>\x03 para máis información."
+  set_sub_footer:   "Use \x0303/msg %bot% HELP %command% <opción>\x03 para máis información."
+  syntax_label:     "\x0307Sintaxe:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "NOTA: As canles \x0304\x1Fsen uso\x0F durante máis de %days% días elimínanse automaticamente."
+  unknown_command:  "\x0304✗\x03 Comando descoñecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+  ircop_header:     "\x02\x0314Comandos dispoñibles para IRCOPS:\x03\x0F"
+  suboptions:       "Subopcións:"
+
+op:
+  syntax:           "OP <#canle> <alcume>"
+  short:            "Conceder o modo de operador de canle."
+  help:             "Concede o modo de operador de canle."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 foille concedido o estado de operador de canle."
+  user_not_on_channel: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está na rede."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 concede \x0304%mode%\x03 a \x0314%to%\x03"
+
+deop:
+  syntax:           "DEOP <#canle> <alcume>"
+  short:            "Retirar o modo de operador de canle."
+  help:             "Retira o modo de operador de canle."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 foille retirado o modo de operador."
+
+secure:
+  requires_access: "\x0304✗\x03 Con SECURE activado, \x02%nickname%\x02 debe estar na lista de acceso para recibir un rango."
+  requires_min_level: "\x0304✗\x03 Con SECURE activado, \x02%nickname%\x02 debe ter polo menos nivel \x02%level%\x02 para recibir \x02%mode%\x02."
+
+set:
+  syntax:           "SET <#canle> <opción> [valor]"
+  short:            "Cambiar as opcións da canle."
+  help:             "Cambiar as opcións da canle. Use \x0303HELP SET <opción>\x03 para cada unha: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  unknown_option:    "\x0304✗\x03 Opción descoñecida \x02%option%\x02. Use unha de: %options%."
+  founder:
+    syntax:         "SET <#canle> FOUNDER <alcume> [token]"
+    short:          "Transferir a canle a outro alcume rexistrado."
+    help:           "Sen token: envía un token ao correo electrónico do fundador actual. Con token: completa a transferencia."
+    token_sent:     "\x0303✔\x03 Enviouse un token de cambio de fundador a %email_hint%."
+    invalid_token:  "\x0304✗\x03 Token non válido ou caducado."
+    updated:        "\x0303✔\x03 O fundador foi cambiado a \x02%nickname%\x02."
+    no_email:       "\x0304✗\x03 O fundador actual non ten correo electrónico configurado. Non se pode enviar o token."
+    throttled:      "\x0304✗\x03 Agarde antes de solicitar outro token."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 debe estar rexistrado e activado."
+    suspended:         "\x0304✗\x03 \x02%nickname%\x02 está suspendido e non pode ser establecido como fundador."
+    cannot_be_self:   "\x0304✗\x03 O novo fundador non pode ser o fundador actual."
+    cannot_be_successor: "\x0304✗\x03 O novo fundador non pode ser o sucesor da canle."
+    limit_exceeded: "\x0304✗\x03 \x02%nickname%\x02 alcanzou o máximo de %max% canles rexistradas."
+    notice_channel:   "\x02%from%\x02 asigna \x02%nickname%\x02 como fundador da canle."
+  successor:
+    syntax:         "SET <#canle> SUCCESSOR [alcume]"
+    short:          "Establecer o sucesor da canle."
+    help:           "Establece un alcume como sucesor da canle. Omita o alcume para limpar. O alcume debe estar rexistrado e activado."
+    cleared:        "\x0303✔\x03 O sucesor foi limpo."
+    updated:        "\x0303✔\x03 O sucesor foi establecido como \x02%nickname%\x02."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 debe estar rexistrado e activado."
+    suspended:      "\x0304✗\x03 \x02%nickname%\x02 está suspendido e non pode ser establecido como sucesor."
+    cannot_be_founder: "\x0304✗\x03 O fundador non pode ser establecido como sucesor."
+    notice_channel:   "\x02%from%\x02 asigna \x02%nickname%\x02 como sucesor da canle."
+    notice_channel_cleared: "\x02%from%\x02 limpou o sucesor da canle."
+  desc:
+    syntax:         "SET <#canle> DESC <descrición>"
+    short:          "Cambiar a descrición da canle."
+    help:           "Cambia a descrición da canle (obrigatoria)."
+    updated:        "\x0303✔\x03 Descrición actualizada."
+  url:
+    syntax:         "SET <#canle> URL [url]"
+    short:          "Establecer o URL da canle."
+    help:           "Cambia o sitio web da canle (URL). Omita url para limpar."
+    updated:        "\x0303✔\x03 URL actualizado."
+    cleared:        "\x0303✔\x03 URL limpado."
+  email:
+    syntax:         "SET <#canle> EMAIL <correo-e|none>"
+    short:          "Establecer o correo electrónico da canle."
+    help:           "Cambia o enderezo de correo electrónico da canle. Use \x02none\x02 para limpar."
+    updated:        "\x0303✔\x03 Correo electrónico actualizado."
+    cleared:        "\x0303✔\x03 Correo electrónico limpado."
+  entrymsg:
+    syntax:         "SET <#canle> ENTRYMSG <mensaxe|none>"
+    short:          "Establecer a mensaxe de entrada da canle."
+    help:           "Establece a mensaxe que se mostra cando os usuarios entran na canle (NOTICE). Use \x02none\x02 para limpar."
+    updated:        "\x0303✔\x03 Mensaxe de entrada actualizada."
+    cleared:        "\x0303✔\x03 Mensaxe de entrada limpada."
+    too_long:       "\x0304✗\x03 A mensaxe de entrada non pode exceder %max% caracteres."
+  topiclock:
+    syntax:         "SET <#canle> TOPICLOCK {ON|OFF}"
+    short:          "Bloquear o tema da canle."
+    help:           "Impide cambiar o tema da canle. Cando está ON, o tema actual gárdase e bloquéase."
+    on:             "\x0303✔\x03 O bloqueo de tema está agora ON."
+    off:            "\x0303✔\x03 O bloqueo de tema está agora OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa TOPICLOCK."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva TOPICLOCK."
+  mlock:
+    syntax:         "SET <#canle> MLOCK {ON|OFF}"
+    short:          "Bloquear os modos da canle."
+    help:           "Bloquea os modos actuais da canle (p. ex. +nt). Cando está ON, os modos non se poden cambiar."
+    no_modes:       "sen modos"
+    on:             "\x0303✔\x03 MLOCK está agora ON (%modes%)."
+    off:            "\x0303✔\x03 MLOCK está agora OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa MLOCK (%modes%)."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva MLOCK."
+  secure:
+    syntax:         "SET <#canle> SECURE {ON|OFF}"
+    short:          "Esixir lista de acceso para rangos de canle."
+    help:           "Cando está ON, só os usuarios na lista de acceso poden recibir rangos de canle (OP, VOICE, etc.)."
+    on:             "\x0303✔\x03 SECURE está agora ON."
+    off:            "\x0303✔\x03 SECURE está agora OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa o modo SECURE."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva o modo SECURE."
+
+access:
+  syntax:           "ACCESS <#canle> {ADD|DEL|LIST} [alcume] [nivel]"
+  short:            "Xestionar a lista de acceso."
+  help:             "LIST: mostra a lista de acceso (alcume e nivel por entrada). ADD: engade ou actualiza o nivel dun alcume (1-499). DEL: elimina un alcume da lista. Use \x0303HELP ACCESS <opción>\x03 para cada unha."
+  unknown_sub:      "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use LIST, ADD ou DEL."
+  level_range:      "\x0304✗\x03 O nivel de acceso debe estar entre %min% e %max%."
+  cannot_manage_level: "\x0304✗\x03 Só pode xestionar alcumes con nivel estritamente inferior ao seu propio."
+  founder_not_in_list: "\x0304✗\x03 O fundador non está na lista de acceso."
+  max_entries:      "\x0304✗\x03 Máximo %max% entradas de acceso por canle."
+  list:
+    syntax:         "ACCESS <#canle> LIST"
+    short:          "Listar a lista de acceso (require nivel ACCESSLIST)."
+    help:           "Mostra o alcume e nivel de cada entrada."
+    header:         "\x0303Lista de acceso de \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 A canle \x02%channel%\x02 non ten entradas de acceso."
+    entry:          "  #%index%: %nickname% (nivel %level%)"
+  add:
+    syntax:         "ACCESS <#canle> ADD <alcume> <nivel>"
+    short:          "Engadir ou actualizar nivel de acceso (require nivel ACCESSCHANGE)."
+    help:           "Nivel 1-499. Só pode establecer niveis inferiores ao seu propio."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 establecido no nivel %level%."
+    notice_channel: "\x0303✔\x03 \x0302%from%\x03 establece \x0314%to%\x03 no nivel \x0304%level%\x03"
+  del:
+    syntax:         "ACCESS <#canle> DEL <alcume>"
+    short:          "Eliminar da lista de acceso (require nivel ACCESSCHANGE)."
+    help:           "Só pode eliminar alcumes con nivel inferior ao seu propio."
+    not_in_list:    "\x0304✗\x03 \x02%nickname%\x02 non está na lista de acceso."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 eliminado da lista de acceso."
+    notice_channel: "\x0304✗\x03 \x0302%from%\x03 elimina \x0314%to%\x03 da lista de acceso"
+
+delaccess:
+  syntax:           "DELACCESS <#canle>"
+  short:            "Eliminar o seu propio acceso dunha canle."
+  help:             "Elimina a súa entrada de acceso da lista de acceso da canle. Debe estar identificado. O fundador non pode usar este comando."
+  done:             "\x0303✔\x03 O seu acceso foi eliminado de \x02%channel%\x02."
+  not_in_list:      "\x0304✗\x03 Non ten acceso en \x02%channel%\x02."
+  founder_not_in_access: "\x0304✗\x03 Vostede é o fundador de \x02%channel%\x02 e non está na lista de acceso."
+  notice_channel: "\x0304✗\x03 \x0302%nickname%\x03 elimina o seu acceso da canle"
+
+levels:
+  syntax:           "LEVELS <#canle> {LIST|SET|RESET} [nivel] [valor]"
+  short:            "Configurar os niveis da canle."
+  help:             "LIST: mostra os requisitos de nivel (OPDEOP, VOICEDEVOICE, etc.). SET: establece o nivel mínimo para unha acción (-1 a 499). RESET: restaura os valores predeterminados. Só fundador para SET/RESET."
+  unknown_sub:      "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use LIST, SET ou RESET."
+  unknown_key:      "\x0304✗\x03 Clave de nivel descoñecida \x02%key%\x02 ou non soportada por este IRCd."
+  value_range:      "\x0304✗\x03 O valor de nivel debe estar entre %min% e %max%."
+  list:
+    syntax:         "LEVELS <#canle> LIST"
+    short:          "Listar os requisitos de nivel."
+    help:           "Mostra cada clave de nivel e o seu valor (predeterminado se non está definido)."
+    header:         "\x0303Niveis\x03"
+  set:
+    syntax:         "LEVELS <#canle> SET <nivel> <valor>"
+    short:          "Establecer un requisito de nivel."
+    help:           "Valor -1 a 499. Só fundador."
+    done:           "\x0303✔\x03 \x02%key%\x02 establecido en %value%."
+  reset:
+    syntax:         "LEVELS <#canle> RESET"
+    short:          "Restablecer todos os niveis aos valores predeterminados."
+    help:           "Elimina todas as modificacións. Só fundador."
+    done:           "\x0303✔\x03 Todos os niveis restablecidos aos valores predeterminados."
+
+voice:
+  syntax:           "VOICE <#canle> <alcume>"
+  short:            "Conceder o modo voice na canle."
+  help:             "Concede o modo voice na canle."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 foille concedido voice."
+  user_not_on_channel: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está na rede."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 concede \x0304%mode%\x03 a \x0314%to%\x03"
+
+devoice:
+  syntax:           "DEVOICE <#canle> <alcume>"
+  short:            "Retirar o modo voice na canle."
+  help:             "Retira o modo voice na canle."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 foille retirado voice."
+
+invite:
+  syntax:           "INVITE <#canle>"
+  short:            "Convidarse a si mesmo á canle."
+  help:             "Convídase a si mesmo á canle."
+  done:             "\x0303✔\x03 Foi convidado a \x02%channel%\x02."
+  notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 convídase a si mesmo á canle."
+
+admin:
+  syntax:           "ADMIN <#canle> <alcume>"
+  short:            "Conceder o modo de administrador de canle."
+  help:             "Concede o modo de administrador de canle. Só se o IRCd soporta +a."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 foille concedido administrador de canle."
+  user_not_on_channel: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está na rede."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 concede \x0304%mode%\x03 a \x0314%to%\x03"
+  not_supported:    "\x0304✗\x03 Esta rede non soporta o modo de administrador de canle (+a)."
+
+deadmin:
+  syntax:           "DEADMIN <#canle> <alcume>"
+  short:            "Retirar o modo de administrador de canle."
+  help:             "Retira o modo de administrador de canle."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 foille retirado administrador."
+
+halfop:
+  syntax:           "HALFOP <#canle> <alcume>"
+  short:            "Conceder o modo de semioperador na canle."
+  help:             "Concede o modo de semioperador na canle. Só se o IRCd soporta +h."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 foille concedido halfop."
+  user_not_on_channel: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está na rede."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 concede \x0304%mode%\x03 a \x0314%to%\x03"
+  not_supported:    "\x0304✗\x03 Esta rede non soporta o modo halfop (+h)."
+
+dehalfop:
+  syntax:           "DEHALFOP <#canle> <alcume>"
+  short:            "Retirar o modo de semioperador na canle."
+  help:             "Retira o modo de semioperador na canle."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 foille retirado halfop."
+
+akick:
+  syntax:           "AKICK <#canle> {ADD|DEL|LIST|ENFORCE} [máscara] [caducidade] [motivo]"
+  short:            "Xestionar a lista de expulsión automática."
+  help:             "ADD <máscara> [caducidade] [motivo]: engadir entrada. DEL <máscara|num>: eliminar. LIST: listar entradas. ENFORCE <máscara>: expulsar usuarios coincidentes."
+  unknown_sub:      "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use ADD, DEL, LIST ou ENFORCE."
+  invalid_mask:     "\x0304✗\x03 Formato de máscara non válido. Use \x02alcume!ident@host\x02 con comodíns (*)."
+  dangerous_mask:   "\x0304✗\x03 A máscara \x02%mask%\x02 é demasiado ampla. Debe conter polo menos 4 caracteres alfanuméricos."
+  protected_user:   "\x0304✗\x03 O alcume \x02%nickname%\x02 ten acceso nesta canle."
+  max_entries:      "\x0304✗\x03 Máximo %max% entradas AKICK por canle."
+  add:
+    syntax:         "AKICK <#canle> ADD <máscara> [caducidade] [motivo]"
+    short:          "Engadir entrada AKICK."
+    help:           "Caducidade obrigatoria se se especifica motivo. Formatos: 0 (permanente), 1d, 7d, 30d, 12h, 60m. Exemplos: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'."
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 engadida."
+    already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 xa existe."
+    notice_channel: "\x02%from%\x02 engade AKICK: \x02%mask%\x02 (%reason%)"
+  del:
+    syntax:         "AKICK <#canle> DEL <máscara|número>"
+    short:          "Eliminar entrada AKICK."
+    help:           "Elimina pola máscara exacta ou polo número de entrada de LIST."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 non atopada."
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 eliminada."
+    notice_channel: "\x02%from%\x02 elimina AKICK: \x02%mask%\x02"
+  list:
+    syntax:         "AKICK <#canle> LIST"
+    short:          "Listar entradas AKICK."
+    help:           "Mostra máscara, motivo, caducidade e quen a engadiu."
+    header:         "\x0303Lista AKICK de \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 A canle \x02%channel%\x02 non ten entradas AKICK."
+    entry:          "  #%index% %mask% %reason% (por %nickname%, caduca: %expiration%)"
+    no_reason:      "Sen motivo"
+    never_expires:  "nunca"
+    unknown_creator: "descoñecido"
+
+drop:
+  syntax:           "DROP <#canle>"
+  short:            "Eliminar unha canle rexistrada."
+  help:             "Elimina unha canle rexistrada da base de datos."
+  success:          "\x0303✔\x03 A canle \x02%channel%\x02 foi eliminada."
+  not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
+
+suspend:
+  syntax:           "SUSPEND <#canle> <duración> <motivo>"
+  short:            "Suspender unha canle."
+  help:             "Desactiva temporalmente unha canle rexistrada. Formatos de duración: 0 = permanente, 1d, 12h, 60m.\nMentres está suspendida, os modos, acceso e forzado da canle están desactivados.\nEste comando require o permiso IRCop: chanserv.suspend"
+  success:          "\x0303✔\x03 A canle \x02%channel%\x02 foi suspendida ata \x02%duration%\x02."
+  not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
+  already_suspended: "\x0304✗\x03 A canle \x02%channel%\x02 xa está suspendida."
+  invalid_duration:  "\x0304✗\x03 Duración non válida. Use: 0 (permanente), 1d, 12h ou 60m."
+  permanent:         "Permanente"
+  channel_suspended: "\x0304✗\x03 A canle \x02%channel%\x02 está suspendida e non se pode usar."
+  channel_forbidden: "\x0304✗\x03 A canle \x02%channel%\x02 está prohibida e non se pode usar."
+  notice_channel:    "\x0304⚠\x03 A canle foi suspendida. Motivo: %reason%"
+
+unsuspend:
+  syntax:           "UNSUSPEND <#canle>"
+  short:            "Levantar unha suspensión de canle."
+  help:             "Reactiva unha canle suspendida, restaurando os seus modos e forzado.\nEste comando require o permiso IRCop: chanserv.suspend"
+  success:          "\x0303✔\x03 A canle \x02%channel%\x02 xa non está suspendida."
+  not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
+  not_suspended:    "\x0304✗\x03 A canle \x02%channel%\x02 non está suspendida."
+  reason_expired:   "suspensión caducada"
+
+# NOJOIN documentation for LEVELS:
+# NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
+# Default: -1 (disabled). Set to 0 to only allow registered users, 50 for level 50+, etc.
+# NOJOIN: Nivel de acceso mínimo requirido para entrar na canle. Os usuarios con nivel < NOJOIN son expulsados.
+# Predeterminado: -1 (desactivado). Estableza 0 para só usuarios rexistrados, 50 para nivel 50+, etc.
+
+nojoin:
+  reason: "Restrición de nivel NOJOIN"
+
+# --- DEBUG CHANNEL -----------------------------------------------------------
+debug_channel:
+  kick_reason: "Non está autorizado para entrar nesta canle."
+
+permissions:
+  chanserv.drop: "Eliminar unha canle rexistrada (DROP)"
+  chanserv.suspend: "Suspender ou reactivar unha canle (SUSPEND/UNSUSPEND)"
+  chanserv.forbid: "Prohibir ou desprohibir unha canle (FORBID/UNFORBID)"
+  chanserv.noexpire: "Establecer ou eliminar a protección contra caducidade dunha canle (NOEXPIRE)"
+  chanserv.history: "Ver e xestionar o historial de accións dunha canle (HISTORY)"
+  chanserv.clearaccess: "Limpar toda a lista de acceso dunha canle (CLEARACCESS)"
+  chanserv.clearusers: "Expulsar todos os usuarios dunha canle (CLEARUSERS)"
+
+noexpire:
+  syntax:           "NOEXPIRE <#canle> {ON|OFF}"
+  short:            "Establecer ou eliminar a protección contra caducidade dunha canle."
+  help:             |
+    Controla se unha canle caducará por inactividade.
+    Cando está ON, a canle nunca caduca sen importar a última actividade.
+    Cando está OFF, aplícanse as regras normais de caducidade.
+
+    Só os IRCops co permiso 'chanserv.noexpire' poden usar este comando.
+
+    Sintaxe: NOEXPIRE <#canle> {ON|OFF}
+    Exemplos:
+      NOEXPIRE #Importante ON
+      NOEXPIRE #Importante OFF
+  success_on:       "\x0303✔\x03 A canle \x02%channel%\x02 está agora protexida contra a caducidade."
+  success_off:      "\x0303✔\x03 A canle \x02%channel%\x02 caducará normalmente agora."
+  not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
+  forbidden:         "\x0304✗\x03 A canle \x02%channel%\x02 está prohibida."
+  suspended:         "\x0304✗\x03 A canle \x02%channel%\x02 está suspendida."
+
+forbid:
+  syntax:           "FORBID <#canle> <motivo>"
+  short:             "Prohibir que unha canle sexa usada."
+  help:              "Impide que unha canle poida ser usada por ninguén.\nSe a canle está actualmente rexistrada, será eliminada primeiro.\nTodos os usuarios na canle serán expulsados e a canle bloquearase.\nEste comando require o permiso IRCop: chanserv.forbid"
+  reason_required:  "\x0304✗\x03 Debe especificar un motivo."
+  success:          "\x0303✔\x03 A canle \x02%channel%\x02 foi prohibida."
+  updated:          "\x0303✔\x03 O motivo de prohibición da canle \x02%channel%\x02 foi actualizado."
+  channel_forbidden: "\x0304✗\x03 A canle \x02%channel%\x02 está prohibida e non se pode usar."
+
+unforbid:
+  syntax:           "UNFORBID <#canle>"
+  short:             "Eliminar unha prohibición de canle."
+  help:              "Elimina unha prohibición de canle, permitindo que a canle poida ser rexistrada de novo.\nEste comando require o permiso IRCop: chanserv.forbid"
+  success:          "\x0303✔\x03 A canle \x02%channel%\x02 xa non está prohibida."
+  not_forbidden:    "\x0304✗\x03 A canle \x02%channel%\x02 non está prohibida."
+
+debug:
+  action_message: "%operator% executa o comando %command% sobre %target%. %reason%"
+  action_with_option: "%operator% executa o comando %command% sobre %target%. Opción: %option%. %reason%"
+  action_with_value: "%operator% executa o comando %command% sobre %target%. Opción: %option%=%value%. %reason%"
+  founder_action: "Acción de nivel-fundador"
+  prefix_reason:  "Motivo: %reason%"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <#canle> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Ver ou xestionar o historial de accións da canle."
+  help:             |
+    Xestiona o historial de accións dunha canle.
+    Só os IRCops co permiso 'chanserv.history' poden usar este comando.
+
+    Subcomandos:
+      ADD   — Engadir unha entrada manual ao historial da canle.
+      DEL   — Eliminar unha entrada específica polo ID.
+      VIEW  — Ver entradas do historial (paxinado, 3 por páxina).
+      CLEAR — Eliminar todas as entradas do historial da canle.
+
+    Sintaxe: HISTORY <#canle> {ADD|DEL|VIEW|CLEAR} [argumentos]
+    Exemplos:
+      HISTORY #canle VIEW
+      HISTORY #canle VIEW 2
+      HISTORY #canle VIEW ALL
+      HISTORY #canle ADD Sospeita de intento de apropiación
+      HISTORY #canle DEL 42
+      HISTORY #canle CLEAR
+  not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
+  unknown_operator: "(descoñecido)"
+
+  add:
+    syntax:     "HISTORY <#canle> ADD <mensaxe>"
+    short:      "Engadir unha entrada manual ao historial."
+    help:        |
+      Engade unha entrada manual ao historial da canle.
+    success:    "\x0303✔\x03 Entrada do historial engadida para \x02%channel%\x02."
+
+  del:
+    syntax:     "HISTORY <#canle> DEL <id>"
+    short:      "Eliminar unha entrada do historial polo ID."
+    success:    "\x0303✔\x03 Entrada do historial \x02%id%\x02 eliminada."
+    not_found:  "\x0304✗\x03 Entrada do historial \x02%id%\x02 non atopada."
+    invalid_id: "\x0304✗\x03 ID de entrada non válido: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <#canle> VIEW [PÁXINA|ALL]"
+    short:      "Ver o historial de accións da canle."
+    header:     "\x02Historial de \x0307%channel%\x03\x02 (mostrando %start%-%end% de %total%):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 por %operator% — %message%"
+    extra:       "  Extra \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 Non se atoparon entradas do historial para \x02%channel%\x02."
+    page_hint:   "Use \x0303HISTORY %channel% VIEW %next_page%\x03 para máis entradas."
+
+  clear:
+    syntax:     "HISTORY <#canle> CLEAR"
+    short:      "Eliminar todas as entradas do historial dunha canle."
+    success:    "\x0303✔\x03 Limpadas \x02%count%\x02 entradas do historial de \x02%channel%\x02."
+
+# --- History message translations ---
+history.message:
+  unsuspend:                  "Suspensión levantada"
+  founder_changed:            "Fundador cambiado de %old_founder% a %new_founder%"
+  successor_changed:          "Sucesor cambiado de %old_successor% a %new_successor%"
+  successor_cleared:          "Sucesor limpado"
+  access_add:                 "Acceso engadido para %target_nickname% (nivel %level%)"
+  access_del:                 "Acceso eliminado para %target_nickname%"
+  akick_add:                  "AKICK engadida: %mask%"
+  akick_del:                  "AKICK eliminada: %mask%"
+
+# --- History extra field translations ---
+history.extra:
+  duration:      "Duración: %value%"
+  expires_at:    "Caduca: %value%"
+  old_founder:     "Antigo fundador: %value%"
+  new_founder:     "Novo fundador: %value%"
+  old_successor:   "Antigo sucesor: %value%"
+  new_successor:   "Novo sucesor: %value%"
+  target_nickname: "Destino: %value%"
+  level:           "Nivel: %value%"
+  mask:            "Máscara: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- CLEARACCESS (IRCop) ---------------------------------------------------------
+clearaccess:
+  syntax:           "CLEARACCESS <#canle>"
+  short:            "Limpar toda a lista de acceso dunha canle."
+  help:             |
+    Elimina todas as entradas de acceso da lista de acceso dunha canle.
+    Esta acción é irreversible e non se pode desfacer.
+    Só os IRCops co permiso 'chanserv.clearaccess' poden usar este comando.
+
+    Sintaxe: CLEARACCESS <#canle>
+    Exemplos:
+      CLEARACCESS #canle
+  success:          "\x0303✔\x03 Limpadas \x02%count%\x02 entradas de acceso de \x02%channel%\x02."
+  empty:            "\x0307ℹ\x03 A canle \x02%channel%\x02 non ten entradas de acceso."
+
+clearusers:
+  syntax:           "CLEARUSERS <#canle> [motivo]"
+  short:            "Expulsar todos os usuarios dunha canle."
+  help:             |
+    Expulsa todos os usuarios da canle especificada.
+    Este é un comando exclusivo para IRCops usado na xestión de canles.
+    Pode proporcionarse un motivo opcional; se se omite, úsase un motivo predeterminado.
+
+    Só os IRCops co permiso 'chanserv.clearusers' poden usar este comando.
+
+    Sintaxe: CLEARUSERS <#canle> [motivo]
+    Exemplos:
+      CLEARUSERS #canle
+      CLEARUSERS #canle flooding
+  not_on_network:   "\x0304✗\x03 A canle \x02%channel%\x02 non está actualmente na rede."
+  empty:            "\x0307ℹ\x03 A canle \x02%channel%\x02 non ten usuarios que expulsar."
+  success:          "\x0303✔\x03 Expulsado(s) \x02%count%\x02 usuario(s) de \x02%channel%\x02."
+  default_reason:   "Comando CLEARUSERS"

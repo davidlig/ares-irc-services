@@ -1,0 +1,571 @@
+# NickServ translations — Greek
+# Domain: nickserv
+#
+# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
+#   \x02        bold on/off
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
+#   \x03        reset color
+#   \x0F        reset all formatting
+#
+# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark grey (14 decimal)  ← CORRECT
+#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
+
+unknown_command: "\x0304✗\x03 Άγνωστη εντολή \x02%command%\x02. Χρησιμοποιήστε \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:            "\x0304✗\x03 Λανθασμένη σύνταξη. Χρήση: \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 Αυτή η εντολή περιορίζεται σε IRC Operators."
+  not_identified:    "\x0304✗\x03 Δεν έχετε ταυτοποιηθεί. Χρησιμοποιήστε \x0303/msg %bot% IDENTIFY <nickname> <password>\x03"
+  permission_denied: "\x0304✗\x03 Άρνηση πρόσβασης. Δεν έχετε πρόσβαση σε αυτήν την εντολή."
+  mail_failed:       "\x0304✗\x03 Το email δεν μπόρεσε να σταλεί. Ελέγξτε τη διεύθυνσή σας ή δοκιμάστε αργότερα."
+
+# --- REGISTER ---------------------------------------------------------------
+register:
+  syntax:           "REGISTER <password> <email>"
+  short:            "Καταχωρήστε το ψευδώνυμό σας στις υπηρεσίες."
+  help:             "Ξεκινά την καταχώρηση του τρέχοντος ψευδωνύμου σας. Ένα token επαλήθευσης\nθα σταλεί στη διεύθυνση email που δώσατε. Ολοκληρώστε την καταχώρηση\nεκτελώντας \x0303/msg %bot% VERIFY <token>\x03. Το token λήγει σε 1 ώρα.\nΑν δεν φτάσει, ελέγξτε τον φάκελο spam ή χρησιμοποιήστε \x0303RESEND\x03."
+  pending:          "\x0307→\x03 Ένα token επαλήθευσης έχει σταλεί στο \x02%email%\x02.\n  Εκτελέστε \x0303/msg %bot% VERIFY <token>\x03 για να ολοκληρώσετε την καταχώρηση.\n  Δεν το λάβατε; Ελέγξτε το spam ή χρησιμοποιήστε \x0303/msg %bot% RESEND\x03\n  Το token θα λήξει σε \x021 ώρα\x02."
+  already_registered: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι ήδη καταχωρημένο."
+  already_pending:  "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει ήδη εκκρεμή επαλήθευση.\n  Χρησιμοποιήστε \x0303/msg %bot% VERIFY <token>\x03 ή \x0303/msg %bot% RESEND\x03."
+  forbidden:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν μπορεί να καταχωρηθεί σε αυτό το δίκτυο."
+  invalid_email:    "\x0304✗\x03 Η διεύθυνση email που δώσατε δεν είναι έγκυρη."
+  email_already_used: "\x0304✗\x03 Το email \x02%email%\x02 χρησιμοποιείται ήδη από άλλο ψευδώνυμο. Χρησιμοποιήστε διαφορετική διεύθυνση."
+  throttled:          "\x0304✗\x03 Πρέπει να περιμένετε \x02%minutes%\x02 λεπτό(ά) πριν δοκιμάσετε να καταχωρηθείτε ξανά."
+  guest_prefix_forbidden: "\x0304✗\x03 Δεν μπορείτε να καταχωρήσετε ψευδώνυμο που ξεκινά με \x02%prefix%\x02."
+
+# --- VERIFY -----------------------------------------------------------------
+verify:
+  syntax:           "VERIFY <token>"
+  short:            "Επιβεβαιώστε τη διεύθυνση email σας και ενεργοποιήστε το ψευδώνυμό σας."
+  help:             "Ολοκληρώνει την καταχώρηση επαληθεύοντας το token που στάλθηκε στο email σας.\nΤο token ισχύει για 1 ώρα από τη στιγμή της καταχώρησης."
+  success:          "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει καταχωρηθεί επιτυχώς και είστε πλέον ταυτοποιημένοι."
+  invalid_token:    "\x0304✗\x03 Το token είναι άκυρο ή έχει λήξει. Χρησιμοποιήστε \x0303/msg %bot% REGISTER\x03 για να ξεκινήσετε από την αρχή."
+  no_pending:       "\x0304✗\x03 Δεν έχετε εκκρεμή καταχώρηση προς επαλήθευση."
+
+# --- RESEND -----------------------------------------------------------------
+resend:
+  syntax:           "RESEND"
+  short:            "Επαναποστολή του token επαλήθευσης στο email σας."
+  help:             "Επαναστέλνει το token επαλήθευσης στη διεύθυνση email που δώσατε κατά την\nκαταχώρηση. Λειτουργεί μόνο αν έχετε εκκρεμή καταχώρηση."
+  success:          "\x0307→\x03 Το token επαλήθευσης επαναστάλθηκε στο \x02%email%\x02."
+  no_pending:       "\x0304✗\x03 Δεν έχετε εκκρεμή καταχώρηση για επαναποστολή token."
+  throttled:        "\x0304✗\x03 Πρέπει να περιμένετε \x02%minutes%\x02 λεπτό(ά) πριν ζητήσετε άλλο email επαλήθευσης."
+
+# --- RECOVER -----------------------------------------------------------------
+recover:
+  syntax:           "RECOVER <nickname> [token]"
+  short:            "Ανακτήστε το ψευδώνυμό σας αν χάσατε τον κωδικό σας."
+  help:             "Ανακτά πρόσβαση σε καταχωρημένο ψευδώνυμο όταν έχετε χάσει τον κωδικό σας.\n1) \x0303RECOVER <nickname>\x03 — αποστέλλεται token στο email του ψευδωνύμου.\n2) \x0303RECOVER <nickname> <token>\x03 — εισάγετε το token από το email για επαναφορά κωδικού.\nΘα λάβετε έναν προσωρινό κωδικό και την εντολή για να τον αλλάξετε."
+  email_sent:       "\x0307→\x03 Ένα token ανάκτησης έχει σταλεί στο \x02%email_hint%\x02. Ελέγξτε τα εισερχόμενά σας (και τον φάκελο spam)."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  pending:          "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει εκκρεμή επαλήθευση email."
+  suspended:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Αιτία: %reason%"
+  forbidden:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν μπορεί να χρησιμοποιηθεί σε αυτό το δίκτυο."
+  no_email:         "\x0304✗\x03 Δεν έχει οριστεί email για το ψευδώνυμο \x02%nickname%\x02. Η ανάκτηση δεν είναι διαθέσιμη."
+  throttled:        "\x0304✗\x03 Πρέπει να περιμένετε \x02%minutes%\x02 λεπτό(ά) πριν ζητήσετε άλλο email ανάκτησης."
+  invalid_token:    "\x0304✗\x03 Το token είναι άκυρο ή έχει λήξει. Ζητήστε νέο με \x0303RECOVER %nickname%\x03."
+  success_identify: "\x0303✔\x03 Επαναφορά κωδικού. Ταυτοποιηθείτε τώρα: \x0303%identify_cmd%\x03"
+  success_then_change: "Μετά αλλάξτε τον κωδικό σας: \x0303/msg %bot% SET PASSWORD <new_password>\x03"
+
+# --- IDENTIFY ---------------------------------------------------------------
+identify:
+  syntax:           "IDENTIFY <nickname> <password>"
+  short:            "Ταυτοποιηθείτε ως ο κάτοχος ενός ψευδωνύμου."
+  help:             "Πιστοποιεί τη συνεδρία σας με το %nickserv% χρησιμοποιώντας το ψευδώνυμο και τον κωδικό σας.\nΜετά από επιτυχή ταυτοποίηση θα λάβετε τη λειτουργία \x02+r\x02\nκαι, αν χρησιμοποιούσατε ψευδώνυμο επισκέπτη, το καταχωρημένο σας ψευδώνυμο θα αποκατασταθεί."
+  success:          "\x0303✔\x03 Είστε πλέον ταυτοποιημένοι ως \x02%nickname%\x02."
+  already_identified: "\x0307ℹ\x03 Είστε ήδη ταυτοποιημένοι ως \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  invalid_credentials: "\x0304✗\x03 Λανθασμένος κωδικός. Παρακαλώ δοκιμάστε ξανά."
+  locked_out:         "\x0304✗\x03 Πάρα πολλές αποτυχημένες προσπάθειες. Δοκιμάστε ξανά σε \x02%minutes%\x02 λεπτό(ά)."
+  ghost_released:   "\x0307⚡\x03 Η συνεδρία-φάντασμα που κατείχε το \x02%nickname%\x02 έχει αποσυνδεθεί."
+  kill_reason:      "Το ψευδώνυμο %nickname% ανακτήθηκε από %source% (ο καταχωρημένος κάτοχος ταυτοποιήθηκε)"
+  pending:          "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει εκκρεμή επαλήθευση email.\n  Εκτελέστε \x0303/msg %bot% VERIFY <token>\x03 ή \x0303/msg %bot% RESEND\x03."
+  suspended:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Αιτία: %reason%"
+  forbidden:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν μπορεί να χρησιμοποιηθεί σε αυτό το δίκτυο."
+
+# --- STATUS -----------------------------------------------------------------
+status:
+  syntax:           "STATUS <nickname>"
+  short:            "Εμφάνιση κατάστασης καταχώρησης ενός ψευδωνύμου."
+  help:             "Εμφανίζει την τρέχουσα κατάσταση ενός ψευδωνύμου: καταχωρημένο, εκκρεμή επαλήθευση,\nσε αναστολή ή απαγορευμένο."
+  header:           "\x02Κατάσταση του ψευδωνύμου \x0307%nickname%\x03:\x02"
+  unregistered:     "  Κατάσταση      : Μη καταχωρημένο"
+  not_registered_offline: "  Κατάσταση      : \x0315Μη καταχωρημένο\x03"
+  pending:          "  Κατάσταση      : \x0307Εκκρεμής επαλήθευση\x03"
+  pending_expires:  "  Λήγει σε       : %minutes% λεπτό(ά)"
+  pending_expires_at: "  Λήγει στις     : %date%"
+  not_connected:    "  Κατάσταση      : \x0315Μη συνδεδεμένο\x03"
+  not_identified:   "  Κατάσταση      : \x0307Μη ταυτοποιημένο\x03"
+  identified:       "  Κατάσταση      : \x0303Ταυτοποιημένο\x03"
+  suspended:        "  Κατάσταση      : \x0304Σε αναστολή\x03"
+  suspended_reason: "  Αιτία          : %reason%"
+  suspended_until:  "  Λήγει στις     : %date%"
+  suspended_permanent: "  Λήγει στις     : Μόνιμη"
+  forbidden:        "  Κατάσταση      : \x0304Απαγορευμένο\x03"
+  forbidden_reason: "  Αιτία          : %reason%"
+  footer:           "\x0314─────────────────────────────\x03"
+
+# --- INFO -------------------------------------------------------------------
+info:
+  syntax:           "INFO <nickname>"
+  short:            "Εμφάνιση πληροφοριών για καταχωρημένο ψευδώνυμο."
+  help:             "Εμφανίζει λεπτομέρειες καταχώρησης για ένα ψευδώνυμο: ημερομηνία καταχώρησης,\nκατάσταση σύνδεσης, τελευταίο μήνυμα εξόδου και διεύθυνση email. Το email\nείναι ορατό μόνο στον κάτοχο όταν είναι ταυτοποιημένος. Με PRIVATE ON μόνο\nο κάτοχος και οι IRC Operators μπορούν να δουν τις πληροφορίες."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  private:          "\x0304✗\x03 Οι πληροφορίες του ψευδωνύμου \x02%nickname%\x02 είναι ιδιωτικές."
+  header:           "\x02Πληροφορίες για το ψευδώνυμο \x0307%nickname%\x03:\x02"
+  status:           "  \x0314Κατάσταση\x03      : %status%"
+  status_registered:  "\x0303Καταχωρημένο\x03"
+  status_suspended:   "\x0304Σε αναστολή\x03"
+  status_forbidden:   "\x0304Απαγορευμένο\x03"
+  reason:           "  \x0314Αιτία\x03          : %reason%"
+  suspended_until:  "  \x0314Λήγει στις\x03     : %date%"
+  suspended_permanent: "  \x0314Λήγει στις\x03     : Μόνιμη"
+  registered_at:    "  \x0314Καταχωρήθηκε\x03  : %date%"
+  last_seen_online: "  \x0314Τελ. εμφάνιση\x03 : \x0303● ONLINE ΤΩΡΑ\x03"
+  last_seen_at:     "  \x0314Τελ. εμφάνιση\x03 : %date%"
+  last_seen_never:  "  \x0314Τελ. εμφάνιση\x03 : Ποτέ"
+  last_quit:        "  \x0314Τελ. μήνυμα\x03   : %message%"
+  last_connect:     "  \x0314Τελ. εμφ. από\x03  : %ip% (%host%)"
+  email:            "  \x0314Email\x03         : %email%"
+  vhost:            "  \x0314VHost\x03         : %vhost%"
+  no_expire:        "  \x0314Ποτέ δεν λήγει\x03 : Ναι"
+  footer:           "\x0314─────────────────────────────\x03"
+  channels_header:  "\x0314\x0AΚανάλια με πρόσβαση:\x03"
+  channels_entry_founder:   "  %channel% (\x0303Ιδρυτής\x03)"
+  channels_entry_successor: "  %channel% (\x0303Διάδοχος\x03)"
+  channels_entry_access:    "  %channel% (%level%)"
+
+# --- SET --------------------------------------------------------------------
+set:
+  syntax:           "SET <option> <value>"
+  short:            "Αλλάξτε τις ρυθμίσεις του ψευδωνύμου σας στο %nickserv%."
+  help:             "Τροποποιεί τις ρυθμίσεις του ψευδωνύμου σας στο %nickserv%.\nΠρέπει να είστε ταυτοποιημένοι για να χρησιμοποιήσετε αυτήν την εντολή."
+  unknown_option:   "\x0304✗\x03 Άγνωστη επιλογή \x02%option%\x02. Διαθέσιμες επιλογές: %options%."
+
+  password:
+    syntax:         "SET PASSWORD <new_password>"
+    short:          "Αλλάξτε τον κωδικό του ψευδωνύμου σας."
+    help:           "Αλλάζει τον κωδικό για το ψευδώνυμό σας στο NickServ. Ο νέος κωδικός\nισχύει άμεσα. Επιλέξτε έναν ισχυρό κωδικό τουλάχιστον 6 χαρακτήρων\nπου δεν χρησιμοποιείτε σε άλλες υπηρεσίες."
+    success:        "\x0303✔\x03 Ο κωδικός σας έχει ενημερωθεί επιτυχώς."
+
+  email:
+    syntax:         "SET EMAIL <new_email> [token]"
+    short:          "Αλλάξτε τη διεύθυνση email που συνδέεται με το ψευδώνυμό σας (επιβεβαίωση δύο βημάτων)."
+    help:           "Αλλαγή email σε δύο βήματα για ασφάλεια.\n1) \x0303SET EMAIL <new_email>\x03 — αποστέλλεται token στο τρέχον email σας.\n2) \x0303SET EMAIL <new_email> <token>\x03 — επιβεβαίωση με το token που λάβατε.\nΤο token λήγει σε 1 ώρα."
+    success:        "\x0303✔\x03 Το email σας έχει ενημερωθεί σε \x02%email%\x02."
+    pending_sent:   "\x0307→\x03 Ένα token επιβεβαίωσης έχει σταλεί στο \x02%current_email%\x02.\n  Για να επιβεβαιώσετε την αλλαγή σε \x02%new_email%\x02 εκτελέστε:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  Το token λήγει σε 1 ώρα."
+    invalid_token:  "\x0304✗\x03 Το token είναι άκυρο ή έχει λήξει. Ζητήστε νέο με \x0303SET EMAIL <new_email>\x03."
+
+  language:
+    syntax:         "SET LANGUAGE <code>"
+    short:          "Αλλάξτε τη γλώσσα που χρησιμοποιούν οι υπηρεσίες για να επικοινωνούν μαζί σας."
+    help:           "Αλλάζει τη γλώσσα που το %nickserv% και άλλες υπηρεσίες χρησιμοποιούν όταν σας μιλούν.\nΔιαθέσιμες γλώσσες: \x02es\x02 (Ισπανικά), \x02en\x02 (Αγγλικά)."
+    success:        "\x0303✔\x03 Η γλώσσα άλλαξε σε \x02%language%\x02."
+    invalid:        "\x0304✗\x03 Μη υποστηριζόμενη γλώσσα. Διαθέσιμες γλώσσες: %languages%."
+
+  timezone:
+    syntax:         "SET TIMEZONE <timezone>"
+    short:          "Ορίστε τη ζώνη ώρας που χρησιμοποιείται κατά την εμφάνιση ημερομηνιών."
+    help:           "Ορίζει τη ζώνη ώρας που χρησιμοποιεί το %nickserv% όταν εμφανίζει ημερομηνίες.\nΧρησιμοποιήστε \x02HELP SET TIMEZONE\x02 για το ευρετήριο περιοχών· \x02HELP SET TIMEZONE <region>\x02 (π.χ. Europe) για τις ζώνες ώρας αυτής της περιοχής. Χρησιμοποιήστε \x02OFF\x02 για εκκαθάριση."
+    success:        "\x0303✔\x03 Ζώνη ώρας ορίστηκε σε \x02%timezone%\x02. Οι ημερομηνίες θα εμφανίζονται σε αυτήν τη ζώνη ώρας."
+    cleared:        "\x0303✔\x03 Η ζώνη ώρας εκκαθαρίστηκε. Οι ημερομηνίες θα χρησιμοποιούν την προεπιλογή του δικτύου."
+    invalid:        "\x0304✗\x03 Μη έγκυρη ζώνη ώρας \x02%timezone%\x02. Χρησιμοποιήστε έγκυρο αναγνωριστικό (π.χ. UTC, Europe/Athens)."
+
+  private:
+    syntax:         "SET PRIVATE {ON|OFF}"
+    short:          "Ενεργοποίηση ή απενεργοποίηση ιδιωτικότητας για τις πληροφορίες του ψευδωνύμου σας."
+    help:           "Ελέγχει την ορατότητα των πληροφοριών του ψευδωνύμου σας στην εντολή INFO.\nΜε \x02PRIVATE ON\x02 μόνο εσείς και οι IRC Operators μπορούν να δουν τις λεπτομέρειές σας.\nΜε \x02PRIVATE OFF\x02 οι πληροφορίες σας είναι δημόσιες για όλους."
+    on:             "\x0303✔\x03 Οι πληροφορίες του ψευδωνύμου σας είναι τώρα \x02ιδιωτικές\x02."
+    off:            "\x0303✔\x03 Οι πληροφορίες του ψευδωνύμου σας είναι τώρα \x02δημόσιες\x02."
+
+  msg:
+    syntax:         "SET MSG {ON|OFF}"
+    short:          "Χρήση PRIVMSG (ON) ή NOTICE (OFF) για απαντήσεις υπηρεσιών."
+    help:           "Ελέγχει πώς το %nickserv% και άλλες υπηρεσίες στέλνουν μηνύματα σε εσάς.\nΜε \x02MSG ON\x02 οι απαντήσεις στέλνονται ως \x02PRIVMSG\x02 (ορισμένοι clients μπορεί να ενεργοποιούν απαντήσεις ή ειδοποιήσεις).\nΜε \x02MSG OFF\x02 οι απαντήσεις στέλνονται ως \x02NOTICE\x02 (προεπιλογή· συνήθως χωρίς αυτόματη απάντηση)."
+    on:             "\x0303✔\x03 Τα μηνύματα υπηρεσιών θα στέλνονται τώρα ως \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 Τα μηνύματα υπηρεσιών θα στέλνονται τώρα ως \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SET VHOST <vhost>"
+    short:          "Ορίστε ή εκκαθαρίστε το προσαρμοσμένο εικονικό host σας (εμφανιζόμενο hostname)."
+    help:           "Ορίζει ένα προσαρμοσμένο hostname που βλέπουν οι άλλοι όταν είστε ταυτοποιημένοι.\nΧρησιμοποιήστε \x02SET VHOST OFF\x02 για εκκαθάριση. Μόνο γράμματα (a-z, A-Z), ψηφία,\nπαύλα και τελεία· όχι παύλα ή τελεία στην αρχή/τέλος κάθε μπλοκ· μέγιστο 48 χαρακτήρες.\nΜοναδικό ανά ψευδώνυμο."
+    success:        "\x0303✔\x03 Το εικονικό host σας έχει οριστεί σε \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 Το εικονικό host σας έχει εκκαθαριστεί."
+    invalid:        "\x0304✗\x03 Μη έγκυρο vhost. Μόνο γράμματα, ψηφία, παύλα και τελεία (όχι στην αρχή/τέλος μπλοκ)· μέγιστο 48 χαρακτήρες."
+    taken:          "\x0304✗\x03 Αυτό το vhost χρησιμοποιείται ήδη από άλλο ψευδώνυμο."
+    forced:         "\x0304✗\x03 Το vhost σας διαμορφώνεται αυτόματα και δεν μπορεί να αλλάξει με SET VHOST."
+
+# --- HELP -------------------------------------------------------------------
+help:
+  syntax:           "HELP [command]"
+  short:            "Εμφάνιση βοήθειας για εντολές του %nickserv%."
+  help:             "Εμφανίζει γενική βοήθεια του %nickserv% ή λεπτομερείς πληροφορίες\nγια μια συγκεκριμένη εντολή."
+  header_title:     "%bot%"
+  intro:            "Υπηρεσία καταχώρησης και προστασίας ψευδωνύμων για το δίκτυο IRC."
+  intro_expiration: "ΣΗΜΕΙΩΣΗ: Τα ψευδώνυμα \x0304\x1Fαχρησιμοποίητα\x0F για περισσότερες από %days% ημέρες αφαιρούνται αυτόματα."
+  general_header:   "\x02\x0314Διαθέσιμες εντολές:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Επιλογές:\x03\x0F"
+  general_footer:   "Χρησιμοποιήστε \x0303/msg %bot% HELP <command>\x03 για περισσότερες πληροφορίες."
+  set_sub_footer:   "Χρησιμοποιήστε \x0303/msg %bot% HELP %command% <option>\x03 για περισσότερες πληροφορίες."
+  command_header:   "\x02Βοήθεια για %command%:\x02"
+  syntax_label:     "\x0307Σύνταξη:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  unknown_command:  "\x0304✗\x03 Δεν υπάρχει βοήθεια για \x02%command%\x02."
+  ircop_header:     "\x02\x0314Διαθέσιμες εντολές για IRCOPS:\x03\x0F"
+
+  set_timezone:
+    index_label:    "\x0314Περιοχές\x03 (χρησιμοποιήστε \x02HELP SET TIMEZONE <region>\x02 για λίστα):"
+    region_header:  "\x0314Ζώνες ώρας για %region%:\x03"
+    region_unknown: "\x0304✗\x03 Άγνωστη περιοχή. Χρησιμοποιήστε \x02HELP SET TIMEZONE\x02 για το ευρετήριο."
+
+# --- Nick Protection --------------------------------------------------------
+protection:
+  nick_in_use:      "\x0304⚠\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι καταχωρημένο. Θα μετονομαστείτε αν δεν ταυτοποιηθείτε."
+  renamed_to:       "\x0307→\x03 Έχετε μετονομαστεί σε \x02%guest_nick%\x02. Για ανάκτηση του ψευδωνύμου σας:\n\x0303/msg %bot% IDENTIFY %nickname% <password>\x03"
+  nick_forbidden:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο: %reason%"
+
+# --- IRCop Commands ---------------------------------------------------------
+userip:
+  syntax:           "USERIP <nickname>"
+  short:            "Λάβετε την πραγματική διεύθυνση IP και το hostname του ψευδωνύμου."
+  help:             |
+    Εμφανίζει την πραγματική διεύθυνση IP και το hostname του καθορισμένου ψευδωνύμου.
+    Διαθέσιμο μόνο σε IRCops με άδεια 'nickserv.userip'.
+
+    Αυτή η εντολή εμφανίζει ευαίσθητες πληροφορίες ψευδωνύμου.
+    Χρησιμοποιήστε υπεύθυνα.
+
+    Σύνταξη: USERIP <nickname>
+    Παράδειγμα: USERIP SomeUser
+  not_online:       "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
+  result:           "\x0307ℹ\x03 Ψευδώνυμο: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+
+permissions:
+  nickserv.userip: "Προβολή πραγματικής διεύθυνσης IP/hostname ψευδωνύμου (USERIP)"
+  nickserv.suspend: "Αναστολή ή άρση αναστολής ψευδωνύμου (SUSPEND/UNSUSPEND)"
+  nickserv.rename: "Αναγκαστική μετονομασία συνδεδεμένου ψευδωνύμου σε τυχαίο (RENAME)"
+  nickserv.drop: "Διαγραφή καταχωρημένου ψευδωνύμου (DROP)"
+  nickserv.forbid: "Απαγόρευση ή άρση απαγόρευσης ψευδωνύμου (FORBID/UNFORBID)"
+  nickserv.forbidvhost: "Απαγόρευση ή επιτρεπή μοτίβων vhost (FORBIDVHOST)"
+  nickserv.saset: "Τροποποίηση ρυθμίσεων ψευδωνύμου άλλου χρήστη (SASET)"
+  nickserv.noexpire: "Ορισμός ή αφαίρεση προστασίας λήξης για ψευδώνυμο (NOEXPIRE)"
+  nickserv.history: "Προβολή και διαχείριση ιστορικού ενεργειών ψευδωνύμου (HISTORY)"
+
+# --- SUSPEND (IRCop) ---------------------------------------------------------
+suspend:
+  syntax:           "SUSPEND <nickname> <duration> <reason>"
+  short:            "Αναστολή ψευδωνύμου."
+  help:             |
+    Θέτει σε αναστολή ένα ψευδώνυμο, εμποδίζοντας τον κάτοχο από το να ταυτοποιηθεί.
+    Η αναστολή μπορεί να είναι προσωρινή ή μόνιμη.
+
+    Μορφές διάρκειας: \x0303%d\x03 (ημέρες), \x0303%h\x03 (ώρες), \x0303%m\x03 (λεπτά), ή \x03030\x03 (μόνιμη).
+
+    Οι χρήστες σε αναστολή δεν μπορούν να ταυτοποιηθούν στο ψευδώνυμό τους.
+    Οι IRC operators και οι root χρήστες δεν μπορούν να τεθούν σε αναστολή.
+
+    Σύνταξη: SUSPEND <nickname> <duration> <reason>
+    Παραδείγματα:
+      SUSPEND BadUser 7d Spamming στο #help
+      SUSPEND Abuser 30d Επαναλαμβανόμενο flood
+      SUSPEND ProblemUser 0 Αποφυγή permaban
+  success:            "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει τεθεί σε αναστολή μέχρι \x02%duration%\x02."
+  already_suspended:  "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι ήδη σε αναστολή."
+  not_registered:     "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  forbidden:          "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο και δεν μπορεί να τεθεί σε αναστολή."
+  cannot_suspend_oper: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή ο IRC operator \x02%nickname%\x02."
+  cannot_suspend_root: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή ο root χρήστης \x02%nickname%\x02."
+  cannot_suspend_service: "\x0304✗\x03 Δεν μπορεί να τεθεί σε αναστολή το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."
+  invalid_duration:   "\x0304✗\x03 Μη έγκυρη διάρκεια. Χρησιμοποιήστε: \x0303<d><h><m>\x03 (π.χ., 7d, 12h, 30m) ή \x03030\x03 για μόνιμη."
+  permanent:          "μόνιμη"
+
+# --- UNSUSPEND (IRCop) -------------------------------------------------------
+unsuspend:
+  syntax:           "UNSUSPEND <nickname>"
+  short:            "Αφαίρεση αναστολής από ψευδώνυμο."
+  help:             |
+    Αφαιρεί μια ενεργή αναστολή από ένα ψευδώνυμο, επιτρέποντας στον κάτοχο να ταυτοποιηθεί ξανά.
+
+    Σύνταξη: UNSUSPEND <nickname>
+    Παράδειγμα: UNSUSPEND SomeUser
+  success:          "\x0303✔\x03 Η αναστολή έχει αρθεί από \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  not_suspended:    "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι σε αναστολή."
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax:           "RENAME <nickname>"
+  short:            "Αναγκαστική μετονομασία συνδεδεμένου ψευδωνύμου σε τυχαίο."
+  help:             |
+    Αναγκάζει ένα συνδεδεμένο ψευδώνυμο να αλλάξει το nick του σε ένα τυχαία παραγόμενο.
+    Χρήσιμο για επιβολή πολιτικών δικτύου χωρίς αποσύνδεση του χρήστη.
+
+    Η μορφή του νέου ψευδωνύμου χρησιμοποιεί το διαμορφωμένο πρόθεμα επισκέπτη (%prefix%).
+
+    Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.rename
+
+    Σύνταξη: RENAME <nickname>
+    Παράδειγμα: RENAME Troublemaker
+  not_online:        "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι συνδεδεμένο."
+  cannot_rename_root: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί ο root χρήστης \x02%nickname%\x02."
+  cannot_rename_oper: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί ο IRC operator \x02%nickname%\x02."
+  cannot_rename_service: "\x0304✗\x03 Δεν μπορεί να μετονομαστεί το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."
+  success:           "\x0303✓\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει μετονομαστεί σε \x02%new_nick%\x02."
+
+# --- DROP (IRCop) --------------------------------------------------------------
+drop:
+  syntax:           "DROP <nickname>"
+  short:            "Διαγραφή καταχωρημένου ψευδωνύμου."
+  help:             |
+    Διαγράφει ένα καταχωρημένο ψευδώνυμο από τη βάση δεδομένων.
+    Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.
+
+    Αν ο χρήστης είναι online, θα μετονομαστεί σε ψευδώνυμο Guest-.
+    Οι root χρήστες και οι IRC operators δεν μπορούν να διαγραφούν.
+    Δεν μπορείτε να διαγράψετε το δικό σας ψευδώνυμο.
+
+    Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.drop
+
+    Σύνταξη: DROP <nickname>
+    Παράδειγμα: DROP OldAccount
+  not_registered:     "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  suspended:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή. Άρετε πρώτα την αναστολή."
+  forbidden:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο."
+  cannot_drop_root:   "\x0304✗\x03 Δεν μπορεί να διαγραφεί ο root χρήστης \x02%nickname%\x02."
+  cannot_drop_oper:   "\x0304✗\x03 Δεν μπορεί να διαγραφεί ο IRC operator \x02%nickname%\x02."
+  cannot_drop_self:    "\x0304✗\x03 Δεν μπορείτε να διαγράψετε το δικό σας ψευδώνυμο."
+  success:            "\x0303✓\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει διαγραφεί."
+  cannot_drop_service: "\x0304✗\x03 Δεν μπορεί να διαγραφεί το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."
+
+# --- FORBID (IRCop) --------------------------------------------------------------
+forbid:
+  syntax:           "FORBID <nickname> <reason>"
+  short:            "Μόνιμος αποκλεισμός ψευδωνύμου από χρήση."
+  help:             |
+    Απαγορεύει τη χρήση ενός ψευδωνύμου στο δίκτυο.
+    Το ψευδώνυμο δεν μπορεί να καταχωρηθεί ή να χρησιμοποιηθεί από κανέναν.
+
+    Αν το ψευδώνυμο είναι τρέχοντα καταχωρημένο, θα διαγραφεί πρώτα.
+    Αν κάποιος το χρησιμοποιεί, θα αναγκαστεί να αλλάξει σε ψευδώνυμο Guest-.
+
+    Οι root χρήστες, οι IRC operators και τα ψευδώνυμα υπηρεσιών δεν μπορούν να απαγορευτούν.
+
+    Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbid
+
+    Σύνταξη: FORBID <nickname> <reason>
+    Παράδειγμα: FORBID BadNick Επαναλαμβανόμενες παραβιάσεις πολιτικής
+  success:            "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 έχει απαγορευτεί."
+  updated:            "\x0303✔\x03 Η αιτία απαγόρευσης για το \x02%nickname%\x02 έχει ενημερωθεί."
+  reason_required:    "\x0304✗\x03 Πρέπει να δώσετε αιτία για την απαγόρευση."
+  cannot_forbid_root:  "\x0304✗\x03 Δεν μπορεί να απαγορευτεί ο root χρήστης \x02%nickname%\x02."
+  cannot_forbid_oper:  "\x0304✗\x03 Δεν μπορεί να απαγορευτεί ο IRC operator \x02%nickname%\x02."
+  cannot_forbid_service: "\x0304✗\x03 Δεν μπορεί να απαγορευτεί το ψευδώνυμο υπηρεσίας \x02%nickname%\x02."
+
+# --- UNFORBID (IRCop) ------------------------------------------------------------
+unforbid:
+  syntax:           "UNFORBID <nickname>"
+  short:            "Άρση απαγόρευσης ψευδωνύμου."
+  help:             |
+    Αφαιρεί την απαγόρευση ενός ψευδωνύμου, επιτρέποντας τη χρήση του ξανά.
+
+    Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbid
+
+    Σύνταξη: UNFORBID <nickname>
+    Παράδειγμα: UNFORBID SomeNick
+  success:          "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι πλέον απαγορευμένο."
+  not_forbidden:    "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι απαγορευμένο."
+
+# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
+forbidvhost:
+  syntax:           "FORBIDVHOST ADD|DEL|LIST [pattern]"
+  short:            "Διαχείριση απαγορευμένων μοτίβων vhost."
+  help:             |
+    Διαχειρίζεται μοτίβα που εμποδίζουν τους χρήστες να ορίσουν vhosts που ταιριάζουν
+    μέσω του NickServ SET VHOST.
+
+    Wildcards: * ταιριάζει με οποιαδήποτε ακολουθία, ? ταιριάζει με έναν χαρακτήρα.
+    Παράδειγμα: *.pirated.com μπλοκάρει οποιοδήποτε vhost τελειώνει σε .pirated.com
+
+    Αυτή η εντολή απαιτεί άδεια IRCop: nickserv.forbidvhost
+
+    Υπο-εντολές:
+      ADD <pattern>    Προσθήκη απαγορευμένου μοτίβου
+      DEL <pattern>    Αφαίρεση απαγορευμένου μοτίβου
+      LIST             Εμφάνιση όλων των απαγορευμένων μοτίβων
+
+  unknown_sub: "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL, ή LIST."
+
+  add:
+    syntax:      "FORBIDVHOST ADD <pattern>"
+    short:       "Προσθήκη απαγορευμένου μοτίβου vhost."
+    help:        |
+      Προσθέτει ένα μοτίβο στη λίστα απαγορευμένων vhost. Οι χρήστες δεν θα
+      μπορούν να ορίσουν vhosts που ταιριάζουν με αυτό το μοτίβο μέσω SET VHOST.
+
+      Wildcards: * ταιριάζει με οποιαδήποτε ακολουθία, ? ταιριάζει με έναν χαρακτήρα.
+
+      Σύνταξη: FORBIDVHOST ADD <pattern>
+      Παράδειγμα: FORBIDVHOST ADD *.pirated.com
+    done:            "\x0303✓\x03 Προστέθηκε απαγορευμένο μοτίβο vhost: \x02%pattern%\x02"
+    already_exists:  "\x0304✗\x03 Το μοτίβο \x02%pattern%\x02 υπάρχει ήδη."
+    invalid:          "\x0304✗\x03 Μη έγκυρη μορφή μοτίβου vhost."
+
+  del:
+    syntax:      "FORBIDVHOST DEL <pattern>"
+    short:       "Αφαίρεση απαγορευμένου μοτίβου vhost."
+    help:        |
+      Αφαιρεί ένα μοτίβο από τη λίστα απαγορευμένων vhost.
+
+      Σύνταξη: FORBIDVHOST DEL <pattern>
+      Παράδειγμα: FORBIDVHOST DEL *.pirated.com
+    done:        "\x0303✓\x03 Αφαιρέθηκε απαγορευμένο μοτίβο vhost: \x02%pattern%\x02"
+    not_found:   "\x0304✗\x03 Το μοτίβο \x02%pattern%\x02 δεν βρέθηκε."
+
+  list:
+    short:       "Λίστα όλων των απαγορευμένων μοτίβων vhost."
+    syntax:      "FORBIDVHOST LIST"
+    help:        |
+      Εμφανίζει όλα τα απαγορευμένα μοτίβα vhost.
+
+      Σύνταξη: FORBIDVHOST LIST
+    header:      "\x0307ℹ\x03 Απαγορευμένα μοτίβα vhost (\x02%count%\x02):"
+    entry:       "  %index%. \x0304%pattern%\x03 — από %nickname% (%date%)"
+    empty:       "\x0307ℹ\x03 Δεν υπάρχουν απαγορευμένα μοτίβα vhost."
+    unknown_creator: "άγνωστος"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <nickname> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Προβολή ή διαχείριση ιστορικού ενεργειών ψευδωνύμου."
+  help:             |
+    Διαχείριση του ιστορικού ενεργειών για ένα ψευδώνυμο.
+    Μόνο IRCops με άδεια 'nickserv.history' μπορούν να χρησιμοποιήσουν αυτήν την εντολή.
+
+    Ενέργειες που καταγράφονται αυτόματα:
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+
+    Σύνταξη: HISTORY <nickname> ADD <message>
+            HISTORY <nickname> DEL <id>
+            HISTORY <nickname> VIEW [PAGE|ALL]
+            HISTORY <nickname> CLEAR
+
+    Παραδείγματα:
+      HISTORY SomeNick VIEW
+      HISTORY SomeNick ADD Χειροκίνητη σημείωση για αυτόν τον χρήστη
+      HISTORY SomeNick VIEW 2
+      HISTORY SomeNick VIEW ALL
+      HISTORY SomeNick DEL 123
+      HISTORY SomeNick CLEAR
+
+    Χρησιμοποιήστε VIEW για να δείτε το ιστορικό (εμφανίζει 3 καταχωρήσεις προεπιλεγμένα).
+    Χρησιμοποιήστε VIEW PAGE 2 για την επόμενη σελίδα.
+    Χρησιμοποιήστε VIEW ALL για πλήρες ιστορικό.
+    Χρησιμοποιήστε ADD για χειροκίνητη καταχώρηση.
+    Χρησιμοποιήστε DEL για διαγραφή συγκεκριμένης καταχώρησης μέσω ID.
+    Χρησιμοποιήστε CLEAR για διαγραφή όλων των καταχωρήσεων ιστορικού.
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  unknown_operator: "(άγνωστος)"
+
+  add:
+    syntax:     "HISTORY <nickname> ADD <message>"
+    short:      "Προσθήκη χειροκίνητης καταχώρησης ιστορικού."
+    help:        |
+      Προσθέτει μια χειροκίνητη καταχώρηση στο ιστορικό του ψευδωνύμου.
+
+      Σύνταξη: HISTORY <nickname> ADD <message>
+      Παράδειγμα: HISTORY SomeNick ADD Ο χρήστης αναφέρθηκε για spam
+    success:    "\x0303✔\x03 Η καταχώρηση ιστορικού προστέθηκε για \x02%nickname%\x02."
+
+  del:
+    syntax:     "HISTORY <nickname> DEL <id>"
+    short:      "Διαγραφή καταχώρησης ιστορικού μέσω ID."
+    help:        |
+      Διαγράφει μια συγκεκριμένη καταχώρηση ιστορικού με το ID της.
+
+      Σύνταξη: HISTORY <nickname> DEL <id>
+      Παράδειγμα: HISTORY SomeNick DEL 42
+    success:    "\x0303✔\x03 Η καταχώρηση ιστορικού \x02%id%\x02 διαγράφηκε."
+    not_found:  "\x0304✗\x03 Η καταχώρηση ιστορικού \x02%id%\x02 δεν βρέθηκε."
+    invalid_id: "\x0304✗\x03 Μη έγκυρο ID καταχώρησης: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <nickname> VIEW [PAGE|ALL]"
+    short:      "Προβολή ιστορικού ενεργειών ψευδωνύμου."
+    help:        |
+      Εμφανίζει το ιστορικό ενεργειών του ψευδωνύμου.
+
+      Σύνταξη: HISTORY <nickname> VIEW
+              HISTORY <nickname> VIEW PAGE
+              HISTORY <nickname> VIEW ALL
+
+      Προεπιλεγμένα εμφανίζει 3 καταχωρήσεις κάθε φορά.
+      Χρησιμοποιήστε VIEW 2 για τη δεύτερη σελίδα.
+      Χρησιμοποιήστε VIEW ALL για πλήρες ιστορικό.
+    header:     "\x02Ιστορικό για \x0307%nickname%\x03\x02 (εμφάνιση %start%-%end% από %total%):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 από %operator% — %message%"
+    extra:       "  Επιπλέον \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 Δεν βρέθηκαν καταχωρήσεις ιστορικού για \x02%nickname%\x02."
+    page_hint:   "Χρησιμοποιήστε \x0303HISTORY %nickname% VIEW %next_page%\x03 για περισσότερες καταχωρήσεις."
+
+  clear:
+    syntax:     "HISTORY <nickname> CLEAR"
+    short:      "Διαγραφή όλων των καταχωρήσεων ιστορικού για ένα ψευδώνυμο."
+    help:        |
+      Αφαιρεί όλες τις καταχωρήσεις ιστορικού για το καθορισμένο ψευδώνυμο.
+      Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.
+
+      Σύνταξη: HISTORY <nickname> CLEAR
+      Παράδειγμα: HISTORY SomeNick CLEAR
+    success:    "\x0303✔\x03 Εκκαθαρίστηκαν \x02%count%\x02 καταχωρήσεις ιστορικού για \x02%nickname%\x02."
+
+# --- History message translations (used when viewing history) ---
+history.message:
+  unsuspend:                  "Άρση αναστολής"
+  password_changed_owner:     "Ο κωδικός άλλαξε από τον κάτοχο"
+  password_changed_operator:  "Ο κωδικός άλλαξε από operator"
+  email_changed_owner:        "Το email άλλαξε από %old_email% σε %new_email%"
+  email_changed_operator:     "Το email άλλαξε σε %new_email% από operator"
+  recover:                    "Επαναφορά κωδικού μέσω token email"
+
+# --- History extra field translations ---
+history.extra:
+  duration:      "Διάρκεια: %value%"
+  expires_at:    "Λήγει: %value%"
+  old_email:     "Προηγούμενο email: %value%"
+  new_email:     "Νέο email: %value%"
+  method:        "Μέθοδος: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax:           "NOEXPIRE <nickname> {ON|OFF}"
+  short:            "Ορισμός ή αφαίρεση προστασίας λήξης για ένα ψευδώνυμο."
+  help:             |
+    Ελέγχει αν ένα ψευδώνυμο θα λήξει λόγω αδράνειας.
+    Όταν είναι ON, το ψευδώνυμο δεν λήγει ποτέ ανεξάρτητα από την τελευταία δραστηριότητα.
+    Όταν είναι OFF, ισχύουν οι κανονικοί κανόνες λήξης.
+
+    Μόνο IRCops με άδεια 'nickserv.noexpire' μπορούν να χρησιμοποιήσουν αυτήν την εντολή.
+
+    Σύνταξη: NOEXPIRE <nickname> {ON|OFF}
+    Παραδείγματα:
+      NOEXPIRE ImportantUser ON
+      NOEXPIRE ImportantUser OFF
+  success_on:       "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι τώρα προστατευμένο από λήξη."
+  success_off:      "\x0303✔\x03 Το ψευδώνυμο \x02%nickname%\x02 θα λήγει τώρα κανονικά."
+  not_registered:   "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι καταχωρημένο."
+  forbidden:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι απαγορευμένο."
+  suspended:         "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 είναι σε αναστολή."
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator% εκτελεί την εντολή %command% σε %target%. %reason%"
+  action_with_option: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%. %reason%"
+  action_with_value: "%operator% εκτελεί την εντολή %command% σε %target%. Επιλογή: %option%=%value%. %reason%"
+  action_duration: "%operator% εκτελεί την εντολή %command% σε %target%. Διάρκεια: %duration%. %reason%"
+  prefix_reason: "Αιτία: %reason%"

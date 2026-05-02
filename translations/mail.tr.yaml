@@ -1,0 +1,73 @@
+# Email content — domain: mail (plain text, no IRC codes)
+# Placeholders: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — doğrulama tokenı
+register_verification_subject: "%bot%: rumuz kaydınızı doğrulayın"
+register_verification_body: |
+  Merhaba,
+
+  IRC ağında "%nickname%" rumuzunu kaydetmek istediniz.
+
+  Doğrulama tokenınız: %token%
+
+  Kaydı tamamlamak için, %bot% adresine şu komutu gönderin (<token> yerine yukarıdaki tokenı yazın):
+    /msg %bot% VERIFY %token%
+
+  Token 1 saat içinde sona erer. Bu isteği siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.
+
+# RESEND — aynı register, tokenın yeniden gönderimi
+resend_verification_subject: "%bot%: doğrulama tokenınız (yeniden gönderme)"
+resend_verification_body: |
+  Merhaba,
+
+  "%nickname%" rumuzu için yeni bir doğrulama tokenı talep ettiniz.
+
+  Doğrulama tokenınız: %token%
+
+  Kaydı tamamlamak için %bot% adresine gönderin:
+    /msg %bot% VERIFY %token%
+
+  Token 1 saat içinde sona erer. Bu isteği siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.
+
+# SET EMAIL — mevcut e-postaya gönderilen onay tokenı
+email_change_token_subject: "%bot%: yeni e-posta adresinizi onaylayın"
+email_change_token_body: |
+  Merhaba,
+
+  %bot% rumuzunuz için e-posta adresini %new_email% olarak değiştirmek istediniz.
+
+  Onay tokenınız: %token%
+
+  Değişikliği onaylamak için %bot% adresine gönderin:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  Token 1 saat içinde sona erer. Bu değişikliği siz talep etmediyseniz, lütfen bu e-postayı dikkate almayın.
+
+# RECOVER — şifre kurtarma tokenı
+recovery_token_subject: "%bot%: şifre kurtarma"
+recovery_token_body: |
+  Merhaba,
+
+  "%nickname%" rumuzu için bir şifre kurtarma talebinde bulunuldu.
+
+  Kurtarma tokenınız: %token%
+
+  Şifrenizi sıfırlamak için %bot% adresine gönderin:
+    /msg %bot% RECOVER %nickname% %token%
+
+  Token 1 saat içinde sona erer. Bu isteği siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.
+
+# ChanServ SET FOUNDER — kurucu değişikliği tokenı
+founder_change_token_subject: "%bot%: %channel% için kurucu değişikliği tokenı"
+founder_change_token_body: |
+  Merhaba,
+
+  "%channel%" kanalı için "%new_nick%" rumuzuna kurucu değişikliği talep edildi.
+
+  Onay tokenınız: %token%
+
+  Değişikliği tamamlamak için %bot% adresine şu komutu gönderin (kopyalayıp yapıştırabilirsiniz):
+
+    /msg %bot% %command%
+
+  Token 1 saat içinde sona erer. Bu isteği siz yapmadıysanız, lütfen bu e-postayı dikkate almayın.

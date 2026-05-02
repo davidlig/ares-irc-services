@@ -1,0 +1,27 @@
+# Common translations — Italiano
+# Domain: common
+#
+# Traduzioni condivise usate in tutti i servizi IRC.
+
+antiflood:
+  blocked: "Ha superato il limite di comandi. Riprovi tra %seconds% secondi."
+  debug_channel: "%nick% limite %command% raggiunto per %host% (%seconds%s rimanenti)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Per il mio leale ed eterno amico,\x02
+      
+      Anche se il 2023 è stato l'anno in cui abbiamo dovuto dirci addio, il tempo non ha
+      cancellato un solo dettaglio di te. Ricordo ancora la tua energia inesauribile,
+      il tuo sguardo nobile e quella gioia immensa e contagiosa che solo tu sapevi donare.
+      
+      Hai riempito la mia casa di vita e la mia vita di un amore incondizionato che non
+      dimenticherò mai. Anche se non sento più i tuoi passi correre a salutarmi né sento
+      la tua testa appoggiarsi a me in cerca di affetto, so che il tuo spirito giocoso
+      mi accompagna ancora.
+      
+      Grazie per ogni momento, ogni marachella e per essere stato il miglior compagno che
+      avrei potuto desiderare. Lo spazio che hai lasciato al mio fianco è ora colmo dei
+      ricordi più felici. Sarai sempre il mio caro amico e avrai sempre un posto immenso
+      nel mio cuore.

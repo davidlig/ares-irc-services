@@ -1,0 +1,28 @@
+# Common translations — Galician
+# Domain: common
+#
+# Shared translations used across all IRC services.
+# Traducións compartidas usadas en todos os servizos de IRC.
+
+antiflood:
+  blocked: "Excedeu o límite de velocidade de comandos. Ténteo de novo en %seconds% segundos."
+  debug_channel: "%nick% límite de %command% alcanzado para %host% (quedan %seconds%s)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Para o meu leal e eterno amigo,\x02
+      
+      Aínda que 2023 foi o ano no que tivemos que dicir adeus, o tempo non borrou nin un só
+      detalle de ti. Aínda lembro a túa enerxía inesgotable, a túa mirada nobre e esa
+      alegría inmensa e contaxiosa que só ti sabías dar.
+      
+      Enchiches o meu fogar de vida e a miña vida dun amor incondicional que nunca
+      esquecerei. Aínda que xa non oio os teus pasos correndo a saudarme nin sinto a túa
+      cabeza apoiándose en min buscando cariño, sei que o teu espírito xoguetón aínda
+      me acompaña.
+      
+      Grazas por cada momento, cada travesura e por seres o mellor compañeiro que puiden
+      ter. O espazo que deixaches ao meu lado énchese agora coas lembranzas máis felices.
+      Sempre serás o meu querido amigo e sempre terás un lugar inmenso
+      no meu corazón.

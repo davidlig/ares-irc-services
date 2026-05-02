@@ -1,0 +1,122 @@
+# MemoServ translations — Catalan
+# Domain: memoserv
+
+unknown_command: "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
+  not_identified: "\x0304✗\x03 No esteu identificat. Utilitzeu \x0303/msg %nickserv% IDENTIFY\x03."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  insufficient_access: "\x0304✗\x03 Accés insuficient per a \x02%operation%\x02 al canal \x02%channel%\x02."
+
+send:
+  syntax: "SEND {nickname|#channel} <message>"
+  short: "Enviar un missatge a un sobrenom o canal."
+  help: "Envia un missatge a un sobrenom o canal registrat. El destinatari ha de tenir el servei de missatges activat (ENABLE)."
+  sent_nick: "\x0303✔\x03 Missatge enviat a \x02%nickname%\x02."
+  sent_channel: "\x0303✔\x03 Missatge enviat al canal \x02%channel%\x02."
+  nick_not_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  throttled: "\x0304✗\x03 Heu d'esperar \x02%seconds%\x02 segon(s) abans d'enviar un altre missatge."
+  limit_reached: "\x0304✗\x03 Límit de missatges assolit per a \x02%target%\x02."
+  ignored: "\x0304✗\x03 No podeu enviar missatges a aquest destinatari, sou a la seva llista d'ignorats."
+  cannot_send_to_self: "\x0304✗\x03 No podeu enviar-vos un missatge a vós mateix."
+  message_too_long: "\x0304✗\x03 Missatge massa llarg. El màxim és \x02%max%\x02 caràcters."
+  service_disabled_for_target: "\x0304✗\x03 El servei de missatges està desactivat per a \x02%target%\x02."
+
+read:
+  syntax: "READ [#channel] <number>"
+  short: "Llegir un missatge per número."
+  help: "Llegeix el missatge amb el número indicat. Sense #channel, llegeix de la vostra bústia de sobrenom. Amb #channel, requereix nivell MEMOREAD."
+  header: "\x02\x0307Missatge #%index%\x03 de \x02%from%\x02:\x0F"
+  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  not_found: "\x0304✗\x03 Missatge #%index% no trobat."
+
+list:
+  syntax: "LIST [#channel]"
+  short: "Llistar missatges (no llegits marcats amb * vermell)."
+  help: "Llista els vostres missatges o els missatges del canal. Els missatges no llegits es mostren amb un asterisc vermell i una previsualització (màx. 50 caràcters). Sense #channel = la vostra bústia de sobrenom; amb #channel requereix MEMOREAD."
+  header: "\x02\x0307Missatges per a %target%\x03:\x0F"
+  footer: "\x0314─────────────────────────────\x03"
+  empty: "\x0307ℹ\x03 No hi ha missatges per a \x02%target%\x02."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+
+del:
+  syntax: "DEL [#channel] <number>"
+  short: "Esborrar un missatge per número."
+  help: "Esborra el missatge amb el número indicat. Per a canals requereix nivell MEMOCHANGE."
+  deleted: "\x0303✔\x03 Missatge #%index% esborrat."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  not_found: "\x0304✗\x03 Missatge #%index% no trobat."
+
+ignore:
+  syntax: "IGNORE {ADD|DEL|LIST} [#channel] [nickname]"
+  short: "Gestionar la llista d'ignorats per a missatges."
+  help: "ADD afegeix un sobrenom a la vostra llista d'ignorats (o la del canal); DEL el treu; LIST mostra la llista. Per a canals, ADD/DEL requereixen MEMOCHANGE."
+  add:
+    syntax: "IGNORE ADD [#channel] <nickname>"
+    short: "Afegir sobrenom a la llista d'ignorats."
+    help: "No s'acceptaran missatges d'aquest sobrenom per a la vostra bústia (o la del canal)."
+  del:
+    syntax: "IGNORE DEL [#channel] <nickname>"
+    short: "Treure sobrenom de la llista d'ignorats."
+    help: "Treu el sobrenom de la llista d'ignorats."
+  list:
+    syntax: "IGNORE LIST [#channel]"
+    short: "Llistar els sobrenoms ignorats."
+    help: "Mostra la llista de sobrenoms que vós (o el canal) ignoreu per a missatges."
+  added: "\x0303✔\x03 \x02%nickname%\x02 afegit a la llista d'ignorats."
+  removed: "\x0303✔\x03 \x02%nickname%\x02 tret de la llista d'ignorats."
+  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 ja és a la llista d'ignorats."
+  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 no és a la llista d'ignorats."
+  nick_not_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  limit_reached_nick: "\x0304✗\x03 Límit de la llista d'ignorats assolit per al vostre sobrenom (màx. \x02%limit%\x02)."
+  limit_reached_channel: "\x0304✗\x03 Límit de la llista d'ignorats assolit per a \x02%channel%\x02 (màx. \x02%limit%\x02)."
+  list_empty: "\x0307ℹ\x03 La llista d'ignorats és buida."
+  list_header: "\x02\x0307Llista d'ignorats:\x03\x0F"
+  list_footer: "\x0314─────────────────────────────\x03"
+
+enable:
+  syntax: "ENABLE [#channel]"
+  short: "Activar la recepció de missatges."
+  help: "Activa la recepció de missatges per al vostre sobrenom o, per a canals, només el fundador pot activar."
+  enabled_nick: "\x0303✔\x03 Servei de missatges activat per al vostre sobrenom."
+  enabled_channel: "\x0303✔\x03 Servei de missatges activat per al canal \x02%channel%\x02."
+  already_enabled_nick: "\x0307ℹ\x03 El servei de missatges ja està activat per al vostre sobrenom."
+  already_enabled_channel: "\x0307ℹ\x03 El servei de missatges ja està activat per a \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  founder_only: "\x0304✗\x03 Només el fundador del canal pot activar els missatges per a \x02%channel%\x02."
+
+disable:
+  syntax: "DISABLE [#channel]"
+  short: "Desactivar la recepció de missatges."
+  help: "Desactiva la recepció de missatges per al vostre sobrenom o canal. Per a canals, només el fundador pot desactivar."
+  disabled_nick: "\x0303✔\x03 Servei de missatges desactivat per al vostre sobrenom."
+  disabled_channel: "\x0303✔\x03 Servei de missatges desactivat per al canal \x02%channel%\x02."
+  already_disabled_nick: "\x0307ℹ\x03 El servei de missatges ja està desactivat per al vostre sobrenom."
+  already_disabled_channel: "\x0307ℹ\x03 El servei de missatges ja està desactivat per a \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  founder_only: "\x0304✗\x03 Només el fundador del canal pot desactivar els missatges per a \x02%channel%\x02."
+
+help:
+  syntax: "HELP [command [sub-option]]"
+  short: "Llistar les ordres o mostrar l'ajuda d'una ordre."
+  help: "Sense arguments llista totes les ordres. Utilitzeu \x0303HELP <command>\x03 per a l'ajuda completa."
+  header_title: "%bot%"
+  intro: "Servei de missatges per a sobrenoms i canals."
+  general_header: "\x02\x0314Ordres disponibles:\x03\x0F"
+  command_line: "  \x0307%command%\x03%description%"
+  subcommand_line: "  \x0307%command%\x03%description%"
+  options_header: "\x02\x0314Opcions:\x03\x0F"
+  general_footer: "Utilitzeu \x0303/msg %bot% HELP <command>\x03 per a més informació."
+  set_sub_footer: "Utilitzeu \x0303/msg %bot% HELP %command% <option>\x03 per a més informació."
+  syntax_label: "\x0307Sintaxi:\x03 \x02%syntax%\x02"
+  footer: "\x0314─────────────────────────────\x03"
+  unknown_command: "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
+
+notify:
+  nick_pending: "Teniu \x02%count%\x02 missatge(s) no llegit(s). Per llistar-los: \x0309/msg %bot% LIST\x03"
+  channel_pending: "El canal \x02%channel%\x02 té \x02%count%\x02 missatge(s) no llegit(s). Utilitzeu \x0309/msg %bot% LIST %channel%\x03 per llistar-los."

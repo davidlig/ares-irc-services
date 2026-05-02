@@ -1,0 +1,518 @@
+# ChanServ translations — Catalan
+# Domain: chanserv
+
+unknown_command: "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:         "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
+  oper_only:      "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
+  not_identified: "\x0304✗\x03 No esteu identificat. Utilitzeu \x0303/msg %nickserv% IDENTIFY\x03."
+  invalid_channel: "\x0304✗\x03 Nom de canal no vàlid. Utilitzeu \x02#channel\x02."
+  channel_not_registered: "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  generic:        "\x0304✗\x03 S'ha produït un error. Torneu-ho a provar."
+  nick_not_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
+  insufficient_access: "\x0304✗\x03 Accés insuficient per a \x02%operation%\x02 al canal \x02%channel%\x02."
+  mail_failed: "\x0304✗\x03 No s'ha pogut enviar el correu electrònic. Torneu-ho a provar més tard."
+
+register:
+  syntax:           "REGISTER <#channel> <description>"
+  short:            "Registrar un canal."
+  help:             "Registreu i associeu un canal al vostre sobrenom. Heu d'estar identificat amb %nickserv%."
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."
+  channel_not_on_network: "\x0304✗\x03 El canal \x02%channel%\x02 no existeix a la xarxa."
+  limit_exceeded: "\x0304✗\x03 Heu assolit el màxim de %max% canals registrats."
+  throttled: "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de registrar un altre canal."
+
+info:
+  syntax:           "INFO <#channel>"
+  short:            "Mostrar la informació del canal."
+  help:             "Mostra el fundador, la data de registre, el successor, l'URL, el correu electrònic, la descripció, el darrer ús, el tema i les opcions (TOPICLOCK, MLOCK, SECURE)."
+  header:          "\x02Informació del canal \x0307%channel%\x03:\x02"
+  footer:          "\x0314─────────────────────────────\x03"
+  founder:         "  \x0314Fundador\x03      : \x02%nickname%\x02"
+  registered:      "  \x0314Registrat\x03     : %date%"
+  successor:       "  \x0314Successor\x03     : \x02%nickname%\x02"
+  description:     "  \x0314Descripció\x03    : %desc%"
+  url:             "  \x0314URL\x03           : %url%"
+  email:           "  \x0314Correu\x03        : %email%"
+  last_used:       "  \x0314Darrer ús\x03     : %date%"
+  topic:           "  \x0314Darrer tema\x03   : %topic%"
+  topic_set_by:    "  \x0314Tema posat per\x03 : %nickname%"
+  options:         "  \x0314Opcions\x03       : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  no_expire:       "  \x0314Mai expira\x03    : Sí"
+  mlock_modes:     "  \x0314Bloqueig de modes\x03: %modes%"
+  suspended_status: "  \x0314Estat\x03         : \x0304Suspès\x03"
+  suspended_reason: "  \x0314Motiu\x03         : %reason%"
+  suspended_until:  "  \x0314Acaba el\x03       : %date%"
+  suspended_permanent: "  \x0314Acaba el\x03       : Permanent"
+  forbidden_status: "  \x0314Estat\x03        : \x0304Prohibit\x03"
+  forbidden_reason: "  \x0314Motiu\x03        : %reason%"
+
+help:
+  syntax:           "HELP [command [sub-option]]"
+  short:            "Llistar les ordres o mostrar l'ajuda d'una ordre."
+  help:             "Sense arguments llista totes les ordres. Utilitzeu \x0303HELP <command>\x03 per a l'ajuda completa, o \x0303HELP <command> <option>\x03 per a les subopcions de SET."
+  header_title:     "%bot%"
+  intro:            "Servei de registre i gestió de canals per a la xarxa IRC."
+  general_header:   "\x02\x0314Ordres disponibles:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Opcions:\x03\x0F"
+  general_footer:   "Utilitzeu \x0303/msg %bot% HELP <command>\x03 per a més informació."
+  set_sub_footer:   "Utilitzeu \x0303/msg %bot% HELP %command% <option>\x03 per a més informació."
+  syntax_label:     "\x0307Sintaxi:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "NOTA: Els canals \x0304\x1Fno utilitzats\x0F durant més de %days% dies s'eliminen automàticament."
+  unknown_command:  "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
+  ircop_header:     "\x02\x0314Ordres disponibles per a IRCOPS:\x03\x0F"
+  suboptions:       "Subopcions:"
+
+op:
+  syntax:           "OP <#channel> <nickname>"
+  short:            "Donar el mode d'operador de canal."
+  help:             "Donar el mode d'operador de canal."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha donat l'estat d'operador de canal."
+  user_not_on_channel: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no és a la xarxa."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 dona \x0304%mode%\x03 a \x0314%to%\x03"
+
+deop:
+  syntax:           "DEOP <#channel> <nickname>"
+  short:            "Treure el mode d'operador de canal."
+  help:             "Treure el mode d'operador de canal."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret l'op."
+
+secure:
+  requires_access: "\x0304✗\x03 Amb SECURE activat, \x02%nickname%\x02 ha de ser a la llista d'accés per rebre un rang."
+  requires_min_level: "\x0304✗\x03 Amb SECURE activat, \x02%nickname%\x02 ha de tenir almenys el nivell \x02%level%\x02 per rebre \x02%mode%\x02."
+
+set:
+  syntax:           "SET <#channel> <option> [value]"
+  short:            "Canviar les opcions del canal."
+  help:             "Canviar les opcions del canal. Utilitzeu \x0303HELP SET <option>\x03 per a cadascuna: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  unknown_option:    "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Utilitzeu una de: %options%."
+  founder:
+    syntax:         "SET <#channel> FOUNDER <nickname> [token]"
+    short:          "Transferir el canal a un altre sobrenom registrat."
+    help:           "Sense token: envia un token al correu del fundador actual. Amb token: completa la transferència."
+    token_sent:     "\x0303✔\x03 S'ha enviat un token de canvi de fundador a %email_hint%."
+    invalid_token:  "\x0304✗\x03 Token no vàlid o expirat."
+    updated:        "\x0303✔\x03 El fundador s'ha canviat a \x02%nickname%\x02."
+    no_email:       "\x0304✗\x03 El fundador actual no té cap correu electrònic establert. No es pot enviar el token."
+    throttled:      "\x0304✗\x03 Espereu abans de sol·licitar un altre token."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 ha d'estar registrat i activat."
+    suspended:         "\x0304✗\x03 \x02%nickname%\x02 està suspès i no es pot establir com a fundador."
+    cannot_be_self:   "\x0304✗\x03 El nou fundador no pot ser el fundador actual."
+    cannot_be_successor: "\x0304✗\x03 El nou fundador no pot ser el successor del canal."
+    limit_exceeded: "\x0304✗\x03 \x02%nickname%\x02 ha assolit el màxim de %max% canals registrats."
+    notice_channel:   "\x02%from%\x02 assigna \x02%nickname%\x02 com a fundador del canal."
+  successor:
+    syntax:         "SET <#channel> SUCCESSOR [nickname]"
+    short:          "Establir el successor del canal."
+    help:           "Estableix un sobrenom com a successor del canal. Ometeu el sobrenom per esborrar. El sobrenom ha d'estar registrat i activat."
+    cleared:        "\x0303✔\x03 S'ha esborrat el successor."
+    updated:        "\x0303✔\x03 S'ha establert el successor com a \x02%nickname%\x02."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 ha d'estar registrat i activat."
+    suspended:      "\x0304✗\x03 \x02%nickname%\x02 està suspès i no es pot establir com a successor."
+    cannot_be_founder: "\x0304✗\x03 El fundador no es pot establir com a successor."
+    notice_channel:   "\x02%from%\x02 assigna \x02%nickname%\x02 com a successor del canal."
+    notice_channel_cleared: "\x02%from%\x02 ha esborrat el successor del canal."
+  desc:
+    syntax:         "SET <#channel> DESC <description>"
+    short:          "Canviar la descripció del canal."
+    help:           "Canviar la descripció del canal (obligatòria)."
+    updated:        "\x0303✔\x03 Descripció actualitzada."
+  url:
+    syntax:         "SET <#channel> URL [url]"
+    short:          "Establir l'URL del canal."
+    help:           "Canviar el lloc web del canal (URL). Ometeu l'url per esborrar."
+    updated:        "\x0303✔\x03 URL actualitzat."
+    cleared:        "\x0303✔\x03 URL esborrat."
+  email:
+    syntax:         "SET <#channel> EMAIL <email|none>"
+    short:          "Establir el correu electrònic del canal."
+    help:           "Canviar l'adreça de correu electrònic del canal. Utilitzeu \x02none\x02 per esborrar."
+    updated:        "\x0303✔\x03 Correu electrònic actualitzat."
+    cleared:        "\x0303✔\x03 Correu electrònic esborrat."
+  entrymsg:
+    syntax:         "SET <#channel> ENTRYMSG <message|none>"
+    short:          "Establir el missatge d'entrada del canal."
+    help:           "Establir el missatge que es mostra quan els usuaris s'uneixen al canal (NOTICE). Utilitzeu \x02none\x02 per esborrar."
+    updated:        "\x0303✔\x03 Missatge d'entrada actualitzat."
+    cleared:        "\x0303✔\x03 Missatge d'entrada esborrat."
+    too_long:       "\x0304✗\x03 El missatge d'entrada no pot superar els %max% caràcters."
+  topiclock:
+    syntax:         "SET <#channel> TOPICLOCK {ON|OFF}"
+    short:          "Bloquejar el tema del canal."
+    help:           "Impedeix canviar el tema del canal. Quan està ON, el tema actual s'emmagatzema i es bloqueja."
+    on:             "\x0303✔\x03 El bloqueig de tema ara és ON."
+    off:            "\x0303✔\x03 El bloqueig de tema ara és OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa TOPICLOCK."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva TOPICLOCK."
+  mlock:
+    syntax:         "SET <#channel> MLOCK {ON|OFF}"
+    short:          "Bloquejar els modes del canal."
+    help:           "Bloqueja els modes actuals del canal (p. ex. +nt). Quan està ON, els modes no es poden canviar."
+    no_modes:       "sense modes"
+    on:             "\x0303✔\x03 MLOCK ara és ON (%modes%)."
+    off:            "\x0303✔\x03 MLOCK ara és OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa MLOCK (%modes%)."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva MLOCK."
+  secure:
+    syntax:         "SET <#channel> SECURE {ON|OFF}"
+    short:          "Exigir la llista d'accés per als rangs del canal."
+    help:           "Quan està ON, només els usuaris de la llista d'accés poden rebre rangs del canal (OP, VOICE, etc.)."
+    on:             "\x0303✔\x03 SECURE ara és ON."
+    off:            "\x0303✔\x03 SECURE ara és OFF."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activa el mode SECURE."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 desactiva el mode SECURE."
+
+access:
+  syntax:           "ACCESS <#channel> {ADD|DEL|LIST} [nickname] [level]"
+  short:            "Gestionar la llista d'accés."
+  help:             "LIST: mostra la llista d'accés (sobrenom i nivell per entrada). ADD: afegeix o actualitza el nivell d'un sobrenom (1-499). DEL: treu un sobrenom de la llista. Utilitzeu \x0303HELP ACCESS <option>\x03 per a cadascuna."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu LIST, ADD, o DEL."
+  level_range:      "\x0304✗\x03 El nivell d'accés ha d'estar entre %min% i %max%."
+  cannot_manage_level: "\x0304✗\x03 Només podeu gestionar sobrenoms amb nivell estrictament inferior al vostre."
+  founder_not_in_list: "\x0304✗\x03 El fundador no és a la llista d'accés."
+  max_entries:      "\x0304✗\x03 Màxim de %max% entrades d'accés per canal."
+  list:
+    syntax:         "ACCESS <#channel> LIST"
+    short:          "Llistar la llista d'accés (requereix nivell ACCESSLIST)."
+    help:           "Mostra el sobrenom i el nivell de cada entrada."
+    header:         "\x0303Llista d'accés de \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap entrada d'accés."
+    entry:          "  #%index%: %nickname% (nivell %level%)"
+  add:
+    syntax:         "ACCESS <#channel> ADD <nickname> <level>"
+    short:          "Afegir o actualitzar el nivell d'accés (requereix nivell ACCESSCHANGE)."
+    help:           "Nivell 1-499. Només podeu establir nivells inferiors al vostre."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 establert al nivell %level%."
+    notice_channel: "\x0303✔\x03 \x0302%from%\x03 estableix \x0314%to%\x03 al nivell \x0304%level%\x03"
+  del:
+    syntax:         "ACCESS <#channel> DEL <nickname>"
+    short:          "Treure de la llista d'accés (requereix nivell ACCESSCHANGE)."
+    help:           "Només podeu treure sobrenoms amb nivell inferior al vostre."
+    not_in_list:    "\x0304✗\x03 \x02%nickname%\x02 no és a la llista d'accés."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 tret de la llista d'accés."
+    notice_channel: "\x0304✗\x03 \x0302%from%\x03 treu \x0314%to%\x03 de la llista d'accés"
+
+delaccess:
+  syntax:           "DELACCESS <#channel>"
+  short:            "Treure el vostre propi accés d'un canal."
+  help:             "Treu la vostra entrada d'accés de la llista d'accés del canal. Heu d'estar identificat. El fundador no pot utilitzar aquesta ordre."
+  done:             "\x0303✔\x03 El vostre accés ha estat tret de \x02%channel%\x02."
+  not_in_list:      "\x0304✗\x03 No teniu accés a \x02%channel%\x02."
+  founder_not_in_access: "\x0304✗\x03 Sou el fundador de \x02%channel%\x02 i no sou a la llista d'accés."
+  notice_channel: "\x0304✗\x03 \x0302%nickname%\x03 treu el seu accés del canal"
+
+levels:
+  syntax:           "LEVELS <#channel> {LIST|SET|RESET} [level] [value]"
+  short:            "Configurar els nivells del canal."
+  help:             "LIST: mostra els requisits de nivell (OPDEOP, VOICEDEVOICE, etc.). SET: estableix el nivell mínim per a una acció (-1 a 499). RESET: restaura els valors predeterminats. Només el fundador per a SET/RESET."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu LIST, SET, o RESET."
+  unknown_key:      "\x0304✗\x03 Clau de nivell desconeguda \x02%key%\x02 o no compatible amb aquest IRCd."
+  value_range:      "\x0304✗\x03 El valor del nivell ha d'estar entre %min% i %max%."
+  list:
+    syntax:         "LEVELS <#channel> LIST"
+    short:          "Llistar els requisits de nivell."
+    help:           "Mostra cada clau de nivell i el seu valor (predeterminats si no s'han establert)."
+    header:         "\x0303Nivells\x03"
+  set:
+    syntax:         "LEVELS <#channel> SET <level> <value>"
+    short:          "Establir un requisit de nivell."
+    help:           "Valor -1 a 499. Només el fundador."
+    done:           "\x0303✔\x03 \x02%key%\x02 establert a %value%."
+  reset:
+    syntax:         "LEVELS <#channel> RESET"
+    short:          "Restablir tots els nivells als valors predeterminats."
+    help:           "Treu totes les modificacions. Només el fundador."
+    done:           "\x0303✔\x03 Tots els nivells restablerts als valors predeterminats."
+
+voice:
+  syntax:           "VOICE <#channel> <nickname>"
+  short:            "Donar el mode de veu al canal."
+  help:             "Donar el mode de veu al canal."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha donat veu."
+  user_not_on_channel: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no és a la xarxa."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 dona \x0304%mode%\x03 a \x0314%to%\x03"
+
+devoice:
+  syntax:           "DEVOICE <#channel> <nickname>"
+  short:            "Treure el mode de veu al canal."
+  help:             "Treure el mode de veu al canal."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret la veu."
+
+invite:
+  syntax:           "INVITE <#channel>"
+  short:            "Convidar-vos al canal."
+  help:             "Convidar-vos al canal."
+  done:             "\x0303✔\x03 Heu estat convidat a \x02%channel%\x02."
+  notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 es convida al canal."
+
+admin:
+  syntax:           "ADMIN <#channel> <nickname>"
+  short:            "Donar el mode d'administrador de canal."
+  help:             "Donar el mode d'administrador de canal. Només si l'IRCd admet +a."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha donat administrador de canal."
+  user_not_on_channel: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no és a la xarxa."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 dona \x0304%mode%\x03 a \x0314%to%\x03"
+  not_supported:    "\x0304✗\x03 Aquesta xarxa no admet el mode d'administrador de canal (+a)."
+
+deadmin:
+  syntax:           "DEADMIN <#channel> <nickname>"
+  short:            "Treure el mode d'administrador de canal."
+  help:             "Treure el mode d'administrador de canal."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret l'admin."
+
+halfop:
+  syntax:           "HALFOP <#channel> <nickname>"
+  short:            "Donar el mode de semioperador al canal."
+  help:             "Donar el mode de semioperador al canal. Només si l'IRCd admet +h."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha donat halfop."
+  user_not_on_channel: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no és a la xarxa."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 dona \x0304%mode%\x03 a \x0314%to%\x03"
+  not_supported:    "\x0304✗\x03 Aquesta xarxa no admet el mode de semioperador (+h)."
+
+dehalfop:
+  syntax:           "DEHALFOP <#channel> <nickname>"
+  short:            "Treure el mode de semioperador al canal."
+  help:             "Treure el mode de semioperador al canal."
+  done:             "\x0303✔\x03 A \x02%nickname%\x02 se li ha tret el halfop."
+
+akick:
+  syntax:           "AKICK <#channel> {ADD|DEL|LIST|ENFORCE} [mask] [expiry] [reason]"
+  short:            "Gestionar la llista d'auto-kick."
+  help:             "ADD <mask> [expiry] [reason]: afegir entrada. DEL <mask|num>: treure. LIST: llistar entrades. ENFORCE <mask>: fer kick als usuaris coincidents."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, o ENFORCE."
+  invalid_mask:     "\x0304✗\x03 Format de màscara no vàlid. Utilitzeu \x02nick!ident@host\x02 amb comodins (*)."
+  dangerous_mask:   "\x0304✗\x03 La màscara \x02%mask%\x02 és massa àmplia. Ha de contenir almenys 4 caràcters alfanumèrics."
+  protected_user:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té accés en aquest canal."
+  max_entries:      "\x0304✗\x03 Màxim de %max% entrades AKICK per canal."
+  add:
+    syntax:         "AKICK <#channel> ADD <mask> [expiry] [reason]"
+    short:          "Afegir entrada AKICK."
+    help:           "Caducitat necessària si s'especifica el motiu. Formats: 0 (permanent), 1d, 7d, 30d, 12h, 60m. Exemples: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'."
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 afegit."
+    already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 ja existeix."
+    notice_channel: "\x02%from%\x02 afegeix AKICK: \x02%mask%\x02 (%reason%)"
+  del:
+    syntax:         "AKICK <#channel> DEL <mask|number>"
+    short:          "Treure entrada AKICK."
+    help:           "Treure per màscara exacta o número d'entrada de LIST."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 no trobat."
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 tret."
+    notice_channel: "\x02%from%\x02 treu AKICK: \x02%mask%\x02"
+  list:
+    syntax:         "AKICK <#channel> LIST"
+    short:          "Llistar entrades AKICK."
+    help:           "Mostra la màscara, el motiu, la caducitat i qui l'ha afegit."
+    header:         "\x0303Llista AKICK de \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap entrada AKICK."
+    entry:          "  #%index% %mask% %reason% (per %nickname%, expira: %expiration%)"
+    no_reason:      "Sense motiu"
+    never_expires:  "mai"
+    unknown_creator: "desconegut"
+
+drop:
+  syntax:           "DROP <#channel>"
+  short:            "Eliminar un canal registrat."
+  help:             "Treu un canal registrat de la base de dades."
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat eliminat."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+
+suspend:
+  syntax:           "SUSPEND <#channel> <duration> <reason>"
+  short:            "Suspendre un canal."
+  help:             "Desactiva temporalment un canal registrat. Formats de durada: 0 = permanent, 1d, 12h, 60m.\nMentre està suspès, els modes del canal, l'accés i l'aplicació estan desactivats.\nAquesta ordre requereix el permís d'IRCop: chanserv.suspend"
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat suspès fins a \x02%duration%\x02."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  already_suspended: "\x0304✗\x03 El canal \x02%channel%\x02 ja està suspès."
+  invalid_duration:  "\x0304✗\x03 Durada no vàlida. Utilitzeu: 0 (permanent), 1d, 12h, o 60m."
+  permanent:         "Permanent"
+  channel_suspended: "\x0304✗\x03 El canal \x02%channel%\x02 està suspès i no es pot utilitzar."
+  channel_forbidden: "\x0304✗\x03 El canal \x02%channel%\x02 està prohibit i no es pot utilitzar."
+  notice_channel:    "\x0304⚠\x03 El canal ha estat suspès. Motiu: %reason%"
+
+unsuspend:
+  syntax:           "UNSUSPEND <#channel>"
+  short:            "Aixecar una suspensió de canal."
+  help:             "Reactiva un canal suspès, restaurant els seus modes i l'aplicació.\nAquesta ordre requereix el permís d'IRCop: chanserv.suspend"
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ja no està suspès."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  not_suspended:    "\x0304✗\x03 El canal \x02%channel%\x02 no està suspès."
+  reason_expired:   "suspensió expirada"
+
+# NOJOIN documentation for LEVELS:
+# NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
+# Default: -1 (disabled). Set to 0 to only allow registered users, 50 for level 50+, etc.
+
+nojoin:
+  reason: "restricció de nivell NOJOIN"
+
+# --- DEBUG CHANNEL -----------------------------------------------------------
+debug_channel:
+  kick_reason: "No esteu autoritzat a unir-vos a aquest canal."
+
+permissions:
+  chanserv.drop: "Eliminar un canal registrat (DROP)"
+  chanserv.suspend: "Suspendre o treure la suspensió d'un canal (SUSPEND/UNSUSPEND)"
+  chanserv.forbid: "Prohibir o treure la prohibició d'un canal (FORBID/UNFORBID)"
+  chanserv.noexpire: "Establir o treure la protecció contra l'expiració d'un canal (NOEXPIRE)"
+  chanserv.history: "Veure i gestionar l'historial d'accions del canal (HISTORY)"
+  chanserv.clearaccess: "Esborrar tota la llista d'accés d'un canal (CLEARACCESS)"
+  chanserv.clearusers: "Fer kick a tots els usuaris d'un canal (CLEARUSERS)"
+
+noexpire:
+  syntax:           "NOEXPIRE <#channel> {ON|OFF}"
+  short:            "Establir o treure la protecció contra l'expiració d'un canal."
+  help:             |
+    Controla si un canal expirarà per inactivitat.
+    Quan està ON, el canal no expira mai independentment de la darrera activitat.
+    Quan està OFF, s'apliquen les regles normals d'expiració.
+
+    Només els IRCops amb el permís 'chanserv.noexpire' poden utilitzar aquesta ordre.
+
+    Sintaxi: NOEXPIRE <#channel> {ON|OFF}
+    Exemples:
+      NOEXPIRE #Important ON
+      NOEXPIRE #Important OFF
+  success_on:       "\x0303✔\x03 El canal \x02%channel%\x02 ara està protegit contra l'expiració."
+  success_off:      "\x0303✔\x03 El canal \x02%channel%\x02 ara expirarà normalment."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  forbidden:         "\x0304✗\x03 El canal \x02%channel%\x02 està prohibit."
+  suspended:         "\x0304✗\x03 El canal \x02%channel%\x02 està suspès."
+
+forbid:
+  syntax:           "FORBID <#channel> <reason>"
+  short:             "Prohibir l'ús d'un canal."
+  help:              "Impedeix que ningú pugui utilitzar un canal.\nSi el canal està registrat actualment, s'eliminarà primer.\nTots els usuaris del canal rebran kick i el canal es bloquejarà.\nAquesta ordre requereix el permís d'IRCop: chanserv.forbid"
+  reason_required:  "\x0304✗\x03 Heu d'especificar un motiu."
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat prohibit."
+  updated:          "\x0303✔\x03 El motiu de prohibició del canal \x02%channel%\x02 ha estat actualitzat."
+  channel_forbidden: "\x0304✗\x03 El canal \x02%channel%\x02 està prohibit i no es pot utilitzar."
+
+unforbid:
+  syntax:           "UNFORBID <#channel>"
+  short:             "Treure una prohibició de canal."
+  help:              "Treu una prohibició de canal, permetent que el canal es pugui registrar de nou.\nAquesta ordre requereix el permís d'IRCop: chanserv.forbid"
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ja no està prohibit."
+  not_forbidden:    "\x0304✗\x03 El canal \x02%channel%\x02 no està prohibit."
+
+debug:
+  action_message: "%operator% executa l'ordre %command% sobre %target%. %reason%"
+  action_with_option: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%. %reason%"
+  action_with_value: "%operator% executa l'ordre %command% sobre %target%. Opció: %option%=%value%. %reason%"
+  founder_action: "Acció de nivell de fundador"
+  prefix_reason:  "Motiu: %reason%"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <#channel> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Veure o gestionar l'historial d'accions del canal."
+  help:             |
+    Gestiona l'historial d'accions d'un canal.
+    Només els IRCops amb el permís 'chanserv.history' poden utilitzar aquesta ordre.
+
+    Subordres:
+      ADD   — Afegir una entrada manual a l'historial del canal.
+      DEL   — Esborrar una entrada específica per ID.
+      VIEW  — Veure les entrades de l'historial (paginat, 3 per pàgina).
+      CLEAR — Esborrar totes les entrades de l'historial del canal.
+
+    Sintaxi: HISTORY <#channel> {ADD|DEL|VIEW|CLEAR} [arguments]
+    Exemples:
+      HISTORY #channel VIEW
+      HISTORY #channel VIEW 2
+      HISTORY #channel VIEW ALL
+      HISTORY #channel ADD Sospita d'intent de takeover
+      HISTORY #channel DEL 42
+      HISTORY #channel CLEAR
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  unknown_operator: "(desconegut)"
+
+  add:
+    syntax:     "HISTORY <#channel> ADD <message>"
+    short:      "Afegir una entrada manual a l'historial."
+    help:        |
+      Afegeix una entrada manual a l'historial del canal.
+    success:    "\x0303✔\x03 Entrada d'historial afegida per a \x02%channel%\x02."
+
+  del:
+    syntax:     "HISTORY <#channel> DEL <id>"
+    short:      "Esborrar una entrada de l'historial per ID."
+    success:    "\x0303✔\x03 Entrada d'historial \x02%id%\x02 esborrada."
+    not_found:  "\x0304✗\x03 Entrada d'historial \x02%id%\x02 no trobada."
+    invalid_id: "\x0304✗\x03 ID d'entrada no vàlid: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <#channel> VIEW [PAGE|ALL]"
+    short:      "Veure l'historial d'accions del canal."
+    header:     "\x02Historial de \x0307%channel%\x03\x02 (mostrant %start%-%end% de %total%):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 per %operator% — %message%"
+    extra:       "  Extra \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 No s'han trobat entrades d'historial per a \x02%channel%\x02."
+    page_hint:   "Utilitzeu \x0303HISTORY %channel% VIEW %next_page%\x03 per a més entrades."
+
+  clear:
+    syntax:     "HISTORY <#channel> CLEAR"
+    short:      "Esborrar totes les entrades d'historial d'un canal."
+    success:    "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'historial de \x02%channel%\x02."
+
+# --- History message translations ---
+history.message:
+  unsuspend:                  "Suspensió aixecada"
+  founder_changed:            "Fundador canviat de %old_founder% a %new_founder%"
+  successor_changed:          "Successor canviat de %old_successor% a %new_successor%"
+  successor_cleared:          "Successor esborrat"
+  access_add:                 "Accés afegit per a %target_nickname% (nivell %level%)"
+  access_del:                 "Accés tret per a %target_nickname%"
+  akick_add:                  "AKICK afegit: %mask%"
+  akick_del:                  "AKICK tret: %mask%"
+
+# --- History extra field translations ---
+history.extra:
+  duration:      "Durada: %value%"
+  expires_at:    "Expira: %value%"
+  old_founder:     "Fundador anterior: %value%"
+  new_founder:     "Nou fundador: %value%"
+  old_successor:   "Successor anterior: %value%"
+  new_successor:   "Nou successor: %value%"
+  target_nickname: "Destinatari: %value%"
+  level:           "Nivell: %value%"
+  mask:            "Màscara: %value%"
+  ip:            "IP: %value%"
+  host:          "Amfitrió: %value%"
+
+# --- CLEARACCESS (IRCop) ---------------------------------------------------------
+clearaccess:
+  syntax:           "CLEARACCESS <#channel>"
+  short:            "Esborrar tota la llista d'accés d'un canal."
+  help:             |
+    Treu totes les entrades d'accés de la llista d'accés d'un canal.
+    Aquesta acció és irreversible i no es pot desfer.
+    Només els IRCops amb el permís 'chanserv.clearaccess' poden utilitzar aquesta ordre.
+
+    Sintaxi: CLEARACCESS <#channel>
+    Exemples:
+      CLEARACCESS #channel
+  success:          "\x0303✔\x03 S'han esborrat \x02%count%\x02 entrades d'accés de \x02%channel%\x02."
+  empty:            "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap entrada d'accés."
+
+clearusers:
+  syntax:           "CLEARUSERS <#channel> [reason]"
+  short:            "Fer kick a tots els usuaris d'un canal."
+  help:             |
+    Fa kick a tots els usuaris del canal especificat.
+    Aquesta és una ordre exclusiva per a IRCops utilitzada per a la gestió de canals.
+    Es pot proporcionar un motiu opcional; si s'omet, s'utilitza un motiu predeterminat.
+
+    Només els IRCops amb el permís 'chanserv.clearusers' poden utilitzar aquesta ordre.
+
+    Sintaxi: CLEARUSERS <#channel> [reason]
+    Exemples:
+      CLEARUSERS #channel
+      CLEARUSERS #channel flooding
+  not_on_network:   "\x0304✗\x03 El canal \x02%channel%\x02 no és actualment a la xarxa."
+  empty:            "\x0307ℹ\x03 El canal \x02%channel%\x02 no té cap usuari per fer kick."
+  success:          "\x0303✔\x03 S'ha fet kick a \x02%count%\x02 usuari(s) de \x02%channel%\x02."
+  default_reason:   "ordre CLEARUSERS"

@@ -1,0 +1,518 @@
+# ChanServ translations — Romanian
+# Domain: chanserv
+
+unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:         "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
+  oper_only:      "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
+  not_identified: "\x0304✗\x03 Nu sunteți identificat. Folosiți \x0303/msg %nickserv% IDENTIFY\x03."
+  invalid_channel: "\x0304✗\x03 Nume de canal invalid. Folosiți \x02#canal\x02."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  generic:        "\x0304✗\x03 A apărut o eroare. Vă rugăm să încercați din nou."
+  nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
+  insufficient_access: "\x0304✗\x03 Acces insuficient pentru \x02%operation%\x02 pe canalul \x02%channel%\x02."
+  mail_failed: "\x0304✗\x03 Nu s-a putut trimite e-mailul. Vă rugăm să încercați mai târziu."
+
+register:
+  syntax:           "REGISTER <#canal> <descriere>"
+  short:            "Înregistrați un canal."
+  help:             "Înregistrați și asociați un canal cu porecla dumneavoastră. Trebuie să fiți identificat cu %nickserv%."
+  success:          "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
+  channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu există în rețea."
+  limit_exceeded: "\x0304✗\x03 Ați atins limita maximă de %max% canale înregistrate."
+  throttled: "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a înregistra alt canal."
+
+info:
+  syntax:           "INFO <#canal>"
+  short:            "Afișați informațiile canalului."
+  help:             "Afișează fondatorul, data înregistrării, succesorul, URL-ul, e-mailul, descrierea, ultima utilizare, subiectul și opțiunile (TOPICLOCK, MLOCK, SECURE)."
+  header:          "\x02Informații pentru canalul \x0307%channel%\x03:\x02"
+  footer:          "\x0314─────────────────────────────\x03"
+  founder:         "  \x0314Fondator\x03       : \x02%nickname%\x02"
+  registered:      "  \x0314Înregistrat\x03    : %date%"
+  successor:       "  \x0314Succesor\x03      : \x02%nickname%\x02"
+  description:     "  \x0314Descriere\x03      : %desc%"
+  url:             "  \x0314URL\x03            : %url%"
+  email:           "  \x0314E-mail\x03         : %email%"
+  last_used:       "  \x0314Ultima folosire\x03 : %date%"
+  topic:           "  \x0314Ultimul subiect\x03 : %topic%"
+  topic_set_by:    "  \x0314Subiect setat de\x03 : %nickname%"
+  options:         "  \x0314Opțiuni\x03        : TOPICLOCK %topiclock%, MLOCK %mlock%, SECURE %secure%"
+  no_expire:       "  \x0314Nu expiră niciodată\x03 : Da"
+  mlock_modes:     "  \x0314Blocare moduri\x03  : %modes%"
+  suspended_status: "  \x0314Stare\x03           : \x0304Suspendat\x03"
+  suspended_reason: "  \x0314Motiv\x03           : %reason%"
+  suspended_until:  "  \x0314Se termină la\x03    : %date%"
+  suspended_permanent: "  \x0314Se termină la\x03    : Permanent"
+  forbidden_status: "  \x0314Stare\x03          : \x0304Interzis\x03"
+  forbidden_reason: "  \x0314Motiv\x03          : %reason%"
+
+help:
+  syntax:           "HELP [comandă [sub-opțiune]]"
+  short:            "Listați comenzile sau afișați ajutor pentru o comandă."
+  help:             "Fără argumente listează toate comenzile. Folosiți \x0303HELP <comandă>\x03 pentru ajutor complet sau \x0303HELP <comandă> <opțiune>\x03 pentru sub-opțiunile SET."
+  header_title:     "%bot%"
+  intro:            "Serviciu de înregistrare și administrare a canalelor pentru rețeaua IRC."
+  general_header:   "\x02\x0314Comenzi disponibile:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Opțiuni:\x03\x0F"
+  general_footer:   "Folosiți \x0303/msg %bot% HELP <comandă>\x03 pentru mai multe informații."
+  set_sub_footer:   "Folosiți \x0303/msg %bot% HELP %command% <opțiune>\x03 pentru mai multe informații."
+  syntax_label:     "\x0307Sintaxă:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "NOTĂ: Canalele \x0304\x1Fnefolosite\x0F mai mult de %days% zile sunt eliminate automat."
+  unknown_command:  "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
+  ircop_header:     "\x02\x0314Comenzi disponibile pentru IRCOPS:\x03\x0F"
+  suboptions:       "Sub-opțiuni:"
+
+op:
+  syntax:           "OP <#canal> <poreclă>"
+  short:            "Acordați modul de operator de canal."
+  help:             "Acordați modul de operator de canal."
+  done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a acordat statutul de operator de canal."
+  user_not_on_channel: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu se află în rețea."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 acordă \x0304%mode%\x03 lui \x0314%to%\x03"
+
+deop:
+  syntax:           "DEOP <#canal> <poreclă>"
+  short:            "Retrageți modul de operator de canal."
+  help:             "Retrageți modul de operator de canal."
+  done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras statutul de operator."
+
+secure:
+  requires_access: "\x0304✗\x03 Cu SECURE activat, \x02%nickname%\x02 trebuie să fie în lista de acces pentru a primi un rang."
+  requires_min_level: "\x0304✗\x03 Cu SECURE activat, \x02%nickname%\x02 trebuie să aibă cel puțin nivelul \x02%level%\x02 pentru a primi \x02%mode%\x02."
+
+set:
+  syntax:           "SET <#canal> <opțiune> [valoare]"
+  short:            "Modificați opțiunile canalului."
+  help:             "Modificați opțiunile canalului. Folosiți \x0303HELP SET <opțiune>\x03 pentru fiecare: FOUNDER, SUCCESSOR, DESC, URL, EMAIL, ENTRYMSG, TOPICLOCK, MLOCK, SECURE."
+  unknown_option:    "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Folosiți una dintre: %options%."
+  founder:
+    syntax:         "SET <#canal> FOUNDER <poreclă> [token]"
+    short:          "Transferați canalul către o altă poreclă înregistrată."
+    help:           "Fără token: trimite un token la e-mailul fondatorului actual. Cu token: finalizează transferul."
+    token_sent:     "\x0303✔\x03 Un token de schimbare a fondatorului a fost trimis la %email_hint%."
+    invalid_token:  "\x0304✗\x03 Token invalid sau expirat."
+    updated:        "\x0303✔\x03 Fondatorul a fost schimbat în \x02%nickname%\x02."
+    no_email:       "\x0304✗\x03 Fondatorul actual nu are un e-mail setat. Nu se poate trimite tokenul."
+    throttled:      "\x0304✗\x03 Vă rugăm să așteptați înainte de a solicita alt token."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 trebuie să fie înregistrată și activată."
+    suspended:         "\x0304✗\x03 \x02%nickname%\x02 este suspendată și nu poate fi setată ca fondator."
+    cannot_be_self:   "\x0304✗\x03 Noul fondator nu poate fi fondatorul actual."
+    cannot_be_successor: "\x0304✗\x03 Noul fondator nu poate fi succesorul canalului."
+    limit_exceeded: "\x0304✗\x03 \x02%nickname%\x02 a atins limita maximă de %max% canale înregistrate."
+    notice_channel:   "\x02%from%\x02 desemnează \x02%nickname%\x02 ca fondator al canalului."
+  successor:
+    syntax:         "SET <#canal> SUCCESSOR [poreclă]"
+    short:          "Setați succesorul canalului."
+    help:           "Setează o poreclă ca succesor al canalului. Omiteți porecla pentru a șterge. Porecla trebuie să fie înregistrată și activată."
+    cleared:        "\x0303✔\x03 Succesorul a fost șters."
+    updated:        "\x0303✔\x03 Succesorul a fost setat la \x02%nickname%\x02."
+    must_be_registered: "\x0304✗\x03 \x02%nickname%\x02 trebuie să fie înregistrată și activată."
+    suspended:      "\x0304✗\x03 \x02%nickname%\x02 este suspendată și nu poate fi setată ca succesor."
+    cannot_be_founder: "\x0304✗\x03 Fondatorul nu poate fi setat ca succesor."
+    notice_channel:   "\x02%from%\x02 desemnează \x02%nickname%\x02 ca succesor al canalului."
+    notice_channel_cleared: "\x02%from%\x02 a șters succesorul canalului."
+  desc:
+    syntax:         "SET <#canal> DESC <descriere>"
+    short:          "Schimbați descrierea canalului."
+    help:           "Schimbați descrierea canalului (obligatorie)."
+    updated:        "\x0303✔\x03 Descrierea a fost actualizată."
+  url:
+    syntax:         "SET <#canal> URL [url]"
+    short:          "Setați URL-ul canalului."
+    help:           "Schimbați site-ul web al canalului (URL). Omiteți url-ul pentru a șterge."
+    updated:        "\x0303✔\x03 URL-ul a fost actualizat."
+    cleared:        "\x0303✔\x03 URL-ul a fost șters."
+  email:
+    syntax:         "SET <#canal> EMAIL <e-mail|none>"
+    short:          "Setați e-mailul canalului."
+    help:           "Schimbați adresa de e-mail a canalului. Folosiți \x02none\x02 pentru a șterge."
+    updated:        "\x0303✔\x03 E-mailul a fost actualizat."
+    cleared:        "\x0303✔\x03 E-mailul a fost șters."
+  entrymsg:
+    syntax:         "SET <#canal> ENTRYMSG <mesaj|none>"
+    short:          "Setați mesajul de intrare al canalului."
+    help:           "Setați mesajul afișat atunci când utilizatorii intră pe canal (NOTICE). Folosiți \x02none\x02 pentru a șterge."
+    updated:        "\x0303✔\x03 Mesajul de intrare a fost actualizat."
+    cleared:        "\x0303✔\x03 Mesajul de intrare a fost șters."
+    too_long:       "\x0304✗\x03 Mesajul de intrare nu poate depăși %max% caractere."
+  topiclock:
+    syntax:         "SET <#canal> TOPICLOCK {ON|OFF}"
+    short:          "Blocați subiectul canalului."
+    help:           "Împiedică schimbarea subiectului canalului. Când este ON, subiectul actual este stocat și blocat."
+    on:             "\x0303✔\x03 Blocarea subiectului este acum ACTIVATĂ."
+    off:            "\x0303✔\x03 Blocarea subiectului este acum DEZACTIVATĂ."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activează TOPICLOCK."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 dezactivează TOPICLOCK."
+  mlock:
+    syntax:         "SET <#canal> MLOCK {ON|OFF}"
+    short:          "Blocați modurile canalului."
+    help:           "Blochează modurile actuale ale canalului (de ex. +nt). Când este ON, modurile nu pot fi schimbate."
+    no_modes:       "fără moduri"
+    on:             "\x0303✔\x03 MLOCK este acum ACTIVAT (%modes%)."
+    off:            "\x0303✔\x03 MLOCK este acum DEZACTIVAT."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activează MLOCK (%modes%)."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 dezactivează MLOCK."
+  secure:
+    syntax:         "SET <#canal> SECURE {ON|OFF}"
+    short:          "Solicitați lista de acces pentru ranguri de canal."
+    help:           "Când este ON, doar utilizatorii din lista de acces pot primi ranguri de canal (OP, VOICE etc.)."
+    on:             "\x0303✔\x03 SECURE este acum ACTIVAT."
+    off:            "\x0303✔\x03 SECURE este acum DEZACTIVAT."
+    notice_on:      "\x0303✔\x03 \x0302%nickname%\x03 activează modul SECURE."
+    notice_off:     "\x0304✗\x03 \x0302%nickname%\x03 dezactivează modul SECURE."
+
+access:
+  syntax:           "ACCESS <#canal> {ADD|DEL|LIST} [poreclă] [nivel]"
+  short:            "Gestionați lista de acces."
+  help:             "LIST: afișează lista de acces (poreclă și nivel per intrare). ADD: adaugă sau actualizează nivelul unei porecle (1-499). DEL: elimină o poreclă din listă. Folosiți \x0303HELP ACCESS <opțiune>\x03 pentru fiecare."
+  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți LIST, ADD sau DEL."
+  level_range:      "\x0304✗\x03 Nivelul de acces trebuie să fie între %min% și %max%."
+  cannot_manage_level: "\x0304✗\x03 Puteți gestiona doar porecle cu nivel strict inferior propriului nivel."
+  founder_not_in_list: "\x0304✗\x03 Fondatorul nu se află în lista de acces."
+  max_entries:      "\x0304✗\x03 Maxim %max% intrări de acces per canal."
+  list:
+    syntax:         "ACCESS <#canal> LIST"
+    short:          "Listați lista de acces (necesită nivel ACCESSLIST)."
+    help:           "Afișează porecla și nivelul pentru fiecare intrare."
+    header:         "\x0303Lista de acces pentru \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are intrări de acces."
+    entry:          "  #%index%: %nickname% (nivel %level%)"
+  add:
+    syntax:         "ACCESS <#canal> ADD <poreclă> <nivel>"
+    short:          "Adăugați sau actualizați nivelul de acces (necesită nivel ACCESSCHANGE)."
+    help:           "Nivel 1-499. Puteți seta doar niveluri inferioare propriului nivel."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 setat la nivelul %level%."
+    notice_channel: "\x0303✔\x03 \x0302%from%\x03 setează \x0314%to%\x03 la nivelul \x0304%level%\x03"
+  del:
+    syntax:         "ACCESS <#canal> DEL <poreclă>"
+    short:          "Eliminați din lista de acces (necesită nivel ACCESSCHANGE)."
+    help:           "Puteți elimina doar porecle cu nivel inferior propriului nivel."
+    not_in_list:    "\x0304✗\x03 \x02%nickname%\x02 nu se află în lista de acces."
+    done:           "\x0303✔\x03 \x02%nickname%\x02 eliminat din lista de acces."
+    notice_channel: "\x0304✗\x03 \x0302%from%\x03 elimină \x0314%to%\x03 din lista de acces"
+
+delaccess:
+  syntax:           "DELACCESS <#canal>"
+  short:            "Eliminați propriul acces dintr-un canal."
+  help:             "Elimină intrarea dumneavoastră de acces din lista de acces a canalului. Trebuie să fiți identificat. Fondatorul nu poate folosi această comandă."
+  done:             "\x0303✔\x03 Accesul dumneavoastră a fost eliminat din \x02%channel%\x02."
+  not_in_list:      "\x0304✗\x03 Nu aveți acces în \x02%channel%\x02."
+  founder_not_in_access: "\x0304✗\x03 Sunteți fondatorul canalului \x02%channel%\x02 și nu vă aflați în lista de acces."
+  notice_channel: "\x0304✗\x03 \x0302%nickname%\x03 își elimină accesul din canal"
+
+levels:
+  syntax:           "LEVELS <#canal> {LIST|SET|RESET} [nivel] [valoare]"
+  short:            "Configurați nivelurile canalului."
+  help:             "LIST: afișează cerințele de nivel (OPDEOP, VOICEDEVOICE etc.). SET: setează nivelul minim pentru o acțiune (-1 până la 499). RESET: restabilește valorile implicite. Doar fondatorul pentru SET/RESET."
+  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți LIST, SET sau RESET."
+  unknown_key:      "\x0304✗\x03 Cheie de nivel necunoscută \x02%key%\x02 sau nesuportată de acest IRCd."
+  value_range:      "\x0304✗\x03 Valoarea nivelului trebuie să fie între %min% și %max%."
+  list:
+    syntax:         "LEVELS <#canal> LIST"
+    short:          "Listați cerințele de nivel."
+    help:           "Afișează fiecare cheie de nivel și valoarea sa (implicită dacă nu este setată)."
+    header:         "\x0303Niveluri\x03"
+  set:
+    syntax:         "LEVELS <#canal> SET <nivel> <valoare>"
+    short:          "Setați o cerință de nivel."
+    help:           "Valoare de la -1 la 499. Doar fondatorul."
+    done:           "\x0303✔\x03 \x02%key%\x02 setat la %value%."
+  reset:
+    syntax:         "LEVELS <#canal> RESET"
+    short:          "Resetați toate nivelurile la valorile implicite."
+    help:           "Elimină toate suprascrierile. Doar fondatorul."
+    done:           "\x0303✔\x03 Toate nivelurile au fost resetate la valorile implicite."
+
+voice:
+  syntax:           "VOICE <#canal> <poreclă>"
+  short:            "Acordați modul voice pe canal."
+  help:             "Acordați modul voice pe canal."
+  done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a acordat voice."
+  user_not_on_channel: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu se află în rețea."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 acordă \x0304%mode%\x03 lui \x0314%to%\x03"
+
+devoice:
+  syntax:           "DEVOICE <#canal> <poreclă>"
+  short:            "Retrageți modul voice pe canal."
+  help:             "Retrageți modul voice pe canal."
+  done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras voice-ul."
+
+invite:
+  syntax:           "INVITE <#canal>"
+  short:            "Invitați-vă pe canal."
+  help:             "Invitați-vă pe canal."
+  done:             "\x0303✔\x03 Ați fost invitat pe \x02%channel%\x02."
+  notice_channel:   "\x0303✔\x03 \x0302%nickname%\x03 se invită singur pe canal."
+
+admin:
+  syntax:           "ADMIN <#canal> <poreclă>"
+  short:            "Acordați modul de admin de canal."
+  help:             "Acordați modul de admin de canal. Doar dacă IRCd-ul suportă +a."
+  done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a acordat admin de canal."
+  user_not_on_channel: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu se află în rețea."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 acordă \x0304%mode%\x03 lui \x0314%to%\x03"
+  not_supported:    "\x0304✗\x03 Această rețea nu suportă modul admin de canal (+a)."
+
+deadmin:
+  syntax:           "DEADMIN <#canal> <poreclă>"
+  short:            "Retrageți modul de admin de canal."
+  help:             "Retrageți modul de admin de canal."
+  done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras adminul de canal."
+
+halfop:
+  syntax:           "HALFOP <#canal> <poreclă>"
+  short:            "Acordați modul de semi-operator pe canal."
+  help:             "Acordați modul de semi-operator pe canal. Doar dacă IRCd-ul suportă +h."
+  done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a acordat halfop."
+  user_not_on_channel: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu se află în rețea."
+  notice_grant:     "\x0303✔\x03 \x0302%from%\x03 acordă \x0304%mode%\x03 lui \x0314%to%\x03"
+  not_supported:    "\x0304✗\x03 Această rețea nu suportă modul halfop (+h)."
+
+dehalfop:
+  syntax:           "DEHALFOP <#canal> <poreclă>"
+  short:            "Retrageți modul de semi-operator pe canal."
+  help:             "Retrageți modul de semi-operator pe canal."
+  done:             "\x0303✔\x03 Lui \x02%nickname%\x02 i s-a retras halfopul."
+
+akick:
+  syntax:           "AKICK <#canal> {ADD|DEL|LIST|ENFORCE} [mască] [expirare] [motiv]"
+  short:            "Gestionați lista de auto-kick."
+  help:             "ADD <mască> [expirare] [motiv]: adaugă intrare. DEL <mască|număr>: elimină. LIST: listează intrările. ENFORCE <mască>: dă kick utilizatorilor corespunzători."
+  unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL, LIST sau ENFORCE."
+  invalid_mask:     "\x0304✗\x03 Format de mască invalid. Folosiți \x02poreclă!ident@host\x02 cu metacaractere (*)."
+  dangerous_mask:   "\x0304✗\x03 Masca \x02%mask%\x02 este prea largă. Trebuie să conțină cel puțin 4 caractere alfanumerice."
+  protected_user:   "\x0304✗\x03 Porecla \x02%nickname%\x02 are acces pe acest canal."
+  max_entries:      "\x0304✗\x03 Maxim %max% intrări AKICK per canal."
+  add:
+    syntax:         "AKICK <#canal> ADD <mască> [expirare] [motiv]"
+    short:          "Adăugați intrare AKICK."
+    help:           "Expirarea este obligatorie dacă se specifică motivul. Formate: 0 (permanent), 1d, 7d, 30d, 12h, 60m. Exemple: 'AKICK #c ADD *!*@* 0', 'AKICK #c ADD *!*@* 7d Spam'."
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 adăugat."
+    already_exists: "\x0304✗\x03 AKICK \x02%mask%\x02 există deja."
+    notice_channel: "\x02%from%\x02 adaugă AKICK: \x02%mask%\x02 (%reason%)"
+  del:
+    syntax:         "AKICK <#canal> DEL <mască|număr>"
+    short:          "Eliminați intrare AKICK."
+    help:           "Eliminați după masca exactă sau numărul intrării din LIST."
+    not_found:      "\x0304✗\x03 AKICK \x02%mask%\x02 nu a fost găsit."
+    done:           "\x0303✔\x03 AKICK \x02%mask%\x02 eliminat."
+    notice_channel: "\x02%from%\x02 elimină AKICK: \x02%mask%\x02"
+  list:
+    syntax:         "AKICK <#canal> LIST"
+    short:          "Listați intrările AKICK."
+    help:           "Afișează masca, motivul, expirarea și cine a adăugat."
+    header:         "\x0303Lista AKICK pentru \x02%channel%\x02\x03"
+    empty:          "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are intrări AKICK."
+    entry:          "  #%index% %mask% %reason% (de %nickname%, expiră: %expiration%)"
+    no_reason:      "Fără motiv"
+    never_expires:  "niciodată"
+    unknown_creator: "necunoscut"
+
+drop:
+  syntax:           "DROP <#canal>"
+  short:            "Eliminați un canal înregistrat."
+  help:             "Elimină un canal înregistrat din baza de date."
+  success:          "\x0303✔\x03 Canalul \x02%channel%\x02 a fost eliminat."
+  not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+
+suspend:
+  syntax:           "SUSPEND <#canal> <durată> <motiv>"
+  short:            "Suspendă un canal."
+  help:             "Dezactivează temporar un canal înregistrat. Formate de durată: 0 = permanent, 1d, 12h, 60m.\nCât timp este suspendat, modurile canalului, accesul și aplicarea regulilor sunt dezactivate.\nAceastă comandă necesită permisiunea IRCop: chanserv.suspend"
+  success:          "\x0303✔\x03 Canalul \x02%channel%\x02 a fost suspendat până la \x02%duration%\x02."
+  not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  already_suspended: "\x0304✗\x03 Canalul \x02%channel%\x02 este deja suspendat."
+  invalid_duration:  "\x0304✗\x03 Durată invalidă. Folosiți: 0 (permanent), 1d, 12h sau 60m."
+  permanent:         "Permanent"
+  channel_suspended: "\x0304✗\x03 Canalul \x02%channel%\x02 este suspendat și nu poate fi folosit."
+  channel_forbidden: "\x0304✗\x03 Canalul \x02%channel%\x02 este interzis și nu poate fi folosit."
+  notice_channel:    "\x0304⚠\x03 Canalul a fost suspendat. Motiv: %reason%"
+
+unsuspend:
+  syntax:           "UNSUSPEND <#canal>"
+  short:            "Anulați suspendarea unui canal."
+  help:             "Reactivează un canal suspendat, restaurându-i modurile și aplicarea regulilor.\nAceastă comandă necesită permisiunea IRCop: chanserv.suspend"
+  success:          "\x0303✔\x03 Canalul \x02%channel%\x02 nu mai este suspendat."
+  not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  not_suspended:    "\x0304✗\x03 Canalul \x02%channel%\x02 nu este suspendat."
+  reason_expired:   "suspendare expirată"
+
+# NOJOIN documentation for LEVELS:
+# NOJOIN: Minimum access level required to join channel. Users with level < NOJOIN are kicked.
+# Default: -1 (disabled). Set to 0 to only allow registered users, 50 for level 50+, etc.
+
+nojoin:
+  reason: "Restricție de nivel NOJOIN"
+
+# --- DEBUG CHANNEL -----------------------------------------------------------
+debug_channel:
+  kick_reason: "Nu sunteți autorizat să intrați pe acest canal."
+
+permissions:
+  chanserv.drop: "Eliminați un canal înregistrat (DROP)"
+  chanserv.suspend: "Suspendare sau anulare suspendare a unui canal (SUSPEND/UNSUSPEND)"
+  chanserv.forbid: "Interzicere sau anulare interzicere a unui canal (FORBID/UNFORBID)"
+  chanserv.noexpire: "Setare sau eliminare a protecției împotriva expirării pentru un canal (NOEXPIRE)"
+  chanserv.history: "Vizualizare și gestionare a istoricului de acțiuni al canalului (HISTORY)"
+  chanserv.clearaccess: "Ștergerea întregii liste de acces a unui canal (CLEARACCESS)"
+  chanserv.clearusers: "Eliminare prin kick a tuturor utilizatorilor dintr-un canal (CLEARUSERS)"
+
+noexpire:
+  syntax:           "NOEXPIRE <#canal> {ON|OFF}"
+  short:            "Setați sau eliminați protecția împotriva expirării pentru un canal."
+  help:             |
+    Controlează dacă un canal va expira din cauza inactivității.
+    Când este ON, canalul nu expiră niciodată, indiferent de ultima activitate.
+    Când este OFF, se aplică regulile normale de expirare.
+
+    Doar IRCopii cu permisiunea 'chanserv.noexpire' pot folosi această comandă.
+
+    Sintaxă: NOEXPIRE <#canal> {ON|OFF}
+    Exemple:
+      NOEXPIRE #Important ON
+      NOEXPIRE #Important OFF
+  success_on:       "\x0303✔\x03 Canalul \x02%channel%\x02 este acum protejat împotriva expirării."
+  success_off:      "\x0303✔\x03 Canalul \x02%channel%\x02 va expira acum normal."
+  not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  forbidden:         "\x0304✗\x03 Canalul \x02%channel%\x02 este interzis."
+  suspended:         "\x0304✗\x03 Canalul \x02%channel%\x02 este suspendat."
+
+forbid:
+  syntax:           "FORBID <#canal> <motiv>"
+  short:             "Interziceți utilizarea unui canal."
+  help:              "Împiedică pe oricine să folosească un canal.\nDacă canalul este înregistrat în prezent, va fi mai întâi eliminat.\nToți utilizatorii de pe canal vor primi kick și canalul va fi blocat.\nAceastă comandă necesită permisiunea IRCop: chanserv.forbid"
+  reason_required:  "\x0304✗\x03 Trebuie să specificați un motiv."
+  success:          "\x0303✔\x03 Canalul \x02%channel%\x02 a fost interzis."
+  updated:          "\x0303✔\x03 Motivul interzicerii pentru canalul \x02%channel%\x02 a fost actualizat."
+  channel_forbidden: "\x0304✗\x03 Canalul \x02%channel%\x02 este interzis și nu poate fi folosit."
+
+unforbid:
+  syntax:           "UNFORBID <#canal>"
+  short:             "Anulați interzicerea unui canal."
+  help:              "Elimină interzicerea unui canal, permițând înregistrarea din nou a canalului.\nAceastă comandă necesită permisiunea IRCop: chanserv.forbid"
+  success:          "\x0303✔\x03 Canalul \x02%channel%\x02 nu mai este interzis."
+  not_forbidden:    "\x0304✗\x03 Canalul \x02%channel%\x02 nu este interzis."
+
+debug:
+  action_message: "%operator% execută comanda %command% asupra %target%. %reason%"
+  action_with_option: "%operator% execută comanda %command% asupra %target%. Opțiune: %option%. %reason%"
+  action_with_value: "%operator% execută comanda %command% asupra %target%. Opțiune: %option%=%value%. %reason%"
+  founder_action: "Acțiune de nivel fondator"
+  prefix_reason:  "Motiv: %reason%"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <#canal> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Vizualizați sau gestionați istoricul de acțiuni al canalului."
+  help:             |
+    Gestionați istoricul de acțiuni pentru un canal.
+    Doar IRCopii cu permisiunea 'chanserv.history' pot folosi această comandă.
+
+    Subcomenzi:
+      ADD   — Adaugă o intrare manuală în istoricul canalului.
+      DEL   — Șterge o intrare specifică după ID.
+      VIEW  — Vizualizează intrările din istoric (paginat, 3 pe pagină).
+      CLEAR — Șterge toate intrările din istoricul canalului.
+
+    Sintaxă: HISTORY <#canal> {ADD|DEL|VIEW|CLEAR} [argumente]
+    Exemple:
+      HISTORY #canal VIEW
+      HISTORY #canal VIEW 2
+      HISTORY #canal VIEW ALL
+      HISTORY #canal ADD Tentativă suspectă de preluare
+      HISTORY #canal DEL 42
+      HISTORY #canal CLEAR
+  not_registered:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  unknown_operator: "(necunoscut)"
+
+  add:
+    syntax:     "HISTORY <#canal> ADD <mesaj>"
+    short:      "Adăugați o intrare manuală în istoric."
+    help:        |
+      Adaugă o intrare manuală în istoricul canalului.
+    success:    "\x0303✔\x03 Intrare în istoric adăugată pentru \x02%channel%\x02."
+
+  del:
+    syntax:     "HISTORY <#canal> DEL <id>"
+    short:      "Ștergeți o intrare din istoric după ID."
+    success:    "\x0303✔\x03 Intrarea din istoric \x02%id%\x02 a fost ștearsă."
+    not_found:  "\x0304✗\x03 Intrarea din istoric \x02%id%\x02 nu a fost găsită."
+    invalid_id: "\x0304✗\x03 ID de intrare invalid: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <#canal> VIEW [PAGINĂ|ALL]"
+    short:      "Vizualizați istoricul de acțiuni al canalului."
+    header:     "\x02Istoric pentru \x0307%channel%\x03\x02 (se afișează %start%-%end% din %total%):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 de %operator% — %message%"
+    extra:       "  Extra \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 Nu s-au găsit intrări în istoric pentru \x02%channel%\x02."
+    page_hint:   "Folosiți \x0303HISTORY %channel% VIEW %next_page%\x03 pentru mai multe intrări."
+
+  clear:
+    syntax:     "HISTORY <#canal> CLEAR"
+    short:      "Ștergeți toate intrările din istoricul unui canal."
+    success:    "\x0303✔\x03 S-au șters \x02%count%\x02 intrări din istoricul canalului \x02%channel%\x02."
+
+# --- History message translations ---
+history.message:
+  unsuspend:                  "Suspendare anulată"
+  founder_changed:            "Fondator schimbat din %old_founder% în %new_founder%"
+  successor_changed:          "Succesor schimbat din %old_successor% în %new_successor%"
+  successor_cleared:          "Succesor șters"
+  access_add:                 "Acces adăugat pentru %target_nickname% (nivel %level%)"
+  access_del:                 "Acces eliminat pentru %target_nickname%"
+  akick_add:                  "AKICK adăugat: %mask%"
+  akick_del:                  "AKICK eliminat: %mask%"
+
+# --- History extra field translations ---
+history.extra:
+  duration:      "Durată: %value%"
+  expires_at:    "Expiră: %value%"
+  old_founder:     "Vechi fondator: %value%"
+  new_founder:     "Nou fondator: %value%"
+  old_successor:   "Vechi succesor: %value%"
+  new_successor:   "Nou succesor: %value%"
+  target_nickname: "Țintă: %value%"
+  level:           "Nivel: %value%"
+  mask:            "Mască: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- CLEARACCESS (IRCop) ---------------------------------------------------------
+clearaccess:
+  syntax:           "CLEARACCESS <#canal>"
+  short:            "Ștergeți întreaga listă de acces a unui canal."
+  help:             |
+    Elimină toate intrările de acces din lista de acces a unui canal.
+    Această acțiune este ireversibilă și nu poate fi anulată.
+    Doar IRCopii cu permisiunea 'chanserv.clearaccess' pot folosi această comandă.
+
+    Sintaxă: CLEARACCESS <#canal>
+    Exemple:
+      CLEARACCESS #canal
+  success:          "\x0303✔\x03 S-au șters \x02%count%\x02 intrări de acces din \x02%channel%\x02."
+  empty:            "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are intrări de acces."
+
+clearusers:
+  syntax:           "CLEARUSERS <#canal> [motiv]"
+  short:            "Eliminați prin kick toți utilizatorii dintr-un canal."
+  help:             |
+    Dă kick tuturor utilizatorilor de pe canalul specificat.
+    Aceasta este o comandă doar pentru IRCop, folosită pentru administrarea canalelor.
+    Se poate furniza un motiv opțional; dacă este omis, se folosește un motiv implicit.
+
+    Doar IRCopii cu permisiunea 'chanserv.clearusers' pot folosi această comandă.
+
+    Sintaxă: CLEARUSERS <#canal> [motiv]
+    Exemple:
+      CLEARUSERS #canal
+      CLEARUSERS #canal flooding
+  not_on_network:   "\x0304✗\x03 Canalul \x02%channel%\x02 nu se află în prezent în rețea."
+  empty:            "\x0307ℹ\x03 Canalul \x02%channel%\x02 nu are utilizatori cărora să li se dea kick."
+  success:          "\x0303✔\x03 S-a dat kick la \x02%count%\x02 utilizator(i) din \x02%channel%\x02."
+  default_reason:   "Comanda CLEARUSERS"

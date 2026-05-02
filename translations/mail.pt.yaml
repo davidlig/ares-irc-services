@@ -1,0 +1,73 @@
+# Email content — domain: mail (texto simples, sem códigos IRC)
+# Placeholders: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — token de verificação
+register_verification_subject: "%bot%: verifique o registo do seu nickname"
+register_verification_body: |
+  Olá,
+
+  Solicitou o registo do nickname "%nickname%" na rede IRC.
+
+  O seu token de verificação é: %token%
+
+  Para concluir o registo, envie este comando para %bot% (substitua <token> pelo token acima):
+    /msg %bot% VERIFY %token%
+
+  O token expira em 1 hora. Se não solicitou este registo, ignore este email.
+
+# RESEND — igual ao registo, reenvio do token
+resend_verification_subject: "%bot%: o seu token de verificação (reenvio)"
+resend_verification_body: |
+  Olá,
+
+  Solicitou um novo token de verificação para o nickname "%nickname%".
+
+  O seu token de verificação é: %token%
+
+  Para concluir o registo, envie para %bot%:
+    /msg %bot% VERIFY %token%
+
+  O token expira em 1 hora. Se não solicitou este registo, ignore este email.
+
+# SET EMAIL — token de confirmação enviado para o email atual
+email_change_token_subject: "%bot%: confirme o seu novo endereço de email"
+email_change_token_body: |
+  Olá,
+
+  Solicitou a alteração do endereço de email do seu nickname %bot% para: %new_email%
+
+  O seu token de confirmação é: %token%
+
+  Para confirmar a alteração, envie para %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  O token expira em 1 hora. Se não solicitou esta alteração, ignore este email.
+
+# RECOVER — token de recuperação de palavra-passe
+recovery_token_subject: "%bot%: recuperação de palavra-passe"
+recovery_token_body: |
+  Olá,
+
+  Foi solicitada uma recuperação de palavra-passe para o nickname "%nickname%".
+
+  O seu token de recuperação é: %token%
+
+  Para redefinir a sua palavra-passe, envie para %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  O token expira em 1 hora. Se não solicitou esta recuperação, ignore este email.
+
+# ChanServ SET FOUNDER — token de alteração de fundador
+founder_change_token_subject: "%bot%: token de alteração de fundador para %channel%"
+founder_change_token_body: |
+  Olá,
+
+  Foi solicitada uma alteração de fundador para o canal "%channel%" para o nickname "%new_nick%".
+
+  O seu token de confirmação é: %token%
+
+  Para concluir a alteração, envie para %bot% este comando (pode copiar e colar):
+
+    /msg %bot% %command%
+
+  O token expira em 1 hora. Se não solicitou esta alteração, ignore este email.

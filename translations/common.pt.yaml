@@ -1,0 +1,27 @@
+# Common translations — Portuguese
+# Domain: common
+#
+# Traduções partilhadas usadas em todos os serviços IRC.
+
+antiflood:
+  blocked: "Excedeu o limite de comandos. Tente novamente dentro de %seconds% segundos."
+  debug_channel: "%nick% limite de %command% atingido para %host% (%seconds%s restantes)"
+
+ctcp:
+  version:
+    tribute: |
+      \x02Para o meu leal e eterno amigo,\x02
+      
+      Embora 2023 tenha sido o ano em que tivemos de nos despedir, o tempo não apagou um único
+      detalhe teu. Ainda me lembro da tua energia inesgotável, do teu olhar nobre e daquela
+      alegria imensa e contagiante que só tu sabias dar.
+      
+      Encheste a minha casa de vida e a minha vida de um amor incondicional que nunca
+      esquecerei. Embora já não oiça os teus passos a correr para me receber ou sinta a tua
+      cabeça apoiada em mim à procura de afeto, sei que o teu espírito brincalhão ainda
+      me acompanha.
+      
+      Obrigado por cada momento, cada travessura e por teres sido o melhor companheiro que eu
+      poderia ter pedido. O espaço que deixaste ao meu lado é agora preenchido pelas memórias
+      mais felizes. Serás sempre o meu querido amigo e terás sempre um lugar imenso
+      no meu coração.

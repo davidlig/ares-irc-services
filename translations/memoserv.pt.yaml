@@ -1,0 +1,122 @@
+# MemoServ translations — Portuguese
+# Domain: memoserv
+
+unknown_command: "\x0304✗\x03 Comando desconhecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Sintaxe incorreta. Uso: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Este comando é restrito a Operadores de IRC."
+  not_identified: "\x0304✗\x03 Não está identificado. Use \x0303/msg %nickserv% IDENTIFY\x03."
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+  insufficient_access: "\x0304✗\x03 Acesso insuficiente para \x02%operation%\x02 no canal \x02%channel%\x02."
+
+send:
+  syntax: "SEND {nickname|#canal} <mensagem>"
+  short: "Enviar uma mensagem para um nickname ou canal."
+  help: "Envia uma mensagem para um nickname ou canal registado. O destinatário deve ter o serviço de mensagens ativado (ENABLE)."
+  sent_nick: "\x0303✔\x03 Mensagem enviada para \x02%nickname%\x02."
+  sent_channel: "\x0303✔\x03 Mensagem enviada para o canal \x02%channel%\x02."
+  nick_not_registered: "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+  throttled: "\x0304✗\x03 Deve aguardar \x02%seconds%\x02 segundo(s) antes de enviar outra mensagem."
+  limit_reached: "\x0304✗\x03 Limite de mensagens atingido para \x02%target%\x02."
+  ignored: "\x0304✗\x03 Não pode enviar mensagens para este destinatário, está na sua lista de ignorados."
+  cannot_send_to_self: "\x0304✗\x03 Não pode enviar uma mensagem para si mesmo."
+  message_too_long: "\x0304✗\x03 Mensagem demasiado longa. O máximo é \x02%max%\x02 caracteres."
+  service_disabled_for_target: "\x0304✗\x03 O serviço de mensagens está desativado para \x02%target%\x02."
+
+read:
+  syntax: "READ [#canal] <número>"
+  short: "Ler uma mensagem por número."
+  help: "Lê a mensagem com o número indicado. Sem #canal, lê da sua caixa de entrada de nickname. Com #canal, requer nível MEMOREAD."
+  header: "\x02\x0307Mensagem #%index%\x03 de \x02%from%\x02:\x0F"
+  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+  not_found: "\x0304✗\x03 Mensagem #%index% não encontrada."
+
+list:
+  syntax: "LIST [#canal]"
+  short: "Listar mensagens (não lidas marcadas com * vermelho)."
+  help: "Lista as suas mensagens ou mensagens do canal. As mensagens não lidas são mostradas com um asterisco vermelho e uma pré-visualização (máx. 50 caracteres). Sem #canal = a sua caixa de entrada de nickname; com #canal requer MEMOREAD."
+  header: "\x02\x0307Mensagens para %target%\x03:\x0F"
+  footer: "\x0314─────────────────────────────\x03"
+  empty: "\x0307ℹ\x03 Nenhuma mensagem para \x02%target%\x02."
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+
+del:
+  syntax: "DEL [#canal] <número>"
+  short: "Eliminar uma mensagem por número."
+  help: "Elimina a mensagem com o número indicado. Para canais requer nível MEMOCHANGE."
+  deleted: "\x0303✔\x03 Mensagem #%index% eliminada."
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+  not_found: "\x0304✗\x03 Mensagem #%index% não encontrada."
+
+ignore:
+  syntax: "IGNORE {ADD|DEL|LIST} [#canal] [nickname]"
+  short: "Gerir lista de ignorados para mensagens."
+  help: "ADD adiciona um nickname à sua lista de ignorados (ou do canal); DEL remove; LIST mostra a lista. Para canais, ADD/DEL requerem MEMOCHANGE."
+  add:
+    syntax: "IGNORE ADD [#canal] <nickname>"
+    short: "Adicionar nickname à lista de ignorados."
+    help: "Mensagens deste nickname não serão aceites para a sua caixa de entrada (ou do canal)."
+  del:
+    syntax: "IGNORE DEL [#canal] <nickname>"
+    short: "Remover nickname da lista de ignorados."
+    help: "Remove o nickname da lista de ignorados."
+  list:
+    syntax: "IGNORE LIST [#canal]"
+    short: "Listar nicknames ignorados."
+    help: "Mostra a lista de nicknames que você (ou o canal) ignora para mensagens."
+  added: "\x0303✔\x03 \x02%nickname%\x02 adicionado à lista de ignorados."
+  removed: "\x0303✔\x03 \x02%nickname%\x02 removido da lista de ignorados."
+  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 já está na lista de ignorados."
+  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 não está na lista de ignorados."
+  nick_not_registered: "\x0304✗\x03 O nickname \x02%nickname%\x02 não está registado."
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+  limit_reached_nick: "\x0304✗\x03 Limite da lista de ignorados atingido para o seu nickname (máx. \x02%limit%\x02)."
+  limit_reached_channel: "\x0304✗\x03 Limite da lista de ignorados atingido para \x02%channel%\x02 (máx. \x02%limit%\x02)."
+  list_empty: "\x0307ℹ\x03 A lista de ignorados está vazia."
+  list_header: "\x02\x0307Lista de ignorados:\x03\x0F"
+  list_footer: "\x0314─────────────────────────────\x03"
+
+enable:
+  syntax: "ENABLE [#canal]"
+  short: "Ativar receção de mensagens."
+  help: "Ativa a receção de mensagens para o seu nickname ou, para canais, apenas o fundador pode ativar."
+  enabled_nick: "\x0303✔\x03 Serviço de mensagens ativado para o seu nickname."
+  enabled_channel: "\x0303✔\x03 Serviço de mensagens ativado para o canal \x02%channel%\x02."
+  already_enabled_nick: "\x0307ℹ\x03 O serviço de mensagens já está ativado para o seu nickname."
+  already_enabled_channel: "\x0307ℹ\x03 O serviço de mensagens já está ativado para \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+  founder_only: "\x0304✗\x03 Apenas o fundador do canal pode ativar mensagens para \x02%channel%\x02."
+
+disable:
+  syntax: "DISABLE [#canal]"
+  short: "Desativar receção de mensagens."
+  help: "Desativa a receção de mensagens para o seu nickname ou canal. Para canais, apenas o fundador pode desativar."
+  disabled_nick: "\x0303✔\x03 Serviço de mensagens desativado para o seu nickname."
+  disabled_channel: "\x0303✔\x03 Serviço de mensagens desativado para o canal \x02%channel%\x02."
+  already_disabled_nick: "\x0307ℹ\x03 O serviço de mensagens já está desativado para o seu nickname."
+  already_disabled_channel: "\x0307ℹ\x03 O serviço de mensagens já está desativado para \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 O canal \x02%channel%\x02 não está registado."
+  founder_only: "\x0304✗\x03 Apenas o fundador do canal pode desativar mensagens para \x02%channel%\x02."
+
+help:
+  syntax: "HELP [comando [sub-opção]]"
+  short: "Listar comandos ou mostrar ajuda de um comando."
+  help: "Sem argumentos lista todos os comandos. Use \x0303HELP <comando>\x03 para ajuda completa."
+  header_title: "%bot%"
+  intro: "Serviço de mensagens para nicknames e canais."
+  general_header: "\x02\x0314Comandos disponíveis:\x03\x0F"
+  command_line: "  \x0307%command%\x03%description%"
+  subcommand_line: "  \x0307%command%\x03%description%"
+  options_header: "\x02\x0314Opções:\x03\x0F"
+  general_footer: "Use \x0303/msg %bot% HELP <comando>\x03 para mais informações."
+  set_sub_footer: "Use \x0303/msg %bot% HELP %command% <opção>\x03 para mais informações."
+  syntax_label: "\x0307Sintaxe:\x03 \x02%syntax%\x02"
+  footer: "\x0314─────────────────────────────\x03"
+  unknown_command: "\x0304✗\x03 Comando desconhecido \x02%command%\x02. Use \x0303/msg %bot% HELP\x03."
+
+notify:
+  nick_pending: "Tem \x02%count%\x02 mensagem(ns) não lida(s). Para as listar: \x0309/msg %bot% LIST\x03"
+  channel_pending: "O canal \x02%channel%\x02 tem \x02%count%\x02 mensagem(ns) não lida(s). Use \x0309/msg %bot% LIST %channel%\x03 para as listar."

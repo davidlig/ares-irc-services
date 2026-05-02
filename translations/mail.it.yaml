@@ -1,0 +1,73 @@
+# Contenuto email — domain: mail (testo semplice, no codici IRC)
+# Segnaposti: %nickname%, %token%, %new_email%
+
+# REGISTER / VERIFY — token di verifica
+register_verification_subject: "%bot%: verifichi la registrazione del suo nickname"
+register_verification_body: |
+  Buongiorno,
+
+  Ha richiesto di registrare il nickname "%nickname%" sulla rete IRC.
+
+  Il suo token di verifica è: %token%
+
+  Per completare la registrazione, invii questo comando a %bot% (sostituisca <token> con il token sopra):
+    /msg %bot% VERIFY %token%
+
+  Il token scade in 1 ora. Se non ha richiesto questa operazione, ignori questa email.
+
+# RESEND — uguale a register, rinvio del token
+resend_verification_subject: "%bot%: il suo token di verifica (rinvio)"
+resend_verification_body: |
+  Buongiorno,
+
+  Ha richiesto un nuovo token di verifica per il nickname "%nickname%".
+
+  Il suo token di verifica è: %token%
+
+  Per completare la registrazione, invii a %bot%:
+    /msg %bot% VERIFY %token%
+
+  Il token scade in 1 ora. Se non ha richiesto questa operazione, ignori questa email.
+
+# SET EMAIL — token di conferma inviato all'email attuale
+email_change_token_subject: "%bot%: confermi il suo nuovo indirizzo email"
+email_change_token_body: |
+  Buongiorno,
+
+  Ha richiesto di cambiare l'indirizzo email per il suo nickname %bot% in: %new_email%
+
+  Il suo token di conferma è: %token%
+
+  Per confermare la modifica, invii a %bot%:
+    /msg %bot% SET EMAIL %new_email% %token%
+
+  Il token scade in 1 ora. Se non ha richiesto questa modifica, ignori questa email.
+
+# RECOVER — token di recupero password
+recovery_token_subject: "%bot%: recupero password"
+recovery_token_body: |
+  Buongiorno,
+
+  È stato richiesto un recupero password per il nickname "%nickname%".
+
+  Il suo token di recupero è: %token%
+
+  Per reimpostare la password, invii a %bot%:
+    /msg %bot% RECOVER %nickname% %token%
+
+  Il token scade in 1 ora. Se non ha richiesto questa operazione, ignori questa email.
+
+# ChanServ SET FOUNDER — token cambio fondatore
+founder_change_token_subject: "%bot%: token cambio fondatore per %channel%"
+founder_change_token_body: |
+  Buongiorno,
+
+  È stato richiesto un cambio fondatore per il canale "%channel%" al nickname "%new_nick%".
+
+  Il suo token di conferma è: %token%
+
+  Per completare il cambio, invii a %bot% questo comando (può copiarlo e incollarlo):
+
+    /msg %bot% %command%
+
+  Il token scade in 1 ora. Se non ha richiesto questa operazione, ignori questa email.

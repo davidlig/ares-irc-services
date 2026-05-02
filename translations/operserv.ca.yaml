@@ -1,0 +1,300 @@
+# OperServ translations — Catalan
+# Domain: operserv
+
+unknown_command: "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:           "\x0304✗\x03 Sintaxi incorrecta. Ús: \x02%syntax%\x02"
+  oper_only:        "\x0304✗\x03 Aquesta ordre està restringida als operadors d'IRC."
+  permission_denied: "\x0304✗\x03 No teniu permisos suficients per executar aquesta ordre."
+  root_only:        "\x0304✗\x03 Aquesta ordre està restringida als administradors root de la xarxa."
+  nick_not_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
+
+# --- HELP --------------------------------------------------------------------
+help:
+  syntax:           "HELP [command [sub-option]]"
+  short:            "Llistar les ordres o mostrar l'ajuda d'una ordre."
+  help:             "Sense arguments llista totes les ordres. Utilitzeu \x0303HELP <command>\x03 per a l'ajuda completa, o \x0303HELP <command> <option>\x03 per a subopcions."
+  header_title:     "%bot%"
+  intro:            "Servei de gestió de xarxa per a operadors d'IRC."
+  general_header:   "\x02\x0314Ordres disponibles:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Opcions:\x03\x0F"
+  general_footer:   "Utilitzeu \x0303/msg %bot% HELP <command>\x03 per a més informació."
+  set_sub_footer:   "Utilitzeu \x0303/msg %bot% HELP %command% <option>\x03 per a més informació."
+  syntax_label:     "\x0307Sintaxi:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  intro_expiration: "NOTA: Els sobrenoms \x0304\x1Fno utilitzats\x0F durant més de %days% dies s'eliminen automàticament."
+  unknown_command:  "\x0304✗\x03 Ordre desconeguda \x02%command%\x02. Utilitzeu \x0303/msg %bot% HELP\x03."
+  suboptions:       "Subopcions:"
+
+# --- IRCOP --------------------------------------------------------------------
+ircop:
+  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <role>"
+  short:            "Gestionar els operadors d'IRC de la xarxa."
+  help:             "Gestiona els operadors d'IRC de la xarxa. ADD afegeix un sobrenom registrat\ncom a operador amb el rol especificat.\nDEL treu un operador. LIST mostra tots els operadors.\nUtilitzeu ROLE LIST per veure els rols disponibles.\nAquesta ordre està restringida als usuaris Root configurats als serveis."
+
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, o LIST."
+  unknown_role:     "\x0304✗\x03 El rol \x02%role%\x02 no existeix. Utilitzeu \x0303/msg %bot% ROLE LIST\x03 per veure els rols disponibles."
+  already_admin:    "\x0304✗\x03 \x02%nickname%\x02 ja és un operador d'IRC (rol: %role%)."
+  not_admin:       "\x0304✗\x03 \x02%nickname%\x02 no és un operador d'IRC."
+  role_changed:     "\x0303✓\x03 Rol canviat de \x02%nickname%\x02 de %old% a %new%."
+
+  add:
+    syntax:         "IRCOP <nickname> ADD <role>"
+    short:          "Afegir un operador d'IRC de xarxa."
+    help:           "Afegeix un sobrenom registrat com a operador d'IRC de xarxa.\nUtilitzeu ROLE LIST per veure els rols disponibles.\nAquesta ordre està restringida als usuaris Root."
+    done:           "\x0303✓\x03 Afegit \x02%nickname%\x02 com a \x02%role%\x02."
+    nick_not_active: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no és un sobrenom registrat actiu."
+
+  del:
+    syntax:         "IRCOP <nickname> DEL"
+    short:          "Treure un operador d'IRC de xarxa."
+    help:            "Treu un operador d'IRC de xarxa de la llista.\nAquesta ordre està restringida als usuaris Root."
+    done:           "\x0303✓\x03 Tret \x02%nickname%\x02 dels operadors d'IRC."
+
+  list:
+    syntax:         "IRCOP LIST"
+    short:          "Llistar tots els operadors d'IRC de xarxa."
+    help:            "Llista tots els operadors d'IRC de xarxa amb els seus rols i data de registre.\nAquesta ordre està restringida als usuaris Root."
+    header:         "\x0307---\x03 \x02Operadors d'IRC de la xarxa\x02 \x0307---\x03"
+    empty:          "No hi ha operadors d'IRC."
+
+# --- ROLE --------------------------------------------------------------------
+role:
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
+  short:            "Gestionar els rols d'operador."
+  help:             "Gestiona els rols d'operador. ADD crea un nou rol, DEL l'elimina,\nLIST mostra tots els rols, PERMS gestiona els permisos d'un rol, MODES gestiona els modes IRCOP,\nVHOST gestiona el patró de vhost forçat per a un rol.\nEls rols protegits (ADMIN, OPER, PREOPER) no es poden esborrar.\nAquesta ordre està restringida als usuaris Root."
+
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, PERMS, MODES, o VHOST."
+  not_found:        "\x0304✗\x03 El rol \x02%role%\x02 no existeix."
+  already_exists:   "\x0304✗\x03 El rol \x02%role%\x02 ja existeix."
+  protected:        "\x0304✗\x03 El rol \x02%role%\x02 està protegit i no es pot esborrar."
+
+  add:
+    syntax:         "ROLE ADD <name> [description]"
+    short:          "Crear un nou rol."
+    help:            "Crea un nou rol personalitzat. La descripció és opcional.\nAquesta ordre està restringida als usuaris Root."
+    done:           "\x0303✓\x03 Creat el rol \x02%role%\x02."
+
+  del:
+    syntax:         "ROLE DEL <name>"
+    short:          "Esborrar un rol."
+    help:            "Esborra un rol personalitzat. Els rols protegits (ADMIN, OPER, PREOPER)\nno es poden esborrar. Si el rol té operadors assignats,\nels haureu de reassignar primer.\nAquesta ordre està restringida als usuaris Root."
+    done:           "\x0303✓\x03 Esborrat el rol \x02%role%\x02."
+
+  list:
+    syntax:         "ROLE LIST"
+    short:          "Llistar tots els rols."
+    help:            "Llista tots els rols. Els rols protegits estan marcats amb [PROTEGIT].\nAquesta ordre està restringida als usuaris Root."
+    header:         "\x0307---\x03 \x02Rols d'operador\x02 \x0307---\x03"
+    empty:          "No hi ha rols d'operador."
+
+  perms:
+    syntax:         "ROLE PERMS <role> {LIST|ADD|DEL} [permission]"
+    short:          "Gestionar els permisos del rol."
+    help:            "Gestiona els permisos assignats a un rol.\nLIST mostra tots els permisos del rol.\nADD assigna un permís al rol.\nDEL treu un permís del rol (no per a rols protegits).\nAquesta ordre està restringida als usuaris Root."
+    unknown_action:  "\x0304✗\x03 Acció desconeguda \x02%action%\x02. Utilitzeu LIST, ADD, o DEL."
+    not_found:       "\x0304✗\x03 El permís \x02%perm%\x02 no existeix."
+    already_has:     "\x0304✗\x03 El rol \x02%role%\x02 ja té el permís \x02%perm%\x02."
+    does_not_have:   "\x0304✗\x03 El rol \x02%role%\x02 no té el permís \x02%perm%\x02."
+    protected:      "\x0304✗\x03 No es poden modificar els permisos del rol protegit \x02%role%\x02."
+
+    list:
+      syntax:       "ROLE PERMS <role> LIST"
+      short:        "Llistar els permisos d'un rol."
+      help:         "Llista tots els permisos assignats a un rol.\nAquesta ordre està restringida als usuaris Root."
+      header:        "\x0307---\x03 \x02Permisos de %role%\x02 \x0307---\x03"
+      empty:        "El rol \x02%role%\x02 no té cap permís assignat."
+      assigned:     "\x0310Assignats:\x03"
+      none_assigned: "\x0314No hi ha permisos assignats.\x03"
+      available:    "\x0310Disponibles:\x03"
+      all_assigned: "\x0314Tots els permisos estan assignats a aquest rol.\x03"
+
+    add:
+      syntax:       "ROLE PERMS <role> ADD <permission>"
+      short:        "Afegir un permís a un rol."
+      help:         "Afegeix un permís a un rol.\nAquesta ordre està restringida als usuaris Root."
+      done:         "\x0303✓\x03 Afegit el permís \x02%perm%\x02 al rol \x02%role%\x02."
+
+    del:
+      syntax:       "ROLE PERMS <role> DEL <permission>"
+      short:        "Treure un permís d'un rol."
+      help:         "Treu un permís d'un rol.\nNo es poden modificar els rols protegits.\nAquesta ordre està restringida als usuaris Root."
+      done:         "\x0303✓\x03 Tret el permís \x02%perm%\x02 del rol \x02%role%\x02."
+
+  modes:
+    syntax:         "ROLE MODES <role> {VIEW|SET} [modes]"
+    short:          "Gestionar els modes d'usuari IRCOP del rol."
+    help:            "Gestiona els modes d'usuari IRCOP assignats a un rol.\nVIEW mostra els modes actuals del rol.\nSET estableix els modes IRCOP (p. ex., oH per a +oH).\nEls usuaris amb aquest rol rebran aquests modes en identificar-se.\nModes disponibles per IRCD: UnrealIRCd (H, q, s, W), InspIRCd (s).\nAquesta ordre està restringida als usuaris Root."
+    unknown_action:  "\x0304✗\x03 Acció desconeguda \x02%action%\x02. Utilitzeu VIEW o SET."
+
+    view:
+      syntax:       "ROLE MODES <role> VIEW"
+      short:        "Mostra els modes del rol."
+      help:          "Mostra els modes d'usuari IRCOP assignats a un rol.\nAquesta ordre està restringida als usuaris Root."
+      header:        "\x0307---\x03 \x02Modes de %role%\x02 \x0307---\x03"
+      empty:        "El rol \x02%role%\x02 no té cap mode assignat."
+      line:         "  Modes: \x0303%modes%\x03"
+
+    set:
+      syntax:       "ROLE MODES <role> SET [modes]"
+      short:        "Establir els modes d'usuari IRCOP."
+      help:          "Estableix els modes d'usuari IRCOP del rol.\nSense arguments, treu tots els modes del rol.\nNomés modes IRCOP vàlids per a l'IRCD actiu.\nEls usuaris identificats amb aquest rol rebran els canvis.\nAquesta ordre està restringida als usuaris Root."
+      done:         "\x0303✓\x03 Establerts els modes \x02%modes%\x02 per al rol \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Tots els modes han estat trets del rol \x02%role%\x02."
+      invalid_mode: "\x0304✗\x03 El mode \x02%mode%\x02 no és un mode IRCOP vàlid."
+      invalid_modes: "\x0304✗\x03 Modes no vàlids: %invalid%. Modes vàlids: %valid%."
+      no_irc_user_modes: "\x0304✗\x03 L'IRCD actual no té modes IRCOP configurats."
+
+  vhost:
+    syntax:         "ROLE VHOST <role> {VIEW|SET} [pattern]"
+    short:          "Gestionar el patró de vhost forçat per a un rol."
+    help:           "Gestiona el vhost forçat assignat a un rol.\nVIEW mostra el patró de vhost forçat actual.\nSET assigna un patró de vhost forçat (els usuaris amb aquest rol\nrebran aquest vhost en identificar-se, sobreescrivint el vhost personal).\nEl patró s'afegeix després del sobrenom netejat, p. ex.:\n  Sobrenom: _davidlig_ → Patró: admin.ares → VHost: davidlig.admin.ares\nCaràcters vàlids: a-z, A-Z, 0-9, guionet (-) i punt (.).\nHa de tenir almenys un punt, no pot començar/acabar amb - o . ni tenir ..\nUtilitzeu OFF per esborrar el patró de vhost forçat.\nAquesta ordre està restringida als usuaris Root."
+    unknown_action:  "\x0304✗\x03 Acció desconeguda \x02%action%\x02. Utilitzeu VIEW o SET."
+
+    view:
+      syntax:       "ROLE VHOST <role> VIEW"
+      short:         "Mostra el patró de vhost forçat del rol."
+      help:          "Mostra el patró de vhost forçat assignat a un rol.\nAquesta ordre està restringida als usuaris Root."
+      header:        "\x0307---\x03 \x02Vhost forçat de %role%\x02 \x0307---\x03"
+      empty:        "El rol \x02%role%\x02 no té cap patró de vhost forçat establert."
+      line:         "  Patró: \x0303%pattern%\x03"
+      example:      "  Exemple: \x02nickname\x02.%pattern%"
+
+    set:
+      syntax:       "ROLE VHOST <role> SET <pattern>"
+      short:         "Establir el patró de vhost forçat del rol."
+      help:          "Estableix el patró de vhost forçat del rol.\nEls usuaris que s'identifiquen amb aquest rol rebran el vhost forçat,\nque té prioritat sobre el vhost personal.\nEl patró s'afegeix després del sobrenom netejat.\nUtilitzeu OFF o ometeu l'argument per esborrar el vhost forçat.\nAquesta ordre està restringida als usuaris Root."
+      done:         "\x0303✓\x03 Establert el patró de vhost forçat per al rol \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Tret el patró de vhost forçat del rol \x02%role%\x02."
+      invalid:      "\x0304✗\x03 Patró de vhost no vàlid. Caràcters vàlids: a-z, A-Z, 0-9, - i .. Ha de tenir almenys un punt, no pot començar/acabar amb - o . ni tenir .."
+
+# --- KILL --------------------------------------------------------------------
+kill:
+  syntax:           "KILL <nickname> <reason>"
+  short:            "Desconnectar forçosament un usuari de la xarxa."
+  help:             "Desconnecta un usuari de la xarxa IRC.\nEls IRCops i usuaris Root no es poden matar.\nAquesta ordre requereix el permís operserv.kill.\n\nSintaxi: KILL <nickname> <reason>\nExemple: KILL BadUser Flooding channels"
+  user_not_online:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està connectat."
+  protected_root:   "\x0304✗\x03 No es pot matar l'usuari Root \x02%nickname%\x02."
+  protected_ircop:  "\x0304✗\x03 No es pot matar l'operador d'IRC \x02%nickname%\x02."
+  done:             "\x0303✓\x03 L'usuari \x02%nickname%\x02 ha estat mort (%reason%)."
+  permission_denied: "\x0304✗\x03 Permís denegat. Necessiteu el permís operserv.kill."
+
+# --- GLINE --------------------------------------------------------------------
+gline:
+  syntax:           "GLINE <ADD|DEL|LIST> [mask] [expiry] [reason]"
+  short:            "Gestionar les G-lines de tota la xarxa."
+  help:             "Gestiona les G-lines (prohibicions globals) de tota la xarxa.\nADD afegeix una nova G-line amb màscara, caducitat i motiu.\nDEL treu una G-line per màscara o número d'entrada.\nLIST mostra totes les G-lines, opcionalment filtrades per màscara.\n\nFormat de caducitat: 0=permanent, o utilitzeu sufix d, h, m (p. ex., 7d, 12h, 30m).\nLes GLINEs que coincideixen amb usuaris Root o IRCop es rebutgen.\nAquesta ordre requereix el permís operserv.gline."
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, o LIST."
+  invalid_mask:     "\x0304✗\x03 Format de màscara no vàlid. Ha de tenir el format user@host (p. ex., *@192.168.*)."
+  global_mask:      "\x0304✗\x03 La màscara de G-line \x02%mask%\x02 és massa àmplia. No es permeten màscares globals."
+  dangerous_mask:   "\x0304✗\x03 La màscara de G-line \x02%mask%\x02 és massa àmplia. La part de l'amfitrió necessita almenys 4 caràcters alfanumèrics."
+  protected_user:   "\x0304✗\x03 No es pot posar G-line a l'usuari protegit \x02%nickname%\x02."
+  invalid_expiry:   "\x0304✗\x03 Format de caducitat no vàlid. Utilitzeu 0 per a permanent, o un valor com 7d, 12h, 30m."
+  already_exists:   "\x0304✗\x03 La G-line per a \x02%mask%\x02 ja existeix."
+  max_entries:      "\x0304✗\x03 Nombre màxim de G-lines (%max%) assolit."
+  not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 no trobada."
+  user_not_found:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està en línia."
+  permanent:        "permanent"
+
+  add:
+    syntax:         "GLINE ADD <mask> <expiry> <reason>"
+    short:          "Afegir una G-line de tota la xarxa."
+    help:           "Afegeix una G-line (prohibició global) de tota la xarxa.\nLa màscara ha de tenir el format user@host.\nCaducitat: 0=permanent, o utilitzeu sufix d, h, m (p. ex., 7d, 12h, 30m).\nLes GLINEs que coincideixen amb usuaris Root o IRCop es rebutgen.\nAquesta ordre requereix el permís operserv.gline."
+    done:           "\x0303✓\x03 G-line afegida: \x02%mask%\x02 (%duration%) - %reason%"
+
+  del:
+    syntax:         "GLINE DEL <mask|number>"
+    short:          "Treure una G-line."
+    help:           "Treu una G-line de la llista.\nPodeu especificar la màscara o el número d'entrada de LIST.\nAquesta ordre requereix el permís operserv.gline."
+    done:           "\x0303✓\x03 G-line \x02%mask%\x02 treta."
+
+  list:
+    syntax:         "GLINE LIST [mask]"
+    short:          "Llistar totes les G-lines."
+    help:           "Llista totes les G-lines. Opcionalment filtreu per patró de màscara.\nAquesta ordre requereix el permís operserv.gline."
+    header:         "\x0307---\x03 \x02G-lines (%count%) \x0307---\x03"
+    empty:          "No hi ha G-lines."
+    no_reason:      "Sense motiu"
+    never_expires:  "Permanent"
+    unknown_creator: "desconegut"
+    entry:          "\x0310%index%.\x03 \x02%mask%\x02 - %reason% (\x0314%nickname%\x03, expira: %expiration%)"
+
+# --- GLOBAL -------------------------------------------------------------------
+global:
+  syntax:           "GLOBAL {service|nick!ident@vhost} {PRIVMSG|NOTICE} <message>"
+  short:            "Enviar un missatge global a tots els usuaris connectats."
+  help:             "Envia un missatge a tots els usuaris connectats.\n\nSi el primer argument és un nom de servei, el missatge s'enviarà utilitzant aquest servei existent.\n\nSi no és un servei, es crearà un pseudoclient temporal amb la\nmàscara especificada. La màscara ha de tenir el format: nick!ident@vhost\n- sobrenom: sobrenom vàlid d'IRC (lletres, []{}|\\`, dígits, comença amb lletra)\n- ident: alfanumèric amb . _ ~ -\n- vhost: nom d'amfitrió vàlid\n\nPer a pseudoclients, el sobrenom no pot estar connectat ni registrat.\nEl pseudoclient romandrà connectat durant l'enviament i es desconnectarà\nautomàticament (el sobrenom es bloquejarà durant 24h via SQLINE/QLINE).\n\nPRIVMSG envia com a missatge privat, NOTICE envia com a avís.\nAquesta ordre requereix el permís operserv.global."
+  mask_invalid:    "\x0304✗\x03 Format de màscara no vàlid: %error%"
+  nick_service:    "\x0304✗\x03 No es pot utilitzar un sobrenom de servei."
+  nick_connected: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està connectat actualment."
+  nick_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està registrat."
+  type_invalid:    "\x0304✗\x03 El tipus de missatge ha de ser PRIVMSG o NOTICE."
+  done:            "\x0303✓\x03 Missatge global enviat des de \x02%nickname%\x02 a %count% usuaris."
+
+# --- RAW ---------------------------------------------------------------------
+raw:
+  syntax:           "RAW <line>"
+  short:            "Enviar una línia de protocol en brut a l'IRCd."
+  help:             "Envia la línia donada directament al socket de l'IRCd d'enllaç ascendent.\nUtilitzeu amb molta precaució. Les línies de protocol no vàlides poden fer caure la xarxa.\nAquesta ordre requereix el permís operserv.raw."
+  empty:            "\x0304✗\x03 Heu d'especificar una línia no buida per enviar."
+  too_long:         "\x0304✗\x03 La línia és massa llarga. Màxim 510 caràcters."
+  not_connected:    "\x0304✗\x03 No està connectat a l'IRCd."
+  done:             "\x0303✓\x03 Línia en brut enviada."
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message:   "%operator% executa l'ordre %command% sobre %target%. %reason%"
+  actionWithDuration: "%operator% executa l'ordre %command% sobre %target%. Durada: %duration%. %reason%"
+  action_global:    "%operator% executa l'ordre GLOBAL amb el sobrenom %target% via %type% a %count% usuaris. Missatge: %message%"
+  prefix_reason:    "Motiu: %reason%"
+  prefix_message:   "Missatge: %reason%"
+
+# --- PERMISSIONS --------------------------------------------------------------
+permissions:
+  operserv.kill:    "Desconnectar un sobrenom de la xarxa (KILL)"
+  operserv.gline:   "Gestionar les G-lines de tota la xarxa (GLINE)"
+  operserv.global:  "Enviar missatges globals a tots els usuaris (GLOBAL)"
+  operserv.raw:     "Enviar línies de protocol en brut a l'IRCd (RAW)"
+  operserv.motd:    "Gestionar els missatges MOTD de connexió (MOTD)"
+
+# --- MOTD ----------------------------------------------------------------------
+motd:
+  short:            "Gestionar els missatges MOTD enviats als usuaris en connectar-se."
+  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args]"
+  help:             "Gestiona les entrades de Message Of The Day que s'envien als usuaris quan es connecten a la xarxa.\n\n"
+  unknown_sub:      "\x0304✗\x03 Subordre desconeguda. Utilitzeu: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
+  add:
+    syntax:         "MOTD ADD {service|nick!ident@vhost} {PRIVMSG|NOTICE} <expiry> <message>"
+    syntax_hint:    "\x0304✗\x03 Ús: \x02%syntax%\x02"
+    short:          "Afegir una entrada MOTD."
+    help:           "Afegeix un nou missatge MOTD que s'enviarà a cada usuari quan es connecti a la xarxa.\n\n"
+    done:           "\x0303✓\x03 Entrada MOTD #%id% afegida."
+    invalid_type:   "\x0304✗\x03 Tipus de missatge no vàlid. Ha de ser \x02PRIVMSG\x02 o \x02NOTICE\x02."
+    invalid_expiry: "\x0304✗\x03 Format de caducitat no vàlid. Utilitzeu: \x02<number><s|m|h|d>\x02 (p. ex., 30s, 5m, 24h, 7d)."
+  del:
+    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax_hint:    "\x0304✗\x03 Ús: \x02%syntax%\x02"
+    short:          "Esborrar una entrada MOTD."
+    help:           "Esborra una entrada MOTD pel seu ID.\n\n"
+    done:           "\x0303✓\x03 Entrada MOTD #%id% esborrada."
+    not_found:      "\x0304✗\x03 Entrada MOTD no trobada."
+  list:
+    syntax:         "MOTD LIST"
+    short:          "Llistar totes les entrades MOTD."
+    help:           "Llista totes les entrades MOTD configurades.\n\n"
+    empty:          "No hi ha entrades MOTD configurades."
+    header:         "Entrades MOTD:"
+    status_enabled: "\x0303activat\x03"
+    status_disabled: "\x0304desactivat\x03"
+    expired:        "\x0304expirat\x03"
+    no_bot:         "(sense bot)"
+    never:          "mai"
+  clean:
+    syntax:         "MOTD CLEAN"
+    short:          "Treure totes les entrades MOTD expirades."
+    help:           "Treu totes les entrades MOTD que hagin superat el temps d'expiració.\n\n"
+    done:           "\x0303✓\x03 S'han tret %count% entrades MOTD expirades."
+    none:           "\x0303✓\x03 No hi ha entrades MOTD expirades per treure."

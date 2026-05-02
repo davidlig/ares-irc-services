@@ -1,0 +1,122 @@
+# MemoServ translations — Romanian
+# Domain: memoserv
+
+unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax: "\x0304✗\x03 Sintaxă incorectă. Utilizare: \x02%syntax%\x02"
+  oper_only: "\x0304✗\x03 Această comandă este rezervată operatorilor IRC."
+  not_identified: "\x0304✗\x03 Nu sunteți identificat. Folosiți \x0303/msg %nickserv% IDENTIFY\x03."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  insufficient_access: "\x0304✗\x03 Acces insuficient pentru \x02%operation%\x02 pe canalul \x02%channel%\x02."
+
+send:
+  syntax: "SEND {poreclă|#canal} <mesaj>"
+  short: "Trimiteți un mesaj către o poreclă sau un canal."
+  help: "Trimite un mesaj către o poreclă sau un canal înregistrat. Destinatarul trebuie să aibă serviciul de mesaje activat (ENABLE)."
+  sent_nick: "\x0303✔\x03 Mesaj trimis către \x02%nickname%\x02."
+  sent_channel: "\x0303✔\x03 Mesaj trimis către canalul \x02%channel%\x02."
+  nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  throttled: "\x0304✗\x03 Trebuie să așteptați \x02%seconds%\x02 secundă(e) înainte de a trimite alt mesaj."
+  limit_reached: "\x0304✗\x03 Limita de mesaje atinsă pentru \x02%target%\x02."
+  ignored: "\x0304✗\x03 Nu puteți trimite mesaje către această destinație, vă aflați pe lista sa de ignorare."
+  cannot_send_to_self: "\x0304✗\x03 Nu vă puteți trimite un mesaj dumneavoastră înșivă."
+  message_too_long: "\x0304✗\x03 Mesaj prea lung. Maximul este de \x02%max%\x02 caractere."
+  service_disabled_for_target: "\x0304✗\x03 Serviciul de mesaje este dezactivat pentru \x02%target%\x02."
+
+read:
+  syntax: "READ [#canal] <număr>"
+  short: "Citiți un mesaj după număr."
+  help: "Citește mesajul cu numărul specificat. Fără #canal, citește din inboxul poreclei dumneavoastră. Cu #canal, necesită nivel MEMOREAD."
+  header: "\x02\x0307Mesajul #%index%\x03 de la \x02%from%\x02:\x0F"
+  footer: "\x0314─────────────────────────────\x03 \x0314%date%\x03"
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  not_found: "\x0304✗\x03 Mesajul #%index% nu a fost găsit."
+
+list:
+  syntax: "LIST [#canal]"
+  short: "Listați mesajele (necititele sunt marcate cu * roșu)."
+  help: "Listează mesajele dumneavoastră sau mesajele canalului. Mesajele necitite sunt afișate cu un asterisc roșu și o previzualizare (maxim 50 de caractere). Fără #canal = inboxul poreclei dumneavoastră; cu #canal necesită MEMOREAD."
+  header: "\x02\x0307Mesaje pentru %target%\x03:\x0F"
+  footer: "\x0314─────────────────────────────\x03"
+  empty: "\x0307ℹ\x03 Nu există mesaje pentru \x02%target%\x02."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+
+del:
+  syntax: "DEL [#canal] <număr>"
+  short: "Ștergeți un mesaj după număr."
+  help: "Șterge mesajul cu numărul specificat. Pentru canale necesită nivel MEMOCHANGE."
+  deleted: "\x0303✔\x03 Mesajul #%index% a fost șters."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  not_found: "\x0304✗\x03 Mesajul #%index% nu a fost găsit."
+
+ignore:
+  syntax: "IGNORE {ADD|DEL|LIST} [#canal] [poreclă]"
+  short: "Gestionați lista de ignorare pentru mesaje."
+  help: "ADD adaugă o poreclă în lista dumneavoastră (sau a canalului) de ignorare; DEL elimină; LIST afișează lista. Pentru canale, ADD/DEL necesită MEMOCHANGE."
+  add:
+    syntax: "IGNORE ADD [#canal] <poreclă>"
+    short: "Adăugați poreclă în lista de ignorare."
+    help: "Mesajele de la această poreclă nu vor fi acceptate pentru inboxul dumneavoastră (sau al canalului)."
+  del:
+    syntax: "IGNORE DEL [#canal] <poreclă>"
+    short: "Eliminați poreclă din lista de ignorare."
+    help: "Elimină porecla din lista de ignorare."
+  list:
+    syntax: "IGNORE LIST [#canal]"
+    short: "Listați poreclele ignorate."
+    help: "Afișează lista poreclelor pe care dumneavoastră (sau canalul) le ignorați pentru mesaje."
+  added: "\x0303✔\x03 \x02%nickname%\x02 adăugat în lista de ignorare."
+  removed: "\x0303✔\x03 \x02%nickname%\x02 eliminat din lista de ignorare."
+  already_ignored: "\x0304✗\x03 \x02%nickname%\x02 se află deja în lista de ignorare."
+  not_ignored: "\x0304✗\x03 \x02%nickname%\x02 nu se află în lista de ignorare."
+  nick_not_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  limit_reached_nick: "\x0304✗\x03 Limita listei de ignorare atinsă pentru porecla dumneavoastră (max \x02%limit%\x02)."
+  limit_reached_channel: "\x0304✗\x03 Limita listei de ignorare atinsă pentru \x02%channel%\x02 (max \x02%limit%\x02)."
+  list_empty: "\x0307ℹ\x03 Lista de ignorare este goală."
+  list_header: "\x02\x0307Lista de ignorare:\x03\x0F"
+  list_footer: "\x0314─────────────────────────────\x03"
+
+enable:
+  syntax: "ENABLE [#canal]"
+  short: "Activați recepția de mesaje."
+  help: "Activează recepția de mesaje pentru porecla dumneavoastră sau, pentru canale, doar fondatorul poate activa."
+  enabled_nick: "\x0303✔\x03 Serviciul de mesaje activat pentru porecla dumneavoastră."
+  enabled_channel: "\x0303✔\x03 Serviciul de mesaje activat pentru canalul \x02%channel%\x02."
+  already_enabled_nick: "\x0307ℹ\x03 Serviciul de mesaje este deja activat pentru porecla dumneavoastră."
+  already_enabled_channel: "\x0307ℹ\x03 Serviciul de mesaje este deja activat pentru \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  founder_only: "\x0304✗\x03 Doar fondatorul canalului poate activa mesajele pentru \x02%channel%\x02."
+
+disable:
+  syntax: "DISABLE [#canal]"
+  short: "Dezactivați recepția de mesaje."
+  help: "Dezactivează recepția de mesaje pentru porecla dumneavoastră sau canal. Pentru canale, doar fondatorul poate dezactiva."
+  disabled_nick: "\x0303✔\x03 Serviciul de mesaje dezactivat pentru porecla dumneavoastră."
+  disabled_channel: "\x0303✔\x03 Serviciul de mesaje dezactivat pentru canalul \x02%channel%\x02."
+  already_disabled_nick: "\x0307ℹ\x03 Serviciul de mesaje este deja dezactivat pentru porecla dumneavoastră."
+  already_disabled_channel: "\x0307ℹ\x03 Serviciul de mesaje este deja dezactivat pentru \x02%channel%\x02."
+  channel_not_registered: "\x0304✗\x03 Canalul \x02%channel%\x02 nu este înregistrat."
+  founder_only: "\x0304✗\x03 Doar fondatorul canalului poate dezactiva mesajele pentru \x02%channel%\x02."
+
+help:
+  syntax: "HELP [comandă [sub-opțiune]]"
+  short: "Listați comenzile sau afișați ajutor pentru o comandă."
+  help: "Fără argumente listează toate comenzile. Folosiți \x0303HELP <comandă>\x03 pentru ajutor complet."
+  header_title: "%bot%"
+  intro: "Serviciu de mesaje pentru porecle și canale."
+  general_header: "\x02\x0314Comenzi disponibile:\x03\x0F"
+  command_line: "  \x0307%command%\x03%description%"
+  subcommand_line: "  \x0307%command%\x03%description%"
+  options_header: "\x02\x0314Opțiuni:\x03\x0F"
+  general_footer: "Folosiți \x0303/msg %bot% HELP <comandă>\x03 pentru mai multe informații."
+  set_sub_footer: "Folosiți \x0303/msg %bot% HELP %command% <opțiune>\x03 pentru mai multe informații."
+  syntax_label: "\x0307Sintaxă:\x03 \x02%syntax%\x02"
+  footer: "\x0314─────────────────────────────\x03"
+  unknown_command: "\x0304✗\x03 Comandă necunoscută \x02%command%\x02. Folosiți \x0303/msg %bot% HELP\x03."
+
+notify:
+  nick_pending: "Aveți \x02%count%\x02 mesaj(e) necitit(e). Pentru a le lista: \x0309/msg %bot% LIST\x03"
+  channel_pending: "Canalul \x02%channel%\x02 are \x02%count%\x02 mesaj(e) necitit(e). Folosiți \x0309/msg %bot% LIST %channel%\x03 pentru a le lista."

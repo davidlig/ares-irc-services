@@ -1,0 +1,571 @@
+# NickServ translations — Dutch
+# Domain: nickserv
+#
+# IRC formatting codes (inside double-quoted strings, use \x## hex escapes):
+#   \x02        bold on/off
+#   \x03NN      color (DECIMAL: 03=green, 04=red, 07=orange, 14=dark grey)
+#   \x03        reset color
+#   \x0F        reset all formatting
+#
+# NOTE: IRC colors use DECIMAL numbers (0-15), not hexadecimal.
+#   \x0314 = dark grey (14 decimal)  ← CORRECT
+#   \x030F = color 0 + letter "F"    ← WRONG (0F is hex, not decimal)
+
+unknown_command: "\x0304✗\x03 Onbekend commando \x02%command%\x02. Gebruik \x0303/msg %bot% HELP\x03."
+
+error:
+  syntax:            "\x0304✗\x03 Onjuiste syntax. Gebruik: \x02%syntax%\x02"
+  oper_only:         "\x0304✗\x03 Dit commando is voorbehouden aan IRC Operators."
+  not_identified:    "\x0304✗\x03 U bent niet geïdentificeerd. Gebruik \x0303/msg %bot% IDENTIFY <bijnaam> <wachtwoord>\x03"
+  permission_denied: "\x0304✗\x03 Toegang geweigerd. U heeft geen toegang tot dit commando."
+  mail_failed:       "\x0304✗\x03 De e-mail kon niet worden verzonden. Controleer uw adres of probeer het later opnieuw."
+
+# --- REGISTER ---------------------------------------------------------------
+register:
+  syntax:           "REGISTER <wachtwoord> <e-mail>"
+  short:            "Registreer uw bijnaam bij de services."
+  help:             "Start de registratie van uw huidige bijnaam. Er wordt een verificatietoken\nnaar het opgegeven e-mailadres gestuurd. Voltooi de registratie\ndoor \x0303/msg %bot% VERIFY <token>\x03 uit te voeren. De token verloopt binnen 1 uur.\nAls deze niet aankomt, controleer uw spammap of gebruik \x0303RESEND\x03."
+  pending:          "\x0307→\x03 Er is een verificatietoken verzonden naar \x02%email%\x02.\n  Voer \x0303/msg %bot% VERIFY <token>\x03 uit om de registratie te voltooien.\n  Niet ontvangen? Controleer spam of gebruik \x0303/msg %bot% RESEND\x03\n  De token verloopt over \x021 uur\x02."
+  already_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geregistreerd."
+  already_pending:  "\x0304✗\x03 Bijnaam \x02%nickname%\x02 heeft al een lopende verificatie.\n  Gebruik \x0303/msg %bot% VERIFY <token>\x03 of \x0303/msg %bot% RESEND\x03."
+  forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden geregistreerd op dit netwerk."
+  invalid_email:    "\x0304✗\x03 Het opgegeven e-mailadres is niet geldig."
+  email_already_used: "\x0304✗\x03 De e-mail \x02%email%\x02 is al in gebruik door een andere bijnaam. Gebruik een ander adres."
+  throttled:          "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u opnieuw probeert te registreren."
+  guest_prefix_forbidden: "\x0304✗\x03 U kunt geen bijnaam registreren die begint met \x02%prefix%\x02."
+
+# --- VERIFY -----------------------------------------------------------------
+verify:
+  syntax:           "VERIFY <token>"
+  short:            "Bevestig uw e-mailadres en activeer uw bijnaam."
+  help:             "Voltooit de registratie door de token te verifiëren die naar uw e-mail is verzonden.\nDe token is 1 uur geldig vanaf het moment van registratie."
+  success:          "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is succesvol geregistreerd en u bent nu geïdentificeerd."
+  invalid_token:    "\x0304✗\x03 De token is ongeldig of verlopen. Gebruik \x0303/msg %bot% REGISTER\x03 om opnieuw te beginnen."
+  no_pending:       "\x0304✗\x03 U heeft geen lopende registratie om te verifiëren."
+
+# --- RESEND -----------------------------------------------------------------
+resend:
+  syntax:           "RESEND"
+  short:            "Verstuur de verificatietoken opnieuw naar uw e-mail."
+  help:             "Verstuurt de verificatietoken opnieuw naar het e-mailadres dat is opgegeven tijdens\nde registratie. Werkt alleen als u een lopende registratie heeft."
+  success:          "\x0307→\x03 Verificatietoken opnieuw verzonden naar \x02%email%\x02."
+  no_pending:       "\x0304✗\x03 U heeft geen lopende registratie om een token voor opnieuw te verzenden."
+  throttled:        "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een nieuwe verificatie-e-mail aanvraagt."
+
+# --- RECOVER -----------------------------------------------------------------
+recover:
+  syntax:           "RECOVER <bijnaam> [token]"
+  short:            "Herstel uw bijnaam als u uw wachtwoord bent kwijtgeraakt."
+  help:             "Herstelt de toegang tot een geregistreerde bijnaam wanneer u uw wachtwoord bent vergeten.\n1) \x0303RECOVER <bijnaam>\x03 — er wordt een token naar de e-mail van de bijnaam gestuurd.\n2) \x0303RECOVER <bijnaam> <token>\x03 — voer de token uit de e-mail in om uw wachtwoord te resetten.\nU ontvangt dan een tijdelijk wachtwoord en het commando om het te wijzigen."
+  email_sent:       "\x0307→\x03 Er is een hersteltoken verzonden naar \x02%email_hint%\x02. Controleer uw inbox (en spammap)."
+  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  pending:          "\x0304✗\x03 Bijnaam \x02%nickname%\x02 wacht op e-mailverificatie."
+  suspended:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
+  forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
+  no_email:         "\x0304✗\x03 Er is geen e-mail ingesteld voor bijnaam \x02%nickname%\x02. Herstel is niet beschikbaar."
+  throttled:        "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een nieuwe herstel-e-mail aanvraagt."
+  invalid_token:    "\x0304✗\x03 De token is ongeldig of verlopen. Vraag een nieuwe aan met \x0303RECOVER %nickname%\x03."
+  success_identify: "\x0303✔\x03 Wachtwoord gereset. Identificeer nu: \x0303%identify_cmd%\x03"
+  success_then_change: "Wijzig daarna uw wachtwoord: \x0303/msg %bot% SET PASSWORD <nieuw_wachtwoord>\x03"
+
+# --- IDENTIFY ---------------------------------------------------------------
+identify:
+  syntax:           "IDENTIFY <bijnaam> <wachtwoord>"
+  short:            "Identificeer uzelf als de eigenaar van een bijnaam."
+  help:             "Authenticeert uw sessie bij %nickserv% met uw bijnaam en wachtwoord.\nNa succesvolle identificatie ontvangt u de geregistreerde modus \x02+r\x02\nen, als u een gastbijnaam gebruikte, wordt uw geregistreerde bijnaam hersteld."
+  success:          "\x0303✔\x03 U bent nu geïdentificeerd als \x02%nickname%\x02."
+  already_identified: "\x0307ℹ\x03 U bent al geïdentificeerd als \x02%nickname%\x02."
+  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  invalid_credentials: "\x0304✗\x03 Onjuist wachtwoord. Probeer het opnieuw."
+  locked_out:         "\x0304✗\x03 Te veel mislukte pogingen. Probeer het over \x02%minutes%\x02 minu(u)t(en) opnieuw."
+  ghost_released:   "\x0307⚡\x03 De spooksessie die \x02%nickname%\x02 vasthield is verbroken."
+  kill_reason:      "Bijnaam %nickname% teruggevorderd door %source% (de geregistreerde eigenaar heeft zich geïdentificeerd)"
+  pending:          "\x0304✗\x03 Bijnaam \x02%nickname%\x02 wacht op e-mailverificatie.\n  Voer \x0303/msg %bot% VERIFY <token>\x03 uit of \x0303/msg %bot% RESEND\x03."
+  suspended:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
+  forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
+
+# --- STATUS -----------------------------------------------------------------
+status:
+  syntax:           "STATUS <bijnaam>"
+  short:            "Toon de registratiestatus van een bijnaam."
+  help:             "Toont de huidige status van een bijnaam: geregistreerd, verificatie in afwachting,\ngeschorst of verboden."
+  header:           "\x02Status van bijnaam \x0307%nickname%\x03:\x02"
+  unregistered:     "  Status          : Niet geregistreerd"
+  not_registered_offline: "  Status          : \x0315Niet geregistreerd\x03"
+  pending:          "  Status          : \x0307Wacht op verificatie\x03"
+  pending_expires:  "  Verloopt over     : %minutes% minu(u)t(en)"
+  pending_expires_at: "  Verloopt op       : %date%"
+  not_connected:    "  Status          : \x0315Niet verbonden\x03"
+  not_identified:   "  Status          : \x0307Niet geïdentificeerd\x03"
+  identified:       "  Status          : \x0303Geïdentificeerd\x03"
+  suspended:        "  Status          : \x0304Geschorst\x03"
+  suspended_reason: "  Reden           : %reason%"
+  suspended_until:  "  Eindigt op      : %date%"
+  suspended_permanent: "  Eindigt op      : Permanent"
+  forbidden:        "  Status          : \x0304Verboden\x03"
+  forbidden_reason: "  Reden           : %reason%"
+  footer:           "\x0314─────────────────────────────\x03"
+
+# --- INFO -------------------------------------------------------------------
+info:
+  syntax:           "INFO <bijnaam>"
+  short:            "Toon informatie over een geregistreerde bijnaam."
+  help:             "Toont registratiedetails voor een bijnaam: registratiedatum, verbindingsstatus,\nlaatste quitbericht en e-mailadres. De e-mail is alleen zichtbaar voor\nde eigenaar wanneer geïdentificeerd. Met PRIVATE ON kunnen alleen de eigenaar en IRC Operators\nde informatie bekijken."
+  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  private:          "\x0304✗\x03 Informatie van bijnaam \x02%nickname%\x02 is privé."
+  header:           "\x02Informatie voor bijnaam \x0307%nickname%\x03:\x02"
+  status:           "  \x0314Status\x03          : %status%"
+  status_registered:  "\x0303Geregistreerd\x03"
+  status_suspended:   "\x0304Geschorst\x03"
+  status_forbidden:   "\x0304Verboden\x03"
+  reason:           "  \x0314Reden\x03           : %reason%"
+  suspended_until:  "  \x0314Eindigt op\x03      : %date%"
+  suspended_permanent: "  \x0314Eindigt op\x03      : Permanent"
+  registered_at:    "  \x0314Geregistreerd\x03   : %date%"
+  last_seen_online: "  \x0314Laatst gezien\x03   : \x0303● NU ONLINE\x03"
+  last_seen_at:     "  \x0314Laatst gezien\x03   : %date%"
+  last_seen_never:  "  \x0314Laatst gezien\x03   : Nooit"
+  last_quit:        "  \x0314Laatste quitbericht\x03 : %message%"
+  last_connect:     "  \x0314Laatst gezien van\x03 : %ip% (%host%)"
+  email:            "  \x0314E-mail\x03           : %email%"
+  vhost:            "  \x0314VHost\x03           : %vhost%"
+  no_expire:        "  \x0314Vervalt nooit\x03   : Ja"
+  footer:           "\x0314─────────────────────────────\x03"
+  channels_header:  "\x0314\x0AKanalen met toegang:\x03"
+  channels_entry_founder:   "  %channel% (\x0303Oprichter\x03)"
+  channels_entry_successor: "  %channel% (\x0303Opvolger\x03)"
+  channels_entry_access:    "  %channel% (%level%)"
+
+# --- SET --------------------------------------------------------------------
+set:
+  syntax:           "SET <optie> <waarde>"
+  short:            "Wijzig uw %nickserv% bijnaaminstellingen."
+  help:             "Wijzigt uw %nickserv% bijnaaminstellingen.\nU moet geïdentificeerd zijn om dit commando te gebruiken."
+  unknown_option:   "\x0304✗\x03 Onbekende optie \x02%option%\x02. Beschikbare opties: %options%."
+
+  password:
+    syntax:         "SET PASSWORD <nieuw_wachtwoord>"
+    short:          "Wijzig uw bijnaamwachtwoord."
+    help:           "Wijzigt het wachtwoord voor uw NickServ-bijnaam. Het nieuwe wachtwoord wordt\ndirect van kracht. Kies een sterk wachtwoord van minimaal 6 tekens\ndat u niet op andere services gebruikt."
+    success:        "\x0303✔\x03 Uw wachtwoord is succesvol bijgewerkt."
+
+  email:
+    syntax:         "SET EMAIL <nieuwe_e-mail> [token]"
+    short:          "Wijzig het e-mailadres dat aan uw bijnaam is gekoppeld (tweestapsbevestiging)."
+    help:           "E-mailwijziging in twee stappen voor veiligheid.\n1) \x0303SET EMAIL <nieuwe_e-mail>\x03 — er wordt een token naar uw huidige e-mail gestuurd.\n2) \x0303SET EMAIL <nieuwe_e-mail> <token>\x03 — bevestig met de ontvangen token.\nDe token verloopt binnen 1 uur."
+    success:        "\x0303✔\x03 Uw e-mail is bijgewerkt naar \x02%email%\x02."
+    pending_sent:   "\x0307→\x03 Er is een bevestigingstoken verzonden naar \x02%current_email%\x02.\n  Om de wijziging naar \x02%new_email%\x02 te bevestigen, voer uit:\n  \x0303/msg %bot% SET EMAIL %new_email% <token>\x03\n  De token verloopt binnen 1 uur."
+    invalid_token:  "\x0304✗\x03 De token is ongeldig of verlopen. Vraag een nieuwe aan met \x0303SET EMAIL <nieuwe_e-mail>\x03."
+
+  language:
+    syntax:         "SET LANGUAGE <code>"
+    short:          "Wijzig de taal die de services gebruiken om met u te communiceren."
+    help:           "Wijzigt de taal die %nickserv% en andere services gebruiken wanneer ze met u praten.\nBeschikbare talen: \x02es\x02 (Spaans), \x02en\x02 (Engels), \x02nl\x02 (Nederlands)."
+    success:        "\x0303✔\x03 Taal gewijzigd naar \x02%language%\x02."
+    invalid:        "\x0304✗\x03 Niet-ondersteunde taal. Beschikbare talen: %languages%."
+
+  timezone:
+    syntax:         "SET TIMEZONE <tijdzone>"
+    short:          "Stel de tijdzone in die wordt gebruikt bij het weergeven van datums."
+    help:           "Stelt de tijdzone in die %nickserv% gebruikt bij het tonen van datums.\nGebruik \x02HELP SET TIMEZONE\x02 voor de regio-index; \x02HELP SET TIMEZONE <regio>\x02 (bijv. Europe) voor de tijdzones van die regio. Gebruik \x02OFF\x02 om te wissen."
+    success:        "\x0303✔\x03 Tijdzone ingesteld op \x02%timezone%\x02. Datums worden in deze tijdzone weergegeven."
+    cleared:        "\x0303✔\x03 Tijdzone gewist. Datums gebruiken de netwerkstandaard."
+    invalid:        "\x0304✗\x03 Ongeldige tijdzone \x02%timezone%\x02. Gebruik een geldige identificatie (bijv. UTC, Europe/Amsterdam)."
+
+  private:
+    syntax:         "SET PRIVATE {ON|OFF}"
+    short:          "Schakel privacy in of uit voor uw bijnaaminformatie."
+    help:           "Bepaalt de zichtbaarheid van uw bijnaaminformatie in het INFO-commando.\nMet \x02PRIVATE ON\x02 kunnen alleen u en IRC Operators uw gegevens bekijken.\nMet \x02PRIVATE OFF\x02 is uw informatie openbaar voor iedereen."
+    on:             "\x0303✔\x03 Uw bijnaaminformatie is nu \x02privé\x02."
+    off:            "\x0303✔\x03 Uw bijnaaminformatie is nu \x02openbaar\x02."
+
+  msg:
+    syntax:         "SET MSG {ON|OFF}"
+    short:          "Gebruik PRIVMSG (ON) of NOTICE (OFF) voor service-antwoorden."
+    help:           "Bepaalt hoe %nickserv% en andere services berichten naar u sturen.\nMet \x02MSG ON\x02 worden antwoorden verzonden als \x02PRIVMSG\x02 (sommige clients kunnen antwoorden of meldingen activeren).\nMet \x02MSG OFF\x02 worden antwoorden verzonden als \x02NOTICE\x02 (standaard; meestal geen automatisch antwoord)."
+    on:             "\x0303✔\x03 Serviceberichten worden nu verzonden als \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 Serviceberichten worden nu verzonden als \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SET VHOST <vhost>"
+    short:          "Stel uw aangepaste virtuele host in of wis deze (weergegeven hostnaam)."
+    help:           "Stelt een aangepaste hostnaam in die anderen zien wanneer u geïdentificeerd bent.\nGebruik \x02SET VHOST OFF\x02 om te wissen. Alleen letters (a-z, A-Z), cijfers, koppelteken en punt;\ngeen koppelteken of punt aan begin/einde van een blok; max 48 tekens. Uniek per bijnaam."
+    success:        "\x0303✔\x03 Uw virtuele host is ingesteld op \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 Uw virtuele host is gewist."
+    invalid:        "\x0304✗\x03 Ongeldige vhost. Alleen letters, cijfers, koppelteken en punt (niet aan begin/einde van blok); max 48 tekens."
+    taken:          "\x0304✗\x03 Die vhost is al in gebruik door een andere bijnaam."
+    forced:         "\x0304✗\x03 Uw vhost wordt automatisch geconfigureerd en kan niet worden gewijzigd met SET VHOST."
+
+# --- HELP -------------------------------------------------------------------
+help:
+  syntax:           "HELP [commando]"
+  short:            "Toon hulp voor %nickserv% commando's."
+  help:             "Toont algemene %nickserv% hulp of gedetailleerde informatie\nvoor een specifiek commando."
+  header_title:     "%bot%"
+  intro:            "Bijnaamregistratie- en beschermingsservice voor het IRC-netwerk."
+  intro_expiration: "LET OP: Bijnamen die langer dan %days% dagen \x0304\x1Fniet gebruikt\x0F zijn, worden automatisch verwijderd."
+  general_header:   "\x02\x0314Beschikbare commando's:\x03\x0F"
+  command_line:     "  \x0307%command%\x03%description%"
+  subcommand_line:  "  \x0307%command%\x03%description%"
+  options_header:   "\x02\x0314Opties:\x03\x0F"
+  general_footer:   "Gebruik \x0303/msg %bot% HELP <commando>\x03 voor meer informatie."
+  set_sub_footer:   "Gebruik \x0303/msg %bot% HELP %command% <optie>\x03 voor meer informatie."
+  command_header:   "\x02Hulp voor %command%:\x02"
+  syntax_label:     "\x0307Syntax:\x03 \x02%syntax%\x02"
+  footer:           "\x0314─────────────────────────────\x03"
+  unknown_command:  "\x0304✗\x03 Geen hulp beschikbaar voor \x02%command%\x02."
+  ircop_header:     "\x02\x0314Beschikbare commando's voor IRCOPS:\x03\x0F"
+
+  set_timezone:
+    index_label:    "\x0314Regio's\x03 (gebruik \x02HELP SET TIMEZONE <regio>\x02 voor lijst):"
+    region_header:  "\x0314Tijdzones voor %region%:\x03"
+    region_unknown: "\x0304✗\x03 Onbekende regio. Gebruik \x02HELP SET TIMEZONE\x02 voor de index."
+
+# --- Nick Protection --------------------------------------------------------
+protection:
+  nick_in_use:      "\x0304⚠\x03 Bijnaam \x02%nickname%\x02 is geregistreerd. U wordt hernoemd als u zich niet identificeert."
+  renamed_to:       "\x0307→\x03 U bent hernoemd naar \x02%guest_nick%\x02. Om uw bijnaam te herstellen:\n\x0303/msg %bot% IDENTIFY %nickname% <wachtwoord>\x03"
+  nick_forbidden:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden: %reason%"
+
+# --- IRCop Commands ---------------------------------------------------------
+userip:
+  syntax:           "USERIP <bijnaam>"
+  short:            "Verkrijg het echte IP-adres en de hostnaam van de bijnaam."
+  help:             |
+    Toont het echte IP-adres en de hostnaam van de opgegeven bijnaam.
+    Alleen beschikbaar voor IRCops met 'nickserv.userip'-toestemming.
+
+    Dit commando toont gevoelige bijnaaminformatie.
+    Gebruik op verantwoorde wijze.
+
+    Syntax: USERIP <bijnaam>
+    Voorbeeld: USERIP EenGebruiker
+  not_online:       "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verbonden."
+  result:           "\x0307ℹ\x03 Bijnaam: \x02%nickname%\x02 | IP: \x0307%ip%\x03 | Host: \x0307%host%\x03"
+
+permissions:
+  nickserv.userip: "Bekijk het echte IP-adres/de hostnaam van een bijnaam (USERIP)"
+  nickserv.suspend: "Schors of hef schorsing van een bijnaam op (SUSPEND/UNSUSPEND)"
+  nickserv.rename: "Forceer hernoeming van een verbonden bijnaam naar een willekeurige bijnaam (RENAME)"
+  nickserv.drop: "Laat een geregistreerde bijnaam vallen (DROP)"
+  nickserv.forbid: "Verbied of hef verbod van een bijnaam op (FORBID/UNFORBID)"
+  nickserv.forbidvhost: "Verbied of sta vhost-patronen toe (FORBIDVHOST)"
+  nickserv.saset: "Wijzig instellingen van een andere bijnaam (SASET)"
+  nickserv.noexpire: "Stel verloopbescherming in of verwijder deze voor een bijnaam (NOEXPIRE)"
+  nickserv.history: "Bekijk en beheer bijnaamactiegeschiedenis (HISTORY)"
+
+# --- SUSPEND (IRCop) ---------------------------------------------------------
+suspend:
+  syntax:           "SUSPEND <bijnaam> <duur> <reden>"
+  short:            "Schors een bijnaam."
+  help:             |
+    Schorst een bijnaam, waardoor de eigenaar zich niet kan identificeren.
+    De schorsing kan tijdelijk of permanent zijn.
+
+    Duurformaten: \x0303%d\x03 (dagen), \x0303%h\x03 (uren), \x0303%m\x03 (minuten), of \x03030\x03 (permanent).
+
+    Geschorste gebruikers kunnen zich niet identificeren met hun bijnaam.
+    IRC-operators en rootgebruikers kunnen niet worden geschorst.
+
+    Syntax: SUSPEND <bijnaam> <duur> <reden>
+    Voorbeelden:
+      SUSPEND SlechteGebr 7d Spammen in #hulp
+      SUSPEND Misbruiker 30d Herhaalde flood
+      SUSPEND ProbleemGebr 0 Permaban ontduiking
+  success:            "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is geschorst tot \x02%duration%\x02."
+  already_suspended:  "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geschorst."
+  not_registered:     "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  forbidden:          "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden en kan niet worden geschorst."
+  cannot_suspend_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet schorsen."
+  cannot_suspend_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet schorsen."
+  cannot_suspend_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet schorsen."
+  invalid_duration:   "\x0304✗\x03 Ongeldige duur. Gebruik: \x0303<d><h><m>\x03 (bijv. 7d, 12h, 30m) of \x03030\x03 voor permanent."
+  permanent:          "permanent"
+
+# --- UNSUSPEND (IRCop) -------------------------------------------------------
+unsuspend:
+  syntax:           "UNSUSPEND <bijnaam>"
+  short:            "Hef schorsing van een bijnaam op."
+  help:             |
+    Heft een actieve schorsing van een bijnaam op, zodat de eigenaar zich weer kan identificeren.
+
+    Syntax: UNSUSPEND <bijnaam>
+    Voorbeeld: UNSUSPEND EenGebruiker
+  success:          "\x0303✔\x03 De schorsing van \x02%nickname%\x02 is opgeheven."
+  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  not_suspended:    "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geschorst."
+
+# --- RENAME (IRCop) -----------------------------------------------------------
+rename:
+  syntax:           "RENAME <bijnaam>"
+  short:            "Forceer hernoeming van een verbonden bijnaam naar een willekeurige bijnaam."
+  help:             |
+    Dwingt een verbonden bijnaam om zijn/haar nick te wijzigen naar een willekeurig gegenereerde.
+    Handig voor het afdwingen van netwerkbeleid zonder de gebruiker te verbreken.
+
+    Het nieuwe bijnaamformaat gebruikt het geconfigureerde gastprefix (%prefix%).
+
+    Dit commando vereist IRCop-toestemming: nickserv.rename
+
+    Syntax: RENAME <bijnaam>
+    Voorbeeld: RENAME Lastpost
+  not_online:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verbonden."
+  cannot_rename_root: "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet hernoemen."
+  cannot_rename_oper: "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet hernoemen."
+  cannot_rename_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet hernoemen."
+  success:           "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is hernoemd naar \x02%new_nick%\x02."
+
+# --- DROP (IRCop) --------------------------------------------------------------
+drop:
+  syntax:           "DROP <bijnaam>"
+  short:            "Laat een geregistreerde bijnaam vallen."
+  help:             |
+    Verwijdert een geregistreerde bijnaam uit de database.
+    Deze actie kan niet ongedaan worden gemaakt.
+
+    Als de gebruiker online is, wordt hij/zij hernoemd naar een Gast-bijnaam.
+    Rootgebruikers en IRC-operators kunnen niet worden verwijderd.
+    U kunt uw eigen bijnaam niet verwijderen.
+
+    Dit commando vereist IRCop-toestemming: nickserv.drop
+
+    Syntax: DROP <bijnaam>
+    Voorbeeld: DROP OudAccount
+  not_registered:     "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  suspended:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Hef eerst de schorsing op."
+  forbidden:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
+  cannot_drop_root:   "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet verwijderen."
+  cannot_drop_oper:   "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet verwijderen."
+  cannot_drop_self:    "\x0304✗\x03 U kunt uw eigen bijnaam niet verwijderen."
+  success:            "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is verwijderd."
+  cannot_drop_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet verwijderen."
+
+# --- FORBID (IRCop) --------------------------------------------------------------
+forbid:
+  syntax:           "FORBID <bijnaam> <reden>"
+  short:            "Blokkeer permanent het gebruik van een bijnaam."
+  help:             |
+    Verbiedt het gebruik van een bijnaam op het netwerk.
+    De bijnaam kan door niemand worden geregistreerd of gebruikt.
+
+    Als de bijnaam momenteel geregistreerd is, wordt deze eerst verwijderd.
+    Als iemand hem gebruikt, wordt hij/zij gedwongen te wijzigen naar een Gast-bijnaam.
+
+    Rootgebruikers, IRC-operators en service-bijnamen kunnen niet worden verboden.
+
+    Dit commando vereist IRCop-toestemming: nickserv.forbid
+
+    Syntax: FORBID <bijnaam> <reden>
+    Voorbeeld: FORBID SlechteNick Herhaalde beleidsovertredingen
+  success:            "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is verboden."
+  updated:            "\x0303✔\x03 Verbodsreden voor \x02%nickname%\x02 is bijgewerkt."
+  reason_required:    "\x0304✗\x03 U moet een reden opgeven voor het verbod."
+  cannot_forbid_root:  "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet verbieden."
+  cannot_forbid_oper:  "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet verbieden."
+  cannot_forbid_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet verbieden."
+
+# --- UNFORBID (IRCop) ------------------------------------------------------------
+unforbid:
+  syntax:           "UNFORBID <bijnaam>"
+  short:            "Hef een bijnaamverbod op."
+  help:             |
+    Heft een bijnaamverbod op, zodat de bijnaam weer kan worden gebruikt.
+
+    Dit commando vereist IRCop-toestemming: nickserv.forbid
+
+    Syntax: UNFORBID <bijnaam>
+    Voorbeeld: UNFORBID EenNick
+  success:          "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is niet langer verboden."
+  not_forbidden:    "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet verboden."
+
+# --- FORBIDVHOST (IRCop) ---------------------------------------------------------
+forbidvhost:
+  syntax:           "FORBIDVHOST ADD|DEL|LIST [patroon]"
+  short:            "Beheer verboden vhost-patronen."
+  help:             |
+    Beheert patronen die voorkomen dat gebruikers overeenkomende vhosts
+    instellen via NickServ SET VHOST.
+
+    Wildcards: * komt overeen met elke reeks, ? komt overeen met één teken.
+    Voorbeeld: *.pirated.com blokkeert elke vhost die eindigt op .pirated.com
+
+    Dit commando vereist IRCop-toestemming: nickserv.forbidvhost
+
+    Subcommando's:
+      ADD <patroon>    Voeg een verboden patroon toe
+      DEL <patroon>    Verwijder een verboden patroon
+      LIST             Toon alle verboden patronen
+
+  unknown_sub: "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
+
+  add:
+    syntax:      "FORBIDVHOST ADD <patroon>"
+    short:       "Voeg een verboden vhost-patroon toe."
+    help:        |
+      Voegt een patroon toe aan de lijst met verboden vhosts. Gebruikers kunnen
+      geen vhosts instellen die overeenkomen met dit patroon via SET VHOST.
+
+      Wildcards: * komt overeen met elke reeks, ? komt overeen met één teken.
+
+      Syntax: FORBIDVHOST ADD <patroon>
+      Voorbeeld: FORBIDVHOST ADD *.pirated.com
+    done:            "\x0303✓\x03 Verboden vhost-patroon toegevoegd: \x02%pattern%\x02"
+    already_exists:  "\x0304✗\x03 Patroon \x02%pattern%\x02 bestaat al."
+    invalid:          "\x0304✗\x03 Ongeldig vhost-patroonformaat."
+
+  del:
+    syntax:      "FORBIDVHOST DEL <patroon>"
+    short:       "Verwijder een verboden vhost-patroon."
+    help:        |
+      Verwijdert een patroon uit de lijst met verboden vhosts.
+
+      Syntax: FORBIDVHOST DEL <patroon>
+      Voorbeeld: FORBIDVHOST DEL *.pirated.com
+    done:        "\x0303✓\x03 Verboden vhost-patroon verwijderd: \x02%pattern%\x02"
+    not_found:   "\x0304✗\x03 Patroon \x02%pattern%\x02 niet gevonden."
+
+  list:
+    short:       "Toon alle verboden vhost-patronen."
+    syntax:      "FORBIDVHOST LIST"
+    help:        |
+      Toont alle verboden vhost-patronen.
+
+      Syntax: FORBIDVHOST LIST
+    header:      "\x0307ℹ\x03 Verboden vhost-patronen (\x02%count%\x02):"
+    entry:       "  %index%. \x0304%pattern%\x03 — door %nickname% (%date%)"
+    empty:       "\x0307ℹ\x03 Geen verboden vhost-patronen."
+    unknown_creator: "onbekend"
+
+# --- HISTORY (IRCop) ---------------------------------------------------------
+history:
+  syntax:           "HISTORY <bijnaam> {ADD|DEL|VIEW|CLEAR}"
+  short:            "Bekijk of beheer bijnaamactiegeschiedenis."
+  help:             |
+    Beheer de actiegeschiedenis voor een bijnaam.
+    Alleen IRCops met 'nickserv.history'-toestemming kunnen dit commando gebruiken.
+
+    Acties die automatisch worden vastgelegd:
+      SUSPEND, UNSUSPEND, SET PASSWORD, SET EMAIL, SASET PASSWORD,
+      SASET EMAIL, RECOVER
+
+    Syntax: HISTORY <bijnaam> ADD <bericht>
+            HISTORY <bijnaam> DEL <id>
+            HISTORY <bijnaam> VIEW [PAGINA|ALL]
+            HISTORY <bijnaam> CLEAR
+
+    Voorbeelden:
+      HISTORY EenNick VIEW
+      HISTORY EenNick ADD Handmatige opmerking over deze gebruiker
+      HISTORY EenNick VIEW 2
+      HISTORY EenNick VIEW ALL
+      HISTORY EenNick DEL 123
+      HISTORY EenNick CLEAR
+
+    Gebruik VIEW om de geschiedenis te bekijken (toont standaard 3 vermeldingen).
+    Gebruik VIEW PAGINA 2 om de volgende pagina te zien.
+    Gebruik VIEW ALL om de volledige geschiedenis te zien.
+    Gebruik ADD om een handmatige vermelding toe te voegen.
+    Gebruik DEL om een specifieke vermelding op ID te verwijderen.
+    Gebruik CLEAR om alle geschiedenisvermeldingen te verwijderen.
+  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  unknown_operator: "(onbekend)"
+
+  add:
+    syntax:     "HISTORY <bijnaam> ADD <bericht>"
+    short:      "Voeg een handmatige geschiedenisvermelding toe."
+    help:        |
+      Voegt een handmatige vermelding toe aan de geschiedenis van de bijnaam.
+
+      Syntax: HISTORY <bijnaam> ADD <bericht>
+      Voorbeeld: HISTORY EenNick ADD Gebruiker gerapporteerd voor spam
+    success:    "\x0303✔\x03 Geschiedenisvermelding toegevoegd voor \x02%nickname%\x02."
+
+  del:
+    syntax:     "HISTORY <bijnaam> DEL <id>"
+    short:      "Verwijder een geschiedenisvermelding op ID."
+    help:        |
+      Verwijdert een specifieke geschiedenisvermelding op zijn ID.
+
+      Syntax: HISTORY <bijnaam> DEL <id>
+      Voorbeeld: HISTORY EenNick DEL 42
+    success:    "\x0303✔\x03 Geschiedenisvermelding \x02%id%\x02 verwijderd."
+    not_found:  "\x0304✗\x03 Geschiedenisvermelding \x02%id%\x02 niet gevonden."
+    invalid_id: "\x0304✗\x03 Ongeldige vermeldings-ID: \x02%id%\x02."
+
+  view:
+    syntax:     "HISTORY <bijnaam> VIEW [PAGINA|ALL]"
+    short:      "Bekijk bijnaamactiegeschiedenis."
+    help:        |
+      Toont de actiegeschiedenis van de bijnaam.
+
+      Syntax: HISTORY <bijnaam> VIEW
+              HISTORY <bijnaam> VIEW PAGINA
+              HISTORY <bijnaam> VIEW ALL
+
+      Standaard worden er 3 vermeldingen tegelijk getoond.
+      Gebruik VIEW 2 om de tweede pagina te zien.
+      Gebruik VIEW ALL om de volledige geschiedenis te zien.
+    header:     "\x02Geschiedenis voor \x0307%nickname%\x03\x02 (toont %start%-%end% van %total%):"
+    entry:       "#%id% [%date%] \x0303%action%\x03 door %operator% — %message%"
+    extra:       "  Extra \x0307→\x03 %extra%"
+    no_entries:  "\x0307ℹ\x03 Geen geschiedenisvermeldingen gevonden voor \x02%nickname%\x02."
+    page_hint:   "Gebruik \x0303HISTORY %nickname% VIEW %next_page%\x03 voor meer vermeldingen."
+
+  clear:
+    syntax:     "HISTORY <bijnaam> CLEAR"
+    short:      "Verwijder alle geschiedenisvermeldingen voor een bijnaam."
+    help:        |
+      Verwijdert alle geschiedenisvermeldingen voor de opgegeven bijnaam.
+      Deze actie kan niet ongedaan worden gemaakt.
+
+      Syntax: HISTORY <bijnaam> CLEAR
+      Voorbeeld: HISTORY EenNick CLEAR
+    success:    "\x0303✔\x03 \x02%count%\x02 geschiedenisvermeldingen gewist voor \x02%nickname%\x02."
+
+# --- History message translations (used when viewing history) ---
+history.message:
+  unsuspend:                  "Schorsing opgeheven"
+  password_changed_owner:     "Wachtwoord gewijzigd door eigenaar"
+  password_changed_operator:  "Wachtwoord gewijzigd door operator"
+  email_changed_owner:        "E-mail gewijzigd van %old_email% naar %new_email%"
+  email_changed_operator:     "E-mail gewijzigd naar %new_email% door operator"
+  recover:                    "Wachtwoord gereset via e-mailtoken"
+
+# --- History extra field translations ---
+history.extra:
+  duration:      "Duur: %value%"
+  expires_at:    "Verloopt: %value%"
+  old_email:     "Oude e-mail: %value%"
+  new_email:     "Nieuwe e-mail: %value%"
+  method:        "Methode: %value%"
+  ip:            "IP: %value%"
+  host:          "Host: %value%"
+
+# --- NOEXPIRE (IRCop) ---------------------------------------------------------
+noexpire:
+  syntax:           "NOEXPIRE <bijnaam> {ON|OFF}"
+  short:            "Stel verloopbescherming in of verwijder deze voor een bijnaam."
+  help:             |
+    Bepaalt of een bijnaam verloopt door inactiviteit.
+    Wanneer ON, verloopt de bijnaam nooit, ongeacht de laatste activiteit.
+    Wanneer OFF, zijn de normale verloopregels van toepassing.
+
+    Alleen IRCops met 'nickserv.noexpire'-toestemming kunnen dit commando gebruiken.
+
+    Syntax: NOEXPIRE <bijnaam> {ON|OFF}
+    Voorbeelden:
+      NOEXPIRE BelangrijkeGebr ON
+      NOEXPIRE BelangrijkeGebr OFF
+  success_on:       "\x0303✔\x03 Bijnaam \x02%nickname%\x02 is nu beschermd tegen verloop."
+  success_off:      "\x0303✔\x03 Bijnaam \x02%nickname%\x02 verloopt nu normaal."
+  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  forbidden:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is verboden."
+  suspended:         "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst."
+
+# --- DEBUG -------------------------------------------------------------------
+debug:
+  action_message: "%operator% voert commando %command% uit op %target%. %reason%"
+  action_with_option: "%operator% voert commando %command% uit op %target%. Optie: %option%. %reason%"
+  action_with_value: "%operator% voert commando %command% uit op %target%. Optie: %option%=%value%. %reason%"
+  action_duration: "%operator% voert commando %command% uit op %target%. Duur: %duration%. %reason%"
+  prefix_reason: "Reden: %reason%"
