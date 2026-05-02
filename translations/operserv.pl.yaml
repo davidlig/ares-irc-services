@@ -92,10 +92,10 @@ role:
     empty:          "Brak ról operatorów."
 
   perms:
-    syntax:         "ROLE PERMS <rola> {LIST|ADD|DEL} [uprawnienie]"
+    syntax:         "ROLE PERMS <rola> {LIST|ADD|DEL|CLEAR} [uprawnienie|ALL]"
     short:          "Zarządzaj uprawnieniami roli."
-    help:            "Zarządzaj uprawnieniami przypisanymi do roli.\nLIST pokazuje wszystkie uprawnienia dla roli.\nADD przypisuje uprawnienie do roli.\nDEL usuwa uprawnienie z roli (nie dla chronionych ról).\nTa komenda jest dostępna tylko dla użytkowników Root."
-    unknown_action:  "\x0304✗\x03 Nieznana akcja \x02%action%\x02. Użyj LIST, ADD lub DEL."
+    help:            "Zarządzaj uprawnieniami przypisanymi do roli.\nLIST pokazuje wszystkie uprawnienia dla roli.\nADD przypisuje uprawnienie do roli.\nDEL usuwa uprawnienie z roli (nie dla chronionych ról).\nCLEAR usuwa wszystkie uprawnienia z roli.\nUżyj ALL aby dodać wszystkie dostępne uprawnienia na raz.\nTa komenda jest dostępna tylko dla użytkowników Root."
+    unknown_action:  "\x0304✗\x03 Nieznana akcja \x02%action%\x02. Użyj LIST, ADD, DEL lub CLEAR."
     not_found:       "\x0304✗\x03 Uprawnienie \x02%perm%\x02 nie istnieje."
     already_has:     "\x0304✗\x03 Rola \x02%role%\x02 już ma uprawnienie \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Rola \x02%role%\x02 nie ma uprawnienia \x02%perm%\x02."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Wszystkie uprawnienia są przypisane do tej roli.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rola> ADD <uprawnienie>"
+      syntax:       "ROLE PERMS <rola> ADD {uprawnienie|ALL}"
       short:        "Dodaj uprawnienie do roli."
-      help:         "Dodaje uprawnienie do roli.\nTa komenda jest dostępna tylko dla użytkowników Root."
+      help:         "Dodaje uprawnienie do roli.\nUżyj ALL aby dodać wszystkie dostępne uprawnienia na raz.\nTa komenda jest dostępna tylko dla użytkowników Root."
       done:         "\x0303✓\x03 Dodano uprawnienie \x02%perm%\x02 do roli \x02%role%\x02."
+      all_done:     "\x0303✓\x03 Dodano \x02%count%\x02 uprawnień do roli \x02%role%\x02."
+      all_skipped:  "\x0304✗\x03 Rola \x02%role%\x02 już posiada wszystkie dostępne uprawnienia."
+      all_empty:    "\x0304✗\x03 Brak dostępnych uprawnień do dodania."
 
     del:
       syntax:       "ROLE PERMS <rola> DEL <uprawnienie>"
       short:        "Usuń uprawnienie z roli."
       help:         "Usuwa uprawnienie z roli.\nNie można modyfikować chronionych ról.\nTa komenda jest dostępna tylko dla użytkowników Root."
       done:         "\x0303✓\x03 Usunięto uprawnienie \x02%perm%\x02 z roli \x02%role%\x02."
+
+    clear:
+      syntax:       "ROLE PERMS <rola> CLEAR"
+      short:        "Usuń wszystkie uprawnienia z roli."
+      help:         "Usuwa wszystkie uprawnienia z roli.\nTa komenda jest dostępna tylko dla użytkowników Root."
+      done:         "\x0303✓\x03 Usunięto \x02%count%\x02 uprawnień z roli \x02%role%\x02."
+      empty:        "\x0304✗\x03 Rola \x02%role%\x02 nie ma przypisanych uprawnień."
 
   modes:
     syntax:         "ROLE MODES <rola> {VIEW|SET} [tryby]"

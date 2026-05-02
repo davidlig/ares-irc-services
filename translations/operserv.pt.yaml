@@ -92,10 +92,10 @@ role:
     empty:          "Não existem cargos de operador."
 
   perms:
-    syntax:         "ROLE PERMS <cargo> {LIST|ADD|DEL} [permissão]"
+    syntax:         "ROLE PERMS <cargo> {LIST|ADD|DEL|CLEAR} [permissão|ALL]"
     short:          "Gerir permissões do cargo."
-    help:            "Gere permissões atribuídas a um cargo.\nLIST mostra todas as permissões do cargo.\nADD atribui uma permissão ao cargo.\nDEL remove uma permissão do cargo (não para cargos protegidos).\nEste comando é restrito a utilizadores Root."
-    unknown_action:  "\x0304✗\x03 Ação desconhecida \x02%action%\x02. Use LIST, ADD ou DEL."
+    help:            "Gere permissões atribuídas a um cargo.\nLIST mostra todas as permissões do cargo.\nADD atribui uma permissão ao cargo.\nDEL remove uma permissão do cargo (não para cargos protegidos).\nCLEAR remove todas as permissões do cargo.\nUse ALL para adicionar todas as permissões disponíveis de uma vez.\nEste comando é restrito a utilizadores Root."
+    unknown_action:  "\x0304✗\x03 Ação desconhecida \x02%action%\x02. Use LIST, ADD, DEL ou CLEAR."
     not_found:       "\x0304✗\x03 A permissão \x02%perm%\x02 não existe."
     already_has:     "\x0304✗\x03 O cargo \x02%role%\x02 já tem a permissão \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 O cargo \x02%role%\x02 não tem a permissão \x02%perm%\x02."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Todas as permissões estão atribuídas a este cargo.\x03"
 
     add:
-      syntax:       "ROLE PERMS <cargo> ADD <permissão>"
+      syntax:       "ROLE PERMS <cargo> ADD {permissão|ALL}"
       short:        "Adicionar uma permissão a um cargo."
-      help:         "Adiciona uma permissão a um cargo.\nEste comando é restrito a utilizadores Root."
+      help:         "Adiciona uma permissão a um cargo.\nUse ALL para adicionar todas as permissões disponíveis de uma vez.\nEste comando é restrito a utilizadores Root."
       done:         "\x0303✓\x03 Adicionada permissão \x02%perm%\x02 ao cargo \x02%role%\x02."
+      all_done:     "\x0303✓\x03 Adicionadas \x02%count%\x02 permissões ao cargo \x02%role%\x02."
+      all_skipped:  "\x0304✗\x03 O cargo \x02%role%\x02 já tem todas as permissões disponíveis."
+      all_empty:    "\x0304✗\x03 Não existem permissões disponíveis para adicionar."
 
     del:
       syntax:       "ROLE PERMS <cargo> DEL <permissão>"
       short:        "Remover uma permissão de um cargo."
       help:         "Remove uma permissão de um cargo.\nNão é possível modificar cargos protegidos.\nEste comando é restrito a utilizadores Root."
       done:         "\x0303✓\x03 Removida permissão \x02%perm%\x02 do cargo \x02%role%\x02."
+
+    clear:
+      syntax:       "ROLE PERMS <cargo> CLEAR"
+      short:        "Remover todas as permissões de um cargo."
+      help:         "Remove todas as permissões de um cargo.\nEste comando é restrito a utilizadores Root."
+      done:         "\x0303✓\x03 Removidas \x02%count%\x02 permissões do cargo \x02%role%\x02."
+      empty:        "\x0304✗\x03 O cargo \x02%role%\x02 não tem permissões atribuídas."
 
   modes:
     syntax:         "ROLE MODES <cargo> {VIEW|SET} [modos]"

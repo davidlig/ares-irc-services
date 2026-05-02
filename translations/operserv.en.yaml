@@ -92,10 +92,10 @@ role:
     empty:          "There are no operator roles."
 
   perms:
-    syntax:         "ROLE PERMS <role> {LIST|ADD|DEL} [permission]"
+    syntax:         "ROLE PERMS <role> {LIST|ADD|DEL|CLEAR} [permission|ALL]"
     short:          "Manage role permissions."
-    help:            "Manage permissions assigned to a role.\nLIST shows all permissions for the role.\nADD assigns a permission to the role.\nDEL removes a permission from the role (not for protected roles).\nThis command is restricted to Root users."
-    unknown_action:  "\x0304✗\x03 Unknown action \x02%action%\x02. Use LIST, ADD, or DEL."
+    help:            "Manage permissions assigned to a role.\nLIST shows all permissions for the role.\nADD assigns a permission to the role.\nDEL removes a permission from the role (not for protected roles).\nCLEAR removes all permissions from the role.\nUse ALL to add all available permissions at once.\nThis command is restricted to Root users."
+    unknown_action:  "\x0304✗\x03 Unknown action \x02%action%\x02. Use LIST, ADD, DEL, or CLEAR."
     not_found:       "\x0304✗\x03 Permission \x02%perm%\x02 does not exist."
     already_has:     "\x0304✗\x03 Role \x02%role%\x02 already has permission \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Role \x02%role%\x02 does not have permission \x02%perm%\x02."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314All permissions are assigned to this role.\x03"
 
     add:
-      syntax:       "ROLE PERMS <role> ADD <permission>"
+      syntax:       "ROLE PERMS <role> ADD {permission|ALL}"
       short:        "Add a permission to a role."
-      help:         "Adds a permission to a role.\nThis command is restricted to Root users."
+      help:         "Adds a permission to a role.\nUse ALL to add all available permissions at once.\nThis command is restricted to Root users."
       done:         "\x0303✓\x03 Added permission \x02%perm%\x02 to role \x02%role%\x02."
+      all_done:     "\x0303✓\x03 Added \x02%count%\x02 permissions to role \x02%role%\x02."
+      all_skipped:  "\x0304✗\x03 Role \x02%role%\x02 already has all available permissions."
+      all_empty:    "\x0304✗\x03 No permissions available to add."
 
     del:
       syntax:       "ROLE PERMS <role> DEL <permission>"
       short:        "Remove a permission from a role."
       help:         "Removes a permission from a role.\nCannot modify protected roles.\nThis command is restricted to Root users."
       done:         "\x0303✓\x03 Removed permission \x02%perm%\x02 from role \x02%role%\x02."
+
+    clear:
+      syntax:       "ROLE PERMS <role> CLEAR"
+      short:        "Remove all permissions from a role."
+      help:         "Removes all permissions from a role.\nThis command is restricted to Root users."
+      done:         "\x0303✓\x03 Removed \x02%count%\x02 permissions from role \x02%role%\x02."
+      empty:        "\x0304✗\x03 Role \x02%role%\x02 has no permissions assigned."
 
   modes:
     syntax:         "ROLE MODES <role> {VIEW|SET} [modes]"

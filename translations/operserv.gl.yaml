@@ -92,10 +92,10 @@ role:
     empty:          "Non hai roles de operador."
 
   perms:
-    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL} [permiso]"
+    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [permiso|ALL]"
     short:          "Xestionar os permisos do rol."
-    help:            "Xestiona os permisos asignados a un rol.\nLIST mostra todos os permisos do rol.\nADD asigna un permiso ao rol.\nDEL elimina un permiso do rol (non para roles protexidos).\nEste comando está restrinxido aos usuarios Root."
-    unknown_action:  "\x0304✗\x03 Acción descoñecida \x02%action%\x02. Use LIST, ADD ou DEL."
+    help:            "Xestiona os permisos asignados a un rol.\nLIST mostra todos os permisos do rol.\nADD asigna un permiso ao rol.\nDEL elimina un permiso do rol (non para roles protexidos).\nCLEAR elimina todos os permisos do rol.\nUse ALL para engadir todos os permisos dispoñibles á vez.\nEste comando está restrinxido aos usuarios Root."
+    unknown_action:  "\x0304✗\x03 Acción descoñecida \x02%action%\x02. Use LIST, ADD, DEL ou CLEAR."
     not_found:       "\x0304✗\x03 O permiso \x02%perm%\x02 non existe."
     already_has:     "\x0304✗\x03 O rol \x02%role%\x02 xa ten o permiso \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 O rol \x02%role%\x02 non ten o permiso \x02%perm%\x02."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Todos os permisos están asignados a este rol.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rol> ADD <permiso>"
+      syntax:       "ROLE PERMS <rol> ADD {permiso|ALL}"
       short:        "Engadir un permiso a un rol."
-      help:         "Engade un permiso a un rol.\nEste comando está restrinxido aos usuarios Root."
+      help:         "Engade un permiso a un rol.\nUse ALL para engadir todos os permisos dispoñibles á vez.\nEste comando está restrinxido aos usuarios Root."
       done:         "\x0303✓\x03 Engadido o permiso \x02%perm%\x02 ao rol \x02%role%\x02."
+      all_done:     "\x0303✓\x03 Engadidos \x02%count%\x02 permisos ao rol \x02%role%\x02."
+      all_skipped:  "\x0304✗\x03 O rol \x02%role%\x02 xa ten todos os permisos dispoñibles."
+      all_empty:    "\x0304✗\x03 Non hai permisos dispoñibles para engadir."
 
     del:
       syntax:       "ROLE PERMS <rol> DEL <permiso>"
       short:        "Eliminar un permiso dun rol."
       help:         "Elimina un permiso dun rol.\nNon se poden modificar os roles protexidos.\nEste comando está restrinxido aos usuarios Root."
       done:         "\x0303✓\x03 Eliminado o permiso \x02%perm%\x02 do rol \x02%role%\x02."
+
+    clear:
+      syntax:       "ROLE PERMS <rol> CLEAR"
+      short:        "Eliminar todos os permisos dun rol."
+      help:         "Elimina todos os permisos dun rol.\nEste comando está restrinxido aos usuarios Root."
+      done:         "\x0303✓\x03 Eliminados \x02%count%\x02 permisos do rol \x02%role%\x02."
+      empty:        "\x0304✗\x03 O rol \x02%role%\x02 non ten permisos asignados."
 
   modes:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [modos]"

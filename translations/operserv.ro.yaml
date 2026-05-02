@@ -92,10 +92,10 @@ role:
     empty:          "Nu există roluri de operator."
 
   perms:
-    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL} [permisiune]"
+    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [permisiune|ALL]"
     short:          "Gestionați permisiunile rolului."
-    help:            "Gestionează permisiunile atribuite unui rol.\nLIST afișează toate permisiunile rolului.\nADD atribuie o permisiune rolului.\nDEL elimină o permisiune din rol (nu pentru rolurile protejate).\nAceastă comandă este rezervată utilizatorilor Root."
-    unknown_action:  "\x0304✗\x03 Acțiune necunoscută \x02%action%\x02. Folosiți LIST, ADD sau DEL."
+    help:            "Gestionează permisiunile atribuite unui rol.\nLIST afișează toate permisiunile rolului.\nADD atribuie o permisiune rolului.\nDEL elimină o permisiune din rol (nu pentru rolurile protejate).\nCLEAR elimină toate permisiunile din rol.\nFolosiți ALL pentru a adăuga toate permisiunile disponibile deodată.\nAceastă comandă este rezervată utilizatorilor Root."
+    unknown_action:  "\x0304✗\x03 Acțiune necunoscută \x02%action%\x02. Folosiți LIST, ADD, DEL sau CLEAR."
     not_found:       "\x0304✗\x03 Permisiunea \x02%perm%\x02 nu există."
     already_has:     "\x0304✗\x03 Rolul \x02%role%\x02 are deja permisiunea \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Rolul \x02%role%\x02 nu are permisiunea \x02%perm%\x02."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Toate permisiunile sunt atribuite acestui rol.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rol> ADD <permisiune>"
+      syntax:       "ROLE PERMS <rol> ADD {permisiune|ALL}"
       short:        "Adăugați o permisiune unui rol."
-      help:         "Adaugă o permisiune unui rol.\nAceastă comandă este rezervată utilizatorilor Root."
+      help:         "Adaugă o permisiune unui rol.\nFolosiți ALL pentru a adăuga toate permisiunile disponibile deodată.\nAceastă comandă este rezervată utilizatorilor Root."
       done:         "\x0303✓\x03 Permisiunea \x02%perm%\x02 adăugată rolului \x02%role%\x02."
+      all_done:     "\x0303✓\x03 Adăugate \x02%count%\x02 permisiuni rolului \x02%role%\x02."
+      all_skipped:  "\x0304✗\x03 Rolul \x02%role%\x02 are deja toate permisiunile disponibile."
+      all_empty:    "\x0304✗\x03 Nu există permisiuni disponibile de adăugat."
 
     del:
       syntax:       "ROLE PERMS <rol> DEL <permisiune>"
       short:        "Eliminați o permisiune dintr-un rol."
       help:         "Elimină o permisiune dintr-un rol.\nNu se pot modifica rolurile protejate.\nAceastă comandă este rezervată utilizatorilor Root."
       done:         "\x0303✓\x03 Permisiunea \x02%perm%\x02 eliminată din rolul \x02%role%\x02."
+
+    clear:
+      syntax:       "ROLE PERMS <rol> CLEAR"
+      short:        "Eliminați toate permisiunile dintr-un rol."
+      help:         "Elimină toate permisiunile dintr-un rol.\nAceastă comandă este rezervată utilizatorilor Root."
+      done:         "\x0303✓\x03 Eliminate \x02%count%\x02 permisiuni din rolul \x02%role%\x02."
+      empty:        "\x0304✗\x03 Rolul \x02%role%\x02 nu are permisiuni atribuite."
 
   modes:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [moduri]"

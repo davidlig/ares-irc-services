@@ -92,10 +92,10 @@ role:
     empty:          "Ez dago operadore rolik."
 
   perms:
-    syntax:         "ROLE PERMS <rola> {LIST|ADD|DEL} [baimena]"
+    syntax:         "ROLE PERMS <rola> {LIST|ADD|DEL|CLEAR} [baimena|ALL]"
     short:          "Kudeatu rol baten baimenak."
-    help:            "Rol bati esleitutako baimenak kudeatzen ditu.\nLISTek rolaren baimen guztiak erakusten ditu.\nADDek baimen bat esleitzen dio rolari.\nDELek baimen bat kentzen dio rolari (ez babestutako roletarako).\nKomando hau Root erabiltzaileentzat mugatuta dago."
-    unknown_action:  "\x0304✗\x03 Ekintza ezezaguna \x02%action%\x02. Erabili LIST, ADD edo DEL."
+    help:            "Rol bati esleitutako baimenak kudeatzen ditu.\nLISTek rolaren baimen guztiak erakusten ditu.\nADDek baimen bat esleitzen dio rolari.\nDELek baimen bat kentzen dio rolari (ez babestutako roletarako).\nCLEARek rolaren baimen guztiak kentzen ditu.\nErabili ALL eskuragarri dauden baimen guztiak batera gehitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+    unknown_action:  "\x0304✗\x03 Ekintza ezezaguna \x02%action%\x02. Erabili LIST, ADD, DEL edo CLEAR."
     not_found:       "\x0304✗\x03 \x02%perm%\x02 baimena ez da existitzen."
     already_has:     "\x0304✗\x03 \x02%role%\x02 rolak jada \x02%perm%\x02 baimena du."
     does_not_have:   "\x0304✗\x03 \x02%role%\x02 rolak ez du \x02%perm%\x02 baimenik."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Baimen guztiak rol honi esleituta daude.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rola> ADD <baimena>"
+      syntax:       "ROLE PERMS <rola> ADD {baimena|ALL}"
       short:        "Gehitu baimen bat rol bati."
-      help:         "Rol bati baimen bat gehitzen dio.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+      help:         "Rol bati baimen bat gehitzen dio.\nErabili ALL eskuragarri dauden baimen guztiak batera gehitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       done:         "\x0303✓\x03 \x02%perm%\x02 baimena gehitu zaio \x02%role%\x02 rolari."
+      all_done:     "\x0303✓\x03 \x02%count%\x02 baimen gehitu zaizkio \x02%role%\x02 rolari."
+      all_skipped:  "\x0304✗\x03 \x02%role%\x02 rolak jada baimen guztiak ditu."
+      all_empty:    "\x0304✗\x03 Ez dago gehitzeko baimenik erabilgarri."
 
     del:
       syntax:       "ROLE PERMS <rola> DEL <baimena>"
       short:        "Kendu baimen bat rol batetik."
       help:         "Rol bati baimen bat kentzen dio.\nEzin dira babestutako rolak aldatu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       done:         "\x0303✓\x03 \x02%perm%\x02 baimena kendu zaio \x02%role%\x02 rolari."
+
+    clear:
+      syntax:       "ROLE PERMS <rola> CLEAR"
+      short:        "Kendu rol baten baimen guztiak."
+      help:         "Rol baten baimen guztiak kentzen ditu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+      done:         "\x0303✓\x03 \x02%count%\x02 baimen kendu zaizkio \x02%role%\x02 rolari."
+      empty:        "\x0304✗\x03 \x02%role%\x02 rolak ez du baimenik esleituta."
 
   modes:
     syntax:         "ROLE MODES <rola> {VIEW|SET} [moduak]"

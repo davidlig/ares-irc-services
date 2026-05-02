@@ -92,10 +92,10 @@ role:
     empty:          "Operatör rolü bulunmamaktadır."
 
   perms:
-    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL} [izin]"
+    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [izin|ALL]"
     short:          "Rol izinlerini yönetin."
-    help:            "Bir role atanmış izinleri yönetin.\nLIST, rolün tüm izinlerini gösterir.\nADD, role bir izin atar.\nDEL, rolden bir izni kaldırır (korumalı roller için geçerli değil).\nBu komut yalnızca Root kullanıcıları içindir."
-    unknown_action:  "\x0304✗\x03 Bilinmeyen eylem \x02%action%\x02. LIST, ADD veya DEL kullanın."
+    help:            "Bir role atanmış izinleri yönetin.\nLIST, rolün tüm izinlerini gösterir.\nADD, role bir izin atar.\nDEL, rolden bir izni kaldırır (korumalı roller için geçerli değil).\nCLEAR, roldeki tüm izinleri kaldırır.\nMevcut tüm izinleri tek seferde eklemek için ALL kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
+    unknown_action:  "\x0304✗\x03 Bilinmeyen eylem \x02%action%\x02. LIST, ADD, DEL veya CLEAR kullanın."
     not_found:       "\x0304✗\x03 \x02%perm%\x02 izni mevcut değil."
     already_has:     "\x0304✗\x03 \x02%role%\x02 rolü zaten \x02%perm%\x02 iznine sahip."
     does_not_have:   "\x0304✗\x03 \x02%role%\x02 rolü \x02%perm%\x02 iznine sahip değil."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Bu role tüm izinler atanmış.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rol> ADD <izin>"
+      syntax:       "ROLE PERMS <rol> ADD {izin|ALL}"
       short:        "Bir role izin ekleyin."
-      help:         "Bir role izin ekler.\nBu komut yalnızca Root kullanıcıları içindir."
+      help:         "Bir role izin ekler.\nMevcut tüm izinleri tek seferde eklemek için ALL kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
       done:         "\x0303✓\x03 \x02%perm%\x02 izni \x02%role%\x02 rolüne eklendi."
+      all_done:     "\x0303✓\x03 \x02%role%\x02 rolüne \x02%count%\x02 izin eklendi."
+      all_skipped:  "\x0304✗\x03 \x02%role%\x02 rolü zaten tüm mevcut izinlere sahip."
+      all_empty:    "\x0304✗\x03 Eklenebilecek izin bulunmamaktadır."
 
     del:
       syntax:       "ROLE PERMS <rol> DEL <izin>"
       short:        "Bir rolden izni kaldırın."
       help:         "Bir rolden izni kaldırır.\nKorumalı roller değiştirilemez.\nBu komut yalnızca Root kullanıcıları içindir."
       done:         "\x0303✓\x03 \x02%perm%\x02 izni \x02%role%\x02 rolünden kaldırıldı."
+
+    clear:
+      syntax:       "ROLE PERMS <rol> CLEAR"
+      short:        "Bir roldeki tüm izinleri kaldırın."
+      help:         "Bir roldeki tüm izinleri kaldırır.\nBu komut yalnızca Root kullanıcıları içindir."
+      done:         "\x0303✓\x03 \x02%role%\x02 rolünden \x02%count%\x02 izin kaldırıldı."
+      empty:        "\x0304✗\x03 \x02%role%\x02 rolüne atanmış izin yok."
 
   modes:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [modlar]"

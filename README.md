@@ -86,7 +86,7 @@ Offline messaging for users and channels. SEND notes that are delivered on next 
 
 ### OperServ
 
-IRC operator management. **IRCOP** ADD/DEL/LIST for registering IRCops with hostmasks. **ROLE** system with fine-grained permissions (add/del/list roles with per-service permission sets). **GLINE** network-wide bans with duration and expiry. **MOTD** system (add/del/list/clean messages per bot with expiry). **GLOBAL** notices, **KILL** (force-disconnect), and **RAW** (arbitrary IRC command injection). Configurable **root users** have unrestricted access.
+IRC operator management with a role-based permission system. **IRCOP** ADD/DEL/LIST for registering IRC operators assigned to roles. **ROLE** system (ADD/DEL/LIST) with **PERMS** subcommand for fine-grained permissions (LIST/ADD/DEL/CLEAR with ALL shortcut), **MODES** for IRCOP user modes, and **VHOST** for forced vhost patterns. Protected default roles (ADMIN, OPER, PREOPER). Permissions auto-register from code into the database on first use. **GLINE** network-wide bans with duration and expiry. **MOTD** system (add/del/list/clean messages per bot with expiry). **GLOBAL** notices, **KILL** (force-disconnect), and **RAW** (arbitrary IRC command injection). Configurable **root users** have unrestricted access.
 
 ---
 
@@ -411,12 +411,15 @@ Ensure the `spanningtree` module is loaded.
 
 | Command | Parameters | Description |
 |---------|------------|-------------|
-| `IRCOP ADD` | `<nick> [hostmask]` | Register an IRCop |
-| `IRCOP DEL` | `<nick>` | Remove an IRCop |
-| `IRCOP LIST` | | List registered IRCops |
-| `ROLE ADD` | `<role> <permissions>` | Create a role |
-| `ROLE DEL` | `<role>` | Delete a role |
+| `IRCOP ADD` | `<nick> <role>` | Add an IRC operator |
+| `IRCOP DEL` | `<nick>` | Remove an IRC operator |
+| `IRCOP LIST` | | List registered IRC operators |
+| `ROLE ADD` | `<name> [description]` | Create a new role |
+| `ROLE DEL` | `<name>` | Delete a role |
 | `ROLE LIST` | | List all roles |
+| `ROLE PERMS` | `<role> {LIST\|ADD\|DEL\|CLEAR} [permission\|ALL]` | Manage role permissions |
+| `ROLE MODES` | `<role> {VIEW\|SET} [modes]` | Manage IRCOP user modes for a role |
+| `ROLE VHOST` | `<role> {VIEW\|SET} [pattern]` | Manage forced vhost pattern for a role |
 | `GLINE` | `ADD\|DEL\|LIST <mask> [duration] [reason]` | Manage G-lines |
 | `MOTD ADD` | `<bot> <type> <message> [expiry]` | Add a MOTD message |
 | `MOTD DEL` | `<bot> <id>` | Delete a MOTD message |

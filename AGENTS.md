@@ -122,6 +122,18 @@ For detailed guidance, consult the corresponding skill file:
 
 Every translatable string MUST exist in ALL 14 languages: `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`. Files at `translations/<service>.<lang>.yaml`. A task is incomplete if any key is missing in any language.
 
+**Syntax formatting rule:** Required positional arguments use `<>`, optional arguments use `[]`, and **choice/selection arguments MUST use `{}`**.
+
+**IMPORTANT — General vs subcommand syntax:** The general syntax shows ALL subcommands and their arguments in one line. Since some subcommands (LIST, CLEAR) don't require the argument, the general syntax uses `[]` for optionality. Each subcommand's own `syntax` should use the correct bracket for its specific context.
+
+```
+General: ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [permiso|ALL]  ← optativo (LIST/CLEAR no lo usan)
+Add:     ROLE PERMS <rol> ADD {permiso|ALL}                    ← elección requerida
+Del:     ROLE PERMS <rol> DEL <permiso>                        ← requerido
+List:    ROLE PERMS <rol> LIST                                 ← sin argumento
+Clear:   ROLE PERMS <rol> CLEAR                                ← sin argumento
+```
+
 ---
 
 ## 8. Data Integrity — Ref Cleanup on Drop

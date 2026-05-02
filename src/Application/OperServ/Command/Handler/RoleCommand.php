@@ -13,6 +13,7 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Security\PermissionRegistry;
+use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -235,6 +236,9 @@ final readonly class RoleCommand implements OperServCommandInterface
             case 'DEL':
                 $this->delPerm($context, $role);
                 break;
+            case 'CLEAR':
+                $this->clearPerms($context, $role);
+                break;
             default:
                 $context->reply('role.perms.unknown_action', ['%action%' => $action]);
         }
@@ -297,7 +301,13 @@ final readonly class RoleCommand implements OperServCommandInterface
 
         $permName = $context->args[3];
 
-        $permission = $this->permissionRepository->findByName($permName);
+        if ('ALL' === strtoupper($permName)) {
+            $this->addAllPerms($context, $role);
+
+            return;
+        }
+
+        $permission = $this->findOrCreatePermission($permName);
         if (null === $permission) {
             $context->reply('role.perms.not_found', ['%perm%' => $permName]);
 
@@ -314,6 +324,81 @@ final readonly class RoleCommand implements OperServCommandInterface
         $this->roleRepository->save($role);
 
         $context->reply('role.perms.add.done', ['%role%' => $role->getName(), '%perm%' => $permName]);
+    }
+
+    private function addAllPerms(OperServContext $context, OperRole $role): void
+    {
+        $allPermissions = $this->permissionRegistry->getAllPermissions();
+        $added = 0;
+        $skipped = 0;
+
+        foreach ($allPermissions as $permName) {
+            if ($role->hasPermission($permName)) {
+                ++$skipped;
+
+                continue;
+            }
+
+            $permission = $this->findOrCreatePermission($permName);
+
+            $role->addPermission($permission);
+            ++$added;
+        }
+
+        if ($added > 0) {
+            $this->roleRepository->save($role);
+        }
+
+        if (0 === $added && $skipped > 0) {
+            $context->reply('role.perms.add.all_skipped', ['%role%' => $role->getName()]);
+
+            return;
+        }
+
+        if (0 === $added) {
+            $context->reply('role.perms.add.all_empty');
+
+            return;
+        }
+
+        $context->reply('role.perms.add.all_done', ['%role%' => $role->getName(), '%count%' => (string) $added]);
+    }
+
+    private function findOrCreatePermission(string $permName): ?OperPermission
+    {
+        $permission = $this->permissionRepository->findByName($permName);
+        if (null !== $permission) {
+            return $permission;
+        }
+
+        $allPermissions = $this->permissionRegistry->getAllPermissions();
+        if (!in_array($permName, $allPermissions, true)) {
+            return null;
+        }
+
+        $permission = OperPermission::create($permName);
+        $this->permissionRepository->save($permission);
+
+        return $permission;
+    }
+
+    private function clearPerms(OperServContext $context, OperRole $role): void
+    {
+        if ($role->getPermissions()->isEmpty()) {
+            $context->reply('role.perms.clear.empty', ['%role%' => $role->getName()]);
+
+            return;
+        }
+
+        $count = $role->getPermissions()->count();
+
+        foreach ($role->getPermissions()->toArray() as $permission) {
+            $role->removePermission($permission);
+        }
+
+        $this->roleRepository->save($role);
+
+        $context->reply('role.perms.clear.done', ['%role%' => $role->getName(), '%count%' => (string) $count]);
     }
 
     private function delPerm(OperServContext $context, OperRole $role): void

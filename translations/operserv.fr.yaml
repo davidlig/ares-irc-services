@@ -92,10 +92,10 @@ role:
     empty:          "Il n'y a aucun rôle d'opérateur."
 
   perms:
-    syntax:         "ROLE PERMS <rôle> {LIST|ADD|DEL} [permission]"
+    syntax:         "ROLE PERMS <rôle> {LIST|ADD|DEL|CLEAR} [permission|ALL]"
     short:          "Gérer les permissions du rôle."
-    help:            "Gère les permissions assignées à un rôle.\nLIST affiche toutes les permissions du rôle.\nADD assigne une permission au rôle.\nDEL retire une permission du rôle (pas pour les rôles protégés).\nCette commande est réservée aux utilisateurs Root."
-    unknown_action:  "\x0304✗\x03 Action inconnue \x02%action%\x02. Utilisez LIST, ADD ou DEL."
+    help:            "Gère les permissions assignées à un rôle.\nLIST affiche toutes les permissions du rôle.\nADD assigne une permission au rôle.\nDEL retire une permission du rôle (pas pour les rôles protégés).\nCLEAR retire toutes les permissions du rôle.\nUtilisez ALL pour ajouter toutes les permissions disponibles à la fois.\nCette commande est réservée aux utilisateurs Root."
+    unknown_action:  "\x0304✗\x03 Action inconnue \x02%action%\x02. Utilisez LIST, ADD, DEL ou CLEAR."
     not_found:       "\x0304✗\x03 La permission \x02%perm%\x02 n'existe pas."
     already_has:     "\x0304✗\x03 Le rôle \x02%role%\x02 a déjà la permission \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Le rôle \x02%role%\x02 n'a pas la permission \x02%perm%\x02."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Toutes les permissions sont assignées à ce rôle.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rôle> ADD <permission>"
+      syntax:       "ROLE PERMS <rôle> ADD {permission|ALL}"
       short:        "Ajouter une permission à un rôle."
-      help:         "Ajoute une permission à un rôle.\nCette commande est réservée aux utilisateurs Root."
+      help:         "Ajoute une permission à un rôle.\nUtilisez ALL pour ajouter toutes les permissions disponibles à la fois.\nCette commande est réservée aux utilisateurs Root."
       done:         "\x0303✓\x03 Permission \x02%perm%\x02 ajoutée au rôle \x02%role%\x02."
+      all_done:     "\x0303✓\x03 \x02%count%\x02 permissions ajoutées au rôle \x02%role%\x02."
+      all_skipped:  "\x0304✗\x03 Le rôle \x02%role%\x02 a déjà toutes les permissions disponibles."
+      all_empty:    "\x0304✗\x03 Aucune permission disponible à ajouter."
 
     del:
       syntax:       "ROLE PERMS <rôle> DEL <permission>"
       short:        "Retirer une permission d'un rôle."
       help:         "Retire une permission d'un rôle.\nImpossible de modifier les rôles protégés.\nCette commande est réservée aux utilisateurs Root."
       done:         "\x0303✓\x03 Permission \x02%perm%\x02 retirée du rôle \x02%role%\x02."
+
+    clear:
+      syntax:       "ROLE PERMS <rôle> CLEAR"
+      short:        "Retirer toutes les permissions d'un rôle."
+      help:         "Retire toutes les permissions d'un rôle.\nCette commande est réservée aux utilisateurs Root."
+      done:         "\x0303✓\x03 \x02%count%\x02 permissions retirées du rôle \x02%role%\x02."
+      empty:        "\x0304✗\x03 Le rôle \x02%role%\x02 n'a aucune permission assignée."
 
   modes:
     syntax:         "ROLE MODES <rôle> {VIEW|SET} [modes]"

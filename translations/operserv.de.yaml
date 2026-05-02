@@ -92,10 +92,10 @@ role:
     empty:          "Es gibt keine Operator-Rollen."
 
   perms:
-    syntax:         "ROLE PERMS <Rolle> {LIST|ADD|DEL} [Berechtigung]"
+    syntax:         "ROLE PERMS <Rolle> {LIST|ADD|DEL|CLEAR} [Berechtigung|ALL]"
     short:          "Rollen-Berechtigungen verwalten."
-    help:            "Verwaltet Berechtigungen, die einer Rolle zugewiesen sind.\nLIST zeigt alle Berechtigungen der Rolle.\nADD weist der Rolle eine Berechtigung zu.\nDEL entfernt eine Berechtigung von der Rolle (nicht für geschützte Rollen).\nDieser Befehl ist Root-Benutzern vorbehalten."
-    unknown_action:  "\x0304✗\x03 Unbekannte Aktion \x02%action%\x02. Verwenden Sie LIST, ADD oder DEL."
+    help:            "Verwaltet Berechtigungen, die einer Rolle zugewiesen sind.\nLIST zeigt alle Berechtigungen der Rolle.\nADD weist der Rolle eine Berechtigung zu.\nDEL entfernt eine Berechtigung von der Rolle (nicht für geschützte Rollen).\nCLEAR entfernt alle Berechtigungen der Rolle.\nVerwenden Sie ALL, um alle verfügbaren Berechtigungen auf einmal hinzuzufügen.\nDieser Befehl ist Root-Benutzern vorbehalten."
+    unknown_action:  "\x0304✗\x03 Unbekannte Aktion \x02%action%\x02. Verwenden Sie LIST, ADD, DEL oder CLEAR."
     not_found:       "\x0304✗\x03 Berechtigung \x02%perm%\x02 existiert nicht."
     already_has:     "\x0304✗\x03 Rolle \x02%role%\x02 hat bereits die Berechtigung \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Rolle \x02%role%\x02 hat die Berechtigung \x02%perm%\x02 nicht."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Alle Berechtigungen sind dieser Rolle zugewiesen.\x03"
 
     add:
-      syntax:       "ROLE PERMS <Rolle> ADD <Berechtigung>"
+      syntax:       "ROLE PERMS <Rolle> ADD {Berechtigung|ALL}"
       short:        "Eine Berechtigung zu einer Rolle hinzufügen."
-      help:         "Fügt einer Rolle eine Berechtigung hinzu.\nDieser Befehl ist Root-Benutzern vorbehalten."
+      help:         "Fügt einer Rolle eine Berechtigung hinzu.\nVerwenden Sie ALL, um alle verfügbaren Berechtigungen auf einmal hinzuzufügen.\nDieser Befehl ist Root-Benutzern vorbehalten."
       done:         "\x0303✓\x03 Berechtigung \x02%perm%\x02 zu Rolle \x02%role%\x02 hinzugefügt."
+      all_done:     "\x0303✓\x03 \x02%count%\x02 Berechtigungen zu Rolle \x02%role%\x02 hinzugefügt."
+      all_skipped:  "\x0304✗\x03 Rolle \x02%role%\x02 hat bereits alle verfügbaren Berechtigungen."
+      all_empty:    "\x0304✗\x03 Keine Berechtigungen zum Hinzufügen verfügbar."
 
     del:
       syntax:       "ROLE PERMS <Rolle> DEL <Berechtigung>"
       short:        "Eine Berechtigung von einer Rolle entfernen."
       help:         "Entfernt eine Berechtigung von einer Rolle.\nGeschützte Rollen können nicht geändert werden.\nDieser Befehl ist Root-Benutzern vorbehalten."
       done:         "\x0303✓\x03 Berechtigung \x02%perm%\x02 von Rolle \x02%role%\x02 entfernt."
+
+    clear:
+      syntax:       "ROLE PERMS <Rolle> CLEAR"
+      short:        "Alle Berechtigungen von einer Rolle entfernen."
+      help:         "Entfernt alle Berechtigungen von einer Rolle.\nDieser Befehl ist Root-Benutzern vorbehalten."
+      done:         "\x0303✓\x03 \x02%count%\x02 Berechtigungen von Rolle \x02%role%\x02 entfernt."
+      empty:        "\x0304✗\x03 Rolle \x02%role%\x02 hat keine Berechtigungen zugewiesen."
 
   modes:
     syntax:         "ROLE MODES <Rolle> {VIEW|SET} [Modes]"

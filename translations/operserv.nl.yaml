@@ -92,10 +92,10 @@ role:
     empty:          "Er zijn geen operatorrollen."
 
   perms:
-    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL} [permissie]"
+    syntax:         "ROLE PERMS <rol> {LIST|ADD|DEL|CLEAR} [permissie|ALL]"
     short:          "Beheer rolpermissies."
-    help:            "Beheer permissies die aan een rol zijn toegewezen.\nLIST toont alle permissies voor de rol.\nADD wijst een permissie toe aan de rol.\nDEL verwijdert een permissie uit de rol (niet voor beschermde rollen).\nDit commando is voorbehouden aan Root-gebruikers."
-    unknown_action:  "\x0304✗\x03 Onbekende actie \x02%action%\x02. Gebruik LIST, ADD of DEL."
+    help:            "Beheer permissies die aan een rol zijn toegewezen.\nLIST toont alle permissies voor de rol.\nADD wijst een permissie toe aan de rol.\nDEL verwijdert een permissie uit de rol (niet voor beschermde rollen).\nCLEAR verwijdert alle permissies uit de rol.\nGebruik ALL om alle beschikbare permissies in één keer toe te voegen.\nDit commando is voorbehouden aan Root-gebruikers."
+    unknown_action:  "\x0304✗\x03 Onbekende actie \x02%action%\x02. Gebruik LIST, ADD, DEL of CLEAR."
     not_found:       "\x0304✗\x03 Permissie \x02%perm%\x02 bestaat niet."
     already_has:     "\x0304✗\x03 Rol \x02%role%\x02 heeft al permissie \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 Rol \x02%role%\x02 heeft permissie \x02%perm%\x02 niet."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Alle permissies zijn aan deze rol toegewezen.\x03"
 
     add:
-      syntax:       "ROLE PERMS <rol> ADD <permissie>"
+      syntax:       "ROLE PERMS <rol> ADD {permissie|ALL}"
       short:        "Voeg een permissie toe aan een rol."
-      help:         "Voegt een permissie toe aan een rol.\nDit commando is voorbehouden aan Root-gebruikers."
+      help:         "Voegt een permissie toe aan een rol.\nGebruik ALL om alle beschikbare permissies in één keer toe te voegen.\nDit commando is voorbehouden aan Root-gebruikers."
       done:         "\x0303✓\x03 Permissie \x02%perm%\x02 toegevoegd aan rol \x02%role%\x02."
+      all_done:     "\x0303✓\x03 \x02%count%\x02 permissies toegevoegd aan rol \x02%role%\x02."
+      all_skipped:  "\x0304✗\x03 Rol \x02%role%\x02 heeft al alle beschikbare permissies."
+      all_empty:    "\x0304✗\x03 Geen permissies beschikbaar om toe te voegen."
 
     del:
       syntax:       "ROLE PERMS <rol> DEL <permissie>"
       short:        "Verwijder een permissie uit een rol."
       help:         "Verwijdert een permissie uit een rol.\nKan beschermde rollen niet wijzigen.\nDit commando is voorbehouden aan Root-gebruikers."
       done:         "\x0303✓\x03 Permissie \x02%perm%\x02 verwijderd uit rol \x02%role%\x02."
+
+    clear:
+      syntax:       "ROLE PERMS <rol> CLEAR"
+      short:        "Verwijder alle permissies uit een rol."
+      help:         "Verwijdert alle permissies uit een rol.\nDit commando is voorbehouden aan Root-gebruikers."
+      done:         "\x0303✓\x03 \x02%count%\x02 permissies verwijderd uit rol \x02%role%\x02."
+      empty:        "\x0304✗\x03 Rol \x02%role%\x02 heeft geen permissies toegewezen."
 
   modes:
     syntax:         "ROLE MODES <rol> {VIEW|SET} [modi]"

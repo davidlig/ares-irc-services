@@ -92,10 +92,10 @@ role:
     empty:          "No hi ha rols d'operador."
 
   perms:
-    syntax:         "ROLE PERMS <role> {LIST|ADD|DEL} [permission]"
+    syntax:         "ROLE PERMS <role> {LIST|ADD|DEL|CLEAR} [permission|ALL]"
     short:          "Gestionar els permisos del rol."
-    help:            "Gestiona els permisos assignats a un rol.\nLIST mostra tots els permisos del rol.\nADD assigna un permís al rol.\nDEL treu un permís del rol (no per a rols protegits).\nAquesta ordre està restringida als usuaris Root."
-    unknown_action:  "\x0304✗\x03 Acció desconeguda \x02%action%\x02. Utilitzeu LIST, ADD, o DEL."
+    help:            "Gestiona els permisos assignats a un rol.\nLIST mostra tots els permisos del rol.\nADD assigna un permís al rol.\nDEL treu un permís del rol (no per a rols protegits).\nCLEAR treu tots els permisos del rol.\nUseu ALL per afegir tots els permisos disponibles alhora.\nAquesta ordre està restringida als usuaris Root."
+    unknown_action:  "\x0304✗\x03 Acció desconeguda \x02%action%\x02. Utilitzeu LIST, ADD, DEL, o CLEAR."
     not_found:       "\x0304✗\x03 El permís \x02%perm%\x02 no existeix."
     already_has:     "\x0304✗\x03 El rol \x02%role%\x02 ja té el permís \x02%perm%\x02."
     does_not_have:   "\x0304✗\x03 El rol \x02%role%\x02 no té el permís \x02%perm%\x02."
@@ -113,16 +113,26 @@ role:
       all_assigned: "\x0314Tots els permisos estan assignats a aquest rol.\x03"
 
     add:
-      syntax:       "ROLE PERMS <role> ADD <permission>"
+      syntax:       "ROLE PERMS <role> ADD {permission|ALL}"
       short:        "Afegir un permís a un rol."
-      help:         "Afegeix un permís a un rol.\nAquesta ordre està restringida als usuaris Root."
+      help:         "Afegeix un permís a un rol.\nUseu ALL per afegir tots els permisos disponibles alhora.\nAquesta ordre està restringida als usuaris Root."
       done:         "\x0303✓\x03 Afegit el permís \x02%perm%\x02 al rol \x02%role%\x02."
+      all_done:     "\x0303✓\x03 Afegits \x02%count%\x02 permisos al rol \x02%role%\x02."
+      all_skipped:  "\x0304✗\x03 El rol \x02%role%\x02 ja té tots els permisos disponibles."
+      all_empty:    "\x0304✗\x03 No hi ha permisos disponibles per afegir."
 
     del:
       syntax:       "ROLE PERMS <role> DEL <permission>"
       short:        "Treure un permís d'un rol."
       help:         "Treu un permís d'un rol.\nNo es poden modificar els rols protegits.\nAquesta ordre està restringida als usuaris Root."
       done:         "\x0303✓\x03 Tret el permís \x02%perm%\x02 del rol \x02%role%\x02."
+
+    clear:
+      syntax:       "ROLE PERMS <role> CLEAR"
+      short:        "Treure tots els permisos d'un rol."
+      help:         "Treu tots els permisos d'un rol.\nAquesta ordre està restringida als usuaris Root."
+      done:         "\x0303✓\x03 Tretes \x02%count%\x02 permisos del rol \x02%role%\x02."
+      empty:        "\x0304✗\x03 El rol \x02%role%\x02 no té cap permís assignat."
 
   modes:
     syntax:         "ROLE MODES <role> {VIEW|SET} [modes]"
