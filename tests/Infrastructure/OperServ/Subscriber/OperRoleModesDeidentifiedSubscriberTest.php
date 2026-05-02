@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\OperServ\Subscriber;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
+use App\Application\Port\UserModeSupportInterface;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
@@ -147,10 +148,11 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
         $serviceActions
             ->expects(self::once())
             ->method('setUserMode')
-            ->with('001', '001ABC', '-Hq');
+            ->with('001', '001ABC', '-Hq', []);
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
+        $module->method('getUserModeSupport')->willReturn($this->createModeSupportStub());
 
         $connectionHolder = new ActiveConnectionHolder();
         $connectionHolder->setProtocolModule($module);
@@ -170,6 +172,16 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
         );
 
         $subscriber->onUserDeidentified($event);
+    }
+
+    private function createModeSupportStub(): UserModeSupportInterface
+    {
+        $support = $this->createStub(UserModeSupportInterface::class);
+        $support->method('buildModeParams')->willReturnCallback(
+            static fn (string $sign, array $modes): array => [$sign . implode('', $modes), []],
+        );
+
+        return $support;
     }
 
     private function injectServerSid(ActiveConnectionHolder $holder, string $sid): void

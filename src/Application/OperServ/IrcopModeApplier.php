@@ -77,12 +77,13 @@ final readonly class IrcopModeApplier
 
         $serverSid = $this->connectionHolder->getServerSid();
         $serviceActions = $module->getServiceActions();
+        $userModeSupport = $module->getUserModeSupport();
 
-        $modesStr = '+' . implode('', $toApply);
-        $this->logger->info('IrcopModeApplier: applying modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modesStr]);
-        $serviceActions->setUserMode($serverSid, $uid, $modesStr);
+        [$modeStr, $params] = $userModeSupport->buildModeParams('+', $toApply);
+        $this->logger->info('IrcopModeApplier: applying modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modeStr]);
+        $serviceActions->setUserMode($serverSid, $uid, $modeStr, $params);
 
-        $this->userLookup->applyModeChange($uid, $modesStr);
+        $this->userLookup->applyModeChange($uid, '+' . implode('', $toApply));
 
         return true;
     }
@@ -125,12 +126,13 @@ final readonly class IrcopModeApplier
 
         $serverSid = $this->connectionHolder->getServerSid();
         $serviceActions = $module->getServiceActions();
+        $userModeSupport = $module->getUserModeSupport();
 
-        $modesStr = '-' . implode('', $toRemove);
-        $this->logger->info('IrcopModeApplier: removing modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modesStr]);
-        $serviceActions->setUserMode($serverSid, $uid, $modesStr);
+        [$modeStr, $params] = $userModeSupport->buildModeParams('-', $toRemove);
+        $this->logger->info('IrcopModeApplier: removing modes', ['nick' => $registeredNick, 'uid' => $uid, 'modes' => $modeStr]);
+        $serviceActions->setUserMode($serverSid, $uid, $modeStr, $params);
 
-        $this->userLookup->applyModeChange($uid, $modesStr);
+        $this->userLookup->applyModeChange($uid, '-' . implode('', $toRemove));
 
         return true;
     }
@@ -177,29 +179,30 @@ final readonly class IrcopModeApplier
 
             $serverSid = $this->connectionHolder->getServerSid();
             $serviceActions = $module->getServiceActions();
+            $userModeSupport = $module->getUserModeSupport();
 
             $modesToRemove = array_intersect($toRemove, $currentModes);
             if (!empty($modesToRemove)) {
-                $modesStr = '-' . implode('', $modesToRemove);
+                [$modeStr, $params] = $userModeSupport->buildModeParams('-', $modesToRemove);
                 $this->logger->info('IrcopModeApplier: removing modes for role change', [
                     'nick' => $nick->getNickname(),
                     'uid' => $uid,
-                    'modes' => $modesStr,
+                    'modes' => $modeStr,
                 ]);
-                $serviceActions->setUserMode($serverSid, $uid, $modesStr);
-                $this->userLookup->applyModeChange($uid, $modesStr);
+                $serviceActions->setUserMode($serverSid, $uid, $modeStr, $params);
+                $this->userLookup->applyModeChange($uid, '-' . implode('', $modesToRemove));
             }
 
             $modesToAdd = array_diff($toAdd, $currentModes);
             if (!empty($modesToAdd)) {
-                $modesStr = '+' . implode('', $modesToAdd);
+                [$modeStr, $params] = $userModeSupport->buildModeParams('+', $modesToAdd);
                 $this->logger->info('IrcopModeApplier: applying modes for role change', [
                     'nick' => $nick->getNickname(),
                     'uid' => $uid,
-                    'modes' => $modesStr,
+                    'modes' => $modeStr,
                 ]);
-                $serviceActions->setUserMode($serverSid, $uid, $modesStr);
-                $this->userLookup->applyModeChange($uid, $modesStr);
+                $serviceActions->setUserMode($serverSid, $uid, $modeStr, $params);
+                $this->userLookup->applyModeChange($uid, '+' . implode('', $modesToAdd));
             }
         }
     }

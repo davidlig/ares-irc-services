@@ -51,9 +51,10 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
         $this->write(sprintf(':%s MODE %s +r', $serverSid, $targetUid));
     }
 
-    public function setUserMode(string $serverSid, string $targetUid, string $modes): void
+    public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void
     {
-        $this->write(sprintf(':%s MODE %s %s', $serverSid, $targetUid, $modes));
+        $paramStr = [] === $params ? '' : ' ' . implode(' ', $params);
+        $this->write(sprintf(':%s MODE %s %s%s', $serverSid, $targetUid, $modes, $paramStr));
     }
 
     public function forceNick(string $serverSid, string $targetUid, string $newNick): void

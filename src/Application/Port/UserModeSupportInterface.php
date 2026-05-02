@@ -24,4 +24,18 @@ interface UserModeSupportInterface
      * @return list<string> Mode letters (case-sensitive), e.g. ['H', 'q', 's', 'W']
      */
     public function getIrcOpUserModes(): array;
+
+    /**
+     * Builds mode wire string and parameters for the given mode letters.
+     *
+     * Some IRCds (e.g. InspIRCd) require parameters for certain user modes:
+     * - +s (snomask) needs a mask parameter on set (+kcfj by default)
+     * Other IRCds (e.g. UnrealIRCd) use SVSMODE which always ignores parameters.
+     *
+     * @param string             $sign  '+' or '-'
+     * @param array<int, string> $modes Mode letters to include
+     *
+     * @return array{string, array<string>} [mode string, params to append after the MODE command]
+     */
+    public function buildModeParams(string $sign, array $modes): array;
 }

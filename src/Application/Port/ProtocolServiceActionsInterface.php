@@ -14,7 +14,7 @@ interface ProtocolServiceActionsInterface
 {
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void;
 
-    public function setUserMode(string $serverSid, string $targetUid, string $modes): void;
+    public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void;
 
     public function forceNick(string $serverSid, string $targetUid, string $newNick): void;
 

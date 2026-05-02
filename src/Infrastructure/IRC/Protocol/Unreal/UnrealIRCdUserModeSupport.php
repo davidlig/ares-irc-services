@@ -23,4 +23,11 @@ final readonly class UnrealIRCdUserModeSupport implements UserModeSupportInterfa
     {
         return self::IRCOP_USER_MODES;
     }
+
+    public function buildModeParams(string $sign, array $modes): array
+    {
+        $modeStr = $sign . implode('', $modes);
+
+        return [$modeStr, []];
+    }
 }

@@ -39,7 +39,7 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         $this->write(sprintf(':%s SVS2MODE %s %s', $serverSid, $targetUid, $modeDelta));
     }
 
-    public function setUserMode(string $serverSid, string $targetUid, string $modes): void
+    public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void
     {
         $this->write(sprintf(':%s SVSMODE %s %s', $serverSid, $targetUid, $modes));
     }

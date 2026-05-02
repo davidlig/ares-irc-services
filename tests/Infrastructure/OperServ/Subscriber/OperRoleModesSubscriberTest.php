@@ -11,6 +11,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserModeSupportInterface;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
@@ -108,10 +109,16 @@ final class OperRoleModesSubscriberTest extends TestCase
         $serviceActions
             ->expects(self::once())
             ->method('setUserMode')
-            ->with('001', '001ABCD', '+os');
+            ->with('001', '001ABCD', '+os', []);
+
+        $userModeSupport = $this->createStub(UserModeSupportInterface::class);
+        $userModeSupport->method('buildModeParams')->willReturnCallback(
+            static fn (string $sign, array $modes): array => [$sign . implode('', $modes), []],
+        );
 
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getServiceActions')->willReturn($serviceActions);
+        $protocolModule->method('getUserModeSupport')->willReturn($userModeSupport);
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);

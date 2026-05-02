@@ -11,6 +11,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserModeSupportInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
@@ -38,6 +39,25 @@ final class IrcopModeApplierTest extends TestCase
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             new NullLogger(),
         );
+    }
+
+    private function createUserModeSupportStub(): UserModeSupportInterface
+    {
+        $support = $this->createStub(UserModeSupportInterface::class);
+        $support->method('buildModeParams')->willReturnCallback(
+            static fn (string $sign, array $modes): array => [$sign . implode('', $modes), []],
+        );
+
+        return $support;
+    }
+
+    private function createModuleWithUserModeSupport(ProtocolServiceActionsInterface $serviceActions): ProtocolModuleInterface
+    {
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
+        $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
+
+        return $module;
     }
 
     #[Test]
@@ -133,10 +153,9 @@ final class IrcopModeApplierTest extends TestCase
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())
             ->method('setUserMode')
-            ->with('SID', 'UID123', '+qW');
+            ->with('SID', 'UID123', '+qW', []);
 
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getServiceActions')->willReturn($serviceActions);
+        $module = $this->createModuleWithUserModeSupport($serviceActions);
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
@@ -194,10 +213,9 @@ final class IrcopModeApplierTest extends TestCase
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())
             ->method('setUserMode')
-            ->with('SID', 'UID123', '+HW');
+            ->with('SID', 'UID123', '+HW', []);
 
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getServiceActions')->willReturn($serviceActions);
+        $module = $this->createModuleWithUserModeSupport($serviceActions);
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
@@ -303,10 +321,9 @@ final class IrcopModeApplierTest extends TestCase
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())
             ->method('setUserMode')
-            ->with('SID', 'UID123', '-Hq');
+            ->with('SID', 'UID123', '-Hq', []);
 
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getServiceActions')->willReturn($serviceActions);
+        $module = $this->createModuleWithUserModeSupport($serviceActions);
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
@@ -421,16 +438,15 @@ final class IrcopModeApplierTest extends TestCase
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::exactly(2))
             ->method('setUserMode')
-            ->willReturnCallback(static function (string $sid, string $uid, string $modes): bool {
+            ->willReturnCallback(static function (string $sid, string $uid, string $modes, array $params = []): void {
                 self::assertSame('SID', $sid);
                 self::assertSame('UID123', $uid);
                 self::assertTrue('-H' === $modes || '+q' === $modes);
-
-                return true;
             });
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
+        $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
@@ -576,10 +592,11 @@ final class IrcopModeApplierTest extends TestCase
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())
             ->method('setUserMode')
-            ->with('SID', 'UID123', '+q');
+            ->with('SID', 'UID123', '+q', []);
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
+        $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
@@ -625,6 +642,7 @@ final class IrcopModeApplierTest extends TestCase
 
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getServiceActions')->willReturn($serviceActions);
+        $module->method('getUserModeSupport')->willReturn($this->createUserModeSupportStub());
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);

@@ -54,15 +54,16 @@ final readonly class OperRoleModesDeidentifiedSubscriber implements EventSubscri
 
         $serverSid = $this->connectionHolder->getServerSid();
         $serviceActions = $module->getServiceActions();
+        $userModeSupport = $module->getUserModeSupport();
 
-        $modesStr = '-' . implode('', $modes);
+        [$modeStr, $params] = $userModeSupport->buildModeParams('-', $modes);
         $this->logger->info('OperRoleModesDeidentifiedSubscriber: removing modes on deidentify', [
             'nickId' => $event->nickId,
             'uid' => $event->uid,
-            'modes' => $modesStr,
+            'modes' => $modeStr,
         ]);
-        $serviceActions->setUserMode($serverSid, $event->uid, $modesStr);
+        $serviceActions->setUserMode($serverSid, $event->uid, $modeStr, $params);
 
-        $this->userLookup->applyModeChange($event->uid, $modesStr);
+        $this->userLookup->applyModeChange($event->uid, '-' . implode('', $modes));
     }
 }
