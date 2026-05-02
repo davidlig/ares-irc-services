@@ -160,7 +160,7 @@ set:
   language:
     syntax:         "SET LANGUAGE <code>"
     short:          "Wijzig de taal die de services gebruiken om met u te communiceren."
-    help:           "Wijzigt de taal die %nickserv% en andere services gebruiken wanneer ze met u praten.\nBeschikbare talen: \x02es\x02 (Spaans), \x02en\x02 (Engels), \x02nl\x02 (Nederlands)."
+    help:           "Wijzigt de taal die %nickserv% en andere services gebruiken wanneer ze met u praten.\nBeschikbare talen:\n  \x02ca\x02 (Catalaans)\n  \x02de\x02 (Duits)\n  \x02el\x02 (Grieks)\n  \x02en\x02 (Engels)\n  \x02es\x02 (Spaans)\n  \x02eu\x02 (Baskisch)\n  \x02fr\x02 (Frans)\n  \x02gl\x02 (Galicisch)\n  \x02it\x02 (Italiaans)\n  \x02nl\x02 (Nederlands)\n  \x02pl\x02 (Pools)\n  \x02pt\x02 (Portugees)\n  \x02ro\x02 (Roemeens)\n  \x02tr\x02 (Turks)"
     success:        "\x0303✔\x03 Taal gewijzigd naar \x02%language%\x02."
     invalid:        "\x0304✗\x03 Niet-ondersteunde taal. Beschikbare talen: %languages%."
 

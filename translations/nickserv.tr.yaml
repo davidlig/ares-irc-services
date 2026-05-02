@@ -160,7 +160,7 @@ set:
   language:
     syntax:         "SET LANGUAGE <kod>"
     short:          "Hizmetlerin sizinle iletişim kurarken kullandığı dili değiştirin."
-    help:           "%nickserv% ve diğer hizmetlerin sizinle konuşurken kullandığı dili değiştirir.\nKullanılabilir diller: \x02es\x02 (İspanyolca), \x02en\x02 (İngilizce)."
+    help:           "%nickserv% ve diğer hizmetlerin sizinle konuşurken kullandığı dili değiştirir.\nKullanılabilir diller:\n  \x02ca\x02 (Katalanca)\n  \x02de\x02 (Almanca)\n  \x02el\x02 (Yunanca)\n  \x02en\x02 (İngilizce)\n  \x02es\x02 (İspanyolca)\n  \x02eu\x02 (Baskça)\n  \x02fr\x02 (Fransızca)\n  \x02gl\x02 (Galiçyaca)\n  \x02it\x02 (İtalyanca)\n  \x02nl\x02 (Felemenkçe)\n  \x02pl\x02 (Lehçe)\n  \x02pt\x02 (Portekizce)\n  \x02ro\x02 (Rumence)\n  \x02tr\x02 (Türkçe)"
     success:        "\x0303✔\x03 Dil \x02%language%\x02 olarak değiştirildi."
     invalid:        "\x0304✗\x03 Desteklenmeyen dil. Kullanılabilir diller: %languages%."
 

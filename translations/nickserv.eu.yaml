@@ -160,7 +160,7 @@ set:
   language:
     syntax:         "SET LANGUAGE <kodea>"
     short:          "Aldatu zerbitzuek zurekin komunikatzeko erabiltzen duten hizkuntza."
-    help:           "%nickserv% eta beste zerbitzuek zurekin hitz egitean erabiltzen duten hizkuntza\naldatzen du. Hizkuntza erabilgarriak: \x02es\x02 (Gaztelania), \x02en\x02 (Ingelesa)."
+    help:           "%nickserv% eta beste zerbitzuek zurekin hitz egitean erabiltzen duten hizkuntza\naldatzen du. Hizkuntza erabilgarriak:\n  \x02ca\x02 (Katalana)\n  \x02de\x02 (Alemana)\n  \x02el\x02 (Greziera)\n  \x02en\x02 (Ingelesa)\n  \x02es\x02 (Gaztelania)\n  \x02eu\x02 (Euskara)\n  \x02fr\x02 (Frantsesa)\n  \x02gl\x02 (Galiziera)\n  \x02it\x02 (Italiera)\n  \x02nl\x02 (Nederlandera)\n  \x02pl\x02 (Poloniera)\n  \x02pt\x02 (Portugesa)\n  \x02ro\x02 (Errumaniera)\n  \x02tr\x02 (Turkiera)"
     success:        "\x0303✔\x03 Hizkuntza \x02%language%\x02(e)ra aldatu da."
     invalid:        "\x0304✗\x03 Onartu gabeko hizkuntza. Hizkuntza erabilgarriak: %languages%."
 

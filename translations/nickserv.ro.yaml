@@ -160,7 +160,7 @@ set:
   language:
     syntax:         "SET LANGUAGE <cod>"
     short:          "Schimbați limba pe care serviciile o folosesc pentru a comunica cu dumneavoastră."
-    help:           "Schimbă limba pe care %nickserv% și celelalte servicii o folosesc când vă vorbesc.\nLimbi disponibile: \x02es\x02 (spaniolă), \x02en\x02 (engleză)."
+    help:           "Schimbă limba pe care %nickserv% și celelalte servicii o folosesc când vă vorbesc.\nLimbi disponibile:\n  \x02ca\x02 (catalană)\n  \x02de\x02 (germană)\n  \x02el\x02 (greacă)\n  \x02en\x02 (engleză)\n  \x02es\x02 (spaniolă)\n  \x02eu\x02 (bască)\n  \x02fr\x02 (franceză)\n  \x02gl\x02 (galiciană)\n  \x02it\x02 (italiană)\n  \x02nl\x02 (olandeză)\n  \x02pl\x02 (poloneză)\n  \x02pt\x02 (portugheză)\n  \x02ro\x02 (română)\n  \x02tr\x02 (turcă)"
     success:        "\x0303✔\x03 Limba a fost schimbată în \x02%language%\x02."
     invalid:        "\x0304✗\x03 Limbă nesuportată. Limbi disponibile: %languages%."
 
