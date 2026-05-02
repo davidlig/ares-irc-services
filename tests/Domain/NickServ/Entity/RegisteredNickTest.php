@@ -262,7 +262,7 @@ final class RegisteredNickTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unsupported language');
 
-        $nick->changeLanguage('fr');
+        $nick->changeLanguage('xx');
     }
 
     #[Test]
@@ -327,7 +327,7 @@ final class RegisteredNickTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        RegisteredNick::createForbidden('Nick', 'Reason', 'fr');
+        RegisteredNick::createForbidden('Nick', 'Reason', 'xx');
     }
 
     #[Test]
