@@ -15,6 +15,7 @@ use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Infrastructure\NickServ\UserLanguageResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -30,6 +31,7 @@ final readonly class OperServService
     public function __construct(
         private OperServCommandRegistry $commandRegistry,
         private RegisteredNickRepositoryInterface $nickRepository,
+        private UserLanguageResolver $languageResolver,
         private OperServNotifierInterface $notifier,
         private UserMessageTypeResolverInterface $messageTypeResolver,
         private TranslatorInterface $translator,
@@ -68,7 +70,7 @@ final readonly class OperServService
         }
 
         $account = $this->nickRepository->findByNick($sender->nick);
-        $language = $account?->getLanguage() ?? $this->defaultLanguage;
+        $language = $this->languageResolver->resolveFromAccount($sender, $account);
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
         $messageType = $this->messageTypeResolver->resolve($sender);
 

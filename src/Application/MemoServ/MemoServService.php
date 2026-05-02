@@ -16,6 +16,7 @@ use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Infrastructure\NickServ\UserLanguageResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -35,6 +36,7 @@ final readonly class MemoServService
     public function __construct(
         private readonly MemoServCommandRegistry $commandRegistry,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly UserLanguageResolver $languageResolver,
         private readonly MemoServNotifierInterface $notifier,
         private readonly UserMessageTypeResolverInterface $messageTypeResolver,
         private readonly TranslatorInterface $translator,
@@ -76,7 +78,7 @@ final readonly class MemoServService
         }
 
         $account = $this->nickRepository->findByNick($sender->nick);
-        $language = $account?->getLanguage() ?? $this->defaultLanguage;
+        $language = $this->languageResolver->resolveFromAccount($sender, $account);
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
         $messageType = $this->messageTypeResolver->resolve($sender);
 

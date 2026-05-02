@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder;
 use App\Infrastructure\NickServ\UserLanguageResolver;
@@ -40,6 +41,7 @@ final class CtcpVersionResponderTest extends TestCase
     {
         return new UserLanguageResolver(
             $this->createStub(RegisteredNickRepositoryInterface::class),
+            new SessionLanguageRegistry(),
             $defaultLanguage,
         );
     }

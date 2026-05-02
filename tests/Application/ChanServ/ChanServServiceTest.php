@@ -13,18 +13,21 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Infrastructure\NickServ\UserLanguageResolver;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -1481,6 +1484,7 @@ final class ChanServServiceTest extends TestCase
             $registry,
             $channelRepository,
             $nickRepository,
+            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), $defaultLanguage),
             $notifier,
             $messageTypeResolver,
             $translator,

@@ -18,10 +18,12 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Infrastructure\NickServ\UserLanguageResolver;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -202,6 +204,7 @@ final class NickServServiceTest extends TestCase
             $authorizationChecker,
             $registry,
             $nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             $messageTypeResolver,
             $translator,
@@ -259,6 +262,7 @@ final class NickServServiceTest extends TestCase
             $authorizationChecker,
             $registry,
             $nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             $messageTypeResolver,
             $translator,
@@ -286,6 +290,7 @@ final class NickServServiceTest extends TestCase
             $this->createStub(AuthorizationCheckerInterface::class),
             new NickServCommandRegistry([]),
             $this->createStub(RegisteredNickRepositoryInterface::class),
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $this->createStub(TranslatorInterface::class),
@@ -390,6 +395,7 @@ final class NickServServiceTest extends TestCase
             $authorizationChecker,
             new NickServCommandRegistry([$permissionHandler]),
             $this->createStub(RegisteredNickRepositoryInterface::class),
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
@@ -495,6 +501,7 @@ final class NickServServiceTest extends TestCase
             $authorizationChecker,
             new NickServCommandRegistry([$identifiedHandler]),
             $this->createStub(RegisteredNickRepositoryInterface::class),
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
@@ -594,6 +601,7 @@ final class NickServServiceTest extends TestCase
             $this->createStub(AuthorizationCheckerInterface::class),
             new NickServCommandRegistry([$minArgsHandler]),
             $this->createStub(RegisteredNickRepositoryInterface::class),
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $translator,
@@ -684,6 +692,7 @@ final class NickServServiceTest extends TestCase
             $this->createStub(AuthorizationCheckerInterface::class),
             new NickServCommandRegistry([$exceptionHandler]),
             $this->createStub(RegisteredNickRepositoryInterface::class),
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
             $this->createStub(TranslatorInterface::class),
@@ -821,6 +830,7 @@ final class NickServServiceTest extends TestCase
             $authorizationChecker,
             $registry,
             $nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($nickRepository),
             $this->createStub(TranslatorInterface::class),
@@ -934,6 +944,7 @@ final class NickServServiceTest extends TestCase
             $authorizationChecker,
             $registry,
             $nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
             $this->createStub(TranslatorInterface::class),
@@ -1054,6 +1065,7 @@ final class NickServServiceTest extends TestCase
             $authorizationChecker,
             $registry,
             $nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
             $this->createStub(TranslatorInterface::class),

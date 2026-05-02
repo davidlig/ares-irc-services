@@ -24,6 +24,7 @@ use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Infrastructure\NickServ\UserLanguageResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -48,6 +49,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         private readonly ChanServCommandRegistry $commandRegistry,
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly UserLanguageResolver $languageResolver,
         private readonly ChanServNotifierInterface $notifier,
         private readonly UserMessageTypeResolverInterface $messageTypeResolver,
         private readonly TranslatorInterface $translator,
@@ -92,7 +94,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         }
 
         $account = $this->nickRepository->findByNick($sender->nick);
-        $language = $account?->getLanguage() ?? $this->defaultLanguage;
+        $language = $this->languageResolver->resolveFromAccount($sender, $account);
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
         $messageType = $this->messageTypeResolver->resolve($sender);
         $modeSupport = $this->modeSupportProvider->getSupport();

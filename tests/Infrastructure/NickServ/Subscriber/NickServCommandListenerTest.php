@@ -14,6 +14,7 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\NickServService;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\NetworkUserLookupPort;
@@ -28,6 +29,7 @@ use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\Bot\NickServBot;
 use App\Infrastructure\NickServ\Subscriber\NickServCommandListener;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
+use App\Infrastructure\NickServ\UserLanguageResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -107,6 +109,7 @@ final class NickServCommandListenerTest extends TestCase
             $this->createStub(AuthorizationCheckerInterface::class),
             new NickServCommandRegistry([]),
             $nickRepository,
+            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), 'en'),
             $this->nickServNotifier,
             $this->messageTypeResolver,
             $translator,
@@ -382,6 +385,7 @@ final class NickServCommandListenerTest extends TestCase
             $this->createStub(AuthorizationCheckerInterface::class),
             new NickServCommandRegistry($commands),
             $nickRepository,
+            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), 'en'),
             $notifier,
             $messageTypeResolver,
             $translator,

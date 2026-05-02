@@ -22,6 +22,8 @@ use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Infrastructure\NickServ\UserLanguageResolver;
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\MemoServ\Bot\MemoServBot;
 use App\Infrastructure\MemoServ\Subscriber\MemoServCommandListener;
@@ -100,6 +102,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([]),
             $this->nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
@@ -192,6 +195,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$captureHandler]),
             $this->nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
@@ -260,6 +264,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$throwHandler]),
             $this->nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
@@ -309,6 +314,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$throwHandler]),
             $this->nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
@@ -367,6 +373,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$throwHandler]),
             $this->nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,
@@ -404,6 +411,7 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServService = new MemoServService(
             new MemoServCommandRegistry([$throwHandler]),
             $this->nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
             $this->translator,

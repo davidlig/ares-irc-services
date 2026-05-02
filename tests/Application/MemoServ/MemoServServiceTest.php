@@ -20,6 +20,8 @@ use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
+use App\Infrastructure\NickServ\UserLanguageResolver;
+use App\Application\NickServ\SessionLanguageRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -1230,6 +1232,7 @@ final class MemoServServiceTest extends TestCase
         return new MemoServService(
             $registry,
             $nickRepository,
+            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), $defaultLanguage),
             $notifier,
             $messageTypeResolver,
             $translator,

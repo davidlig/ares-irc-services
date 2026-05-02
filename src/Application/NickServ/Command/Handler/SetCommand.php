@@ -6,11 +6,14 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\SessionLanguageRegistry;
+use App\Domain\NickServ\Entity\RegisteredNick;
 
 use function array_slice;
 use function count;
 use function implode;
 use function in_array;
+use function strtolower;
 use function strtoupper;
 
 /**
@@ -18,6 +21,9 @@ use function strtoupper;
  *
  * Allows a registered and identified user to change their own NickServ settings.
  * Delegates each option to a dedicated Set*Handler.
+ *
+ * The LANGUAGE option is also available to unregistered users: it sets a
+ * temporary session language that lasts until they disconnect.
  *
  * For modifying other users' settings, use SASET.
  */
@@ -36,6 +42,7 @@ final class SetCommand implements NickServCommandInterface
         SetMsgHandler $setMsgHandler,
         SetTimezoneHandler $setTimezoneHandler,
         SetVhostHandler $setVhostHandler,
+        private readonly SessionLanguageRegistry $sessionLanguageRegistry,
     ) {
         $this->handlers = [
             'PASSWORD' => $setPasswordHandler,
@@ -138,7 +145,7 @@ final class SetCommand implements NickServCommandInterface
 
     public function getRequiredPermission(): ?string
     {
-        return 'IDENTIFIED';
+        return null;
     }
 
     public function getHelpParams(): array
@@ -173,6 +180,13 @@ final class SetCommand implements NickServCommandInterface
         }
 
         $account = $context->senderAccount;
+
+        if ('LANGUAGE' === $option && null === $account) {
+            $this->handleLanguageForUnregistered($context, $value);
+
+            return;
+        }
+
         if (null === $account) {
             $context->reply('error.not_identified');
 
@@ -192,5 +206,29 @@ final class SetCommand implements NickServCommandInterface
         // @codeCoverageIgnoreEnd
 
         $handler->handle($context, $account, $value, false);
+    }
+
+    private function handleLanguageForUnregistered(NickServContext $context, string $value): void
+    {
+        $lang = strtolower($value);
+
+        if ('' === $lang) {
+            $context->reply('error.syntax', [
+                'syntax' => $context->trans('set.language.syntax'),
+            ]);
+
+            return;
+        }
+
+        if (!in_array($lang, RegisteredNick::SUPPORTED_LANGUAGES, true)) {
+            $context->reply('set.language.invalid', [
+                'languages' => implode(', ', RegisteredNick::SUPPORTED_LANGUAGES),
+            ]);
+
+            return;
+        }
+
+        $this->sessionLanguageRegistry->register($context->sender->uid, $lang);
+        $context->reply('set.language.success', ['language' => $lang]);
     }
 }

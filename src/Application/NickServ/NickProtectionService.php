@@ -33,6 +33,7 @@ final readonly class NickProtectionService
         private readonly NickServNotifierInterface $notifier,
         private readonly BurstState $burstState,
         private readonly IdentifiedSessionRegistry $identifiedRegistry,
+        private readonly SessionLanguageRegistry $sessionLanguageRegistry,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly TranslatorInterface $translator,
         private readonly EventDispatcherInterface $eventDispatcher,
@@ -94,7 +95,8 @@ final readonly class NickProtectionService
                 ));
             }
 
-            $this->identifiedRegistry->remove($uid);
+        $this->identifiedRegistry->remove($uid);
+        $this->sessionLanguageRegistry->remove($uid);
             $sender = $this->userLookup->findByUid($uid);
             if (null !== $sender) {
                 $this->notifier->setUserAccount($uid, '0');

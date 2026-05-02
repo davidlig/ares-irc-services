@@ -8,6 +8,7 @@ use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
@@ -61,6 +62,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->notifier,
             $this->burstState,
             new IdentifiedSessionRegistry(),
+            new SessionLanguageRegistry(),
             $pendingRegistry,
             $translator,
             $this->createStub(EventDispatcherInterface::class),

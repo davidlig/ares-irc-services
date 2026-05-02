@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\ApplicationPort\ServiceUidRegistry;
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendCtcpPort;
 use App\Application\Port\SenderView;
@@ -49,6 +50,7 @@ final class CtcpHandlerTest extends TestCase
     {
         return new UserLanguageResolver(
             $this->createStub(RegisteredNickRepositoryInterface::class),
+            new SessionLanguageRegistry(),
             $language,
         );
     }

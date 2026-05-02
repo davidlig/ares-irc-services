@@ -15,6 +15,8 @@ use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
+use App\Infrastructure\NickServ\UserLanguageResolver;
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\OperServ\OperServService;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
@@ -1228,6 +1230,7 @@ final class OperServServiceTest extends TestCase
         return new OperServService(
             $registry,
             $nickRepository,
+            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), $defaultLanguage),
             $notifier,
             $messageTypeResolver,
             $translator,
