@@ -19,7 +19,7 @@ final readonly class InspIRCdUserModeSupport implements UserModeSupportInterface
      */
     private const array IRCOP_USER_MODES = ['s', 'W'];
 
-    private const string SNOMASK_DEFAULT = '+kcfj';
+    private const string SNOMASK_DEFAULT = '+*';
 
     /**
      * Mode letters that require a parameter on set.
