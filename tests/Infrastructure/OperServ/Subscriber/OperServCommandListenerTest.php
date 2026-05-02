@@ -9,6 +9,7 @@ use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
+use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -20,13 +21,12 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\UserMessageTypeResolverInterface;
-use App\Infrastructure\NickServ\UserLanguageResolver;
-use App\Application\NickServ\SessionLanguageRegistry;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\NickServ\UserLanguageResolver;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use App\Infrastructure\OperServ\Bot\OperServBot;
 use App\Infrastructure\OperServ\Subscriber\OperServCommandListener;
@@ -233,7 +233,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
-          $nickRepository,
+            $nickRepository,
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $operServNotifier,
             $messageTypeResolver,
@@ -293,7 +293,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
-          $nickRepository,
+            $nickRepository,
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $operServNotifier,
             $messageTypeResolver,
@@ -355,7 +355,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
-          $nickRepository,
+            $nickRepository,
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $operServNotifier,
             $messageTypeResolver,
@@ -421,7 +421,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
-          $nickRepository,
+            $nickRepository,
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $operServNotifier,
             $messageTypeResolver,
@@ -488,7 +488,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
-          $nickRepository,
+            $nickRepository,
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $operServNotifier,
             $messageTypeResolver,
@@ -554,7 +554,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $operServService = new OperServService(
             new OperServCommandRegistry([]),
-          $nickRepository,
+            $nickRepository,
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $operServNotifier,
             $messageTypeResolver,
@@ -623,7 +623,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $operServService = new OperServService(
             new OperServCommandRegistry([$throwCommand]),
-          $nickRepository,
+            $nickRepository,
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $operServNotifier,
             $messageTypeResolver,

@@ -95,8 +95,8 @@ final readonly class NickProtectionService
                 ));
             }
 
-        $this->identifiedRegistry->remove($uid);
-        $this->sessionLanguageRegistry->remove($uid);
+            $this->identifiedRegistry->remove($uid);
+            $this->sessionLanguageRegistry->remove($uid);
             $sender = $this->userLookup->findByUid($uid);
             if (null !== $sender) {
                 $this->notifier->setUserAccount($uid, '0');
