@@ -8,7 +8,7 @@ error:
   oper_only:        "\x0304✗\x03 Este comando está restringido a Operadores de IRC."
   permission_denied: "\x0304✗\x03 No tienes permisos suficientes para ejecutar este comando."
   root_only:        "\x0304✗\x03 Este comando está restringido a administradores root de la red."
-  nick_not_registered: "\x0304✗\x03 El nickname \x02%nickname%\x02 no está registrado."
+  nick_not_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
 
 # --- HELP --------------------------------------------------------------------
 help:
@@ -25,15 +25,15 @@ help:
   set_sub_footer:   "Usa \x0303/msg %bot% HELP %command% <opción>\x03 para más información."
   syntax_label:     "\x0307Sintaxis:\x03 \x02%syntax%\x02"
   footer:           "\x0314─────────────────────────────\x03"
-  intro_expiration: "NOTA: Los nicks \x0304\x1Fsin usar\x0F durante más de %days% días se eliminan automáticamente."
+  intro_expiration: "NOTA: Los apodos \x0304\x1Fsin usar\x0F durante más de %days% días se eliminan automáticamente."
   unknown_command:  "\x0304✗\x03 Comando desconocido \x02%command%\x02. Usa \x0303/msg %bot% HELP\x03."
   suboptions:       "Sub-opciones:"
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <rol>"
+  syntax:           "IRCOP <apodo> {ADD|DEL|LIST} <rol>"
   short:            "Gestiona operadores de red."
-  help:             "Gestiona operadores de red. ADD añade un nickname registrado\ncomo operador con el rol especificado.\nDEL elimina un operador. LIST muestra todos los operadores.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root configurados en los servicios."
+  help:             "Gestiona operadores de red. ADD añade un apodo registrado\ncomo operador con el rol especificado.\nDEL elimina un operador. LIST muestra todos los operadores.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root configurados en los servicios."
 
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
   unknown_role:     "\x0304✗\x03 El rol \x02%role%\x02 no existe. Usa \x0303/msg %bot% ROLE LIST\x03 para ver los roles disponibles."
@@ -42,14 +42,14 @@ ircop:
   role_changed:    "\x0303✓\x03 Cambiado el rol de \x02%nickname%\x02 de %old% a %new%."
 
   add:
-    syntax:         "IRCOP <nickname> ADD <rol>"
+    syntax:         "IRCOP <apodo> ADD <rol>"
     short:          "Añade un operador de red."
-    help:            "Añade un nickname registrado como operador de red.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root."
+    help:            "Añade un apodo registrado como operador de red.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root."
     done:           "\x0303✓\x03 Añadido \x02%nickname%\x02 como \x02%role%\x02."
-    nick_not_active: "\x0304✗\x03 El nickname \x02%nickname%\x02 no es un nickname registrado activo."
+    nick_not_active: "\x0304✗\x03 El apodo \x02%nickname%\x02 no es un apodo registrado activo."
 
   del:
-    syntax:         "IRCOP <nickname> DEL"
+    syntax:         "IRCOP <apodo> DEL"
     short:          "Elimina un operador de red."
     help:            "Elimina un operador de red de la lista.\nEste comando está restringido a usuarios Root."
     done:           "\x0303✓\x03 Eliminado \x02%nickname%\x02 de operadores."
@@ -151,7 +151,7 @@ role:
   vhost:
     syntax:         "ROLE VHOST <rol> {VIEW|SET} [patrón]"
     short:          "Gestiona el patrón de vhost forzado del rol."
-    help:           "Gestiona el vhost forzado asignado a un rol.\nVIEW muestra el patrón de vhost forzado actual.\nSET asigna un patrón de vhost forzado (los usuarios con este rol\nrecibirán este vhost al identificarse, sobrescribiendo el vhost personal).\nEl patrón se añade después del nickname limpio, ej:\n  Nick: _davidlig_ → Patrón: admin.ares → VHost: davidlig.admin.ares\nCaracteres válidos: a-z, A-Z, 0-9, guion (-) y punto (.).\nDebe tener al menos un punto, no puede empezar/terminar con - o . o tener ..\nUsa OFF para eliminar el patrón de vhost forzado.\nEste comando está restringido a usuarios Root."
+    help:           "Gestiona el vhost forzado asignado a un rol.\nVIEW muestra el patrón de vhost forzado actual.\nSET asigna un patrón de vhost forzado (los usuarios con este rol\nrecibirán este vhost al identificarse, sobrescribiendo el vhost personal).\nEl patrón se añade después del apodo limpio, ej:\n  Nick: _davidlig_ → Patrón: admin.ares → VHost: davidlig.admin.ares\nCaracteres válidos: a-z, A-Z, 0-9, guion (-) y punto (.).\nDebe tener al menos un punto, no puede empezar/terminar con - o . o tener ..\nUsa OFF para eliminar el patrón de vhost forzado.\nEste comando está restringido a usuarios Root."
     unknown_action:  "\x0304✗\x03 Acción desconocida \x02%action%\x02. Usa VIEW o SET."
 
     view:
@@ -161,22 +161,22 @@ role:
       header:        "\x0307---\x03 \x02VHost forzado de %role%\x02 \x0307---\x03"
       empty:        "El rol \x02%role%\x02 no tiene patrón de vhost forzado configurado."
       line:         "  Patrón: \x0303%pattern%\x03"
-      example:      "  Ejemplo: \x02nickname\x02.%pattern%"
+      example:      "  Ejemplo: \x02apodo\x02.%pattern%"
 
     set:
       syntax:       "ROLE VHOST <rol> SET <patrón>"
       short:         "Establece el patrón de vhost forzado del rol."
-      help:          "Establece el patrón de vhost forzado para el rol.\nLos usuarios que se identifiquen con este rol recibirán el vhost forzado,\nque tiene prioridad sobre el vhost personal.\nEl patrón se añade después del nickname limpio.\nUsa OFF u omite el argumento para eliminar el vhost forzado.\nEste comando está restringido a usuarios Root."
+      help:          "Establece el patrón de vhost forzado para el rol.\nLos usuarios que se identifiquen con este rol recibirán el vhost forzado,\nque tiene prioridad sobre el vhost personal.\nEl patrón se añade después del apodo limpio.\nUsa OFF u omite el argumento para eliminar el vhost forzado.\nEste comando está restringido a usuarios Root."
       done:         "\x0303✓\x03 Establecido patrón de vhost forzado para el rol \x02%role%\x02."
       cleared:      "\x0303✓\x03 Eliminado el patrón de vhost forzado del rol \x02%role%\x02."
       invalid:      "\x0304✗\x03 Patrón de vhost inválido. Caracteres válidos: a-z, A-Z, 0-9, - y .. Debe tener al menos un punto, no puede empezar/terminar con - o . o tener .."
 
 # --- KILL --------------------------------------------------------------------
 kill:
-  syntax:           "KILL <nickname> <razón>"
+  syntax:           "KILL <apodo> <razón>"
   short:            "Desconecta forzosamente a un usuario de la red."
-  help:             "Desconecta a un usuario de la red IRC.\nLos IRCops y usuarios Root no pueden ser killeados.\nEste comando requiere el permiso operserv.kill.\n\nSintaxis: KILL <nickname> <razón>\nEjemplo: KILL BadUser Flooding en canales"
-  user_not_online:  "\x0304✗\x03 El nick \x02%nickname%\x02 no está conectado."
+  help:             "Desconecta a un usuario de la red IRC.\nLos IRCops y usuarios Root no pueden ser killeados.\nEste comando requiere el permiso operserv.kill.\n\nSintaxis: KILL <apodo> <razón>\nEjemplo: KILL BadUser Flooding en canales"
+  user_not_online:  "\x0304✗\x03 El apodo \x02%nickname%\x02 no está conectado."
   protected_root:   "\x0304✗\x03 No se puede hacer KILL al usuario Root \x02%nickname%\x02."
   protected_ircop:  "\x0304✗\x03 No se puede hacer KILL al IRC operator \x02%nickname%\x02."
   done:             "\x0303✓\x03 Usuario \x02%nickname%\x02 desconectado (%reason%)."
@@ -196,7 +196,7 @@ gline:
   already_exists:   "\x0304✗\x03 Ya existe un G-line para \x02%mask%\x02."
   max_entries:      "\x0304✗\x03 Se alcanzó el máximo de G-lines (%max%)."
   not_found:        "\x0304✗\x03 G-line \x02%mask%\x02 no encontrado."
-  user_not_found:   "\x0304✗\x03 El nickname \x02%nickname%\x02 no está conectado."
+  user_not_found:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está conectado."
   permanent:        "permanente"
 
   add:
@@ -224,13 +224,13 @@ gline:
 
 # --- GLOBAL -------------------------------------------------------------------
 global:
-  syntax:           "GLOBAL {servicio|nick!ident@vhost} {PRIVMSG|NOTICE} <mensaje>"
+  syntax:           "GLOBAL {servicio|apodo!ident@vhost} {PRIVMSG|NOTICE} <mensaje>"
   short:            "Envía un mensaje global a todos los usuarios conectados."
-  help:             "Envía un mensaje a todos los usuarios conectados.\n\nSi el primer argumento es un nombre de servicio, el mensaje se enviará usando ese servicio existente.\n\nSi no es un servicio, se creará un pseudo-cliente temporal con la máscara\nespecificada. La máscara debe tener el formato: nick!ident@vhost\n- nick: nickname IRC válido (letras, []{}|\\`, dígitos, empieza por letra)\n- ident: alfanumérico con . _ ~ -\n- vhost: hostname válido\n\nPara pseudo-clientes, el nickname no puede estar conectado ni registrado.\nEl pseudo-cliente permanecerá conectado durante el envío y se desconectará\nautomáticamente (el nick será bloqueado 24h mediante SQLINE/QLINE).\n\nPRIVMSG envía como mensaje privado, NOTICE envía como aviso.\nEste comando requiere el permiso operserv.global."
+  help:             "Envía un mensaje a todos los usuarios conectados.\n\nSi el primer argumento es un nombre de servicio, el mensaje se enviará usando ese servicio existente.\n\nSi no es un servicio, se creará un pseudo-cliente temporal con la máscara\nespecificada. La máscara debe tener el formato: apodo!ident@vhost\n- apodo: apodo IRC válido (letras, []{}|\\`, dígitos, empieza por letra)\n- ident: alfanumérico con . _ ~ -\n- vhost: hostname válido\n\nPara pseudo-clientes, el apodo no puede estar conectado ni registrado.\nEl pseudo-cliente permanecerá conectado durante el envío y se desconectará\nautomáticamente (el apodo será bloqueado 24h mediante SQLINE/QLINE).\n\nPRIVMSG envía como mensaje privado, NOTICE envía como aviso.\nEste comando requiere el permiso operserv.global."
   mask_invalid:    "\x0304✗\x03 Formato de máscara inválido: %error%"
-  nick_service:    "\x0304✗\x03 No se puede usar un nickname de servicio."
-  nick_connected: "\x0304✗\x03 El nickname \x02%nickname%\x02 está conectado actualmente."
-  nick_registered: "\x0304✗\x03 El nickname \x02%nickname%\x02 está registrado."
+  nick_service:    "\x0304✗\x03 No se puede usar un apodo de servicio."
+  nick_connected: "\x0304✗\x03 El apodo \x02%nickname%\x02 está conectado actualmente."
+  nick_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 está registrado."
   type_invalid:    "\x0304✗\x03 El tipo de mensaje debe ser PRIVMSG o NOTICE."
   done:            "\x0303✓\x03 Mensaje global enviado desde \x02%nickname%\x02 a %count% usuarios."
 
@@ -248,13 +248,13 @@ raw:
 debug:
   action_message:   "%operator% ejecuta el comando %command% sobre %target%. %reason%"
   actionWithDuration: "%operator% ejecuta el comando %command% sobre %target%. Duración: %duration%. %reason%"
-  action_global:    "%operator% ejecuta el comando GLOBAL con el nickname %target% mediante %type% a %count% usuarios. Mensaje: %message%"
+  action_global:    "%operator% ejecuta el comando GLOBAL con el apodo %target% mediante %type% a %count% usuarios. Mensaje: %message%"
   prefix_reason:    "Razón: %reason%"
   prefix_message:   "Mensaje: %reason%"
 
 # --- PERMISOS ----------------------------------------------------------------
 permissions:
-  operserv.kill:    "Desconecta a un nickname de la red (KILL)"
+  operserv.kill:    "Desconecta a un apodo de la red (KILL)"
   operserv.gline:   "Gestiona G-lines de red (GLINE)"
   operserv.global:  "Envía mensajes globales a todos los usuarios (GLOBAL)"
   operserv.raw:     "Envía líneas de protocolo crudas al IRCd (RAW)"
@@ -267,7 +267,7 @@ motd:
   help:             "Gestiona entradas de mensaje del día (MOTD) que se envían cuando un usuario se conecta a la red.\n\n"
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido. Usa: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
-    syntax:         "MOTD ADD {servicio|nick!ident@vhost} {PRIVMSG|NOTICE} <expiración> <mensaje>"
+    syntax:         "MOTD ADD {servicio|apodo!ident@vhost} {PRIVMSG|NOTICE} <expiración> <mensaje>"
     syntax_hint:    "\x0304✗\x03 Uso: \x02%syntax%\x02"
     short:          "Añade una entrada MOTD."
     help:           "Añade un nuevo mensaje MOTD que se enviará a cada usuario cuando se conecte a la red.\n\n"

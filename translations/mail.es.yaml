@@ -2,11 +2,11 @@
 # Placeholders: %nickname%, %token%, %new_email%
 
 # REGISTER / VERIFY — token de verificación
-register_verification_subject: "%bot%: verifica el registro de tu nickname"
+register_verification_subject: "%bot%: verifica el registro de tu apodo"
 register_verification_body: |
   Hola,
 
-  Solicitaste registrar el nickname "%nickname%" en la red IRC.
+  Solicitaste registrar el apodo "%nickname%" en la red IRC.
 
   Tu token de verificación es: %token%
 
@@ -20,7 +20,7 @@ resend_verification_subject: "%bot%: tu token de verificación (reenvío)"
 resend_verification_body: |
   Hola,
 
-  Solicitaste un nuevo token de verificación para el nickname "%nickname%".
+  Solicitaste un nuevo token de verificación para el apodo "%nickname%".
 
   Tu token de verificación es: %token%
 
@@ -34,7 +34,7 @@ email_change_token_subject: "%bot%: confirma tu nueva dirección de correo"
 email_change_token_body: |
   Hola,
 
-  Solicitaste cambiar la dirección de correo de tu nickname %bot% a: %new_email%
+  Solicitaste cambiar la dirección de correo de tu apodo %bot% a: %new_email%
 
   Tu token de confirmación es: %token%
 
@@ -48,7 +48,7 @@ recovery_token_subject: "%bot%: recuperación de contraseña"
 recovery_token_body: |
   Hola,
 
-  Se solicitó una recuperación de contraseña para el nickname "%nickname%".
+  Se solicitó una recuperación de contraseña para el apodo "%nickname%".
 
   Tu token de recuperación es: %token%
 
@@ -62,7 +62,7 @@ founder_change_token_subject: "%bot%: token de cambio de fundador para %channel%
 founder_change_token_body: |
   Hola,
 
-  Se solicitó un cambio de fundador del canal "%channel%" al nickname "%new_nick%".
+  Se solicitó un cambio de fundador del canal "%channel%" al apodo "%new_nick%".
 
   Tu token de confirmación es: %token%
 
