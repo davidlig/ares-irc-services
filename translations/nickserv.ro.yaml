@@ -127,7 +127,7 @@ info:
   last_seen_never:  "  \x0314Ultima vizualizare\x03      : Niciodată"
   last_quit:        "  \x0314Ultimul mesaj quit\x03      : %message%"
   last_connect:     "  \x0314Ultima conectare de la\x03  : %ip% (%host%)"
-  language:         "  \x0314Limbă\x03                    : %language%"
+  language:         "  \x0314Limbă\x03                   : %language%"
   email:            "  \x0314E-mail\x03                  : %email%"
   vhost:            "  \x0314VHost\x03                   : %vhost%"
   no_expire:        "  \x0314Nu expiră niciodată\x03     : Da"

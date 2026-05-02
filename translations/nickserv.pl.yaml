@@ -127,7 +127,7 @@ info:
   last_seen_never:  "  \x0314Ostatnio widziany\x03       : Nigdy"
   last_quit:        "  \x0314Ostatnia wiad. wyjścia\x03  : %message%"
   last_connect:     "  \x0314Ostatnio widziany z\x03     : %ip% (%host%)"
-  language:         "  \x0314Język\x03                    : %language%"
+  language:         "  \x0314Język\x03                   : %language%"
   email:            "  \x0314E-mail\x03                  : %email%"
   vhost:            "  \x0314VHost\x03                   : %vhost%"
   no_expire:        "  \x0314Nigdy nie wygasa\x03        : Tak"

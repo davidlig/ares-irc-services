@@ -127,7 +127,7 @@ info:
   last_seen_never:  "  \x0314Darrer vist\x03           : Mai"
   last_quit:        "  \x0314Darrer miss. sortida\x03  : %message%"
   last_connect:     "  \x0314Darrer vist des de\x03    : %ip% (%host%)"
-  language:         "  \x0314Idioma\x03                 : %language%"
+  language:         "  \x0314Idioma\x03                : %language%"
   email:            "  \x0314Correu\x03                : %email%"
   vhost:            "  \x0314VHost\x03                 : %vhost%"
   no_expire:        "  \x0314Mai expira\x03            : Sí"
