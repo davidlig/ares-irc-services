@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <bijnaam> {ADD|DEL|LIST} <rol>"
+  syntax:           "IRCOP <bijnaam> {ADD|DEL|LIST} [rol]"
   short:            "Beheer netwerk IRC-operators."
   help:             "Beheer netwerk IRC-operators. ADD voegt een geregistreerde bijnaam toe\nals operator met de opgegeven rol.\nDEL verwijdert een operator. LIST toont alle operators.\nGebruik ROLE LIST om beschikbare rollen te zien.\nDit commando is voorbehouden aan Root-gebruikers die in de services zijn geconfigureerd."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Voorbeeld: \x02bijnaam\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rol> SET <patroon>"
+      syntax:       "ROLE VHOST <rol> SET [patroon]"
       short:         "Stel het geforceerde vhost-patroon voor de rol in."
       help:          "Stelt het geforceerde vhost-patroon voor de rol in.\nGebruikers die zich identificeren met deze rol ontvangen de geforceerde vhost,\ndie voorrang heeft op de persoonlijke vhost.\nHet patroon wordt toegevoegd na de opgeschoonde bijnaam.\nGebruik OFF of laat het argument weg om de geforceerde vhost te wissen.\nDit commando is voorbehouden aan Root-gebruikers."
       done:         "\x0303✓\x03 Geforceerd vhost-patroon ingesteld voor rol \x02%role%\x02."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [masker] [verloop] [reden]"
+  syntax:           "GLINE {ADD|DEL|LIST} [masker] [verloop] [reden]"
   short:            "Beheer netwerkbrede G-lines."
   help:             "Beheer netwerkbrede G-lines (globale bans).\nADD voegt een nieuwe G-line toe met masker, verloop en reden.\nDEL verwijdert een G-line op masker of vermeldingsnummer.\nLIST toont alle G-lines, optioneel gefilterd op masker.\n\nVerloopformaat: 0=permanent, of gebruik d, h, m suffix (bijv. 7d, 12h, 30m).\nGLINEs die overeenkomen met Root- of IRCop-gebruikers worden geweigerd.\nDit commando vereist de operserv.gline-permissie."
   unknown_sub:      "\x0304✗\x03 Onbekende subopdracht \x02%sub%\x02. Gebruik ADD, DEL of LIST."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Beheer connect MOTD-berichten die naar gebruikers worden gestuurd bij verbinding."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [args]"
   help:             "Beheer Message Of The Day-vermeldingen die naar gebruikers worden gestuurd wanneer ze verbinding maken met het netwerk.\n\n"
   unknown_sub:      "\x0304✗\x03 Onbekende subopdracht. Gebruik: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Ongeldig berichttype. Moet \x02PRIVMSG\x02 of \x02NOTICE\x02 zijn."
     invalid_expiry: "\x0304✗\x03 Ongeldig verloopformaat. Gebruik: \x02<getal><s|m|h|d>\x02 (bijv. 30s, 5m, 24h, 7d)."
   del:
-    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax:         "MOTD DEL <id>"
     syntax_hint:    "\x0304✗\x03 Gebruik: \x02%syntax%\x02"
     short:          "Verwijder een MOTD-vermelding."
     help:           "Verwijdert een MOTD-vermelding op basis van zijn ID.\n\n"

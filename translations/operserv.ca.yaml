@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <role>"
+  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [role]"
   short:            "Gestionar els operadors d'IRC de la xarxa."
   help:             "Gestiona els operadors d'IRC de la xarxa. ADD afegeix un sobrenom registrat\ncom a operador amb el rol especificat.\nDEL treu un operador. LIST mostra tots els operadors.\nUtilitzeu ROLE LIST per veure els rols disponibles.\nAquesta ordre està restringida als usuaris Root configurats als serveis."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Exemple: \x02nickname\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <role> SET <pattern>"
+      syntax:       "ROLE VHOST <role> SET [pattern]"
       short:         "Establir el patró de vhost forçat del rol."
       help:          "Estableix el patró de vhost forçat del rol.\nEls usuaris que s'identifiquen amb aquest rol rebran el vhost forçat,\nque té prioritat sobre el vhost personal.\nEl patró s'afegeix després del sobrenom netejat.\nUtilitzeu OFF o ometeu l'argument per esborrar el vhost forçat.\nAquesta ordre està restringida als usuaris Root."
       done:         "\x0303✓\x03 Establert el patró de vhost forçat per al rol \x02%role%\x02."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [mask] [expiry] [reason]"
+  syntax:           "GLINE {ADD|DEL|LIST} [mask] [expiry] [reason]"
   short:            "Gestionar les G-lines de tota la xarxa."
   help:             "Gestiona les G-lines (prohibicions globals) de tota la xarxa.\nADD afegeix una nova G-line amb màscara, caducitat i motiu.\nDEL treu una G-line per màscara o número d'entrada.\nLIST mostra totes les G-lines, opcionalment filtrades per màscara.\n\nFormat de caducitat: 0=permanent, o utilitzeu sufix d, h, m (p. ex., 7d, 12h, 30m).\nLes GLINEs que coincideixen amb usuaris Root o IRCop es rebutgen.\nAquesta ordre requereix el permís operserv.gline."
   unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, o LIST."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Gestionar els missatges MOTD enviats als usuaris en connectar-se."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [args]"
   help:             "Gestiona les entrades de Message Of The Day que s'envien als usuaris quan es connecten a la xarxa.\n\n"
   unknown_sub:      "\x0304✗\x03 Subordre desconeguda. Utilitzeu: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Tipus de missatge no vàlid. Ha de ser \x02PRIVMSG\x02 o \x02NOTICE\x02."
     invalid_expiry: "\x0304✗\x03 Format de caducitat no vàlid. Utilitzeu: \x02<number><s|m|h|d>\x02 (p. ex., 30s, 5m, 24h, 7d)."
   del:
-    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax:         "MOTD DEL <id>"
     syntax_hint:    "\x0304✗\x03 Ús: \x02%syntax%\x02"
     short:          "Esborrar una entrada MOTD."
     help:           "Esborra una entrada MOTD pel seu ID.\n\n"

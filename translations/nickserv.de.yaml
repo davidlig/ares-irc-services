@@ -381,7 +381,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ---------------------------------------------------------
 forbidvhost:
-  syntax:           "FORBIDVHOST ADD|DEL|LIST [Muster]"
+  syntax:           "FORBIDVHOST {ADD|DEL|LIST} [Muster]"
   short:            "Gesperrte VHost-Muster verwalten."
   help:             |
     Verwaltet Muster, die Benutzer daran hindern, übereinstimmende VHosts

@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <rol>"
+  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [rol]"
   short:            "Ağ IRC operatörlerini yönetin."
   help:             "Ağ IRC operatörlerini yönetin. ADD, kayıtlı bir rumuzu\nbelirtilen rolle operatör olarak ekler.\nDEL bir operatörü kaldırır. LIST tüm operatörleri gösterir.\nMevcut rolleri görmek için ROLE LIST kullanın.\nBu komut yalnızca hizmetlerde yapılandırılmış Root kullanıcıları içindir."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Örnek: \x02rumuz\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rol> SET <kalıp>"
+      syntax:       "ROLE VHOST <rol> SET [kalıp]"
       short:         "Rol için zorunlu vhost kalıbını ayarlayın."
       help:          "Rol için zorunlu vhost kalıbını ayarlar.\nBu rolle kimlik doğrulayan kullanıcılar zorunlu vhost'u alır,\nbu kişisel vhost'tan önceliklidir.\nKalıp temizlenmiş rumuzun sonuna eklenir.\nZorunlu vhost'u temizlemek için OFF kullanın veya argümanı belirtmeyin.\nBu komut yalnızca Root kullanıcıları içindir."
       done:         "\x0303✓\x03 \x02%role%\x02 rolü için zorunlu vhost kalıbı ayarlandı."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [maske] [süre] [sebep]"
+  syntax:           "GLINE {ADD|DEL|LIST} [maske] [süre] [sebep]"
   short:            "Ağ genelindeki G-line'ları yönetin."
   help:             "Ağ genelindeki G-line'ları (genel yasaklamalar) yönetin.\nADD maske, süre ve sebep ile yeni bir G-line ekler.\nDEL bir G-line'ı maske veya giriş numarasıyla kaldırır.\nLIST maske filtresi ile isteğe bağlı olarak tüm G-line'ları gösterir.\n\nSüre formatı: 0=kalıcı, veya d, s, d son ekini kullanın (örn., 7g, 12s, 30d).\nRoot veya IRCop kullanıcılarıyla eşleşen GLINE'lar reddedilir.\nBu komut operserv.gline iznini gerektirir."
   unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL veya LIST kullanın."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Bağlantıda kullanıcılara gönderilen MOTD mesajlarını yönetin."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [argümanlar]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [argümanlar]"
   help:             "Kullanıcılar ağa bağlandığında gönderilen Günün Mesajı girişlerini yönetin.\n\n"
   unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut. Kullanın: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Geçersiz mesaj türü. \x02PRIVMSG\x02 veya \x02NOTICE\x02 olmalıdır."
     invalid_expiry: "\x0304✗\x03 Geçersiz süre formatı. Kullanın: \x02<sayı><s|d|s|g>\x02 (örn., 30s, 5d, 24s, 7g)."
   del:
-    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax:         "MOTD DEL <id>"
     syntax_hint:    "\x0304✗\x03 Kullanım: \x02%syntax%\x02"
     short:          "Bir MOTD girişini silin."
     help:           "Bir MOTD girişini ID'sine göre siler.\n\n"

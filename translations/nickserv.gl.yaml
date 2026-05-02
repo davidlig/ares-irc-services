@@ -389,7 +389,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ---------------------------------------------------------
 forbidvhost:
-  syntax:           "FORBIDVHOST ADD|DEL|LIST [patrón]"
+  syntax:           "FORBIDVHOST {ADD|DEL|LIST} [patrón]"
   short:            "Xestionar os patróns de vhost prohibidos."
   help:             |
     Xestiona os patróns que impiden que os usuarios establezan vhosts

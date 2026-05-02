@@ -381,7 +381,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ---------------------------------------------------------
 forbidvhost:
-  syntax:           "FORBIDVHOST ADD|DEL|LIST [kalıp]"
+  syntax:           "FORBIDVHOST {ADD|DEL|LIST} [kalıp]"
   short:            "Yasaklı vhost kalıplarını yönetin."
   help:             |
     Kullanıcıların NickServ SET VHOST ile eşleşen vhost'ları

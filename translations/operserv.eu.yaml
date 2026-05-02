@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <ezizena> {ADD|DEL|LIST} <rola>"
+  syntax:           "IRCOP <ezizena> {ADD|DEL|LIST} [rola]"
   short:            "Kudeatu sareko IRC operadoreak."
   help:             "Sareko IRC operadoreak kudeatzen ditu. ADDk ezizen erregistratu bat gehitzen du\nzehaztutako rolarekin operadore gisa.\nDELek operadore bat kentzen du. LISTek operadore guztiak erakusten ditu.\nErabili ROLE LIST rolak ikusteko.\nKomando hau zerbitzuetan konfiguratutako Root erabiltzaileentzat mugatuta dago."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Adibidea: \x02ezizena\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rola> SET <eredua>"
+      syntax:       "ROLE VHOST <rola> SET [eredua]"
       short:         "Ezarri rolaren behartutako vhost eredua."
       help:          "Rolarentzako behartutako vhost eredua ezartzen du.\nRol honekin identifikatzen diren erabiltzaileek behartutako vhost-a jasoko dute,\nvhost pertsonalaren gainetik lehentasuna duena.\nEredua ezizen garbituaren ondoren eransten da.\nErabili OFF edo utzi argumentua hutsik behartutako vhost-a garbitzeko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
       done:         "\x0303✓\x03 \x02%role%\x02 rolerako behartutako vhost eredua ezarri da."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [maskara] [iraungitzea] [arrazoia]"
+  syntax:           "GLINE {ADD|DEL|LIST} [maskara] [iraungitzea] [arrazoia]"
   short:            "Kudeatu sare osoko G-lineak."
   help:             "Sare osoko G-lineak (debeku globalak) kudeatzen ditu.\nADDek G-line berri bat gehitzen du maskara, iraungitze eta arrazoiarekin.\nDELek G-line bat kentzen du maskara edo sarrera zenbakiaren arabera.\nLISTek G-line guztiak erakusten ditu, aukeran maskararekin iragazita.\n\nIraungitze formatua: 0=iraunkorra, edo erabili d, o, m atzizkia (adib., 7d, 12o, 30m).\nRoot edo IRCop erabiltzaileekin bat datozen GLINEak baztertzen dira.\nKomando honek operserv.gline baimena behar du."
   unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL edo LIST."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Kudeatu konexio MOTD mezuak, erabiltzaileei konektatzean bidaliak."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [arg]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [arg]"
   help:             "Kudeatu Eguneko Mezua sarrerak, erabiltzaileei sarera konektatzean bidaltzen zaizkienak.\n\n"
   unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna. Erabili: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Mezu mota baliogabea. \x02PRIVMSG\x02 edo \x02NOTICE\x02 izan behar du."
     invalid_expiry: "\x0304✗\x03 Iraungitze formatu baliogabea. Erabili: \x02<zenbakia><s|m|o|e>\x02 (adib., 30s, 5m, 24o, 7e)."
   del:
-    syntax:         "MOTD DEL \x02<ida>\x02"
+    syntax:         "MOTD DEL <ida>"
     syntax_hint:    "\x0304✗\x03 Erabilera: \x02%syntax%\x02"
     short:          "Ezabatu MOTD sarrera bat."
     help:           "MOTD sarrera bat ezabatzen du bere IDaren arabera.\n\n"

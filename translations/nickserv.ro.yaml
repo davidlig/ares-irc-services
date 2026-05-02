@@ -381,7 +381,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ---------------------------------------------------------
 forbidvhost:
-  syntax:           "FORBIDVHOST ADD|DEL|LIST [model]"
+  syntax:           "FORBIDVHOST {ADD|DEL|LIST} [model]"
   short:            "Gestionați modelele de vhost interzise."
   help:             |
     Gestionează modelele care împiedică utilizatorii să seteze vhosturi

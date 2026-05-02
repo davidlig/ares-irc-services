@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nick> {ADD|DEL|LIST} <rola>"
+  syntax:           "IRCOP <nick> {ADD|DEL|LIST} [rola]"
   short:            "Zarządzaj operatorami IRC sieci."
   help:             "Zarządzaj operatorami IRC sieci. ADD dodaje zarejestrowany nick\njako operatora z określoną rolą.\nDEL usuwa operatora. LIST pokazuje wszystkich operatorów.\nUżyj ROLE LIST aby zobaczyć dostępne role.\nTa komenda jest dostępna tylko dla użytkowników Root skonfigurowanych w serwisach."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Przykład: \x02nick\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rola> SET <wzorzec>"
+      syntax:       "ROLE VHOST <rola> SET [wzorzec]"
       short:         "Ustaw wymuszony wzorzec vhost dla roli."
       help:          "Ustawia wymuszony wzorzec vhost dla roli.\nUżytkownicy identyfikujący się z tą rolą otrzymają wymuszony vhost,\nktóry ma pierwszeństwo przed osobistym vhostem.\nWzorzec jest dodawany po oczyszczonym nicku.\nUżyj OFF lub pomiń argument aby wyczyścić wymuszony vhost.\nTa komenda jest dostępna tylko dla użytkowników Root."
       done:         "\x0303✓\x03 Ustawiono wymuszony wzorzec vhost dla roli \x02%role%\x02."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [maska] [wygaśnięcie] [powód]"
+  syntax:           "GLINE {ADD|DEL|LIST} [maska] [wygaśnięcie] [powód]"
   short:            "Zarządzaj globalnymi G-line'ami w sieci."
   help:             "Zarządzaj sieciowymi G-line'ami (globalne bany).\nADD dodaje nowy G-line z maską, wygaśnięciem i powodem.\nDEL usuwa G-line według maski lub numeru wpisu.\nLIST pokazuje wszystkie G-line'y, opcjonalnie filtrowane po masce.\n\nFormat wygaśnięcia: 0=stałe, lub użyj przyrostka d, h, m (np., 7d, 12h, 30m).\nGLINE'y pasujące do użytkowników Root lub IRCop są odrzucane.\nTa komenda wymaga uprawnienia operserv.gline."
   unknown_sub:      "\x0304✗\x03 Nieznana podkomenda \x02%sub%\x02. Użyj ADD, DEL lub LIST."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Zarządzaj wiadomościami MOTD wysyłanymi użytkownikom przy połączeniu."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [args]"
   help:             "Zarządzaj wpisami Message Of The Day, które są wysyłane do użytkowników gdy łączą się z siecią.\n\n"
   unknown_sub:      "\x0304✗\x03 Nieznana podkomenda. Użyj: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Nieprawidłowy typ wiadomości. Musi być \x02PRIVMSG\x02 lub \x02NOTICE\x02."
     invalid_expiry: "\x0304✗\x03 Nieprawidłowy format wygaśnięcia. Użyj: \x02<liczba><s|m|h|d>\x02 (np., 30s, 5m, 24h, 7d)."
   del:
-    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax:         "MOTD DEL <id>"
     syntax_hint:    "\x0304✗\x03 Użycie: \x02%syntax%\x02"
     short:          "Usuń wpis MOTD."
     help:           "Usuwa wpis MOTD według jego ID.\n\n"

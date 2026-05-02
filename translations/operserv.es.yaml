@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <apodo> {ADD|DEL|LIST} <rol>"
+  syntax:           "IRCOP <apodo> {ADD|DEL|LIST} [rol]"
   short:            "Gestiona operadores de red."
   help:             "Gestiona operadores de red. ADD añade un apodo registrado\ncomo operador con el rol especificado.\nDEL elimina un operador. LIST muestra todos los operadores.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root configurados en los servicios."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Ejemplo: \x02apodo\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rol> SET <patrón>"
+      syntax:       "ROLE VHOST <rol> SET [patrón]"
       short:         "Establece el patrón de vhost forzado del rol."
       help:          "Establece el patrón de vhost forzado para el rol.\nLos usuarios que se identifiquen con este rol recibirán el vhost forzado,\nque tiene prioridad sobre el vhost personal.\nEl patrón se añade después del apodo limpio.\nUsa OFF u omite el argumento para eliminar el vhost forzado.\nEste comando está restringido a usuarios Root."
       done:         "\x0303✓\x03 Establecido patrón de vhost forzado para el rol \x02%role%\x02."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [máscara] [expiración] [razón]"
+  syntax:           "GLINE {ADD|DEL|LIST} [máscara] [expiración] [razón]"
   short:            "Gestiona G-lines de red."
   help:             "Gestiona G-lines (bans globales) de red.\nADD añade un nuevo G-line con máscara, expiración y razón.\nDEL elimina un G-line por máscara o número de entrada.\nLIST muestra todos los G-lines, filtrable por máscara.\n\nFormato de expiración: 0=permanente, o usa sufijo d, h, m (ej: 7d, 12h, 30m).\nLos GLINEs que coincidan con usuarios Root o IRCop son rechazados.\nEste comando requiere el permiso operserv.gline."
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL o LIST."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Gestiona mensajes MOTD que se envían a usuarios al conectar."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [parámetros]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [parámetros]"
   help:             "Gestiona entradas de mensaje del día (MOTD) que se envían cuando un usuario se conecta a la red.\n\n"
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido. Usa: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Tipo de mensaje inválido. Debe ser \x02PRIVMSG\x02 o \x02NOTICE\x02."
     invalid_expiry: "\x0304✗\x03 Formato de expiración inválido. Usa: \x02<número><s|m|h|d>\x02 o \x020\x02 para indefinido (ej: 30s, 5m, 24h, 7d)."
   del:
-    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax:         "MOTD DEL <id>"
     syntax_hint:    "\x0304✗\x03 Uso: \x02%syntax%\x02"
     short:          "Elimina una entrada MOTD."
     help:           "Elimina una entrada MOTD por su ID.\n\n"

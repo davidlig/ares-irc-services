@@ -381,7 +381,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ---------------------------------------------------------
 forbidvhost:
-  syntax:           "FORBIDVHOST ADD|DEL|LIST [wzorzec]"
+  syntax:           "FORBIDVHOST {ADD|DEL|LIST} [wzorzec]"
   short:            "Zarządzaj zabronionymi wzorcami vhost."
   help:             |
     Zarządza wzorcami, które uniemożliwiają użytkownikom ustawianie pasujących

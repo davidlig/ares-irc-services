@@ -381,7 +381,7 @@ unforbid:
 
 # --- FORBIDVHOST (IRCop) ---------------------------------------------------------
 forbidvhost:
-  syntax:           "FORBIDVHOST ADD|DEL|LIST [eredua]"
+  syntax:           "FORBIDVHOST {ADD|DEL|LIST} [eredua]"
   short:            "Kudeatu debekatutako vhost ereduak."
   help:             |
     NickServ SET VHOST bidez bat datozen vhost-ak ezartzea

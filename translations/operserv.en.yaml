@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <role>"
+  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [role]"
   short:            "Manage network IRC operators."
   help:             "Manage network IRC operators. ADD adds a registered nickname\nas an operator with the specified role.\nDEL removes an operator. LIST shows all operators.\nUse ROLE LIST to see available roles.\nThis command is restricted to Root users configured in services."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Example: \x02nickname\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <role> SET <pattern>"
+      syntax:       "ROLE VHOST <role> SET [pattern]"
       short:         "Set the forced vhost pattern for the role."
       help:          "Sets the forced vhost pattern for the role.\nUsers identifying with this role will receive the forced vhost,\nwhich takes priority over personal vhost.\nThe pattern is appended after the cleaned nickname.\nUse OFF or omit argument to clear the forced vhost.\nThis command is restricted to Root users."
       done:         "\x0303✓\x03 Set forced vhost pattern for role \x02%role%\x02."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [mask] [expiry] [reason]"
+  syntax:           "GLINE {ADD|DEL|LIST} [mask] [expiry] [reason]"
   short:            "Manage network-wide G-lines."
   help:             "Manage network-wide G-lines (global bans).\nADD adds a new G-line with mask, expiry and reason.\nDEL removes a G-line by mask or entry number.\nLIST shows all G-lines, optionally filtered by mask.\n\nExpiry format: 0=permanent, or use d, h, m suffix (e.g., 7d, 12h, 30m).\nGLINEs matching Root or IRCop users are rejected.\nThis command requires the operserv.gline permission."
   unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, or LIST."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Manage connect MOTD messages sent to users on connect."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [args]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [args]"
   help:             "Manage Message Of The Day entries that are sent to users when they connect to the network.\n\n"
   unknown_sub:      "\x0304✗\x03 Unknown subcommand. Use: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Invalid message type. Must be \x02PRIVMSG\x02 or \x02NOTICE\x02."
     invalid_expiry: "\x0304✗\x03 Invalid expiry format. Use: \x02<number><s|m|h|d>\x02 (e.g., 30s, 5m, 24h, 7d)."
   del:
-    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax:         "MOTD DEL <id>"
     syntax_hint:    "\x0304✗\x03 Usage: \x02%syntax%\x02"
     short:          "Delete a MOTD entry."
     help:           "Deletes a MOTD entry by its ID.\n\n"

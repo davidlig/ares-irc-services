@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <poreclă> {ADD|DEL|LIST} <rol>"
+  syntax:           "IRCOP <poreclă> {ADD|DEL|LIST} [rol]"
   short:            "Gestionați operatorii IRC ai rețelei."
   help:             "Gestionează operatorii IRC ai rețelei. ADD adaugă o poreclă înregistrată\nca operator cu rolul specificat.\nDEL elimină un operator. LIST afișează toți operatorii.\nFolosiți ROLE LIST pentru a vedea rolurile disponibile.\nAceastă comandă este rezervată utilizatorilor Root configurați în servicii."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Exemplu: \x02poreclă\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <rol> SET <model>"
+      syntax:       "ROLE VHOST <rol> SET [model]"
       short:         "Setați modelul de vhost forțat pentru rol."
       help:          "Setează modelul de vhost forțat pentru rol.\nUtilizatorii care se identifică cu acest rol vor primi vhostul forțat,\ncare are prioritate față de vhostul personal.\nModelul este adăugat după porecla curățată.\nFolosiți OFF sau omiteți argumentul pentru a șterge vhostul forțat.\nAceastă comandă este rezervată utilizatorilor Root."
       done:         "\x0303✓\x03 Model de vhost forțat setat pentru rolul \x02%role%\x02."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [mască] [expirare] [motiv]"
+  syntax:           "GLINE {ADD|DEL|LIST} [mască] [expirare] [motiv]"
   short:            "Gestionați G-line-urile la nivel de rețea."
   help:             "Gestionează G-line-urile la nivel de rețea (interdicții globale).\nADD adaugă un nou G-line cu mască, expirare și motiv.\nDEL elimină un G-line după mască sau numărul intrării.\nLIST afișează toate G-line-urile, opțional filtrate după mască.\n\nFormat de expirare: 0=permanent, sau folosiți sufixul d, h, m (de ex. 7d, 12h, 30m).\nGLINE-urile care corespund utilizatorilor Root sau IRCop sunt respinse.\nAceastă comandă necesită permisiunea operserv.gline."
   unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL sau LIST."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Gestionați mesajele MOTD de conectare trimise utilizatorilor la conectare."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [arg]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [arg]"
   help:             "Gestionează intrările Message Of The Day care sunt trimise utilizatorilor când se conectează la rețea.\n\n"
   unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută. Folosiți: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Tip de mesaj invalid. Trebuie să fie \x02PRIVMSG\x02 sau \x02NOTICE\x02."
     invalid_expiry: "\x0304✗\x03 Format de expirare invalid. Folosiți: \x02<număr><s|m|h|z>\x02 (de ex. 30s, 5m, 24h, 7z)."
   del:
-    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax:         "MOTD DEL <id>"
     syntax_hint:    "\x0304✗\x03 Utilizare: \x02%syntax%\x02"
     short:          "Ștergeți o intrare MOTD."
     help:           "Șterge o intrare MOTD după ID-ul său.\n\n"

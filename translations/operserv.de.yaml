@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} <Rolle>"
+  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [Rolle]"
   short:            "Netzwerk-IRC-Operatoren verwalten."
   help:             "Verwaltet Netzwerk-IRC-Operatoren. ADD fügt einen registrierten Nickname\nals Operator mit der angegebenen Rolle hinzu.\nDEL entfernt einen Operator. LIST zeigt alle Operatoren.\nVerwenden Sie ROLE LIST, um verfügbare Rollen zu sehen.\nDieser Befehl ist Root-Benutzern vorbehalten, die in den Services konfiguriert sind."
 
@@ -174,7 +174,7 @@ role:
       example:      "  Beispiel: \x02nickname\x02.%pattern%"
 
     set:
-      syntax:       "ROLE VHOST <Rolle> SET <Muster>"
+      syntax:       "ROLE VHOST <Rolle> SET [Muster]"
       short:         "Das erzwungene VHost-Muster für die Rolle setzen."
       help:          "Setzt das erzwungene VHost-Muster für die Rolle.\nBenutzer, die sich mit dieser Rolle identifizieren, erhalten den erzwungenen VHost,\nder Vorrang vor dem persönlichen VHost hat.\nDas Muster wird nach dem bereinigten Nickname angehängt.\nVerwenden Sie OFF oder lassen Sie das Argument weg, um den erzwungenen VHost zu löschen.\nDieser Befehl ist Root-Benutzern vorbehalten."
       done:         "\x0303✓\x03 Erzwungenes VHost-Muster für Rolle \x02%role%\x02 gesetzt."
@@ -194,7 +194,7 @@ kill:
 
 # --- GLINE --------------------------------------------------------------------
 gline:
-  syntax:           "GLINE <ADD|DEL|LIST> [Maske] [Ablauf] [Grund]"
+  syntax:           "GLINE {ADD|DEL|LIST} [Maske] [Ablauf] [Grund]"
   short:            "Netzwerkweite G-Lines verwalten."
   help:             "Verwaltet netzwerkweite G-Lines (globale Sperren).\nADD fügt eine neue G-Line mit Maske, Ablauf und Grund hinzu.\nDEL entfernt eine G-Line anhand der Maske oder Eintragsnummer.\nLIST zeigt alle G-Lines, optional nach Maske gefiltert.\n\nAblauf-Format: 0=dauerhaft, oder Suffix d, h, m verwenden (z. B. 7d, 12h, 30m).\nGLINEs, die Root- oder IRCop-Benutzer treffen, werden abgelehnt.\nDieser Befehl erfordert die Berechtigung operserv.gline."
   unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl \x02%sub%\x02. Verwenden Sie ADD, DEL oder LIST."
@@ -273,7 +273,7 @@ permissions:
 # --- MOTD ----------------------------------------------------------------------
 motd:
   short:            "Connect-MOTD-Nachrichten verwalten, die Benutzern beim Verbinden gesendet werden."
-  syntax:           "MOTD \x02{ADD|DEL|LIST|CLEAN}\x02 [Argumente]"
+  syntax:           "MOTD {ADD|DEL|LIST|CLEAN} [Argumente]"
   help:             "Verwaltet Message-Of-The-Day-Einträge, die Benutzern beim Verbinden mit dem Netzwerk gesendet werden.\n\n"
   unknown_sub:      "\x0304✗\x03 Unbekannter Unterbefehl. Verwenden Sie: \x02ADD\x02, \x02DEL\x02, \x02LIST\x02, \x02CLEAN\x02"
   add:
@@ -285,7 +285,7 @@ motd:
     invalid_type:   "\x0304✗\x03 Ungültiger Nachrichtentyp. Muss \x02PRIVMSG\x02 oder \x02NOTICE\x02 sein."
     invalid_expiry: "\x0304✗\x03 Ungültiges Ablauf-Format. Verwenden Sie: \x02<Zahl><s|m|h|d>\x02 (z. B. 30s, 5m, 24h, 7d)."
   del:
-    syntax:         "MOTD DEL \x02<id>\x02"
+    syntax:         "MOTD DEL <id>"
     syntax_hint:    "\x0304✗\x03 Verwendung: \x02%syntax%\x02"
     short:          "Einen MOTD-Eintrag löschen."
     help:           "Löscht einen MOTD-Eintrag anhand seiner ID.\n\n"
