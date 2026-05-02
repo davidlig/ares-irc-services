@@ -205,7 +205,7 @@ public function hasIrcopAccess(): bool
 
 ### Translations
 
-Add to `translations/{service}.en.yaml` (English) AND `translations/{service}.es.yaml` (Spanish). Every key MUST exist in both files:
+Add to `translations/{service}.<lang>.yaml` for ALL 14 languages. Every key MUST exist in every language file:
 
 ```yaml
 # File: translations/nickserv.en.yaml

@@ -210,7 +210,7 @@ App\Application\NickServ\Command\Handler\RegisterCommand:
 When creating a new command, complete ALL these steps:
 
 1. **Command Handler class** — implement `{Service}CommandInterface`
-2. **Translations** — add keys to `.en.yaml` AND `.es.yaml` for the service
+2. **Translations** — add keys to ALL 14 language files for the service
 3. **DI Registration** — add service with appropriate tag in `config/services.yaml`
 4. **Permissions** — configure `getRequiredPermission()` (see `.agents/services/commands-permissions.md`)
 5. **Tests** — 100% coverage (see `.agents/services/commands-testing.md`)
@@ -291,6 +291,6 @@ readonly class SenderView
 ## Related Skills
 
 - `.agents/services/commands-permissions.md` — Authorization, voters, permission sync
-- `.agents/services/commands-translations.md` — i18n YAML structure, IRC colors, en+es rule
+- `.agents/services/commands-translations.md` — i18n YAML structure, IRC colors, 14-language rule
 - `.agents/services/commands-testing.md` — Test patterns for command handlers
 - `.agents/services/help-design.md` — HELP command format

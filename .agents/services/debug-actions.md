@@ -202,12 +202,11 @@ To add a debug notifier to a new service:
 2. Implement `ServiceDebugNotifierInterface`
 3. Inject the `ircops` channel logger (`@monolog.logger.ircops`) and the service bot
 4. Register in `ServiceDebugNotifierRegistry` with the `app.debug_notifier` tag in `services.yaml`
-5. Add translations in `translations/<service>.en.yaml` (English) AND `translations/<service>.es.yaml` (Spanish). Every key in `.en.yaml` MUST also exist in `.es.yaml`.
+5. Add translations in all `translations/<service>.<lang>.yaml` files for ALL 14 languages. Every key MUST exist in every language file.
 
 ## Translations
 
-**You MUST create translations for ALL available languages: `en` (English) and `es` (Spanish).**
-Every key added to `.en.yaml` MUST also be added to `.es.yaml` with the corresponding Spanish translation.
+**You MUST create translations for ALL 14 available languages.** Every key added to one language file MUST also be added to all other language files with the corresponding translation.
 
 Translation keys in each service (shown for `.en.yaml` files):
 

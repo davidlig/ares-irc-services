@@ -50,7 +50,7 @@ Pattern: ONE message with multiple tool calls
 - **Commit Order (CRITICAL)**: Run PHP CS Fixer BEFORE committing: (1) implement code, (2) run `./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php`, (3) then commit. Never commit first and fix style separately.
 - **Git Management**: Commit when task is done. Messages MUST be in English, follow Conventional Commits (`feat:`, `fix:`, `refactor:`).
 - **README Sync**: If you add/change/remove features, commands, or config vars, update `README.md`.
-- **Translations (CRITICAL)**: When adding translatable strings, create translations for ALL languages: `en` and `es`. Files at `translations/<service>.en.yaml` and `translations/<service>.es.yaml`. Every key in `.en.yaml` MUST exist in `.es.yaml`, and vice versa.
+- **Translations (CRITICAL)**: When adding translatable strings, create translations for ALL 14 languages: `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`. Files at `translations/<service>.<lang>.yaml`. Every key MUST exist in all language files.
 
 ---
 
@@ -124,7 +124,7 @@ Launch multiple searches in ONE message:
 |--------|---------|
 | Find similar commands/handlers | `grep "implements.*CommandInterface" src/` |
 | Find repository interfaces | `glob "src/Domain/*/Repository/*Interface.php"` |
-| Find translation patterns | `glob "translations/*.yaml"` |
+| Find translation patterns | `glob "translations/*.<lang>.yaml"` |
 | Find test patterns | `glob "tests/Application/**/*Test.php"` |
 
 ### Phase 2: Parallel Implementation

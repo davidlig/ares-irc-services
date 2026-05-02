@@ -103,7 +103,7 @@ For detailed guidance, consult the corresponding skill file:
 | **Services** | `.agents/services/README.md` | Core vs Services, Ports, Bots |
 | **Commands** | `.agents/services/commands.md` | Command handler structure and interface |
 | **Permissions** | `.agents/services/commands-permissions.md` | Authorization, voters, IRCop permissions |
-| **Translations** | `.agents/services/commands-translations.md` | i18n YAML, IRC color codes, en+es rule |
+| **Translations** | `.agents/services/commands-translations.md` | i18n YAML, IRC color codes, 14-language rule |
 | **Testing** | `.agents/services/commands-testing.md` | Test patterns for command handlers |
 | **Bots** | `.agents/services/bots.md` | New bot/service implementation checklist |
 | **IRCop** | `.agents/services/ircop-commands.md` | IRCop permission system |
@@ -120,7 +120,7 @@ For detailed guidance, consult the corresponding skill file:
 
 ## 7. Translations Rule (CRITICAL)
 
-Every translatable string MUST exist in ALL languages: `en` and `es`. Files at `translations/<service>.en.yaml` and `translations/<service>.es.yaml`. A task is incomplete if any key is missing.
+Every translatable string MUST exist in ALL 14 languages: `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`. Files at `translations/<service>.<lang>.yaml`. A task is incomplete if any key is missing in any language.
 
 ---
 

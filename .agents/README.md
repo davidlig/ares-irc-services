@@ -38,7 +38,7 @@ Content is grouped **by type** in subdirectories. Each type has a `README.md` (e
 │   ├── README.md                      ← Core vs Services overview
 │   ├── commands.md                    ← Command handler structure
 │   ├── commands-permissions.md        ← Authorization, voters, IRCop sync
-│   ├── commands-translations.md       ← i18n YAML, IRC colors, en+es rule
+│   ├── commands-translations.md       ← i18n YAML, IRC colors, 14-language rule
 │   ├── commands-testing.md            ← Test patterns for commands
 │   ├── bots.md                        ← New bot/service implementation
 │   ├── help-design.md                 ← Unified HELP format

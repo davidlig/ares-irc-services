@@ -160,7 +160,7 @@ set:
   language:
     syntax:         "SET LANGUAGE <código>"
     short:          "Cambia el idioma en el que los servicios se comunican contigo."
-    help:           "Cambia el idioma en el que %nickserv% y el resto de servicios se dirigen\na ti. Idiomas disponibles: \x02es\x02 (español), \x02en\x02 (inglés)."
+    help:           "Cambia el idioma en el que %nickserv% y el resto de servicios se dirigen\na ti. Idiomas disponibles: \x02ca\x02 (catalán), \x02de\x02 (alemán), \x02el\x02 (griego), \x02en\x02 (inglés), \x02es\x02 (español), \x02eu\x02 (euskera), \x02fr\x02 (francés), \x02gl\x02 (gallego), \x02it\x02 (italiano), \x02nl\x02 (holandés), \x02pl\x02 (polaco), \x02pt\x02 (portugués), \x02ro\x02 (rumano), \x02tr\x02 (turco)."
     success:        "\x0303✔\x03 Idioma cambiado a \x02%language%\x02."
     invalid:        "\x0304✗\x03 Idioma no soportado. Idiomas disponibles: %languages%."
 

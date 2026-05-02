@@ -31,7 +31,7 @@ use const FILTER_VALIDATE_EMAIL;
 class RegisteredNick
 {
     /** Supported BCP-47 language tags for account preferences. */
-    public const array SUPPORTED_LANGUAGES = ['en', 'es'];
+    public const array SUPPORTED_LANGUAGES = ['ca', 'de', 'el', 'en', 'es', 'eu', 'fr', 'gl', 'it', 'nl', 'pl', 'pt', 'ro', 'tr'];
 
     private int $id;
 

@@ -169,7 +169,7 @@ All variables live in `.env.local`. Required variables are marked with ⚠.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `IRC_SERVICES_VHOST` | `services.davidlig.net` | Virtual host for service pseudo-clients |
-| `SERVICES_DEFAULT_LANGUAGE` | `es` | Default language for service replies (`en`, `es`) |
+| `SERVICES_DEFAULT_LANGUAGE` | `es` | Default language for service replies (`ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`) |
 | `SERVICES_DEFAULT_TIMEZONE` | `UTC` | Default timezone for date display |
 
 ### Antiflood
@@ -337,7 +337,7 @@ Ensure the `spanningtree` module is loaded.
 | `INFO` | `<nick>` | Show nick registration details |
 | `SET PASSWORD` | `<new-password>` | Change your password |
 | `SET EMAIL` | `<email>` | Change your email address |
-| `SET LANGUAGE` | `<en\|es>` | Set your preferred language |
+| `SET LANGUAGE` | `<ca\|de\|el\|en\|es\|eu\|fr\|gl\|it\|nl\|pl\|pt\|ro\|tr>` | Set your preferred language |
 | `SET TIMEZONE` | `<tz>` | Set your timezone |
 | `SET PRIVATE` | `<on\|off>` | Hide registration in STATUS |
 | `SET MSG` | `<on\|off>` | Set NOTICE vs PRIVMSG delivery |
@@ -464,18 +464,35 @@ php bin/console irc:connect services.example.com irc.example.com 6697 secret \
 
 ## Internationalization (i18n)
 
-Ares ships with **English** (`en`) and **Spanish** (`es`), defaulting to `es`. Every translatable string exists in both languages.
+Ares ships with **14 languages**, defaulting to `es` (Spanish). Every translatable string exists in all languages.
 
-Translation files per service (in `translations/`):
+| Code | Language |
+|------|---------|
+| `ca` | Catalan (Català) |
+| `de` | German (Deutsch) |
+| `el` | Greek (Ελληνικά) |
+| `en` | English |
+| `es` | Spanish (Español) |
+| `eu` | Basque (Euskara) |
+| `fr` | French (Français) |
+| `gl` | Galician (Galego) |
+| `it` | Italian (Italiano) |
+| `nl` | Dutch (Nederlands) |
+| `pl` | Polish (Polski) |
+| `pt` | Portuguese (Português) |
+| `ro` | Romanian (Română) |
+| `tr` | Turkish (Türkçe) |
 
-| Service | English | Spanish |
-|---------|---------|---------|
-| Common | `common.en.yaml` | `common.es.yaml` |
-| NickServ | `nickserv.en.yaml` | `nickserv.es.yaml` |
-| ChanServ | `chanserv.en.yaml` | `chanserv.es.yaml` |
-| MemoServ | `memoserv.en.yaml` | `memoserv.es.yaml` |
-| OperServ | `operserv.en.yaml` | `operserv.es.yaml` |
-| Email | `mail.en.yaml` | `mail.es.yaml` |
+Translation files per service (in `translations/`) follow the pattern `<service>.<lang>.yaml`, with 6 domains × 14 languages = 84 files:
+
+| Service | Files |
+|---------|-------|
+| Common | `common.<lang>.yaml` |
+| NickServ | `nickserv.<lang>.yaml` |
+| ChanServ | `chanserv.<lang>.yaml` |
+| MemoServ | `memoserv.<lang>.yaml` |
+| OperServ | `operserv.<lang>.yaml` |
+| Email | `mail.<lang>.yaml` |
 
 Users can change their language:
 

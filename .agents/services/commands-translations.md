@@ -6,9 +6,11 @@ Use this skill when adding translations for new commands or modifying existing o
 
 ## Mandatory Rule (CRITICAL)
 
-**You MUST create translations for ALL available languages: `en` (English) and `es` (Spanish).**
+**You MUST create translations for ALL 14 available languages:**
 
-Every key added to `.en.yaml` MUST also be added to `.es.yaml` with the corresponding Spanish translation, and vice versa. A task is not complete if any translation file is missing keys.
+`ca` (Catalan), `de` (German), `el` (Greek), `en` (English), `es` (Spanish), `eu` (Basque), `fr` (French), `gl` (Galician), `it` (Italian), `nl` (Dutch), `pl` (Polish), `pt` (Portuguese), `ro` (Romanian), `tr` (Turkish).
+
+Every key added to one language file MUST also be added to all other language files with the corresponding translation. A task is not complete if any translation file is missing keys.
 
 ---
 
@@ -16,18 +18,12 @@ Every key added to `.en.yaml` MUST also be added to `.es.yaml` with the correspo
 
 ```
 translations/
-├── nickserv.en.yaml
-├── nickserv.es.yaml
-├── chanserv.en.yaml
-├── chanserv.es.yaml
-├── memoserv.en.yaml
-├── memoserv.es.yaml
-├── operserv.en.yaml
-├── operserv.es.yaml
-├── mail.en.yaml
-├── mail.es.yaml
-├── common.en.yaml
-└── common.es.yaml
+├── nickserv.{ca,de,el,en,es,eu,fr,gl,it,nl,pl,pt,ro,tr}.yaml
+├── chanserv.{ca,de,el,en,es,eu,fr,gl,it,nl,pl,pt,ro,tr}.yaml
+├── memoserv.{ca,de,el,en,es,eu,fr,gl,it,nl,pl,pt,ro,tr}.yaml
+├── operserv.{ca,de,el,en,es,eu,fr,gl,it,nl,pl,pt,ro,tr}.yaml
+├── mail.{ca,de,el,en,es,eu,fr,gl,it,nl,pl,pt,ro,tr}.yaml
+└── common.{ca,de,el,en,es,eu,fr,gl,it,nl,pl,pt,ro,tr}.yaml
 ```
 
 ---
@@ -186,7 +182,7 @@ debug:
 
 ---
 
-## Complete Example: English + Spanish
+## Complete Example: All languages (English shown; repeat for all 14)
 
 ### English (`translations/nickserv.en.yaml`)
 
@@ -207,7 +203,7 @@ permissions:
   nickserv.drop: "Drop a registered nickname"
 ```
 
-### Spanish (`translations/nickserv.es.yaml`)
+### Spanish (`translations/nickserv.es.yaml`) — repeat pattern for all 14 languages
 
 ```yaml
 drop:
@@ -232,11 +228,11 @@ permissions:
 
 | Mistake | Symptom |
 |---------|---------|
-| Missing language file | Translation not found for one language |
+| Missing language file | Translation not found for one or more of the 14 languages |
 | Wrong key format | `translation key not found` error |
 | Using `%bot%` in `trans()` | Replace with actual value — `%bot%` only works in replies |
 | Forgetting color reset `\x03` | Color bleeds into subsequent text |
-| Permission missing one language | English shows but Spanish returns key name |
+| Permission missing one language | Some languages show but others return key name |
 
 ---
 

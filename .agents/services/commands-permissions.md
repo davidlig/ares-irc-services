@@ -136,7 +136,7 @@ These files must be kept synchronized when adding a new IRCop permission:
 
 1. **`{Service}Permission.php`** — Constants used by Voters
 2. **`{Service}IrcopPermission.php`** — `PermissionProviderInterface` implementation
-3. **`translations/{service}.en.yaml`** AND **`translations/{service}.es.yaml`** — Permission descriptions (ALL languages)
+3. **`translations/{service}.{ca,de,el,en,es,eu,fr,gl,it,nl,pl,pt,ro,tr}.yaml`** — Permission descriptions (ALL 14 languages)
 
 ### Adding a New IRCop Permission
 
@@ -160,7 +160,7 @@ final readonly class NickServIrcopPermission implements PermissionProviderInterf
 ```
 
 ```yaml
-# 3. Add descriptions in ALL languages
+# 3. Add descriptions in ALL 14 languages
 # translations/nickserv.en.yaml
 permissions:
   nickserv.drop: "Drop a registered nickname"
