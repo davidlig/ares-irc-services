@@ -197,6 +197,76 @@ set:
     taken:          "\x0304✗\x03 Ce vhost est déjà utilisé par un autre surnom."
     forced:         "\x0304✗\x03 Votre vhost est configuré automatiquement et ne peut pas être modifié avec SET VHOST."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <surnom> <option> <valeur>"
+  short:            "Modifier les paramètres d'un autre surnom."
+  help:             |
+    Permet à un opérateur IRC de modifier les paramètres d'un surnom enregistré.
+    Le surnom cible ne peut pas être un utilisateur root, un opérateur IRC ni un service.
+
+    Options disponibles : PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD : Change le mot de passe directement (sans confirmation par e-mail).
+    SASET EMAIL : Change l'e-mail directement (sans validation de jeton).
+
+    Cette commande nécessite la permission IRCop : nickserv.saset
+
+    Syntaxe : SASET <surnom> <option> <valeur>
+    Exemple : SASET Utilisateur PASSWORD nouveau_mdp
+  unknown_option:   "\x0304✗\x03 Option inconnue \x02%option%\x02. Options disponibles : %options%."
+  not_registered:   "\x0304✗\x03 Le surnom \x02%nickname%\x02 n'est pas enregistré."
+  cannot_modify_oper: "\x0304✗\x03 Impossible de modifier le surnom d'un opérateur IRC."
+
+  password:
+    syntax:         "SASET <surnom> PASSWORD <nouveau_mdp>"
+    short:          "Changer le mot de passe d'un surnom."
+    help:           "Change le mot de passe d'un autre surnom.\nLe changement est immédiat.\n\nSyntaxe : SASET <surnom> PASSWORD <nouveau_mdp>\nExemple : SASET Utilisateur PASSWORD nouveau_mdp123"
+    success:        "\x0303✔\x03 Le mot de passe de \x02%nickname%\x02 a été mis à jour."
+
+  email:
+    syntax:         "SASET <surnom> EMAIL <nouvel_e-mail>"
+    short:          "Changer l'e-mail d'un surnom."
+    help:           "Change l'e-mail d'un autre surnom.\nAucune confirmation n'est envoyée—le changement est immédiat.\n\nSyntaxe : SASET <surnom> EMAIL <nouvel_e-mail>\nExemple : SASET Utilisateur EMAIL utilisateur@exemple.com"
+    success:        "\x0303✔\x03 L'e-mail de \x02%nickname%\x02 a été mis à jour en \x02%email%\x02."
+
+  language:
+    syntax:         "SASET <surnom> LANGUAGE <code>"
+    short:          "Changer la langue d'un surnom."
+    help:           "Change la langue d'un autre surnom.\nLangues disponibles : en (anglais), es (espagnol).\n\nSyntaxe : SASET <surnom> LANGUAGE <code>\nExemple : SASET Utilisateur LANGUAGE fr"
+    success:        "\x0303✔\x03 La langue de \x02%nickname%\x02 a été changée en \x02%language%\x02."
+
+  timezone:
+    syntax:         "SASET <surnom> TIMEZONE <fuseau_horaire|OFF>"
+    short:          "Changer le fuseau horaire d'un surnom."
+    help:           "Définit ou efface le fuseau horaire d'un autre surnom.\nUtilisez OFF pour l'effacer.\n\nSyntaxe : SASET <surnom> TIMEZONE <fuseau_horaire>\nExemple : SASET Utilisateur TIMEZONE Europe/Paris"
+    success:        "\x0303✔\x03 Le fuseau horaire de \x02%nickname%\x02 a été défini sur \x02%timezone%\x02."
+    cleared:        "\x0303✔\x03 Le fuseau horaire de \x02%nickname%\x02 a été effacé."
+    invalid:        "\x0304✗\x03 Fuseau horaire invalide \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <surnom> PRIVATE {ON|OFF}"
+    short:          "Changer la confidentialité d'un surnom."
+    help:           "Active ou désactive la confidentialité des informations d'un autre surnom.\n\nSyntaxe : SASET <surnom> PRIVATE {ON|OFF}\nExemple : SASET Utilisateur PRIVATE ON"
+    on:             "\x0303✔\x03 Les informations de \x02%nickname%\x02 sont maintenant \x02privées\x02."
+    off:            "\x0303✔\x03 Les informations de \x02%nickname%\x02 sont maintenant \x02publiques\x02."
+
+  msg:
+    syntax:         "SASET <surnom> MSG {ON|OFF}"
+    short:          "Changer la préférence de messages d'un surnom."
+    help:           "Définit si un autre surnom reçoit les réponses en PRIVMSG (ON) ou NOTICE (OFF).\n\nSyntaxe : SASET <surnom> MSG {ON|OFF}\nExemple : SASET Utilisateur MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 recevra maintenant les messages en \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 recevra maintenant les messages en \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SASET <surnom> VHOST <vhost|OFF>"
+    short:          "Changer l'hôte virtuel d'un surnom."
+    help:           "Définit ou efface l'hôte virtuel d'un autre surnom.\nUtilisez OFF pour l'effacer.\n\nSyntaxe : SASET <surnom> VHOST <vhost>\nExemple : SASET Utilisateur VHOST utilisateurs.exemple.com"
+    success:        "\x0303✔\x03 Le VHost de \x02%nickname%\x02 a été défini sur \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 Le VHost de \x02%nickname%\x02 a été effacé."
+    invalid:        "\x0304✗\x03 VHost invalide pour \x02%nickname%\x02."
+    taken:          "\x0304✗\x03 Ce vhost est déjà utilisé par un autre surnom."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [commande]"

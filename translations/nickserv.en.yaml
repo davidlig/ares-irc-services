@@ -197,6 +197,76 @@ set:
     taken:          "\x0304✗\x03 That vhost is already in use by another nickname."
     forced:         "\x0304✗\x03 Your vhost is configured automatically and cannot be changed with SET VHOST."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <nickname> <option> <value>"
+  short:            "Modify another nickname's settings."
+  help:             |
+    Allows an IRCop to modify a registered nickname's settings.
+    The target nickname cannot be a Root user, IRCop, or service.
+
+    Available options: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Changes the password directly (without email confirmation).
+    SASET EMAIL: Changes the email directly (without token validation).
+
+    This command requires IRCop permission: nickserv.saset
+
+    Syntax: SASET <nickname> <option> <value>
+    Example: SASET User PASSWORD newpass
+  unknown_option:   "\x0304✗\x03 Unknown option \x02%option%\x02. Available options: %options%."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  cannot_modify_oper: "\x0304✗\x03 Cannot modify an IRC Operator nickname."
+
+  password:
+    syntax:         "SASET <nickname> PASSWORD <new_password>"
+    short:          "Change a nickname's password."
+    help:           "Changes another nickname's password.\nThe change is immediate.\n\nSyntax: SASET <nickname> PASSWORD <new_password>\nExample: SASET User PASSWORD newpass123"
+    success:        "\x0303✔\x03 \x02%nickname%\x02's password has been updated."
+
+  email:
+    syntax:         "SASET <nickname> EMAIL <new_email>"
+    short:          "Change a nickname's email."
+    help:           "Changes another nickname's email.\nNo confirmation is sent—the change is immediate.\n\nSyntax: SASET <nickname> EMAIL <new_email>\nExample: SASET User EMAIL user@example.com"
+    success:        "\x0303✔\x03 \x02%nickname%\x02's email has been updated to \x02%email%\x02."
+
+  language:
+    syntax:         "SASET <nickname> LANGUAGE <code>"
+    short:          "Change a nickname's language."
+    help:           "Changes another nickname's language.\nAvailable languages: en (English), es (Spanish).\n\nSyntax: SASET <nickname> LANGUAGE <code>\nExample: SASET User LANGUAGE es"
+    success:        "\x0303✔\x03 \x02%nickname%\x02's language has been changed to \x02%language%\x02."
+
+  timezone:
+    syntax:         "SASET <nickname> TIMEZONE <timezone|OFF>"
+    short:          "Change a nickname's timezone."
+    help:           "Sets or clears another nickname's timezone.\nUse OFF to clear it.\n\nSyntax: SASET <nickname> TIMEZONE <timezone>\nExample: SASET User TIMEZONE Europe/London"
+    success:        "\x0303✔\x03 \x02%nickname%\x02's timezone has been set to \x02%timezone%\x02."
+    cleared:        "\x0303✔\x03 \x02%nickname%\x02's timezone has been cleared."
+    invalid:        "\x0304✗\x03 Invalid timezone \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <nickname> PRIVATE {ON|OFF}"
+    short:          "Change a nickname's privacy."
+    help:           "Enables or disables privacy for another nickname's information.\n\nSyntax: SASET <nickname> PRIVATE {ON|OFF}\nExample: SASET User PRIVATE ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02's information is now \x02private\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02's information is now \x02public\x02."
+
+  msg:
+    syntax:         "SASET <nickname> MSG {ON|OFF}"
+    short:          "Change a nickname's message preference."
+    help:           "Sets whether another nickname receives responses as PRIVMSG (ON) or NOTICE (OFF).\n\nSyntax: SASET <nickname> MSG {ON|OFF}\nExample: SASET User MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 will now receive messages as \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 will now receive messages as \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SASET <nickname> VHOST <vhost|OFF>"
+    short:          "Change a nickname's virtual host."
+    help:           "Sets or clears another nickname's virtual host.\nUse OFF to clear it.\n\nSyntax: SASET <nickname> VHOST <vhost>\nExample: SASET User VHOST users.example.com"
+    success:        "\x0303✔\x03 \x02%nickname%\x02's VHost has been set to \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 \x02%nickname%\x02's VHost has been cleared."
+    invalid:        "\x0304✗\x03 Invalid VHost for \x02%nickname%\x02."
+    taken:          "\x0304✗\x03 That vhost is already in use by another nickname."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [command]"

@@ -197,6 +197,76 @@ set:
     taken:          "\x0304✗\x03 Aquest vhost ja està en ús per un altre sobrenom."
     forced:         "\x0304✗\x03 El vostre vhost es configura automàticament i no es pot canviar amb SET VHOST."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <sobrenom> <opció> <valor>"
+  short:            "Modificar la configuració d'un altre sobrenom."
+  help:             |
+    Permet a un operador d'IRC modificar la configuració d'un sobrenom registrat.
+    El sobrenom objectiu no pot ser un usuari root, un operador d'IRC ni un servei.
+
+    Opcions disponibles: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Canvia la contrasenya directament (sense confirmació per correu).
+    SASET EMAIL: Canvia el correu electrònic directament (sense validació de token).
+
+    Aquesta ordre requereix permís IRCop: nickserv.saset
+
+    Sintaxi: SASET <sobrenom> <opció> <valor>
+    Exemple: SASET Usuari PASSWORD contrasenyanova
+  unknown_option:   "\x0304✗\x03 Opció desconeguda \x02%option%\x02. Opcions disponibles: %options%."
+  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
+  cannot_modify_oper: "\x0304✗\x03 No es pot modificar un sobrenom d'Operador d'IRC."
+
+  password:
+    syntax:         "SASET <sobrenom> PASSWORD <nova_contrasenya>"
+    short:          "Canviar la contrasenya d'un sobrenom."
+    help:           "Canvia la contrasenya d'un altre sobrenom.\nEl canvi és immediat.\n\nSintaxi: SASET <sobrenom> PASSWORD <nova_contrasenya>\nExemple: SASET Usuari PASSWORD contrasenyanova123"
+    success:        "\x0303✔\x03 La contrasenya de \x02%nickname%\x02 ha estat actualitzada."
+
+  email:
+    syntax:         "SASET <sobrenom> EMAIL <nou_correu>"
+    short:          "Canviar el correu electrònic d'un sobrenom."
+    help:           "Canvia el correu electrònic d'un altre sobrenom.\nNo s'envia cap confirmació—el canvi és immediat.\n\nSintaxi: SASET <sobrenom> EMAIL <nou_correu>\nExemple: SASET Usuari EMAIL usuari@exemple.com"
+    success:        "\x0303✔\x03 El correu de \x02%nickname%\x02 ha estat actualitzat a \x02%email%\x02."
+
+  language:
+    syntax:         "SASET <sobrenom> LANGUAGE <codi>"
+    short:          "Canviar l'idioma d'un sobrenom."
+    help:           "Canvia l'idioma d'un altre sobrenom.\nIdiomes disponibles: en (anglès), es (espanyol).\n\nSintaxi: SASET <sobrenom> LANGUAGE <codi>\nExemple: SASET Usuari LANGUAGE ca"
+    success:        "\x0303✔\x03 L'idioma de \x02%nickname%\x02 ha estat canviat a \x02%language%\x02."
+
+  timezone:
+    syntax:         "SASET <sobrenom> TIMEZONE <zona_horària|OFF>"
+    short:          "Canviar la zona horària d'un sobrenom."
+    help:           "Estableix o esborra la zona horària d'un altre sobrenom.\nUtilitzeu OFF per esborrar-la.\n\nSintaxi: SASET <sobrenom> TIMEZONE <zona_horària>\nExemple: SASET Usuari TIMEZONE Europe/Madrid"
+    success:        "\x0303✔\x03 La zona horària de \x02%nickname%\x02 ha estat establerta a \x02%timezone%\x02."
+    cleared:        "\x0303✔\x03 La zona horària de \x02%nickname%\x02 ha estat esborrada."
+    invalid:        "\x0304✗\x03 Zona horària no vàlida \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <sobrenom> PRIVATE {ON|OFF}"
+    short:          "Canviar la privadesa d'un sobrenom."
+    help:           "Activa o desactiva la privadesa de la informació d'un altre sobrenom.\n\nSintaxi: SASET <sobrenom> PRIVATE {ON|OFF}\nExemple: SASET Usuari PRIVATE ON"
+    on:             "\x0303✔\x03 La informació de \x02%nickname%\x02 és ara \x02privada\x02."
+    off:            "\x0303✔\x03 La informació de \x02%nickname%\x02 és ara \x02pública\x02."
+
+  msg:
+    syntax:         "SASET <sobrenom> MSG {ON|OFF}"
+    short:          "Canviar la preferència de missatges d'un sobrenom."
+    help:           "Estableix si un altre sobrenom rep respostes com a PRIVMSG (ON) o NOTICE (OFF).\n\nSintaxi: SASET <sobrenom> MSG {ON|OFF}\nExemple: SASET Usuari MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 rebrà missatges com a \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 rebrà missatges com a \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SASET <sobrenom> VHOST <vhost|OFF>"
+    short:          "Canviar l'amfitrió virtual d'un sobrenom."
+    help:           "Estableix o esborra l'amfitrió virtual d'un altre sobrenom.\nUtilitzeu OFF per esborrar-lo.\n\nSintaxi: SASET <sobrenom> VHOST <vhost>\nExemple: SASET Usuari VHOST usuaris.exemple.com"
+    success:        "\x0303✔\x03 L'amfitrió virtual de \x02%nickname%\x02 ha estat establert a \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 L'amfitrió virtual de \x02%nickname%\x02 ha estat esborrat."
+    invalid:        "\x0304✗\x03 Amfitrió virtual no vàlid per a \x02%nickname%\x02."
+    taken:          "\x0304✗\x03 Aquest vhost ja està en ús per un altre sobrenom."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [command]"

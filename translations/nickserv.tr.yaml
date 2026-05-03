@@ -197,6 +197,76 @@ set:
     taken:          "\x0304✗\x03 Bu vhost zaten başka bir rumuz tarafından kullanılıyor."
     forced:         "\x0304✗\x03 Vhost'unuz otomatik olarak yapılandırılmıştır ve SET VHOST ile değiştirilemez."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <rumuz> <seçenek> <değer>"
+  short:            "Başka bir rumuzun ayarlarını değiştir."
+  help:             |
+    Bir IRC Operatörünün kayıtlı bir rumuzun ayarlarını değiştirmesine izin verir.
+    Hedef rumuz bir root kullanıcı, IRC Operatörü veya hizmet rumuzu olamaz.
+
+    Kullanılabilir seçenekler: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Şifreyi doğrudan değiştirir (e-posta onayı olmadan).
+    SASET EMAIL: E-postayı doğrudan değiştirir (token doğrulaması olmadan).
+
+    Bu komut IRCop izni gerektirir: nickserv.saset
+
+    Sözdizimi: SASET <rumuz> <seçenek> <değer>
+    Örnek: SASET Kullanıcı PASSWORD yenişifre
+  unknown_option:   "\x0304✗\x03 Bilinmeyen seçenek \x02%option%\x02. Kullanılabilir seçenekler: %options%."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  cannot_modify_oper: "\x0304✗\x03 IRC Operatörü rumuzu değiştirilemez."
+
+  password:
+    syntax:         "SASET <rumuz> PASSWORD <yeni_şifre>"
+    short:          "Bir rumuzun şifresini değiştir."
+    help:           "Başka bir rumuzun şifresini değiştirir.\nDeğişiklik hemen geçerlidir.\n\nSözdizimi: SASET <rumuz> PASSWORD <yeni_şifre>\nÖrnek: SASET Kullanıcı PASSWORD yenişifre123"
+    success:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun şifresi güncellendi."
+
+  email:
+    syntax:         "SASET <rumuz> EMAIL <yeni_e-posta>"
+    short:          "Bir rumuzun e-postasını değiştir."
+    help:           "Başka bir rumuzun e-postasını değiştirir.\nOnay gönderilmez—değişiklik hemen geçerlidir.\n\nSözdizimi: SASET <rumuz> EMAIL <yeni_e-posta>\nÖrnek: SASET Kullanıcı EMAIL kullanıcı@örnek.com"
+    success:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun e-postası \x02%email%\x02 olarak güncellendi."
+
+  language:
+    syntax:         "SASET <rumuz> LANGUAGE <kod>"
+    short:          "Bir rumuzun dilini değiştir."
+    help:           "Başka bir rumuzun dilini değiştirir.\nKullanılabilir diller: en (İngilizce), es (İspanyolca).\n\nSözdizimi: SASET <rumuz> LANGUAGE <kod>\nÖrnek: SASET Kullanıcı LANGUAGE tr"
+    success:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun dili \x02%language%\x02 olarak değiştirildi."
+
+  timezone:
+    syntax:         "SASET <rumuz> TIMEZONE <zaman_dilimi|OFF>"
+    short:          "Bir rumuzun zaman dilimini değiştir."
+    help:           "Başka bir rumuzun zaman dilimini ayarlar veya temizler.\nTemizlemek için OFF kullanın.\n\nSözdizimi: SASET <rumuz> TIMEZONE <zaman_dilimi>\nÖrnek: SASET Kullanıcı TIMEZONE Europe/Istanbul"
+    success:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun zaman dilimi \x02%timezone%\x02 olarak ayarlandı."
+    cleared:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun zaman dilimi temizlendi."
+    invalid:        "\x0304✗\x03 Geçersiz zaman dilimi \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <rumuz> PRIVATE {ON|OFF}"
+    short:          "Bir rumuzun gizliliğini değiştir."
+    help:           "Başka bir rumuzun bilgilerinin gizliliğini etkinleştirir veya devre dışı bırakır.\n\nSözdizimi: SASET <rumuz> PRIVATE {ON|OFF}\nÖrnek: SASET Kullanıcı PRIVATE ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 rumuzunun bilgileri artık \x02gizlidir\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 rumuzunun bilgileri artık \x02herkese açıktır\x02."
+
+  msg:
+    syntax:         "SASET <rumuz> MSG {ON|OFF}"
+    short:          "Bir rumuzun mesaj tercihini değiştir."
+    help:           "Başka bir rumuzun yanıtları PRIVMSG (ON) veya NOTICE (OFF) olarak alıp almayacağını ayarlar.\n\nSözdizimi: SASET <rumuz> MSG {ON|OFF}\nÖrnek: SASET Kullanıcı MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 artık mesajları \x02PRIVMSG\x02 olarak alacak."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 artık mesajları \x02NOTICE\x02 olarak alacak."
+
+  vhost:
+    syntax:         "SASET <rumuz> VHOST <vhost|OFF>"
+    short:          "Bir rumuzun sanal host'unu değiştir."
+    help:           "Başka bir rumuzun sanal host'unu ayarlar veya temizler.\nTemizlemek için OFF kullanın.\n\nSözdizimi: SASET <rumuz> VHOST <vhost>\nÖrnek: SASET Kullanıcı VHOST kullanıcılar.örnek.com"
+    success:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun VHost'u \x02%vhost%\x02 olarak ayarlandı."
+    cleared:        "\x0303✔\x03 \x02%nickname%\x02 rumuzunun VHost'u temizlendi."
+    invalid:        "\x0304✗\x03 \x02%nickname%\x02 için geçersiz VHost."
+    taken:          "\x0304✗\x03 Bu vhost zaten başka bir rumuz tarafından kullanılıyor."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [komut]"

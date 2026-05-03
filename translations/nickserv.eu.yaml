@@ -197,6 +197,76 @@ set:
     taken:          "\x0304✗\x03 Vhost hori jada beste ezizen batek erabiltzen du."
     forced:         "\x0304✗\x03 Zure vhost-a automatikoki konfiguratuta dago eta ezin da SET VHOST bidez aldatu."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <ezizen> <aukera> <balio>"
+  short:            "Beste ezizen baten ezarpenak aldatu."
+  help:             |
+    IRC Operadore bati erregistratutako ezizen baten ezarpenak aldatzea ahalbidetzen dio.
+    Helburuko ezizena ezin da root erabiltzaile, IRC Operadore edo zerbitzu ezizen bat izan.
+
+    Aukera erabilgarriak: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Pasahitza zuzenean aldatzen du (berrespenik gabe).
+    SASET EMAIL: Posta elektronikoa zuzenean aldatzen du (token balidaziorik gabe).
+
+    Komando honek IRCop baimena behar du: nickserv.saset
+
+    Sintaxia: SASET <ezizen> <aukera> <balio>
+    Adibidea: SASET Erabiltzaile PASSWORD pasahitzberria
+  unknown_option:   "\x0304✗\x03 Aukera ezezaguna \x02%option%\x02. Aukera erabilgarriak: %options%."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
+  cannot_modify_oper: "\x0304✗\x03 Ezin da IRC Operadore baten ezizena aldatu."
+
+  password:
+    syntax:         "SASET <ezizen> PASSWORD <pasahitz_berria>"
+    short:          "Ezizen baten pasahitza aldatu."
+    help:           "Beste ezizen baten pasahitza aldatzen du.\nAldaketa berehalakoa da.\n\nSintaxia: SASET <ezizen> PASSWORD <pasahitz_berria>\nAdibidea: SASET Erabiltzaile PASSWORD pasahitzberria123"
+    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en pasahitza eguneratu da."
+
+  email:
+    syntax:         "SASET <ezizen> EMAIL <posta_berria>"
+    short:          "Ezizen baten posta elektronikoa aldatu."
+    help:           "Beste ezizen baten posta elektronikoa aldatzen du.\nEz da berrespenik bidaltzen—aldaketa berehalakoa da.\n\nSintaxia: SASET <ezizen> EMAIL <posta_berria>\nAdibidea: SASET Erabiltzaile EMAIL erabiltzaile@adibidea.com"
+    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en posta \x02%email%\x02(e)ra eguneratu da."
+
+  language:
+    syntax:         "SASET <ezizen> LANGUAGE <kodea>"
+    short:          "Ezizen baten hizkuntza aldatu."
+    help:           "Beste ezizen baten hizkuntza aldatzen du.\nHizkuntza erabilgarriak: en (ingelesa), es (espainiera).\n\nSintaxia: SASET <ezizen> LANGUAGE <kodea>\nAdibidea: SASET Erabiltzaile LANGUAGE eu"
+    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en hizkuntza \x02%language%\x02(e)ra aldatu da."
+
+  timezone:
+    syntax:         "SASET <ezizen> TIMEZONE <ordu_zona|OFF>"
+    short:          "Ezizen baten ordu-zona aldatu."
+    help:           "Beste ezizen baten ordu-zona ezartzen edo garbitzen du.\nErabili OFF garbitzeko.\n\nSintaxia: SASET <ezizen> TIMEZONE <ordu_zona>\nAdibidea: SASET Erabiltzaile TIMEZONE Europe/Madrid"
+    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ordu-zona \x02%timezone%\x02 gisa ezarri da."
+    cleared:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ordu-zona garbitu da."
+    invalid:        "\x0304✗\x03 Ordu-zona baliogabea \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <ezizen> PRIVATE {ON|OFF}"
+    short:          "Ezizen baten pribatutasuna aldatu."
+    help:           "Beste ezizen baten informazioaren pribatutasuna gaitu edo desgaitu.\n\nSintaxia: SASET <ezizen> PRIVATE {ON|OFF}\nAdibidea: SASET Erabiltzaile PRIVATE ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02-(r)en informazioa orain \x02pribatua\x02 da."
+    off:            "\x0303✔\x03 \x02%nickname%\x02-(r)en informazioa orain \x02publikoa\x02 da."
+
+  msg:
+    syntax:         "SASET <ezizen> MSG {ON|OFF}"
+    short:          "Ezizen baten mezuen hobespena aldatu."
+    help:           "Beste ezizen batek erantzunak PRIVMSG (ON) edo NOTICE (OFF) gisa jasoko dituen ezartzen du.\n\nSintaxia: SASET <ezizen> MSG {ON|OFF}\nAdibidea: SASET Erabiltzaile MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02-k orain mezuak \x02PRIVMSG\x02 gisa jasoko ditu."
+    off:            "\x0303✔\x03 \x02%nickname%\x02-k orain mezuak \x02NOTICE\x02 gisa jasoko ditu."
+
+  vhost:
+    syntax:         "SASET <ezizen> VHOST <vhost|OFF>"
+    short:          "Ezizen baten ostalari birtuala aldatu."
+    help:           "Beste ezizen baten ostalari birtuala ezartzen edo garbitzen du.\nErabili OFF garbitzeko.\n\nSintaxia: SASET <ezizen> VHOST <vhost>\nAdibidea: SASET Erabiltzaile VHOST erabiltzaileak.adibidea.com"
+    success:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ostalari birtuala \x02%vhost%\x02 gisa ezarri da."
+    cleared:        "\x0303✔\x03 \x02%nickname%\x02-(r)en ostalari birtuala garbitu da."
+    invalid:        "\x0304✗\x03 Vhost baliogabea \x02%nickname%\x02-(r)entzat."
+    taken:          "\x0304✗\x03 Vhost hori jada beste ezizen batek erabiltzen du."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [komandoa]"

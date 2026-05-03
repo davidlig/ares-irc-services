@@ -197,6 +197,76 @@ set:
     taken:          "\x0304✗\x03 Die vhost is al in gebruik door een andere bijnaam."
     forced:         "\x0304✗\x03 Uw vhost wordt automatisch geconfigureerd en kan niet worden gewijzigd met SET VHOST."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <bijnaam> <optie> <waarde>"
+  short:            "Instellingen van een andere bijnaam wijzigen."
+  help:             |
+    Stelt een IRC-operator in staat de instellingen van een geregistreerde bijnaam te wijzigen.
+    De doelbijnaam mag geen rootgebruiker, IRC-operator of service-bijnaam zijn.
+
+    Beschikbare opties: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Wijzigt het wachtwoord direct (zonder e-mailbevestiging).
+    SASET EMAIL: Wijzigt de e-mail direct (zonder tokenvalidatie).
+
+    Dit commando vereist IRCop-toestemming: nickserv.saset
+
+    Syntax: SASET <bijnaam> <optie> <waarde>
+    Voorbeeld: SASET Gebruiker PASSWORD nieuwwachtwoord
+  unknown_option:   "\x0304✗\x03 Onbekende optie \x02%option%\x02. Beschikbare opties: %options%."
+  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  cannot_modify_oper: "\x0304✗\x03 Kan de bijnaam van een IRC-operator niet wijzigen."
+
+  password:
+    syntax:         "SASET <bijnaam> PASSWORD <nieuw_wachtwoord>"
+    short:          "Wachtwoord van een bijnaam wijzigen."
+    help:           "Wijzigt het wachtwoord van een andere bijnaam.\nDe wijziging is direct.\n\nSyntax: SASET <bijnaam> PASSWORD <nieuw_wachtwoord>\nVoorbeeld: SASET Gebruiker PASSWORD nieuwwachtwoord123"
+    success:        "\x0303✔\x03 Het wachtwoord van \x02%nickname%\x02 is bijgewerkt."
+
+  email:
+    syntax:         "SASET <bijnaam> EMAIL <nieuwe_e-mail>"
+    short:          "E-mail van een bijnaam wijzigen."
+    help:           "Wijzigt de e-mail van een andere bijnaam.\nEr wordt geen bevestiging verzonden—de wijziging is direct.\n\nSyntax: SASET <bijnaam> EMAIL <nieuwe_e-mail>\nVoorbeeld: SASET Gebruiker EMAIL gebruiker@voorbeeld.com"
+    success:        "\x0303✔\x03 De e-mail van \x02%nickname%\x02 is bijgewerkt naar \x02%email%\x02."
+
+  language:
+    syntax:         "SASET <bijnaam> LANGUAGE <code>"
+    short:          "Taal van een bijnaam wijzigen."
+    help:           "Wijzigt de taal van een andere bijnaam.\nBeschikbare talen: en (Engels), es (Spaans).\n\nSyntax: SASET <bijnaam> LANGUAGE <code>\nVoorbeeld: SASET Gebruiker LANGUAGE nl"
+    success:        "\x0303✔\x03 De taal van \x02%nickname%\x02 is gewijzigd naar \x02%language%\x02."
+
+  timezone:
+    syntax:         "SASET <bijnaam> TIMEZONE <tijdzone|OFF>"
+    short:          "Tijdzone van een bijnaam wijzigen."
+    help:           "Stelt de tijdzone van een andere bijnaam in of wist deze.\nGebruik OFF om te wissen.\n\nSyntax: SASET <bijnaam> TIMEZONE <tijdzone>\nVoorbeeld: SASET Gebruiker TIMEZONE Europe/Amsterdam"
+    success:        "\x0303✔\x03 De tijdzone van \x02%nickname%\x02 is ingesteld op \x02%timezone%\x02."
+    cleared:        "\x0303✔\x03 De tijdzone van \x02%nickname%\x02 is gewist."
+    invalid:        "\x0304✗\x03 Ongeldige tijdzone \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <bijnaam> PRIVATE {ON|OFF}"
+    short:          "Privacy van een bijnaam wijzigen."
+    help:           "Schakelt de privacy van de informatie van een andere bijnaam in of uit.\n\nSyntax: SASET <bijnaam> PRIVATE {ON|OFF}\nVoorbeeld: SASET Gebruiker PRIVATE ON"
+    on:             "\x0303✔\x03 De informatie van \x02%nickname%\x02 is nu \x02privé\x02."
+    off:            "\x0303✔\x03 De informatie van \x02%nickname%\x02 is nu \x02openbaar\x02."
+
+  msg:
+    syntax:         "SASET <bijnaam> MSG {ON|OFF}"
+    short:          "Berichtvoorkeur van een bijnaam wijzigen."
+    help:           "Stelt in of een andere bijnaam antwoorden ontvangt als PRIVMSG (ON) of NOTICE (OFF).\n\nSyntax: SASET <bijnaam> MSG {ON|OFF}\nVoorbeeld: SASET Gebruiker MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 ontvangt nu berichten als \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 ontvangt nu berichten als \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SASET <bijnaam> VHOST <vhost|OFF>"
+    short:          "Virtuele host van een bijnaam wijzigen."
+    help:           "Stelt de virtuele host van een andere bijnaam in of wist deze.\nGebruik OFF om te wissen.\n\nSyntax: SASET <bijnaam> VHOST <vhost>\nVoorbeeld: SASET Gebruiker VHOST gebruikers.voorbeeld.com"
+    success:        "\x0303✔\x03 De VHost van \x02%nickname%\x02 is ingesteld op \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 De VHost van \x02%nickname%\x02 is gewist."
+    invalid:        "\x0304✗\x03 Ongeldige VHost voor \x02%nickname%\x02."
+    taken:          "\x0304✗\x03 Die vhost is al in gebruik door een andere bijnaam."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [commando]"

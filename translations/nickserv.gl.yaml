@@ -205,6 +205,76 @@ set:
     taken:          "\x0304✗\x03 Ese vhost xa está en uso por outro alcume."
     forced:         "\x0304✗\x03 O seu vhost está configurado automaticamente e non se pode cambiar con SET VHOST."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <alcume> <opción> <valor>"
+  short:            "Modificar a configuración doutro alcume."
+  help:             |
+    Permite a un IRCop modificar a configuración dun alcume rexistrado.
+    O alcume obxectivo non pode ser un usuario Root, IRCop nin un servizo.
+
+    Opcións dispoñibles: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Cambia o contrasinal directamente (sen confirmación por correo).
+    SASET EMAIL: Cambia o correo electrónico directamente (sen validación de token).
+
+    Este comando require permiso IRCop: nickserv.saset
+
+    Sintaxe: SASET <alcume> <opción> <valor>
+    Exemplo: SASET Usuario PASSWORD novo_contrasinal
+  unknown_option:   "\x0304✗\x03 Opción descoñecida \x02%option%\x02. Opcións dispoñibles: %options%."
+  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
+  cannot_modify_oper: "\x0304✗\x03 Non se pode modificar un alcume de Operador de IRC."
+
+  password:
+    syntax:         "SASET <alcume> PASSWORD <novo_contrasinal>"
+    short:          "Cambiar o contrasinal dun alcume."
+    help:           "Cambia o contrasinal doutro alcume.\nO cambio é inmediato.\n\nSintaxe: SASET <alcume> PASSWORD <novo_contrasinal>\nExemplo: SASET Usuario PASSWORD novo_contrasinal123"
+    success:        "\x0303✔\x03 O contrasinal de \x02%nickname%\x02 foi actualizado."
+
+  email:
+    syntax:         "SASET <alcume> EMAIL <novo_correo>"
+    short:          "Cambiar o correo electrónico dun alcume."
+    help:           "Cambia o correo electrónico doutro alcume.\nNon se envía confirmación—o cambio é inmediato.\n\nSintaxe: SASET <alcume> EMAIL <novo_correo>\nExemplo: SASET Usuario EMAIL usuario@exemplo.com"
+    success:        "\x0303✔\x03 O correo electrónico de \x02%nickname%\x02 foi actualizado a \x02%email%\x02."
+
+  language:
+    syntax:         "SASET <alcume> LANGUAGE <código>"
+    short:          "Cambiar o idioma dun alcume."
+    help:           "Cambia o idioma doutro alcume.\nIdiomas dispoñibles: en (inglés), es (español).\n\nSintaxe: SASET <alcume> LANGUAGE <código>\nExemplo: SASET Usuario LANGUAGE gl"
+    success:        "\x0303✔\x03 O idioma de \x02%nickname%\x02 foi cambiado a \x02%language%\x02."
+
+  timezone:
+    syntax:         "SASET <alcume> TIMEZONE <fuso_horario|OFF>"
+    short:          "Cambiar o fuso horario dun alcume."
+    help:           "Establece ou limpa o fuso horario doutro alcume.\nUse OFF para limpalo.\n\nSintaxe: SASET <alcume> TIMEZONE <fuso_horario>\nExemplo: SASET Usuario TIMEZONE Europe/Madrid"
+    success:        "\x0303✔\x03 O fuso horario de \x02%nickname%\x02 foi establecido en \x02%timezone%\x02."
+    cleared:        "\x0303✔\x03 O fuso horario de \x02%nickname%\x02 foi limpado."
+    invalid:        "\x0304✗\x03 Fuso horario non válido \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <alcume> PRIVATE {ON|OFF}"
+    short:          "Cambiar a privacidade dun alcume."
+    help:           "Activa ou desactiva a privacidade da información doutro alcume.\n\nSintaxe: SASET <alcume> PRIVATE {ON|OFF}\nExemplo: SASET Usuario PRIVATE ON"
+    on:             "\x0303✔\x03 A información de \x02%nickname%\x02 é agora \x02privada\x02."
+    off:            "\x0303✔\x03 A información de \x02%nickname%\x02 é agora \x02pública\x02."
+
+  msg:
+    syntax:         "SASET <alcume> MSG {ON|OFF}"
+    short:          "Cambiar a preferencia de mensaxes dun alcume."
+    help:           "Establece se outro alcume recibe as respostas como PRIVMSG (ON) ou NOTICE (OFF).\n\nSintaxe: SASET <alcume> MSG {ON|OFF}\nExemplo: SASET Usuario MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 recibirá agora as mensaxes como \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 recibirá agora as mensaxes como \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SASET <alcume> VHOST <vhost|OFF>"
+    short:          "Cambiar o host virtual dun alcume."
+    help:           "Establece ou limpa o host virtual doutro alcume.\nUse OFF para limpalo.\n\nSintaxe: SASET <alcume> VHOST <vhost>\nExemplo: SASET Usuario VHOST usuarios.exemplo.com"
+    success:        "\x0303✔\x03 O VHost de \x02%nickname%\x02 foi establecido como \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 O VHost de \x02%nickname%\x02 foi limpado."
+    invalid:        "\x0304✗\x03 VHost non válido para \x02%nickname%\x02."
+    taken:          "\x0304✗\x03 Ese vhost xa está en uso por outro alcume."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [comando]"

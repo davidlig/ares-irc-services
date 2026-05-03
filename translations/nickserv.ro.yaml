@@ -197,6 +197,76 @@ set:
     taken:          "\x0304✗\x03 Acel vhost este deja folosit de o altă poreclă."
     forced:         "\x0304✗\x03 Vhostul dumneavoastră este configurat automat și nu poate fi schimbat cu SET VHOST."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <poreclă> <opțiune> <valoare>"
+  short:            "Modifică setările altei porecle."
+  help:             |
+    Permite unui operator IRC să modifice setările unei porecle înregistrate.
+    Porecla țintă nu poate fi un utilizator root, un operator IRC sau un serviciu.
+
+    Opțiuni disponibile: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Schimbă parola direct (fără confirmare prin e-mail).
+    SASET EMAIL: Schimbă e-mailul direct (fără validare token).
+
+    Această comandă necesită permisiune IRCop: nickserv.saset
+
+    Sintaxă: SASET <poreclă> <opțiune> <valoare>
+    Exemplu: SASET Utilizator PASSWORD parolanouă
+  unknown_option:   "\x0304✗\x03 Opțiune necunoscută \x02%option%\x02. Opțiuni disponibile: %options%."
+  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
+  cannot_modify_oper: "\x0304✗\x03 Nu se poate modifica o poreclă de operator IRC."
+
+  password:
+    syntax:         "SASET <poreclă> PASSWORD <parolă_nouă>"
+    short:          "Schimbă parola unei porecle."
+    help:           "Schimbă parola altei porecle.\nSchimbarea este imediată.\n\nSintaxă: SASET <poreclă> PASSWORD <parolă_nouă>\nExemplu: SASET Utilizator PASSWORD parolanouă123"
+    success:        "\x0303✔\x03 Parola \x02%nickname%\x02 a fost actualizată."
+
+  email:
+    syntax:         "SASET <poreclă> EMAIL <e-mail_nou>"
+    short:          "Schimbă e-mailul unei porecle."
+    help:           "Schimbă e-mailul altei porecle.\nNu se trimite nicio confirmare—schimbarea este imediată.\n\nSintaxă: SASET <poreclă> EMAIL <e-mail_nou>\nExemplu: SASET Utilizator EMAIL utilizator@exemplu.com"
+    success:        "\x0303✔\x03 E-mailul \x02%nickname%\x02 a fost actualizat la \x02%email%\x02."
+
+  language:
+    syntax:         "SASET <poreclă> LANGUAGE <cod>"
+    short:          "Schimbă limba unei porecle."
+    help:           "Schimbă limba altei porecle.\nLimbi disponibile: en (engleză), es (spaniolă).\n\nSintaxă: SASET <poreclă> LANGUAGE <cod>\nExemplu: SASET Utilizator LANGUAGE ro"
+    success:        "\x0303✔\x03 Limba \x02%nickname%\x02 a fost schimbată în \x02%language%\x02."
+
+  timezone:
+    syntax:         "SASET <poreclă> TIMEZONE <fus_orar|OFF>"
+    short:          "Schimbă fusul orar al unei porecle."
+    help:           "Setează sau șterge fusul orar al altei porecle.\nFolosiți OFF pentru a-l șterge.\n\nSintaxă: SASET <poreclă> TIMEZONE <fus_orar>\nExemplu: SASET Utilizator TIMEZONE Europe/București"
+    success:        "\x0303✔\x03 Fusul orar al \x02%nickname%\x02 a fost setat la \x02%timezone%\x02."
+    cleared:        "\x0303✔\x03 Fusul orar al \x02%nickname%\x02 a fost șters."
+    invalid:        "\x0304✗\x03 Fus orar invalid \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <poreclă> PRIVATE {ON|OFF}"
+    short:          "Schimbă confidențialitatea unei porecle."
+    help:           "Activează sau dezactivează confidențialitatea informațiilor altei porecle.\n\nSintaxă: SASET <poreclă> PRIVATE {ON|OFF}\nExemplu: SASET Utilizator PRIVATE ON"
+    on:             "\x0303✔\x03 Informațiile \x02%nickname%\x02 sunt acum \x02private\x02."
+    off:            "\x0303✔\x03 Informațiile \x02%nickname%\x02 sunt acum \x02publice\x02."
+
+  msg:
+    syntax:         "SASET <poreclă> MSG {ON|OFF}"
+    short:          "Schimbă preferința de mesaje a unei porecle."
+    help:           "Setează dacă altă poreclă primește răspunsurile ca PRIVMSG (ON) sau NOTICE (OFF).\n\nSintaxă: SASET <poreclă> MSG {ON|OFF}\nExemplu: SASET Utilizator MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 va primi acum mesajele ca \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 va primi acum mesajele ca \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SASET <poreclă> VHOST <vhost|OFF>"
+    short:          "Schimbă gazda virtuală a unei porecle."
+    help:           "Setează sau șterge gazda virtuală a altei porecle.\nFolosiți OFF pentru a o șterge.\n\nSintaxă: SASET <poreclă> VHOST <vhost>\nExemplu: SASET Utilizator VHOST utilizatori.exemplu.com"
+    success:        "\x0303✔\x03 VHostul \x02%nickname%\x02 a fost setat la \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 VHostul \x02%nickname%\x02 a fost șters."
+    invalid:        "\x0304✗\x03 VHost invalid pentru \x02%nickname%\x02."
+    taken:          "\x0304✗\x03 Acel vhost este deja folosit de o altă poreclă."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [comandă]"

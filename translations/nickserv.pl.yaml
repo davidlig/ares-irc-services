@@ -197,6 +197,76 @@ set:
     taken:          "\x0304✗\x03 Ten vhost jest już używany przez inny nick."
     forced:         "\x0304✗\x03 Twój vhost jest konfigurowany automatycznie i nie może być zmieniony przez SET VHOST."
 
+# --- SASET (IRCop) --------------------------------------------------------------
+saset:
+  syntax:           "SASET <nick> <opcja> <wartość>"
+  short:            "Modyfikuj ustawienia innego nicka."
+  help:             |
+    Umożliwia Operatorowi IRC modyfikowanie ustawień zarejestrowanego nicka.
+    Docelowy nick nie może być użytkownikiem root, Operatorem IRC ani nickiem serwisowym.
+
+    Dostępne opcje: PASSWORD, EMAIL, LANGUAGE, TIMEZONE, PRIVATE, MSG, VHOST
+
+    SASET PASSWORD: Zmienia hasło bezpośrednio (bez potwierdzenia e-mailem).
+    SASET EMAIL: Zmienia e-mail bezpośrednio (bez walidacji tokenem).
+
+    Ta komenda wymaga uprawnienia IRCop: nickserv.saset
+
+    Składnia: SASET <nick> <opcja> <wartość>
+    Przykład: SASET Użytkownik PASSWORD nowehasło
+  unknown_option:   "\x0304✗\x03 Nieznana opcja \x02%option%\x02. Dostępne opcje: %options%."
+  not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
+  cannot_modify_oper: "\x0304✗\x03 Nie można modyfikować nicka Operatora IRC."
+
+  password:
+    syntax:         "SASET <nick> PASSWORD <nowe_hasło>"
+    short:          "Zmień hasło nicka."
+    help:           "Zmienia hasło innego nicka.\nZmiana jest natychmiastowa.\n\nSkładnia: SASET <nick> PASSWORD <nowe_hasło>\nPrzykład: SASET Użytkownik PASSWORD nowehasło123"
+    success:        "\x0303✔\x03 Hasło \x02%nickname%\x02 zostało zaktualizowane."
+
+  email:
+    syntax:         "SASET <nick> EMAIL <nowy_e-mail>"
+    short:          "Zmień e-mail nicka."
+    help:           "Zmienia e-mail innego nicka.\nŻadne potwierdzenie nie jest wysyłane—zmiana jest natychmiastowa.\n\nSkładnia: SASET <nick> EMAIL <nowy_e-mail>\nPrzykład: SASET Użytkownik EMAIL użytkownik@przykład.com"
+    success:        "\x0303✔\x03 E-mail \x02%nickname%\x02 został zaktualizowany na \x02%email%\x02."
+
+  language:
+    syntax:         "SASET <nick> LANGUAGE <kod>"
+    short:          "Zmień język nicka."
+    help:           "Zmienia język innego nicka.\nDostępne języki: en (angielski), es (hiszpański).\n\nSkładnia: SASET <nick> LANGUAGE <kod>\nPrzykład: SASET Użytkownik LANGUAGE pl"
+    success:        "\x0303✔\x03 Język \x02%nickname%\x02 został zmieniony na \x02%language%\x02."
+
+  timezone:
+    syntax:         "SASET <nick> TIMEZONE <strefa_czasowa|OFF>"
+    short:          "Zmień strefę czasową nicka."
+    help:           "Ustawia lub czyści strefę czasową innego nicka.\nUżyj OFF, aby wyczyścić.\n\nSkładnia: SASET <nick> TIMEZONE <strefa_czasowa>\nPrzykład: SASET Użytkownik TIMEZONE Europe/Warsaw"
+    success:        "\x0303✔\x03 Strefa czasowa \x02%nickname%\x02 została ustawiona na \x02%timezone%\x02."
+    cleared:        "\x0303✔\x03 Strefa czasowa \x02%nickname%\x02 została wyczyszczona."
+    invalid:        "\x0304✗\x03 Nieprawidłowa strefa czasowa \x02%timezone%\x02."
+
+  private:
+    syntax:         "SASET <nick> PRIVATE {ON|OFF}"
+    short:          "Zmień prywatność nicka."
+    help:           "Włącza lub wyłącza prywatność informacji innego nicka.\n\nSkładnia: SASET <nick> PRIVATE {ON|OFF}\nPrzykład: SASET Użytkownik PRIVATE ON"
+    on:             "\x0303✔\x03 Informacje \x02%nickname%\x02 są teraz \x02prywatne\x02."
+    off:            "\x0303✔\x03 Informacje \x02%nickname%\x02 są teraz \x02publiczne\x02."
+
+  msg:
+    syntax:         "SASET <nick> MSG {ON|OFF}"
+    short:          "Zmień preferencję wiadomości nicka."
+    help:           "Ustawia, czy inny nick otrzymuje odpowiedzi jako PRIVMSG (ON) lub NOTICE (OFF).\n\nSkładnia: SASET <nick> MSG {ON|OFF}\nPrzykład: SASET Użytkownik MSG ON"
+    on:             "\x0303✔\x03 \x02%nickname%\x02 będzie teraz otrzymywać wiadomości jako \x02PRIVMSG\x02."
+    off:            "\x0303✔\x03 \x02%nickname%\x02 będzie teraz otrzymywać wiadomości jako \x02NOTICE\x02."
+
+  vhost:
+    syntax:         "SASET <nick> VHOST <vhost|OFF>"
+    short:          "Zmień host wirtualny nicka."
+    help:           "Ustawia lub czyści host wirtualny innego nicka.\nUżyj OFF, aby wyczyścić.\n\nSkładnia: SASET <nick> VHOST <vhost>\nPrzykład: SASET Użytkownik VHOST użytkownicy.przykład.com"
+    success:        "\x0303✔\x03 Host wirtualny \x02%nickname%\x02 został ustawiony na \x02%vhost%\x02."
+    cleared:        "\x0303✔\x03 Host wirtualny \x02%nickname%\x02 został wyczyszczony."
+    invalid:        "\x0304✗\x03 Nieprawidłowy vhost dla \x02%nickname%\x02."
+    taken:          "\x0304✗\x03 Ten vhost jest już używany przez inny nick."
+
 # --- HELP -------------------------------------------------------------------
 help:
   syntax:           "HELP [komenda]"
