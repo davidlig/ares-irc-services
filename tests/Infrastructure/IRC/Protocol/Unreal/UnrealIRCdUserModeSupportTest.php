@@ -21,4 +21,26 @@ final class UnrealIRCdUserModeSupportTest extends TestCase
 
         self::assertSame(['H', 'o', 'q', 's', 'W'], $modes);
     }
+
+    #[Test]
+    public function buildModeParamsReturnsModeStringWithoutParams(): void
+    {
+        $support = new UnrealIRCdUserModeSupport();
+
+        [$modeStr, $params] = $support->buildModeParams('+', ['H', 'W']);
+
+        self::assertSame('+HW', $modeStr);
+        self::assertSame([], $params);
+    }
+
+    #[Test]
+    public function buildModeParamsRemoveAlsoReturnsEmptyParams(): void
+    {
+        $support = new UnrealIRCdUserModeSupport();
+
+        [$modeStr, $params] = $support->buildModeParams('-', ['s', 'W']);
+
+        self::assertSame('-sW', $modeStr);
+        self::assertSame([], $params);
+    }
 }

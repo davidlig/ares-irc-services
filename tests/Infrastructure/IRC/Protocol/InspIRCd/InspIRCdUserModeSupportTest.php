@@ -21,4 +21,37 @@ final class InspIRCdUserModeSupportTest extends TestCase
 
         self::assertSame(['s', 'W'], $modes);
     }
+
+    #[Test]
+    public function buildModeParamsAddWithSIncludesSnomask(): void
+    {
+        $support = new InspIRCdUserModeSupport();
+
+        [$modeStr, $params] = $support->buildModeParams('+', ['s', 'W']);
+
+        self::assertSame('+sW', $modeStr);
+        self::assertSame(['+*'], $params);
+    }
+
+    #[Test]
+    public function buildModeParamsAddWithoutSDoesNotIncludeParam(): void
+    {
+        $support = new InspIRCdUserModeSupport();
+
+        [$modeStr, $params] = $support->buildModeParams('+', ['W']);
+
+        self::assertSame('+W', $modeStr);
+        self::assertSame([], $params);
+    }
+
+    #[Test]
+    public function buildModeParamsRemoveDoesNotIncludeParam(): void
+    {
+        $support = new InspIRCdUserModeSupport();
+
+        [$modeStr, $params] = $support->buildModeParams('-', ['s', 'W']);
+
+        self::assertSame('-sW', $modeStr);
+        self::assertSame([], $params);
+    }
 }
