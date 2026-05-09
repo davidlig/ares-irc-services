@@ -13,45 +13,45 @@ use PHPUnit\Framework\TestCase;
 final class InspIRCdUserModeSupportTest extends TestCase
 {
     #[Test]
-    public function getIrcOpUserModesReturnsExpectedModes(): void
+    public function getIrcOpUserModesReturnsEmptyArray(): void
     {
         $support = new InspIRCdUserModeSupport();
 
         $modes = $support->getIrcOpUserModes();
 
-        self::assertSame(['s', 'W'], $modes);
+        self::assertSame([], $modes);
     }
 
     #[Test]
-    public function buildModeParamsAddWithSIncludesSnomask(): void
+    public function buildModeParamsAdd(): void
     {
         $support = new InspIRCdUserModeSupport();
 
-        [$modeStr, $params] = $support->buildModeParams('+', ['s', 'W']);
+        [$modeStr, $params] = $support->buildModeParams('+', ['x', 'y']);
 
-        self::assertSame('+sW', $modeStr);
-        self::assertSame(['+*'], $params);
-    }
-
-    #[Test]
-    public function buildModeParamsAddWithoutSDoesNotIncludeParam(): void
-    {
-        $support = new InspIRCdUserModeSupport();
-
-        [$modeStr, $params] = $support->buildModeParams('+', ['W']);
-
-        self::assertSame('+W', $modeStr);
+        self::assertSame('+xy', $modeStr);
         self::assertSame([], $params);
     }
 
     #[Test]
-    public function buildModeParamsRemoveDoesNotIncludeParam(): void
+    public function buildModeParamsRemove(): void
     {
         $support = new InspIRCdUserModeSupport();
 
-        [$modeStr, $params] = $support->buildModeParams('-', ['s', 'W']);
+        [$modeStr, $params] = $support->buildModeParams('-', ['x', 'y']);
 
-        self::assertSame('-sW', $modeStr);
+        self::assertSame('-xy', $modeStr);
+        self::assertSame([], $params);
+    }
+
+    #[Test]
+    public function buildModeParamsEmptyModes(): void
+    {
+        $support = new InspIRCdUserModeSupport();
+
+        [$modeStr, $params] = $support->buildModeParams('+', []);
+
+        self::assertSame('+', $modeStr);
         self::assertSame([], $params);
     }
 }
