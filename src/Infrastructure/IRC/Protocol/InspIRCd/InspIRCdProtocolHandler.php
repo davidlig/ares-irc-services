@@ -62,7 +62,7 @@ class InspIRCdProtocolHandler extends AbstractProtocolHandler
     private bool $remoteCapabActive = false;
 
     public function __construct(
-        private readonly string $sid = 'A0A',
+        private readonly string $sid = '0A0',
         private readonly ?ActiveConnectionHolder $connectionHolder = null,
         private readonly ?InspIRCdChannelModeSupportFactory $modeSupportFactory = null,
         LoggerInterface $logger = new NullLogger(),

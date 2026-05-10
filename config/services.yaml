@@ -332,7 +332,6 @@ services:
 
     App\Infrastructure\IRC\Network\ProtocolNetworkStateRouter:
         arguments:
-            $protocol: '%irc.protocol%'
             $adapters:
                 unreal: '@App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter'
                 inspircd: '@App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter'

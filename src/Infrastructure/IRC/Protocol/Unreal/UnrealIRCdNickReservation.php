@@ -10,9 +10,10 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 use function sprintf;
+use function time;
 
 /**
- * UnrealIRCd nick reservation via SQLINE command.
+ * UnrealIRCd nick reservation via SQLINE/TKL commands.
  *
  * SQLINE prevents regular users from using a nickname while allowing
  * U-lined servers (like services) to introduce it.
@@ -48,10 +49,12 @@ final readonly class UnrealIRCdNickReservation implements ServiceNickReservation
             return;
         }
 
-        $line = sprintf(':%s SQLINE %s %d :%s', $serverSid, $nick, $durationSeconds, $reason);
+        $setAt = time();
+        $expiresAt = 0 === $durationSeconds ? 0 : $setAt + $durationSeconds;
+        $line = sprintf('TKL + Q * %s %s %d %d :%s', $nick, $serverSid, $expiresAt, $setAt, $reason);
 
         $this->connectionHolder->writeLine($line);
-        $this->logger->info('Reserved service nick via SQLINE with duration', [
+        $this->logger->info('Reserved service nick via TKL Q-line', [
             'nick' => $nick,
             'serverSid' => $serverSid,
             'duration' => $durationSeconds,

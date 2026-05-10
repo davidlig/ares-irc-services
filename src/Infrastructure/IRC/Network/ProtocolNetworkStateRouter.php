@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network;
 
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Network\NetworkStateAdapterInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -16,7 +17,7 @@ class ProtocolNetworkStateRouter implements EventSubscriberInterface
 {
     /** @var array<string, NetworkStateAdapterInterface> */
     public function __construct(
-        private readonly string $protocol,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly array $adapters,
     ) {
     }
@@ -35,7 +36,12 @@ class ProtocolNetworkStateRouter implements EventSubscriberInterface
 
     public function onMessageReceived(MessageReceivedEvent $event): void
     {
-        $adapter = $this->adapters[$this->protocol] ?? null;
+        $protocol = $this->connectionHolder->getProtocolModule()?->getProtocolName();
+        if (null === $protocol) {
+            return;
+        }
+
+        $adapter = $this->adapters[$protocol] ?? null;
         if (null === $adapter) {
             return;
         }

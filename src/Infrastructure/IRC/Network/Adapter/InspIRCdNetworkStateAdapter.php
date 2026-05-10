@@ -33,10 +33,12 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use function array_slice;
 use function base64_encode;
 use function count;
+use function in_array;
 use function inet_pton;
 use function preg_match;
 use function sprintf;
 use function str_starts_with;
+use function strlen;
 
 /**
  * InspIRCd protocol adapter: parses UID, NICK, QUIT, FJOIN, IJOIN, FMODE,
@@ -233,36 +235,62 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
                 continue;
             }
 
-            $comma = strpos($entry, ',');
-            $colon = strpos($entry, ':');
-            if (false === $comma || false === $colon || $colon < $comma) {
-                continue;
+            $memberEntry = $this->parseFjoinMemberEntry($entry);
+            if (null !== $memberEntry) {
+                $members[] = $memberEntry;
             }
-
-            $prefixLetter = substr($entry, 0, $comma);
-            $uidStr = substr($entry, $comma + 1, $colon - $comma - 1);
-
-            try {
-                $uid = new Uid($uidStr);
-            } catch (InvalidArgumentException) {
-                continue;
-            }
-
-            $role = ChannelMemberRole::fromModeLetter($prefixLetter) ?? ChannelMemberRole::None;
-            $prefixLetters = ChannelMemberRole::None !== $role ? [$role->toModeLetter()] : [];
-            $members[] = ['uid' => $uid, 'role' => $role, 'prefixLetters' => $prefixLetters];
         }
 
         $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $timestamp, $modeStr, $members));
     }
 
     /**
+     * InspIRCd FJOIN member format: [[<modes>,]<uuid>[:<membid>].
+     *
+     * @return array{uid: Uid, role: ChannelMemberRole, prefixLetters: list<string>}|null
+     */
+    private function parseFjoinMemberEntry(string $entry): ?array
+    {
+        $comma = strpos($entry, ',');
+        $colon = strpos($entry, ':');
+        if (false === $comma) {
+            if (false === $colon) {
+                return null;
+            }
+
+            $prefixLetters = [];
+            $uidStr = substr($entry, 0, $colon);
+        } else {
+            $uidStart = $comma + 1;
+            $uidEnd = false === $colon ? strlen($entry) : $colon;
+            if ($uidEnd < $uidStart) {
+                return null;
+            }
+
+            $prefixLetters = self::parsePrefixModeLetters(substr($entry, 0, $comma));
+            $uidStr = substr($entry, $uidStart, $uidEnd - $uidStart);
+        }
+
+        if ('' === $uidStr) {
+            return null;
+        }
+
+        try {
+            $uid = new Uid($uidStr);
+        } catch (InvalidArgumentException) {
+            return null;
+        }
+
+        return [
+            'uid' => $uid,
+            'role' => ChannelMemberRole::highestRoleFromLetters($prefixLetters),
+            'prefixLetters' => $prefixLetters,
+        ];
+    }
+
+    /**
      * InspIRCd 4.x IJOIN: post-burst join (user joins a channel after ENDBURST).
-     * Format: :<uid> IJOIN <channel> <mode_hint> [<creation_ts>]
-     * <mode_hint> is a numeric representing the user's prefix modes in the channel.
-     * Prefix numeric mapping (protocol 1206): voice=1, halfop=2, op=4, admin=8, owner=16.
-     * Multiple modes are OR'd (e.g. op+voice=5).
-     * <creation_ts> is optional; when absent, the channel already exists on our side.
+     * Format: :<uid> IJOIN <channel> <membid> [<creation_ts> <prefix_modes>].
      */
     private function handleIjoin(IRCMessage $message): void
     {
@@ -272,10 +300,11 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
 
         $uidStr = $message->prefix ?? '';
         $channelStr = $message->params[0];
-        $modeHint = (int) ($message->params[1] ?? 0);
+        $membershipId = $message->params[1] ?? '';
         $creationTs = (int) ($message->params[2] ?? 0);
+        $prefixLetters = isset($message->params[3]) ? self::parsePrefixModeLetters((string) $message->params[3]) : [];
 
-        if ('' === $uidStr || '' === $channelStr) {
+        if ('' === $uidStr || '' === $channelStr || '' === $membershipId) {
             return;
         }
 
@@ -286,11 +315,31 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             return;
         }
 
-        $role = self::roleFromModeHint($modeHint);
-
-        $members = [['uid' => $uid, 'role' => $role, 'prefixLetters' => self::prefixLettersFromModeHint($modeHint)]];
+        $members = [[
+            'uid' => $uid,
+            'role' => ChannelMemberRole::highestRoleFromLetters($prefixLetters),
+            'prefixLetters' => $prefixLetters,
+        ]];
 
         $this->eventDispatcher->dispatch(new ChannelJoinReceivedEvent($channelName, $creationTs, '', $members));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function parsePrefixModeLetters(string $prefixModes): array
+    {
+        $letters = [];
+        for ($i = 0, $length = strlen($prefixModes); $i < $length; ++$i) {
+            $letter = $prefixModes[$i];
+            if (null === ChannelMemberRole::fromModeLetter($letter) || in_array($letter, $letters, true)) {
+                continue;
+            }
+
+            $letters[] = $letter;
+        }
+
+        return $letters;
     }
 
     private function handlePart(IRCMessage $message): void
@@ -463,61 +512,5 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
         }
 
         $this->logger->info(sprintf('User %s opered up with type %s', $sourceId, $operType));
-    }
-
-    private const int MODE_HINT_VOICE = 1;
-
-    private const int MODE_HINT_HALFOP = 2;
-
-    private const int MODE_HINT_OP = 4;
-
-    private const int MODE_HINT_ADMIN = 8;
-
-    private const int MODE_HINT_OWNER = 16;
-
-    private static function roleFromModeHint(int $modeHint): ChannelMemberRole
-    {
-        if (0 !== ($modeHint & self::MODE_HINT_OWNER)) {
-            return ChannelMemberRole::Owner;
-        }
-        if (0 !== ($modeHint & self::MODE_HINT_ADMIN)) {
-            return ChannelMemberRole::Admin;
-        }
-        if (0 !== ($modeHint & self::MODE_HINT_OP)) {
-            return ChannelMemberRole::Op;
-        }
-        if (0 !== ($modeHint & self::MODE_HINT_HALFOP)) {
-            return ChannelMemberRole::HalfOp;
-        }
-        if (0 !== ($modeHint & self::MODE_HINT_VOICE)) {
-            return ChannelMemberRole::Voice;
-        }
-
-        return ChannelMemberRole::None;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function prefixLettersFromModeHint(int $modeHint): array
-    {
-        $letters = [];
-        if (0 !== ($modeHint & self::MODE_HINT_OWNER)) {
-            $letters[] = 'q';
-        }
-        if (0 !== ($modeHint & self::MODE_HINT_ADMIN)) {
-            $letters[] = 'a';
-        }
-        if (0 !== ($modeHint & self::MODE_HINT_OP)) {
-            $letters[] = 'o';
-        }
-        if (0 !== ($modeHint & self::MODE_HINT_HALFOP)) {
-            $letters[] = 'h';
-        }
-        if (0 !== ($modeHint & self::MODE_HINT_VOICE)) {
-            $letters[] = 'v';
-        }
-
-        return $letters;
     }
 }

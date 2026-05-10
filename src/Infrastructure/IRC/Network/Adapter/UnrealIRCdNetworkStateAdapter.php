@@ -232,6 +232,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
      */
     private function parseListModeEntry(string $entry): ?array
     {
+        $entry = $this->stripSjsbyPrefix($entry);
         $firstChar = $entry[0] ?? '';
 
         if ('&' === $firstChar) {
@@ -247,6 +248,20 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         }
 
         return null;
+    }
+
+    private function stripSjsbyPrefix(string $entry): string
+    {
+        if (!str_starts_with($entry, '<')) {
+            return $entry;
+        }
+
+        $closingPos = strpos($entry, '>');
+        if (false === $closingPos) {
+            return $entry;
+        }
+
+        return substr($entry, $closingPos + 1);
     }
 
     /**

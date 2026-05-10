@@ -66,14 +66,14 @@ final class UnrealIRCdNickReservationTest extends TestCase
     }
 
     #[Test]
-    public function reserveNickWithDurationSendsSqlineWithTimestamp(): void
+    public function reserveNickWithDurationSendsTimedQline(): void
     {
         $reservation = new UnrealIRCdNickReservation($this->connectionHolder);
 
         $reservation->reserveNickWithDuration('GlobalBot', 86400, 'Temporary pseudo-client');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001 SQLINE GlobalBot 86400 :Temporary pseudo-client', $this->written[0]);
+        self::assertMatchesRegularExpression('/^TKL \+ Q \* GlobalBot 001 \d+ \d+ :Temporary pseudo-client$/', $this->written[0]);
     }
 
     #[Test]
@@ -84,7 +84,7 @@ final class UnrealIRCdNickReservationTest extends TestCase
         $reservation->reserveNickWithDuration('GlobalBot', 0, 'Permanent block');
 
         self::assertCount(1, $this->written);
-        self::assertSame(':001 SQLINE GlobalBot 0 :Permanent block', $this->written[0]);
+        self::assertMatchesRegularExpression('/^TKL \+ Q \* GlobalBot 001 0 \d+ :Permanent block$/', $this->written[0]);
     }
 
     #[Test]

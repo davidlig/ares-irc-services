@@ -476,7 +476,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleFjoinWithInvalidUidSkipsEntry(): void
+    public function handleFjoinWithControlCharacterInUidSkipsEntry(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -637,7 +637,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
             'FJOIN',
             null,
             ['#test', '1704067200', '+nt'],
-            'o,abc123:0 v,def456:0 h,ghi789:0', // op, voice, halfop
+            'oov,abc123:0 v,def456:0 h,ghi789:0', // op+voice, voice, halfop
         );
         $adapter->handleMessage($message);
 
@@ -645,6 +645,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertCount(3, $captured->members);
         self::assertSame('abc123', $captured->members[0]['uid']->value);
         self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Op, $captured->members[0]['role']);
+        self::assertSame(['o', 'v'], $captured->members[0]['prefixLetters']);
         self::assertSame('def456', $captured->members[1]['uid']->value);
         self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Voice, $captured->members[1]['role']);
         self::assertSame('ghi789', $captured->members[2]['uid']->value);
@@ -790,7 +791,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], ':0 o,abc123:0'));
+        $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], 'abc:0,o o,abc123:0'));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(1, $captured->members);
@@ -798,7 +799,27 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleFjoinWithEntryMissingColonSkipsEntry(): void
+    public function handleFjoinWithInvalidUidSkipsEntry(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], "o,abc\x01123:0 o,def456:0"));
+
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertCount(1, $captured->members);
+        self::assertSame('def456', $captured->members[0]['uid']->value);
+    }
+
+    #[Test]
+    public function handleFjoinWithEntryMissingColonParsesMemberWithoutMembid(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -813,12 +834,13 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], 'o,abc123 o,def456:0'));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
-        self::assertCount(1, $captured->members);
-        self::assertSame('def456', $captured->members[0]['uid']->value);
+        self::assertCount(2, $captured->members);
+        self::assertSame('abc123', $captured->members[0]['uid']->value);
+        self::assertSame('def456', $captured->members[1]['uid']->value);
     }
 
     #[Test]
-    public function handleFjoinWithEntryMissingCommaSkipsEntry(): void
+    public function handleFjoinWithEntryMissingCommaParsesMemberWithoutPrefixes(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -833,7 +855,10 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage(new IRCMessage('FJOIN', null, ['#test', '1704067200', '+nt'], 'abc123:0'));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
-        self::assertCount(0, $captured->members);
+        self::assertCount(1, $captured->members);
+        self::assertSame('abc123', $captured->members[0]['uid']->value);
+        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
     #[Test]
@@ -1305,8 +1330,8 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertSame(0, $captured->timestamp);
         self::assertCount(1, $captured->members);
         self::assertSame('994AAAAAQ', $captured->members[0]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Op, $captured->members[0]['role']);
-        self::assertSame(['o', 'h', 'v'], $captured->members[0]['prefixLetters']);
+        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
     #[Test]
@@ -1329,11 +1354,12 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertSame(1704067200, $captured->timestamp);
         self::assertCount(1, $captured->members);
         self::assertSame('994AAAAAQ', $captured->members[0]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Op, $captured->members[0]['role']);
+        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
     #[Test]
-    public function handleIjoinWithZeroModeHintIsNoneRole(): void
+    public function handleIjoinWithoutPrefixModesIsNoneRole(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -1345,7 +1371,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '0'], null));
+        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
@@ -1353,7 +1379,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleIjoinWithVoiceModeHint(): void
+    public function handleIjoinWithVoicePrefixMode(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -1365,7 +1391,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '1'], null));
+        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69', '1704067200', 'v'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Voice, $captured->members[0]['role']);
@@ -1373,7 +1399,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleIjoinWithOwnerModeHint(): void
+    public function handleIjoinWithOwnerPrefixMode(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -1385,7 +1411,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '16'], null));
+        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69', '1704067200', 'q'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Owner, $captured->members[0]['role']);
@@ -1393,7 +1419,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleIjoinWithAdminModeHint(): void
+    public function handleIjoinWithAdminPrefixMode(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -1405,7 +1431,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '8'], null));
+        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69', '1704067200', 'a'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Admin, $captured->members[0]['role']);
@@ -1413,7 +1439,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleIjoinWithHalfopModeHint(): void
+    public function handleIjoinWithHalfopPrefixMode(): void
     {
         $captured = null;
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
@@ -1425,7 +1451,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new InspIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '2'], null));
+        $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69', '1704067200', 'h'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::HalfOp, $captured->members[0]['role']);

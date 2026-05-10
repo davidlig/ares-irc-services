@@ -365,6 +365,31 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
+    public function handleSjoinWithListModeBAndSjsbyPrefixAddsBanMask(): void
+    {
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function ($event) use (&$captured) {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $message = new IRCMessage(
+            'SJOIN',
+            null,
+            ['1704067200', '#test'],
+            '<1548605202,UserOne>&*!*@bad.host 001ABC123',
+        );
+        $adapter->handleMessage($message);
+
+        self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertSame(['*!*@bad.host'], $captured->listModes['b']);
+    }
+
+    #[Test]
     public function handleSjoinWithListModeEAddsExemptMask(): void
     {
         $captured = null;
