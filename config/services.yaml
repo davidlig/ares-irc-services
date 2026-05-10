@@ -35,6 +35,7 @@ parameters:
     maintenance.interval: '%env(int:MAINTENANCE_INTERVAL)%'
     maintenance.purge_expired_akick_interval: '%env(int:MAINTENANCE_INTERVAL)%'
     maintenance.purge_expired_glines_interval: '%env(int:MAINTENANCE_INTERVAL)%'
+    maintenance.purge_expired_motds_interval: '%env(int:MAINTENANCE_INTERVAL)%'
 
     # NickServ pseudo-client
     nickserv.nick:     '%env(NICKSERV_NICK)%'
@@ -1479,6 +1480,7 @@ services:
     App\Application\OperServ\Command\Handler\MotdCommand:
         arguments:
             $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
+            $debugNotifier: '@App\Infrastructure\OperServ\Service\OperServDebugNotifier'
         tags: ['operserv.command']
 
     # --- OperServ Infrastructure -------------------------------------------------
@@ -1510,11 +1512,14 @@ services:
             $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
             $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
+            $channelLookup: '@App\Application\Port\ChannelLookupPort'
+            $channelRegistration: '@App\Application\Port\ServiceChannelRegistrationPort'
             $pseudoUidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
             $sendNoticePort: '@App\Application\Port\SendNoticePort'
             $nickForce: '@App\Application\NickServ\Service\NickForceService'
+            $debugChannel: '%ircops.debug_channel%'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
@@ -1629,6 +1634,17 @@ services:
             $serverName: '%irc.server_name%'
             $logger: '@monolog.logger.maintenance'
             $intervalSeconds: '%maintenance.purge_expired_glines_interval%'
+        tags: ['maintenance.task']
+
+    App\Application\OperServ\Maintenance\PurgeExpiredMotdsTask:
+        arguments:
+            $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
+            $debugNotifier: '@App\Infrastructure\OperServ\Service\OperServDebugNotifier'
+            $translator: '@translator'
+            $logger: '@monolog.logger.maintenance'
+            $defaultLanguage: '%services.default_language%'
+            $defaultTimezone: '%services.default_timezone%'
+            $intervalSeconds: '%maintenance.purge_expired_motds_interval%'
         tags: ['maintenance.task']
 
     # --- IRCops Debug Channel Protection ----------------------------------------

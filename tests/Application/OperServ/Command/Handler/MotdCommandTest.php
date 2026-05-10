@@ -13,6 +13,7 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -290,6 +291,24 @@ final class MotdCommandTest extends TestCase
     }
 
     #[Test]
+    public function doDelNotifiesDebugChannelBeforeRemovingMotdEntry(): void
+    {
+        $motd = Motd::create('Hello', 'NickServ', 'PRIVMSG');
+        $motd->recordShown();
+
+        $motdRepository = $this->createMock(MotdRepositoryInterface::class);
+        $motdRepository->method('findById')->willReturn($motd);
+        $motdRepository->expects(self::once())->method('remove')->with($motd);
+
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::once())->method('notify')
+            ->with(self::stringContains('motd.debug.finalized'));
+
+        $command = new MotdCommand($motdRepository, $debugNotifier);
+        $command->execute($this->createContext(['DEL', '1']));
+    }
+
+    #[Test]
     public function doDelWithNonNumericIdRepliesNotFound(): void
     {
         $notifier = $this->createMock(OperServNotifierInterface::class);
@@ -463,6 +482,24 @@ final class MotdCommandTest extends TestCase
 
         $auditData = $command->getAuditData($this->createContext(['CLEAN']));
         self::assertNotNull($auditData);
+    }
+
+    #[Test]
+    public function doCleanNotifiesDebugChannelForEveryExpiredMotd(): void
+    {
+        $expired1 = Motd::create('Expired 1', 'Bot1', 'PRIVMSG', null, new DateTimeImmutable('-2 days'));
+        $expired2 = Motd::create('Expired 2', 'Bot2', 'NOTICE', null, new DateTimeImmutable('-1 hour'));
+
+        $motdRepository = $this->createMock(MotdRepositoryInterface::class);
+        $motdRepository->method('findExpired')->willReturn([$expired1, $expired2]);
+        $motdRepository->expects(self::exactly(2))->method('remove');
+
+        $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debugNotifier->expects(self::exactly(2))->method('notify')
+            ->with(self::stringContains('motd.debug.finalized'));
+
+        $command = new MotdCommand($motdRepository, $debugNotifier);
+        $command->execute($this->createContext(['CLEAN']));
     }
 
     #[Test]

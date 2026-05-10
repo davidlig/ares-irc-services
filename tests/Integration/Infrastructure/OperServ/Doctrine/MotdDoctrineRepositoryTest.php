@@ -35,7 +35,23 @@ final class MotdDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertSame('Welcome to the network!', $found->getText());
         self::assertSame('NickServ', $found->getBotNickname());
         self::assertSame('PRIVMSG', $found->getMessageType());
+        self::assertSame(0, $found->getShownCount());
         self::assertTrue($found->isEnabled());
+    }
+
+    #[Test]
+    public function savePersistsShownCount(): void
+    {
+        $motd = Motd::create('Welcome to the network!', 'NickServ', 'PRIVMSG');
+        $motd->recordShown();
+        $motd->recordShown();
+
+        $this->repository->save($motd);
+        $this->entityManager->clear();
+
+        $found = $this->repository->findById($motd->getId());
+        self::assertNotNull($found);
+        self::assertSame(2, $found->getShownCount());
     }
 
     #[Test]

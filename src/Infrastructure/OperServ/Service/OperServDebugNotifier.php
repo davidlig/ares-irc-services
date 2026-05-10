@@ -57,6 +57,16 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
         $this->channelActions->joinChannelAsService($this->debugChannel);
     }
 
+    public function notify(string $message): void
+    {
+        if (!$this->isConfigured()) {
+            return;
+        }
+
+        $this->ensureChannelJoined();
+        $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
+    }
+
     public function log(
         string $operator,
         string $command,
@@ -116,8 +126,6 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
         ?string $reason,
         array $extra,
     ): void {
-        $this->ensureChannelJoined();
-
         $coloredOperator = self::COLOR_BLUE . $operator . self::COLOR_RESET;
         $coloredCommand = self::COLOR_RED . $command . self::COLOR_RESET;
         $coloredTarget = self::COLOR_BLUE . $target . self::COLOR_RESET;
@@ -176,7 +184,7 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
             );
         }
 
-        $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
+        $this->notify($message);
     }
 
     public function isIrcopOrRoot(string $nick, bool $isIdentified): bool

@@ -18,5 +18,6 @@
     <field name="creatorNickId" type="integer" column="creator_nick_id" nullable="true"/>
     <field name="createdAt" type="datetime_immutable" column="created_at"/>
     <field name="expiresAt" type="datetime_immutable" column="expires_at" nullable="true"/>
+    <field name="shownCount" type="integer" column="shown_count"/>
     </entity>
 </doctrine-mapping>

@@ -9,11 +9,15 @@ use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChannelModeSupportInterface;
+use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
@@ -46,21 +50,27 @@ final class MotdOnConnectSubscriberTest extends TestCase
         ?MotdRepositoryInterface $r = null,
         ?ServiceUidRegistry $u = null,
         ?ActiveConnectionHolderInterface $c = null,
+        ?ChannelLookupPort $cl = null,
+        ?ServiceChannelRegistrationPort $cr = null,
         ?PseudoClientUidGenerator $p = null,
         ?NetworkUserLookupPort $l = null,
         ?RegisteredNickRepositoryInterface $n = null,
         ?SendNoticePort $s = null,
         ?NickForceService $f = null,
+        ?string $debugChannel = null,
     ): MotdOnConnectSubscriber {
         return new MotdOnConnectSubscriber(
             $r ?? $this->createStub(MotdRepositoryInterface::class),
             $u ?? $this->createStub(ServiceUidRegistry::class),
             $c ?? $this->createStub(ActiveConnectionHolderInterface::class),
+            $cl ?? $this->createStub(ChannelLookupPort::class),
+            $cr ?? $this->createStub(ServiceChannelRegistrationPort::class),
             $p ?? $this->createStub(PseudoClientUidGenerator::class),
             $l ?? $this->createStub(NetworkUserLookupPort::class),
             $n ?? $this->createStub(RegisteredNickRepositoryInterface::class),
             $s ?? $this->createStub(SendNoticePort::class),
             $f ?? $this->createStub(NickForceService::class),
+            $debugChannel,
         );
     }
 
@@ -102,7 +112,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
     public function serviceNickSends(): void
     {
         $m = Motd::create('Hi', 'NickServ', 'PRIVMSG');
-        $r = $this->createStub(MotdRepositoryInterface::class);
+        $r = $this->createMock(MotdRepositoryInterface::class);
         $r->method('findActive')->willReturn([$m]);
 
         $u = $this->createStub(ServiceUidRegistry::class);
@@ -111,9 +121,13 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $s = $this->createMock(SendNoticePort::class);
         $s->expects(self::once())->method('sendMessage')->with('001NS', '001ABC', 'Hi', 'PRIVMSG');
 
+        $r->expects(self::once())->method('save')->with($m);
+
         $x = $this->sub(r: $r, u: $u, s: $s);
         $x->onSyncComplete();
         $x->onUserJoined(new UserJoinedNetworkAppEvent($this->dto()));
+
+        self::assertSame(1, $m->getShownCount());
     }
 
     #[Test]
@@ -529,5 +543,88 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $x->onSyncComplete();
 
         self::assertTrue(true);
+    }
+
+    #[Test]
+    public function customMotdBotJoinsDebugChannelWhenConfigured(): void
+    {
+        $m = Motd::create('Hi', 'custom!bot@h.example', 'PRIVMSG');
+        $r = $this->createStub(MotdRepositoryInterface::class);
+        $r->method('findAll')->willReturn([$m]);
+        $r->method('findActive')->willReturn([$m]);
+
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(null);
+
+        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $n->method('findByNick')->willReturn(null);
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getSupportedPrefixModes')->willReturn(['o']);
+
+        $sa = $this->createMock(ProtocolServiceActionsInterface::class);
+        $sa->expects(self::once())->method('introducePseudoClient');
+        $sa->expects(self::once())->method('joinChannelAsService')
+            ->with('0A0', '#ircops', '0A0Z00001', 'o', 1234);
+
+        $mod = $this->createStub(ProtocolModuleInterface::class);
+        $mod->method('getServiceActions')->willReturn($sa);
+        $mod->method('getNickReservation')->willReturn($this->createStub(ServiceNickReservationInterface::class));
+        $mod->method('getChannelModeSupport')->willReturn($modeSupport);
+
+        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c->method('getProtocolModule')->willReturn($mod);
+        $c->method('getServerSid')->willReturn('0A0');
+
+        $cl = $this->createStub(ChannelLookupPort::class);
+        $cl->method('findByChannelName')->willReturn(new ChannelView('#ircops', '+nt', null, 1, timestamp: 1234));
+
+        $cr = $this->createMock(ServiceChannelRegistrationPort::class);
+        $cr->expects(self::once())->method('registerServiceChannelJoin')
+            ->with('#ircops', '0A0Z00001', 'o', 1234);
+
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturn('0A0Z00001');
+
+        $x = $this->sub(r: $r, u: $u, c: $c, cl: $cl, cr: $cr, p: $p, l: $l, n: $n, debugChannel: '#ircops');
+        $x->onSyncComplete();
+    }
+
+    #[Test]
+    public function customMotdBotSkipsDebugJoinWhenConnectionDisappearsAfterIntroduction(): void
+    {
+        $m = Motd::create('Hi', 'custom!bot@h.example', 'PRIVMSG');
+        $r = $this->createStub(MotdRepositoryInterface::class);
+        $r->method('findActive')->willReturn([$m]);
+
+        $u = $this->createStub(ServiceUidRegistry::class);
+        $u->method('getUidByNickname')->willReturn(null);
+
+        $l = $this->createStub(NetworkUserLookupPort::class);
+        $l->method('findByNick')->willReturn(null);
+
+        $n = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $n->method('findByNick')->willReturn(null);
+
+        $sa = $this->createMock(ProtocolServiceActionsInterface::class);
+        $sa->expects(self::once())->method('introducePseudoClient');
+        $sa->expects(self::never())->method('joinChannelAsService');
+
+        $mod = $this->createStub(ProtocolModuleInterface::class);
+        $mod->method('getServiceActions')->willReturn($sa);
+        $mod->method('getNickReservation')->willReturn($this->createStub(ServiceNickReservationInterface::class));
+
+        $c = $this->createStub(ActiveConnectionHolderInterface::class);
+        $c->method('getProtocolModule')->willReturnOnConsecutiveCalls($mod, null);
+        $c->method('getServerSid')->willReturn('0A0');
+
+        $p = $this->createStub(PseudoClientUidGenerator::class);
+        $p->method('generate')->willReturn('0A0Z00001');
+
+        $x = $this->sub(r: $r, u: $u, c: $c, p: $p, l: $l, n: $n, debugChannel: '#ircops');
+        $x->onSyncComplete();
     }
 }

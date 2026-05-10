@@ -9,6 +9,7 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Security\OperServPermission;
+use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use DateTimeImmutable;
@@ -26,6 +27,7 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
 
     public function __construct(
         private readonly MotdRepositoryInterface $motdRepository,
+        private readonly ?ServiceDebugNotifierInterface $debugNotifier = null,
     ) {
     }
 
@@ -205,6 +207,7 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
             return;
         }
 
+        $this->notifyFinalized($context, $motd);
         $this->motdRepository->remove($motd);
 
         $context->reply('motd.del.done', [
@@ -242,13 +245,14 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
                 : $context->trans('motd.list.never');
 
             $context->replyRaw(sprintf(
-                '#%d [%s] %s → %s | %s | %s',
+                '#%d [%s] %s → %s | %s | %s | %s',
                 $motd->getId(),
                 $motd->getMessageType(),
                 $botNickname,
                 $motd->getText(),
                 $status,
                 $expiresAt,
+                $context->trans('motd.list.shown_count', ['%count%' => (string) $motd->getShownCount()]),
             ));
         }
     }
@@ -265,6 +269,7 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
 
         $count = 0;
         foreach ($expired as $motd) {
+            $this->notifyFinalized($context, $motd);
             $this->motdRepository->remove($motd);
             ++$count;
         }
@@ -298,5 +303,22 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
         };
 
         return (new DateTimeImmutable())->modify('+' . $seconds . ' seconds');
+    }
+
+    private function notifyFinalized(OperServContext $context, Motd $motd): void
+    {
+        $date = null !== $motd->getExpiresAt()
+            ? $context->formatDate($motd->getExpiresAt())
+            : $context->formatDate($motd->getCreatedAt());
+
+        $this->debugNotifier?->notify($context->trans('motd.debug.finalized', [
+            '%id%' => (string) $motd->getId(),
+            '%type%' => $motd->getMessageType(),
+            '%message%' => $motd->getText(),
+            '%date%' => $date,
+            '%shown_count%' => $context->trans('motd.list.shown_count', [
+                '%count%' => (string) $motd->getShownCount(),
+            ]),
+        ]));
     }
 }

@@ -94,6 +94,29 @@ final class NickServDebugNotifierTest extends TestCase
     }
 
     #[Test]
+    public function notifySendsRawMessageWhenConfigured(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')
+            ->with('#opers', 'raw debug message', 'NOTICE');
+
+        $debug = $this->createNotifier('#opers', $notifier);
+
+        $debug->notify('raw debug message');
+    }
+
+    #[Test]
+    public function notifyDoesNothingWhenNotConfigured(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $debug = $this->createNotifier(null, $notifier);
+
+        $debug->notify('raw debug message');
+    }
+
+    #[Test]
     public function logSendsMessageToChannelWhenConfigured(): void
     {
         $notifier = $this->createMock(NickServNotifierInterface::class);

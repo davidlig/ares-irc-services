@@ -79,6 +79,39 @@ final class OperServDebugNotifierTest extends TestCase
     }
 
     #[Test]
+    public function notifySendsRawMessageWhenConfigured(): void
+    {
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::once())->method('sendMessage')
+            ->with('#ircops', 'raw debug message', 'NOTICE');
+
+        $channelActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelActions->expects(self::once())->method('joinChannelAsService')->with('#ircops');
+
+        $debug = $this->createDebugNotifier(
+            channelActions: $channelActions,
+            notifier: $notifier,
+            debugChannel: '#ircops',
+        );
+
+        $debug->notify('raw debug message');
+    }
+
+    #[Test]
+    public function notifyDoesNothingWhenNotConfigured(): void
+    {
+        $notifier = $this->createMock(OperServNotifierInterface::class);
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $debug = $this->createDebugNotifier(
+            notifier: $notifier,
+            debugChannel: null,
+        );
+
+        $debug->notify('raw debug message');
+    }
+
+    #[Test]
     public function logWritesToFileWhenNotConfigured(): void
     {
         $logger = $this->createMock(LoggerInterface::class);

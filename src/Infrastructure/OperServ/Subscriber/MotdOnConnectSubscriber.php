@@ -9,8 +9,10 @@ use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Motd;
@@ -52,11 +54,14 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         private readonly MotdRepositoryInterface $motdRepository,
         private readonly ServiceUidRegistry $uidRegistry,
         private readonly ActiveConnectionHolderInterface $connectionHolder,
+        private readonly ChannelLookupPort $channelLookup,
+        private readonly ServiceChannelRegistrationPort $channelRegistration,
         private readonly PseudoClientUidGenerator $pseudoUidGenerator,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly SendNoticePort $sendNoticePort,
         private readonly NickForceService $nickForce,
+        private readonly ?string $debugChannel,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -170,6 +175,8 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                 'motdIds' => [$motd->getId()],
             ];
 
+            $this->joinPseudoClientToDebugChannel($uid);
+
             $this->logger->info('MotdOnConnect: introduced pseudo-client.', [
                 'motd_id' => $motd->getId(),
                 'nickname' => $mask->nickname,
@@ -227,6 +234,8 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                     $motd->getText(),
                     $motd->getMessageType(),
                 );
+                $motd->recordShown();
+                $this->motdRepository->save($motd);
 
                 continue;
             }
@@ -247,8 +256,36 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
                     $motd->getText(),
                     $motd->getMessageType(),
                 );
+                $motd->recordShown();
+                $this->motdRepository->save($motd);
             }
         }
+    }
+
+    private function joinPseudoClientToDebugChannel(string $uid): void
+    {
+        if (null === $this->debugChannel || '' === $this->debugChannel) {
+            return;
+        }
+
+        $module = $this->connectionHolder->getProtocolModule();
+        $serverSid = $this->connectionHolder->getServerSid();
+
+        if (null === $module || null === $serverSid) {
+            return;
+        }
+
+        $maxPrefix = 'o';
+        foreach (['q', 'a', 'o', 'h', 'v'] as $letter) {
+            if (in_array($letter, $module->getChannelModeSupport()->getSupportedPrefixModes(), true)) {
+                $maxPrefix = $letter;
+                break;
+            }
+        }
+
+        $channelTimestamp = $this->channelLookup->findByChannelName($this->debugChannel)?->timestamp ?? time();
+        $module->getServiceActions()->joinChannelAsService($serverSid, $this->debugChannel, $uid, $maxPrefix, $channelTimestamp);
+        $this->channelRegistration->registerServiceChannelJoin($this->debugChannel, $uid, $maxPrefix, $channelTimestamp);
     }
 
     private function quitPseudoClient(string $uid): void

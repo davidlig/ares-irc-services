@@ -302,9 +302,12 @@ motd:
     expired:        "\x0304caducada\x03"
     no_bot:         "(sen bot)"
     never:          "nunca"
+    shown_count:    "amosado %count% veces"
   clean:
     syntax:         "MOTD CLEAN"
     short:          "Eliminar todas as entradas MOTD caducadas."
     help:           "Elimina todas as entradas MOTD cuxo tempo de caducidade pasou.\n\n"
     done:           "\x0303✓\x03 Eliminadas %count% entradas MOTD caducadas."
     none:           "\x0303✓\x03 Non hai entradas MOTD caducadas que eliminar."
+  debug:
+    finalized:      "A mensaxe MOTD #%id% finalizou: [%type%] %message% | %date% | %shown_count%"

@@ -12,6 +12,8 @@ interface ServiceDebugNotifierInterface
 
     public function ensureChannelJoined(): void;
 
+    public function notify(string $message): void;
+
     /**
      * Log an IRCop command execution for audit purposes.
      *

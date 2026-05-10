@@ -302,9 +302,12 @@ motd:
     expired:        "\x0304süresi dolmuş\x03"
     no_bot:         "(bot yok)"
     never:          "hiçbir zaman"
+    shown_count:    "%count% kez gösterildi"
   clean:
     syntax:         "MOTD CLEAN"
     short:          "Süresi dolmuş tüm MOTD girişlerini kaldırın."
     help:           "Süresi geçmiş tüm MOTD girişlerini kaldırır.\n\n"
     done:           "\x0303✓\x03 %count% süresi dolmuş MOTD girişi kaldırıldı."
     none:           "\x0303✓\x03 Kaldırılacak süresi dolmuş MOTD girişi yok."
+  debug:
+    finalized:      "MOTD mesajı #%id% sona erdi: [%type%] %message% | %date% | %shown_count%"

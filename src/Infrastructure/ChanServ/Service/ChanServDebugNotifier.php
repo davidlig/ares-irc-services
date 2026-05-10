@@ -42,6 +42,15 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
     {
     }
 
+    public function notify(string $message): void
+    {
+        if (!$this->isConfigured()) {
+            return;
+        }
+
+        $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
+    }
+
     public function log(
         string $operator,
         string $command,
@@ -152,6 +161,6 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
             $this->defaultLanguage,
         );
 
-        $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
+        $this->notify($message);
     }
 }

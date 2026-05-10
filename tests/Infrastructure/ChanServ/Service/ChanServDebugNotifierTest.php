@@ -71,6 +71,35 @@ final class ChanServDebugNotifierTest extends TestCase
     }
 
     #[Test]
+    public function notifySendsRawMessageWhenConfigured(): void
+    {
+        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $chanNotifier->expects(self::once())->method('sendMessage')
+            ->with('#ircops', 'raw debug message', 'NOTICE');
+
+        $notifier = $this->createNotifier(
+            chanNotifier: $chanNotifier,
+            debugChannel: '#ircops',
+        );
+
+        $notifier->notify('raw debug message');
+    }
+
+    #[Test]
+    public function notifyDoesNothingWhenNotConfigured(): void
+    {
+        $chanNotifier = $this->createMock(ChanServNotifierInterface::class);
+        $chanNotifier->expects(self::never())->method('sendMessage');
+
+        $notifier = $this->createNotifier(
+            chanNotifier: $chanNotifier,
+            debugChannel: null,
+        );
+
+        $notifier->notify('raw debug message');
+    }
+
+    #[Test]
     public function logWritesToFileAndSendsToChannelWhenConfigured(): void
     {
         $chanNotifier = $this->createMock(ChanServNotifierInterface::class);

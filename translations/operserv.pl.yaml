@@ -302,9 +302,12 @@ motd:
     expired:        "\x0304wygasłe\x03"
     no_bot:         "(brak bota)"
     never:          "nigdy"
+    shown_count:    "pokazano %count% razy"
   clean:
     syntax:         "MOTD CLEAN"
     short:          "Usuń wszystkie wygasłe wpisy MOTD."
     help:           "Usuwa wszystkie wpisy MOTD, których czas wygaśnięcia minął.\n\n"
     done:           "\x0303✓\x03 Usunięto %count% wygasłych wpisów MOTD."
     none:           "\x0303✓\x03 Brak wygasłych wpisów MOTD do usunięcia."
+  debug:
+    finalized:      "Wiadomość MOTD #%id% zakończyła się: [%type%] %message% | %date% | %shown_count%"

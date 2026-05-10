@@ -302,9 +302,12 @@ motd:
     expired:        "\x0304expirée\x03"
     no_bot:         "(aucun bot)"
     never:          "jamais"
+    shown_count:    "affiché %count% fois"
   clean:
     syntax:         "MOTD CLEAN"
     short:          "Supprimer toutes les entrées MOTD expirées."
     help:           "Supprime toutes les entrées MOTD dont le délai d'expiration est dépassé.\n\n"
     done:           "\x0303✓\x03 %count% entrées MOTD expirées supprimées."
     none:           "\x0303✓\x03 Aucune entrée MOTD expirée à supprimer."
+  debug:
+    finalized:      "Le message MOTD #%id% est terminé : [%type%] %message% | %date% | %shown_count%"

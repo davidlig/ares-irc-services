@@ -302,9 +302,12 @@ motd:
     expired:        "\x0304έληξε\x03"
     no_bot:         "(χωρίς bot)"
     never:          "ποτέ"
+    shown_count:    "εμφανίστηκε %count% φορές"
   clean:
     syntax:         "MOTD CLEAN"
     short:          "Αφαίρεση όλων των ληγμένων καταχωρήσεων MOTD."
     help:           "Αφαιρεί όλες τις καταχωρήσεις MOTD των οποίων ο χρόνος λήξης έχει παρέλθει.\n\n"
     done:           "\x0303✓\x03 Αφαιρέθηκαν %count% ληγμένες καταχωρήσεις MOTD."
     none:           "\x0303✓\x03 Δεν υπάρχουν ληγμένες καταχωρήσεις MOTD προς αφαίρεση."
+  debug:
+    finalized:      "Το μήνυμα MOTD #%id% ολοκληρώθηκε: [%type%] %message% | %date% | %shown_count%"

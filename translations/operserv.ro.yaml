@@ -302,9 +302,12 @@ motd:
     expired:        "\x0304expirată\x03"
     no_bot:         "(fără bot)"
     never:          "niciodată"
+    shown_count:    "afișat de %count% ori"
   clean:
     syntax:         "MOTD CLEAN"
     short:          "Eliminați toate intrările MOTD expirate."
     help:           "Elimină toate intrările MOTD a căror dată de expirare a trecut.\n\n"
     done:           "\x0303✓\x03 Eliminate %count% intrări MOTD expirate."
     none:           "\x0303✓\x03 Nu există intrări MOTD expirate de eliminat."
+  debug:
+    finalized:      "Mesajul MOTD #%id% s-a încheiat: [%type%] %message% | %date% | %shown_count%"

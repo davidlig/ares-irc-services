@@ -302,9 +302,12 @@ motd:
     expired:        "\x0304expirat\x03"
     no_bot:         "(sense bot)"
     never:          "mai"
+    shown_count:    "mostrat %count% vegades"
   clean:
     syntax:         "MOTD CLEAN"
     short:          "Treure totes les entrades MOTD expirades."
     help:           "Treu totes les entrades MOTD que hagin superat el temps d'expiració.\n\n"
     done:           "\x0303✓\x03 S'han tret %count% entrades MOTD expirades."
     none:           "\x0303✓\x03 No hi ha entrades MOTD expirades per treure."
+  debug:
+    finalized:      "El missatge MOTD #%id% ha finalitzat: [%type%] %message% | %date% | %shown_count%"

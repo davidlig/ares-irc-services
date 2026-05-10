@@ -302,9 +302,12 @@ motd:
     expired:        "\x0304iraungia\x03"
     no_bot:         "(botik ez)"
     never:          "inoiz ez"
+    shown_count:    "%count% aldiz erakutsia"
   clean:
     syntax:         "MOTD CLEAN"
     short:          "Kendu iraungitako MOTD sarrera guztiak."
     help:           "Bere iraungitze denbora igaro den MOTD sarrera guztiak kentzen ditu.\n\n"
     done:           "\x0303✓\x03 %count% iraungitako MOTD sarrera kendu dira."
     none:           "\x0303✓\x03 Ez dago kentzeko iraungitako MOTD sarrerarik."
+  debug:
+    finalized:      "#%id% MOTD mezua amaitu da: [%type%] %message% | %date% | %shown_count%"

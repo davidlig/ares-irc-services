@@ -25,7 +25,19 @@ final class MotdTest extends TestCase
         self::assertSame('PRIVMSG', $motd->getMessageType());
         self::assertSame(42, $motd->getCreatorNickId());
         self::assertSame($expiry, $motd->getExpiresAt());
+        self::assertSame(0, $motd->getShownCount());
         self::assertNotNull($motd->getCreatedAt());
+    }
+
+    #[Test]
+    public function recordShownIncrementsShownCount(): void
+    {
+        $motd = Motd::create('Welcome', 'NickServ', 'PRIVMSG');
+
+        $motd->recordShown();
+        $motd->recordShown();
+
+        self::assertSame(2, $motd->getShownCount());
     }
 
     #[Test]

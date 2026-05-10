@@ -34,6 +34,8 @@ class Motd
 
     private ?DateTimeImmutable $expiresAt = null;
 
+    private int $shownCount = 0;
+
     private function __construct()
     {
     }
@@ -54,6 +56,7 @@ class Motd
         $motd->creatorNickId = $creatorNickId;
         $motd->createdAt = new DateTimeImmutable();
         $motd->expiresAt = $expiresAt;
+        $motd->shownCount = 0;
 
         return $motd;
     }
@@ -96,6 +99,16 @@ class Motd
     public function getExpiresAt(): ?DateTimeImmutable
     {
         return $this->expiresAt;
+    }
+
+    public function getShownCount(): int
+    {
+        return $this->shownCount;
+    }
+
+    public function recordShown(): void
+    {
+        ++$this->shownCount;
     }
 
     public function isExpired(): bool
