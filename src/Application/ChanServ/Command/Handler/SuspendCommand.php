@@ -10,16 +10,14 @@ use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use DateInterval;
-use DateTimeImmutable;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function sprintf;
 use function strtolower;
-use function trim;
 
 final class SuspendCommand implements ChanServCommandInterface, AuditableCommandInterface
 {
@@ -136,9 +134,9 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
             return;
         }
 
-        $expiresAt = $this->parseExpiry($durationStr);
+        $expiresAt = RelativeExpiryParser::parse($durationStr);
 
-        if (null === $expiresAt && '0' !== strtolower($durationStr)) {
+        if (null === $expiresAt && !RelativeExpiryParser::isPermanent($durationStr)) {
             $context->reply('suspend.invalid_duration');
 
             return;
@@ -185,31 +183,6 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
     public function getAuditData(object $context): ?IrcopAuditData
     {
         return $this->auditData;
-    }
-
-    private function parseExpiry(string $expiryStr): ?DateTimeImmutable
-    {
-        $expiryStr = strtolower(trim($expiryStr));
-
-        if ('0' === $expiryStr) {
-            return null;
-        }
-
-        $matches = [];
-
-        if (!preg_match('/^(\d+)([dhm])$/', $expiryStr, $matches)) {
-            return null;
-        }
-
-        $value = (int) $matches[1];
-        $unit = $matches[2];
-        $intervalSpec = match ($unit) {
-            'd' => "P{$value}D",
-            'h' => "PT{$value}H",
-            'm' => "PT{$value}M",
-        };
-
-        return (new DateTimeImmutable())->add(new DateInterval($intervalSpec));
     }
 
     private function decodeIp(string $ipBase64): string

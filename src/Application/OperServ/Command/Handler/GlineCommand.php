@@ -13,11 +13,11 @@ use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
-use DateInterval;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 
@@ -26,7 +26,6 @@ use function count;
 use function ctype_digit;
 use function fnmatch;
 use function implode;
-use function preg_match;
 use function sprintf;
 use function strtolower;
 use function strtoupper;
@@ -182,8 +181,8 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         }
 
         $expiryStr = trim($context->args[2]);
-        $expiresAt = $this->parseExpiry($expiryStr);
-        if (null === $expiresAt && '0' !== strtolower($expiryStr)) {
+        $expiresAt = RelativeExpiryParser::parse($expiryStr);
+        if (null === $expiresAt && !RelativeExpiryParser::isPermanent($expiryStr)) {
             $context->reply('gline.invalid_expiry');
 
             return;
@@ -398,31 +397,6 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         }
 
         return $this->glineRepository->findByMask($item);
-    }
-
-    private function parseExpiry(string $expiryStr): ?DateTimeImmutable
-    {
-        $expiryStr = strtolower(trim($expiryStr));
-
-        if ('0' === $expiryStr) {
-            return null;
-        }
-
-        $matches = [];
-        if (!preg_match('/^(\d+)([dhm])$/', $expiryStr, $matches)) {
-            return null;
-        }
-
-        $value = (int) $matches[1];
-        $unit = $matches[2];
-
-        $intervalSpec = match ($unit) {
-            'd' => "P{$value}D",
-            'h' => "PT{$value}H",
-            'm' => "PT{$value}M",
-        };
-
-        return (new DateTimeImmutable())->add(new DateInterval($intervalSpec));
     }
 
     private function resolveCreatorName(?int $creatorNickId, OperServContext $context): string

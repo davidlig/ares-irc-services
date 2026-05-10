@@ -13,16 +13,14 @@ use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickSuspensionService;
 use App\Application\NickServ\Service\NickTargetValidator;
+use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use DateInterval;
-use DateTimeImmutable;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function sprintf;
 use function strtolower;
-use function trim;
 
 final class SuspendCommand implements NickServCommandInterface, AuditableCommandInterface
 {
@@ -132,9 +130,9 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
             return;
         }
 
-        $expiresAt = $this->parseExpiry($durationStr);
+        $expiresAt = RelativeExpiryParser::parse($durationStr);
 
-        if (null === $expiresAt && '0' !== strtolower($durationStr)) {
+        if (null === $expiresAt && !RelativeExpiryParser::isPermanent($durationStr)) {
             $context->reply('suspend.invalid_duration');
 
             return;
@@ -191,31 +189,6 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
     public function getAuditData(object $context): ?IrcopAuditData
     {
         return $this->auditData;
-    }
-
-    private function parseExpiry(string $expiryStr): ?DateTimeImmutable
-    {
-        $expiryStr = strtolower(trim($expiryStr));
-
-        if ('0' === $expiryStr) {
-            return null;
-        }
-
-        $matches = [];
-
-        if (!preg_match('/^(\d+)([dhm])$/', $expiryStr, $matches)) {
-            return null;
-        }
-
-        $value = (int) $matches[1];
-        $unit = $matches[2];
-        $intervalSpec = match ($unit) {
-            'd' => "P{$value}D",
-            'h' => "PT{$value}H",
-            'm' => "PT{$value}M",
-        };
-
-        return (new DateTimeImmutable())->add(new DateInterval($intervalSpec));
     }
 
     private function decodeIp(string $ipBase64): string

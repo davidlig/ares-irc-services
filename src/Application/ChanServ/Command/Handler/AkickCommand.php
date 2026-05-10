@@ -10,6 +10,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\BurstCompletePort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
+use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\ChanServ\Entity\ChannelAkick;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -20,15 +21,12 @@ use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\ValueObject\UserMask;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use DateInterval;
-use DateTimeImmutable;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
 use function ctype_digit;
 use function fnmatch;
-use function preg_match;
 use function sprintf;
 use function strtolower;
 use function strtoupper;
@@ -323,7 +321,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
                 }
             } else {
                 // Try to parse as expiry
-                $expiresAt = $this->parseExpiry($expiryStr);
+                $expiresAt = RelativeExpiryParser::parse($expiryStr);
                 if (null === $expiresAt) {
                     // Not a valid expiry format - syntax error
                     $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
@@ -455,27 +453,6 @@ final readonly class AkickCommand implements ChanServCommandInterface
         }
 
         return $this->akickRepository->findByChannelAndMask($channelId, $item);
-    }
-
-    private function parseExpiry(string $expiryStr): ?DateTimeImmutable
-    {
-        $expiryStr = strtolower(trim($expiryStr));
-
-        $matches = [];
-        if (!preg_match('/^(\d+)([dhm])$/', $expiryStr, $matches)) {
-            return null;
-        }
-
-        $value = (int) $matches[1];
-        $unit = $matches[2];
-
-        $intervalSpec = match ($unit) {
-            'd' => "P{$value}D",
-            'h' => "PT{$value}H",
-            'm' => "PT{$value}M",
-        };
-
-        return (new DateTimeImmutable())->add(new DateInterval($intervalSpec));
     }
 
     private function buildUserMask(string $nick, string $ident, string $host): UserMask
