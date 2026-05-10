@@ -155,7 +155,7 @@ final class DebugChannelJoinSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onSyncCompleteDoesNothingWhenChannelExistsInLookup(): void
+    public function onSyncCompleteAppliesChanServRankWhenChannelExistsInLookup(): void
     {
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isSuspended')->willReturn(false);
@@ -169,14 +169,22 @@ final class DebugChannelJoinSubscriberTest extends TestCase
             new ChannelView(name: '#opers', modes: '+r', topic: null, memberCount: 1),
         );
 
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'v']);
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($modeSupport);
+
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('setChannelModes');
+        $channelActions->expects(self::once())->method('setChannelMemberMode')->with('#opers', '0A0BBBBBB', 'q', true);
 
         $subscriber = $this->createSubscriber(
             debugChannel: '#opers',
             registeredChannelRepository: $registeredRepo,
             channelLookup: $channelLookup,
             channelServiceActions: $channelActions,
+            modeSupportProvider: $modeSupportProvider,
         );
 
         $event = new NetworkSyncCompleteEvent($this->createStub(ConnectionInterface::class), '001');

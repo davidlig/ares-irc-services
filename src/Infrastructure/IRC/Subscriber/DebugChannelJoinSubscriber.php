@@ -80,8 +80,9 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
             return;
         }
 
-        $view = $this->channelLookup->findByChannelName($this->debugChannel);
-        if (null !== $view) {
+        if (null !== $this->channelLookup->findByChannelName($this->debugChannel)) {
+            $this->applyChanServRank($this->debugChannel);
+
             return;
         }
 
