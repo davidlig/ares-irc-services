@@ -118,9 +118,22 @@ final class CoreServiceChannelRegistrationAdapterTest extends TestCase
     }
 
     #[Test]
-    public function registerServiceChannelJoinDefaultsToOpWhenPrefixInvalid(): void
+    public function registerServiceChannelJoinUsesNoRoleWhenPrefixEmpty(): void
     {
         $this->adapter->registerServiceChannelJoin('#ircops', '001CS', '', 1700000000);
+
+        $channel = $this->repository->findByName(new ChannelName('#ircops'));
+        self::assertNotNull($channel);
+        $member = $channel->getMember(new Uid('001CS'));
+        self::assertNotNull($member);
+        self::assertSame(ChannelMemberRole::None, $member->role);
+        self::assertSame([], $member->prefixLetters);
+    }
+
+    #[Test]
+    public function registerServiceChannelJoinDefaultsToOpWhenPrefixInvalid(): void
+    {
+        $this->adapter->registerServiceChannelJoin('#ircops', '001CS', 'x', 1700000000);
 
         $channel = $this->repository->findByName(new ChannelName('#ircops'));
         self::assertNotNull($channel);

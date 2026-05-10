@@ -263,11 +263,22 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function joinChannelAsServiceUsesOperatorWhenInvalidPrefix(): void
+    public function joinChannelAsServiceSkipsPrefixWhenEmpty(): void
     {
         $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', '');
+
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:001 FJOIN #test \d+ 0 :,001CSRV:$/', $this->written[0]);
+    }
+
+    #[Test]
+    public function joinChannelAsServiceUsesOperatorWhenInvalidPrefix(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->joinChannelAsService('001', '#test', '001CSRV', 'x');
 
         self::assertCount(1, $this->written);
         self::assertMatchesRegularExpression('/^:001 FJOIN #test \d+ 0 :o,001CSRV:$/', $this->written[0]);

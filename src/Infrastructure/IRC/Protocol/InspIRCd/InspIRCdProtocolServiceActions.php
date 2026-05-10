@@ -110,7 +110,7 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     {
         $timestamp = (string) ($channelTimestamp ?? time());
         $prefixLetter = strtolower($maxPrefixLetter);
-        if ('' === $prefixLetter || !in_array($prefixLetter, ['v', 'h', 'o', 'a', 'q'], true)) {
+        if ('' !== $prefixLetter && !in_array($prefixLetter, ['v', 'h', 'o', 'a', 'q'], true)) {
             $prefixLetter = 'o';
         }
         $memberEntry = $prefixLetter . ',' . $serviceUid . ':';

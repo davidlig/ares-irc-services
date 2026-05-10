@@ -10,7 +10,6 @@ use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\ChannelLookupPort;
-use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
@@ -562,18 +561,14 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $n = $this->createStub(RegisteredNickRepositoryInterface::class);
         $n->method('findByNick')->willReturn(null);
 
-        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
-        $modeSupport->method('getSupportedPrefixModes')->willReturn(['o']);
-
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::once())->method('introducePseudoClient');
         $sa->expects(self::once())->method('joinChannelAsService')
-            ->with('0A0', '#ircops', '0A0Z00001', 'o', 1234);
+            ->with('0A0', '#ircops', '0A0Z00001', '', 1234);
 
         $mod = $this->createStub(ProtocolModuleInterface::class);
         $mod->method('getServiceActions')->willReturn($sa);
         $mod->method('getNickReservation')->willReturn($this->createStub(ServiceNickReservationInterface::class));
-        $mod->method('getChannelModeSupport')->willReturn($modeSupport);
 
         $c = $this->createStub(ActiveConnectionHolderInterface::class);
         $c->method('getProtocolModule')->willReturn($mod);
@@ -584,7 +579,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
 
         $cr = $this->createMock(ServiceChannelRegistrationPort::class);
         $cr->expects(self::once())->method('registerServiceChannelJoin')
-            ->with('#ircops', '0A0Z00001', 'o', 1234);
+            ->with('#ircops', '0A0Z00001', '', 1234);
 
         $p = $this->createStub(PseudoClientUidGenerator::class);
         $p->method('generate')->willReturn('0A0Z00001');

@@ -275,17 +275,9 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $maxPrefix = 'o';
-        foreach (['q', 'a', 'o', 'h', 'v'] as $letter) {
-            if (in_array($letter, $module->getChannelModeSupport()->getSupportedPrefixModes(), true)) {
-                $maxPrefix = $letter;
-                break;
-            }
-        }
-
         $channelTimestamp = $this->channelLookup->findByChannelName($this->debugChannel)?->timestamp ?? time();
-        $module->getServiceActions()->joinChannelAsService($serverSid, $this->debugChannel, $uid, $maxPrefix, $channelTimestamp);
-        $this->channelRegistration->registerServiceChannelJoin($this->debugChannel, $uid, $maxPrefix, $channelTimestamp);
+        $module->getServiceActions()->joinChannelAsService($serverSid, $this->debugChannel, $uid, '', $channelTimestamp);
+        $this->channelRegistration->registerServiceChannelJoin($this->debugChannel, $uid, '', $channelTimestamp);
     }
 
     private function quitPseudoClient(string $uid): void

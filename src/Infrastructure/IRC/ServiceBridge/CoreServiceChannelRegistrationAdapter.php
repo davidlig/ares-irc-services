@@ -51,7 +51,9 @@ final readonly class CoreServiceChannelRegistrationAdapter implements ServiceCha
         }
 
         $uid = new Uid($serviceUid);
-        $role = ChannelMemberRole::fromModeLetter($servicePrefixLetter) ?? ChannelMemberRole::Op;
+        $role = '' === $servicePrefixLetter
+            ? ChannelMemberRole::None
+            : (ChannelMemberRole::fromModeLetter($servicePrefixLetter) ?? ChannelMemberRole::Op);
         $prefixLetters = ChannelMemberRole::None !== $role ? [$role->toModeLetter()] : [];
 
         $channel = $this->channelRepository->findByName($name);
