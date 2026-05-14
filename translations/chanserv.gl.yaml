@@ -20,6 +20,7 @@ register:
   help:             "Rexistra e asocia unha canle ao seu alcume. Debe estar identificado con %nickserv%."
   success:          "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."
   channel_not_on_network: "\x0304✗\x03 A canle \x02%channel%\x02 non existe na rede."
+  insufficient_channel_rank: "\x0304✗\x03 Debes ter polo menos estado de operador en \x02%channel%\x02 para rexistrala."
   limit_exceeded: "\x0304✗\x03 Alcanzou o máximo de %max% canles rexistradas."
   throttled: "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de rexistrar outra canle."
 

@@ -20,6 +20,7 @@ register:
   help:             "Bir kanalı kaydedin ve rumuzunuza bağlayın. %nickserv% ile kimliğiniz doğrulanmış olmalıdır."
   success:          "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanalı ağda mevcut değil."
+  insufficient_channel_rank: "\x0304✗\x03 Bu kanalı kaydetmek için \x02%channel%\x02 üzerinde en az operatör durumunda olmalısınız."
   limit_exceeded: "\x0304✗\x03 Maksimum %max% kayıtlı kanal sınırına ulaştınız."
   throttled: "\x0304✗\x03 Başka bir kanal kaydetmeden önce \x02%minutes%\x02 dakika beklemelisiniz."
 

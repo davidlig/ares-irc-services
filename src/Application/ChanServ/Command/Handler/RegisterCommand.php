@@ -8,6 +8,7 @@ use App\Application\ChanServ\ChannelRegisterThrottleRegistry;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
@@ -18,6 +19,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
+use function in_array;
 use function strtolower;
 
 /**
@@ -28,6 +30,8 @@ use function strtolower;
  */
 final readonly class RegisterCommand implements ChanServCommandInterface
 {
+    private const array REQUIRED_REGISTER_PREFIX_MODES = ['q', 'a', 'o'];
+
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelLevelRepositoryInterface $levelRepository,
@@ -139,6 +143,12 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         $isPrivileged = (null !== $sender && $sender->isOper)
             || $this->rootRegistry->isRoot($context->sender?->nick ?? '');
 
+        if (!$isPrivileged && !$this->senderHasRequiredChannelPrefix($channelView, $sender?->uid ?? '')) {
+            $context->reply('register.insufficient_channel_rank', ['%channel%' => $channelName]);
+
+            return;
+        }
+
         if (!$isPrivileged) {
             $remainingCooldown = $this->throttleRegistry->getRemainingCooldownSeconds(
                 $senderAccount->getId(),
@@ -182,5 +192,25 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         ));
 
         $context->reply('register.success', ['%channel%' => $channelName]);
+    }
+
+    private function senderHasRequiredChannelPrefix(ChannelView $channelView, string $senderUid): bool
+    {
+        foreach ($channelView->members as $member) {
+            if (($member['uid'] ?? '') !== $senderUid) {
+                continue;
+            }
+
+            $prefixLetters = $member['prefixLetters'] ?? [$member['roleLetter'] ?? ''];
+            foreach ($prefixLetters as $letter) {
+                if (in_array($letter, self::REQUIRED_REGISTER_PREFIX_MODES, true)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return false;
     }
 }

@@ -20,6 +20,7 @@ register:
   help:             "Registra e associa un canale al suo nickname. Deve essere identificato con %nickserv%."
   success:          "\x0303✔\x03 Il canale \x02%channel%\x02 è stato registrato."
   channel_not_on_network: "\x0304✗\x03 Il canale \x02%channel%\x02 non esiste sulla rete."
+  insufficient_channel_rank: "\x0304✗\x03 Devi avere almeno lo stato di operatore su \x02%channel%\x02 per registrarlo."
   limit_exceeded: "\x0304✗\x03 Ha raggiunto il massimo di %max% canali registrati."
   throttled: "\x0304✗\x03 Deve attendere \x02%minutes%\x02 minuto/i prima di registrare un altro canale."
 

@@ -1081,7 +1081,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '~001ABC123'));
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '&001ABC123'));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(1, $captured->members);
@@ -1102,7 +1102,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
             });
 
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '*001ABC123'));
+        $adapter->handleMessage(new IRCMessage('SJOIN', null, ['1704067200', '#test'], '~001ABC123'));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(1, $captured->members);

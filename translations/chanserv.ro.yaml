@@ -20,6 +20,7 @@ register:
   help:             "Înregistrați și asociați un canal cu porecla dumneavoastră. Trebuie să fiți identificat cu %nickserv%."
   success:          "\x0303✔\x03 Canalul \x02%channel%\x02 a fost înregistrat."
   channel_not_on_network: "\x0304✗\x03 Canalul \x02%channel%\x02 nu există în rețea."
+  insufficient_channel_rank: "\x0304✗\x03 Trebuie să ai cel puțin statut de operator pe \x02%channel%\x02 pentru a-l înregistra."
   limit_exceeded: "\x0304✗\x03 Ați atins limita maximă de %max% canale înregistrate."
   throttled: "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a înregistra alt canal."
 

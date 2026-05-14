@@ -32,6 +32,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use function array_slice;
 use function count;
 use function in_array;
+use function preg_match;
 use function sprintf;
 use function str_starts_with;
 use function strpos;
@@ -210,6 +211,15 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
                 continue;
             }
 
+            if (self::isAdminPrefixMemberEntry($entry)) {
+                $memberEntry = $this->parseMemberEntry($entry);
+                if (null !== $memberEntry) {
+                    $members[] = $memberEntry;
+
+                    continue;
+                }
+            }
+
             $listModeEntry = $this->parseListModeEntry($entry);
             if (null !== $listModeEntry) {
                 $listModes[$listModeEntry['mode']][] = $listModeEntry['value'];
@@ -292,10 +302,15 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             '+' => ChannelMemberRole::Voice,
             '%' => ChannelMemberRole::HalfOp,
             '@' => ChannelMemberRole::Op,
-            '~' => ChannelMemberRole::Admin,
-            '*' => ChannelMemberRole::Owner,
+            '&' => ChannelMemberRole::Admin,
+            '~' => ChannelMemberRole::Owner,
             default => ChannelMemberRole::None,
         };
+    }
+
+    private static function isAdminPrefixMemberEntry(string $entry): bool
+    {
+        return 1 === preg_match('/^&[A-Z0-9]{9}$/i', $entry);
     }
 
     /**
@@ -303,7 +318,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
      */
     private static function parseSjoinEntryToLetters(string &$entry): array
     {
-        $prefixChars = ['+', '%', '@', '~', '*'];
+        $prefixChars = ['+', '%', '@', '&', '~'];
         $letters = [];
         while ('' !== $entry && in_array($entry[0], $prefixChars, true)) {
             $role = self::roleFromSjoinPrefix($entry[0]);

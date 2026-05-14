@@ -20,6 +20,7 @@ register:
   help:             "Registreer en koppel een kanaal aan uw bijnaam. U moet geïdentificeerd zijn bij %nickserv%."
   success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
   channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 bestaat niet op het netwerk."
+  insufficient_channel_rank: "\x0304✗\x03 Je moet minstens operatorstatus hebben op \x02%channel%\x02 om het kanaal te registreren."
   limit_exceeded: "\x0304✗\x03 U heeft het maximum van %max% geregistreerde kanalen bereikt."
   throttled: "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een ander kanaal registreert."
 

@@ -20,6 +20,7 @@ register:
   help:             "Erregistratu eta lotu kanal bat zure ezizenarekin. %nickserv% zerbitzuan identifikatuta egon behar duzu."
   success:          "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago sarean."
+  insufficient_channel_rank: "\x0304✗\x03 \x02%channel%\x02 erregistratzeko gutxienez operadore maila izan behar duzu."
   limit_exceeded: "\x0304✗\x03 Erregistratutako kanalen gehieneko kopurura iritsi zara: %max%."
   throttled: "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu beste kanal bat erregistratu aurretik."
 
