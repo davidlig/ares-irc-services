@@ -21,6 +21,7 @@ use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Infrastructure\NickServ\PendingNickRestoreRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -77,6 +78,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -113,6 +115,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -150,6 +153,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -194,6 +198,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -232,6 +237,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -272,6 +278,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -315,6 +322,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -357,6 +365,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -401,6 +410,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -454,6 +464,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -513,6 +524,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -569,6 +581,7 @@ final class IdentifyCommandTest extends TestCase
             $vhostResolver,
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -576,6 +589,55 @@ final class IdentifyCommandTest extends TestCase
         $cmd->execute($this->createContext(new SenderView('UID1', 'Guest', 'i', 'h', 'c', 'ip'), ['User', 'correct'], $notifier, $translator));
 
         self::assertSame(['identify.success'], $messages);
+    }
+
+    #[Test]
+    public function successForcesNickWhenGuestRenameIsPendingEvenIfSenderNickMatches(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('verifyPassword')->willReturn(true);
+        $account->method('getNickname')->willReturn('User');
+        $account->method('getId')->willReturn(1);
+        $account->method('getVhost')->willReturn(null);
+        $account->method('getLanguage')->willReturn('en');
+        $account->expects(self::once())->method('markSeen');
+
+        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $nickRepo->expects(self::once())->method('save')->with($account);
+
+        $pendingRegistry = new PendingNickRestoreRegistry();
+        $pendingRegistry->mark('UID1');
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('forceNick')->with('UID1', 'User');
+        $notifier->expects(self::once())->method('setUserAccount')->with('UID1', 'User');
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID1', '', 'SID');
+        $notifier->method('sendMessage');
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $pendingRegistry,
+            5,
+            300,
+            900,
+        );
+
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false, 'SID');
+        $cmd->execute($this->createContext($sender, ['User', 'correct'], $notifier, $translator));
     }
 
     #[Test]
@@ -590,6 +652,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -609,6 +672,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -628,6 +692,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -647,6 +712,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -666,6 +732,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -685,6 +752,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -704,6 +772,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -723,6 +792,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -742,6 +812,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -761,6 +832,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -780,6 +852,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -895,6 +968,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $ircopRepo,
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -944,6 +1018,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $ircopRepo,
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,
@@ -990,6 +1065,7 @@ final class IdentifyCommandTest extends TestCase
             new VhostDisplayResolver(''),
             $ircopRepo,
             $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
             5,
             300,
             900,

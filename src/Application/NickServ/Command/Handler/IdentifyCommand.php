@@ -9,6 +9,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\IdentifyFailedAttemptRegistry;
 use App\Application\NickServ\NickServClientKeyResolver;
+use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
@@ -36,6 +37,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly VhostDisplayResolver $vhostDisplayResolver,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly int $identifyMaxFailedAttempts,
         private readonly int $identifyFailedWindowSeconds,
         private readonly int $identifyLockoutSeconds,
@@ -268,7 +270,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         RegisteredNick $account,
         string $targetNick,
     ): void {
-        if (0 !== strcasecmp($sender->nick, $targetNick)) {
+        if (0 !== strcasecmp($sender->nick, $targetNick) || $this->pendingRegistry->peek($sender->uid)) {
             $context->getNotifier()->forceNick($sender->uid, $account->getNickname());
         }
 
