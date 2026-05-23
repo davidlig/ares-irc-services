@@ -12,6 +12,7 @@
 /.vscode/
 /docs/
 /backups/
+/.opencode/mcp.env
 
 ###> friendsofphp/php-cs-fixer ###
 /.php-cs-fixer.php

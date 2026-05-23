@@ -1,0 +1,23 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "./plugins/irc-mcp-autostart.ts"
+  ],
+  "mcp": {
+    "irc": {
+      "type": "remote",
+      "enabled": true,
+      "url": "http://127.0.0.1:3005/mcp",
+      "timeout": 30000
+    },
+    "mariadb": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "sh",
+        "-c",
+        "set -a; . ./.opencode/mcp.env; set +a; exec npx -y @oleander/mcp-server-mariadb"
+      ]
+    }
+  }
+}
