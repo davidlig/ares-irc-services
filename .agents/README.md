@@ -40,6 +40,7 @@ Content is grouped **by type** in subdirectories. Each type has a `README.md` (e
 │   ├── commands-permissions.md        ← Authorization, voters, IRCop sync
 │   ├── commands-translations.md       ← i18n YAML, IRC colors, 14-language rule
 │   ├── commands-testing.md            ← Test patterns for commands
+│   ├── live-mcp-testing.md            ← IRC/MariaDB live validation safety
 │   ├── bots.md                        ← New bot/service implementation
 │   ├── help-design.md                 ← Unified HELP format
 │   ├── debug-actions.md               ← Debug logging for IRCop commands

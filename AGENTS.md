@@ -105,6 +105,7 @@ For detailed guidance, consult the corresponding skill file:
 | **Permissions** | `.agents/services/commands-permissions.md` | Authorization, voters, IRCop permissions |
 | **Translations** | `.agents/services/commands-translations.md` | i18n YAML, IRC color codes, 14-language rule |
 | **Testing** | `.agents/services/commands-testing.md` | Test patterns for command handlers |
+| **Live MCP Testing** | `.agents/services/live-mcp-testing.md` | IRC/MariaDB MCP validation against a running IRCd |
 | **Bots** | `.agents/services/bots.md` | New bot/service implementation checklist |
 | **IRCop** | `.agents/services/ircop-commands.md` | IRCop permission system |
 | **Debug** | `.agents/services/debug-actions.md` | Debug logging for IRCop commands |
@@ -143,3 +144,15 @@ Any feature storing `nickId` or `channelId` references MUST define cleanup behav
 - Choose CASCADE DELETE / SET NULL / TRANSFER strategy
 - Implement cleanup in repository + subscriber
 - Full checklist: `.agents/architecture/drop-cleanup.md`
+
+---
+
+## 9. Live MCP Validation Safety
+
+When IRC or MariaDB MCP servers are available, use them for live smoke/integration validation after implementing IRC service behavior. This is mandatory for new or changed service commands when it can be done safely.
+
+- PHPUnit, linting, and coverage remain mandatory; MCP checks never replace them.
+- Use `.agents/services/live-mcp-testing.md` before any live IRC or DB validation.
+- Never run destructive commands against real nicks or real channels.
+- Always create temporary resources for live tests, such as `NickTest<suffix>` or `#test-<suffix>`.
+- Use `OPENCODE_IRC_ROOT_NICK` only when root, IRCop, or founder privileges are required.

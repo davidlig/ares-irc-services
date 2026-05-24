@@ -51,6 +51,7 @@ Pattern: ONE message with multiple tool calls
 - **Git Management**: Commit when task is done. Messages MUST be in English, follow Conventional Commits (`feat:`, `fix:`, `refactor:`).
 - **README Sync**: If you add/change/remove features, commands, or config vars, update `README.md`.
 - **Translations (CRITICAL)**: When adding translatable strings, create translations for ALL 14 languages: `ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`. Files at `translations/<service>.<lang>.yaml`. Every key MUST exist in all language files.
+- **Live MCP Validation**: After implementing IRC service behavior, use IRC/MariaDB MCPs when available and safe. Read `.agents/services/live-mcp-testing.md` first. Never use real nicks/channels for destructive validation.
 
 ---
 
@@ -150,6 +151,18 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
 ./vendor/bin/phpunit --no-coverage --display-all-issues && \
 ./scripts/check-coverage.sh 100
 ```
+
+### Phase 4: Live MCP Validation
+
+When a running IRCd and the project MCPs are available, perform a live smoke/integration check after the mandatory local verification chain:
+
+- Use IRC MCP to exercise the implemented service command through `/msg` behavior.
+- Use MariaDB MCP only for read-only inspection, such as checking persisted state or reading a temporary nick verification token.
+- Create temporary resources such as `NickTest<timestamp>` and `#test-<timestamp>`.
+- Use `OPENCODE_IRC_ROOT_NICK` only when root, IRCop, or founder privileges are required.
+- Skip live validation rather than touching real nicks/channels or running unsafe destructive commands.
+
+Full rules: `.agents/services/live-mcp-testing.md`.
 
 ### Parallelization Rules
 

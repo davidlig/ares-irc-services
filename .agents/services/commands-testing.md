@@ -288,6 +288,22 @@ grep 'count="0"' var/coverage/clover.xml
 
 ---
 
+## Live MCP Validation
+
+For new or changed service commands, run live IRC/MariaDB MCP smoke checks when the MCP servers are available and the check can be performed safely.
+
+Live MCP validation is additive:
+
+- It does not replace PHPUnit.
+- It does not reduce the 100% coverage requirement.
+- It must never mutate real user/channel resources.
+
+Use `.agents/services/live-mcp-testing.md` before running live checks. Create temporary nicks/channels for the validation, such as `NickTest<timestamp>` and `#test-<timestamp>`. For registration flows, MariaDB MCP may be used read-only to find the temporary nick verification token and complete the normal command flow without relying on email delivery.
+
+If the command requires root, IRCop, or founder privileges, use `OPENCODE_IRC_ROOT_NICK` only for that step and only against temporary resources created for the same validation.
+
+---
+
 ## Common Test Patterns
 
 ### Testing Authorization
@@ -366,3 +382,4 @@ public function allowsForbiddenChannelReturnsFalse(): void
 - `.agents/testing/testing-coverage-priorities.md` — Test priorities map
 - `.agents/services/commands.md` — Command structure reference
 - `.agents/services/commands-permissions.md` — Permission system
+- `.agents/services/live-mcp-testing.md` — Live IRC/MariaDB MCP validation

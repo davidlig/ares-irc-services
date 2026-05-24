@@ -214,6 +214,7 @@ When creating a new command, complete ALL these steps:
 3. **DI Registration** — add service with appropriate tag in `config/services.yaml`
 4. **Permissions** — configure `getRequiredPermission()` (see `.agents/services/commands-permissions.md`)
 5. **Tests** — 100% coverage (see `.agents/services/commands-testing.md`)
+6. **Live MCP validation** — when IRC/MariaDB MCPs are available, smoke-test the command against temporary resources only (see `.agents/services/live-mcp-testing.md`)
 
 ## Context Reference
 
@@ -293,4 +294,5 @@ readonly class SenderView
 - `.agents/services/commands-permissions.md` — Authorization, voters, permission sync
 - `.agents/services/commands-translations.md` — i18n YAML structure, IRC colors, 14-language rule
 - `.agents/services/commands-testing.md` — Test patterns for command handlers
+- `.agents/services/live-mcp-testing.md` — Live IRC/MariaDB MCP validation and safety rules
 - `.agents/services/help-design.md` — HELP command format
