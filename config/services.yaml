@@ -614,6 +614,7 @@ services:
             $eventDispatcher: '@event_dispatcher'
             $debug: '@App\Infrastructure\NickServ\Service\NickServDebugNotifier'
             $logger: '@monolog.logger.irc'
+            $sessionRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
             $guestPrefix: '%services.guest_prefix%'
 
     App\Infrastructure\NickServ\Bot\NickServBot:

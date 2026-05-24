@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Service;
 
+use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\Service\NickDropService;
 use App\Application\NickServ\Service\NickForceService;
 use App\Application\Port\NetworkUserLookupPort;
@@ -62,6 +63,7 @@ final class NickDropServiceTest extends TestCase
             $eventDispatcher,
             $debug,
             $logger,
+            new IdentifiedSessionRegistry(),
             'Guest-',
         );
 
@@ -100,6 +102,7 @@ final class NickDropServiceTest extends TestCase
             $eventDispatcher,
             $debug,
             $logger,
+            new IdentifiedSessionRegistry(),
             'Guest-',
         );
 
@@ -144,6 +147,7 @@ final class NickDropServiceTest extends TestCase
             $eventDispatcher,
             $debug,
             $logger,
+            new IdentifiedSessionRegistry(),
             'Guest-',
         );
 
@@ -188,6 +192,7 @@ final class NickDropServiceTest extends TestCase
             $eventDispatcher,
             $debug,
             $logger,
+            new IdentifiedSessionRegistry(),
             'Guest-',
         );
 
@@ -212,6 +217,9 @@ final class NickDropServiceTest extends TestCase
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with('OperUser', 'DROP', 'SoftNick', null, null, 'manual', self::anything());
 
+        $sessionRegistry = new IdentifiedSessionRegistry();
+        // No session registered — findUidByNick returns null, remove not called
+
         $service = new NickDropService(
             $nickRepository,
             $userLookup,
@@ -219,6 +227,7 @@ final class NickDropServiceTest extends TestCase
             $eventDispatcher,
             $debug,
             $this->createStub(LoggerInterface::class),
+            $sessionRegistry,
             'Guest-',
         );
 
@@ -239,6 +248,9 @@ final class NickDropServiceTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::once())->method('forceGuestNick')->with('UID303', null, 'nick-drop');
 
+        $sessionRegistry = new IdentifiedSessionRegistry();
+        $sessionRegistry->register('UID303', 'SoftOnline');
+
         $service = new NickDropService(
             $nickRepository,
             $userLookup,
@@ -246,10 +258,43 @@ final class NickDropServiceTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
+            $sessionRegistry,
             'Guest-',
         );
 
         $service->softDropNick($nick, 'OperUser');
+
+        self::assertNull($sessionRegistry->findUidByNick('SoftOnline'));
+    }
+
+    #[Test]
+    public function softDropNickRemovesSessionWhenOfflineButSessionExists(): void
+    {
+        $nick = $this->createNickWithId('OfflineSession', 304);
+
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::once())->method('save')->with($nick);
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+
+        $sessionRegistry = new IdentifiedSessionRegistry();
+        $sessionRegistry->register('UID404', 'OfflineSession');
+
+        $service = new NickDropService(
+            $nickRepository,
+            $userLookup,
+            $this->createStub(NickForceService::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ServiceDebugNotifierInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $sessionRegistry,
+            'Guest-',
+        );
+
+        $service->softDropNick($nick);
+
+        self::assertNull($sessionRegistry->findUidByNick('OfflineSession'));
     }
 
     #[Test]
@@ -271,6 +316,7 @@ final class NickDropServiceTest extends TestCase
             $this->createStub(EventDispatcherInterface::class),
             $debug,
             $this->createStub(LoggerInterface::class),
+            new IdentifiedSessionRegistry(),
             'Guest-',
         );
 

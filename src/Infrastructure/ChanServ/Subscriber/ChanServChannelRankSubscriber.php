@@ -336,7 +336,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
         $modeSupport = $this->modeSupportProvider->getSupport();
         $account = $this->nickRepository->findByNick($sender->nick);
-        $desired = null !== $account && !$account->isSuspended() && !$account->isPendingDeletion()
+        $desired = null !== $account
             ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
             : '';
 

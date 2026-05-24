@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Service;
 
+use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -34,6 +35,7 @@ readonly class NickDropService
         private EventDispatcherInterface $eventDispatcher,
         private ServiceDebugNotifierInterface $debug,
         private LoggerInterface $logger,
+        private IdentifiedSessionRegistry $sessionRegistry,
         private string $guestPrefix = 'Guest-',
     ) {
     }
@@ -50,6 +52,12 @@ readonly class NickDropService
 
         if (null !== $onlineUser) {
             $this->forceService->forceGuestNick($onlineUser->uid, null, 'nick-drop');
+            $this->sessionRegistry->remove($onlineUser->uid);
+        } else {
+            $uid = $this->sessionRegistry->findUidByNick($nickname);
+            if (null !== $uid) {
+                $this->sessionRegistry->remove($uid);
+            }
         }
 
         $account->markPendingDeletion();
