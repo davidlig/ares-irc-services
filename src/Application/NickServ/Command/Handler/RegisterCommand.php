@@ -111,6 +111,25 @@ final readonly class RegisterCommand implements NickServCommandInterface
             return;
         }
 
+        $errorKey = $this->validateRegister($context, $sender);
+        if (null !== $errorKey) {
+            if ('__handled__' === $errorKey) {
+                return;
+            }
+
+            $context->reply(
+                $errorKey,
+                $this->getRegisterErrorParams($context, $errorKey),
+            );
+
+            return;
+        }
+
+        $this->executeRegister($context, $sender);
+    }
+
+    private function validateRegister(NickServContext $context, \App\Application\Port\SenderView $sender): ?string
+    {
         $clientKey = $this->clientKeyResolver->getClientKey($sender);
         $remaining = $this->throttleRegistry->getRemainingCooldownSeconds($clientKey, $this->registerMinIntervalSeconds);
 
@@ -123,44 +142,61 @@ final readonly class RegisterCommand implements NickServCommandInterface
             $minutes = (int) ceil($remaining / 60);
             $context->reply('register.throttled', ['minutes' => (string) $minutes]);
 
-            return;
+            return '__handled__';
         }
 
         $nick = $sender->nick;
-        $password = $context->args[0];
-        $email = $context->args[1];
 
         if (str_starts_with($nick, $this->guestPrefix)) {
-            $context->reply('register.guest_prefix_forbidden', ['prefix' => $this->guestPrefix]);
-
-            return;
+            return 'register.guest_prefix_forbidden';
         }
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $context->reply('register.invalid_email');
+        return $this->validateRegisterDetails($context, $nick);
+    }
 
-            return;
-        }
+    private function validateRegisterDetails(NickServContext $context, string $nick): ?string
+    {
+        return (function () use ($context, $nick): ?string {
+            $email = $context->args[1];
 
-        $existingByEmail = $this->nickRepository->findByEmail($email);
-        if (null !== $existingByEmail) {
-            $context->reply('register.email_already_used', ['email' => $email]);
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return 'register.invalid_email';
+            }
 
-            return;
-        }
+            if (null !== $this->nickRepository->findByEmail($email)) {
+                return 'register.email_already_used';
+            }
 
-        $existing = $this->nickRepository->findByNick($nick);
+            $existing = $this->nickRepository->findByNick($nick);
+            if (null !== $existing) {
+                $context->reply(match ($existing->getStatus()) {
+                    NickStatus::Pending => 'register.already_pending',
+                    NickStatus::Forbidden => 'register.forbidden',
+                    NickStatus::PendingDeletion => 'register.pending_deletion',
+                    default => 'register.already_registered',
+                }, ['nickname' => $nick]);
 
-        if (null !== $existing) {
-            $context->reply(match ($existing->getStatus()) {
-                NickStatus::Pending => 'register.already_pending',
-                NickStatus::Forbidden => 'register.forbidden',
-                NickStatus::PendingDeletion => 'register.pending_deletion',
-                default => 'register.already_registered',
-            }, ['nickname' => $nick]);
+                return '__handled__';
+            }
 
-            return;
-        }
+            return null;
+        })();
+    }
+
+    private function getRegisterErrorParams(NickServContext $context, string $errorKey): array
+    {
+        return match ($errorKey) {
+            'register.guest_prefix_forbidden' => ['prefix' => $this->guestPrefix],
+            'register.email_already_used' => ['email' => $context->args[1]],
+            default => [],
+        };
+    }
+
+    private function executeRegister(NickServContext $context, \App\Application\Port\SenderView $sender): void
+    {
+        $nick = $sender->nick;
+        $password = $context->args[0];
+        $email = $context->args[1];
 
         $hash = $this->passwordHasher->hash($password);
         $expiresAt = new DateTimeImmutable(sprintf('+%d seconds', self::TOKEN_TTL_SECONDS));
@@ -175,7 +211,6 @@ final readonly class RegisterCommand implements NickServCommandInterface
         );
 
         $this->nickRepository->save($registered);
-
         $context->getPendingVerificationRegistry()->store($nick, $token, $expiresAt);
 
         try {
@@ -194,7 +229,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
             return;
         }
 
-        $this->throttleRegistry->recordAttempt($clientKey);
+        $this->throttleRegistry->recordAttempt($this->clientKeyResolver->getClientKey($sender));
         $context->reply('register.pending', ['email' => $email]);
     }
 }

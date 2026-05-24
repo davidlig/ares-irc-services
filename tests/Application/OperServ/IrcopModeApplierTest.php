@@ -88,10 +88,21 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn(null);
 
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn(new SenderView(
+            uid: 'UID123',
+            nick: 'TestNick',
+            ident: 'test',
+            hostname: 'host.test',
+            cloakedHost: 'hidden.host',
+            ipBase64: base64_encode(inet_pton('10.0.0.1')),
+            isIdentified: true,
+        ));
+
         $role = OperRole::create('ADMIN', 'Admin role');
         $role->setUserModes(['H', 'W']);
 
-        $applier = $this->createApplier($identifiedRegistry, $connectionHolder);
+        $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
         self::assertFalse($applier->applyModesForNick('TestNick', $role));
     }

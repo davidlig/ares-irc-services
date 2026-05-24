@@ -197,14 +197,8 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
     private function applyChanServRank(string $channelName): void
     {
         $supported = $this->modeSupportProvider->getSupport()->getSupportedPrefixModes();
-        $maxPrefix = 'o';
         $prefixOrder = ['q', 'a', 'o', 'h', 'v'];
-        foreach ($prefixOrder as $letter) {
-            if (in_array($letter, $supported, true)) {
-                $maxPrefix = $letter;
-                break;
-            }
-        }
+        $maxPrefix = array_find($prefixOrder, static fn ($letter) => in_array($letter, $supported, true)) ?? 'o';
 
         $this->channelServiceActions->setChannelMemberMode($channelName, $this->uidRegistry->getUid('chanserv'), $maxPrefix, true);
         $this->logger->debug('Debug channel: set ChanServ rank', [

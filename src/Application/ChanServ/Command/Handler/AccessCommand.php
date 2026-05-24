@@ -232,23 +232,40 @@ final readonly class AccessCommand implements ChanServCommandInterface
         RegisteredNick $targetAccount,
     ): bool {
         if ($context->isLevelFounder) {
-            if ($channel->isFounder($targetAccount->getId())) {
-                $context->reply('access.founder_not_in_list');
-
-                return false;
-            }
-
-            $count = $this->accessRepository->countByChannel($channel->getId());
-            $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
-            if (null === $existing && $count >= ChannelAccess::MAX_ENTRIES_PER_CHANNEL) {
-                $context->reply('access.max_entries', ['%max%' => (string) ChannelAccess::MAX_ENTRIES_PER_CHANNEL]);
-
-                return false;
-            }
-
-            return true;
+            return $this->ensureCanAddAccessAsFounder($context, $channel, $targetAccount);
         }
 
+        return $this->ensureCanAddAccessAsMember($context, $channel, $level, $targetAccount);
+    }
+
+    private function ensureCanAddAccessAsFounder(
+        ChanServContext $context,
+        RegisteredChannel $channel,
+        RegisteredNick $targetAccount,
+    ): bool {
+        if ($channel->isFounder($targetAccount->getId())) {
+            $context->reply('access.founder_not_in_list');
+
+            return false;
+        }
+
+        $count = $this->accessRepository->countByChannel($channel->getId());
+        $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
+        if (null === $existing && $count >= ChannelAccess::MAX_ENTRIES_PER_CHANNEL) {
+            $context->reply('access.max_entries', ['%max%' => (string) ChannelAccess::MAX_ENTRIES_PER_CHANNEL]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private function ensureCanAddAccessAsMember(
+        ChanServContext $context,
+        RegisteredChannel $channel,
+        int $level,
+        RegisteredNick $targetAccount,
+    ): bool {
         $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $context->senderAccount->getId(), true);
         if ($level >= $senderLevel) {
             $context->reply('access.cannot_manage_level');
@@ -262,6 +279,14 @@ final readonly class AccessCommand implements ChanServCommandInterface
             return false;
         }
 
+        return $this->ensureCanAddAccessMaxEntries($context, $channel, $targetAccount);
+    }
+
+    private function ensureCanAddAccessMaxEntries(
+        ChanServContext $context,
+        RegisteredChannel $channel,
+        RegisteredNick $targetAccount,
+    ): bool {
         $count = $this->accessRepository->countByChannel($channel->getId());
         $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
         if (null === $existing && $count >= ChannelAccess::MAX_ENTRIES_PER_CHANNEL) {
@@ -328,33 +353,66 @@ final readonly class AccessCommand implements ChanServCommandInterface
             $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_ACCESSCHANGE, $channelName, 'ACCESS DEL');
         }
 
+        $validationResult = $this->validateDelAccess($context, $channel);
+        if (null === $validationResult) {
+            return;
+        }
+
+        [$nickname, $targetAccount, $existing] = $validationResult;
+        $this->performDelAccess($context, $channel, $channelName, $nickname, $targetAccount, $existing);
+    }
+
+    /** @return array{string, RegisteredNick, ChannelAccess}|null */
+    private function validateDelAccess(ChanServContext $context, RegisteredChannel $channel): ?array
+    {
         $nickname = trim($context->args[2] ?? '');
         if ('' === $nickname) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
         $targetAccount = $this->nickRepository->findByNick($nickname);
         if (null === $targetAccount) {
             $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
 
-            return;
+            return null;
         }
 
+        return $this->validateDelAccessExisting($context, $channel, $nickname, $targetAccount);
+    }
+
+    /** @return array{string, RegisteredNick, ChannelAccess}|null */
+    private function validateDelAccessExisting(
+        ChanServContext $context,
+        RegisteredChannel $channel,
+        string $nickname,
+        RegisteredNick $targetAccount,
+    ): ?array {
         $existing = $this->accessRepository->findByChannelAndNick($channel->getId(), $targetAccount->getId());
         if (null === $existing) {
             $context->reply('access.del.not_in_list', ['%nickname%' => $nickname]);
 
-            return;
+            return null;
         }
 
         if (!$context->isLevelFounder && !$this->accessHelper->canManageLevel($channel, $context->senderAccount->getId(), $existing->getLevel())) {
             $context->reply('access.cannot_manage_level');
 
-            return;
+            return null;
         }
 
+        return [$nickname, $targetAccount, $existing];
+    }
+
+    private function performDelAccess(
+        ChanServContext $context,
+        RegisteredChannel $channel,
+        string $channelName,
+        string $nickname,
+        RegisteredNick $targetAccount,
+        ChannelAccess $existing,
+    ): void {
         $this->accessRepository->remove($existing);
 
         $ip = $this->decodeIp($context->sender->ipBase64);

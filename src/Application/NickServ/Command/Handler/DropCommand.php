@@ -90,86 +90,95 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
 
     public function execute(NickServContext $context): void
     {
+        $resolved = $this->resolveDropAction($context);
+        $action = $resolved['action'];
+
+        match ($action) {
+            'silent' => null,
+            'self' => $context->reply('drop.cannot_drop_self'),
+            'not_found' => $context->reply('drop.not_registered', ['%nickname%' => $resolved['nickname']]),
+            'pending' => $context->reply('drop.pending_deletion', ['%nickname%' => $resolved['nickname']]),
+            'pending_force_noperm', 'force_noperm' => $context->reply('error.permission_denied'),
+            'pending_force_ok', 'force_ok' => $this->executeHardDrop($context, $resolved),
+            'suspended' => $context->reply('drop.suspended', ['%nickname%' => $resolved['nickname']]),
+            'forbidden' => $context->reply('drop.forbidden', ['%nickname%' => $resolved['nickname']]),
+            'protected' => $this->replyProtectabilityError($context, $resolved['result']),
+            'soft' => $this->executeSoftDrop($context, $resolved),
+        };
+    }
+
+    private function resolveDropAction(NickServContext $context): array
+    {
         if (null === $context->sender) {
-            return;
+            return ['action' => 'silent'];
         }
 
+        return $this->resolveTargetDropAction($context);
+    }
+
+    private function resolveTargetDropAction(NickServContext $context): array
+    {
         $targetNick = $context->args[0];
-        $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
-        $targetNickLower = strtolower($targetNick);
-        $senderNickLower = strtolower($context->sender->nick);
 
-        if ($targetNickLower === $senderNickLower) {
-            $context->reply('drop.cannot_drop_self');
-
-            return;
+        if (strtolower($targetNick) === strtolower($context->sender->nick)) {
+            return ['action' => 'self'];
         }
 
         $account = $this->nickRepository->findByNick($targetNick);
-
         if (null === $account) {
-            $context->reply('drop.not_registered', ['%nickname%' => $targetNick]);
-
-            return;
+            return ['action' => 'not_found', 'nickname' => $targetNick];
         }
+
+        $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
+
+        return $this->resolveAccountDropAction($context, $targetNick, $account, $force);
+    }
+
+    private function resolveAccountDropAction(NickServContext $context, string $targetNick, \App\Domain\NickServ\Entity\RegisteredNick $account, bool $force): array
+    {
+        $result = ['action' => 'soft', 'nickname' => $targetNick, 'account' => $account];
 
         if ($account->isPendingDeletion()) {
-            if (!$force) {
-                $context->reply('drop.pending_deletion', ['%nickname%' => $targetNick]);
-
-                return;
-            }
-            // Force override - hard delete (requires DROP_FORCE permission)
-            if (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(NickServPermission::DROP_FORCE, $context)) {
-                $context->reply('error.permission_denied');
-
-                return;
-            }
-
-            $this->dropService->hardDropNick($account, 'manual-force', $context->sender->nick);
-            $this->auditData = new IrcopAuditData(target: $targetNick, extra: ['force' => true]);
-            $context->reply('drop.force_success', ['%nickname%' => $targetNick]);
-
-            return;
+            $result['action'] = $force ? $this->resolvePendingForceDrop($context) : 'pending';
         } elseif ($account->isSuspended()) {
-            $context->reply('drop.suspended', ['%nickname%' => $targetNick]);
-
-            return;
+            $result['action'] = 'suspended';
+        } elseif ($account->isForbidden()) {
+            $result['action'] = 'forbidden';
+        } elseif (!$this->targetValidator->validate($targetNick)->isAllowed()) {
+            $result = ['action' => 'protected', 'result' => $this->targetValidator->validate($targetNick)];
+        } elseif ($force) {
+            $result['action'] = $this->resolveForceDrop($context);
         }
 
-        if ($account->isForbidden()) {
-            $context->reply('drop.forbidden', ['%nickname%' => $targetNick]);
+        return $result;
+    }
 
-            return;
-        }
+    private function resolvePendingForceDrop(NickServContext $context): string
+    {
+        return (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(NickServPermission::DROP_FORCE, $context))
+            ? 'pending_force_noperm'
+            : 'pending_force_ok';
+    }
 
-        $protectability = $this->targetValidator->validate($targetNick);
+    private function resolveForceDrop(NickServContext $context): string
+    {
+        return (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(NickServPermission::DROP_FORCE, $context))
+            ? 'force_noperm'
+            : 'force_ok';
+    }
 
-        if (!$protectability->isAllowed()) {
-            $this->replyProtectabilityError($context, $protectability);
+    private function executeHardDrop(NickServContext $context, array $resolved): void
+    {
+        $this->dropService->hardDropNick($resolved['account'], 'manual-force', $context->sender->nick);
+        $this->auditData = new IrcopAuditData(target: $resolved['nickname'], extra: ['force' => true]);
+        $context->reply('drop.force_success', ['%nickname%' => $resolved['nickname']]);
+    }
 
-            return;
-        }
-
-        if ($force) {
-            if (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(NickServPermission::DROP_FORCE, $context)) {
-                $context->reply('error.permission_denied');
-
-                return;
-            }
-
-            $this->dropService->hardDropNick($account, 'manual-force', $context->sender->nick);
-            $this->auditData = new IrcopAuditData(target: $targetNick, extra: ['force' => true]);
-            $context->reply('drop.force_success', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        $this->dropService->softDropNick($account, $context->sender->nick);
-
-        $this->auditData = new IrcopAuditData(target: $targetNick);
-
-        $context->reply('drop.success', ['%nickname%' => $targetNick]);
+    private function executeSoftDrop(NickServContext $context, array $resolved): void
+    {
+        $this->dropService->softDropNick($resolved['account'], $context->sender->nick);
+        $this->auditData = new IrcopAuditData(target: $resolved['nickname']);
+        $context->reply('drop.success', ['%nickname%' => $resolved['nickname']]);
     }
 
     private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void

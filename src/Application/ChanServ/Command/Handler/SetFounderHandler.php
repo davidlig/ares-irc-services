@@ -57,40 +57,87 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
 
             return;
         }
+
+        $validation = $this->validateFounderTransfer($context, $channel, $newNickname, $newAccount);
+        if (null === $validation) {
+            return;
+        }
+
+        $this->executeFounderTransfer($context, $channel, $newAccount, $newNickname, $validation);
+    }
+
+    private function validateFounderTransfer(ChanServContext $context, RegisteredChannel $channel, string $newNickname, $newAccount): ?string
+    {
+        $founderTransferKey = $this->validateFounderAccount($context, $channel, $newNickname, $newAccount);
+        if (null === $founderTransferKey) {
+            return null;
+        }
+
+        $limitKey = $this->validateFounderLimit($context, $channel, $newNickname, $newAccount);
+        if (null === $limitKey) {
+            return null;
+        }
+
+        return $founderTransferKey;
+    }
+
+    private function validateFounderAccount(ChanServContext $context, RegisteredChannel $channel, string $newNickname, $newAccount): ?string
+    {
         if (NickStatus::Suspended === $newAccount->getStatus()) {
             $context->reply('set.founder.suspended', ['%nickname%' => $newNickname]);
 
-            return;
+            return null;
         }
         if (NickStatus::Registered !== $newAccount->getStatus()) {
             $context->reply('set.founder.must_be_registered', ['%nickname%' => $newNickname]);
 
-            return;
+            return null;
         }
+
+        return $this->validateFounderSelfAndSuccessor($context, $channel, $newNickname, $newAccount);
+    }
+
+    private function validateFounderSelfAndSuccessor(ChanServContext $context, RegisteredChannel $channel, string $newNickname, $newAccount): ?string
+    {
         if ($newAccount->getId() === $channel->getFounderNickId()) {
             $context->reply('set.founder.cannot_be_self');
 
-            return;
+            return null;
         }
         if (null !== $channel->getSuccessorNickId() && $newAccount->getId() === $channel->getSuccessorNickId()) {
             $context->reply('set.founder.cannot_be_successor');
 
-            return;
+            return null;
         }
 
+        return 'valid';
+    }
+
+    private function validateFounderLimit(ChanServContext $context, RegisteredChannel $channel, string $newNickname, $newAccount): ?string
+    {
         $existingChannelsByNewFounder = $this->channelRepository->findByFounderNickId($newAccount->getId());
         if (count($existingChannelsByNewFounder) >= $this->maxChannelsPerNick) {
             $context->reply('set.founder.limit_exceeded', ['%nickname%' => $newNickname, '%max%' => (string) $this->maxChannelsPerNick]);
 
-            return;
+            return null;
         }
 
+        return 'valid';
+    }
+
+    private function executeFounderTransfer(ChanServContext $context, RegisteredChannel $channel, $newAccount, string $newNickname, string $validationKey): void
+    {
         if ($context->isLevelFounder) {
             $this->directTransfer($context, $channel, $newAccount->getId());
 
             return;
         }
 
+        $this->executeEmailTokenFlow($context, $channel, $newAccount, $newNickname);
+    }
+
+    private function executeEmailTokenFlow(ChanServContext $context, RegisteredChannel $channel, $newAccount, string $newNickname): void
+    {
         $currentFounder = $this->nickRepository->findById($channel->getFounderNickId());
         $founderEmail = $currentFounder?->getEmail();
         if (null === $founderEmail || '' === $founderEmail) {

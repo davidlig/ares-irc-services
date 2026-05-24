@@ -100,45 +100,21 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         }
 
         $targetNick = $context->args[0];
-        $reason = implode(' ', array_slice($context->args, 1));
-
         $target = $this->userLookup->findByNick($targetNick);
-        if (null === $target) {
-            $context->reply('kill.user_not_online', ['%nickname%' => $targetNick]);
+        $targetError = $this->validateTarget($context, $target, $targetNick);
 
+        if (null !== $targetError || null === $target) {
             return;
         }
 
-        $targetNickLower = strtolower($targetNick);
-
-        if ($this->rootRegistry->isRoot($targetNickLower)) {
-            $context->reply('kill.protected_root', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        if ($this->isOper($target, $targetNickLower)) {
-            $context->reply('kill.protected_ircop', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
+        $reason = implode(' ', array_slice($context->args, 1));
         $operatorNick = $sender->nick;
         $killReason = sprintf('Killed (%s: %s): %s', $context->getBotName(), $operatorNick, $reason);
 
         $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->error('KILL: no active protocol module', [
-                'operator' => $operatorNick,
-                'target' => $targetNick,
-            ]);
-
-            return;
-        }
-
         $serverSid = $this->connectionHolder->getServerSid();
-        if (null === $serverSid) {
-            $this->logger->error('KILL: no server SID', [
+        if (null === $module || null === $serverSid) {
+            $this->logger->error('KILL: no active protocol module or server SID', [
                 'operator' => $operatorNick,
                 'target' => $targetNick,
             ]);
@@ -161,23 +137,32 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         ]);
     }
 
-    private function isOper(\App\Application\Port\SenderView $target, string $targetNickLower): bool
+    private function validateTarget(OperServContext $context, ?\App\Application\Port\SenderView $target, string $targetNick): ?string
     {
-        if (!$target->isOper) {
-            return false;
+        if (null === $target) {
+            $context->reply('kill.user_not_online', ['%nickname%' => $targetNick]);
+
+            return 'not_online';
         }
 
-        if (!$target->isIdentified) {
+        $targetNickLower = strtolower($targetNick);
+        $errorKey = $this->rootRegistry->isRoot($targetNickLower) ? 'root' : ($this->isOper($target, $targetNickLower) ? 'ircop' : null);
+
+        if (null !== $errorKey) {
+            $context->reply('root' === $errorKey ? 'kill.protected_root' : 'kill.protected_ircop', ['%nickname%' => $targetNick]);
+        }
+
+        return $errorKey;
+    }
+
+    private function isOper(\App\Application\Port\SenderView $target, string $targetNickLower): bool
+    {
+        if (!$target->isOper || !$target->isIdentified) {
             return false;
         }
 
         $registeredNick = $this->nickRepo->findByNick($targetNickLower);
-        if (null === $registeredNick) {
-            return false;
-        }
 
-        $ircop = $this->ircopRepo->findByNickId($registeredNick->getId());
-
-        return null !== $ircop;
+        return null !== $registeredNick && null !== $this->ircopRepo->findByNickId($registeredNick->getId());
     }
 }

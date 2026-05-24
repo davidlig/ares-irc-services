@@ -9,6 +9,7 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -100,18 +101,39 @@ final readonly class HalfopCommand implements ChanServCommandInterface
             return;
         }
 
+        $validation = $this->validateHalfopExecute($context);
+        if (null === $validation) {
+            return;
+        }
+
+        [$channelName, $targetNick, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', true);
+        $context->getNotifier()->sendNoticeToChannel(
+            $channelName,
+            $context->trans('halfop.notice_grant', [
+                '%from%' => $context->sender->nick,
+                '%to%' => $targetNick,
+                '%mode%' => '+h',
+            ])
+        );
+        $context->reply('halfop.done', ['%nickname%' => $targetNick]);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateHalfopExecute(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $targetNick = $context->args[1] ?? '';
         if ('' === $targetNick) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
@@ -119,11 +141,17 @@ final readonly class HalfopCommand implements ChanServCommandInterface
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
 
+        return $this->validateHalfopSender($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateHalfopSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
 
         if (!$context->isLevelFounder) {
@@ -134,14 +162,20 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         if (null === $targetAccount) {
             $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
 
-            return;
+            return null;
         }
 
+        return $this->validateHalfopTarget($context, $channel, $channelName, $targetNick, $targetAccount);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateHalfopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount): ?array
+    {
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
             $context->reply('halfop.user_not_on_channel', ['%nickname%' => $targetNick]);
 
-            return;
+            return null;
         }
 
         if (!$context->isLevelFounder && $channel->isSecure()) {
@@ -154,19 +188,10 @@ final readonly class HalfopCommand implements ChanServCommandInterface
                     '%mode%' => '+h',
                 ]);
 
-                return;
+                return null;
             }
         }
 
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', true);
-        $context->getNotifier()->sendNoticeToChannel(
-            $channelName,
-            $context->trans('halfop.notice_grant', [
-                '%from%' => $context->sender->nick,
-                '%to%' => $targetNick,
-                '%mode%' => '+h',
-            ])
-        );
-        $context->reply('halfop.done', ['%nickname%' => $targetNick]);
+        return [$channelName, $targetNick, $targetSender];
     }
 }

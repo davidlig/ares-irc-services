@@ -14,8 +14,10 @@ use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickSuspensionService;
 use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\Shared\Time\RelativeExpiryParser;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use DateTimeImmutable;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
@@ -91,8 +93,6 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
 
     public function execute(NickServContext $context): void
     {
-        $targetNick = $context->args[0];
-        $durationStr = $context->args[1];
         $reasonParts = array_slice($context->args, 2);
         $reason = trim(implode(' ', $reasonParts));
 
@@ -101,6 +101,14 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
 
             return;
         }
+
+        $this->doSuspend($context, $reason);
+    }
+
+    private function doSuspend(NickServContext $context, string $reason): void
+    {
+        $targetNick = $context->args[0];
+        $durationStr = $context->args[1];
 
         $account = $this->nickRepository->findByNick($targetNick);
 
@@ -122,6 +130,16 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
             return;
         }
 
+        $this->validateAndSuspend($context, $account, $targetNick, $durationStr, $reason);
+    }
+
+    private function validateAndSuspend(
+        NickServContext $context,
+        RegisteredNick $account,
+        string $targetNick,
+        string $durationStr,
+        string $reason,
+    ): void {
         $protectability = $this->targetValidator->validate($targetNick);
 
         if (!$protectability->isAllowed()) {
@@ -138,6 +156,17 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
             return;
         }
 
+        $this->finalizeSuspend($context, $account, $targetNick, $durationStr, $reason, $expiresAt);
+    }
+
+    private function finalizeSuspend(
+        NickServContext $context,
+        RegisteredNick $account,
+        string $targetNick,
+        string $durationStr,
+        string $reason,
+        ?DateTimeImmutable $expiresAt,
+    ): void {
         $account->suspend($reason, $expiresAt);
         $this->nickRepository->save($account);
 

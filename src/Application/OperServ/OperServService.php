@@ -90,7 +90,11 @@ final readonly class OperServService
         );
 
         $this->authorizationContext->setCurrentUser($sender);
+        $this->dispatchToHandler($context, $handler, $sender, $cmdName);
+    }
 
+    private function dispatchToHandler(OperServContext $context, Command\OperServCommandInterface $handler, SenderView $sender, string $cmdName): void
+    {
         try {
             $requiredPermission = $handler->getRequiredPermission();
             if (null !== $requiredPermission) {
@@ -103,23 +107,19 @@ final readonly class OperServService
                     'isGranted' => $isGranted,
                 ]);
                 if (!$isGranted) {
-                    if ('IDENTIFIED' === $requiredPermission) {
-                        $context->reply('error.not_identified');
-                    } else {
-                        $context->reply('error.permission_denied');
-                    }
+                    $context->reply('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
 
                     return;
                 }
             }
 
-            if ($handler->isOperOnly() && !$sender->isOper && !$this->accessHelper->isIrcop($account?->getId() ?? 0, strtolower($sender->nick))) {
+            if ($handler->isOperOnly() && !$sender->isOper && !$this->accessHelper->isIrcop($context->senderAccount?->getId() ?? 0, strtolower($sender->nick))) {
                 $context->reply('error.oper_only');
 
                 return;
             }
 
-            if (count($args) < $handler->getMinArgs()) {
+            if (count($context->args) < $handler->getMinArgs()) {
                 $context->reply('error.syntax', [
                     '%syntax%' => $context->trans($handler->getSyntaxKey()),
                 ]);
@@ -131,7 +131,7 @@ final readonly class OperServService
                 'OperServ: %s executed %s [args: %d]',
                 $sender->nick,
                 $cmdName,
-                count($args),
+                count($context->args),
             ));
 
             $handler->execute($context);

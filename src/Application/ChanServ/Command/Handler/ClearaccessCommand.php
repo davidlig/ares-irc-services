@@ -95,30 +95,12 @@ final class ClearaccessCommand implements ChanServCommandInterface, AuditableCom
             return;
         }
 
-        $channelName = $context->getChannelNameArg(0);
-
-        if (null === $channelName) {
-            $context->reply('error.invalid_channel');
-
+        $validation = $this->validateClearaccess($context);
+        if (null === $validation) {
             return;
         }
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-
-        if (null === $channel) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
-
-            return;
-        }
-
-        $count = $this->accessRepository->countByChannel($channel->getId());
-
-        if (0 === $count) {
-            $context->reply('clearaccess.empty', ['%channel%' => $channelName]);
-
-            return;
-        }
-
+        [$channelName, $channel, $count] = $validation;
         $this->accessRepository->deleteByChannelId($channel->getId());
 
         $this->auditData = new IrcopAuditData(
@@ -130,6 +112,42 @@ final class ClearaccessCommand implements ChanServCommandInterface, AuditableCom
             '%channel%' => $channelName,
             '%count%' => $count,
         ]);
+    }
+
+    /** @return array{string, object, int}|null */
+    private function validateClearaccess(ChanServContext $context): ?array
+    {
+        $channelName = $context->getChannelNameArg(0);
+
+        if (null === $channelName) {
+            $context->reply('error.invalid_channel');
+
+            return null;
+        }
+
+        return $this->validateClearaccessChannel($context, $channelName);
+    }
+
+    /** @return array{string, object, int}|null */
+    private function validateClearaccessChannel(ChanServContext $context, string $channelName): ?array
+    {
+        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+
+        if (null === $channel) {
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+
+            return null;
+        }
+
+        $count = $this->accessRepository->countByChannel($channel->getId());
+
+        if (0 === $count) {
+            $context->reply('clearaccess.empty', ['%channel%' => $channelName]);
+
+            return null;
+        }
+
+        return [$channelName, $channel, $count];
     }
 
     public function getAuditData(object $context): ?IrcopAuditData

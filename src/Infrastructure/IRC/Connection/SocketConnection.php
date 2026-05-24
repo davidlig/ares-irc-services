@@ -112,16 +112,14 @@ class SocketConnection implements ConnectionInterface
         if (false === $newlinePos) {
             $chunk = @fread($this->socket, 8192);
 
-            if (false === $chunk || '' === $chunk) {
-                return null;
+            if (false !== $chunk && '' !== $chunk) {
+                $this->recvBuffer .= $chunk;
+                $newlinePos = strpos($this->recvBuffer, "\n");
             }
+        }
 
-            $this->recvBuffer .= $chunk;
-            $newlinePos = strpos($this->recvBuffer, "\n");
-
-            if (false === $newlinePos) {
-                return null;
-            }
+        if (false === $newlinePos) {
+            return null;
         }
 
         $line = substr($this->recvBuffer, 0, $newlinePos);

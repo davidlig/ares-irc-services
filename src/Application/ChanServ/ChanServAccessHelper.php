@@ -79,29 +79,30 @@ final readonly class ChanServAccessHelper
     {
         $supported = $modeSupport->getSupportedPrefixModes();
         if ($channel->isFounder($nickId)) {
-            foreach (self::PREFIX_ORDER as $letter) {
-                if (in_array($letter, $supported, true)) {
-                    return $letter;
-                }
-            }
-
-            return '';
+            return array_find(self::PREFIX_ORDER, static fn ($letter) => in_array($letter, $supported, true)) ?? '';
         }
 
         $level = $this->effectiveAccessLevel($channel, $nickId, true);
         $channelId = $channel->getId();
 
-        if ($level >= $this->getLevelValue($channelId, ChannelLevel::KEY_AUTOADMIN) && in_array('a', $supported, true)) {
-            return 'a';
-        }
-        if ($level >= $this->getLevelValue($channelId, ChannelLevel::KEY_AUTOOP) && in_array('o', $supported, true)) {
-            return 'o';
-        }
-        if ($level >= $this->getLevelValue($channelId, ChannelLevel::KEY_AUTOHALFOP) && in_array('h', $supported, true)) {
-            return 'h';
-        }
-        if ($level >= $this->getLevelValue($channelId, ChannelLevel::KEY_AUTOVOICE) && in_array('v', $supported, true)) {
-            return 'v';
+        $prefix = $this->resolveAutoPrefix($level, $channelId, $supported);
+
+        return $prefix;
+    }
+
+    private function resolveAutoPrefix(int $level, int $channelId, array $supported): string
+    {
+        $candidates = [
+            ['letter' => 'a', 'key' => ChannelLevel::KEY_AUTOADMIN],
+            ['letter' => 'o', 'key' => ChannelLevel::KEY_AUTOOP],
+            ['letter' => 'h', 'key' => ChannelLevel::KEY_AUTOHALFOP],
+            ['letter' => 'v', 'key' => ChannelLevel::KEY_AUTOVOICE],
+        ];
+
+        foreach ($candidates as $candidate) {
+            if ($level >= $this->getLevelValue($channelId, $candidate['key']) && in_array($candidate['letter'], $supported, true)) {
+                return $candidate['letter'];
+            }
         }
 
         return '';

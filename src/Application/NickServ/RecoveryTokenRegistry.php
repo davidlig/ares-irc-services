@@ -59,13 +59,13 @@ final class RecoveryTokenRegistry
             return false;
         }
 
-        if (!hash_equals($entry['token'], $token)) {
-            return false;
+        $valid = hash_equals($entry['token'], $token);
+
+        if ($valid) {
+            unset($this->entries[$key]);
         }
 
-        unset($this->entries[$key]);
-
-        return true;
+        return $valid;
     }
 
     /**

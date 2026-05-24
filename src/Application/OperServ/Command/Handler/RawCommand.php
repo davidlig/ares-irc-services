@@ -91,21 +91,8 @@ final class RawCommand implements OperServCommandInterface, AuditableCommandInte
 
         $rawLine = implode(' ', $context->args);
 
-        if ('' === trim($rawLine)) {
-            $context->reply('raw.empty');
-
-            return;
-        }
-
-        if (strlen($rawLine) > 510) {
-            $context->reply('raw.too_long');
-
-            return;
-        }
-
-        if (!$this->connectionHolder->isConnected()) {
-            $context->reply('raw.not_connected');
-
+        $errorKey = $this->validateRawLine($context, $rawLine);
+        if (null !== $errorKey) {
             return;
         }
 
@@ -122,5 +109,30 @@ final class RawCommand implements OperServCommandInterface, AuditableCommandInte
         );
 
         $context->reply('raw.done');
+    }
+
+    private function validateRawLine(OperServContext $context, string $rawLine): ?string
+    {
+        return (function () use ($context, $rawLine): ?string {
+            if ('' === trim($rawLine)) {
+                $context->reply('raw.empty');
+
+                return 'empty';
+            }
+
+            if (strlen($rawLine) > 510) {
+                $context->reply('raw.too_long');
+
+                return 'too_long';
+            }
+
+            if (!$this->connectionHolder->isConnected()) {
+                $context->reply('raw.not_connected');
+
+                return 'not_connected';
+            }
+
+            return null;
+        })();
     }
 }

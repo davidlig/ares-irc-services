@@ -101,18 +101,39 @@ final readonly class OpCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $validation = $this->validateOpExecute($context);
+        if (null === $validation) {
+            return;
+        }
+
+        [$channelName, $targetNick, $targetUid] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetUid, 'o', true);
+        $context->getNotifier()->sendNoticeToChannel(
+            $channelName,
+            $context->trans('op.notice_grant', [
+                '%from%' => $context->sender->nick,
+                '%to%' => $targetNick,
+                '%mode%' => '+o',
+            ])
+        );
+        $context->reply('op.done', ['%nickname%' => $targetNick]);
+    }
+
+    /** @return array{string, string, string}|null */
+    private function validateOpExecute(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $targetNick = $context->args[1] ?? '';
         if ('' === $targetNick) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
@@ -120,11 +141,17 @@ final readonly class OpCommand implements ChanServCommandInterface
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
 
+        return $this->validateOpSender($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, string}|null */
+    private function validateOpSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
 
         if (!$context->isLevelFounder) {
@@ -139,14 +166,20 @@ final readonly class OpCommand implements ChanServCommandInterface
         if (null === $targetAccount) {
             $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
 
-            return;
+            return null;
         }
 
+        return $this->validateOpTarget($context, $channel, $channelName, $targetNick, $targetAccount);
+    }
+
+    /** @return array{string, string, string}|null */
+    private function validateOpTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount): ?array
+    {
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
             $context->reply('op.user_not_on_channel', ['%nickname%' => $targetNick]);
 
-            return;
+            return null;
         }
         $targetUid = $targetSender->uid;
 
@@ -160,20 +193,11 @@ final readonly class OpCommand implements ChanServCommandInterface
                     '%mode%' => '+o',
                 ]);
 
-                return;
+                return null;
             }
         }
 
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetUid, 'o', true);
-        $context->getNotifier()->sendNoticeToChannel(
-            $channelName,
-            $context->trans('op.notice_grant', [
-                '%from%' => $context->sender->nick,
-                '%to%' => $targetNick,
-                '%mode%' => '+o',
-            ])
-        );
-        $context->reply('op.done', ['%nickname%' => $targetNick]);
+        return [$channelName, $targetNick, $targetUid];
     }
 
     private function getLevelValue(int $channelId, string $key): int

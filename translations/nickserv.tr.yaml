@@ -121,6 +121,7 @@ info:
   status_suspended:   "\x0304Askıya alındı\x03"
   status_forbidden:   "\x0304Yasaklandı\x03"
   status_pending_deletion: "07Silinmeyi bekliyor"
+  status_pending_deletion_at:  "  14Silindi            : %date%"
   reason:           "  \x0314Sebep\x03              : %reason%"
   suspended_until:  "  \x0314Bitiş tarihi\x03       : %date%"
   suspended_permanent: "  \x0314Bitiş tarihi\x03       : Kalıcı"

@@ -50,11 +50,7 @@ final readonly class CtcpHandler implements EventSubscriberInterface
         $sender = $message->prefix ?? '';
         $target = $message->params[0] ?? '';
 
-        if ('' === $text || '' === $sender || '' === $target) {
-            return;
-        }
-
-        if (!preg_match(self::CTCP_PATTERN, $text, $matches)) {
+        if ('' === $text || '' === $sender || '' === $target || !preg_match(self::CTCP_PATTERN, $text, $matches)) {
             return;
         }
 

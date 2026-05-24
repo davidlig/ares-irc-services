@@ -121,6 +121,7 @@ info:
   status_suspended:   "\x0304Suspendat\x03"
   status_forbidden:   "\x0304Interzis\x03"
   status_pending_deletion: "07În așteptare ștergere"
+  status_pending_deletion_at:  "  14Șters              : %date%"
   reason:           "  \x0314Motiv\x03                   : %reason%"
   suspended_until:  "  \x0314Se termină la\x03           : %date%"
   suspended_permanent: "  \x0314Se termină la\x03           : Permanent"

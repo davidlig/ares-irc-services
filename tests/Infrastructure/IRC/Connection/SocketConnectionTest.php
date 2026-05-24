@@ -10,11 +10,23 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 use RuntimeException;
 
 #[CoversClass(SocketConnection::class)]
 final class SocketConnectionTest extends TestCase
 {
+    private function waitForSocketData(SocketConnection $conn): void
+    {
+        $ref = new ReflectionProperty($conn, 'socket');
+        $ref->setAccessible(true);
+        $sock = $ref->getValue($conn);
+        $read = [$sock];
+        $write = null;
+        $except = null;
+        stream_select($read, $write, $except, 0, 100000);
+    }
+
     #[Test]
     public function getStatusReturnsDisconnectedBeforeConnect(): void
     {
@@ -155,12 +167,12 @@ final class SocketConnectionTest extends TestCase
 
         // Send partial data without newline — readLine should return null
         fwrite($client, 'PARTIAL');
-        usleep(50_000);
+        $this->waitForSocketData($conn);
         self::assertNull($conn->readLine());
 
         // Send the rest with newline — readLine should return the full line
         fwrite($client, " DATA\r\n");
-        usleep(50_000);
+        $this->waitForSocketData($conn);
         $line = $conn->readLine();
         self::assertSame('PARTIAL DATA', $line);
 

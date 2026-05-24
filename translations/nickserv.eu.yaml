@@ -121,6 +121,7 @@ info:
   status_suspended:   "\x0304Etenda\x03"
   status_forbidden:   "\x0304Debekatua\x03"
   status_pending_deletion: "07Ezabatzearen zain"
+  status_pending_deletion_at:  "  14Ezabatuta          : %date%"
   reason:           "  \x0314Arrazoia\x03           : %reason%"
   suspended_until:  "  \x0314Amaiera\x03            : %date%"
   suspended_permanent: "  \x0314Amaiera\x03            : Iraunkorra"

@@ -132,76 +132,92 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
 
     private function doAdd(OperServContext $context): void
     {
-        if (count($context->args) < 4) {
+        (function () use ($context): void {
+            if (count($context->args) < 4) {
+                $context->reply('error.syntax', ['%syntax%' => $context->trans('gline.add.syntax')]);
+
+                return;
+            }
+
+            $mask = trim($context->args[1]);
+            $expiryStr = trim($context->args[2]);
+            $reason = trim(implode(' ', array_slice($context->args, 3)));
+
+            $errorKey = $this->validateGlineAddBasics($context, $mask, $reason);
+            if (null !== $errorKey) {
+                return;
+            }
+
+            $resolvedMask = Gline::isNicknameMask($mask) ? $this->resolveNicknameToMask($mask, $context) : $mask;
+            if (null === $resolvedMask) {
+                return;
+            }
+
+            $errorKey = $this->validateGlineMaskSafety($context, $resolvedMask);
+            if (null !== $errorKey) {
+                return;
+            }
+
+            $expiresAt = RelativeExpiryParser::isPermanent($expiryStr) ? null : RelativeExpiryParser::parse($expiryStr);
+            if (null === $expiresAt && !RelativeExpiryParser::isPermanent($expiryStr)) {
+                $context->reply('gline.invalid_expiry');
+
+                return;
+            }
+
+            $this->doAddGline($context, $resolvedMask, $expiresAt, $expiryStr, $reason);
+        })();
+    }
+
+    private function validateGlineAddBasics(OperServContext $context, string $mask, string $reason): ?string
+    {
+        if ('' === $mask || '' === $reason) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('gline.add.syntax')]);
 
-            return;
-        }
-
-        $mask = trim($context->args[1]);
-        if ('' === $mask) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('gline.add.syntax')]);
-
-            return;
+            return 'syntax';
         }
 
         if (!Gline::isValidMask($mask)) {
             $context->reply('gline.invalid_mask');
 
-            return;
+            return 'invalid_mask';
         }
 
-        // If mask is a nickname, resolve it to user@host
-        $originalMask = $mask;
-        if (Gline::isNicknameMask($mask)) {
-            $resolved = $this->resolveNicknameToMask($mask, $context);
-            if (null === $resolved) {
-                return;
+        return null;
+    }
+
+    private function validateGlineMaskSafety(OperServContext $context, string $resolvedMask): ?string
+    {
+        $errorKey = null;
+        $errorParams = ['%mask%' => $resolvedMask];
+
+        if (Gline::isGlobalMask($resolvedMask)) {
+            $errorKey = 'gline.global_mask';
+        } elseif (!Gline::isSafeMask($resolvedMask)) {
+            $errorKey = 'gline.dangerous_mask';
+        } else {
+            $protectedUser = $this->findProtectedUser($resolvedMask);
+            if (null !== $protectedUser) {
+                $errorKey = 'gline.protected_user';
+                $errorParams = ['%nickname%' => $protectedUser];
             }
-            $mask = $resolved;
         }
 
-        if (Gline::isGlobalMask($mask)) {
-            $context->reply('gline.global_mask', ['%mask%' => $mask]);
-
-            return;
+        if (null !== $errorKey) {
+            $context->reply($errorKey, $errorParams);
         }
 
-        if (!Gline::isSafeMask($mask)) {
-            $context->reply('gline.dangerous_mask', ['%mask%' => $mask]);
+        return $errorKey;
+    }
 
-            return;
-        }
-
-        $protectedUser = $this->findProtectedUser($mask);
-        if (null !== $protectedUser) {
-            $context->reply('gline.protected_user', ['%nickname%' => $protectedUser]);
-
-            return;
-        }
-
-        $expiryStr = trim($context->args[2]);
-        $expiresAt = RelativeExpiryParser::parse($expiryStr);
-        if (null === $expiresAt && !RelativeExpiryParser::isPermanent($expiryStr)) {
-            $context->reply('gline.invalid_expiry');
-
-            return;
-        }
-
-        $reasonParts = array_slice($context->args, 3);
-        $reason = trim(implode(' ', $reasonParts));
-        if ('' === $reason) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('gline.add.syntax')]);
-
-            return;
-        }
-
-        $existing = $this->glineRepository->findByMask($mask);
+    private function doAddGline(OperServContext $context, string $resolvedMask, ?DateTimeImmutable $expiresAt, string $expiryStr, string $reason): void
+    {
+        $existing = $this->glineRepository->findByMask($resolvedMask);
         if (null !== $existing) {
             if ($existing->isExpired()) {
                 $this->glineRepository->remove($existing);
             } else {
-                $context->reply('gline.already_exists', ['%mask%' => $mask]);
+                $context->reply('gline.already_exists', ['%mask%' => $resolvedMask]);
 
                 return;
             }
@@ -215,23 +231,23 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         }
 
         $creatorNickId = $context->senderAccount?->getId();
-        $gline = Gline::create($mask, $creatorNickId, $reason, $expiresAt);
+        $gline = Gline::create($resolvedMask, $creatorNickId, $reason, $expiresAt);
         $this->glineRepository->save($gline);
 
-        $this->sendGlineToIrcd($mask, $expiresAt, $reason);
+        $this->sendGlineToIrcd($resolvedMask, $expiresAt, $reason);
 
         $duration = null === $expiresAt
             ? $context->trans('gline.permanent')
             : $expiryStr;
 
         $this->auditData = new IrcopAuditData(
-            target: $mask,
+            target: $resolvedMask,
             reason: $reason,
             extra: ['duration' => $duration],
         );
 
         $context->reply('gline.add.done', [
-            '%mask%' => $mask,
+            '%mask%' => $resolvedMask,
             '%duration%' => $duration,
             '%reason%' => $reason,
         ]);
@@ -321,17 +337,16 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
     private function findProtectedUser(string $mask): ?string
     {
         $rootNicks = $this->rootRegistry->getRootNicks();
-        foreach ($rootNicks as $rootNick) {
-            // Roots are always protected - check if the nick is online
+        $matchingRoot = array_find($rootNicks, function (string $rootNick) use ($mask): bool {
             $users = $this->userLookup->findByNick($rootNick);
             if (null === $users) {
-                continue;
+                return false;
             }
 
-            $userMask = strtolower($rootNick . '!' . $users->ident . '@' . $users->hostname);
-            if ($this->glineMatchesUser($mask, $userMask)) {
-                return $rootNick;
-            }
+            return $this->glineMatchesUser($mask, strtolower($rootNick . '!' . $users->ident . '@' . $users->hostname));
+        });
+        if (null !== $matchingRoot) {
+            return $matchingRoot;
         }
 
         $allIrcops = $this->ircopRepo->findAll();

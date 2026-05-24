@@ -163,16 +163,11 @@ class Gline
 
     public static function isSafeMask(string $mask): bool
     {
-        // GLINE masks must not contain ! (that's for AKICK format)
-        if (str_contains($mask, '!')) {
+        if (str_contains($mask, '!') || !str_contains($mask, '@')) {
             return false;
         }
 
         $atPos = strpos($mask, '@');
-        if (false === $atPos) {
-            return false;
-        }
-
         $userPart = substr($mask, 0, $atPos);
         $hostPart = substr($mask, $atPos + 1);
 

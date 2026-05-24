@@ -66,29 +66,21 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         $sender = $this->context->sender;
         $account = $this->context->senderAccount;
 
-        // Must be identified to have IRCop permissions
         if (null === $sender || null === $account) {
             return [];
         }
 
         $nickLower = strtolower($sender->nick);
 
-        // Root users see all IRCop commands
         if ($this->rootRegistry->isRoot($nickLower)) {
             return $this->filterIrcopCommands($this->context->getRegistry()->all());
         }
 
-        // Must be IRCop and have at least one permission
-        if (!$sender->isOper) {
-            return [];
-        }
+        $allCommands = $this->context->getRegistry()->all();
 
-        // Filter by permissions
-        return $this->filterByPermission(
-            $this->context->getRegistry()->all(),
-            $account->getId(),
-            $nickLower
-        );
+        return $sender->isOper
+            ? $this->filterByPermission($allCommands, $account->getId(), $nickLower)
+            : [];
     }
 
     public function hasIrcopAccess(): bool
@@ -102,22 +94,17 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         $nickLower = strtolower($sender->nick);
 
-        // Root users always have IRCop access
         if ($this->rootRegistry->isRoot($nickLower)) {
             return true;
         }
 
-        // IRCops with at least one permission
+        $result = false;
         if ($sender->isOper) {
             $servicePermissions = $this->permissionRegistry->getPermissionsByService()['NickServ'] ?? [];
-            foreach ($servicePermissions as $permission) {
-                if ($this->accessHelper->hasPermission($account->getId(), $nickLower, $permission)) {
-                    return true;
-                }
-            }
+            $result = array_any($servicePermissions, fn ($permission) => $this->accessHelper->hasPermission($account->getId(), $nickLower, $permission));
         }
 
-        return false;
+        return $result;
     }
 
     /**

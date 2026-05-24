@@ -64,6 +64,11 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
             return $this->context->sender?->isOper ?? false;
         }
 
+        return $this->shouldShowByName($command);
+    }
+
+    private function shouldShowByName(object $command): bool
+    {
         $name = $command->getName();
         if (isset(self::MODE_DEPENDENT_COMMANDS[$name])) {
             $mode = self::MODE_DEPENDENT_COMMANDS[$name];
@@ -85,6 +90,11 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         $nickLower = strtolower($sender->nick);
 
+        return $this->resolveIrcopCommands($sender, $account, $nickLower);
+    }
+
+    private function resolveIrcopCommands(object $sender, object $account, string $nickLower): iterable
+    {
         if ($this->rootRegistry->isRoot($nickLower)) {
             return $this->filterIrcopCommands($this->context->getRegistry()->all());
         }
@@ -111,16 +121,19 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         $nickLower = strtolower($sender->nick);
 
+        return $this->checkIrcopAccess($sender, $account, $nickLower);
+    }
+
+    private function checkIrcopAccess(object $sender, object $account, string $nickLower): bool
+    {
         if ($this->rootRegistry->isRoot($nickLower)) {
             return true;
         }
 
         if ($sender->isOper) {
             $servicePermissions = $this->permissionRegistry->getPermissionsByService()['ChanServ'] ?? [];
-            foreach ($servicePermissions as $permission) {
-                if ($this->accessHelper->hasPermission($account->getId(), $nickLower, $permission)) {
-                    return true;
-                }
+            if (array_any($servicePermissions, fn ($permission) => $this->accessHelper->hasPermission($account->getId(), $nickLower, $permission))) {
+                return true;
             }
         }
 

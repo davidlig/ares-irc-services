@@ -39,37 +39,38 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
         $newEmail = trim($parts[0] ?? '');
         $token = isset($parts[1]) ? trim($parts[1]) : null;
 
+        $errorKey = $this->validateEmailInput($context, $newEmail, $account);
+        if (null !== $errorKey) {
+            $context->reply($errorKey);
+
+            return;
+        }
+
+        $this->dispatchEmailChange($context, $account, $newEmail, $token, $isIrcopMode);
+    }
+
+    private function validateEmailInput(NickServContext $context, string $newEmail, RegisteredNick $account): ?string
+    {
         if ('' === $newEmail) {
-            $context->reply('error.syntax', ['syntax' => $context->trans('set.email.syntax')]);
-
-            return;
+            return $context->trans('error.syntax', ['syntax' => $context->trans('set.email.syntax')], 'nickserv', $context->getLanguage());
         }
 
-        if (false === filter_var($newEmail, FILTER_VALIDATE_EMAIL)) {
-            $context->reply('register.invalid_email');
+        $result = match (true) {
+            false === filter_var($newEmail, FILTER_VALIDATE_EMAIL) => 'register.invalid_email',
+            null === $account->getEmail() => 'error.not_identified',
+            default => null,
+        };
 
-            return;
-        }
+        return $result;
+    }
 
-        if (null === $account->getEmail()) {
-            $context->reply('error.not_identified');
-
-            return;
-        }
-
-        if ($isIrcopMode) {
-            $this->changeEmailDirectly($context, $account, $newEmail);
-
-            return;
-        }
-
-        if (null !== $token && '' !== $token) {
-            $this->confirmEmailChange($context, $account, $newEmail, $token);
-
-            return;
-        }
-
-        $this->requestEmailChange($context, $account, $newEmail);
+    private function dispatchEmailChange(NickServContext $context, RegisteredNick $account, string $newEmail, ?string $token, bool $isIrcopMode): void
+    {
+        $_ = match (true) {
+            $isIrcopMode => $this->changeEmailDirectly($context, $account, $newEmail),
+            null !== $token && '' !== $token => $this->confirmEmailChange($context, $account, $newEmail, $token),
+            default => $this->requestEmailChange($context, $account, $newEmail),
+        };
     }
 
     private function requestEmailChange(NickServContext $context, RegisteredNick $account, string $newEmail): void

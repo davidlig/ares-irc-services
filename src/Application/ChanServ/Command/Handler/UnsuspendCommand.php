@@ -97,12 +97,23 @@ final class UnsuspendCommand implements ChanServCommandInterface, AuditableComma
             return;
         }
 
+        $validation = $this->validateUnsuspend($context);
+        if (null === $validation) {
+            return;
+        }
+
+        $this->performUnsuspend($context, ...$validation);
+    }
+
+    /** @return array{string, object}|null */
+    private function validateUnsuspend(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
 
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $channel = $this->channelRepository->findByChannelName($channelName);
@@ -110,15 +121,26 @@ final class UnsuspendCommand implements ChanServCommandInterface, AuditableComma
         if (null === $channel) {
             $context->reply('unsuspend.not_registered', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
+        return $this->checkUnsuspendStatus($context, $channel, $channelName);
+    }
+
+    /** @return array{string, object}|null */
+    private function checkUnsuspendStatus(ChanServContext $context, object $channel, string $channelName): ?array
+    {
         if (!$channel->isSuspended()) {
             $context->reply('unsuspend.not_suspended', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
+        return [$channelName, $channel];
+    }
+
+    private function performUnsuspend(ChanServContext $context, string $channelName, object $channel): void
+    {
         $channel->unsuspend();
         $this->channelRepository->save($channel);
 

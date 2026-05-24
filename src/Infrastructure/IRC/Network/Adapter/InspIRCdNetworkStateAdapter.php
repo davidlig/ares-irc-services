@@ -253,31 +253,16 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
     {
         $comma = strpos($entry, ',');
         $colon = strpos($entry, ':');
-        if (false === $comma) {
-            if (false === $colon) {
-                return null;
-            }
+        $parts = $this->extractFjoinParts($entry, $comma, $colon);
 
-            $prefixLetters = [];
-            $uidStr = substr($entry, 0, $colon);
-        } else {
-            $uidStart = $comma + 1;
-            $uidEnd = false === $colon ? strlen($entry) : $colon;
-            if ($uidEnd < $uidStart) {
-                return null;
-            }
-
-            $prefixLetters = self::parsePrefixModeLetters(substr($entry, 0, $comma));
-            $uidStr = substr($entry, $uidStart, $uidEnd - $uidStart);
-        }
-
-        if ('' === $uidStr) {
+        if (null === $parts) {
             return null;
         }
 
-        try {
-            $uid = new Uid($uidStr);
-        } catch (InvalidArgumentException) {
+        [$prefixLetters, $uidStr] = $parts;
+        $uid = $this->tryCreateUid($uidStr);
+
+        if (null === $uid) {
             return null;
         }
 
@@ -286,6 +271,39 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
             'role' => ChannelMemberRole::highestRoleFromLetters($prefixLetters),
             'prefixLetters' => $prefixLetters,
         ];
+    }
+
+    /** @return array{list<string>, string}|null */
+    private function extractFjoinParts(string $entry, int|false $comma, int|false $colon): ?array
+    {
+        if (false === $comma) {
+            return false === $colon ? null : [[], substr($entry, 0, $colon)];
+        }
+
+        $uidStart = $comma + 1;
+        $uidEnd = false === $colon ? strlen($entry) : $colon;
+
+        if ($uidEnd < $uidStart) {
+            return null;
+        }
+
+        return [
+            self::parsePrefixModeLetters(substr($entry, 0, $comma)),
+            substr($entry, $uidStart, $uidEnd - $uidStart),
+        ];
+    }
+
+    private function tryCreateUid(string $uidStr): ?Uid
+    {
+        if ('' === $uidStr) {
+            return null;
+        }
+
+        try {
+            return new Uid($uidStr);
+        } catch (InvalidArgumentException) {
+            return null;
+        }
     }
 
     /**

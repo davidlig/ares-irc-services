@@ -45,10 +45,6 @@ final class MemoServSendThrottleRegistry
         $nextAllowedAt = $last->modify(sprintf('+%d seconds', $minIntervalSeconds));
         $now = new DateTimeImmutable();
 
-        if ($now >= $nextAllowedAt) {
-            return 0;
-        }
-
-        return $nextAllowedAt->getTimestamp() - $now->getTimestamp();
+        return max(0, $nextAllowedAt->getTimestamp() - $now->getTimestamp());
     }
 }

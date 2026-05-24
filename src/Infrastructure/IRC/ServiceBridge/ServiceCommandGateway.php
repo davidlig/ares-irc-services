@@ -101,12 +101,6 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
             return $this->listenersByNick[$lower];
         }
 
-        foreach ($this->listenersAll as $listener) {
-            if ($listener->getServiceUid() === $target) {
-                return $listener;
-            }
-        }
-
-        return null;
+        return array_find($this->listenersAll, static fn ($listener) => $listener->getServiceUid() === $target);
     }
 }

@@ -14,18 +14,13 @@ final readonly class NickServClientKeyResolver
 {
     public function getClientKey(SenderView $user): string
     {
-        if ('' !== $user->ipBase64 && '*' !== $user->ipBase64) {
-            return 'ip:' . $user->ipBase64;
-        }
+        $key = match (true) {
+            '' !== $user->ipBase64 && '*' !== $user->ipBase64 => 'ip:' . $user->ipBase64,
+            '' !== $user->cloakedHost => 'cloak:' . $user->cloakedHost,
+            '' !== $user->hostname => 'host:' . $user->hostname,
+            default => 'uid:' . $user->uid,
+        };
 
-        if ('' !== $user->cloakedHost) {
-            return 'cloak:' . $user->cloakedHost;
-        }
-
-        if ('' !== $user->hostname) {
-            return 'host:' . $user->hostname;
-        }
-
-        return 'uid:' . $user->uid;
+        return $key;
     }
 }

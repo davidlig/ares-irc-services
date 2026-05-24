@@ -8,6 +8,7 @@ use App\Application\Helper\SecureToken;
 use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -94,58 +95,93 @@ final readonly class ResendCommand implements NickServCommandInterface
     public function execute(NickServContext $context): void
     {
         $sender = $context->sender;
+
         if (null === $sender) {
             return;
         }
 
-        $nick = $sender->nick;
+        $account = $this->validateAndGetAccount($context, $sender->nick);
+
+        if (null === $account) {
+            return;
+        }
+
+        $this->performResend($context, $sender->nick, $account);
+    }
+
+    private function validateAndGetAccount(NickServContext $context, string $nick): ?RegisteredNick
+    {
         $account = $this->nickRepository->findByNick($nick);
 
         if (null === $account || !$account->isPending()) {
             $context->reply('resend.no_pending');
 
-            return;
+            return null;
         }
 
-        $registry = $context->getPendingVerificationRegistry();
-        $lastResendAt = $registry->getLastResendAt($nick);
-        if (null !== $lastResendAt && $this->resendMinIntervalSeconds > 0) {
-            $nextAllowedAt = $lastResendAt->modify(sprintf('+%d seconds', $this->resendMinIntervalSeconds));
-            $now = new DateTimeImmutable();
-            if ($now < $nextAllowedAt) {
-                $remainingSeconds = $nextAllowedAt->getTimestamp() - $now->getTimestamp();
-                $minutes = (int) ceil($remainingSeconds / 60);
-                $context->reply('resend.throttled', ['%minutes%' => (string) $minutes]);
-
-                return;
-            }
+        if ($this->isResendThrottled($context, $nick)) {
+            return null;
         }
 
+        return $account;
+    }
+
+    private function performResend(NickServContext $context, string $nick, RegisteredNick $account): void
+    {
         $token = SecureToken::hex(32);
         $expiresAt = new DateTimeImmutable(sprintf('+%d seconds', self::TOKEN_TTL_SECONDS));
 
         $context->getPendingVerificationRegistry()->store($nick, $token, $expiresAt);
 
         $recipientEmail = $account->getEmail() ?? '';
-        if ('' !== $recipientEmail) {
-            try {
-                $locale = $context->getLanguage();
-                $subject = $this->translator->trans('resend_verification_subject', ['%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
-                $body = $this->translator->trans('resend_verification_body', ['%nickname%' => $nick, '%token%' => $token, '%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
-                $this->messageBus->dispatch(new SendEmail($recipientEmail, $subject, $body));
-            } catch (Throwable $e) {
-                $this->logger->error('NickServ RESEND: failed to dispatch verification email', [
-                    'nick' => $nick,
-                    'recipient' => $recipientEmail,
-                    'exception' => $e,
-                ]);
-                $context->reply('error.mail_failed');
 
-                return;
+        if ('' !== $recipientEmail && !$this->dispatchResendEmail($context, $nick, $token, $recipientEmail)) {
+            return;
+        }
+
+        $context->getPendingVerificationRegistry()->recordResend($nick);
+        $context->reply('resend.success', ['email' => $recipientEmail]);
+    }
+
+    private function dispatchResendEmail(NickServContext $context, string $nick, string $token, string $recipientEmail): bool
+    {
+        try {
+            $locale = $context->getLanguage();
+            $subject = $this->translator->trans('resend_verification_subject', ['%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
+            $body = $this->translator->trans('resend_verification_body', ['%nickname%' => $nick, '%token%' => $token, '%bot%' => $context->getNotifier()->getNick()], 'mail', $locale);
+            $this->messageBus->dispatch(new SendEmail($recipientEmail, $subject, $body));
+
+            return true;
+        } catch (Throwable $e) {
+            $this->logger->error('NickServ RESEND: failed to dispatch verification email', [
+                'nick' => $nick,
+                'recipient' => $recipientEmail,
+                'exception' => $e,
+            ]);
+            $context->reply('error.mail_failed');
+
+            return false;
+        }
+    }
+
+    private function isResendThrottled(NickServContext $context, string $nick): bool
+    {
+        $registry = $context->getPendingVerificationRegistry();
+        $lastResendAt = $registry->getLastResendAt($nick);
+
+        if (null !== $lastResendAt && $this->resendMinIntervalSeconds > 0) {
+            $nextAllowedAt = $lastResendAt->modify(sprintf('+%d seconds', $this->resendMinIntervalSeconds));
+            $now = new DateTimeImmutable();
+
+            if ($now < $nextAllowedAt) {
+                $remainingSeconds = $nextAllowedAt->getTimestamp() - $now->getTimestamp();
+                $minutes = (int) ceil($remainingSeconds / 60);
+                $context->reply('resend.throttled', ['%minutes%' => (string) $minutes]);
+
+                return true;
             }
         }
 
-        $registry->recordResend($nick);
-        $context->reply('resend.success', ['email' => $recipientEmail]);
+        return false;
     }
 }

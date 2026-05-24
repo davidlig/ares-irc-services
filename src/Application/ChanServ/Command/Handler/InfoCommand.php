@@ -209,18 +209,23 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return true;
         }
 
+        return !$this->isChannelPrivate($context, $channel);
+    }
+
+    private function isChannelPrivate(ChanServContext $context, RegisteredChannel $channel): bool
+    {
         $view = $context->getChannelView($channel->getName());
         if (null !== $view && (str_contains($view->modes, 's') || str_contains($view->modes, 'p'))) {
-            return false;
+            return true;
         }
 
         if ($channel->isMlockActive() && (
             str_contains($channel->getMlock(), 's') || str_contains($channel->getMlock(), 'p')
         )) {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     private function isSenderFounderOrOper(ChanServContext $context, RegisteredChannel $channel): bool
@@ -230,11 +235,14 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return false;
         }
 
-        if ($sender->isOper) {
-            return true;
-        }
+        $isOperOrFounder = $sender->isOper || $this->isSenderChannelFounder($context, $channel);
 
-        if (!$sender->isIdentified) {
+        return $isOperOrFounder;
+    }
+
+    private function isSenderChannelFounder(ChanServContext $context, RegisteredChannel $channel): bool
+    {
+        if (!$context->sender->isIdentified) {
             return false;
         }
 

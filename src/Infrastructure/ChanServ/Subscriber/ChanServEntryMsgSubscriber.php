@@ -45,6 +45,11 @@ final readonly class ChanServEntryMsgSubscriber implements EventSubscriberInterf
             return;
         }
 
+        $this->sendEntryMsg($channel, $uid, $event->channel->value);
+    }
+
+    private function sendEntryMsg(object $channel, string $uid, string $channelName): void
+    {
         if ($channel->isBlocked()) {
             return;
         }
@@ -54,7 +59,7 @@ final readonly class ChanServEntryMsgSubscriber implements EventSubscriberInterf
             return;
         }
 
-        $message = sprintf("[\x0303%s\x03] %s", $event->channel->value, $entrymsg);
+        $message = sprintf("[\x0303%s\x03] %s", $channelName, $entrymsg);
         $this->notifier->sendNotice($uid, $message);
     }
 }

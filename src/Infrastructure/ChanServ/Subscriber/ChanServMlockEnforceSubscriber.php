@@ -70,6 +70,12 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         if (null === $registered || !$registered->isMlockActive()) {
             return;
         }
+
+        $this->enforceMlock($registered, $channelName);
+    }
+
+    private function enforceMlock(object $registered, string $channelName): void
+    {
         if ($registered->isBlocked()) {
             return;
         }

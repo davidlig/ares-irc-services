@@ -11,6 +11,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionProperty;
 
 #[CoversClass(ChannelAkickDoctrineRepository::class)]
 #[Group('integration')]
@@ -22,6 +23,13 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     {
         parent::setUp();
         $this->repository = new ChannelAkickDoctrineRepository($this->entityManager);
+    }
+
+    private function setCreatedAt(ChannelAkick $akick, DateTimeImmutable $time): void
+    {
+        $ref = new ReflectionProperty($akick, 'createdAt');
+        $ref->setAccessible(true);
+        $ref->setValue($akick, $time);
     }
 
     #[Test]
@@ -123,10 +131,13 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     public function listByChannelReturnsAkickOrderedByCreatedAt(): void
     {
         $akick1 = ChannelAkick::create(channelId: 1, creatorNickId: 100, mask: '*!*@first.com');
-        usleep(10000);
         $akick2 = ChannelAkick::create(channelId: 1, creatorNickId: 101, mask: '*!*@second.com');
-        usleep(10000);
         $akick3 = ChannelAkick::create(channelId: 1, creatorNickId: 102, mask: '*!*@third.com');
+
+        // Set explicit timestamps to ensure ordering without usleep
+        $this->setCreatedAt($akick1, new DateTimeImmutable('-3 seconds'));
+        $this->setCreatedAt($akick2, new DateTimeImmutable('-2 seconds'));
+        $this->setCreatedAt($akick3, new DateTimeImmutable('-1 second'));
 
         $this->repository->save($akick1);
         $this->repository->save($akick2);

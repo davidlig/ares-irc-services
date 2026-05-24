@@ -98,12 +98,23 @@ final class ForbidCommand implements ChanServCommandInterface, AuditableCommandI
             return;
         }
 
+        $validation = $this->validateForbid($context);
+        if (null === $validation) {
+            return;
+        }
+
+        $this->performForbid($context, ...$validation);
+    }
+
+    /** @return array{string, string}|null */
+    private function validateForbid(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
 
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $reasonParts = array_slice($context->args, 1);
@@ -112,21 +123,15 @@ final class ForbidCommand implements ChanServCommandInterface, AuditableCommandI
         if ('' === $reason) {
             $context->reply('forbid.reason_required');
 
-            return;
+            return null;
         }
 
+        return [$channelName, $reason];
+    }
+
+    private function performForbid(ChanServContext $context, string $channelName, string $reason): void
+    {
         $existing = $this->channelRepository->findByChannelName($channelName);
-
-        if (null !== $existing && $existing->isForbidden()) {
-            $this->forbiddenService->forbid($channelName, $reason, $context->sender->nick);
-            $this->auditData = new IrcopAuditData(
-                target: $channelName,
-                reason: $reason,
-            );
-            $context->reply('forbid.updated', ['%channel%' => $channelName]);
-
-            return;
-        }
 
         $this->forbiddenService->forbid($channelName, $reason, $context->sender->nick);
 
@@ -135,7 +140,8 @@ final class ForbidCommand implements ChanServCommandInterface, AuditableCommandI
             reason: $reason,
         );
 
-        $context->reply('forbid.success', ['%channel%' => $channelName]);
+        $replyKey = null !== $existing && $existing->isForbidden() ? 'forbid.updated' : 'forbid.success';
+        $context->reply($replyKey, ['%channel%' => $channelName]);
     }
 
     public function getAuditData(object $context): ?IrcopAuditData

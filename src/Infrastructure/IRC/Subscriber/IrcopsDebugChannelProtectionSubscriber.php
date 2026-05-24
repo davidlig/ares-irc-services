@@ -136,12 +136,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
 
         $registeredNick = $this->nickRepo->findByNick($nick);
 
-        if (null === $registeredNick) {
-            return false;
-        }
-
-        $ircop = $this->ircopRepo->findByNickId($registeredNick->getId());
-
-        return null !== $ircop;
+        return null !== $registeredNick
+            && null !== $this->ircopRepo->findByNickId($registeredNick->getId());
     }
 }

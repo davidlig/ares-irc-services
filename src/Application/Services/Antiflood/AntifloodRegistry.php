@@ -75,29 +75,32 @@ final class AntifloodRegistry
         }
 
         $now = time();
+        $remaining = 0;
 
         if (isset($this->lockoutUntilByKey[$clientKey])) {
             $lockoutUntil = $this->lockoutUntilByKey[$clientKey];
             if ($now < $lockoutUntil) {
-                return $lockoutUntil - $now;
+                $remaining = $lockoutUntil - $now;
+            } else {
+                unset($this->lockoutUntilByKey[$clientKey]);
+                unset($this->notifiedByKey[$clientKey]);
             }
-            unset($this->lockoutUntilByKey[$clientKey]);
-            unset($this->notifiedByKey[$clientKey]);
         }
 
-        $cutoff = $now - $windowSeconds;
-        $timestamps = $this->timestampsByKey[$clientKey] ?? [];
-        $recent = array_values(array_filter($timestamps, static fn (int $t): bool => $t >= $cutoff));
+        if (0 === $remaining) {
+            $cutoff = $now - $windowSeconds;
+            $timestamps = $this->timestampsByKey[$clientKey] ?? [];
+            $recent = array_values(array_filter($timestamps, static fn (int $t): bool => $t >= $cutoff));
 
-        if (count($recent) < $maxMessages) {
-            return 0;
+            if (count($recent) >= $maxMessages) {
+                $lastCommand = max($recent);
+                $lockoutUntil = $lastCommand + $lockoutSeconds;
+                $this->lockoutUntilByKey[$clientKey] = $lockoutUntil;
+                $remaining = $lockoutUntil - $now;
+            }
         }
 
-        $lastCommand = max($recent);
-        $lockoutUntil = $lastCommand + $lockoutSeconds;
-        $this->lockoutUntilByKey[$clientKey] = $lockoutUntil;
-
-        return $lockoutUntil - $now;
+        return $remaining;
     }
 
     /**

@@ -7,6 +7,7 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
@@ -103,6 +104,7 @@ final readonly class StatusCommand implements NickServCommandInterface
             NickStatus::Registered => $this->replyRegistered($context, $targetNick),
             NickStatus::Suspended => $this->replySuspended($context, $account->getReason(), $account->getSuspendedUntil()),
             NickStatus::Forbidden => $this->replyForbidden($context, $account->getReason()),
+            NickStatus::PendingDeletion => $this->replyPendingDeletion($context, $account),
         };
 
         $context->replyRaw($context->trans('status.footer'));
@@ -164,6 +166,16 @@ final readonly class StatusCommand implements NickServCommandInterface
 
         if (null !== $reason) {
             $context->replyRaw($context->trans('status.forbidden_reason', ['reason' => $reason]));
+        }
+    }
+
+    private function replyPendingDeletion(NickServContext $context, RegisteredNick $account): void
+    {
+        $context->replyRaw($context->trans('status.pending_deletion'));
+
+        $deletionAt = $account->getPendingDeletionAt();
+        if (null !== $deletionAt) {
+            $context->replyRaw($context->trans('status.pending_deletion_at', ['date' => $context->formatDate($deletionAt)]));
         }
     }
 }

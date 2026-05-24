@@ -8,6 +8,7 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -72,81 +73,25 @@ final readonly class NickProtectionService
             return;
         }
 
-        if (str_starts_with($newNick, $this->guestPrefix) && $this->pendingRegistry->consume($uid)) {
-            $this->logger->info(sprintf(
-                'Nick change: %s [%s] → %s — SVSNICK to Guest echo, skipping protection',
-                $oldNick,
-                $uid,
-                $newNick,
-            ));
-
-            return;
-        }
-
-        $registeredNick = $this->identifiedRegistry->findNick($uid);
-        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $oldNick)) {
-            // Get account info before removing from registry
-            $account = $this->nickRepository->findByNick($registeredNick);
-            if (null !== $account) {
-                $this->eventDispatcher->dispatch(new UserDeidentifiedEvent(
-                    $uid,
-                    $account->getId(),
-                    $registeredNick,
-                ));
-            }
-
-            $this->identifiedRegistry->remove($uid);
-            $this->sessionLanguageRegistry->remove($uid);
-            $sender = $this->userLookup->findByUid($uid);
-            if (null !== $sender) {
-                $this->notifier->setUserAccount($uid, '0');
-                $this->notifier->setUserVhost($uid, '', $sender->serverSid);
-            }
-        }
-
-        $account = $this->nickRepository->findByNick($newNick);
-
-        if (null === $account || !$account->isRegistered()) {
-            $this->logger->debug(sprintf(
-                'NickProtection onNickChanged: skip (account null or not registered for %s)',
-                $newNick,
-            ));
-
-            return;
-        }
-
-        $user = $this->userLookup->findByUid($uid);
+        $user = $this->resolveProtectionTarget($uid, $oldNick, $newNick);
 
         if (null === $user) {
-            $this->logger->debug(sprintf(
-                'NickProtection onNickChanged: skip (user null for uid %s)',
-                $uid,
-            ));
-
             return;
         }
 
-        if (str_starts_with($oldNick, $this->guestPrefix) && $this->pendingRegistry->consume($uid)) {
-            $this->logger->info(sprintf(
-                'Nick change: %s [%s] → %s — SVSNICK restore echo, skipping protection',
-                $oldNick,
-                $uid,
-                $newNick,
-            ));
+        $this->enforceProtection($user);
+    }
 
-            return;
+    private function resolveProtectionTarget(string $uid, string $oldNick, string $newNick): ?SenderView
+    {
+        $user = $this->prepareProtectionCheck($uid, $oldNick, $newNick);
+
+        if (null === $user) {
+            return null;
         }
 
-        $registeredNick = $this->identifiedRegistry->findNick($uid);
-        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $newNick)) {
-            $this->logger->info(sprintf(
-                'Nick change: %s [%s] → %s — identified in registry, skipping protection',
-                $oldNick,
-                $uid,
-                $newNick,
-            ));
-
-            return;
+        if ($this->isAlreadyIdentifiedInRegistry($uid, $oldNick, $newNick)) {
+            return null;
         }
 
         if ($user->isIdentified) {
@@ -167,7 +112,117 @@ final readonly class NickProtectionService
             $newNick,
         ));
 
-        $this->enforceProtection($user);
+        return $user;
+    }
+
+    private function prepareProtectionCheck(string $uid, string $oldNick, string $newNick): ?SenderView
+    {
+        if ($this->shouldSkipGuestEcho($uid, $oldNick, $newNick)) {
+            return null;
+        }
+
+        $this->handleDeidentifyOnNickChange($uid, $oldNick);
+
+        return $this->findUserIfNickProtected($uid, $newNick);
+    }
+
+    private function findUserIfNickProtected(string $uid, string $newNick): ?SenderView
+    {
+        $account = $this->nickRepository->findByNick($newNick);
+
+        if (null === $account || !$account->isRegistered()) {
+            $this->logger->debug(sprintf(
+                'NickProtection onNickChanged: skip (account null or not registered for %s)',
+                $newNick,
+            ));
+
+            return null;
+        }
+
+        $user = $this->userLookup->findByUid($uid);
+
+        if (null === $user) {
+            $this->logger->debug(sprintf(
+                'NickProtection onNickChanged: skip (user null for uid %s)',
+                $uid,
+            ));
+
+            return null;
+        }
+
+        return $user;
+    }
+
+    private function shouldSkipGuestEcho(string $uid, string $oldNick, string $newNick): bool
+    {
+        if (str_starts_with($newNick, $this->guestPrefix) && $this->pendingRegistry->consume($uid)) {
+            $this->logger->info(sprintf(
+                'Nick change: %s [%s] → %s — SVSNICK to Guest echo, skipping protection',
+                $oldNick,
+                $uid,
+                $newNick,
+            ));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function handleDeidentifyOnNickChange(string $uid, string $oldNick): void
+    {
+        $registeredNick = $this->identifiedRegistry->findNick($uid);
+
+        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $oldNick)) {
+            // Get account info before removing from registry
+            $account = $this->nickRepository->findByNick($registeredNick);
+
+            if (null !== $account) {
+                $this->eventDispatcher->dispatch(new UserDeidentifiedEvent(
+                    $uid,
+                    $account->getId(),
+                    $registeredNick,
+                ));
+            }
+
+            $this->identifiedRegistry->remove($uid);
+            $this->sessionLanguageRegistry->remove($uid);
+            $sender = $this->userLookup->findByUid($uid);
+
+            if (null !== $sender) {
+                $this->notifier->setUserAccount($uid, '0');
+                $this->notifier->setUserVhost($uid, '', $sender->serverSid);
+            }
+        }
+    }
+
+    private function isAlreadyIdentifiedInRegistry(string $uid, string $oldNick, string $newNick): bool
+    {
+        if (str_starts_with($oldNick, $this->guestPrefix) && $this->pendingRegistry->consume($uid)) {
+            $this->logger->info(sprintf(
+                'Nick change: %s [%s] → %s — SVSNICK restore echo, skipping protection',
+                $oldNick,
+                $uid,
+                $newNick,
+            ));
+
+            return true;
+        }
+
+        $registeredNick = $this->identifiedRegistry->findNick($uid);
+
+        if (null !== $registeredNick && 0 === strcasecmp($registeredNick, $newNick)) {
+            $this->logger->info(sprintf(
+                'Nick change: %s [%s] → %s — identified in registry, skipping protection',
+                $oldNick,
+                $uid,
+                $newNick,
+            ));
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -234,42 +289,74 @@ final readonly class NickProtectionService
         }
 
         if (!$account->isRegistered()) {
+            // Account is pending, suspended, or pending deletion.
+            // If the user has +r, enforce guest rename to prevent channel mode abuse.
+            if ($user->isIdentified) {
+                $this->enforceGuestRename($account, $user, $nick);
+            }
+
             return;
         }
 
         if ($user->isIdentified) {
-            $identifiedNick = $this->identifiedRegistry->findNick($user->uid);
-            if (null !== $identifiedNick && 0 === strcasecmp($identifiedNick, $account->getNickname())) {
-                $account->markSeen();
-                $this->nickRepository->save($account);
+            $this->handleIdentifiedEnforcement($account, $user, $nick);
+        } else {
+            $this->enforceGuestRename($account, $user, $nick);
+        }
+    }
 
-                // Register the session so IrcopModeApplier can find it
-                $this->identifiedRegistry->register($user->uid, $account->getNickname());
+    private function handleIdentifiedEnforcement(RegisteredNick $account, SenderView $user, string $nick): void
+    {
+        $identifiedNick = $this->identifiedRegistry->findNick($user->uid);
 
-                $this->logger->info(sprintf(
-                    'Nick protection: %s [%s] auto-identified (has +r)',
-                    $nick,
-                    $user->uid,
-                ));
-
-                // Dispatch event so subscribers (like OperRoleModesSubscriber) can react
-                $this->eventDispatcher->dispatch(new NickIdentifiedEvent(
-                    $account->getId(),
-                    $account->getNickname(),
-                    $user->uid,
-                ));
-
-                return;
-            }
-
-            $this->logger->info(sprintf(
-                'Nick protection: %s [%s] has +r but identified to %s, enforcing protection',
-                $nick,
-                $user->uid,
-                $identifiedNick ?? 'none',
-            ));
+        // Reconstruct registry state after service restart:
+        // if the user has +r on IRCd but the in-memory registry is empty,
+        // trust the IRCd state when the nick matches the registered account.
+        if (null === $identifiedNick && 0 === strcasecmp($user->nick, $account->getNickname())) {
+            $this->identifiedRegistry->register($user->uid, $account->getNickname());
+            $identifiedNick = $account->getNickname();
         }
 
+        if (null !== $identifiedNick && 0 === strcasecmp($identifiedNick, $account->getNickname())) {
+            $this->markIdentifiedAndDispatch($account, $user);
+
+            return;
+        }
+
+        $this->logger->info(sprintf(
+            'Nick protection: %s [%s] has +r but identified to %s, enforcing protection',
+            $nick,
+            $user->uid,
+            $identifiedNick ?? 'none',
+        ));
+
+        $this->enforceGuestRename($account, $user, $nick);
+    }
+
+    private function markIdentifiedAndDispatch(RegisteredNick $account, SenderView $user): void
+    {
+        $account->markSeen();
+        $this->nickRepository->save($account);
+
+        // Register the session so IrcopModeApplier can find it
+        $this->identifiedRegistry->register($user->uid, $account->getNickname());
+
+        $this->logger->info(sprintf(
+            'Nick protection: %s [%s] auto-identified (has +r)',
+            $user->nick,
+            $user->uid,
+        ));
+
+        // Dispatch event so subscribers (like OperRoleModesSubscriber) can react
+        $this->eventDispatcher->dispatch(new NickIdentifiedEvent(
+            $account->getId(),
+            $account->getNickname(),
+            $user->uid,
+        ));
+    }
+
+    private function enforceGuestRename(RegisteredNick $account, SenderView $user, string $nick): void
+    {
         $language = $account->getLanguage() ?? $this->defaultLanguage;
         $botName = $this->notifier->getNick();
 
@@ -296,7 +383,7 @@ final readonly class NickProtectionService
         $this->notifier->forceNick($user->uid, $guestNick);
 
         $this->logger->info(sprintf(
-            'Nick protection: %s [%s] renamed to %s (nick in use, not identified)',
+            'Nick protection: %s [%s] → %s',
             $nick,
             $user->uid,
             $guestNick,

@@ -57,13 +57,13 @@ final class PendingEmailChangeRegistry
             return false;
         }
 
-        if (0 !== strcasecmp($entry['newEmail'], $newEmail) || !hash_equals($entry['token'], $token)) {
-            return false;
+        $valid = 0 === strcasecmp($entry['newEmail'], $newEmail) && hash_equals($entry['token'], $token);
+
+        if ($valid) {
+            unset($this->entries[$key]);
         }
 
-        unset($this->entries[$key]);
-
-        return true;
+        return $valid;
     }
 
     public function has(string $nickname): bool

@@ -138,21 +138,9 @@ final readonly class InspIRCdCapab
 
     public function hasModule(string $moduleBaseName): bool
     {
-        foreach ($this->modSupport as $mod) {
-            $base = strtolower(explode('=', $mod, 2)[0]);
-            if ($base === strtolower($moduleBaseName)) {
-                return true;
-            }
-        }
+        $matches = static fn ($mod) => strtolower(explode('=', $mod, 2)[0]) === strtolower($moduleBaseName);
 
-        foreach ($this->modules as $mod) {
-            $base = strtolower(explode('=', $mod, 2)[0]);
-            if ($base === strtolower($moduleBaseName)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->modSupport, $matches) || array_any($this->modules, $matches);
     }
 
     /** @return list<string> */
@@ -263,21 +251,20 @@ final readonly class InspIRCdCapab
     private static function parseModeLetter(string $assignment): string
     {
         $eqPos = strpos($assignment, '=');
+
         if (false === $eqPos) {
             return '';
         }
 
         $letter = substr($assignment, $eqPos + 1);
 
-        if (1 === strlen($letter)) {
-            return $letter;
-        }
+        $result = match (true) {
+            1 === strlen($letter) => $letter,
+            2 === strlen($letter) && in_array($letter[0], ['+', '%', '@', '&', '~'], true) => $letter[1],
+            default => '',
+        };
 
-        if (2 === strlen($letter) && in_array($letter[0], ['+', '%', '@', '&', '~'], true)) {
-            return $letter[1];
-        }
-
-        return '';
+        return $result;
     }
 
     /**

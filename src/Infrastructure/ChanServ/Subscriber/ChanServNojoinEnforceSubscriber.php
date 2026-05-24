@@ -73,15 +73,7 @@ final readonly class ChanServNojoinEnforceSubscriber implements EventSubscriberI
         }
 
         $user = $this->userLookup->findByUid($uid);
-        if (null === $user) {
-            return;
-        }
-
-        if ($user->isOper) {
-            return;
-        }
-
-        if ($user->nick === $this->chanservNick) {
+        if (null === $user || $user->isOper || $user->nick === $this->chanservNick) {
             return;
         }
 

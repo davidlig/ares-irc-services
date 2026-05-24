@@ -51,32 +51,19 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
         }
 
         $channel = $this->channelRepository->findByChannelName(strtolower($event->channel->value));
-        if (null === $channel) {
-            return;
-        }
 
-        if (!$this->memoSettingsRepository->isEnabledForChannel($channel->getId())) {
+        if (null === $channel || !$this->memoSettingsRepository->isEnabledForChannel($channel->getId())) {
             return;
         }
 
         $unread = $this->memoRepository->countUnreadByTargetChannel($channel->getId());
-        if (0 === $unread) {
-            return;
-        }
 
-        $sender = $this->userLookup->findByUid($event->uid->value);
-        if (null === $sender) {
-            return;
-        }
+        $sender = 0 !== $unread ? $this->userLookup->findByUid($event->uid->value) : null;
+        $account = null !== $sender ? $this->nickRepository->findByNick($sender->nick) : null;
+        $hasAccess = null !== $account && $sender->isIdentified
+            && $this->accessHelper->effectiveAccessLevel($channel, $account->getId(), true) >= $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_MEMOREAD);
 
-        $account = $this->nickRepository->findByNick($sender->nick);
-        if (null === $account || !$sender->isIdentified) {
-            return;
-        }
-
-        $userLevel = $this->accessHelper->effectiveAccessLevel($channel, $account->getId(), true);
-        $required = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_MEMOREAD);
-        if ($userLevel < $required) {
+        if (0 === $unread || !$hasAccess) {
             return;
         }
 

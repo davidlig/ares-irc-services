@@ -80,44 +80,47 @@ final class NoexpireCommand implements NickServCommandInterface, AuditableComman
 
     public function execute(NickServContext $context): void
     {
-        $targetNick = $context->args[0];
         $action = strtoupper($context->args[1]);
-
         if (!in_array($action, ['ON', 'OFF'], true)) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
             return;
         }
 
+        $errorKey = $this->validateNoexpireTarget($context);
+        if (null !== $errorKey) {
+            $context->reply($errorKey, ['%nickname%' => $context->args[0]]);
+
+            return;
+        }
+
+        $this->executeNoexpire($context, 'ON' === $action);
+    }
+
+    private function validateNoexpireTarget(NickServContext $context): ?string
+    {
+        $account = $this->nickRepository->findByNick($context->args[0]);
+
+        $result = match (true) {
+            null === $account => 'noexpire.not_registered',
+            $account->isForbidden() => 'noexpire.forbidden',
+            $account->isSuspended() => 'noexpire.suspended',
+            default => null,
+        };
+
+        return $result;
+    }
+
+    private function executeNoexpire(NickServContext $context, bool $newValue): void
+    {
+        $targetNick = $context->args[0];
+        $action = strtoupper($context->args[1]);
         $account = $this->nickRepository->findByNick($targetNick);
 
-        if (null === $account) {
-            $context->reply('noexpire.not_registered', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        if ($account->isForbidden()) {
-            $context->reply('noexpire.forbidden', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        if ($account->isSuspended()) {
-            $context->reply('noexpire.suspended', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        $newValue = 'ON' === $action;
         $account->setNoExpire($newValue);
         $this->nickRepository->save($account);
 
-        $this->auditData = new IrcopAuditData(
-            target: $targetNick,
-            extra: ['option' => $action],
-        );
-
+        $this->auditData = new IrcopAuditData(target: $targetNick, extra: ['option' => $action]);
         $context->reply(
             $newValue ? 'noexpire.success_on' : 'noexpire.success_off',
             ['%nickname%' => $targetNick],

@@ -168,6 +168,11 @@ final class SetCommand implements NickServCommandInterface
             return;
         }
 
+        $this->routeSet($context);
+    }
+
+    private function routeSet(NickServContext $context): void
+    {
         $option = strtoupper($context->args[0]);
         $value = implode(' ', array_slice($context->args, 1));
 
@@ -188,6 +193,15 @@ final class SetCommand implements NickServCommandInterface
             return;
         }
 
+        $this->dispatchHandler($context, $account, $option, $value);
+    }
+
+    private function dispatchHandler(
+        NickServContext $context,
+        ?RegisteredNick $account,
+        string $option,
+        string $value,
+    ): void {
         if (null === $account) {
             $context->reply('error.not_identified');
 

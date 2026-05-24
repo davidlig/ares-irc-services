@@ -51,7 +51,7 @@ final class ConsumerProcessManagerTest extends TestCase
     #[Test]
     public function isRunningReturnsTrueWhileProcessIsAliveThenFalseAfterStop(): void
     {
-        $script = $this->createTemporaryConsoleScriptWithSleep(2);
+        $script = $this->createTemporaryConsoleScriptBlocking();
         try {
             $manager = new ConsumerProcessManager($script);
 
@@ -78,7 +78,7 @@ final class ConsumerProcessManagerTest extends TestCase
         return $path;
     }
 
-    private function createTemporaryConsoleScriptWithSleep(int $seconds): string
+    private function createTemporaryConsoleScriptBlocking(): string
     {
         $tmp = tempnam(sys_get_temp_dir(), 'ares_console_');
         if (false === $tmp) {
@@ -86,7 +86,8 @@ final class ConsumerProcessManagerTest extends TestCase
         }
         $path = $tmp . '.php';
         rename($tmp, $path);
-        file_put_contents($path, "<?php\ndeclare(strict_types=1);\nsleep(" . $seconds . ');' . "\nexit(0);\n");
+        // Block on stdin — process runs until pipes are closed by stop()
+        file_put_contents($path, "<?php fgets(STDIN);\n");
 
         return $path;
     }
@@ -94,7 +95,7 @@ final class ConsumerProcessManagerTest extends TestCase
     #[Test]
     public function stopClosesPipeResources(): void
     {
-        $script = $this->createTemporaryConsoleScriptWithSleep(2);
+        $script = $this->createTemporaryConsoleScriptBlocking();
         try {
             $manager = new ConsumerProcessManager($script);
 
@@ -123,7 +124,7 @@ final class ConsumerProcessManagerTest extends TestCase
     #[Test]
     public function startWithCustomTransportNames(): void
     {
-        $script = $this->createTemporaryConsoleScriptWithSleep(2);
+        $script = $this->createTemporaryConsoleScriptBlocking();
         try {
             $manager = new ConsumerProcessManager($script, ['async', 'async_emails']);
 
@@ -145,7 +146,6 @@ final class ConsumerProcessManagerTest extends TestCase
             $manager = new ConsumerProcessManager($script);
 
             $manager->start();
-            usleep(100000);
             $manager->stop();
             $manager->stop();
 

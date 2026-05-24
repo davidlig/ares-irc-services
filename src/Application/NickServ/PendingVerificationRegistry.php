@@ -65,13 +65,13 @@ final class PendingVerificationRegistry
             return false;
         }
 
-        if (!hash_equals($entry['token'], $token)) {
-            return false;
+        $valid = hash_equals($entry['token'], $token);
+
+        if ($valid) {
+            unset($this->entries[$key]);
         }
 
-        unset($this->entries[$key]);
-
-        return true;
+        return $valid;
     }
 
     public function has(string $nickname): bool

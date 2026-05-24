@@ -68,36 +68,35 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
 
     public function onMessage(MessageReceivedEvent $event): void
     {
-        if ($this->maxMessages <= 0) {
+        if (!$this->shouldProcessMessage($event)) {
             return;
+        }
+
+        $this->processFloodCheck($event);
+    }
+
+    private function shouldProcessMessage(MessageReceivedEvent $event): bool
+    {
+        if ($this->maxMessages <= 0) {
+            return false;
         }
 
         $message = $event->message;
 
-        if (!in_array($message->command, ['PRIVMSG', 'SQUERY'], true)) {
-            return;
-        }
+        return in_array($message->command, ['PRIVMSG', 'SQUERY'], true)
+            && '' !== ($message->params[0] ?? '')
+            && '' !== ($message->prefix ?? '')
+            && null !== $this->gateway->findListenerFor($message->params[0] ?? '');
+    }
 
-        $target = $message->params[0] ?? '';
-        $sourceId = $message->prefix ?? '';
-
-        if ('' === $target || '' === $sourceId) {
-            return;
-        }
-
+    private function processFloodCheck(MessageReceivedEvent $event): void
+    {
+        $message = $event->message;
+        $target = $message->params[0];
+        $sender = $this->userLookup->findByUid($message->prefix);
         $listener = $this->gateway->findListenerFor($target);
 
-        if (null === $listener) {
-            return;
-        }
-
-        $sender = $this->userLookup->findByUid($sourceId);
-
-        if (null === $sender) {
-            return;
-        }
-
-        if ($sender->isOper || $this->rootRegistry->isRoot($sender->nick)) {
+        if (null === $sender || $sender->isOper || $this->rootRegistry->isRoot($sender->nick)) {
             return;
         }
 

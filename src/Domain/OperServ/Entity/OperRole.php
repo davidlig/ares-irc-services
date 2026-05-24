@@ -74,13 +74,7 @@ class OperRole
 
     public function hasPermission(string $permissionName): bool
     {
-        foreach ($this->permissions as $permission) {
-            if ($permission->getName() === $permissionName) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->permissions->toArray(), static fn ($permission) => $permission->getName() === $permissionName);
     }
 
     public function addPermission(OperPermission $permission): void

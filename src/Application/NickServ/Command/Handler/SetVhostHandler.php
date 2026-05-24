@@ -32,59 +32,80 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
-        // Check if user has forced vhost from IRCop role - they cannot change it
         if ($this->hasForcedVhost($account->getId())) {
             $context->reply('set.vhost.forced');
 
             return;
         }
 
+        $errorKey = $this->validateVhostInput($value, $account, $context, $isIrcopMode);
+        if (null !== $errorKey) {
+            if ('__cleared__' === $errorKey) {
+                return;
+            }
+
+            $context->reply($errorKey);
+
+            return;
+        }
+
+        $this->applyVhost($context, $account, $value, $isIrcopMode);
+    }
+
+    private function validateVhostInput(string $value, RegisteredNick $account, NickServContext $context, bool $isIrcopMode): ?string
+    {
         $normalized = trim($value);
         $clearKeywords = ['OFF', ''];
+
         if ('' === $normalized || in_array(strtoupper($normalized), $clearKeywords, true)) {
             $account->changeVhost(null);
             $this->nickRepository->save($account);
-
-            // In IRCop mode, the target user may be different from the sender
-            if ($isIrcopMode) {
-                $targetUser = $this->userLookup->findByNick($account->getNickname());
-                if (null !== $targetUser) {
-                    $context->getNotifier()->setUserVhost($targetUser->uid, '', $targetUser->serverSid);
-                }
-            } elseif (null !== $context->sender) {
-                $context->getNotifier()->setUserVhost($context->sender->uid, '', $context->sender->serverSid);
-            }
+            $this->applyClearVhost($context, $account, $isIrcopMode);
             $context->reply('set.vhost.cleared');
 
-            return;
+            return '__cleared__';
         }
 
         $normalized = $this->vhostValidator->normalize($normalized);
-        if (null === $normalized) {
-            $context->reply('set.vhost.invalid');
 
-            return;
-        }
+        $result = match (true) {
+            null === $normalized => 'set.vhost.invalid',
+            $this->isForbidden($normalized) => 'set.vhost.invalid',
+            default => $this->validateVhostUniqueness($normalized, $account),
+        };
 
-        if ($this->isForbidden($normalized)) {
-            $context->reply('set.vhost.invalid');
+        return $result;
+    }
 
-            return;
-        }
-
+    private function validateVhostUniqueness(string $normalized, RegisteredNick $account): ?string
+    {
         $existing = $this->nickRepository->findByVhost($normalized);
-        if (null !== $existing && $existing->getId() !== $account->getId()) {
-            $context->reply('set.vhost.taken');
 
-            return;
+        return (null !== $existing && $existing->getId() !== $account->getId())
+            ? 'set.vhost.taken'
+            : null;
+    }
+
+    private function applyClearVhost(NickServContext $context, RegisteredNick $account, bool $isIrcopMode): void
+    {
+        if ($isIrcopMode) {
+            $targetUser = $this->userLookup->findByNick($account->getNickname());
+            if (null !== $targetUser) {
+                $context->getNotifier()->setUserVhost($targetUser->uid, '', $targetUser->serverSid);
+            }
+        } elseif (null !== $context->sender) {
+            $context->getNotifier()->setUserVhost($context->sender->uid, '', $context->sender->serverSid);
         }
+    }
 
+    private function applyVhost(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode): void
+    {
+        $normalized = $this->vhostValidator->normalize(trim($value));
         $account->changeVhost($normalized);
         $this->nickRepository->save($account);
 
         $displayVhost = $this->displayResolver->getDisplayVhost($normalized);
 
-        // In IRCop mode, the target user may be different from the sender
         if ($isIrcopMode) {
             $targetUser = $this->userLookup->findByNick($account->getNickname());
             if (null !== $targetUser && '' !== $displayVhost) {
@@ -111,12 +132,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
     private function isForbidden(string $vhost): bool
     {
         $forbiddenList = $this->forbiddenVhostRepository->findAll();
-        foreach ($forbiddenList as $forbidden) {
-            if ($forbidden->matches($vhost)) {
-                return true;
-            }
-        }
 
-        return false;
+        return array_any($forbiddenList, static fn ($forbidden) => $forbidden->matches($vhost));
     }
 }

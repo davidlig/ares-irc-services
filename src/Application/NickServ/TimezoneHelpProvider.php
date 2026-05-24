@@ -96,22 +96,20 @@ final class TimezoneHelpProvider
         $this->ensureLoaded();
 
         $id = trim($timezoneIdentifier);
+
         if ('' === $id) {
             return null;
         }
 
         $pos = strpos($id, '/');
+
         if (false === $pos) {
             return null;
         }
 
         $prefix = substr($id, 0, $pos);
 
-        if ('Etc' === $prefix || !isset(self::$byRegion[$prefix])) {
-            return null;
-        }
-
-        return $prefix;
+        return 'Etc' !== $prefix && isset(self::$byRegion[$prefix]) ? $prefix : null;
     }
 
     private function normalizeRegionName(string $name): ?string
@@ -122,13 +120,8 @@ final class TimezoneHelpProvider
         }
 
         $lower = strtolower($trimmed);
-        foreach (self::REGION_ORDER as $region) {
-            if (strtolower($region) === $lower) {
-                return $region;
-            }
-        }
 
-        return null;
+        return array_find(self::REGION_ORDER, static fn ($region) => strtolower($region) === $lower);
     }
 
     private function ensureLoaded(): void

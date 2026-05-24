@@ -98,42 +98,15 @@ final class ClearusersCommand implements ChanServCommandInterface, AuditableComm
             return;
         }
 
-        $channelName = $context->getChannelNameArg(0);
-
-        if (null === $channelName) {
-            $context->reply('error.invalid_channel');
-
+        $validation = $this->validateClearusers($context);
+        if (null === $validation) {
             return;
         }
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-
-        if (null === $channel) {
-            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
-
-            return;
-        }
-
-        $view = $context->getChannelView($channelName);
-
-        if (null === $view) {
-            $context->reply('clearusers.not_on_network', ['%channel%' => $channelName]);
-
-            return;
-        }
-
-        $reason = trim(implode(' ', array_slice($context->args, 1)));
-        $kickReason = '' !== $reason ? $reason : $context->trans('clearusers.default_reason');
-
+        [$channelName, $view, $reason] = $validation;
         $members = $view->members;
-
-        if (0 === count($members)) {
-            $context->reply('clearusers.empty', ['%channel%' => $channelName]);
-
-            return;
-        }
-
         $count = count($members);
+        $kickReason = '' !== $reason ? $reason : $context->trans('clearusers.default_reason');
 
         foreach ($members as $member) {
             $this->notifier->kickFromChannel(
@@ -153,6 +126,51 @@ final class ClearusersCommand implements ChanServCommandInterface, AuditableComm
             '%channel%' => $channelName,
             '%count%' => (string) $count,
         ]);
+    }
+
+    /** @return array{string, object, string}|null */
+    private function validateClearusers(ChanServContext $context): ?array
+    {
+        $channelName = $context->getChannelNameArg(0);
+
+        if (null === $channelName) {
+            $context->reply('error.invalid_channel');
+
+            return null;
+        }
+
+        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+
+        if (null === $channel) {
+            $context->reply('error.channel_not_registered', ['%channel%' => $channelName]);
+
+            return null;
+        }
+
+        return $this->validateClearusersView($context, $channelName);
+    }
+
+    /** @return array{string, object, string}|null */
+    private function validateClearusersView(ChanServContext $context, string $channelName): ?array
+    {
+        $view = $context->getChannelView($channelName);
+
+        if (null === $view) {
+            $context->reply('clearusers.not_on_network', ['%channel%' => $channelName]);
+
+            return null;
+        }
+
+        $reason = trim(implode(' ', array_slice($context->args, 1)));
+        $members = $view->members;
+
+        if (0 === count($members)) {
+            $context->reply('clearusers.empty', ['%channel%' => $channelName]);
+
+            return null;
+        }
+
+        return [$channelName, $view, $reason];
     }
 
     public function getAuditData(object $context): ?IrcopAuditData

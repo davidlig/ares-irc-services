@@ -573,6 +573,78 @@ final class NickProtectionServiceTest extends TestCase
     }
 
     #[Test]
+    public function enforceProtectionAutoIdentifiesWhenIdentifiedButRegistryEmpty(): void
+    {
+        // Simulates service restart: user has +r on IRCd but identifiedRegistry is empty
+        $user = new SenderView('UID1', 'MyNick', 'i', 'h', 'c', 'ip', isIdentified: true);
+        $account = RegisteredNick::createPending('MyNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+
+        $reflection = new ReflectionClass($account);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setAccessible(true);
+        $idProp->setValue($account, 1);
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('MyNick')->willReturn($account);
+        $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('forceNick');
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        // Registry is EMPTY — simulating service restart
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $notifier,
+            new BurstState(),
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $eventDispatcher,
+            $this->createStub(ForbiddenNickService::class),
+        );
+
+        $service->enforceProtection($user);
+    }
+
+    #[Test]
+    public function enforceProtectionRenamesWhenIdentifiedButAccountPendingDeletion(): void
+    {
+        // Nick is pending deletion — should NOT auto-identify, should rename to Guest
+        $user = new SenderView('UID1', 'MyNick', 'i', 'h', 'c', 'ip', isIdentified: true);
+        $account = RegisteredNick::createPending('MyNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        // Account is NOT activated — stays in pending state (not registered)
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('MyNick')->willReturn($account);
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('forceNick')->with('UID1', self::stringStartsWith('Guest-'));
+        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $notifier,
+            new BurstState(),
+            new IdentifiedSessionRegistry(),
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $translator,
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+        );
+
+        $service->enforceProtection($user);
+    }
+
+    #[Test]
     public function onNickChangedClearsVhostWhenChangingAwayFromIdentifiedNick(): void
     {
         $burstState = new BurstState();

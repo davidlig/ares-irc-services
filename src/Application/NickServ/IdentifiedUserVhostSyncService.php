@@ -6,6 +6,7 @@ namespace App\Application\NickServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
@@ -48,11 +49,18 @@ final readonly class IdentifiedUserVhostSyncService
         }
 
         $account = $this->nickRepository->findByNick($user->nick);
+
         if (null === $account || !$account->isRegistered()) {
             return;
         }
 
+        $this->applyVhostForUser($user, $account);
+    }
+
+    private function applyVhostForUser(SenderView $user, RegisteredNick $account): void
+    {
         $ircop = $this->ircopRepository->findByNickId($account->getId());
+
         if (null !== $ircop) {
             $role = $ircop->getRole();
             $forcedPattern = $role->getForcedVhostPattern();
@@ -74,6 +82,7 @@ final readonly class IdentifiedUserVhostSyncService
         }
 
         $displayVhost = $this->displayResolver->getDisplayVhost($account->getVhost());
+
         if ('' === $displayVhost) {
             return;
         }

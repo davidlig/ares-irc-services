@@ -110,12 +110,6 @@ final readonly class HelpCommand implements MemoServCommandInterface
      */
     private function findSubCommand(MemoServCommandInterface $handler, string $subName): ?array
     {
-        foreach ($handler->getSubCommandHelp() as $sub) {
-            if ($sub['name'] === $subName) {
-                return $sub;
-            }
-        }
-
-        return null;
+        return array_find($handler->getSubCommandHelp(), static fn (array $sub): bool => $sub['name'] === $subName);
     }
 }

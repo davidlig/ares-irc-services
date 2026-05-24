@@ -99,11 +99,23 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $validation = $this->validateDelaccess($context);
+        if (null === $validation) {
+            return;
+        }
+
+        [$channelName, $channel, $existing] = $validation;
+        $this->performDelaccess($context, $channelName, $channel, $existing);
+    }
+
+    /** @return array{string, object, object}|null */
+    private function validateDelaccess(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
@@ -111,19 +123,32 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
 
+        return $this->validateDelaccessSender($context, $channel, $channelName);
+    }
+
+    /** @return array{string, object, object}|null */
+    private function validateDelaccessSender(ChanServContext $context, object $channel, string $channelName): ?array
+    {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
 
         if (!$context->isLevelFounder && $channel->isFounder($senderAccount->getId())) {
             $context->reply('delaccess.founder_not_in_access', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
+        return $this->findDelaccessEntry($context, $channel, $channelName);
+    }
+
+    /** @return array{string, object, object}|null */
+    private function findDelaccessEntry(ChanServContext $context, object $channel, string $channelName): ?array
+    {
+        $senderAccount = $context->senderAccount;
         $existing = $this->accessRepository->findByChannelAndNick(
             $channel->getId(),
             $senderAccount->getId(),
@@ -132,14 +157,20 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         if (null === $existing) {
             $context->reply('delaccess.not_in_list', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
+        return [$channelName, $channel, $existing];
+    }
+
+    private function performDelaccess(ChanServContext $context, string $channelName, object $channel, object $existing): void
+    {
         $this->accessRepository->remove($existing);
 
+        $senderAccount = $context->senderAccount;
         $ip = $this->decodeIp($context->sender->ipBase64);
         $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
-        $performedByNickId = $context->senderAccount?->getId();
+        $performedByNickId = $senderAccount?->getId();
         $nickname = $context->sender->nick;
 
         $this->eventDispatcher->dispatch(new ChannelAccessChangedEvent(

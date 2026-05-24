@@ -121,6 +121,7 @@ info:
   status_suspended:   "\x0304Sospeso\x03"
   status_forbidden:   "\x0304Vietato\x03"
   status_pending_deletion: "07In attesa di cancellazione"
+  status_pending_deletion_at:  "  14Eliminato          : %date%"
   reason:           "  \x0314Motivo\x03                 : %reason%"
   suspended_until:  "  \x0314Termina il\x03          : %date%"
   suspended_permanent: "  \x0314Termina il\x03          : Permanente"

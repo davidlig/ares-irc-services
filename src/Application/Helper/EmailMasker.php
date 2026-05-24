@@ -24,23 +24,19 @@ final class EmailMasker
     public static function mask(string $email): string
     {
         $email = trim($email);
+
         if ('' === $email) {
             return self::FALLBACK;
         }
 
         $at = strpos($email, '@');
+
         if (false === $at) {
             return self::FALLBACK;
         }
 
-        $local = substr($email, 0, $at);
-        $domain = substr($email, $at);
+        $visible = mb_substr(substr($email, 0, $at), 0, 2);
 
-        $visible = mb_substr($local, 0, 2);
-        if ('' === $visible) {
-            return self::FALLBACK;
-        }
-
-        return $visible . self::MASK . $domain;
+        return '' !== $visible ? $visible . '****' . substr($email, $at) : self::FALLBACK;
     }
 }

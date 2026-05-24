@@ -99,12 +99,23 @@ final class NoexpireCommand implements ChanServCommandInterface, AuditableComman
             return;
         }
 
+        $validation = $this->validateNoexpire($context);
+        if (null === $validation) {
+            return;
+        }
+
+        $this->performNoexpire($context, ...$validation);
+    }
+
+    /** @return array{string, object, bool}|null */
+    private function validateNoexpire(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
 
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $action = strtoupper($context->args[1]);
@@ -112,33 +123,52 @@ final class NoexpireCommand implements ChanServCommandInterface, AuditableComman
         if (!in_array($action, ['ON', 'OFF'], true)) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
+        return $this->validateNoexpireChannel($context, $channelName, $action);
+    }
+
+    /** @return array{string, object, bool}|null */
+    private function validateNoexpireChannel(ChanServContext $context, string $channelName, string $action): ?array
+    {
         $channel = $this->channelRepository->findByChannelName($channelName);
 
         if (null === $channel) {
             $context->reply('noexpire.not_registered', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
         if ($channel->isForbidden()) {
             $context->reply('noexpire.forbidden', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
+        return $this->validateNoexpireSuspended($context, $channel, $channelName, $action);
+    }
+
+    /** @return array{string, object, bool}|null */
+    private function validateNoexpireSuspended(ChanServContext $context, object $channel, string $channelName, string $action): ?array
+    {
         if ($channel->isSuspended()) {
             $context->reply('noexpire.suspended', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
         $newValue = 'ON' === $action;
+
+        return [$channelName, $channel, $newValue];
+    }
+
+    private function performNoexpire(ChanServContext $context, string $channelName, object $channel, bool $newValue): void
+    {
         $channel->setNoExpire($newValue);
         $this->channelRepository->save($channel);
 
+        $action = $newValue ? 'ON' : 'OFF';
         $this->auditData = new IrcopAuditData(
             target: $channelName,
             extra: ['option' => $action],

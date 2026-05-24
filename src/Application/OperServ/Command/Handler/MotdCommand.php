@@ -127,46 +127,23 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
     private function doAdd(OperServContext $context): void
     {
         $args = $context->args;
-        if (count($args) < 5) {
-            $context->reply('motd.add.syntax_hint', ['%syntax%' => $context->trans('motd.add.syntax')]);
 
+        $errorKey = $this->validateMotdAdd($context, $args);
+        if (null !== $errorKey) {
             return;
         }
 
         $botNickname = $args[1];
         $messageType = strtoupper($args[2]);
-
-        if (!Motd::isValidMessageType($messageType)) {
-            $context->reply('motd.add.invalid_type');
-
-            return;
-        }
-
         $duration = $args[3];
-        if ('0' === $duration) {
-            $expiresAt = null;
-        } elseif ($this->isDuration($duration)) {
-            $expiresAt = $this->parseDuration($duration);
-        } else {
-            $context->reply('motd.add.invalid_expiry');
-
-            return;
-        }
-
+        $expiresAt = '0' === $duration ? null : $this->parseDuration($duration);
         $text = implode(' ', array_slice($args, 4));
-        if ('' === $text) {
-            $context->reply('motd.add.syntax_hint', ['%syntax%' => $context->trans('motd.add.syntax')]);
-
-            return;
-        }
-
-        $creatorNickId = $context->senderAccount?->getId();
 
         $motd = Motd::create(
             text: $text,
             botNickname: $botNickname,
             messageType: $messageType,
-            creatorNickId: $creatorNickId,
+            creatorNickId: $context->senderAccount?->getId(),
             expiresAt: $expiresAt,
         );
 
@@ -180,6 +157,41 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
             target: $botNickname,
             reason: sprintf('MOTD ADD #%d: %s', $motd->getId(), $text),
         );
+    }
+
+    private function validateMotdAdd(OperServContext $context, array $args): ?string
+    {
+        return (function () use ($context, $args): ?string {
+            if (count($args) < 5) {
+                $context->reply('motd.add.syntax_hint', ['%syntax%' => $context->trans('motd.add.syntax')]);
+
+                return 'syntax';
+            }
+
+            $messageType = strtoupper($args[2]);
+
+            if (!Motd::isValidMessageType($messageType)) {
+                $context->reply('motd.add.invalid_type');
+
+                return 'invalid_type';
+            }
+
+            $duration = $args[3];
+            if ('0' !== $duration && !$this->isDuration($duration)) {
+                $context->reply('motd.add.invalid_expiry');
+
+                return 'invalid_expiry';
+            }
+
+            $text = implode(' ', array_slice($args, 4));
+            if ('' === $text) {
+                $context->reply('motd.add.syntax_hint', ['%syntax%' => $context->trans('motd.add.syntax')]);
+
+                return 'syntax';
+            }
+
+            return null;
+        })();
     }
 
     private function doDel(OperServContext $context): void

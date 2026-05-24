@@ -34,15 +34,10 @@ readonly class NickTargetValidator
         }
 
         $account = $this->nickRepository->findByNick($nickname);
+        $isIrcop = null !== $account && null !== $this->ircopRepository->findByNickId($account->getId());
 
-        if (null !== $account) {
-            $ircop = $this->ircopRepository->findByNickId($account->getId());
-
-            if (null !== $ircop) {
-                return NickProtectabilityResult::ircop($nickname);
-            }
-        }
-
-        return NickProtectabilityResult::allowed($nickname, $account);
+        return $isIrcop
+            ? NickProtectabilityResult::ircop($nickname)
+            : NickProtectabilityResult::allowed($nickname, $account);
     }
 }

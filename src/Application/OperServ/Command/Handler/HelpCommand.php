@@ -68,42 +68,43 @@ final readonly class HelpCommand implements OperServCommandInterface
 
     public function execute(OperServContext $context): void
     {
-        $sender = $context->getSender();
-        if (null !== $sender && !$sender->isOper && !$context->isRoot()) {
-            $context->reply('error.oper_only');
+        (function () use ($context): void {
+            $sender = $context->getSender();
+            if (null !== $sender && !$sender->isOper && !$context->isRoot()) {
+                $context->reply('error.oper_only');
 
-            return;
-        }
+                return;
+            }
 
-        if (empty($context->args)) {
-            $this->showGeneralHelp($context);
+            if (empty($context->args)) {
+                $this->showGeneralHelp($context);
 
-            return;
-        }
+                return;
+            }
 
-        $targetCmd = strtoupper($context->args[0]);
-        $handler = $context->getRegistry()->find($targetCmd);
+            $targetCmd = strtoupper($context->args[0]);
+            $handler = $context->getRegistry()->find($targetCmd);
 
-        if (null === $handler || ($handler->isOperOnly() && !$context->isRoot())) {
-            $context->reply('help.unknown_command', ['%command%' => $targetCmd]);
+            if (null === $handler || ($handler->isOperOnly() && !$context->isRoot())) {
+                $context->reply('help.unknown_command', ['%command%' => $targetCmd]);
 
-            return;
-        }
+                return;
+            }
 
-        $adapter = new OperServHelpFormatterContextAdapter($context);
+            $adapter = new OperServHelpFormatterContextAdapter($context);
 
-        if (isset($context->args[1]) && [] !== $handler->getSubCommandHelp()) {
-            $subName = strtoupper($context->args[1]);
-            $subCmd = $this->findSubCommand($handler, $subName);
+            $subCmd = isset($context->args[1]) && [] !== $handler->getSubCommandHelp()
+                ? $this->findSubCommand($handler, strtoupper($context->args[1]))
+                : null;
 
             if (null !== $subCmd) {
                 $this->formatter->showSubCommandHelp($adapter, $handler->getName(), $subCmd);
 
                 return;
             }
-        }
 
-        $this->formatter->showCommandHelp($adapter, $handler);
+            $this->formatter->showCommandHelp($adapter, $handler);
+        })();
     }
 
     private function showGeneralHelp(OperServContext $context): void
@@ -116,12 +117,6 @@ final readonly class HelpCommand implements OperServCommandInterface
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
     private function findSubCommand(OperServCommandInterface $handler, string $name): ?array
     {
-        foreach ($handler->getSubCommandHelp() as $sub) {
-            if ($name === strtoupper($sub['name'])) {
-                return $sub;
-            }
-        }
-
-        return null;
+        return array_find($handler->getSubCommandHelp(), static fn (array $sub): bool => $name === strtoupper($sub['name']));
     }
 }

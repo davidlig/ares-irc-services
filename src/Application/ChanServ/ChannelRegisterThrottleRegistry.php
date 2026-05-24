@@ -47,11 +47,9 @@ final class ChannelRegisterThrottleRegistry
         $nextAllowedAt = $last->modify(sprintf('+%d seconds', $minIntervalSeconds));
         $now = new DateTimeImmutable();
 
-        if ($now >= $nextAllowedAt) {
-            return 0;
-        }
+        $remaining = $now >= $nextAllowedAt ? 0 : $nextAllowedAt->getTimestamp() - $now->getTimestamp();
 
-        return $nextAllowedAt->getTimestamp() - $now->getTimestamp();
+        return $remaining;
     }
 
     /**

@@ -45,13 +45,8 @@ final class IdentifiedSessionRegistry
     {
         $lowerNick = strtolower($registeredNick);
         $this->logger?->debug('IdentifiedSessionRegistry: searching for nick', ['search' => $registeredNick, 'sessions' => $this->sessions]);
-        foreach ($this->sessions as $uid => $nick) {
-            if (strtolower($nick) === $lowerNick) {
-                return $uid;
-            }
-        }
 
-        return null;
+        return array_find_key($this->sessions, static fn ($nick) => strtolower($nick) === $lowerNick);
     }
 
     /** Removes the UID entry (called on quit to free memory). */

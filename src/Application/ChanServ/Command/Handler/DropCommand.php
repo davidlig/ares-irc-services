@@ -103,13 +103,24 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
             return;
         }
 
+        $validation = $this->validateDrop($context);
+        if (null === $validation) {
+            return;
+        }
+
+        $this->performDrop($context, ...$validation);
+    }
+
+    /** @return array{string, object, bool}|null */
+    private function validateDrop(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
         $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
 
         if (null === $channelName) {
             $context->reply('drop.invalid_channel');
 
-            return;
+            return null;
         }
 
         $channel = $this->channelRepository->findByChannelName($channelName);
@@ -117,24 +128,33 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
         if (null === $channel) {
             $context->reply('drop.not_registered', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
-        if ($channel->isPendingDeletion()) {
-            if (!$force) {
-                $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
+        return $this->validateDropAccess($context, $channel, $channelName, $force);
+    }
 
-                return;
-            }
+    /** @return array{string, object, bool}|null */
+    private function validateDropAccess(ChanServContext $context, object $channel, string $channelName, bool $force): ?array
+    {
+        if ($channel->isPendingDeletion() && !$force) {
+            $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
+
+            return null;
         }
 
+        if ($force && (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(ChanServPermission::DROP_FORCE, $context))) {
+            $context->reply('error.permission_denied');
+
+            return null;
+        }
+
+        return [$channelName, $channel, $force];
+    }
+
+    private function performDrop(ChanServContext $context, string $channelName, object $channel, bool $force): void
+    {
         if ($force) {
-            if (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(ChanServPermission::DROP_FORCE, $context)) {
-                $context->reply('error.permission_denied');
-
-                return;
-            }
-
             $this->dropService->hardDropChannel($channel, 'manual-force', $context->sender->nick);
             $this->auditData = new IrcopAuditData(target: $channelName, extra: ['force' => true]);
             $context->reply('drop.force_success', ['%channel%' => $channelName]);

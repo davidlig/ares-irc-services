@@ -250,44 +250,91 @@ final readonly class AkickCommand implements ChanServCommandInterface
             $this->accessHelper->requireLevel($channel, $context->senderAccount->getId(), ChannelLevel::KEY_AKICK, $channelName, 'AKICK ADD');
         }
 
+        $mask = $this->validateAndGetMask($context, $channel);
+        if (null === $mask) {
+            return;
+        }
+
+        $this->completeAdd($context, $channel, $channelName, $mask);
+    }
+
+    private function validateAndGetMask(ChanServContext $context, RegisteredChannel $channel): ?string
+    {
+        $mask = $this->extractMaskFromArgs($context);
+        if (null === $mask) {
+            return null;
+        }
+
+        if ($this->hasMaskProblems($context, $mask, $channel)) {
+            return null;
+        }
+
+        return $mask;
+    }
+
+    private function extractMaskFromArgs(ChanServContext $context): ?string
+    {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
         $mask = trim($context->args[2] ?? '');
         if ('' === $mask) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
+        return $mask;
+    }
+
+    private function hasMaskProblems(ChanServContext $context, string $mask, RegisteredChannel $channel): bool
+    {
+        return $this->isMaskInvalid($context, $mask)
+            || $this->isMaskBlocked($context, $mask, $channel)
+            || $this->isLimitOrDuplicate($context, $mask, $channel);
+    }
+
+    private function isMaskInvalid(ChanServContext $context, string $mask): bool
+    {
         if (!ChannelAkick::isValidMask($mask)) {
             $context->reply('akick.invalid_mask');
 
-            return;
+            return true;
         }
 
         if (!ChannelAkick::isSafeMask($mask)) {
             $context->reply('akick.dangerous_mask', ['%mask%' => $mask]);
 
-            return;
+            return true;
         }
 
+        return false;
+    }
+
+    private function isMaskBlocked(ChanServContext $context, string $mask, RegisteredChannel $channel): bool
+    {
         $protectedNick = $this->findProtectedUser($channel, $mask);
         if (null !== $protectedNick) {
             $context->reply('akick.protected_user', ['%nickname%' => $protectedNick]);
 
-            return;
+            return true;
         }
 
+        return false;
+    }
+
+    private function isLimitOrDuplicate(ChanServContext $context, string $mask, RegisteredChannel $channel): bool
+    {
         $count = $this->akickRepository->countByChannel($channel->getId());
         $existing = $this->akickRepository->findByChannelAndMask($channel->getId(), $mask);
+
         if (null === $existing && $count >= ChannelAkick::MAX_ENTRIES_PER_CHANNEL) {
             $context->reply('akick.max_entries', ['%max%' => (string) ChannelAkick::MAX_ENTRIES_PER_CHANNEL]);
 
-            return;
+            return true;
         }
 
         if (null !== $existing) {
@@ -296,10 +343,15 @@ final readonly class AkickCommand implements ChanServCommandInterface
             } else {
                 $context->reply('akick.add.already_exists', ['%mask%' => $mask]);
 
-                return;
+                return true;
             }
         }
 
+        return false;
+    }
+
+    private function completeAdd(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $mask): void
+    {
         $expiresAt = null;
         $reason = null;
 

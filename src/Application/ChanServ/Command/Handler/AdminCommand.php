@@ -8,7 +8,9 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -100,64 +102,12 @@ final readonly class AdminCommand implements ChanServCommandInterface
             return;
         }
 
-        $channelName = $context->getChannelNameArg(0);
-        if (null === $channelName) {
-            $context->reply('error.invalid_channel');
-
+        $validation = $this->validateAdminExecute($context);
+        if (null === $validation) {
             return;
         }
 
-        $targetNick = $context->args[1] ?? '';
-        if ('' === $targetNick) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-            return;
-        }
-
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
-            throw ChannelNotRegisteredException::forChannel($channelName);
-        }
-
-        $senderAccount = $context->senderAccount;
-        if (null === $senderAccount) {
-            $context->reply('error.not_identified');
-
-            return;
-        }
-
-        if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_ADMINDEADMIN, $channelName, 'ADMIN');
-        }
-
-        $targetAccount = $this->nickRepository->findByNick($targetNick);
-        if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        $targetSender = $this->userLookup->findByNick($targetNick);
-        if (null === $targetSender) {
-            $context->reply('admin.user_not_on_channel', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-
-        if (!$context->isLevelFounder && $channel->isSecure()) {
-            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
-            $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOADMIN);
-            if ($targetLevel < $minLevelForMode) {
-                $context->reply('secure.requires_min_level', [
-                    '%nickname%' => $targetNick,
-                    '%level%' => (string) $minLevelForMode,
-                    '%mode%' => '+a',
-                ]);
-
-                return;
-            }
-        }
-
+        [$channelName, $targetNick, $channel, $targetSender] = $validation;
         $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'a', true);
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
@@ -168,5 +118,87 @@ final readonly class AdminCommand implements ChanServCommandInterface
             ])
         );
         $context->reply('admin.done', ['%nickname%' => $targetNick]);
+    }
+
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
+    private function validateAdminExecute(ChanServContext $context): ?array
+    {
+        $channelName = $context->getChannelNameArg(0);
+        if (null === $channelName) {
+            $context->reply('error.invalid_channel');
+
+            return null;
+        }
+
+        $targetNick = $context->args[1] ?? '';
+        if ('' === $targetNick) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+            return null;
+        }
+
+        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+        if (null === $channel) {
+            throw ChannelNotRegisteredException::forChannel($channelName);
+        }
+
+        return $this->validateAdminSender($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
+    private function validateAdminSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
+        $senderAccount = $context->senderAccount;
+        if (null === $senderAccount) {
+            $context->reply('error.not_identified');
+
+            return null;
+        }
+
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_ADMINDEADMIN, $channelName, 'ADMIN');
+        }
+
+        return $this->validateAdminTarget($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
+    private function validateAdminTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
+        $targetAccount = $this->nickRepository->findByNick($targetNick);
+        if (null === $targetAccount) {
+            $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
+
+            return null;
+        }
+
+        $targetSender = $this->userLookup->findByNick($targetNick);
+        if (null === $targetSender) {
+            $context->reply('admin.user_not_on_channel', ['%nickname%' => $targetNick]);
+
+            return null;
+        }
+
+        return $this->validateAdminSecureCheck($context, $channel, $channelName, $targetNick, $targetAccount, $targetSender);
+    }
+
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
+    private function validateAdminSecureCheck(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount, SenderView $targetSender): ?array
+    {
+        if (!$context->isLevelFounder && $channel->isSecure()) {
+            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
+            $minLevelForMode = $this->accessHelper->getLevelValue($channel->getId(), ChannelLevel::KEY_AUTOADMIN);
+            if ($targetLevel < $minLevelForMode) {
+                $context->reply('secure.requires_min_level', [
+                    '%nickname%' => $targetNick,
+                    '%level%' => (string) $minLevelForMode,
+                    '%mode%' => '+a',
+                ]);
+
+                return null;
+            }
+        }
+
+        return [$channelName, $targetNick, $channel, $targetSender];
     }
 }

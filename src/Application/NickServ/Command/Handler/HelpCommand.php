@@ -108,6 +108,11 @@ final readonly class HelpCommand implements NickServCommandInterface
             return;
         }
 
+        $this->executeHelpForCommand($context, $sender);
+    }
+
+    private function executeHelpForCommand(NickServContext $context, \App\Application\Port\SenderView $sender): void
+    {
         $targetCmd = strtoupper($context->args[0]);
         $handler = $context->getRegistry()->find($targetCmd);
 
@@ -235,12 +240,6 @@ final readonly class HelpCommand implements NickServCommandInterface
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
     private function findSubCommand(NickServCommandInterface $handler, string $name): ?array
     {
-        foreach ($handler->getSubCommandHelp() as $sub) {
-            if ($name === strtoupper($sub['name'])) {
-                return $sub;
-            }
-        }
-
-        return null;
+        return array_find($handler->getSubCommandHelp(), static fn (array $sub): bool => $name === strtoupper($sub['name']));
     }
 }

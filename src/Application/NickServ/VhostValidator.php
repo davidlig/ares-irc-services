@@ -36,19 +36,11 @@ final readonly class VhostValidator
         }
 
         $normalized = trim($value);
-        if ('' === $normalized) {
-            return null;
-        }
+        $valid = '' !== $normalized
+            && strlen($normalized) <= self::MAX_LENGTH
+            && 1 === preg_match(self::VHOST_PATTERN, $normalized);
 
-        if (strlen($normalized) > self::MAX_LENGTH) {
-            return null;
-        }
-
-        if (1 !== preg_match(self::VHOST_PATTERN, $normalized)) {
-            return null;
-        }
-
-        return $normalized;
+        return $valid ? $normalized : null;
     }
 
     public function isValid(?string $value): bool

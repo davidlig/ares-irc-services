@@ -52,10 +52,7 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
     {
         $channelName = $event->channel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $registered) {
-            return;
-        }
-        if ($registered->isBlocked()) {
+        if (null === $registered || $registered->isBlocked()) {
             return;
         }
         $modeSupport = $this->modeSupportProvider->getSupport();
@@ -63,11 +60,14 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
         if (null === $registeredLetter) {
             return;
         }
+
+        $this->setRegisteredMode($channelName, $registeredLetter);
+    }
+
+    private function setRegisteredMode(string $channelName, string $registeredLetter): void
+    {
         $view = $this->channelLookup->findByChannelName($channelName);
-        if (null === $view) {
-            return;
-        }
-        if (str_contains($view->modes, $registeredLetter)) {
+        if (null === $view || str_contains($view->modes, $registeredLetter)) {
             return;
         }
         $this->channelServiceActions->setChannelModes($channelName, '+' . $registeredLetter, []);

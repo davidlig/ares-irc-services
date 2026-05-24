@@ -121,6 +121,7 @@ info:
   status_suspended:   "\x0304Geschorst\x03"
   status_forbidden:   "\x0304Verboden\x03"
   status_pending_deletion: "07Verwijdering in afwachting"
+  status_pending_deletion_at:  "  14Verwijderd         : %date%"
   reason:           "  \x0314Reden\x03                  : %reason%"
   suspended_until:  "  \x0314Eindigt op\x03           : %date%"
   suspended_permanent: "  \x0314Eindigt op\x03           : Permanent"

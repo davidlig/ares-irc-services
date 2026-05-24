@@ -27,54 +27,82 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
     {
         $nickname = trim($value);
         if ('' === $nickname) {
-            $oldSuccessorNickId = $channel->getSuccessorNickId();
-            $channel->assignSuccessor(null);
-            $this->channelRepository->save($channel);
-
-            $ip = $this->decodeIp($context->sender->ipBase64);
-            $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
-            $performedByNickId = $context->senderAccount?->getId();
-
-            $this->eventDispatcher->dispatch(new ChannelSuccessorChangedEvent(
-                channelId: $channel->getId(),
-                channelName: $channel->getName(),
-                oldSuccessorNickId: $oldSuccessorNickId,
-                newSuccessorNickId: null,
-                performedBy: $context->sender->nick,
-                performedByNickId: $performedByNickId,
-                performedByIp: $ip,
-                performedByHost: $host,
-            ));
-
-            $context->reply('set.successor.cleared');
-            $notice = $context->trans('set.successor.notice_channel_cleared', ['%from%' => $context->sender->nick]);
-            $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
+            $this->clearSuccessor($context, $channel);
 
             return;
         }
 
+        $validation = $this->validateSuccessorNick($context, $channel, $nickname);
+        if (null === $validation) {
+            return;
+        }
+
+        $this->performSuccessorChange($context, $channel, $nickname, $validation);
+    }
+
+    private function validateSuccessorNick(ChanServContext $context, RegisteredChannel $channel, string $nickname): ?object
+    {
         $account = $this->nickRepository->findByNick($nickname);
         if (null === $account) {
             $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
 
-            return;
-        }
-        if (NickStatus::Suspended === $account->getStatus()) {
-            $context->reply('set.successor.suspended', ['%nickname%' => $nickname]);
-
-            return;
-        }
-        if (NickStatus::Registered !== $account->getStatus()) {
-            $context->reply('set.successor.must_be_registered', ['%nickname%' => $nickname]);
-
-            return;
-        }
-        if ($channel->isFounder($account->getId())) {
-            $context->reply('set.successor.cannot_be_founder', ['%nickname%' => $nickname]);
-
-            return;
+            return null;
         }
 
+        return $this->validateSuccessorStatus($context, $channel, $nickname, $account);
+    }
+
+    private function validateSuccessorStatus(ChanServContext $context, RegisteredChannel $channel, string $nickname, object $account): ?object
+    {
+        return (static function () use ($context, $channel, $nickname, $account): ?object {
+            if (NickStatus::Suspended === $account->getStatus()) {
+                $context->reply('set.successor.suspended', ['%nickname%' => $nickname]);
+
+                return null;
+            }
+            if (NickStatus::Registered !== $account->getStatus()) {
+                $context->reply('set.successor.must_be_registered', ['%nickname%' => $nickname]);
+
+                return null;
+            }
+            if ($channel->isFounder($account->getId())) {
+                $context->reply('set.successor.cannot_be_founder', ['%nickname%' => $nickname]);
+
+                return null;
+            }
+
+            return $account;
+        })();
+    }
+
+    private function clearSuccessor(ChanServContext $context, RegisteredChannel $channel): void
+    {
+        $oldSuccessorNickId = $channel->getSuccessorNickId();
+        $channel->assignSuccessor(null);
+        $this->channelRepository->save($channel);
+
+        $ip = $this->decodeIp($context->sender->ipBase64);
+        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new ChannelSuccessorChangedEvent(
+            channelId: $channel->getId(),
+            channelName: $channel->getName(),
+            oldSuccessorNickId: $oldSuccessorNickId,
+            newSuccessorNickId: null,
+            performedBy: $context->sender->nick,
+            performedByNickId: $performedByNickId,
+            performedByIp: $ip,
+            performedByHost: $host,
+        ));
+
+        $context->reply('set.successor.cleared');
+        $notice = $context->trans('set.successor.notice_channel_cleared', ['%from%' => $context->sender->nick]);
+        $context->getNotifier()->sendNoticeToChannel($channel->getName(), $notice);
+    }
+
+    private function performSuccessorChange(ChanServContext $context, RegisteredChannel $channel, string $nickname, object $account): void
+    {
         $oldSuccessorNickId = $channel->getSuccessorNickId();
         $channel->assignSuccessor($account->getId());
         $this->channelRepository->save($channel);

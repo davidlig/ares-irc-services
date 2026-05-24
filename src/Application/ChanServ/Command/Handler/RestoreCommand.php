@@ -93,26 +93,48 @@ final class RestoreCommand implements ChanServCommandInterface, AuditableCommand
             return;
         }
 
+        $validation = $this->validateRestore($context);
+        if (null === $validation) {
+            return;
+        }
+
+        $this->performRestore($context, ...$validation);
+    }
+
+    /** @return array{string, object}|null */
+    private function validateRestore(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $channel = $this->channelRepository->findByChannelName($channelName);
         if (null === $channel) {
             $context->reply('restore.not_registered', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
+        return $this->checkRestoreDeletionStatus($context, $channel, $channelName);
+    }
+
+    /** @return array{string, object}|null */
+    private function checkRestoreDeletionStatus(ChanServContext $context, object $channel, string $channelName): ?array
+    {
         if (!$channel->isPendingDeletion()) {
             $context->reply('restore.not_pending_deletion', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
+        return [$channelName, $channel];
+    }
+
+    private function performRestore(ChanServContext $context, string $channelName, object $channel): void
+    {
         $this->dropService->restoreChannel($channel, $context->sender->nick);
         $this->auditData = new IrcopAuditData(target: $channelName);
 

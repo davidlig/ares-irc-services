@@ -121,6 +121,7 @@ info:
   status_suspended:   "\x0304Σε αναστολή\x03"
   status_forbidden:   "\x0304Απαγορευμένο\x03"
   status_pending_deletion: "07Σε αναμονή διαγραφής"
+  status_pending_deletion_at:  "  14Διαγράφηκε         : %date%"
   reason:           "  \x0314Αιτία\x03                 : %reason%"
   suspended_until:  "  \x0314Λήγει στις\x03      : %date%"
   suspended_permanent: "  \x0314Λήγει στις\x03      : Μόνιμη"

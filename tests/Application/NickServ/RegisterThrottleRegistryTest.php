@@ -107,9 +107,11 @@ final class RegisterThrottleRegistryTest extends TestCase
         $registry = new RegisterThrottleRegistry();
         $registry->recordAttempt('key');
         $first = $registry->getLastAttemptAt('key');
-        usleep(10000);
         $registry->recordAttempt('key');
         $second = $registry->getLastAttemptAt('key');
+
+        self::assertNotNull($first);
+        self::assertNotNull($second);
         self::assertGreaterThanOrEqual($first, $second);
     }
 

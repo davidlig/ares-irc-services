@@ -172,6 +172,32 @@ final class StatusCommandTest extends TestCase
     }
 
     #[Test]
+    public function pendingDeletionShowsStatusAndDate(): void
+    {
+        $deletionAt = new DateTimeImmutable('2026-06-01');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getStatus')->willReturn(NickStatus::PendingDeletion);
+        $account->method('getPendingDeletionAt')->willReturn($deletionAt);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new StatusCommand($nickRepo, $userLookup);
+        $cmd->execute($this->createContext(['Nick'], $notifier, $translator));
+
+        self::assertContains('status.pending_deletion', $messages);
+        self::assertContains('status.pending_deletion_at', $messages);
+    }
+
+    #[Test]
     public function replyRegisteredOffline(): void
     {
         $account = $this->createStub(RegisteredNick::class);

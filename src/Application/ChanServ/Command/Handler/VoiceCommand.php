@@ -9,6 +9,7 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -96,18 +97,39 @@ final readonly class VoiceCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $validation = $this->validateVoiceExecute($context);
+        if (null === $validation) {
+            return;
+        }
+
+        [$channelName, $targetNick, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'v', true);
+        $context->getNotifier()->sendNoticeToChannel(
+            $channelName,
+            $context->trans('voice.notice_grant', [
+                '%from%' => $context->sender->nick,
+                '%to%' => $targetNick,
+                '%mode%' => '+v',
+            ])
+        );
+        $context->reply('voice.done', ['%nickname%' => $targetNick]);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateVoiceExecute(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $targetNick = $context->args[1] ?? '';
         if ('' === $targetNick) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
@@ -115,11 +137,17 @@ final readonly class VoiceCommand implements ChanServCommandInterface
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
 
+        return $this->validateVoiceSender($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateVoiceSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
 
         if (!$context->isLevelFounder) {
@@ -130,14 +158,20 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         if (null === $targetAccount) {
             $context->reply('error.nick_not_registered', ['%nickname%' => $targetNick]);
 
-            return;
+            return null;
         }
 
+        return $this->validateVoiceTarget($context, $channel, $channelName, $targetNick, $targetAccount);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateVoiceTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount): ?array
+    {
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
             $context->reply('voice.user_not_on_channel', ['%nickname%' => $targetNick]);
 
-            return;
+            return null;
         }
 
         if (!$context->isLevelFounder && $channel->isSecure()) {
@@ -150,19 +184,10 @@ final readonly class VoiceCommand implements ChanServCommandInterface
                     '%mode%' => '+v',
                 ]);
 
-                return;
+                return null;
             }
         }
 
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'v', true);
-        $context->getNotifier()->sendNoticeToChannel(
-            $channelName,
-            $context->trans('voice.notice_grant', [
-                '%from%' => $context->sender->nick,
-                '%to%' => $targetNick,
-                '%mode%' => '+v',
-            ])
-        );
-        $context->reply('voice.done', ['%nickname%' => $targetNick]);
+        return [$channelName, $targetNick, $targetSender];
     }
 }

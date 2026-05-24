@@ -40,27 +40,18 @@ final readonly class OperServHelpFormatterContextAdapter implements HelpFormatte
         }
 
         $requiredPermission = $command->getRequiredPermission();
-        if (null !== $requiredPermission) {
-            $sender = $this->context->getSender();
-            if (null === $sender) {
-                return false;
-            }
-
-            $account = $this->context->getSenderAccount();
-            if (null === $account) {
-                return $this->context->isRoot();
-            }
-
-            $nickLower = strtolower($sender->nick);
-
-            return $this->context->getAccessHelper()->hasPermission(
-                $account->getId(),
-                $nickLower,
-                $requiredPermission,
-            );
+        if (null === $requiredPermission) {
+            return true;
         }
 
-        return true;
+        $sender = $this->context->getSender();
+        $account = null !== $sender ? $this->context->getSenderAccount() : null;
+
+        return null === $sender
+            ? false
+            : (null !== $account
+                ? $this->context->getAccessHelper()->hasPermission($account->getId(), strtolower($sender->nick), $requiredPermission)
+                : $this->context->isRoot());
     }
 
     public function getIrcopCommands(): iterable

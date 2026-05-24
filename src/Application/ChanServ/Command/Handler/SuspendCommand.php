@@ -13,6 +13,7 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use DateTimeImmutable;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
@@ -102,12 +103,23 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
             return;
         }
 
+        $validation = $this->validateSuspend($context);
+        if (null === $validation) {
+            return;
+        }
+
+        $this->performSuspend($context, ...$validation);
+    }
+
+    /** @return array{string, object, string, string, ?DateTimeImmutable}|null */
+    private function validateSuspend(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
 
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
 
         $durationStr = $context->args[1];
@@ -117,31 +129,48 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
         if ('' === $reason) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
 
+        return $this->validateSuspendChannel($context, $channelName, $durationStr, $reason);
+    }
+
+    /** @return array{string, object, string, string, ?DateTimeImmutable}|null */
+    private function validateSuspendChannel(ChanServContext $context, string $channelName, string $durationStr, string $reason): ?array
+    {
         $channel = $this->channelRepository->findByChannelName($channelName);
 
         if (null === $channel) {
             $context->reply('suspend.not_registered', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
         if ($channel->isSuspended()) {
             $context->reply('suspend.already_suspended', ['%channel%' => $channelName]);
 
-            return;
+            return null;
         }
 
+        return $this->parseSuspendExpiry($context, $channel, $channelName, $durationStr, $reason);
+    }
+
+    /** @return array{string, object, string, string, ?DateTimeImmutable}|null */
+    private function parseSuspendExpiry(ChanServContext $context, object $channel, string $channelName, string $durationStr, string $reason): ?array
+    {
         $expiresAt = RelativeExpiryParser::parse($durationStr);
 
         if (null === $expiresAt && !RelativeExpiryParser::isPermanent($durationStr)) {
             $context->reply('suspend.invalid_duration');
 
-            return;
+            return null;
         }
 
+        return [$channelName, $channel, $durationStr, $reason, $expiresAt];
+    }
+
+    private function performSuspend(ChanServContext $context, string $channelName, object $channel, string $durationStr, string $reason, ?DateTimeImmutable $expiresAt): void
+    {
         $channel->suspend($reason, $expiresAt);
         $this->channelRepository->save($channel);
 

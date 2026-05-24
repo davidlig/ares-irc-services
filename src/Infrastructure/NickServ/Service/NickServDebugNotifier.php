@@ -188,13 +188,8 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
 
         $registeredNick = $this->nickRepo->findByNick($nick);
 
-        if (null === $registeredNick) {
-            return false;
-        }
-
-        $ircop = $this->ircopRepo->findByNickId($registeredNick->getId());
-
-        return null !== $ircop;
+        return null !== $registeredNick
+            && null !== $this->ircopRepo->findByNickId($registeredNick->getId());
     }
 
     public function getDebugChannel(): ?string

@@ -191,13 +191,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         }
 
         $supported = $module->getChannelModeSupport()->getSupportedPrefixModes();
-        $maxPrefix = 'o';
-        foreach (self::PREFIX_ORDER as $letter) {
-            if (in_array($letter, $supported, true)) {
-                $maxPrefix = $letter;
-                break;
-            }
-        }
+        $maxPrefix = array_find(self::PREFIX_ORDER, static fn ($letter) => in_array($letter, $supported, true)) ?? 'o';
 
         $actualTimestamp = $channelTimestamp;
         if (null === $actualTimestamp) {

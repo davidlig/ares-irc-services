@@ -50,11 +50,7 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
     {
         $channelName = $event->channel->name->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $registered) {
-            return;
-        }
-
-        if ($registered->isBlocked()) {
+        if (null === $registered || $registered->isBlocked()) {
             return;
         }
 
@@ -63,6 +59,11 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
             return;
         }
 
+        $this->applyTopic($channelName, $storedTopic, $event);
+    }
+
+    private function applyTopic(string $channelName, ?string $storedTopic, ChannelSyncedEvent $event): void
+    {
         if ($event->channelSetupApplicable) {
             $this->channelServiceActions->setChannelTopic($channelName, $storedTopic);
             $this->logger->debug('ChanServ applied stored topic on setup', ['channel' => $channelName]);

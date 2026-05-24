@@ -40,6 +40,7 @@ final class RegisterThrottleRegistry
         }
 
         $last = $this->getLastAttemptAt($clientKey);
+
         if (null === $last) {
             return 0;
         }
@@ -47,11 +48,7 @@ final class RegisterThrottleRegistry
         $nextAllowedAt = $last->modify(sprintf('+%d seconds', $minIntervalSeconds));
         $now = new DateTimeImmutable();
 
-        if ($now >= $nextAllowedAt) {
-            return 0;
-        }
-
-        return $nextAllowedAt->getTimestamp() - $now->getTimestamp();
+        return $now >= $nextAllowedAt ? 0 : $nextAllowedAt->getTimestamp() - $now->getTimestamp();
     }
 
     /**

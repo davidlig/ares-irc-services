@@ -56,26 +56,25 @@ final class IrcopPermissionVoter extends Voter
         $sender = $user->getSenderView();
         $nickLower = strtolower($sender->nick);
 
-        // Root users identified have all permissions automatically (bypass +o requirement)
         if ($sender->isIdentified && $this->accessHelper->isRoot($nickLower)) {
             return true;
         }
 
-        // Must have ROLE_OPER (be an IRC operator)
+        return $this->evaluateOperPermission($user, $subject, $attribute, $nickLower);
+    }
+
+    private function evaluateOperPermission(IrcServiceUser $user, IrcopContextInterface $subject, string $attribute, string $nickLower): bool
+    {
         if (!in_array(IrcServiceUser::ROLE_OPER, $user->getRoles(), true)) {
             return false;
         }
 
-        // Need account to check permissions
         $account = $subject->getSenderAccount();
+
         if (null === $account) {
             return false;
         }
 
-        return $this->accessHelper->hasPermission(
-            $account->getId(),
-            $nickLower,
-            $attribute
-        );
+        return $this->accessHelper->hasPermission($account->getId(), $nickLower, $attribute);
     }
 }

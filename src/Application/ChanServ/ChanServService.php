@@ -94,6 +94,11 @@ final readonly class ChanServService implements ChanServDispatchPort
             return;
         }
 
+        $this->executeHandler($handler, $sender, $cmdName, $args);
+    }
+
+    private function executeHandler(object $handler, SenderView $sender, string $cmdName, array $args): void
+    {
         $account = $this->nickRepository->findByNick($sender->nick);
         $language = $this->languageResolver->resolveFromAccount($sender, $account);
         $timezone = $account?->getTimezone() ?? $this->defaultTimezone;
@@ -122,11 +127,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         try {
             $requiredPermission = $handler->getRequiredPermission();
             if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
-                if ('IDENTIFIED' === $requiredPermission) {
-                    $context->reply('error.not_identified');
-                } else {
-                    $context->reply('error.permission_denied');
-                }
+                $context->reply('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
 
                 return;
             }
@@ -151,46 +152,9 @@ final readonly class ChanServService implements ChanServDispatchPort
                 isLevelFounder: $isLevelFounder,
             );
 
-            if (count($args) < $handler->getMinArgs()) {
-                $context->reply('error.syntax', [
-                    'syntax' => $context->trans($handler->getSyntaxKey()),
-                ]);
-
+            $validationKey = $this->validateDispatchContext($context, $handler, $isLevelFounder);
+            if (null !== $validationKey) {
                 return;
-            }
-
-            if (!$handler->allowsForbiddenChannel()) {
-                $channelName = $context->getChannelNameArg(0);
-                if (null !== $channelName) {
-                    $channel = $this->channelRepository->findByChannelName($channelName);
-                    if (null !== $channel && $channel->isForbidden()) {
-                        $context->reply('forbid.channel_forbidden', ['%channel%' => $channelName]);
-
-                        return;
-                    }
-                }
-            }
-
-            if (!$handler->allowsSuspendedChannel() && !$isLevelFounder) {
-                $channelName = $context->getChannelNameArg(0);
-                if (null !== $channelName) {
-                    $channel = $this->channelRepository->findByChannelName($channelName);
-                    if (null !== $channel && $channel->isCurrentlySuspended()) {
-                        $context->reply('suspend.channel_suspended', ['%channel%' => $channelName]);
-
-                        return;
-                    }
-                }
-            }
-
-            $channelName = $context->getChannelNameArg(0);
-            if (null !== $channelName && !in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
-                $channel = $this->channelRepository->findByChannelName($channelName);
-                if (null !== $channel && $channel->isPendingDeletion()) {
-                    $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
-
-                    return;
-                }
             }
 
             $this->logger->debug(sprintf(
@@ -202,52 +166,7 @@ final readonly class ChanServService implements ChanServDispatchPort
 
             $handler->execute($context);
 
-            if (null !== $requiredPermission) {
-                $auditData = $handler instanceof AuditableCommandInterface
-                    ? $handler->getAuditData($context)
-                    : null;
-
-                if (null !== $auditData) {
-                    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
-                        serviceName: $this->notifier->getServiceKey(),
-                        operatorNick: $sender->nick,
-                        commandName: $cmdName,
-                        permission: $requiredPermission,
-                        target: $auditData->target,
-                        targetHost: $auditData->targetHost,
-                        targetIp: $auditData->targetIp,
-                        reason: $auditData->reason,
-                        extra: $auditData->extra,
-                    ));
-                }
-            }
-
-            if ($isLevelFounder && null !== $account && $handler->usesLevelFounder()) {
-                $auditChannelName = $context->getChannelNameArg(0);
-                if (null !== $auditChannelName) {
-                    $auditChannel = $this->channelRepository->findByChannelName($auditChannelName);
-                    if (null !== $auditChannel && !$auditChannel->isFounder($account->getId())) {
-                        $auditExtra = ['founder_action' => true];
-                        if (count($args) >= 2) {
-                            $auditExtra['option'] = strtoupper($args[1]);
-                        }
-                        if (count($args) >= 3) {
-                            $auditExtra['value'] = implode(' ', array_slice($args, 2));
-                        }
-
-                        $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
-                            serviceName: $this->notifier->getServiceKey(),
-                            operatorNick: $sender->nick,
-                            commandName: $cmdName,
-                            permission: ChanServPermission::LEVEL_FOUNDER,
-                            target: $auditChannelName,
-                            targetHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
-                            targetIp: $this->decodeIp($sender->ipBase64),
-                            extra: $auditExtra,
-                        ));
-                    }
-                }
-            }
+            $this->dispatchAuditEvents($handler, $context, $sender, $cmdName, $args, $requiredPermission, $isLevelFounder, $account);
         } catch (ChannelNotRegisteredException|ChannelAlreadyRegisteredException|InsufficientAccessException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -258,6 +177,137 @@ final readonly class ChanServService implements ChanServDispatchPort
             throw $e;
         } finally {
             $this->authorizationContext->clear();
+        }
+    }
+
+    private function validateDispatchContext(ChanServContext $context, object $handler, bool $isLevelFounder): ?string
+    {
+        if (count($context->args) < $handler->getMinArgs()) {
+            $context->reply('error.syntax', [
+                'syntax' => $context->trans($handler->getSyntaxKey()),
+            ]);
+
+            return 'syntax';
+        }
+
+        if ($this->isForbiddenChannelViolation($context, $handler)) {
+            return 'forbidden';
+        }
+
+        return $this->validateSuspendedAndPending($context, $handler, $isLevelFounder);
+    }
+
+    private function validateSuspendedAndPending(ChanServContext $context, object $handler, bool $isLevelFounder): ?string
+    {
+        if ($this->isSuspendedChannelViolation($context, $handler, $isLevelFounder)) {
+            return 'suspended';
+        }
+
+        return $this->isPendingDeletionViolation($context, $handler);
+    }
+
+    private function isForbiddenChannelViolation(ChanServContext $context, object $handler): bool
+    {
+        if ($handler->allowsForbiddenChannel()) {
+            return false;
+        }
+
+        $channelName = $context->getChannelNameArg(0);
+        if (null !== $channelName) {
+            $channel = $this->channelRepository->findByChannelName($channelName);
+            if (null !== $channel && $channel->isForbidden()) {
+                $context->reply('forbid.channel_forbidden', ['%channel%' => $channelName]);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isSuspendedChannelViolation(ChanServContext $context, object $handler, bool $isLevelFounder): bool
+    {
+        if ($handler->allowsSuspendedChannel() || $isLevelFounder) {
+            return false;
+        }
+
+        $channelName = $context->getChannelNameArg(0);
+        if (null !== $channelName) {
+            $channel = $this->channelRepository->findByChannelName($channelName);
+            if (null !== $channel && $channel->isCurrentlySuspended()) {
+                $context->reply('suspend.channel_suspended', ['%channel%' => $channelName]);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isPendingDeletionViolation(ChanServContext $context, object $handler): ?string
+    {
+        $channelName = $context->getChannelNameArg(0);
+        if (null === $channelName || in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
+            return null;
+        }
+
+        $channel = $this->channelRepository->findByChannelName($channelName);
+        if (null !== $channel && $channel->isPendingDeletion()) {
+            $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
+
+            return 'pending_deletion';
+        }
+
+        return null;
+    }
+
+    private function dispatchAuditEvents(object $handler, ChanServContext $context, SenderView $sender, string $cmdName, array $args, ?string $requiredPermission, bool $isLevelFounder, $account): void
+    {
+        if (null !== $requiredPermission) {
+            $auditData = $handler instanceof AuditableCommandInterface
+                ? $handler->getAuditData($context)
+                : null;
+
+            if (null !== $auditData) {
+                $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                    serviceName: $this->notifier->getServiceKey(),
+                    operatorNick: $sender->nick,
+                    commandName: $cmdName,
+                    permission: $requiredPermission,
+                    target: $auditData->target,
+                    targetHost: $auditData->targetHost,
+                    targetIp: $auditData->targetIp,
+                    reason: $auditData->reason,
+                    extra: $auditData->extra,
+                ));
+            }
+        }
+
+        if ($isLevelFounder && null !== $account && $handler->usesLevelFounder()) {
+            $auditChannelName = $context->getChannelNameArg(0);
+            if (null !== $auditChannelName) {
+                $auditChannel = $this->channelRepository->findByChannelName($auditChannelName);
+                if (null !== $auditChannel && !$auditChannel->isFounder($account->getId())) {
+                    $auditExtra = ['founder_action' => true];
+                    if (count($args) >= 2) {
+                        $auditExtra['option'] = strtoupper($args[1]);
+                    }
+                    if (count($args) >= 3) {
+                        $auditExtra['value'] = implode(' ', array_slice($args, 2));
+                    }
+
+                    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                        serviceName: $this->notifier->getServiceKey(),
+                        operatorNick: $sender->nick,
+                        commandName: $cmdName,
+                        permission: ChanServPermission::LEVEL_FOUNDER,
+                        target: $auditChannelName,
+                        targetHost: sprintf('%s@%s', $sender->ident, $sender->hostname),
+                        targetIp: $this->decodeIp($sender->ipBase64),
+                        extra: $auditExtra,
+                    ));
+                }
+            }
         }
     }
 

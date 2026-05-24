@@ -22,20 +22,14 @@ final readonly class ForbiddenPatternValidator
 
     public function isValid(?string $pattern): bool
     {
-        if (null === $pattern) {
-            return false;
-        }
+        $normalized = null !== $pattern ? trim($pattern) : '';
 
-        $normalized = trim($pattern);
+        $result = match (true) {
+            '' === $normalized => false,
+            strlen($normalized) > ForbiddenVhost::MAX_PATTERN_LENGTH => false,
+            default => 1 === preg_match(self::PATTERN_REGEX, $normalized),
+        };
 
-        if ('' === $normalized) {
-            return false;
-        }
-
-        if (strlen($normalized) > ForbiddenVhost::MAX_PATTERN_LENGTH) {
-            return false;
-        }
-
-        return 1 === preg_match(self::PATTERN_REGEX, $normalized);
+        return $result;
     }
 }

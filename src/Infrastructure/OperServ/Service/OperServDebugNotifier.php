@@ -189,23 +189,14 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
 
     public function isIrcopOrRoot(string $nick, bool $isIdentified): bool
     {
-        if ($this->rootRegistry->isRoot($nick)) {
-            return true;
+        $result = $this->rootRegistry->isRoot($nick);
+
+        if (!$result && $isIdentified) {
+            $registeredNick = $this->nickRepo->findByNick($nick);
+            $result = null !== $registeredNick && null !== $this->ircopRepo->findByNickId($registeredNick->getId());
         }
 
-        if (!$isIdentified) {
-            return false;
-        }
-
-        $registeredNick = $this->nickRepo->findByNick($nick);
-
-        if (null === $registeredNick) {
-            return false;
-        }
-
-        $ircop = $this->ircopRepo->findByNickId($registeredNick->getId());
-
-        return null !== $ircop;
+        return $result;
     }
 
     public function getDebugChannel(): ?string

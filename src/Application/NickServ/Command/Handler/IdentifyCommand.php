@@ -120,6 +120,16 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
+        $this->doIdentify($context, $sender, $targetNick, $password, $clientKey);
+    }
+
+    private function doIdentify(
+        NickServContext $context,
+        SenderView $sender,
+        string $targetNick,
+        string $password,
+        string $clientKey,
+    ): void {
         $account = $this->nickRepository->findByNick($targetNick);
 
         if (null === $account) {
@@ -128,7 +138,8 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
-        if (!$this->validateAccountStatus($context, $account, $targetNick)) {
+        $statusError = $this->validateAccountStatus($context, $account, $targetNick);
+        if (null !== $statusError) {
             return;
         }
 
@@ -161,36 +172,27 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return false;
     }
 
-    private function validateAccountStatus(NickServContext $context, RegisteredNick $account, string $targetNick): bool
+    private function validateAccountStatus(NickServContext $context, RegisteredNick $account, string $targetNick): ?string
     {
-        if ($account->isPending()) {
-            $context->reply('identify.pending', ['nickname' => $targetNick]);
-
-            return false;
-        }
-
-        if ($account->isSuspended()) {
-            $context->reply('identify.suspended', [
+        $result = match (true) {
+            $account->isPending() => $this->replyAndReturn($context, 'identify.pending', ['nickname' => $targetNick]),
+            $account->isSuspended() => $this->replyAndReturn($context, 'identify.suspended', [
                 'nickname' => $targetNick,
                 'reason' => $account->getReason() ?? '',
-            ]);
+            ]),
+            $account->isForbidden() => $this->replyAndReturn($context, 'identify.forbidden', ['nickname' => $targetNick]),
+            $account->isPendingDeletion() => $this->replyAndReturn($context, 'identify.pending_deletion', ['nickname' => $targetNick]),
+            default => null,
+        };
 
-            return false;
-        }
+        return $result;
+    }
 
-        if ($account->isForbidden()) {
-            $context->reply('identify.forbidden', ['nickname' => $targetNick]);
+    private function replyAndReturn(NickServContext $context, string $key, array $params): string
+    {
+        $context->reply($key, $params);
 
-            return false;
-        }
-
-        if ($account->isPendingDeletion()) {
-            $context->reply('identify.pending_deletion', ['nickname' => $targetNick]);
-
-            return false;
-        }
-
-        return true;
+        return $key;
     }
 
     private function handleSuccessfulIdentification(

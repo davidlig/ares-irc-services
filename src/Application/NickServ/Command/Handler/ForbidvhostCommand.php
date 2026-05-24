@@ -115,44 +115,46 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
 
     private function doAdd(NickServContext $context): void
     {
-        if (count($context->args) < 2) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('forbidvhost.add.syntax')]);
+        $syntaxKey = 'forbidvhost.add.syntax';
+        $pattern = count($context->args) >= 2 ? trim($context->args[1]) : '';
+
+        if (count($context->args) < 2 || '' === $pattern) {
+            $context->reply('error.syntax', ['%syntax%' => $context->trans($syntaxKey)]);
 
             return;
         }
 
-        $pattern = trim($context->args[1]);
-        if ('' === $pattern) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('forbidvhost.add.syntax')]);
+        $errorKey = $this->validateAddPattern($pattern);
+        if (null !== $errorKey) {
+            $context->reply($errorKey, ['%pattern%' => $pattern]);
 
             return;
         }
 
-        if (!$this->patternValidator->isValid($pattern)) {
-            $context->reply('forbidvhost.add.invalid');
+        $this->executeAdd($context, $pattern);
+    }
 
-            return;
-        }
+    private function validateAddPattern(string $pattern): ?string
+    {
+        $result = match (true) {
+            !$this->patternValidator->isValid($pattern) => 'forbidvhost.add.invalid',
+            null !== $this->forbiddenVhostRepository->findByPattern($pattern) => 'forbidvhost.add.already_exists',
+            default => null,
+        };
 
-        $existing = $this->forbiddenVhostRepository->findByPattern($pattern);
-        if (null !== $existing) {
-            $context->reply('forbidvhost.add.already_exists', ['%pattern%' => $pattern]);
+        return $result;
+    }
 
-            return;
-        }
-
+    private function executeAdd(NickServContext $context, string $pattern): void
+    {
         $creatorNickId = $context->senderAccount?->getId();
         $this->forbiddenVhostService->forbid($pattern, $creatorNickId);
 
-        $this->auditData = new IrcopAuditData(
-            target: $pattern,
-        );
-
+        $this->auditData = new IrcopAuditData(target: $pattern);
         $this->logger->info('Vhost pattern forbidden via FORBIDVHOST ADD', [
             'operator' => $context->sender->nick,
             'pattern' => $pattern,
         ]);
-
         $context->reply('forbidvhost.add.done', ['%pattern%' => $pattern]);
     }
 

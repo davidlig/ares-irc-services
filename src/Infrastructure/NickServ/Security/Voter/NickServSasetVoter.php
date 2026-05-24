@@ -53,26 +53,13 @@ final class NickServSasetVoter extends Voter
         // @codeCoverageIgnoreEnd
 
         $senderNickLower = strtolower($sender->nick);
-
-        // Root users have all permissions
-        if ($sender->isIdentified && $this->rootRegistry->isRoot($senderNickLower)) {
-            return true;
-        }
-
-        // Must have ROLE_OPER and permission
-        if (!in_array(IrcServiceUser::ROLE_OPER, $user->getRoles(), true)) {
-            return false;
-        }
-
         $account = $subject->senderAccount;
-        if (null === $account) {
-            return false;
-        }
 
-        return $this->accessHelper->hasPermission(
-            $account->getId(),
-            $senderNickLower,
-            NickServPermission::SASET
-        );
+        return ($sender->isIdentified && $this->rootRegistry->isRoot($senderNickLower))
+            || (
+                in_array(IrcServiceUser::ROLE_OPER, $user->getRoles(), true)
+                && null !== $account
+                && $this->accessHelper->hasPermission($account->getId(), $senderNickLower, NickServPermission::SASET)
+            );
     }
 }

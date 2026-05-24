@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Middleware\MiddlewareInterface;
 use Symfony\Component\Messenger\Middleware\StackInterface;
@@ -18,10 +19,15 @@ use Symfony\Component\Messenger\Stamp\ReceivedStamp;
 #[CoversClass(EmailDelayMiddleware::class)]
 final class EmailDelayMiddlewareTest extends TestCase
 {
+    private function createMiddleware(int $delaySeconds, ?ClockInterface $clock = null): EmailDelayMiddleware
+    {
+        return new EmailDelayMiddleware($delaySeconds, $clock ?? $this->createStub(ClockInterface::class));
+    }
+
     #[Test]
     public function handlePassesThroughNonSendEmailMessages(): void
     {
-        $middleware = new EmailDelayMiddleware(5);
+        $middleware = $this->createMiddleware(5);
 
         $message = new stdClass();
         $envelope = new Envelope($message);
@@ -44,7 +50,7 @@ final class EmailDelayMiddlewareTest extends TestCase
     #[Test]
     public function handlePassesThroughSendEmailWithoutReceivedStamp(): void
     {
-        $middleware = new EmailDelayMiddleware(5);
+        $middleware = $this->createMiddleware(5);
 
         $message = new SendEmail('test@example.com', 'Subject', 'Body');
         $envelope = new Envelope($message);
@@ -67,7 +73,7 @@ final class EmailDelayMiddlewareTest extends TestCase
     #[Test]
     public function handlePassesThroughSendEmailWithZeroDelay(): void
     {
-        $middleware = new EmailDelayMiddleware(0);
+        $middleware = $this->createMiddleware(0);
 
         $message = new SendEmail('test@example.com', 'Subject', 'Body');
         $envelope = new Envelope($message, [new ReceivedStamp('async_emails')]);
@@ -90,7 +96,7 @@ final class EmailDelayMiddlewareTest extends TestCase
     #[Test]
     public function handlePassesThroughSendEmailWithNegativeDelay(): void
     {
-        $middleware = new EmailDelayMiddleware(-1);
+        $middleware = $this->createMiddleware(-1);
 
         $message = new SendEmail('test@example.com', 'Subject', 'Body');
         $envelope = new Envelope($message, [new ReceivedStamp('async_emails')]);
@@ -113,7 +119,12 @@ final class EmailDelayMiddlewareTest extends TestCase
     #[Test]
     public function handleDelaysWhenSendEmailWithReceivedStampAndPositiveDelay(): void
     {
-        $middleware = new EmailDelayMiddleware(1);
+        $clock = $this->createMock(ClockInterface::class);
+        $clock->expects(self::once())
+            ->method('sleep')
+            ->with(1);
+
+        $middleware = $this->createMiddleware(1, $clock);
 
         $message = new SendEmail('test@example.com', 'Subject', 'Body');
         $envelope = new Envelope($message, [new ReceivedStamp('async_emails')]);
@@ -128,11 +139,8 @@ final class EmailDelayMiddlewareTest extends TestCase
             ->method('next')
             ->willReturn($next);
 
-        $start = hrtime(true);
         $result = $middleware->handle($envelope, $stack);
-        $elapsedMs = (hrtime(true) - $start) / 1_000_000;
 
         self::assertSame($envelope, $result);
-        self::assertGreaterThanOrEqual(900, $elapsedMs, 'EmailDelayMiddleware should sleep at least ~1 second');
     }
 }

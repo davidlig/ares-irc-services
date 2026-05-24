@@ -97,20 +97,20 @@ final readonly class MemoServService
         );
 
         $this->authorizationContext->setCurrentUser($sender);
+        $this->dispatchToHandler($context, $handler, $sender, $cmdName);
+    }
 
+    private function dispatchToHandler(MemoServContext $context, Command\MemoServCommandInterface $handler, SenderView $sender, string $cmdName): void
+    {
         try {
             $requiredPermission = $handler->getRequiredPermission();
             if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
-                if ('IDENTIFIED' === $requiredPermission) {
-                    $context->reply('error.not_identified');
-                } else {
-                    $context->reply('error.permission_denied');
-                }
+                $context->reply('IDENTIFIED' === $requiredPermission ? 'error.not_identified' : 'error.permission_denied');
 
                 return;
             }
 
-            if (count($args) < $handler->getMinArgs()) {
+            if (count($context->args) < $handler->getMinArgs()) {
                 $context->reply('error.syntax', [
                     'syntax' => $context->trans($handler->getSyntaxKey()),
                 ]);
@@ -122,7 +122,7 @@ final readonly class MemoServService
                 'MemoServ: %s executed %s [args: %d]',
                 $sender->nick,
                 $cmdName,
-                count($args),
+                count($context->args),
             ));
 
             $handler->execute($context);

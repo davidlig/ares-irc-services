@@ -46,11 +46,7 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
     {
         $channelName = $event->channelName->value;
         $registered = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $registered) {
-            return;
-        }
-
-        if ($registered->isBlocked()) {
+        if (null === $registered || $registered->isBlocked()) {
             return;
         }
 
@@ -62,6 +58,11 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
             return;
         }
 
+        $this->persistTopicIfReady($channelName, $registered, $event);
+    }
+
+    private function persistTopicIfReady(string $channelName, object $registered, ChannelTopicReceivedEvent $event): void
+    {
         if (!$this->syncCompletedRegistry->isSyncCompleted($channelName)) {
             $this->logger->debug('ChanServ topic from wire not persisted (channel sync not yet completed)', ['channel' => $channelName]);
 

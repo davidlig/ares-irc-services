@@ -11,6 +11,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickTargetValidator;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 use function array_slice;
@@ -171,6 +172,11 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
             return;
         }
 
+        $this->routeSaset($context);
+    }
+
+    private function routeSaset(NickServContext $context): void
+    {
         $targetNick = $context->args[0];
         $option = strtoupper($context->args[1]);
         $value = implode(' ', array_slice($context->args, 2));
@@ -199,6 +205,16 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
             return;
         }
 
+        $this->dispatchSaset($context, $targetNick, $option, $value, $targetAccount);
+    }
+
+    private function dispatchSaset(
+        NickServContext $context,
+        string $targetNick,
+        string $option,
+        string $value,
+        RegisteredNick $targetAccount,
+    ): void {
         $handler = $this->handlers[$option] ?? null;
         // @codeCoverageIgnoreStart
         if (null === $handler) {

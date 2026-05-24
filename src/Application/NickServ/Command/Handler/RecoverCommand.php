@@ -119,54 +119,52 @@ final readonly class RecoverCommand implements NickServCommandInterface
 
     private function requestToken(NickServContext $context, string $targetNick, ?RegisteredNick $account): void
     {
+        $errorKey = $this->validateRecoverRequest($context, $targetNick, $account);
+        if (null !== $errorKey) {
+            $context->reply($errorKey['key'], $errorKey['params']);
+
+            return;
+        }
+
+        $this->sendRecoveryToken($context, $targetNick, $account);
+    }
+
+    private function validateRecoverRequest(NickServContext $context, string $targetNick, ?RegisteredNick $account): ?array
+    {
         if (null === $account) {
-            $context->reply('recover.not_registered', ['nickname' => $targetNick]);
-
-            return;
+            return ['key' => 'recover.not_registered', 'params' => ['nickname' => $targetNick]];
         }
 
-        if ($account->isPending()) {
-            $context->reply('recover.pending', ['nickname' => $targetNick]);
+        $result = match (true) {
+            $account->isPending() => ['key' => 'recover.pending', 'params' => ['nickname' => $targetNick]],
+            $account->isSuspended() => ['key' => 'recover.suspended', 'params' => ['nickname' => $targetNick, 'reason' => $account->getReason() ?? '']],
+            $account->isForbidden() => ['key' => 'recover.forbidden', 'params' => ['nickname' => $targetNick]],
+            null === $account->getEmail() || '' === $account->getEmail() => ['key' => 'recover.no_email', 'params' => ['nickname' => $targetNick]],
+            default => $this->validateRecoverThrottle($context, $targetNick),
+        };
 
-            return;
-        }
+        return $result;
+    }
 
-        if ($account->isSuspended()) {
-            $context->reply('recover.suspended', [
-                'nickname' => $targetNick,
-                'reason' => $account->getReason() ?? '',
-            ]);
-
-            return;
-        }
-
-        if ($account->isForbidden()) {
-            $context->reply('recover.forbidden', ['nickname' => $targetNick]);
-
-            return;
-        }
-
-        $email = $account->getEmail();
-        if (null === $email || '' === $email) {
-            $context->reply('recover.no_email', ['nickname' => $targetNick]);
-
-            return;
-        }
-
+    private function validateRecoverThrottle(NickServContext $context, string $targetNick): ?array
+    {
         $registry = $context->getRecoveryTokenRegistry();
         $lastRecoverAt = $registry->getLastRecoverAt($targetNick);
-        if (null !== $lastRecoverAt && $this->recoverMinIntervalSeconds > 0) {
-            $nextAllowedAt = $lastRecoverAt->modify(sprintf('+%d seconds', $this->recoverMinIntervalSeconds));
-            $now = new DateTimeImmutable();
-            if ($now < $nextAllowedAt) {
-                $remainingSeconds = $nextAllowedAt->getTimestamp() - $now->getTimestamp();
-                $minutes = (int) ceil($remainingSeconds / 60);
-                $context->reply('recover.throttled', ['minutes' => (string) $minutes]);
-
-                return;
-            }
+        if (null === $lastRecoverAt || $this->recoverMinIntervalSeconds <= 0) {
+            return null;
         }
 
+        $nextAllowedAt = $lastRecoverAt->modify(sprintf('+%d seconds', $this->recoverMinIntervalSeconds));
+        $now = new DateTimeImmutable();
+
+        return $now < $nextAllowedAt
+            ? ['key' => 'recover.throttled', 'params' => ['minutes' => (string) (int) ceil(($nextAllowedAt->getTimestamp() - $now->getTimestamp()) / 60)]]
+            : null;
+    }
+
+    private function sendRecoveryToken(NickServContext $context, string $targetNick, RegisteredNick $account): void
+    {
+        $registry = $context->getRecoveryTokenRegistry();
         $token = SecureToken::hex(32);
         $expiresAt = new DateTimeImmutable(sprintf('+%d seconds', $this->recoverTokenTtlSeconds));
         $registry->store($targetNick, $token, $expiresAt);
@@ -179,11 +177,11 @@ final readonly class RecoverCommand implements NickServCommandInterface
                 '%token%' => $token,
                 '%bot%' => $context->getNotifier()->getNick(),
             ], 'mail', $locale);
-            $this->messageBus->dispatch(new SendEmail($email, $subject, $body));
+            $this->messageBus->dispatch(new SendEmail($account->getEmail(), $subject, $body));
         } catch (Throwable $e) {
             $this->logger->error('NickServ RECOVER: failed to dispatch recovery email', [
                 'nick' => $targetNick,
-                'recipient' => $email,
+                'recipient' => $account->getEmail(),
                 'exception' => $e,
             ]);
             $context->reply('error.mail_failed');
@@ -192,46 +190,47 @@ final readonly class RecoverCommand implements NickServCommandInterface
         }
 
         $registry->recordRecover($targetNick);
-        $emailHint = EmailMasker::mask($email);
-        $context->reply('recover.email_sent', ['email_hint' => $emailHint]);
+        $context->reply('recover.email_sent', ['email_hint' => EmailMasker::mask($account->getEmail())]);
     }
 
     private function consumeToken(NickServContext $context, string $targetNick, string $token, ?RegisteredNick $account): void
     {
+        $errorKey = $this->validateRecoverConsume($context, $targetNick, $token, $account);
+        if (null !== $errorKey) {
+            $context->reply($errorKey['key'], $errorKey['params']);
+
+            return;
+        }
+
+        $this->executeRecoverConsume($context, $targetNick, $account);
+    }
+
+    private function validateRecoverConsume(NickServContext $context, string $targetNick, string $token, ?RegisteredNick $account): ?array
+    {
         if (null === $account) {
-            $context->reply('recover.not_registered', ['nickname' => $targetNick]);
-
-            return;
+            return ['key' => 'recover.not_registered', 'params' => ['nickname' => $targetNick]];
         }
 
-        if ($account->isPending()) {
-            $context->reply('recover.pending', ['nickname' => $targetNick]);
+        $statusError = match (true) {
+            $account->isPending() => ['key' => 'recover.pending', 'params' => ['nickname' => $targetNick]],
+            $account->isSuspended() => ['key' => 'recover.suspended', 'params' => ['nickname' => $targetNick, 'reason' => $account->getReason() ?? '']],
+            $account->isForbidden() => ['key' => 'recover.forbidden', 'params' => ['nickname' => $targetNick]],
+            default => null,
+        };
 
-            return;
-        }
-
-        if ($account->isSuspended()) {
-            $context->reply('recover.suspended', [
-                'nickname' => $targetNick,
-                'reason' => $account->getReason() ?? '',
-            ]);
-
-            return;
-        }
-
-        if ($account->isForbidden()) {
-            $context->reply('recover.forbidden', ['nickname' => $targetNick]);
-
-            return;
+        if (null !== $statusError) {
+            return $statusError;
         }
 
         $registry = $context->getRecoveryTokenRegistry();
-        if (!$registry->consume($targetNick, $token)) {
-            $context->reply('recover.invalid_token', ['nickname' => $targetNick]);
 
-            return;
-        }
+        return $registry->consume($targetNick, $token)
+            ? null
+            : ['key' => 'recover.invalid_token', 'params' => ['nickname' => $targetNick]];
+    }
 
+    private function executeRecoverConsume(NickServContext $context, string $targetNick, RegisteredNick $account): void
+    {
         $newPassword = SecureToken::hex(12);
         $account->changePasswordWithHasher($newPassword, $this->passwordHasher);
         $this->nickRepository->save($account);

@@ -17,7 +17,6 @@ use Psr\Log\LoggerInterface;
 
 use function array_slice;
 use function implode;
-use function strtolower;
 use function trim;
 
 final class ForbidCommand implements NickServCommandInterface, AuditableCommandInterface
@@ -95,8 +94,7 @@ final class ForbidCommand implements NickServCommandInterface, AuditableCommandI
         }
 
         $targetNick = $context->args[0];
-        $reasonParts = array_slice($context->args, 1);
-        $reason = trim(implode(' ', $reasonParts));
+        $reason = trim(implode(' ', array_slice($context->args, 1)));
 
         if ('' === $reason) {
             $context->reply('forbid.reason_required');
@@ -104,8 +102,11 @@ final class ForbidCommand implements NickServCommandInterface, AuditableCommandI
             return;
         }
 
-        $targetNickLower = strtolower($targetNick);
+        $this->processForbid($context, $targetNick, $reason);
+    }
 
+    private function processForbid(NickServContext $context, string $targetNick, string $reason): void
+    {
         $protectability = $this->targetValidator->validate($targetNick);
 
         if (!$protectability->isAllowed()) {

@@ -10,6 +10,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -101,56 +102,12 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
             return;
         }
 
-        $channelName = $context->getChannelNameArg(0);
-        if (null === $channelName) {
-            $context->reply('error.invalid_channel');
-
+        $validation = $this->validateDehalfopExecute($context);
+        if (null === $validation) {
             return;
         }
 
-        $targetNick = $context->args[1] ?? '';
-        if ('' === $targetNick) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-            return;
-        }
-
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
-            throw ChannelNotRegisteredException::forChannel($channelName);
-        }
-
-        $senderAccount = $context->senderAccount;
-        if (null === $senderAccount) {
-            $context->reply('error.not_identified');
-
-            return;
-        }
-
-        if (!$context->isLevelFounder) {
-            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_HALFOPDEHALFOP, $channelName, 'DEHALFOP');
-        }
-
-        $targetSender = $this->userLookup->findByNick($targetNick);
-        if (null === $targetSender) {
-            $context->reply('halfop.user_not_on_channel', ['%nickname%' => $targetNick]);
-
-            return;
-        }
-        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->getId(), true);
-        $targetAccount = $this->nickRepository->findByNick($targetNick);
-        if (null === $targetAccount) {
-            $targetLevel = ChannelAccess::LEVEL_UNREGISTERED;
-        } else {
-            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
-        }
-        $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
-        if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
-            $context->reply('error.insufficient_access', ['%operation%' => 'DEHALFOP', '%channel%' => $channelName]);
-
-            return;
-        }
-
+        [$channelName, $targetNick, $targetSender] = $validation;
         $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', false);
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
@@ -161,5 +118,73 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
             ])
         );
         $context->reply('dehalfop.done', ['%nickname%' => $targetNick]);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateDehalfopExecute(ChanServContext $context): ?array
+    {
+        $channelName = $context->getChannelNameArg(0);
+        if (null === $channelName) {
+            $context->reply('error.invalid_channel');
+
+            return null;
+        }
+
+        $targetNick = $context->args[1] ?? '';
+        if ('' === $targetNick) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+            return null;
+        }
+
+        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+        if (null === $channel) {
+            throw ChannelNotRegisteredException::forChannel($channelName);
+        }
+
+        return $this->validateDehalfopSender($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateDehalfopSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
+        $senderAccount = $context->senderAccount;
+        if (null === $senderAccount) {
+            $context->reply('error.not_identified');
+
+            return null;
+        }
+
+        if (!$context->isLevelFounder) {
+            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_HALFOPDEHALFOP, $channelName, 'DEHALFOP');
+        }
+
+        return $this->validateDehalfopTarget($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateDehalfopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
+        $targetSender = $this->userLookup->findByNick($targetNick);
+        if (null === $targetSender) {
+            $context->reply('halfop.user_not_on_channel', ['%nickname%' => $targetNick]);
+
+            return null;
+        }
+        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $context->senderAccount->getId(), true);
+        $targetAccount = $this->nickRepository->findByNick($targetNick);
+        if (null === $targetAccount) {
+            $targetLevel = ChannelAccess::LEVEL_UNREGISTERED;
+        } else {
+            $targetLevel = $this->accessHelper->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
+        }
+        $isSelfTarget = null !== $targetAccount && null !== $context->senderAccount && $targetAccount->getId() === $context->senderAccount->getId();
+        if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
+            $context->reply('error.insufficient_access', ['%operation%' => 'DEHALFOP', '%channel%' => $channelName]);
+
+            return null;
+        }
+
+        return [$channelName, $targetNick, $targetSender];
     }
 }

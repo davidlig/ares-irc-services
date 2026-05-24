@@ -31,41 +31,39 @@ final readonly class ForcedVhostApplier
     public function applyForcedVhostIfApplicable(int $nickId, string $nickname, string $uid): bool
     {
         $ircop = $this->ircopRepository->findByNickId($nickId);
-        if (null === $ircop) {
-            return false;
+        $result = false;
+
+        if (null !== $ircop) {
+            $role = $ircop->getRole();
+            $pattern = $role->getForcedVhostPattern();
+
+            if (null !== $pattern && '' !== $pattern) {
+                if (ForcedVhost::isValidPattern($pattern)) {
+                    $forcedVhost = ForcedVhost::fromPattern($pattern);
+                    $vhost = $forcedVhost->generateVhost($nickname);
+
+                    $serverSid = $this->connectionHolder->getServerSid();
+                    $this->notifier->setUserVhost($uid, $vhost, $serverSid);
+
+                    $this->logger->info('ForcedVhostApplier: applied forced vhost', [
+                        'nickId' => $nickId,
+                        'nickname' => $nickname,
+                        'uid' => $uid,
+                        'vhost' => $vhost,
+                        'role' => $role->getName(),
+                    ]);
+
+                    $result = true;
+                } else {
+                    $this->logger->warning('ForcedVhostApplier: invalid pattern stored for role', [
+                        'role' => $role->getName(),
+                        'pattern' => $pattern,
+                    ]);
+                }
+            }
         }
 
-        $role = $ircop->getRole();
-        $pattern = $role->getForcedVhostPattern();
-
-        if (null === $pattern || '' === $pattern) {
-            return false;
-        }
-
-        if (!ForcedVhost::isValidPattern($pattern)) {
-            $this->logger->warning('ForcedVhostApplier: invalid pattern stored for role', [
-                'role' => $role->getName(),
-                'pattern' => $pattern,
-            ]);
-
-            return false;
-        }
-
-        $forcedVhost = ForcedVhost::fromPattern($pattern);
-        $vhost = $forcedVhost->generateVhost($nickname);
-
-        $serverSid = $this->connectionHolder->getServerSid();
-        $this->notifier->setUserVhost($uid, $vhost, $serverSid);
-
-        $this->logger->info('ForcedVhostApplier: applied forced vhost', [
-            'nickId' => $nickId,
-            'nickname' => $nickname,
-            'uid' => $uid,
-            'vhost' => $vhost,
-            'role' => $role->getName(),
-        ]);
-
-        return true;
+        return $result;
     }
 
     public function updateVhostForRole(int $roleId, ?string $newPattern): void

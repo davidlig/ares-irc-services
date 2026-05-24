@@ -42,6 +42,14 @@ final class FounderChangeTokenRegistry
 
             return null;
         }
+
+        $newFounderNickId = $this->validateAndConsumeToken($entry, $token, $channelId);
+
+        return $newFounderNickId;
+    }
+
+    private function validateAndConsumeToken(array $entry, string $token, int $channelId): ?int
+    {
         if (!hash_equals($entry['token'], $token)) {
             return null;
         }

@@ -50,36 +50,27 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
         $uid = $event->uid->value;
 
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
-            return;
-        }
-
-        if ($channel->isBlocked()) {
+        if (null === $channel || $channel->isBlocked()) {
             return;
         }
 
         $user = $this->userLookup->findByUid($uid);
-        if (null === $user) {
+        if (null === $user || $user->isOper) {
             return;
         }
 
-        if ($user->isOper) {
-            return;
-        }
+        $this->checkAkickMatch($channel, $channelName, $uid, $user);
+    }
 
+    private function checkAkickMatch(object $channel, string $channelName, string $uid, object $user): void
+    {
         $userMask = $user->toUserMask();
 
         $akicks = $this->akickRepository->listByChannel($channel->getId());
 
-        foreach ($akicks as $akick) {
-            if ($akick->isExpired()) {
-                continue;
-            }
-
-            if ($akick->matches((string) $userMask)) {
-                $this->enforceAkick($channelName, $akick->getMask(), $uid, $akick->getReason());
-                break;
-            }
+        $matching = array_find($akicks, static fn ($akick) => !$akick->isExpired() && $akick->matches((string) $userMask));
+        if (null !== $matching) {
+            $this->enforceAkick($channelName, $matching->getMask(), $uid, $matching->getReason());
         }
     }
 
@@ -132,11 +123,9 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
 
             $userMask = $user->toUserMask();
 
-            foreach ($validAkicks as $akick) {
-                if ($akick->matches((string) $userMask)) {
-                    $this->enforceAkick($channelName, $akick->getMask(), $uid, $akick->getReason());
-                    break;
-                }
+            $matching = array_find($validAkicks, static fn ($akick) => $akick->matches((string) $userMask));
+            if (null !== $matching) {
+                $this->enforceAkick($channelName, $matching->getMask(), $uid, $matching->getReason());
             }
         }
     }

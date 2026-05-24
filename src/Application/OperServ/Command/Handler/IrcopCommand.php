@@ -121,47 +121,26 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
     private function doAdd(OperServContext $context, string $nickname): void
     {
-        if (count($context->args) < 3) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.add.syntax')]);
+        $roleName = strtoupper($context->args[2] ?? '');
 
+        $validation = $this->validateIrcopAdd($context, $nickname, $roleName);
+        if (null === $validation) {
             return;
         }
 
-        $roleName = strtoupper($context->args[2]);
-
-        $targetAccount = $this->nickRepository->findByNick($nickname);
-        if (null === $targetAccount) {
-            $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
-
-            return;
-        }
-
-        if (!$targetAccount->isRegistered()) {
-            $context->reply('ircop.nick_not_active', ['%nickname%' => $nickname]);
-
-            return;
-        }
-
-        $role = $this->roleRepository->findByName($roleName);
-        if (null === $role) {
-            $context->reply('ircop.unknown_role', [
-                '%role%' => $roleName,
-                '%bot%' => $context->getBotName(),
-            ]);
-
-            return;
-        }
+        [$targetAccount, $role] = $validation;
 
         $existing = $this->ircopRepository->findByNickId($targetAccount->getId());
+
         if (null !== $existing) {
-            $oldRoleName = $existing->getRole()->getName();
-            if ($oldRoleName === $roleName) {
+            $oldRole = $existing->getRole();
+            if ($oldRole->getName() === $roleName) {
                 $context->reply('ircop.already_admin', ['%nickname%' => $nickname, '%role%' => $roleName]);
 
                 return;
             }
 
-            $oldRole = $existing->getRole();
+            $oldRoleName = $oldRole->getName();
             $existing->changeRole($role);
             $this->ircopRepository->save($existing);
 
@@ -185,6 +164,43 @@ final readonly class IrcopCommand implements OperServCommandInterface
         $this->modeApplier->applyModesForNick($nickname, $role);
 
         $context->reply('ircop.add.done', ['%nickname%' => $nickname, '%role%' => $roleName]);
+    }
+
+    /** @return array{0: RegisteredNick, 1: OperRole}|null */
+    private function validateIrcopAdd(OperServContext $context, string $nickname, string $roleName): ?array
+    {
+        return (function () use ($context, $nickname, $roleName): ?array {
+            if (count($context->args) < 3) {
+                $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.add.syntax')]);
+
+                return null;
+            }
+
+            $targetAccount = $this->nickRepository->findByNick($nickname);
+            if (null === $targetAccount) {
+                $context->reply('error.nick_not_registered', ['%nickname%' => $nickname]);
+
+                return null;
+            }
+
+            if (!$targetAccount->isRegistered()) {
+                $context->reply('ircop.nick_not_active', ['%nickname%' => $nickname]);
+
+                return null;
+            }
+
+            $role = $this->roleRepository->findByName($roleName);
+            if (null === $role) {
+                $context->reply('ircop.unknown_role', [
+                    '%role%' => $roleName,
+                    '%bot%' => $context->getBotName(),
+                ]);
+
+                return null;
+            }
+
+            return [$targetAccount, $role];
+        })();
     }
 
     private function doDel(OperServContext $context, string $nickname): void

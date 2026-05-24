@@ -14,19 +14,14 @@ final readonly class ClientKeyResolver
 {
     public function getClientKey(SenderView $user): string
     {
-        if ('' !== $user->ipBase64 && '*' !== $user->ipBase64) {
-            return 'ip:' . $user->ipBase64;
-        }
+        $result = match (true) {
+            '' !== $user->ipBase64 && '*' !== $user->ipBase64 => 'ip:' . $user->ipBase64,
+            '' !== $user->cloakedHost => 'cloak:' . $user->cloakedHost,
+            '' !== $user->hostname => 'host:' . $user->hostname,
+            default => 'uid:' . $user->uid,
+        };
 
-        if ('' !== $user->cloakedHost) {
-            return 'cloak:' . $user->cloakedHost;
-        }
-
-        if ('' !== $user->hostname) {
-            return 'host:' . $user->hostname;
-        }
-
-        return 'uid:' . $user->uid;
+        return $result;
     }
 
     /**
@@ -37,26 +32,17 @@ final readonly class ClientKeyResolver
     {
         if ('' !== $user->ipBase64 && '*' !== $user->ipBase64) {
             $binary = base64_decode($user->ipBase64, strict: true);
+            $ip = false !== $binary ? inet_ntop($binary) : false;
 
-            if (false !== $binary) {
-                $ip = inet_ntop($binary);
-
-                if (false !== $ip) {
-                    return $ip;
-                }
-            }
-
-            return $user->ipBase64;
+            return false !== $ip ? $ip : $user->ipBase64;
         }
 
-        if ('' !== $user->cloakedHost) {
-            return $user->cloakedHost;
-        }
+        $result = match (true) {
+            '' !== $user->cloakedHost => $user->cloakedHost,
+            '' !== $user->hostname => $user->hostname,
+            default => $user->uid,
+        };
 
-        if ('' !== $user->hostname) {
-            return $user->hostname;
-        }
-
-        return $user->uid;
+        return $result;
     }
 }

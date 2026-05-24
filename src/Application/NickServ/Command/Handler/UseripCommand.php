@@ -117,22 +117,19 @@ final class UseripCommand implements NickServCommandInterface, AuditableCommandI
     private function decodeIp(string $ipBase64): string
     {
         $decoded = base64_decode($ipBase64, true);
+
         if (false === $decoded) {
             return $ipBase64;
         }
 
-        // IPv4 (4 bytes)
-        if (4 === strlen($decoded)) {
+        $len = strlen($decoded);
+
+        if (4 === $len) {
             $parts = unpack('C4', $decoded);
 
             return sprintf('%d.%d.%d.%d', $parts[1], $parts[2], $parts[3], $parts[4]);
         }
 
-        // IPv6 (16 bytes)
-        if (16 === strlen($decoded)) {
-            return bin2hex($decoded);
-        }
-
-        return $ipBase64;
+        return 16 === $len ? bin2hex($decoded) : $ipBase64;
     }
 }

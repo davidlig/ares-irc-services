@@ -157,56 +157,67 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
         }
 
         $nickname = $mask->nickname;
-        $nicknameLower = strtolower($nickname);
 
-        // Check if the nickname extracted from mask is a service
-        $serviceUid = $this->serviceUidRegistry->getUidByNickname($nickname);
-        if (null !== $serviceUid) {
-            // Use the existing service instead of creating pseudo-client
-            $this->sendFromService($context, $nickname, $serviceUid, $typeArg, $message);
-
+        if ($this->trySendViaService($context, $nickname, $typeArg, $message)) {
             return;
         }
 
-        // Validate nickname is not connected or registered
-        $connectedUser = $this->userLookup->findByNick($nickname);
-        if (null !== $connectedUser) {
-            $context->reply('global.nick_connected', ['%nickname%' => $nickname]);
-
-            return;
-        }
-
-        $registeredNick = $this->nickRepository->findByNick($nicknameLower);
-        if (null !== $registeredNick) {
-            $context->reply('global.nick_registered', ['%nickname%' => $nickname]);
-
+        $errorKey = $this->validatePseudoClientNickname($context, $nickname);
+        if (null !== $errorKey) {
             return;
         }
 
         $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->error('GLOBAL: no active protocol module');
+        if (null !== $module) {
+            $serverSid = $this->connectionHolder->getServerSid();
+            $uid = $this->uidGenerator->generate();
+            $reason = sprintf('Global message pseudo-client (sender: %s)', $sender->nick);
 
-            return;
+            $module->getNickReservation()->reserveNickWithDuration($nickname, self::DURATION_SECONDS, $reason);
+            $module->getServiceActions()->introducePseudoClient($serverSid, $mask->nickname, $mask->ident, $mask->vhost, $uid, $mask->nickname);
+
+            $this->logger->info('GLOBAL: pseudo-client introduced', [
+                'nickname' => $nickname,
+                'uid' => $uid,
+                'sender' => $sender->nick,
+                'type' => $typeArg,
+            ]);
+
+            $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, true);
+        } else {
+            $this->logger->error('GLOBAL: no active protocol module');
+        }
+    }
+
+    private function trySendViaService(OperServContext $context, string $nickname, string $typeArg, string $message): bool
+    {
+        $serviceUid = $this->serviceUidRegistry->getUidByNickname($nickname);
+        if (null !== $serviceUid) {
+            $this->sendFromService($context, $nickname, $serviceUid, $typeArg, $message);
+
+            return true;
         }
 
-        $nickReservation = $module->getNickReservation();
-        $serverSid = $this->connectionHolder->getServerSid();
-        $uid = $this->uidGenerator->generate();
+        return false;
+    }
 
-        $reason = sprintf('Global message pseudo-client (sender: %s)', $sender->nick);
+    private function validatePseudoClientNickname(OperServContext $context, string $nickname): ?string
+    {
+        $connectedUser = $this->userLookup->findByNick($nickname);
+        if (null !== $connectedUser) {
+            $context->reply('global.nick_connected', ['%nickname%' => $nickname]);
 
-        $nickReservation->reserveNickWithDuration($nickname, self::DURATION_SECONDS, $reason);
-        $module->getServiceActions()->introducePseudoClient($serverSid, $mask->nickname, $mask->ident, $mask->vhost, $uid, $mask->nickname);
+            return 'connected';
+        }
 
-        $this->logger->info('GLOBAL: pseudo-client introduced', [
-            'nickname' => $nickname,
-            'uid' => $uid,
-            'sender' => $sender->nick,
-            'type' => $typeArg,
-        ]);
+        $registeredNick = $this->nickRepository->findByNick(strtolower($nickname));
+        if (null !== $registeredNick) {
+            $context->reply('global.nick_registered', ['%nickname%' => $nickname]);
 
-        $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, true);
+            return 'registered';
+        }
+
+        return null;
     }
 
     private function broadcastAndReply(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message, bool $isPseudoClient): void

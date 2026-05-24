@@ -90,41 +90,64 @@ final readonly class DelCommand implements MemoServCommandInterface
         $first = $context->args[0] ?? '';
         $isChannel = str_starts_with($first, '#');
 
-        if ($isChannel) {
-            $channelName = $first;
-            $indexArg = $context->args[1] ?? '';
-            if ('' === $indexArg || !ctype_digit($indexArg)) {
-                $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+        $memoResult = $isChannel
+            ? $this->resolveChannelMemo($context, $senderAccount->getId(), $first)
+            : $this->resolveNickMemo($context, $senderAccount->getId(), $first);
 
-                return;
-            }
-            $index = (int) $indexArg;
-            $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-            if (null === $channel) {
-                $context->reply('del.channel_not_registered', ['channel' => $channelName]);
-
-                return;
-            }
-            $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_MEMOCHANGE, $channelName, 'DEL');
-            $memo = $this->memoRepository->findByTargetChannelAndIndex($channel->getId(), $index);
-        } else {
-            $indexArg = $first;
-            if (!ctype_digit($indexArg)) {
-                $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
-
-                return;
-            }
-            $index = (int) $indexArg;
-            $memo = $this->memoRepository->findByTargetNickAndIndex($senderAccount->getId(), $index);
-        }
-
-        if (null === $memo) {
-            $context->reply('del.not_found', ['index' => $index]);
-
+        if (null === $memoResult) {
             return;
         }
 
+        [$memo, $index] = $memoResult;
         $this->memoRepository->delete($memo);
         $context->reply('del.deleted', ['index' => $index]);
+    }
+
+    private function resolveChannelMemo(MemoServContext $context, int $senderNickId, string $channelName): ?array
+    {
+        $indexArg = $context->args[1] ?? '';
+        if ('' === $indexArg || !ctype_digit($indexArg)) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+            return null;
+        }
+        $index = (int) $indexArg;
+        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+        if (null === $channel) {
+            $context->reply('del.channel_not_registered', ['channel' => $channelName]);
+
+            return null;
+        }
+        $this->accessHelper->requireLevel($channel, $senderNickId, ChannelLevel::KEY_MEMOCHANGE, $channelName, 'DEL');
+        $memo = $this->memoRepository->findByTargetChannelAndIndex($channel->getId(), $index);
+
+        $result = null;
+        if (null !== $memo) {
+            $result = [$memo, $index];
+        } else {
+            $context->reply('del.not_found', ['index' => $index]);
+        }
+
+        return $result;
+    }
+
+    private function resolveNickMemo(MemoServContext $context, int $senderNickId, string $indexArg): ?array
+    {
+        if (!ctype_digit($indexArg)) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+            return null;
+        }
+        $index = (int) $indexArg;
+        $memo = $this->memoRepository->findByTargetNickAndIndex($senderNickId, $index);
+
+        $result = null;
+        if (null !== $memo) {
+            $result = [$memo, $index];
+        } else {
+            $context->reply('del.not_found', ['index' => $index]);
+        }
+
+        return $result;
     }
 }

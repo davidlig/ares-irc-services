@@ -72,12 +72,7 @@ final readonly class NickServService
         $handler = $this->commandRegistry->find($cmdName);
 
         if (null === $handler) {
-            $messageType = $this->messageTypeResolver->resolve($sender);
-            $this->notifier->sendMessage(
-                $sender->uid,
-                $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'nickserv', $this->defaultLanguage),
-                $messageType
-            );
+            $this->replyUnknownCommand($sender, $cmdName);
 
             return;
         }
@@ -106,61 +101,88 @@ final readonly class NickServService
         $this->authorizationContext->setCurrentUser($sender);
 
         try {
-            $requiredPermission = $handler->getRequiredPermission();
-            if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
-                if ('IDENTIFIED' === $requiredPermission) {
-                    $context->reply('error.not_identified');
-                } else {
-                    $context->reply('error.permission_denied');
-                }
-
+            $error = $this->checkCommandPermissions($context, $handler);
+            if (null !== $error) {
                 return;
             }
 
-            if (count($args) < $handler->getMinArgs()) {
-                $context->reply('error.syntax', [
-                    'syntax' => $context->trans($handler->getSyntaxKey()),
-                ]);
-
-                return;
-            }
-
-            if (null !== $account && $account->isPendingDeletion() && !in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
-                $context->reply('drop.pending_deletion', ['%nickname%' => $sender->nick]);
-
-                return;
-            }
-
-            $this->logger->debug(sprintf(
-                'NickServ: %s executed %s [args: %d]',
-                $sender->nick,
-                $cmdName,
-                count($args),
-            ));
-
-            $handler->execute($context);
-
-            if (null !== $requiredPermission) {
-                $auditData = $handler instanceof AuditableCommandInterface
-                    ? $handler->getAuditData($context)
-                    : null;
-
-                if (null !== $auditData) {
-                    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
-                        serviceName: $this->notifier->getServiceKey(),
-                        operatorNick: $sender->nick,
-                        commandName: $cmdName,
-                        permission: $requiredPermission,
-                        target: $auditData->target,
-                        targetHost: $auditData->targetHost,
-                        targetIp: $auditData->targetIp,
-                        reason: $auditData->reason,
-                        extra: $auditData->extra,
-                    ));
-                }
-            }
+            $this->executeHandlerAfterValidation($context, $handler, $args);
         } finally {
             $this->authorizationContext->clear();
+        }
+    }
+
+    private function replyUnknownCommand(SenderView $sender, string $cmdName): void
+    {
+        $messageType = $this->messageTypeResolver->resolve($sender);
+        $this->notifier->sendMessage(
+            $sender->uid,
+            $this->translator->trans('unknown_command', ['%command%' => $cmdName, '%bot%' => $this->notifier->getNick()], 'nickserv', $this->defaultLanguage),
+            $messageType
+        );
+    }
+
+    private function checkCommandPermissions(NickServContext $context, $handler): ?string
+    {
+        $requiredPermission = $handler->getRequiredPermission();
+        if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
+            if ('IDENTIFIED' === $requiredPermission) {
+                $context->reply('error.not_identified');
+            } else {
+                $context->reply('error.permission_denied');
+            }
+
+            return 'denied';
+        }
+
+        return null;
+    }
+
+    private function executeHandlerAfterValidation(NickServContext $context, $handler, array $args): void
+    {
+        if (count($args) < $handler->getMinArgs()) {
+            $context->reply('error.syntax', [
+                'syntax' => $context->trans($handler->getSyntaxKey()),
+            ]);
+
+            return;
+        }
+
+        if (null !== $context->senderAccount && $context->senderAccount->isPendingDeletion() && !in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
+            $context->reply('drop.pending_deletion', ['%nickname%' => $context->sender->nick]);
+
+            return;
+        }
+
+        $requiredPermission = $handler->getRequiredPermission();
+
+        $this->logger->debug(sprintf(
+            'NickServ: %s executed %s [args: %d]',
+            $context->sender->nick,
+            $context->command,
+            count($context->args),
+        ));
+
+        $handler->execute($context);
+
+        if (null !== $requiredPermission) {
+            $auditData = $handler instanceof AuditableCommandInterface
+                ? $handler->getAuditData($context)
+                : null;
+
+            if (null !== $auditData) {
+                $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
+                    serviceName: $this->notifier->getServiceKey(),
+                    operatorNick: $context->sender->nick,
+                    commandName: $context->command,
+                    permission: $requiredPermission,
+                    target: $auditData->target,
+                    targetHost: $auditData->targetHost,
+                    targetIp: $auditData->targetIp,
+                    reason: $auditData->reason,
+                    extra: $auditData->extra,
+                ));
+            }
         }
     }
 }

@@ -121,6 +121,7 @@ info:
   status_suspended:   "\x0304Suspès\x03"
   status_forbidden:   "\x0304Prohibit\x03"
   status_pending_deletion: "07Pendent d'eliminació"
+  status_pending_deletion_at:  "  14Eliminat           : %date%"
   reason:           "  \x0314Motiu\x03                 : %reason%"
   suspended_until:  "  \x0314Acaba el\x03              : %date%"
   suspended_permanent: "  \x0314Acaba el\x03              : Permanent"

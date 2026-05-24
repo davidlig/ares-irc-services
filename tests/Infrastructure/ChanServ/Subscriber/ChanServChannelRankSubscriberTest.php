@@ -232,6 +232,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(10);
 
@@ -293,6 +294,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
@@ -342,6 +344,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(50);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -414,6 +417,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -468,6 +472,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -524,6 +529,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -577,6 +583,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(10);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -642,6 +649,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::atLeastOnce())->method('listAll')->willReturn([$channel]);
@@ -695,6 +703,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::atLeastOnce())->method('listAll')->willReturn([$channel]);
@@ -745,6 +754,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(30);
 
@@ -855,6 +865,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
@@ -947,6 +958,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(50);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -1013,6 +1025,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(30);
 
@@ -1062,6 +1075,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
 
@@ -1106,6 +1120,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -1159,6 +1174,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(30);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -1262,6 +1278,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
 
@@ -1306,6 +1323,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -1457,6 +1475,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -1593,6 +1612,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
@@ -2135,6 +2155,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
 
@@ -2179,6 +2200,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
 
@@ -2391,6 +2413,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(30);
 
@@ -2456,6 +2479,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
@@ -2764,6 +2788,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         );
         $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
+        $account->method('isRegistered')->willReturn(true);
         $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);

@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 #[CoversClass(RecoveryTokenRegistry::class)]
 final class RecoveryTokenRegistryTest extends TestCase
@@ -77,7 +78,14 @@ final class RecoveryTokenRegistryTest extends TestCase
         $registry = new RecoveryTokenRegistry();
         $registry->store('Active', 'token', new DateTimeImmutable('+1 hour'));
         $registry->recordRecover('OldNick');
-        sleep(2);
+
+        // Simulate aging by setting lastRecoverAt to an old timestamp
+        $reflection = new ReflectionClass($registry);
+        $prop = $reflection->getProperty('lastRecoverAt');
+        $prop->setAccessible(true);
+        $lastRecoverAt = $prop->getValue($registry);
+        $lastRecoverAt[strtolower('OldNick')] = new DateTimeImmutable('-2 seconds');
+        $prop->setValue($registry, $lastRecoverAt);
 
         $removed = $registry->pruneExpired(1);
 

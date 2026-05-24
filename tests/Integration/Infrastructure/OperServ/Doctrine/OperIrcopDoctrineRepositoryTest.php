@@ -8,9 +8,11 @@ use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Infrastructure\OperServ\Doctrine\OperIrcopDoctrineRepository;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
+use ReflectionProperty;
 
 #[CoversClass(OperIrcopDoctrineRepository::class)]
 #[Group('integration')]
@@ -22,6 +24,13 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     {
         parent::setUp();
         $this->repository = new OperIrcopDoctrineRepository($this->entityManager);
+    }
+
+    private function setAddedAt(OperIrcop $ircop, DateTimeImmutable $time): void
+    {
+        $ref = new ReflectionProperty($ircop, 'addedAt');
+        $ref->setAccessible(true);
+        $ref->setValue($ircop, $time);
     }
 
     #[Test]
@@ -78,23 +87,18 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     public function findAllReturnsAllOperIrcopsOrderedByAddedAtDesc(): void
     {
         $role = $this->createOperRole('Admin');
-        $roleId = $role->getId();
 
         $ircop1 = OperIrcop::create(nickId: 100, role: $role);
-        $this->entityManager->persist($ircop1);
-        $this->entityManager->flush();
-
-        sleep(1);
-
-        $role = $this->entityManager->find(OperRole::class, $roleId);
         $ircop2 = OperIrcop::create(nickId: 101, role: $role);
-        $this->entityManager->persist($ircop2);
-        $this->entityManager->flush();
-
-        sleep(1);
-
-        $role = $this->entityManager->find(OperRole::class, $roleId);
         $ircop3 = OperIrcop::create(nickId: 102, role: $role);
+
+        // Set explicit timestamps to ensure ordering without sleep
+        $this->setAddedAt($ircop1, new DateTimeImmutable('-3 seconds'));
+        $this->setAddedAt($ircop2, new DateTimeImmutable('-2 seconds'));
+        $this->setAddedAt($ircop3, new DateTimeImmutable('-1 second'));
+
+        $this->entityManager->persist($ircop1);
+        $this->entityManager->persist($ircop2);
         $this->entityManager->persist($ircop3);
         $this->entityManager->flush();
 

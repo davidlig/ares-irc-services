@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Messenger\Middleware;
 
 use App\Application\Mail\Message\SendEmail;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Middleware\MiddlewareInterface;
 use Symfony\Component\Messenger\Middleware\StackInterface;
@@ -19,6 +20,7 @@ final readonly class EmailDelayMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly int $emailDelaySeconds,
+        private readonly ClockInterface $clock,
     ) {
     }
 
@@ -32,7 +34,7 @@ final readonly class EmailDelayMiddleware implements MiddlewareInterface
             && $this->emailDelaySeconds > 0
             && [] !== $envelope->all(ReceivedStamp::class)
         ) {
-            sleep($this->emailDelaySeconds);
+            $this->clock->sleep($this->emailDelaySeconds);
         }
 
         return $result;

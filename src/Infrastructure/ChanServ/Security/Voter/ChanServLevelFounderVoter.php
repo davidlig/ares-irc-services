@@ -47,12 +47,26 @@ final class ChanServLevelFounderVoter extends Voter
         }
         // @codeCoverageIgnoreEnd
 
+        $result = $this->checkLevelFounder($sender, $user, $subject);
+
+        return $result;
+    }
+
+    private function checkLevelFounder($sender, IrcServiceUser $user, ChanServContext $subject): bool
+    {
         $senderNickLower = strtolower($sender->nick);
 
         if ($sender->isIdentified && $this->rootRegistry->isRoot($senderNickLower)) {
             return true;
         }
 
+        $result = $this->checkOperPermission($senderNickLower, $user, $subject);
+
+        return $result;
+    }
+
+    private function checkOperPermission(string $senderNickLower, IrcServiceUser $user, ChanServContext $subject): bool
+    {
         if (!in_array(IrcServiceUser::ROLE_OPER, $user->getRoles(), true)) {
             return false;
         }

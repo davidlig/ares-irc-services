@@ -60,23 +60,12 @@ class ServiceUidRegistry
     public function getUidByNickname(string $nickname): ?string
     {
         $nicknameLower = strtolower($nickname);
-        foreach ($this->providers as $provider) {
-            if (strtolower($provider->getNickname()) === $nicknameLower) {
-                return $provider->getUid();
-            }
-        }
 
-        return null;
+        return array_find($this->providers, static fn ($provider) => strtolower($provider->getNickname()) === $nicknameLower)?->getUid();
     }
 
     public function getUidByUid(string $uid): ?string
     {
-        foreach ($this->providers as $provider) {
-            if ($provider->getUid() === $uid) {
-                return $uid;
-            }
-        }
-
-        return null;
+        return array_find($this->providers, static fn ($provider) => $provider->getUid() === $uid)?->getUid();
     }
 }

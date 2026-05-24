@@ -107,35 +107,25 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
             return;
         }
 
-        $arg1 = $context->args[1] ?? null;
-        $arg2 = $context->args[2] ?? null;
-
-        $isChannel = null !== $arg1 && str_starts_with($arg1, '#');
-        if ($isChannel) {
-            $channelName = $arg1;
-            $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-            if (null === $channel) {
-                $context->reply('ignore.channel_not_registered', ['channel' => $channelName]);
-
-                return;
-            }
-            if ('LIST' !== $sub) {
-                $this->accessHelper->requireLevel($channel, $senderAccount->getId(), ChannelLevel::KEY_MEMOCHANGE, $channelName, 'IGNORE');
-            }
-            $targetNickId = null;
-            $targetChannelId = $channel->getId();
-        } else {
-            $targetNickId = $senderAccount->getId();
-            $targetChannelId = null;
+        $ignoreInfo = $this->resolveIgnoreTarget($context, $senderAccount->getId(), $sub);
+        if (null === $ignoreInfo) {
+            return;
         }
 
+        [$targetNickId, $targetChannelId] = $ignoreInfo;
+        $this->dispatchSubCommand($context, $sub, $targetNickId, $targetChannelId);
+    }
+
+    private function dispatchSubCommand(MemoServContext $context, string $sub, ?int $targetNickId, ?int $targetChannelId): void
+    {
         if ('LIST' === $sub) {
             $this->doList($context, $targetNickId, $targetChannelId);
 
             return;
         }
 
-        $nickToIgnore = $isChannel ? ($arg2 ?? '') : ($arg1 ?? '');
+        $isChannel = null !== $targetChannelId;
+        $nickToIgnore = $isChannel ? ($context->args[2] ?? '') : ($context->args[1] ?? '');
         if ('' === $nickToIgnore) {
             $context->reply('error.syntax', ['syntax' => $context->trans('ignore.' . strtolower($sub) . '.syntax')]);
 
@@ -149,12 +139,33 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
             return;
         }
 
-        if ('ADD' === $sub) {
-            $channelNameForLimit = $isChannel ? $arg1 : null;
-            $this->doAdd($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore, $channelNameForLimit);
-        } else {
-            $this->doDel($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore);
+        $channelNameForLimit = $isChannel ? $context->args[1] : null;
+        $_ = match ($sub) {
+            'ADD' => $this->doAdd($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore, $channelNameForLimit),
+            default => $this->doDel($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore),
+        };
+    }
+
+    private function resolveIgnoreTarget(MemoServContext $context, int $senderNickId, string $sub): ?array
+    {
+        $arg1 = $context->args[1] ?? null;
+        $isChannel = null !== $arg1 && str_starts_with($arg1, '#');
+
+        if ($isChannel) {
+            $channel = $this->channelRepository->findByChannelName(strtolower($arg1));
+            if (null === $channel) {
+                $context->reply('ignore.channel_not_registered', ['channel' => $arg1]);
+
+                return null;
+            }
+            if ('LIST' !== $sub) {
+                $this->accessHelper->requireLevel($channel, $senderNickId, ChannelLevel::KEY_MEMOCHANGE, $arg1, 'IGNORE');
+            }
+
+            return [null, $channel->getId()];
         }
+
+        return [$senderNickId, null];
     }
 
     private function doAdd(MemoServContext $context, ?int $targetNickId, ?int $targetChannelId, int $ignoredNickId, string $nickDisplay, ?string $channelNameForLimit): void

@@ -99,27 +99,48 @@ final readonly class DeopCommand implements ChanServCommandInterface
 
     public function execute(ChanServContext $context): void
     {
+        $validation = $this->validateDeopExecute($context);
+        if (null === $validation) {
+            return;
+        }
+
+        [$channelName, $targetNick, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'o', false);
+        $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('op.notice_grant', ['%from%' => $context->sender->nick, '%to%' => $targetNick, '%mode%' => '-o']));
+        $context->reply('deop.done', ['%nickname%' => $targetNick]);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateDeopExecute(ChanServContext $context): ?array
+    {
         $channelName = $context->getChannelNameArg(0);
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return null;
         }
         $targetNick = $context->args[1] ?? '';
         if ('' === $targetNick) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return null;
         }
         $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
         if (null === $channel) {
             throw ChannelNotRegisteredException::forChannel($channelName);
         }
+
+        return $this->validateDeopSender($context, $channel, $channelName, $targetNick);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateDeopSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
+    {
         $senderAccount = $context->senderAccount;
         if (null === $senderAccount) {
             $context->reply('error.not_identified');
 
-            return;
+            return null;
         }
         if (!$context->isLevelFounder) {
             $requiredLevel = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_OPDEOP);
@@ -128,11 +149,18 @@ final readonly class DeopCommand implements ChanServCommandInterface
                 throw InsufficientAccessException::forOperation($channelName, 'DEOP');
             }
         }
+
+        return $this->validateDeopTarget($context, $channel, $channelName, $targetNick, $senderLevel);
+    }
+
+    /** @return array{string, string, SenderView}|null */
+    private function validateDeopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, int $senderLevel): ?array
+    {
         $targetSender = $this->userLookup->findByNick($targetNick);
         if (null === $targetSender) {
             $context->reply('op.user_not_on_channel', ['%nickname%' => $targetNick]);
 
-            return;
+            return null;
         }
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         if (null === $targetAccount) {
@@ -140,15 +168,14 @@ final readonly class DeopCommand implements ChanServCommandInterface
         } else {
             $targetLevel = $this->effectiveAccessLevel($channel, $targetAccount->getId(), $targetSender->isIdentified);
         }
-        $isSelfTarget = null !== $targetAccount && null !== $senderAccount && $targetAccount->getId() === $senderAccount->getId();
+        $isSelfTarget = null !== $targetAccount && null !== $context->senderAccount && $targetAccount->getId() === $context->senderAccount->getId();
         if (!$context->isLevelFounder && !$isSelfTarget && $senderLevel <= $targetLevel) {
             $context->reply('error.insufficient_access', ['%operation%' => 'DEOP', '%channel%' => $channelName]);
 
-            return;
+            return null;
         }
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'o', false);
-        $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('op.notice_grant', ['%from%' => $context->sender->nick, '%to%' => $targetNick, '%mode%' => '-o']));
-        $context->reply('deop.done', ['%nickname%' => $targetNick]);
+
+        return [$channelName, $targetNick, $targetSender];
     }
 
     private function getLevelValue(int $channelId, string $key): int

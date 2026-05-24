@@ -108,32 +108,40 @@ final readonly class SendCommand implements MemoServCommandInterface
 
         $targetArg = $context->args[0] ?? '';
         $message = implode(' ', array_slice($context->args, 1));
-        if ('' === $message) {
-            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
-        }
-
-        if (mb_strlen($message) > Memo::MESSAGE_MAX_LENGTH) {
-            $context->reply('send.message_too_long', ['max' => Memo::MESSAGE_MAX_LENGTH]);
-
-            return;
-        }
-
-        $remaining = $this->throttleRegistry->getRemainingCooldownSeconds($context->sender->uid, $this->sendMinIntervalSeconds);
-        if ($remaining > 0) {
-            $context->reply('send.throttled', ['seconds' => $remaining]);
-
+        $errorKey = $this->validateSendParams($context, $message);
+        if (null !== $errorKey) {
             return;
         }
 
         if (str_starts_with($targetArg, '#')) {
             $this->sendToChannel($context, $targetArg, $message, $senderAccount);
+        } else {
+            $this->sendToNick($context, $targetArg, $message, $senderAccount);
+        }
+    }
 
-            return;
+    private function validateSendParams(MemoServContext $context, string $message): ?string
+    {
+        if ('' === $message) {
+            $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+            return 'syntax';
         }
 
-        $this->sendToNick($context, $targetArg, $message, $senderAccount);
+        if (mb_strlen($message) > Memo::MESSAGE_MAX_LENGTH) {
+            $context->reply('send.message_too_long', ['max' => Memo::MESSAGE_MAX_LENGTH]);
+
+            return 'too_long';
+        }
+
+        $remaining = $this->throttleRegistry->getRemainingCooldownSeconds($context->sender->uid, $this->sendMinIntervalSeconds);
+        $errorKey = $remaining > 0 ? 'throttled' : null;
+        if ('throttled' === $errorKey) {
+            $context->reply('send.throttled', ['seconds' => $remaining]);
+        }
+
+        return $errorKey;
     }
 
     private function sendToNick(MemoServContext $context, string $nickName, string $message, RegisteredNick $senderAccount): void
@@ -145,27 +153,8 @@ final readonly class SendCommand implements MemoServCommandInterface
             return;
         }
 
-        if ($recipient->getId() === $senderAccount->getId()) {
-            $context->reply('send.cannot_send_to_self');
-
-            return;
-        }
-
-        if (!$this->memoSettingsRepository->isEnabledForNick($recipient->getId())) {
-            throw MemoDisabledException::forTarget($nickName);
-        }
-
-        $ignore = $this->memoIgnoreRepository->findByTargetNickAndIgnored($recipient->getId(), $senderAccount->getId());
-        if (null !== $ignore) {
-            $context->reply('send.ignored');
-
-            return;
-        }
-
-        $count = $this->memoRepository->countByTargetNick($recipient->getId());
-        if ($count >= $this->maxMemosPerNick) {
-            $context->reply('send.limit_reached', ['target' => $nickName]);
-
+        $errorKey = $this->validateSendToNickRecipient($context, $recipient, $senderAccount, $nickName);
+        if (null !== $errorKey) {
             return;
         }
 
@@ -176,6 +165,33 @@ final readonly class SendCommand implements MemoServCommandInterface
         $context->reply('send.sent_nick', ['nick' => $recipient->getNickname()]);
 
         $this->notifyRecipientIfOnline($context, $recipient);
+    }
+
+    private function validateSendToNickRecipient(MemoServContext $context, RegisteredNick $recipient, RegisteredNick $senderAccount, string $nickName): ?string
+    {
+        if ($recipient->getId() === $senderAccount->getId()) {
+            $context->reply('send.cannot_send_to_self');
+
+            return 'self';
+        }
+
+        if (!$this->memoSettingsRepository->isEnabledForNick($recipient->getId())) {
+            throw MemoDisabledException::forTarget($nickName);
+        }
+
+        $ignored = null !== $this->memoIgnoreRepository->findByTargetNickAndIgnored($recipient->getId(), $senderAccount->getId());
+        $limitReached = $this->memoRepository->countByTargetNick($recipient->getId()) >= $this->maxMemosPerNick;
+        $errorKey = null;
+
+        if ($ignored) {
+            $context->reply('send.ignored');
+            $errorKey = 'ignored';
+        } elseif ($limitReached) {
+            $context->reply('send.limit_reached', ['target' => $nickName]);
+            $errorKey = 'limit';
+        }
+
+        return $errorKey;
     }
 
     private function notifyRecipientIfOnline(MemoServContext $context, RegisteredNick $recipient): void

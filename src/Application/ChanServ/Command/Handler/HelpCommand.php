@@ -142,12 +142,6 @@ final readonly class HelpCommand implements ChanServCommandInterface
     /** @return array{name: string, desc_key: string, help_key: string, syntax_key: string}|null */
     private function findSubCommand(ChanServCommandInterface $handler, string $name): ?array
     {
-        foreach ($handler->getSubCommandHelp() as $sub) {
-            if ($name === strtoupper($sub['name'])) {
-                return $sub;
-            }
-        }
-
-        return null;
+        return array_find($handler->getSubCommandHelp(), static fn (array $sub): bool => $name === strtoupper($sub['name']));
     }
 }

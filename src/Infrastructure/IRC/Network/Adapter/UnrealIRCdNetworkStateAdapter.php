@@ -245,19 +245,12 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         $entry = $this->stripSjsbyPrefix($entry);
         $firstChar = $entry[0] ?? '';
 
-        if ('&' === $firstChar) {
-            return ['mode' => 'b', 'value' => substr($entry, 1)];
-        }
-
-        if ('"' === $firstChar) {
-            return ['mode' => 'e', 'value' => substr($entry, 1)];
-        }
-
-        if ("'" === $firstChar) {
-            return ['mode' => 'I', 'value' => substr($entry, 1)];
-        }
-
-        return null;
+        return match ($firstChar) {
+            '&' => ['mode' => 'b', 'value' => substr($entry, 1)],
+            '"' => ['mode' => 'e', 'value' => substr($entry, 1)],
+            "'" => ['mode' => 'I', 'value' => substr($entry, 1)],
+            default => null,
+        };
     }
 
     private function stripSjsbyPrefix(string $entry): string

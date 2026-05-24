@@ -39,13 +39,7 @@ readonly class ForbiddenVhostService
     {
         $forbiddenList = $this->repository->findAll();
 
-        foreach ($forbiddenList as $forbidden) {
-            if ($forbidden->matches($vhost)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($forbiddenList, static fn ($forbidden) => $forbidden->matches($vhost));
     }
 
     /**

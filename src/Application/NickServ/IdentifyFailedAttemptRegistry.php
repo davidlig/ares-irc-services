@@ -59,14 +59,9 @@ final class IdentifyFailedAttemptRegistry
             return 0;
         }
 
-        $lastFailure = max($recent);
-        $lockoutUntil = $lastFailure + $lockoutSeconds;
+        $lockoutUntil = max($recent) + $lockoutSeconds;
 
-        if ($now >= $lockoutUntil) {
-            return 0;
-        }
-
-        return $lockoutUntil - $now;
+        return $now < $lockoutUntil ? $lockoutUntil - $now : 0;
     }
 
     public function clearFailedAttempts(string $clientKey): void

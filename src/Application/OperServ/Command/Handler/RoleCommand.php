@@ -308,14 +308,16 @@ final readonly class RoleCommand implements OperServCommandInterface
         }
 
         $permission = $this->findOrCreatePermission($permName);
-        if (null === $permission) {
-            $context->reply('role.perms.not_found', ['%perm%' => $permName]);
 
-            return;
-        }
+        $resultKey = null === $permission
+            ? 'role.perms.not_found'
+            : ($role->hasPermission($permName) ? 'role.perms.already_has' : null);
 
-        if ($role->hasPermission($permName)) {
-            $context->reply('role.perms.already_has', ['%role%' => $role->getName(), '%perm%' => $permName]);
+        if (null !== $resultKey) {
+            $context->reply($resultKey, match ($resultKey) {
+                'role.perms.not_found' => ['%perm%' => $permName],
+                default => ['%role%' => $role->getName(), '%perm%' => $permName],
+            });
 
             return;
         }
@@ -418,14 +420,9 @@ final readonly class RoleCommand implements OperServCommandInterface
             return;
         }
 
-        if (!$role->hasPermission($permName)) {
-            $context->reply('role.perms.does_not_have', ['%role%' => $role->getName(), '%perm%' => $permName]);
-
-            return;
-        }
-
-        if ($role->isProtected()) {
-            $context->reply('role.perms.protected', ['%role%' => $role->getName()]);
+        $errorKey = !$role->hasPermission($permName) ? 'role.perms.does_not_have' : ($role->isProtected() ? 'role.perms.protected' : null);
+        if (null !== $errorKey) {
+            $context->reply($errorKey, ['%role%' => $role->getName(), '%perm%' => $permName]);
 
             return;
         }

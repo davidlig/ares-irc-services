@@ -43,13 +43,7 @@ final readonly class IrcopAccessHelper
 
     public function hasAnyPermission(int $nickId, string $nickLower, array $permissions): bool
     {
-        foreach ($permissions as $permission) {
-            if ($this->hasPermission($nickId, $nickLower, $permission)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($permissions, fn ($permission) => $this->hasPermission($nickId, $nickLower, $permission));
     }
 
     public function isIrcop(int $nickId, string $nickLower): bool
