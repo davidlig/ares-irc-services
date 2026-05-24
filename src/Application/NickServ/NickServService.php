@@ -22,6 +22,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function count;
+use function in_array;
 use function sprintf;
 
 use const PREG_SPLIT_NO_EMPTY;
@@ -120,6 +121,12 @@ final readonly class NickServService
                 $context->reply('error.syntax', [
                     'syntax' => $context->trans($handler->getSyntaxKey()),
                 ]);
+
+                return;
+            }
+
+            if (null !== $account && $account->isPendingDeletion() && !in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
+                $context->reply('drop.pending_deletion', ['%nickname%' => $sender->nick]);
 
                 return;
             }

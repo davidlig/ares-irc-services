@@ -1082,4 +1082,230 @@ final class NickServServiceTest extends TestCase
 
         self::assertInstanceOf(NickServContext::class, $contextHolder->context);
     }
+
+    #[Test]
+    public function blocksNormalCommandsWhenAccountIsPendingDeletion(): void
+    {
+        $sender = new SenderView('UID1', 'DroppedNick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements NickServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SET';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return NickServPermission::IDENTIFIED_OWNER;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
+            public function execute(NickServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPendingDeletion')->willReturn(true);
+        $account->method('getLanguage')->willReturn('en');
+        $account->method('getTimezone')->willReturn('UTC');
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByNick')->willReturn($account);
+
+        $authorizationChecker = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorizationChecker->method('isGranted')->willReturn(true);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('NickServ');
+        $notifier->expects(self::once())->method('sendMessage')
+            ->with($sender->uid, self::stringContains('drop.pending_deletion'));
+
+        $registry = new NickServCommandRegistry([$handler]);
+
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturn('drop.pending_deletion-translated');
+
+        $service = new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $authorizationChecker,
+            $registry,
+            $nickRepository,
+            new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
+            $notifier,
+            new UserMessageTypeResolver($nickRepository),
+            $translator,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+            $this->createStub(EventDispatcherInterface::class),
+            'en',
+            'UTC',
+            $this->createStub(LoggerInterface::class),
+        );
+
+        $service->dispatch('SET PRIVATE', $sender);
+
+        self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
+    public function allowsInfoRestoreAndDropWhenAccountIsPendingDeletion(): void
+    {
+        foreach (['INFO', 'RESTORE', 'DROP'] as $allowedCommand) {
+            $sender = new SenderView('UID1', 'DroppedNick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
+            $contextHolder = new stdClass();
+            $contextHolder->context = null;
+
+            $handler = new class($contextHolder, $allowedCommand) implements NickServCommandInterface {
+                public function __construct(
+                    private readonly stdClass $holder,
+                    private readonly string $name,
+                ) {
+                }
+
+                public function getName(): string
+                {
+                    return $this->name;
+                }
+
+                public function getAliases(): array
+                {
+                    return [];
+                }
+
+                public function getMinArgs(): int
+                {
+                    return 0;
+                }
+
+                public function getSyntaxKey(): string
+                {
+                    return 'syntax';
+                }
+
+                public function getHelpKey(): string
+                {
+                    return 'help';
+                }
+
+                public function getOrder(): int
+                {
+                    return 0;
+                }
+
+                public function getShortDescKey(): string
+                {
+                    return 'short';
+                }
+
+                public function getSubCommandHelp(): array
+                {
+                    return [];
+                }
+
+                public function isOperOnly(): bool
+                {
+                    return false;
+                }
+
+                public function getRequiredPermission(): ?string
+                {
+                    return null;
+                }
+
+                public function getHelpParams(): array
+                {
+                    return [];
+                }
+
+                public function execute(NickServContext $context): void
+                {
+                    $this->holder->context = $context;
+                }
+            };
+
+            $account = $this->createStub(RegisteredNick::class);
+            $account->method('isPendingDeletion')->willReturn(true);
+            $account->method('getLanguage')->willReturn('en');
+            $account->method('getTimezone')->willReturn('UTC');
+
+            $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+            $nickRepository->method('findByNick')->willReturn($account);
+
+            $registry = new NickServCommandRegistry([$handler]);
+            $service = new NickServService(
+                $this->createStub(AuthorizationContextInterface::class),
+                $this->createStub(AuthorizationCheckerInterface::class),
+                $registry,
+                $nickRepository,
+                new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
+                $this->createStub(NickServNotifierInterface::class),
+                new UserMessageTypeResolver($nickRepository),
+                $this->createStub(TranslatorInterface::class),
+                new PendingVerificationRegistry(),
+                new RecoveryTokenRegistry(),
+                $this->createServiceNicks(),
+                $this->createStub(EventDispatcherInterface::class),
+                'en',
+                'UTC',
+                $this->createStub(LoggerInterface::class),
+            );
+
+            $service->dispatch("{$allowedCommand} arg", $sender);
+
+            self::assertNotNull($contextHolder->context, "Command {$allowedCommand} should be allowed for pending deletion account");
+        }
+    }
 }
