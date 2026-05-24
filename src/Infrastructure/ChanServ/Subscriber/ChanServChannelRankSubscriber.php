@@ -208,15 +208,19 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         $currentLetter = $event->role->toModeLetter();
         $hasRole = ChannelMemberRole::None !== $event->role;
 
+        if (!$sender->isIdentified) {
+            if ($channel->isSecure() && $hasRole && '' !== $currentLetter) {
+                $this->channelServiceActions->setChannelMemberMode($channelName, $uid, $currentLetter, false);
+            }
+
+            return;
+        }
+
         if ($this->applySecureStripOnJoin($channel, $channelName, $uid, $currentLetter, $desired, $sender, $hasRole)) {
             return;
         }
 
         if ('' === $desired) {
-            return;
-        }
-
-        if (!$sender->isIdentified) {
             return;
         }
 
@@ -336,7 +340,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
 
         $modeSupport = $this->modeSupportProvider->getSupport();
         $account = $this->nickRepository->findByNick($sender->nick);
-        $desired = null !== $account && !$account->isSuspended() && !$account->isPendingDeletion()
+        $desired = null !== $account
             ? $this->accessHelper->getDesiredPrefixLetter($channel, $account->getId(), $modeSupport)
             : '';
 
