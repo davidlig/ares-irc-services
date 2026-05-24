@@ -269,7 +269,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
-        $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(false);
+        $channel->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
 
         $view = new ChannelView(
@@ -624,7 +624,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     {
         $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
-        $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(false);
+        $channel->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(true);
 
         $view = new ChannelView(

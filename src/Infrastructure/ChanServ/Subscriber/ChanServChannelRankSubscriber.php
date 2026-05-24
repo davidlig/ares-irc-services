@@ -188,23 +188,15 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         $channelName = $event->channel->value;
         $uid = $event->uid->value;
+        $resolved = $this->resolveChannelAndMember($channelName, $uid);
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
+        if (null === $resolved) {
             return;
         }
 
-        if ($channel->isBlocked()) {
-            return;
-        }
-
-        $memberCtx = $this->resolveMemberContext($channel, $uid);
-        if (null === $memberCtx) {
-            return;
-        }
-
-        $sender = $memberCtx['sender'];
-        $desired = $memberCtx['desired'];
+        $channel = $resolved['channel'];
+        $sender = $resolved['sender'];
+        $desired = $resolved['desired'];
         $currentLetter = $event->role->toModeLetter();
         $hasRole = ChannelMemberRole::None !== $event->role;
 
@@ -216,12 +208,26 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        if ($this->applySecureStripOnJoin($channel, $channelName, $uid, $currentLetter, $desired, $sender, $hasRole)) {
+        if (!$this->applyJoinedModes($channel, $channelName, $uid, $currentLetter, $desired, $sender, $hasRole)) {
             return;
+        }
+    }
+
+    private function applyJoinedModes(
+        RegisteredChannel $channel,
+        string $channelName,
+        string $uid,
+        string $currentLetter,
+        string $desired,
+        SenderView $sender,
+        bool $hasRole,
+    ): bool {
+        if ($this->applySecureStripOnJoin($channel, $channelName, $uid, $currentLetter, $desired, $sender, $hasRole)) {
+            return false;
         }
 
         if ('' === $desired) {
-            return;
+            return false;
         }
 
         $channel->touchLastUsed();
@@ -234,6 +240,8 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             'nick' => $sender->nick,
             'mode' => '+' . $desired,
         ]);
+
+        return true;
     }
 
     /**
@@ -243,23 +251,15 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         $channelName = $event->channel->value;
         $uid = $event->uid->value;
+        $resolved = $this->resolveChannelAndMember($channelName, $uid);
 
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-        if (null === $channel) {
+        if (null === $resolved) {
             return;
         }
 
-        if ($channel->isBlocked()) {
-            return;
-        }
-
-        $memberCtx = $this->resolveMemberContext($channel, $uid);
-        if (null === $memberCtx) {
-            return;
-        }
-
-        $sender = $memberCtx['sender'];
-        $desired = $memberCtx['desired'];
+        $channel = $resolved['channel'];
+        $sender = $resolved['sender'];
+        $desired = $resolved['desired'];
 
         if ('' === $desired || !$sender->isIdentified) {
             return;
@@ -345,6 +345,28 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             : '';
 
         return ['sender' => $sender, 'desired' => $desired];
+    }
+
+    /** @return array{channel: RegisteredChannel, sender: SenderView, desired: string}|null */
+    private function resolveChannelAndMember(string $channelName, string $uid): ?array
+    {
+        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+
+        if (null === $channel || $channel->isBlocked()) {
+            return null;
+        }
+
+        $memberCtx = $this->resolveMemberContext($channel, $uid);
+
+        if (null === $memberCtx) {
+            return null;
+        }
+
+        return [
+            'channel' => $channel,
+            'sender' => $memberCtx['sender'],
+            'desired' => $memberCtx['desired'],
+        ];
     }
 
     /**
@@ -433,6 +455,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         ChannelModeSupportInterface $modeSupport,
     ): array {
         $memberCtx = $this->resolveMemberContext($channel, $uid);
+
         if (null === $memberCtx) {
             return [];
         }
@@ -440,26 +463,47 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         $sender = $memberCtx['sender'];
         $desired = $memberCtx['desired'];
         $currentLetter = $member['roleLetter'] ?? '';
-
         $effectiveDesired = $sender->isIdentified ? $desired : '';
         $currentRank = self::RANK_ORDER[$currentLetter] ?? 0;
         $desiredRank = self::RANK_ORDER[$effectiveDesired] ?? 0;
 
-        if ($currentRank > $desiredRank) {
-            return $this->collectOpsWhenRankAboveDesired($channelName, $uid, $member, $currentLetter, $effectiveDesired, $desiredRank, $modeSupport);
-        }
+        return $this->determineSyncAction(
+            $channel,
+            $channelName,
+            $uid,
+            $member,
+            $currentLetter,
+            $effectiveDesired,
+            $currentRank,
+            $desiredRank,
+            $modeSupport,
+        );
+    }
 
-        // @codeCoverageIgnoreStart
-        // NOTE: Unreachable defensive code - see original method for analysis.
-        if ($channel->isSecure() && '' === $effectiveDesired && '' !== $currentLetter) {
-            return $this->collectOpsForSecureStrip($channelName, $uid, $member, $currentLetter, $modeSupport);
-        }
-        // @codeCoverageIgnoreEnd
+    /** @return list<array{uid: string, letter: string, add: bool}> */
+    private function determineSyncAction(
+        RegisteredChannel $channel,
+        string $channelName,
+        string $uid,
+        array $member,
+        string $currentLetter,
+        string $effectiveDesired,
+        int $currentRank,
+        int $desiredRank,
+        ChannelModeSupportInterface $modeSupport,
+    ): array {
+        $result = match (true) {
+            $currentRank > $desiredRank => $this->collectOpsWhenRankAboveDesired($channelName, $uid, $member, $currentLetter, $effectiveDesired, $desiredRank, $modeSupport),
+            '' === $effectiveDesired || !$this->shouldSetMode($currentLetter, $effectiveDesired) => [],
+            default => $this->buildGrantOps($channelName, $uid, $effectiveDesired),
+        };
 
-        if ('' === $effectiveDesired || !$this->shouldSetMode($currentLetter, $effectiveDesired)) {
-            return [];
-        }
+        return $result;
+    }
 
+    /** @return list<array{uid: string, letter: string, add: bool}> */
+    private function buildGrantOps(string $channelName, string $uid, string $effectiveDesired): array
+    {
         $this->logger->debug('ChanServ auto-rank on sync', [
             'channel' => $channelName,
             'uid' => $uid,
@@ -484,13 +528,6 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         $ops = [];
         $supported = $modeSupport->getSupportedPrefixModes();
         $hasLetters = $member['prefixLetters'] ?? [$currentLetter];
-        // @codeCoverageIgnoreStart
-        // Unreachable defensive code: when currentLetter is empty, currentRank=0.
-        // This method is only called when currentRank > desiredRank, which can't be true if currentRank=0.
-        if ('' === $currentLetter) {
-            $hasLetters = [];
-        }
-        // @codeCoverageIgnoreEnd
         foreach (self::PREFIX_LETTERS_DESC as $letter) {
             if (!in_array($letter, $supported, true) || !in_array($letter, $hasLetters, true)) {
                 continue;
@@ -512,36 +549,6 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
                 'channel' => $channelName,
                 'uid' => $uid,
                 'mode' => '+' . $effectiveDesired,
-            ]);
-        }
-
-        return $ops;
-    }
-
-    /**
-     * @return list<array{uid: string, letter: string, add: bool}>
-     *
-     * @codeCoverageIgnore
-     */
-    private function collectOpsForSecureStrip(
-        string $channelName,
-        string $uid,
-        array $member,
-        string $currentLetter,
-        ChannelModeSupportInterface $modeSupport,
-    ): array {
-        $ops = [];
-        $supported = $modeSupport->getSupportedPrefixModes();
-        $hasLetters = $member['prefixLetters'] ?? [$currentLetter];
-        foreach (self::PREFIX_LETTERS_DESC as $letter) {
-            if (!in_array($letter, $supported, true) || !in_array($letter, $hasLetters, true)) {
-                continue;
-            }
-            $ops[] = ['uid' => $uid, 'letter' => $letter, 'add' => false];
-            $this->logger->debug('ChanServ SECURE strip on sync', [
-                'channel' => $channelName,
-                'uid' => $uid,
-                'mode' => '-' . $letter,
             ]);
         }
 
