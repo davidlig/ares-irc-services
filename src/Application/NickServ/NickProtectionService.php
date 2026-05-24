@@ -150,14 +150,14 @@ final readonly class NickProtectionService
         }
 
         if ($user->isIdentified) {
+            $identifiedNick = $this->identifiedRegistry->findNick($uid);
             $this->logger->info(sprintf(
-                'Nick change: %s [%s] → %s — already identified, OK',
+                'Nick change: %s [%s] → %s — identified but to different account (%s), enforcing protection',
                 $oldNick,
                 $uid,
                 $newNick,
+                $identifiedNick ?? 'none',
             ));
-
-            return;
         }
 
         $this->logger->info(sprintf(
@@ -238,26 +238,36 @@ final readonly class NickProtectionService
         }
 
         if ($user->isIdentified) {
-            $account->markSeen();
-            $this->nickRepository->save($account);
+            $identifiedNick = $this->identifiedRegistry->findNick($user->uid);
+            if (null !== $identifiedNick && 0 === strcasecmp($identifiedNick, $account->getNickname())) {
+                $account->markSeen();
+                $this->nickRepository->save($account);
 
-            // Register the session so IrcopModeApplier can find it
-            $this->identifiedRegistry->register($user->uid, $account->getNickname());
+                // Register the session so IrcopModeApplier can find it
+                $this->identifiedRegistry->register($user->uid, $account->getNickname());
+
+                $this->logger->info(sprintf(
+                    'Nick protection: %s [%s] auto-identified (has +r)',
+                    $nick,
+                    $user->uid,
+                ));
+
+                // Dispatch event so subscribers (like OperRoleModesSubscriber) can react
+                $this->eventDispatcher->dispatch(new NickIdentifiedEvent(
+                    $account->getId(),
+                    $account->getNickname(),
+                    $user->uid,
+                ));
+
+                return;
+            }
 
             $this->logger->info(sprintf(
-                'Nick protection: %s [%s] auto-identified (has +r)',
+                'Nick protection: %s [%s] has +r but identified to %s, enforcing protection',
                 $nick,
                 $user->uid,
+                $identifiedNick ?? 'none',
             ));
-
-            // Dispatch event so subscribers (like OperRoleModesSubscriber) can react
-            $this->eventDispatcher->dispatch(new NickIdentifiedEvent(
-                $account->getId(),
-                $account->getNickname(),
-                $user->uid,
-            ));
-
-            return;
         }
 
         $language = $account->getLanguage() ?? $this->defaultLanguage;

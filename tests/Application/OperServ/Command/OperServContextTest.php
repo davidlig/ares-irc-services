@@ -265,6 +265,15 @@ final class OperServContextTest extends TestCase
     }
 
     #[Test]
+    public function isRootReturnsFalseWhenSenderNotIdentified(): void
+    {
+        $sender = new SenderView('UID123', 'TestNick', 'i', 'h', 'c', 'ip', isIdentified: false);
+        $context = $this->createContext(sender: $sender);
+
+        self::assertFalse($context->isRoot());
+    }
+
+    #[Test]
     public function getBotNameReturnsNotifierNick(): void
     {
         $notifier = $this->createStub(OperServNotifierInterface::class);
@@ -283,7 +292,8 @@ final class OperServContextTest extends TestCase
             'i',
             'h',
             'c',
-            'ip'
+            'ip',
+            isIdentified: true,
         );
     }
 

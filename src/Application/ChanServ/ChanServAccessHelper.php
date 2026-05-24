@@ -36,7 +36,7 @@ final readonly class ChanServAccessHelper
         return null !== $level ? $level->getValue() : ChannelLevel::getDefault($key);
     }
 
-    public function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = true): int
+    public function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = false): int
     {
         if (!$isIdentified) {
             return ChannelAccess::LEVEL_UNREGISTERED;
@@ -55,7 +55,7 @@ final readonly class ChanServAccessHelper
     public function requireLevel(RegisteredChannel $channel, int $nickId, string $levelKey, string $channelName, string $operation): void
     {
         $required = $this->getLevelValue($channel->getId(), $levelKey);
-        $userLevel = $this->effectiveAccessLevel($channel, $nickId);
+        $userLevel = $this->effectiveAccessLevel($channel, $nickId, true);
         if ($userLevel < $required) {
             throw InsufficientAccessException::forOperation($channelName, $operation);
         }
@@ -66,7 +66,7 @@ final readonly class ChanServAccessHelper
      */
     public function canManageLevel(RegisteredChannel $channel, int $managerNickId, int $targetLevel): bool
     {
-        $managerLevel = $this->effectiveAccessLevel($channel, $managerNickId);
+        $managerLevel = $this->effectiveAccessLevel($channel, $managerNickId, true);
 
         return $managerLevel > $targetLevel;
     }
@@ -88,7 +88,7 @@ final readonly class ChanServAccessHelper
             return '';
         }
 
-        $level = $this->effectiveAccessLevel($channel, $nickId);
+        $level = $this->effectiveAccessLevel($channel, $nickId, true);
         $channelId = $channel->getId();
 
         if ($level >= $this->getLevelValue($channelId, ChannelLevel::KEY_AUTOADMIN) && in_array('a', $supported, true)) {

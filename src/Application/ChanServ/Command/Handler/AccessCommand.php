@@ -249,7 +249,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
             return true;
         }
 
-        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $context->senderAccount->getId());
+        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $context->senderAccount->getId(), true);
         if ($level >= $senderLevel) {
             $context->reply('access.cannot_manage_level');
 

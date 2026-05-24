@@ -80,7 +80,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function nonRootUserGetsRootOnlyError(): void
     {
-        $sender = new SenderView('UID1', 'NonRootUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'NonRootUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -104,7 +104,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function unknownSubcommandGetsUnknownSubError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -128,7 +128,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function singleArgumentWithoutListReturnsSyntaxError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -152,7 +152,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function addWithMissingArgsGetsSyntaxError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -176,7 +176,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function addWithUnregisteredNickGetsNickNotRegisteredError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -203,7 +203,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function listWithNoAdminsGetsEmptyMessage(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -360,7 +360,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function addSuccessCreatesIrcop(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -404,7 +404,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function addWithInactiveAccountReturnsNickNotActive(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -437,7 +437,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function addWithUnknownRoleReturnsUnknownRole(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -472,7 +472,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function addWhenAlreadyAdminSameRoleReturnsAlreadyAdmin(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -517,7 +517,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function addRoleChangeChangesRole(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -569,7 +569,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function delSuccessDeletesIrcop(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -609,7 +609,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function delWithMissingArgsReturnsSyntaxError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -634,7 +634,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function delWithUnregisteredNickReturnsNickNotRegistered(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -661,7 +661,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function delWithNonAdminUserReturnsNotAdmin(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -697,7 +697,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function listWithAdminsShowsIrcopsList(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -746,7 +746,7 @@ final class IrcopCommandTest extends TestCase
     #[Test]
     public function listWithMissingNickByIdShowsNickId(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {

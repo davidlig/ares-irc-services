@@ -131,7 +131,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function nonRootUserGetsRootOnlyError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -154,7 +154,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function unknownSubcommandGetsUnknownSubError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -177,7 +177,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function delWithMissingArgsGetsSyntaxError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -200,7 +200,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function addWithMissingArgsGetsSyntaxError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -223,7 +223,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function addDuplicateRoleGetsAlreadyExistsError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -249,7 +249,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function delNonExistentRoleGetsNotFoundError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -273,7 +273,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function listWithNoRolesGetsEmptyMessage(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -297,7 +297,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsWithUnknownActionGetsUnknownActionError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -323,7 +323,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsWithMissingArgsGetsSyntaxError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -346,7 +346,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsWithNonExistentRoleGetsNotFoundError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -488,7 +488,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function addSuccessCreatesRoleAndCallsSave(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -521,7 +521,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function addWithDescriptionCreatesRoleWithCustomDescription(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -553,7 +553,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function delSuccessNonProtectedRemovesRole(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -585,7 +585,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function delWithProtectedRoleReturnsRoleProtected(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -612,7 +612,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function listSuccessWithRolesDisplaysRolesWithNamesAndDescriptions(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -645,7 +645,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsListSuccessShowsRolePermissions(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -678,7 +678,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsListEmptyReturnsRolePermsListEmpty(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -705,7 +705,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsListShowsAvailablePermissionsWhenNoneAssigned(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -756,7 +756,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsListShowsPermissionsWithDescriptions(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -818,7 +818,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsListResolvesDescriptionsFromServiceDomains(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -919,7 +919,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsListFallsBackToOperServDomainWhenServiceDomainMissing(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -976,7 +976,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsListShowsAllAssignedWhenRoleHasAllPermissions(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1028,7 +1028,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddSuccessAddsPermissionToRole(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1063,7 +1063,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddWithMissingArgsReturnsErrorSyntax(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1090,7 +1090,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddNonExistentPermissionReturnsRolePermsNotFound(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1119,7 +1119,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddAlreadyHasReturnsRolePermsAlreadyHas(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1150,7 +1150,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsDelSuccessRemovesPermissionFromRole(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1186,7 +1186,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsDelWithMissingArgsReturnsErrorSyntax(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1213,7 +1213,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsDelNonExistentPermReturnsRolePermsNotFound(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1242,7 +1242,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsDelNotInRoleReturnsRolePermsDoesNotHave(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1272,7 +1272,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsDelWithProtectedRoleReturnsRolePermsProtected(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1303,7 +1303,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesWithMissingArgsGetsSyntaxError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1326,7 +1326,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesWithNonExistentRoleGetsNotFoundError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1350,7 +1350,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesWithUnknownActionGetsUnknownActionError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1376,7 +1376,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesViewEmptyReturnsModesViewEmpty(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1402,7 +1402,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesViewSuccessShowsModes(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1431,7 +1431,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesSetClearsModesWhenEmptyArg(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1470,7 +1470,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesSetSuccessSetsValidModes(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1508,7 +1508,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesSetWithInvalidModesReturnsError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1536,7 +1536,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function modesSetWithNoProtocolModuleReturnsError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1605,7 +1605,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostWithMissingArgsGetsSyntaxError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1628,7 +1628,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostWithNonExistentRoleGetsNotFoundError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1652,7 +1652,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostWithUnknownActionGetsUnknownActionError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1678,7 +1678,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostViewEmptyReturnsVhostViewEmpty(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1704,7 +1704,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostViewSuccessShowsPattern(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1733,7 +1733,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostSetWithValidPatternSetsPattern(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1771,7 +1771,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostSetWithInvalidPatternReturnsError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1799,7 +1799,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostSetWithSpecialCharsReturnsError(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1827,7 +1827,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostSetWithOffClearsPattern(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1866,7 +1866,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function vhostSetWithEmptyArgClearsPattern(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1926,7 +1926,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddAllSuccessAddsAllPermissions(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1986,7 +1986,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddAllSkipsWhenRoleAlreadyHasAllPermissions(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -2039,7 +2039,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddAllEmptyWhenNoPermissionsAvailable(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -2066,7 +2066,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsClearSuccessRemovesAllPermissions(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -2103,7 +2103,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsClearEmptyReturnsRolePermsClearEmpty(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -2130,7 +2130,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddAutoCreatesPermissionFromRegistry(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -2189,7 +2189,7 @@ final class RoleCommandTest extends TestCase
     #[Test]
     public function permsAddNonExistentInRegistryReturnsNotFound(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {

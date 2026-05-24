@@ -38,7 +38,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         bool $isRoot = false,
         ?OperServCommandRegistry $registry = null,
     ): OperServContext {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
         $translator = $this->createStub(TranslatorInterface::class);

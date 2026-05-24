@@ -6,6 +6,7 @@ namespace App\Application\NickServ\Command\Handler;
 
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 
@@ -145,7 +146,7 @@ final class SetCommand implements NickServCommandInterface
 
     public function getRequiredPermission(): ?string
     {
-        return null;
+        return NickServPermission::IDENTIFIED_OWNER;
     }
 
     public function getHelpParams(): array

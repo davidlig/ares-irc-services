@@ -106,6 +106,10 @@ final readonly class OperServContext implements IrcopContextInterface
             return false;
         }
 
+        if (!$this->sender->isIdentified) {
+            return false;
+        }
+
         return $this->accessHelper->isRoot($this->sender->nick);
     }
 

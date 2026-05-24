@@ -721,8 +721,10 @@ final class InfoCommandTest extends TestCase
         $senderAccount = $this->createStub(RegisteredNick::class);
         $senderAccount->method('getId')->willReturn(1);
 
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', isIdentified: true);
+
         $cmd = new InfoCommand($channelRepo, $nickRepo);
-        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, $senderAccount));
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, $senderAccount, $sender));
 
         self::assertContains('info.topic', $rawMessages);
     }
@@ -756,6 +758,40 @@ final class InfoCommandTest extends TestCase
         $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, null, $sender));
 
         self::assertContains('info.topic', $rawMessages);
+    }
+
+    #[Test]
+    public function hidesTopicWhenSenderIdentifiedButNotFounderWithPrivateMode(): void
+    {
+        $channel = RegisteredChannel::register('#Test', 1, 'Desc');
+        $channel->updateTopic('Private topic', 'TopicSetter');
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $founder = $this->createStub(RegisteredNick::class);
+        $founder->method('getNickname')->willReturn('FounderNick');
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findById')->willReturn($founder);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(new ChannelView('#Test', '+ntp', null, 1));
+
+        $rawMessages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
+            $rawMessages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        // Sender is identified but NOT founder and NOT oper — hits the final return false in isSenderFounderOrOper
+        $senderAccount = $this->createStub(RegisteredNick::class);
+        $senderAccount->method('getId')->willReturn(999);
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', isIdentified: true);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo);
+        $cmd->execute($this->createContext(['#Test'], $notifier, $translator, $channelLookup, $senderAccount, $sender));
+
+        self::assertNotContains('info.topic', $rawMessages);
     }
 
     #[Test]

@@ -55,7 +55,7 @@ final class ChanServAccessHelperTest extends TestCase
 
         $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        self::assertSame(ChannelAccess::FOUNDER_LEVEL, $helper->effectiveAccessLevel($channel, 10));
+        self::assertSame(ChannelAccess::FOUNDER_LEVEL, $helper->effectiveAccessLevel($channel, 10, true));
     }
 
     #[Test]
@@ -72,7 +72,7 @@ final class ChanServAccessHelperTest extends TestCase
 
         $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        self::assertSame(400, $helper->effectiveAccessLevel($channel, 10));
+        self::assertSame(400, $helper->effectiveAccessLevel($channel, 10, true));
     }
 
     #[Test]
@@ -87,7 +87,7 @@ final class ChanServAccessHelperTest extends TestCase
 
         $helper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
-        self::assertSame(0, $helper->effectiveAccessLevel($channel, 99));
+        self::assertSame(0, $helper->effectiveAccessLevel($channel, 99, true));
     }
 
     #[Test]

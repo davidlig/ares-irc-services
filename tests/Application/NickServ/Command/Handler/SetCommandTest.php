@@ -20,6 +20,7 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
+use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
@@ -1090,7 +1091,7 @@ final class SetCommandTest extends TestCase
     }
 
     #[Test]
-    public function getRequiredPermissionReturnsNull(): void
+    public function getRequiredPermissionReturnsIdentifiedOwner(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $setPassword = new SetPasswordHandler($nickRepo, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventDispatcherInterface::class));
@@ -1102,7 +1103,7 @@ final class SetCommandTest extends TestCase
         $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
 
         $cmd = new SetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, new SessionLanguageRegistry());
-        self::assertNull($cmd->getRequiredPermission());
+        self::assertSame(NickServPermission::IDENTIFIED_OWNER, $cmd->getRequiredPermission());
     }
 
     #[Test]

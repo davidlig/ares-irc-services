@@ -123,7 +123,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
         }
         if (!$context->isLevelFounder) {
             $requiredLevel = $this->getLevelValue($channel->getId(), ChannelLevel::KEY_OPDEOP);
-            $senderLevel = $this->effectiveAccessLevel($channel, $senderAccount->getId());
+            $senderLevel = $this->effectiveAccessLevel($channel, $senderAccount->getId(), true);
             if ($senderLevel < $requiredLevel) {
                 throw InsufficientAccessException::forOperation($channelName, 'DEOP');
             }
@@ -158,7 +158,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
         return null !== $level ? $level->getValue() : ChannelLevel::getDefault($key);
     }
 
-    private function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = true): int
+    private function effectiveAccessLevel(RegisteredChannel $channel, int $nickId, bool $isIdentified = false): int
     {
         if (!$isIdentified) {
             return ChannelAccess::LEVEL_UNREGISTERED;

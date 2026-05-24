@@ -230,12 +230,20 @@ final readonly class InfoCommand implements ChanServCommandInterface
             return false;
         }
 
+        if ($sender->isOper) {
+            return true;
+        }
+
+        if (!$sender->isIdentified) {
+            return false;
+        }
+
         $founderNickId = $channel->getFounderNickId();
         $senderAccount = $context->getSenderAccount();
         if (null !== $senderAccount && $senderAccount->getId() === $founderNickId) {
             return true;
         }
 
-        return $sender->isOper;
+        return false;
     }
 }

@@ -137,7 +137,7 @@ final readonly class DeadminCommand implements ChanServCommandInterface
 
             return;
         }
-        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->getId());
+        $senderLevel = $this->accessHelper->effectiveAccessLevel($channel, $senderAccount->getId(), true);
         $targetAccount = $this->nickRepository->findByNick($targetNick);
         if (null === $targetAccount) {
             $targetLevel = ChannelAccess::LEVEL_UNREGISTERED;

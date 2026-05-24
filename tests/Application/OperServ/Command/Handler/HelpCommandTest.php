@@ -62,7 +62,7 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function unknownCommandRepliesHelpUnknown(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -139,7 +139,7 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function emptyArgsShowsGeneralHelp(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -314,7 +314,7 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function operOnlyCommandShownToRoot(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, false, '', '');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', true, true, '', '');
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -392,7 +392,7 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function knownCommandShowsCommandHelp(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -470,7 +470,7 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function commandWithSubCommandShowsSubCommandHelp(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -550,7 +550,7 @@ final class HelpCommandTest extends TestCase
     #[Test]
     public function commandWithUnknownSubCommandShowsCommandHelp(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $messages = [];
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
