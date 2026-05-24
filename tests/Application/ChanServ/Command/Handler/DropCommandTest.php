@@ -13,6 +13,7 @@ use App\Application\ChanServ\Command\Handler\DropCommand;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Command\IrcopAuditData;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
@@ -186,7 +187,7 @@ final class DropCommandTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
         $dropService = $this->createMock(ChanDropService::class);
-        $dropService->expects(self::once())->method('dropChannel')->with($channel, 'manual', 'OperUser');
+        $dropService->expects(self::once())->method('softDropChannel')->with($channel, 'OperUser');
 
         $cmd = new DropCommand($channelRepository, $dropService);
 
@@ -200,6 +201,64 @@ final class DropCommandTest extends TestCase
         $auditData = $cmd->getAuditData($context);
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
+    }
+
+    #[Test]
+    public function executeWithPendingDeletionChannelRepliesPendingDeletion(): void
+    {
+        $sender = $this->createSender();
+        $channel = $this->createChannelWithId('#test', 42);
+        $channel->markPendingDeletion();
+        $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repo->method('findByChannelName')->willReturn($channel);
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::never())->method('softDropChannel');
+
+        $messages = [];
+        (new DropCommand($repo, $dropService))->execute($this->createContext($sender, null, ['#test'], $messages, channelRepository: $repo));
+
+        self::assertContains('drop.pending_deletion', $messages);
+    }
+
+    #[Test]
+    public function executeWithForceRequiresForcePermission(): void
+    {
+        $sender = $this->createSender();
+        $channel = $this->createChannelWithId('#test', 42);
+        $channel->markPendingDeletion();
+        $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repo->method('findByChannelName')->willReturn($channel);
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturn(false);
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::never())->method('hardDropChannel');
+
+        $messages = [];
+        (new DropCommand($repo, $dropService, $authorization))->execute($this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo));
+
+        self::assertContains('error.permission_denied', $messages);
+    }
+
+    #[Test]
+    public function executeWithForceHardDropsWhenPermissionGranted(): void
+    {
+        $sender = $this->createSender();
+        $channel = $this->createChannelWithId('#test', 42);
+        $channel->markPendingDeletion();
+        $repo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $repo->method('findByChannelName')->willReturn($channel);
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturn(true);
+        $dropService = $this->createMock(ChanDropService::class);
+        $dropService->expects(self::once())->method('hardDropChannel')->with($channel, 'manual-force', 'OperUser');
+
+        $messages = [];
+        $cmd = new DropCommand($repo, $dropService, $authorization);
+        $context = $this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo);
+        $cmd->execute($context);
+
+        self::assertContains('drop.force_success', $messages);
+        self::assertTrue($cmd->getAuditData($context)?->extra['force']);
     }
 
     #[Test]

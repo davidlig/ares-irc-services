@@ -20,6 +20,7 @@ register:
   help:             "Registreer en koppel een kanaal aan uw bijnaam. U moet geïdentificeerd zijn bij %nickserv%."
   success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is geregistreerd."
   channel_not_on_network: "\x0304✗\x03 Kanaal \x02%channel%\x02 bestaat niet op het netwerk."
+  pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."
   insufficient_channel_rank: "\x0304✗\x03 Je moet minstens operatorstatus hebben op \x02%channel%\x02 om het kanaal te registreren."
   limit_exceeded: "\x0304✗\x03 U heeft het maximum van %max% geregistreerde kanalen bereikt."
   throttled: "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u een ander kanaal registreert."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Eindigt op\x03          : Permanent"
   forbidden_status: "  \x0314Status\x03              : \x0304Verboden\x03"
   forbidden_reason: "  \x0314Reden\x03               : %reason%"
+  pending_deletion_status: "  14Status             : 07In afwachting van verwijdering"
+  pending_deletion_at: "  14Verwijderd         : %date%"
+  pending_deletion_until: "  14Definitief op      : %date%"
+  pending_deletion_notice: "  07Dit kanaal is bevroren in ChanServ en kan niet worden geregistreerd."
 
 help:
   syntax:           "HELP [commando [sub-optie]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "nooit"
     unknown_creator: "onbekend"
 
+restore:
+  syntax:           "RESTORE <#kanaal>"
+  short:            "Een kanaal dat op verwijdering wacht herstellen."
+  help:             "Herstelt een kanaal dat handmatig is verwijderd en zich nog in de respijtperiode bevindt. Vereist IRCop-toestemming: chanserv.restore."
+  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is hersteld."
+  not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
+  not_pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat niet op het punt verwijderd te worden."
+
 drop:
-  syntax:           "DROP <#kanaal>"
+  syntax:           "DROP <#kanaal> [FORCE]"
   short:            "Laat een geregistreerd kanaal vallen."
   help:             "Verwijdert een geregistreerd kanaal uit de database."
-  success:          "\x0303✔\x03 Kanaal \x02%channel%\x02 is verwijderd."
+  success:          "03✔ Kanaal %channel% is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
+  force_success:    "\x0303✔\x03 Kanaal \x02%channel%\x02 is definitief verwijderd."
+  pending_deletion: "\x0304✗\x03 Kanaal \x02%channel%\x02 staat al op het punt verwijderd te worden. Gebruik DROP <#kanaal> FORCE om het definitief te verwijderen."
   not_registered:   "\x0304✗\x03 Kanaal \x02%channel%\x02 is niet geregistreerd."
 
 suspend:
@@ -356,6 +371,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Laat een geregistreerd kanaal vallen (DROP)"
+  chanserv.drop.force: "Definitief een herstelbaar kanaal verwijderen (DROP FORCE)"
+  chanserv.restore: "Een kanaal dat op verwijdering wacht herstellen (RESTORE)"
   chanserv.suspend: "Schors of hef schorsing van een kanaal op (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Verbied of hef verbod van een kanaal op (FORBID/UNFORBID)"
   chanserv.noexpire: "Stel verloopbescherming in of verwijder deze voor een kanaal (NOEXPIRE)"

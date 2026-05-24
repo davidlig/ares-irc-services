@@ -20,6 +20,7 @@ register:
   help:             "Rexistra e asocia unha canle ao seu alcume. Debe estar identificado con %nickserv%."
   success:          "\x0303✔\x03 A canle \x02%channel%\x02 foi rexistrada."
   channel_not_on_network: "\x0304✗\x03 A canle \x02%channel%\x02 non existe na rede."
+  pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 está pendente de eliminación e non se pode rexistrar."
   insufficient_channel_rank: "\x0304✗\x03 Debes ter polo menos estado de operador en \x02%channel%\x02 para rexistrala."
   limit_exceeded: "\x0304✗\x03 Alcanzou o máximo de %max% canles rexistradas."
   throttled: "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de rexistrar outra canle."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Finaliza o\x03      : Permanente"
   forbidden_status: "  \x0314Estado\x03          : \x0304Prohibida\x03"
   forbidden_reason: "  \x0314Motivo\x03          : %reason%"
+  pending_deletion_status: "  14Estado             : 07En proceso de eliminación"
+  pending_deletion_at: "  14Eliminado          : %date%"
+  pending_deletion_until: "  14Elim. definitiva   : %date%"
+  pending_deletion_notice: "  07Esta canle está conxelada en ChanServ e non pode ser rexistrada."
 
 help:
   syntax:           "HELP [comando [subopción]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "nunca"
     unknown_creator: "descoñecido"
 
+restore:
+  syntax:           "RESTORE <#canle>"
+  short:            "Restaurar un canal pendente de eliminación."
+  help:             "Restaura un canal que foi eliminado manualmente e aínda está dentro do período de graza. Require permiso IRCop: chanserv.restore."
+  success:          "\x0303✔\x03 O canal \x02%channel%\x02 foi restaurado."
+  not_registered:   "\x0304✗\x03 O canal \x02%channel%\x02 non está rexistrado."
+  not_pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 non está pendente de eliminación."
+
 drop:
-  syntax:           "DROP <#canle>"
+  syntax:           "DROP <#canle> [FORCE]"
   short:            "Eliminar unha canle rexistrada."
   help:             "Elimina unha canle rexistrada da base de datos."
-  success:          "\x0303✔\x03 A canle \x02%channel%\x02 foi eliminada."
+  success:          "03✔ A canle %channel% foi marcada para eliminación e pode ser restaurada durante o período de graza."
+  force_success:    "\x0303✔\x03 O canal \x02%channel%\x02 foi eliminado permanentemente."
+  pending_deletion: "\x0304✗\x03 O canal \x02%channel%\x02 xa está pendente de eliminación. Use DROP <#canle> FORCE para eliminalo permanentemente."
   not_registered:   "\x0304✗\x03 A canle \x02%channel%\x02 non está rexistrada."
 
 suspend:
@@ -358,6 +373,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Eliminar unha canle rexistrada (DROP)"
+  chanserv.drop.force: "Forzar a eliminación permanente dun canal recuperable (DROP FORCE)"
+  chanserv.restore: "Restaurar un canal pendente de eliminación (RESTORE)"
   chanserv.suspend: "Suspender ou reactivar unha canle (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Prohibir ou desprohibir unha canle (FORBID/UNFORBID)"
   chanserv.noexpire: "Establecer ou eliminar a protección contra caducidade dunha canle (NOEXPIRE)"

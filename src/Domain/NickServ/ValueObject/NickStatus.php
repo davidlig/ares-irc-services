@@ -15,6 +15,9 @@ enum NickStatus: string
     /** Account exists but has been temporarily disabled. */
     case Suspended = 'suspended';
 
+    /** Account was manually dropped and is waiting for permanent deletion. */
+    case PendingDeletion = 'pending_deletion';
+
     /** Nick is permanently blocked from being registered by anyone. */
     case Forbidden = 'forbidden';
 }

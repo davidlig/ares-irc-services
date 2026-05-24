@@ -1440,6 +1440,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isMlockActive')->willReturn(true);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $this->burstCompletePort
             ->expects(self::atLeastOnce())
@@ -1467,6 +1468,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
     {
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
         $registered->method('isMlockActive')->willReturn(true);
         $registered->method('getName')->willReturn('#test');
 
@@ -1493,6 +1495,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isMlockActive')->willReturn(true);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $this->channelRepository
             ->expects(self::once())
@@ -1518,6 +1521,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isMlockActive')->willReturn(true);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $this->channelRepository
             ->expects(self::once())

@@ -122,6 +122,22 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
         return array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick);
     }
 
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('n')
+            ->from(RegisteredNick::class, 'n')
+            ->where('n.status = :status')
+            ->andWhere('n.pendingDeletionAt IS NOT NULL')
+            ->andWhere('n.pendingDeletionAt <= :threshold')
+            ->setParameter('status', NickStatus::PendingDeletion)
+            ->setParameter('threshold', $threshold);
+
+        $result = $qb->getQuery()->getResult();
+
+        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick);
+    }
+
     public function all(): array
     {
         return $this->em->getRepository(RegisteredNick::class)->findAll();

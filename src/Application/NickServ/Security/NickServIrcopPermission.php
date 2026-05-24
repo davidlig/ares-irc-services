@@ -20,6 +20,8 @@ final readonly class NickServIrcopPermission implements PermissionProviderInterf
             NickServPermission::SUSPEND,
             NickServPermission::RENAME,
             NickServPermission::DROP,
+            NickServPermission::DROP_FORCE,
+            NickServPermission::RESTORE,
             NickServPermission::FORBID,
             NickServPermission::FORBIDVHOST,
             NickServPermission::SASET,

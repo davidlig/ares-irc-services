@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 Nick \x02%nickname%\x02 jest już zarejestrowany."
   already_pending:  "\x0304✗\x03 Nick \x02%nickname%\x02 ma już oczekującą weryfikację.\n  Użyj \x0303/msg %bot% VERIFY <token>\x03 lub \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Nick \x02%nickname%\x02 nie może być zarejestrowany w tej sieci."
+  pending_deletion: "\x0304✗\x03 Nick \x02%nickname%\x02 oczekuje na usunięcie i nie może być zarejestrowany."
   invalid_email:    "\x0304✗\x03 Podany adres e-mail jest nieprawidłowy."
   email_already_used: "\x0304✗\x03 E-mail \x02%email%\x02 jest już używany przez inny nick. Użyj innego adresu."
   throttled:          "\x0304✗\x03 Musisz poczekać \x02%minutes%\x02 minut(y) przed ponowną próbą rejestracji."
@@ -83,6 +84,7 @@ identify:
   pending:          "\x0304✗\x03 Nick \x02%nickname%\x02 oczekuje na weryfikację e-mail.\n  Uruchom \x0303/msg %bot% VERIFY <token>\x03 lub \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 Nick \x02%nickname%\x02 jest zawieszony. Powód: %reason%"
   forbidden:        "\x0304✗\x03 Nick \x02%nickname%\x02 nie może być używany w tej sieci."
+  pending_deletion: "\x0304✗\x03 Nick \x02%nickname%\x02 oczekuje na usunięcie i nie może być używany."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,6 +120,7 @@ info:
   status_registered:  "\x0303Zarejestrowany\x03"
   status_suspended:   "\x0304Zawieszony\x03"
   status_forbidden:   "\x0304Zabroniony\x03"
+  status_pending_deletion: "07Oczekuje na usunięcie"
   reason:           "  \x0314Powód\x03                   : %reason%"
   suspended_until:  "  \x0314Kończy się\x03              : %date%"
   suspended_permanent: "  \x0314Kończy się\x03              : Stałe"
@@ -131,6 +134,9 @@ info:
   email:            "  \x0314E-mail\x03                  : %email%"
   vhost:            "  \x0314VHost\x03                   : %vhost%"
   no_expire:        "  \x0314Nigdy nie wygasa\x03        : Tak"
+  pending_deletion_at: "  14Usunięty               : %date%"
+  pending_deletion_until: "  14Trwale usunięcie       : %date%"
+  pending_deletion_notice: "  07Ten nick oczekuje na usunięcie i nie może być zarejestrowany."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AKanały z dostępem:\x03"
   channels_entry_founder:   "  %channel% (\x0303Założyciel\x03)"
@@ -319,6 +325,8 @@ permissions:
   nickserv.suspend: "Zawieś lub zdejmij zawieszenie nicka (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Wymuś zmianę nicka połączonego użytkownika na losowy (RENAME)"
   nickserv.drop: "Usuń zarejestrowany nick (DROP)"
+  nickserv.drop.force: "Trwale usuń odzyskiwalnego nicka (DROP FORCE)"
+  nickserv.restore: "Przywróć nicka oczekującego na usunięcie (RESTORE)"
   nickserv.forbid: "Zabroń lub odblokuj nick (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Zabroń lub zezwól na wzorce vhost (FORBIDVHOST)"
   nickserv.saset: "Modyfikuj ustawienia innego nicka (SASET)"
@@ -388,7 +396,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <nick>"
+  syntax:           "DROP <nick> [FORCE]"
   short:            "Usuń zarejestrowany nick."
   help:             |
     Usuwa zarejestrowany nick z bazy danych.
@@ -408,8 +416,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 Nie można usunąć użytkownika root \x02%nickname%\x02."
   cannot_drop_oper:   "\x0304✗\x03 Nie można usunąć operatora IRC \x02%nickname%\x02."
   cannot_drop_self:    "\x0304✗\x03 Nie możesz usunąć własnego nicka."
-  success:            "\x0303✓\x03 Nick \x02%nickname%\x02 został usunięty."
+  success:            "\x0303✓\x03 Nick \x02%nickname%\x02 został oznaczony do usunięcia i może być przywrócony w okresie karencji."
+  force_success:      "\x0303✓\x03 Nick \x02%nickname%\x02 został trwale usunięty."
+  pending_deletion:   "\x0304✗\x03 Nick \x02%nickname%\x02 już oczekuje na usunięcie. Użyj DROP <nick> FORCE aby usunąć go trwale."
   cannot_drop_service: "\x0304✗\x03 Nie można usunąć nicka serwisowego \x02%nickname%\x02."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <nick>"
+  short:            "Przywróć nicka oczekującego na usunięcie."
+  help:             "Przywraca nicka, który został ręcznie usunięty i wciąż znajduje się w okresie karencji. Wymaga uprawnienia IRCop: nickserv.restore."
+  success:          "\x0303✓\x03 Nick \x02%nickname%\x02 został przywrócony."
+  not_registered:   "\x0304✗\x03 Nick \x02%nickname%\x02 nie jest zarejestrowany."
+  not_pending_deletion: "\x0304✗\x03 Nick \x02%nickname%\x02 nie oczekuje na usunięcie."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

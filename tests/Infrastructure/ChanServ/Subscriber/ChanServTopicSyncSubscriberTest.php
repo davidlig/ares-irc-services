@@ -527,6 +527,7 @@ final class ChanServTopicSyncSubscriberTest extends TestCase
     {
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $this->channelRepository
             ->expects(self::once())

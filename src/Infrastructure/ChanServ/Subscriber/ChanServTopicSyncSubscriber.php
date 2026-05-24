@@ -50,7 +50,7 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
             return;
         }
 
-        if ($registered->isSuspended()) {
+        if ($registered->isBlocked()) {
             return;
         }
 

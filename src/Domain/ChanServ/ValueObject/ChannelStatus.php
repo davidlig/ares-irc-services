@@ -8,5 +8,6 @@ enum ChannelStatus: string
 {
     case Active = 'active';
     case Suspended = 'suspended';
+    case PendingDeletion = 'pending_deletion';
     case Forbidden = 'forbidden';
 }

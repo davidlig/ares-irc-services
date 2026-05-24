@@ -48,6 +48,13 @@ interface RegisteredNickRepositoryInterface
      */
     public function findExpiredSuspensions(): array;
 
+    /**
+     * Returns nicks manually dropped before the threshold and ready for hard deletion.
+     *
+     * @return RegisteredNick[]
+     */
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold): array;
+
     /** @return RegisteredNick[] */
     public function findByStatus(NickStatus $status): array;
 

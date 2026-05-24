@@ -20,6 +20,7 @@ register:
   help:             "Register and associate a channel to your nickname. You must be identified with %nickserv%."
   success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been registered."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 does not exist on the network."
+  pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion and cannot be registered."
   insufficient_channel_rank: "\x0304✗\x03 You must have at least operator status on \x02%channel%\x02 to register it."
   limit_exceeded: "\x0304✗\x03 You have reached the maximum of %max% registered channels."
   throttled: "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before registering another channel."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Ends on\x03        : Permanent"
   forbidden_status: "  \x0314Status\x03         : \x0304Forbidden\x03"
   forbidden_reason: "  \x0314Reason\x03         : %reason%"
+  pending_deletion_status: "  14Status             : 07Pending deletion"
+  pending_deletion_at: "  14Dropped            : %date%"
+  pending_deletion_until: "  14Hard delete on     : %date%"
+  pending_deletion_notice: "  07This channel is frozen in ChanServ and cannot be registered."
 
 help:
   syntax:           "HELP [command [sub-option]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "never"
     unknown_creator: "unknown"
 
+restore:
+  syntax:           "RESTORE <#channel>"
+  short:            "Restore a channel pending deletion."
+  help:             "Restores a channel that was manually dropped and is still within the deletion grace period. Requires IRCop permission: chanserv.restore."
+  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been restored."
+  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
+  not_pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is not pending deletion."
+
 drop:
-  syntax:           "DROP <#channel>"
+  syntax:           "DROP <#channel> [FORCE]"
   short:            "Drop a registered channel."
   help:             "Removes a registered channel from the database."
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 has been dropped."
+  success:          "03✔ Channel %channel% has been marked for deletion and can be restored during the grace period."
+  force_success:    "\x0303✔\x03 Channel \x02%channel%\x02 has been permanently dropped."
+  pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 is pending deletion. Use DROP <#channel> force to delete it permanently."
   not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 is not registered."
 
 suspend:
@@ -356,6 +371,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Drop a registered channel (DROP)"
+  chanserv.drop.force: "Permanently force-delete a recoverable channel drop (DROP force)"
+  chanserv.restore: "Restore a channel pending deletion (RESTORE)"
   chanserv.suspend: "Suspend or unsuspend a channel (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Forbid or unforbid a channel (FORBID/UNFORBID)"
   chanserv.noexpire: "Set or remove expiration protection for a channel (NOEXPIRE)"

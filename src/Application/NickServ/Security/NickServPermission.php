@@ -25,6 +25,12 @@ final readonly class NickServPermission
     /** IRCop permission to drop a registered nickname. */
     public const string DROP = 'nickserv.drop';
 
+    /** IRCop permission to force permanent deletion of a recoverable nickname drop. */
+    public const string DROP_FORCE = 'nickserv.drop.force';
+
+    /** IRCop permission to restore a nickname in recoverable deletion grace. */
+    public const string RESTORE = 'nickserv.restore';
+
     /** IRCop permission to forbid and unforbid nicknames. */
     public const string FORBID = 'nickserv.forbid';
 

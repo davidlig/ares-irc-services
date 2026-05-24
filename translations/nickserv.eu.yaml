@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 \x02%nickname%\x02 ezizena jada erregistratuta dago."
   already_pending:  "\x0304✗\x03 \x02%nickname%\x02 ezizenak jada egiaztapen bat zain du.\n  Erabili \x0303/msg %bot% VERIFY <token>\x03 edo \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erregistratu."
+  pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzearen zain dago eta ezin da erregistratu."
   invalid_email:    "\x0304✗\x03 Emandako posta elektronikoko helbidea ez da baliozkoa."
   email_already_used: "\x0304✗\x03 \x02%email%\x02 posta jada beste ezizen batek erabiltzen du. Erabili beste helbide bat."
   throttled:          "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu berriro erregistratzen saiatu aurretik."
@@ -83,6 +84,7 @@ identify:
   pending:          "\x0304✗\x03 \x02%nickname%\x02 ezizenak posta elektronikoaren egiaztapena zain du.\n  Exekutatu \x0303/msg %bot% VERIFY <token>\x03 edo \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago. Arrazoia: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erabili."
+  pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzearen zain dago eta ezin da erabili."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,6 +120,7 @@ info:
   status_registered:  "\x0303Erregistratua\x03"
   status_suspended:   "\x0304Etenda\x03"
   status_forbidden:   "\x0304Debekatua\x03"
+  status_pending_deletion: "07Ezabatzearen zain"
   reason:           "  \x0314Arrazoia\x03           : %reason%"
   suspended_until:  "  \x0314Amaiera\x03            : %date%"
   suspended_permanent: "  \x0314Amaiera\x03            : Iraunkorra"
@@ -131,6 +134,9 @@ info:
   email:            "  \x0314Posta\x03              : %email%"
   vhost:            "  \x0314VHost\x03              : %vhost%"
   no_expire:        "  \x0314Iraungitzen ez da\x03  : Bai"
+  pending_deletion_at: "  14Ezabatuta              : %date%"
+  pending_deletion_until: "  14Behin betiko           : %date%"
+  pending_deletion_notice: "  07Izen hau ezabatzearen zain dago eta ezin da erregistratu."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ASarbidea duten kanalak:\x03"
   channels_entry_founder:   "  %channel% (\x0303Sortzailea\x03)"
@@ -319,6 +325,8 @@ permissions:
   nickserv.suspend: "Etten du edo etenaldia kendu ezizen bati (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Behartu konektatutako ezizen baten izen aldaketa ausazko batera (RENAME)"
   nickserv.drop: "Ezabatu erregistratutako ezizen bat (DROP)"
+  nickserv.drop.force: "Berreskuragarria den ezizen baten ezabaketa behin betiko behartu (DROP FORCE)"
+  nickserv.restore: "Ezabatzearen zain dagoen ezizena berreskuratu (RESTORE)"
   nickserv.forbid: "Debekatu edo des-debekatu ezizen bat (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Debekatu edo baimendu vhost ereduak (FORBIDVHOST)"
   nickserv.saset: "Aldatu beste ezizen baten ezarpenak (SASET)"
@@ -388,7 +396,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <ezizena>"
+  syntax:           "DROP <ezizena> [FORCE]"
   short:            "Ezabatu erregistratutako ezizen bat."
   help:             |
     Erregistratutako ezizen bat datu-basetik ezabatzen du.
@@ -408,8 +416,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 Ezin da root erabiltzaile \x02%nickname%\x02 ezabatu."
   cannot_drop_oper:   "\x0304✗\x03 Ezin da IRC operadore \x02%nickname%\x02 ezabatu."
   cannot_drop_self:    "\x0304✗\x03 Ezin duzu zure ezizena ezabatu."
-  success:            "\x0303✓\x03 \x02%nickname%\x02 ezizena ezabatu da."
+  success:            "\x0303✓\x03 \x02%nickname%\x02 ezizena ezabatzeko markatua izan da eta grazia aldian berreskura daiteke."
+  force_success:      "\x0303✓\x03 \x02%nickname%\x02 ezizena behin betiko ezabatu da."
+  pending_deletion:   "\x0304✗\x03 \x02%nickname%\x02 ezizena jada ezabatzearen zain dago. Erabili DROP <ezizena> FORCE behin betiko ezabatzeko."
   cannot_drop_service: "\x0304✗\x03 Ezin da zerbitzu ezizen \x02%nickname%\x02 ezabatu."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <ezizena>"
+  short:            "Ezabatzearen zain dagoen ezizena berreskuratu."
+  help:             "Eskuz ezabatutako eta oraindik grazia epearen barruan dagoen ezizena berreskuratzen du. IRCop baimena behar du: nickserv.restore."
+  success:          "\x0303✓\x03 \x02%nickname%\x02 ezizena berreskuratu da."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago erregistratuta."
+  not_pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez dago ezabatzearen zain."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

@@ -426,6 +426,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     {
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $channel = new Channel(new ChannelName('#test'));
 
@@ -449,6 +450,7 @@ final class ChanServTopicApplySubscriberTest extends TestCase
     {
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
         $registered->method('getName')->willReturn('#test');
         $registered->method('getTopic')->willReturn('Some topic');
 

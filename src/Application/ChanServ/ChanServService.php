@@ -34,6 +34,7 @@ use Throwable;
 use function array_slice;
 use function base64_decode;
 use function count;
+use function in_array;
 use function inet_ntop;
 use function sprintf;
 
@@ -179,6 +180,16 @@ final readonly class ChanServService implements ChanServDispatchPort
 
                         return;
                     }
+                }
+            }
+
+            $channelName = $context->getChannelNameArg(0);
+            if (null !== $channelName && !in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
+                $channel = $this->channelRepository->findByChannelName($channelName);
+                if (null !== $channel && $channel->isPendingDeletion()) {
+                    $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
+
+                    return;
                 }
             }
 

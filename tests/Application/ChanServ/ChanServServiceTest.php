@@ -408,6 +408,129 @@ final class ChanServServiceTest extends TestCase
     }
 
     #[Test]
+    public function blocksNormalCommandOnPendingDeletionChannel(): void
+    {
+        $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
+        $contextHolder = new stdClass();
+        $contextHolder->context = null;
+
+        $handler = new class($contextHolder) implements ChanServCommandInterface {
+            public function __construct(private readonly stdClass $holder)
+            {
+            }
+
+            public function getName(): string
+            {
+                return 'SOMEOP';
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 1;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function allowsSuspendedChannel(): bool
+            {
+                return true;
+            }
+
+            public function allowsForbiddenChannel(): bool
+            {
+                return true;
+            }
+
+            public function usesLevelFounder(): bool
+            {
+                return false;
+            }
+
+            public function execute(ChanServContext $context): void
+            {
+                $this->holder->context = $context;
+            }
+        };
+
+        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel->method('isPendingDeletion')->willReturn(true);
+
+        $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepository->method('findByChannelName')->willReturn($channel);
+
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')
+            ->with('drop.pending_deletion', self::anything(), 'chanserv', 'en')
+            ->willReturn('Channel #test is pending deletion');
+
+        $notifier = $this->createMock(ChanServNotifierInterface::class);
+        $notifier->method('getNick')->willReturn('ChanServ');
+        $notifier->expects(self::once())->method('sendMessage')
+            ->with($sender->uid, 'Channel #test is pending deletion', 'NOTICE');
+
+        $registry = new ChanServCommandRegistry([$handler]);
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+
+        $service = $this->createChanServService(
+            $registry,
+            $channelRepository,
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $notifier,
+            new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
+            $translator,
+            $this->createStub(ChannelLookupPort::class),
+            $modeSupportProvider,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createServiceNicks(),
+            'en',
+            'UTC',
+        );
+
+        $service->dispatch('SOMEOP #test', $sender);
+
+        self::assertNull($contextHolder->context);
+    }
+
+    #[Test]
     public function repliesNotIdentifiedWhenRequiredPermissionIdentifiedAndNoAccount(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');

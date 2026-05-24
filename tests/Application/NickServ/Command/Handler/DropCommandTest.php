@@ -13,6 +13,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickDropService;
 use App\Application\NickServ\Service\NickProtectabilityResult;
@@ -312,7 +313,7 @@ final class DropCommandTest extends TestCase
         $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetNick', $nick));
 
         $dropService = $this->createMock(NickDropService::class);
-        $dropService->expects(self::once())->method('dropNick')->with($nick, 'manual', 'OperUser');
+        $dropService->expects(self::once())->method('softDropNick')->with($nick, 'OperUser');
 
         $context = $this->createContext($sender, ['TargetNick'], $messages, nickRepository: $nickRepository);
 
@@ -330,6 +331,114 @@ final class DropCommandTest extends TestCase
         $auditData = $cmd->getAuditData($context);
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TargetNick', $auditData->target);
+    }
+
+    #[Test]
+    public function executeWithPendingDeletionNickRepliesPendingDeletion(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createActivatedNick('TargetNick');
+        $nick->markPendingDeletion();
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($nick);
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::never())->method('softDropNick');
+
+        $messages = [];
+        $cmd = new DropCommand($repo, $this->createStub(NickTargetValidator::class), $dropService, $this->createStub(LoggerInterface::class));
+
+        $cmd->execute($this->createContext($sender, ['TargetNick'], $messages, nickRepository: $repo));
+
+        self::assertContains('drop.pending_deletion', $messages);
+    }
+
+    #[Test]
+    public function executeWithForceRequiresForcePermission(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createActivatedNick('TargetNick');
+        $nick->markPendingDeletion();
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($nick);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetNick', $nick));
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturn(false);
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::never())->method('hardDropNick');
+
+        $messages = [];
+        $cmd = new DropCommand($repo, $validator, $dropService, $this->createStub(LoggerInterface::class), $authorization);
+        $cmd->execute($this->createContext($sender, ['TargetNick', 'force'], $messages, nickRepository: $repo));
+
+        self::assertContains('error.permission_denied', $messages);
+    }
+
+    #[Test]
+    public function executeWithForceHardDropsWhenPermissionGranted(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createActivatedNick('TargetNick');
+        $nick->markPendingDeletion();
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($nick);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetNick', $nick));
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturn(true);
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::once())->method('hardDropNick')->with($nick, 'manual-force', 'OperUser');
+
+        $messages = [];
+        $cmd = new DropCommand($repo, $validator, $dropService, $this->createStub(LoggerInterface::class), $authorization);
+        $context = $this->createContext($sender, ['TargetNick', 'force'], $messages, nickRepository: $repo);
+        $cmd->execute($context);
+
+        self::assertContains('drop.force_success', $messages);
+        self::assertTrue($cmd->getAuditData($context)?->extra['force']);
+    }
+
+    #[Test]
+    public function executeWithForceOnNormalNickRequiresForcePermission(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createActivatedNick('TargetNick');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($nick);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetNick', $nick));
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturn(false);
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::never())->method('hardDropNick');
+
+        $messages = [];
+        $cmd = new DropCommand($repo, $validator, $dropService, $this->createStub(LoggerInterface::class), $authorization);
+        $cmd->execute($this->createContext($sender, ['TargetNick', 'force'], $messages, nickRepository: $repo));
+
+        self::assertContains('error.permission_denied', $messages);
+    }
+
+    #[Test]
+    public function executeWithForceOnNormalNickHardDropsWhenGranted(): void
+    {
+        $sender = $this->createSender();
+        $nick = $this->createActivatedNick('TargetNick');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($nick);
+        $validator = $this->createStub(NickTargetValidator::class);
+        $validator->method('validate')->willReturn(NickProtectabilityResult::allowed('TargetNick', $nick));
+        $authorization = $this->createStub(AuthorizationCheckerInterface::class);
+        $authorization->method('isGranted')->willReturn(true);
+        $dropService = $this->createMock(NickDropService::class);
+        $dropService->expects(self::once())->method('hardDropNick')->with($nick, 'manual-force', 'OperUser');
+
+        $messages = [];
+        $cmd = new DropCommand($repo, $validator, $dropService, $this->createStub(LoggerInterface::class), $authorization);
+        $cmd->execute($this->createContext($sender, ['TargetNick', 'force'], $messages, nickRepository: $repo));
+
+        self::assertContains('drop.force_success', $messages);
     }
 
     #[Test]

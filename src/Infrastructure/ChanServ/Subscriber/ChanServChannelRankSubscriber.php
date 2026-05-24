@@ -96,7 +96,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         foreach ($this->syncPendingRegistry->getPendingAtStart() as $channelName) {
             $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
-            if (null !== $channel && !$channel->isSuspended() && !$channel->isForbidden()) {
+            if (null !== $channel && !$channel->isBlocked()) {
                 $this->syncRanksForChannel($channel);
             }
             $this->syncPendingRegistry->remove($channelName);
@@ -111,7 +111,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        if ($channel->isSuspended() || $channel->isForbidden()) {
+        if ($channel->isBlocked()) {
             return;
         }
 
@@ -177,7 +177,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        if ($channel->isSuspended() || $channel->isForbidden()) {
+        if ($channel->isBlocked()) {
             return;
         }
 
@@ -194,7 +194,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        if ($channel->isSuspended() || $channel->isForbidden()) {
+        if ($channel->isBlocked()) {
             return;
         }
 
@@ -245,7 +245,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        if ($channel->isSuspended() || $channel->isForbidden()) {
+        if ($channel->isBlocked()) {
             return;
         }
 
@@ -277,7 +277,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        if ($channel->isSuspended() || $channel->isForbidden()) {
+        if ($channel->isBlocked()) {
             return;
         }
 
@@ -292,7 +292,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
     {
         $channels = $this->channelRepository->listAll();
         foreach ($channels as $channel) {
-            if ($channel->isSuspended() || $channel->isForbidden()) {
+            if ($channel->isBlocked()) {
                 continue;
             }
             $this->syncRanksForChannel($channel);
@@ -312,7 +312,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
             return;
         }
 
-        if ($channel->isSuspended() || $channel->isForbidden()) {
+        if ($channel->isBlocked()) {
             return;
         }
 

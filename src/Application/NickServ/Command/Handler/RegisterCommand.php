@@ -155,6 +155,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
             $context->reply(match ($existing->getStatus()) {
                 NickStatus::Pending => 'register.already_pending',
                 NickStatus::Forbidden => 'register.forbidden',
+                NickStatus::PendingDeletion => 'register.pending_deletion',
                 default => 'register.already_registered',
             }, ['nickname' => $nick]);
 

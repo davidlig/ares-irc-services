@@ -324,6 +324,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
     {
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
 
         $this->channelRepository
             ->expects(self::once())

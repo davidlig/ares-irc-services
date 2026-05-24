@@ -35,6 +35,6 @@ final class NickServIrcopPermissionTest extends TestCase
     {
         $permission = new NickServIrcopPermission();
 
-        self::assertSame([NickServPermission::USERIP, NickServPermission::SUSPEND, NickServPermission::RENAME, NickServPermission::DROP, NickServPermission::FORBID, NickServPermission::FORBIDVHOST, NickServPermission::SASET, NickServPermission::HISTORY], $permission->getPermissions());
+        self::assertSame([NickServPermission::USERIP, NickServPermission::SUSPEND, NickServPermission::RENAME, NickServPermission::DROP, NickServPermission::DROP_FORCE, NickServPermission::RESTORE, NickServPermission::FORBID, NickServPermission::FORBIDVHOST, NickServPermission::SASET, NickServPermission::HISTORY], $permission->getPermissions());
     }
 }

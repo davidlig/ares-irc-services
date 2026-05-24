@@ -8,6 +8,7 @@ use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickDropService;
 use App\Application\NickServ\Service\NickProtectabilityResult;
@@ -16,6 +17,7 @@ use App\Application\NickServ\Service\NickTargetValidator;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
+use function strcasecmp;
 use function strtolower;
 
 final class DropCommand implements NickServCommandInterface, AuditableCommandInterface
@@ -27,6 +29,7 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
         private readonly NickTargetValidator $targetValidator,
         private readonly NickDropService $dropService,
         private readonly LoggerInterface $logger,
+        private readonly ?AuthorizationCheckerInterface $authorizationChecker = null,
     ) {
     }
 
@@ -92,6 +95,7 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
         }
 
         $targetNick = $context->args[0];
+        $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
         $targetNickLower = strtolower($targetNick);
         $senderNickLower = strtolower($context->sender->nick);
 
@@ -109,7 +113,25 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
             return;
         }
 
-        if ($account->isSuspended()) {
+        if ($account->isPendingDeletion()) {
+            if (!$force) {
+                $context->reply('drop.pending_deletion', ['%nickname%' => $targetNick]);
+
+                return;
+            }
+            // Force override - hard delete (requires DROP_FORCE permission)
+            if (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(NickServPermission::DROP_FORCE, $context)) {
+                $context->reply('error.permission_denied');
+
+                return;
+            }
+
+            $this->dropService->hardDropNick($account, 'manual-force', $context->sender->nick);
+            $this->auditData = new IrcopAuditData(target: $targetNick, extra: ['force' => true]);
+            $context->reply('drop.force_success', ['%nickname%' => $targetNick]);
+
+            return;
+        } elseif ($account->isSuspended()) {
             $context->reply('drop.suspended', ['%nickname%' => $targetNick]);
 
             return;
@@ -129,7 +151,21 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
             return;
         }
 
-        $this->dropService->dropNick($account, 'manual', $context->sender->nick);
+        if ($force) {
+            if (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(NickServPermission::DROP_FORCE, $context)) {
+                $context->reply('error.permission_denied');
+
+                return;
+            }
+
+            $this->dropService->hardDropNick($account, 'manual-force', $context->sender->nick);
+            $this->auditData = new IrcopAuditData(target: $targetNick, extra: ['force' => true]);
+            $context->reply('drop.force_success', ['%nickname%' => $targetNick]);
+
+            return;
+        }
+
+        $this->dropService->softDropNick($account, $context->sender->nick);
 
         $this->auditData = new IrcopAuditData(target: $targetNick);
 

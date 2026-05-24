@@ -19,8 +19,8 @@ use function sprintf;
  *
  * Handles all necessary cleanup when dropping a nick:
  * - If user is online, forces rename to Guest- (via NickForceService)
- * - Dispatches NickDropEvent for cleanup by other services (ChanServ, MemoServ, OperServ)
- * - Deletes from repository
+ * - For soft drops, marks the account pending deletion without cleanup events
+ * - For hard drops, dispatches NickDropEvent and deletes from repository
  * - Logs to debug channel (if configured) and ircops.log
  *
  * Used by: DropCommand (IRCop), PurgeInactiveNicknamesTask (maintenance)
@@ -39,13 +39,67 @@ readonly class NickDropService
     }
 
     /**
-     * Drops a registered nickname with full cleanup.
+     * Starts a recoverable manual drop without cleaning dependent data.
+     */
+    public function softDropNick(
+        RegisteredNick $account,
+        ?string $operatorNick = null,
+    ): void {
+        $nickname = $account->getNickname();
+        $onlineUser = $this->userLookup->findByNick($nickname);
+
+        if (null !== $onlineUser) {
+            $this->forceService->forceGuestNick($onlineUser->uid, null, 'nick-drop');
+        }
+
+        $account->markPendingDeletion();
+        $this->nickRepository->save($account);
+
+        $this->debug->log(
+            operator: $operatorNick ?? '*',
+            command: 'DROP',
+            target: $nickname,
+            reason: 'manual',
+            extra: ['soft_delete' => true, 'was_online' => null !== $onlineUser],
+        );
+
+        $this->logger->info(sprintf(
+            'NickDrop: %s (id %d) marked pending deletion. Online: %s. Operator: %s.',
+            $nickname,
+            $account->getId(),
+            null !== $onlineUser ? 'yes' : 'no',
+            $operatorNick ?? 'maintenance',
+        ));
+    }
+
+    public function restoreNick(RegisteredNick $account, ?string $operatorNick = null): void
+    {
+        $account->restoreFromPendingDeletion();
+        $this->nickRepository->save($account);
+
+        $this->debug->log(
+            operator: $operatorNick ?? '*',
+            command: 'RESTORE',
+            target: $account->getNickname(),
+            reason: 'manual',
+        );
+
+        $this->logger->info(sprintf(
+            'NickRestore: %s (id %d) restored from pending deletion. Operator: %s.',
+            $account->getNickname(),
+            $account->getId(),
+            $operatorNick ?? 'maintenance',
+        ));
+    }
+
+    /**
+     * Permanently drops a registered nickname with full cleanup.
      *
      * @param RegisteredNick $account      The account to drop
      * @param string         $reason       Drop reason: 'manual' (IRCop) or 'inactivity' (maintenance)
      * @param string|null    $operatorNick Operator nickname for debug logging (null for maintenance)
      */
-    public function dropNick(
+    public function hardDropNick(
         RegisteredNick $account,
         string $reason = 'manual',
         ?string $operatorNick = null,
@@ -85,5 +139,13 @@ readonly class NickDropService
             null !== $onlineUser ? 'yes' : 'no',
             $operatorNick ?? 'maintenance',
         ));
+    }
+
+    public function dropNick(
+        RegisteredNick $account,
+        string $reason = 'manual',
+        ?string $operatorNick = null,
+    ): void {
+        $this->hardDropNick($account, $reason, $operatorNick);
     }
 }

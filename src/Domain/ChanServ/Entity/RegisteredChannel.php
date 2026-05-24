@@ -80,6 +80,9 @@ class RegisteredChannel
 
     private DateTimeImmutable $createdAt;
 
+    /** Set when a manual DROP starts the recoverable deletion grace period. */
+    private ?DateTimeImmutable $pendingDeletionAt = null;
+
     private function __construct()
     {
         $this->entrymsg = '';
@@ -219,6 +222,20 @@ class RegisteredChannel
         return $this->createdAt;
     }
 
+    public function getPendingDeletionAt(): ?DateTimeImmutable
+    {
+        return $this->pendingDeletionAt;
+    }
+
+    public function getPendingDeletionExpiresAt(int $graceDays): ?DateTimeImmutable
+    {
+        if (null === $this->pendingDeletionAt || $graceDays <= 0) {
+            return $this->pendingDeletionAt;
+        }
+
+        return $this->pendingDeletionAt->modify(sprintf('+%d days', $graceDays));
+    }
+
     public function changeFounder(int $newFounderNickId): void
     {
         $this->founderNickId = $newFounderNickId;
@@ -304,6 +321,31 @@ class RegisteredChannel
         return ChannelStatus::Suspended === $this->status;
     }
 
+    public function isPendingDeletion(): bool
+    {
+        return ChannelStatus::PendingDeletion === $this->status;
+    }
+
+    public function markPendingDeletion(?DateTimeImmutable $at = null): void
+    {
+        if (ChannelStatus::Active !== $this->status) {
+            throw new LogicException('Only active channels can be marked for deletion.');
+        }
+
+        $this->status = ChannelStatus::PendingDeletion;
+        $this->pendingDeletionAt = $at ?? new DateTimeImmutable();
+    }
+
+    public function restoreFromPendingDeletion(): void
+    {
+        if (!$this->isPendingDeletion()) {
+            throw new LogicException('Only channels pending deletion can be restored.');
+        }
+
+        $this->status = ChannelStatus::Active;
+        $this->pendingDeletionAt = null;
+    }
+
     public function isCurrentlySuspended(): bool
     {
         if (!$this->isSuspended()) {
@@ -334,6 +376,15 @@ class RegisteredChannel
     public function isForbidden(): bool
     {
         return ChannelStatus::Forbidden === $this->status;
+    }
+
+    /**
+     * Whether the channel is in a blocked state where no ChanServ actions
+     * should be performed (suspended, forbidden, or pending deletion).
+     */
+    public function isBlocked(): bool
+    {
+        return $this->isSuspended() || $this->isForbidden() || $this->isPendingDeletion();
     }
 
     public function getForbiddenReason(): ?string

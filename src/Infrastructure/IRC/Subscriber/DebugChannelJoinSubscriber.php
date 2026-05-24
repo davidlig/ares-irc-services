@@ -76,7 +76,7 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
         $channelNameLower = strtolower($this->debugChannel);
 
         $registered = $this->registeredChannelRepository->findByChannelName($channelNameLower);
-        if (null === $registered || $registered->isSuspended() || $registered->isForbidden()) {
+        if (null === $registered || $registered->isBlocked()) {
             return;
         }
 

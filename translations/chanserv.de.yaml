@@ -20,6 +20,7 @@ register:
   help:             "Registriert und verknüpft einen Channel mit Ihrem Nickname. Sie müssen bei %nickserv% identifiziert sein."
   success:          "\x0303✔\x03 Channel \x02%channel%\x02 wurde registriert."
   channel_not_on_network: "\x0304✗\x03 Channel \x02%channel%\x02 existiert nicht im Netzwerk."
+  pending_deletion: "\x0304✗\x03 Der Channel \x02%channel%\x02 steht zur Löschung an und kann nicht registriert werden."
   insufficient_channel_rank: "\x0304✗\x03 Du musst mindestens Operator-Status in \x02%channel%\x02 haben, um den Channel zu registrieren."
   limit_exceeded: "\x0304✗\x03 Sie haben das Maximum von %max% registrierten Channels erreicht."
   throttled: "\x0304✗\x03 Sie müssen \x02%minutes%\x02 Minute(n) warten, bevor Sie einen weiteren Channel registrieren."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Endet am\x03           : Dauerhaft"
   forbidden_status: "  \x0314Status\x03             : \x0304Gesperrt\x03"
   forbidden_reason: "  \x0314Grund\x03              : %reason%"
+  pending_deletion_status: "  14Status             : 07Löschung ausstehend"
+  pending_deletion_at: "  14Gelöscht           : %date%"
+  pending_deletion_until: "  14Endgültig am       : %date%"
+  pending_deletion_notice: "  07Dieser Kanal ist in ChanServ eingefroren und kann nicht registriert werden."
 
 help:
   syntax:           "HELP [Befehl [Unteroption]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "nie"
     unknown_creator: "unbekannt"
 
+restore:
+  syntax:           "RESTORE <#channel>"
+  short:            "Einen zur Löschung anstehenden Channel wiederherstellen."
+  help:             "Stellt einen Channel wieder her, der manuell gelöscht wurde und sich noch in der Gnadenfrist befindet. Erfordert IRCop-Berechtigung: chanserv.restore."
+  success:          "\x0303✔\x03 Channel \x02%channel%\x02 wurde wiederhergestellt."
+  not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
+  not_pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 steht nicht zur Löschung an."
+
 drop:
-  syntax:           "DROP <#channel>"
+  syntax:           "DROP <#channel> [FORCE]"
   short:            "Einen registrierten Channel löschen."
   help:             "Entfernt einen registrierten Channel aus der Datenbank."
-  success:          "\x0303✔\x03 Channel \x02%channel%\x02 wurde gelöscht."
+  success:          "03✔ Kanal %channel% wurde zur Löschung markiert und kann während der Schonfrist wiederhergestellt werden."
+  force_success:    "\x0303✔\x03 Channel \x02%channel%\x02 wurde endgültig gelöscht."
+  pending_deletion: "\x0304✗\x03 Channel \x02%channel%\x02 ist bereits zur Löschung vorgemerkt. Verwenden Sie DROP <#channel> FORCE, um ihn dauerhaft zu löschen."
   not_registered:   "\x0304✗\x03 Channel \x02%channel%\x02 ist nicht registriert."
 
 suspend:
@@ -356,6 +371,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Einen registrierten Channel löschen (DROP)"
+  chanserv.drop.force: "Einen wiederherstellbaren Channel dauerhaft löschen (DROP FORCE)"
+  chanserv.restore: "Einen zur Löschung anstehenden Channel wiederherstellen (RESTORE)"
   chanserv.suspend: "Einen Channel suspendieren oder entsuspendieren (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Einen Channel sperren oder entsperren (FORBID/UNFORBID)"
   chanserv.noexpire: "Ablaufschutz für einen Channel setzen oder entfernen (NOEXPIRE)"

@@ -125,6 +125,20 @@ class RegisteredChannelDoctrineRepository implements RegisteredChannelRepository
         return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
     }
 
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold): array
+    {
+        $qb = $this->em->createQueryBuilder();
+        $qb->select('c')
+            ->from(RegisteredChannel::class, 'c')
+            ->where('c.status = :status')
+            ->andWhere('c.pendingDeletionAt IS NOT NULL')
+            ->andWhere('c.pendingDeletionAt <= :threshold')
+            ->setParameter('status', ChannelStatus::PendingDeletion)
+            ->setParameter('threshold', $threshold);
+
+        return array_filter($qb->getQuery()->getResult(), static fn ($row): bool => $row instanceof RegisteredChannel);
+    }
+
     public function findForbiddenChannels(): array
     {
         $qb = $this->em->createQueryBuilder();

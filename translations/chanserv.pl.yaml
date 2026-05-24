@@ -20,6 +20,7 @@ register:
   help:             "Rejestruje i przypisuje kanał do Twojego nicka. Musisz być zidentyfikowany z %nickserv%."
   success:          "\x0303✔\x03 Kanał \x02%channel%\x02 został zarejestrowany."
   channel_not_on_network: "\x0304✗\x03 Kanał \x02%channel%\x02 nie istnieje w sieci."
+  pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 oczekuje na usunięcie i nie może być zarejestrowany."
   insufficient_channel_rank: "\x0304✗\x03 Musisz mieć co najmniej status operatora na \x02%channel%\x02, aby zarejestrować kanał."
   limit_exceeded: "\x0304✗\x03 Osiągnąłeś maksymalną liczbę %max% zarejestrowanych kanałów."
   throttled: "\x0304✗\x03 Musisz poczekać \x02%minutes%\x02 minut(y) przed zarejestrowaniem kolejnego kanału."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Koniec\x03                 : Stałe"
   forbidden_status: "  \x0314Status\x03                 : \x0304Zabroniony\x03"
   forbidden_reason: "  \x0314Powód\x03                  : %reason%"
+  pending_deletion_status: "  14Status             : 07Oczekuje na usunięcie"
+  pending_deletion_at: "  14Usunięty           : %date%"
+  pending_deletion_until: "  14Trwale usunięcie   : %date%"
+  pending_deletion_notice: "  07Ten kanał jest zamrożony w ChanServ i nie może zostać zarejestrowany."
 
 help:
   syntax:           "HELP [komenda [pod-opcja]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "nigdy"
     unknown_creator: "nieznany"
 
+restore:
+  syntax:           "RESTORE <#kana>"
+  short:            "Przywróć kanał oczekujący na usunięcie."
+  help:             "Przywraca kanał, który został ręcznie usunięty i wciąż znajduje się w okresie karencji. Wymaga uprawnienia IRCop: chanserv.restore."
+  success:          "\x0303✔\x03 Kanał \x02%channel%\x02 został przywrócony."
+  not_registered:   "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest zarejestrowany."
+  not_pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 nie oczekuje na usunięcie."
+
 drop:
-  syntax:           "DROP <#kanał>"
+  syntax:           "DROP <#kana> [FORCE]"
   short:            "Usuń zarejestrowany kanał."
   help:             "Usuwa zarejestrowany kanał z bazy danych."
-  success:          "\x0303✔\x03 Kanał \x02%channel%\x02 został usunięty."
+  success:          "03✔ Kanał %channel% został oznaczony do usunięcia i może zostać przywrócony w okresie karencji."
+  force_success:    "\x0303✔\x03 Kanał \x02%channel%\x02 został trwale usunięty."
+  pending_deletion: "\x0304✗\x03 Kanał \x02%channel%\x02 już oczekuje na usunięcie. Użyj DROP <#kana> FORCE aby usunąć go trwale."
   not_registered:   "\x0304✗\x03 Kanał \x02%channel%\x02 nie jest zarejestrowany."
 
 suspend:
@@ -356,6 +371,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Usuń zarejestrowany kanał (DROP)"
+  chanserv.drop.force: "Trwale usuń odzyskiwalny kanał (DROP FORCE)"
+  chanserv.restore: "Przywróć kanał oczekujący na usunięcie (RESTORE)"
   chanserv.suspend: "Zawieś lub zdejmij zawieszenie kanału (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Zabroń lub odblokuj kanał (FORBID/UNFORBID)"
   chanserv.noexpire: "Ustaw lub usuń ochronę przed wygaśnięciem kanału (NOEXPIRE)"

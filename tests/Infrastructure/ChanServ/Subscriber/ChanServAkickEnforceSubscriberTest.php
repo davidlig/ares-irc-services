@@ -726,6 +726,7 @@ final class ChanServAkickEnforceSubscriberTest extends TestCase
     {
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
         $channel->method('getId')->willReturn(1);
 
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -757,6 +758,7 @@ final class ChanServAkickEnforceSubscriberTest extends TestCase
     {
         $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
         $channel->method('getId')->willReturn(1);
         $channel->method('getName')->willReturn('#test');
 

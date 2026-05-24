@@ -376,6 +376,44 @@ final class IdentifyCommandTest extends TestCase
     }
 
     #[Test]
+    public function replyPendingDeletionWhenAccountPendingDeletion(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('isPending')->willReturn(false);
+        $account->method('isSuspended')->willReturn(false);
+        $account->method('isForbidden')->willReturn(false);
+        $account->method('isPendingDeletion')->willReturn(true);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new IdentifyCommand(
+            $nickRepo,
+            $this->createStub(NetworkUserLookupPort::class),
+            new IdentifiedSessionRegistry(),
+            new IdentifyFailedAttemptRegistry(),
+            new NickServClientKeyResolver(),
+            new VhostDisplayResolver(''),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            new PendingNickRestoreRegistry(),
+            5,
+            300,
+            900,
+        );
+        $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), ['User', 'pass'], $notifier, $translator));
+
+        self::assertSame(['identify.pending_deletion'], $messages);
+    }
+
+    #[Test]
     public function replyInvalidCredentialsWhenPasswordWrong(): void
     {
         $account = $this->createStub(RegisteredNick::class);

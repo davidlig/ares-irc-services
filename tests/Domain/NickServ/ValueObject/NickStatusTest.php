@@ -18,6 +18,7 @@ final class NickStatusTest extends TestCase
         self::assertSame('pending', NickStatus::Pending->value);
         self::assertSame('registered', NickStatus::Registered->value);
         self::assertSame('suspended', NickStatus::Suspended->value);
+        self::assertSame('pending_deletion', NickStatus::PendingDeletion->value);
         self::assertSame('forbidden', NickStatus::Forbidden->value);
     }
 
@@ -25,18 +26,20 @@ final class NickStatusTest extends TestCase
     public function allCasesCanBeUsedInSwitch(): void
     {
         $results = [];
-        foreach ([NickStatus::Pending, NickStatus::Registered, NickStatus::Suspended, NickStatus::Forbidden] as $status) {
+        foreach ([NickStatus::Pending, NickStatus::Registered, NickStatus::Suspended, NickStatus::PendingDeletion, NickStatus::Forbidden] as $status) {
             $results[$status->value] = match ($status) {
                 NickStatus::Pending => 'pending',
                 NickStatus::Registered => 'registered',
                 NickStatus::Suspended => 'suspended',
+                NickStatus::PendingDeletion => 'pending_deletion',
                 NickStatus::Forbidden => 'forbidden',
             };
         }
-        self::assertCount(4, $results);
+        self::assertCount(5, $results);
         self::assertSame('pending', $results['pending']);
         self::assertSame('registered', $results['registered']);
         self::assertSame('suspended', $results['suspended']);
+        self::assertSame('pending_deletion', $results['pending_deletion']);
         self::assertSame('forbidden', $results['forbidden']);
     }
 }

@@ -750,6 +750,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
 
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $localChannelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $localChannelRepository->method('findByChannelName')->willReturn($registered);
@@ -789,6 +790,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('getName')->willReturn('#test');
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $localChannelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $localChannelRepository->method('listAll')->willReturn([$registered]);
@@ -837,6 +839,7 @@ final class ChanServRejoinSubscriberTest extends TestCase
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('getName')->willReturn('#test');
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $localChannelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $localChannelRepository->method('listAll')->willReturn([$registered]);

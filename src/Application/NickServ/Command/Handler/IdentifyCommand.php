@@ -184,6 +184,12 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             return false;
         }
 
+        if ($account->isPendingDeletion()) {
+            $context->reply('identify.pending_deletion', ['nickname' => $targetNick]);
+
+            return false;
+        }
+
         return true;
     }
 

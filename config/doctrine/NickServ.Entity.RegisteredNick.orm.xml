@@ -7,6 +7,7 @@
         <indexes>
             <index name="idx_nickname_lower" columns="nickname_lower"/>
             <index name="idx_status_expires" columns="status,expires_at"/>
+            <index name="idx_status_pending_deletion" columns="status,pending_deletion_at"/>
         </indexes>
         <id name="id" type="integer" column="id">
             <generator strategy="IDENTITY"/>
@@ -30,5 +31,6 @@
         <field name="timezone" type="string" length="64" nullable="true" column="timezone"/>
         <field name="msgPrivmsg" type="boolean" column="msg_privmsg"/>
         <field name="noExpire" type="boolean" column="no_expire"/>
+        <field name="pendingDeletionAt" type="datetime_immutable" nullable="true" column="pending_deletion_at"/>
     </entity>
 </doctrine-mapping>

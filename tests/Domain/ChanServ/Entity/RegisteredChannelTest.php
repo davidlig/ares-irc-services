@@ -324,4 +324,70 @@ final class RegisteredChannelTest extends TestCase
 
         self::assertFalse($channel->isNoExpire());
     }
+
+    #[Test]
+    public function markPendingDeletionAndRestore(): void
+    {
+        $at = new DateTimeImmutable('2026-05-01 12:00:00');
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        $channel->markPendingDeletion($at);
+
+        self::assertSame(ChannelStatus::PendingDeletion, $channel->getStatus());
+        self::assertTrue($channel->isPendingDeletion());
+        self::assertSame($at, $channel->getPendingDeletionAt());
+        self::assertSame('2026-05-08 12:00:00', $channel->getPendingDeletionExpiresAt(7)?->format('Y-m-d H:i:s'));
+        self::assertSame($at, $channel->getPendingDeletionExpiresAt(0));
+
+        $channel->restoreFromPendingDeletion();
+
+        self::assertSame(ChannelStatus::Active, $channel->getStatus());
+        self::assertNull($channel->getPendingDeletionAt());
+    }
+
+    #[Test]
+    public function markPendingDeletionThrowsWhenNotActive(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->suspend('Reason');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Only active channels can be marked for deletion.');
+
+        $channel->markPendingDeletion();
+    }
+
+    #[Test]
+    public function restoreFromPendingDeletionThrowsWhenNotPendingDeletion(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Only channels pending deletion can be restored.');
+
+        $channel->restoreFromPendingDeletion();
+    }
+
+    #[Test]
+    public function isBlockedReturnsTrueForBlockedStates(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+
+        self::assertFalse($channel->isBlocked());
+
+        $channel->suspend('Reason');
+        self::assertTrue($channel->isBlocked());
+
+        $channel->unsuspend();
+        self::assertFalse($channel->isBlocked());
+
+        $forbidden = RegisteredChannel::createForbidden('#forbidden', 'Reason');
+        self::assertTrue($forbidden->isBlocked());
+
+        $channel->markPendingDeletion();
+        self::assertTrue($channel->isBlocked());
+
+        $channel->restoreFromPendingDeletion();
+        self::assertFalse($channel->isBlocked());
+    }
 }

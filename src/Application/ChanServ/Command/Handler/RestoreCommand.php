@@ -10,25 +10,21 @@ use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
-use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
-use function strcasecmp;
-
-final class DropCommand implements ChanServCommandInterface, AuditableCommandInterface
+final class RestoreCommand implements ChanServCommandInterface, AuditableCommandInterface
 {
     private ?IrcopAuditData $auditData = null;
 
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChanDropService $dropService,
-        private readonly ?AuthorizationCheckerInterface $authorizationChecker = null,
     ) {
     }
 
     public function getName(): string
     {
-        return 'DROP';
+        return 'RESTORE';
     }
 
     public function getAliases(): array
@@ -43,22 +39,22 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
 
     public function getSyntaxKey(): string
     {
-        return 'drop.syntax';
+        return 'restore.syntax';
     }
 
     public function getHelpKey(): string
     {
-        return 'drop.help';
+        return 'restore.help';
     }
 
     public function getOrder(): int
     {
-        return 75;
+        return 76;
     }
 
     public function getShortDescKey(): string
     {
-        return 'drop.short';
+        return 'restore.short';
     }
 
     public function getSubCommandHelp(): array
@@ -73,7 +69,7 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
 
     public function getRequiredPermission(): ?string
     {
-        return ChanServPermission::DROP;
+        return ChanServPermission::RESTORE;
     }
 
     public function allowsSuspendedChannel(): bool
@@ -81,20 +77,14 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
         return true;
     }
 
-    /** Whether this command is allowed on forbidden channels. */
     public function allowsForbiddenChannel(): bool
     {
-        return false;
+        return true;
     }
 
     public function usesLevelFounder(): bool
     {
         return false;
-    }
-
-    public function getHelpParams(): array
-    {
-        return [];
     }
 
     public function execute(ChanServContext $context): void
@@ -104,49 +94,29 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
         }
 
         $channelName = $context->getChannelNameArg(0);
-        $force = isset($context->args[1]) && 0 === strcasecmp($context->args[1], 'force');
-
         if (null === $channelName) {
-            $context->reply('drop.invalid_channel');
+            $context->reply('error.invalid_channel');
 
             return;
         }
 
         $channel = $this->channelRepository->findByChannelName($channelName);
-
         if (null === $channel) {
-            $context->reply('drop.not_registered', ['%channel%' => $channelName]);
+            $context->reply('restore.not_registered', ['%channel%' => $channelName]);
 
             return;
         }
 
-        if ($channel->isPendingDeletion()) {
-            if (!$force) {
-                $context->reply('drop.pending_deletion', ['%channel%' => $channelName]);
-
-                return;
-            }
-        }
-
-        if ($force) {
-            if (null === $this->authorizationChecker || !$this->authorizationChecker->isGranted(ChanServPermission::DROP_FORCE, $context)) {
-                $context->reply('error.permission_denied');
-
-                return;
-            }
-
-            $this->dropService->hardDropChannel($channel, 'manual-force', $context->sender->nick);
-            $this->auditData = new IrcopAuditData(target: $channelName, extra: ['force' => true]);
-            $context->reply('drop.force_success', ['%channel%' => $channelName]);
+        if (!$channel->isPendingDeletion()) {
+            $context->reply('restore.not_pending_deletion', ['%channel%' => $channelName]);
 
             return;
         }
 
-        $this->dropService->softDropChannel($channel, $context->sender->nick);
-
+        $this->dropService->restoreChannel($channel, $context->sender->nick);
         $this->auditData = new IrcopAuditData(target: $channelName);
 
-        $context->reply('drop.success', ['%channel%' => $channelName]);
+        $context->reply('restore.success', ['%channel%' => $channelName]);
     }
 
     public function getAuditData(object $context): ?IrcopAuditData

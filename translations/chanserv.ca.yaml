@@ -20,6 +20,7 @@ register:
   help:             "Registreu i associeu un canal al vostre sobrenom. Heu d'estar identificat amb %nickserv%."
   success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat registrat."
   channel_not_on_network: "\x0304✗\x03 El canal \x02%channel%\x02 no existeix a la xarxa."
+  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 està pendent d'eliminació i no pot ser registrat."
   insufficient_channel_rank: "\x0304✗\x03 Heu de tenir com a mínim estat d'operador a \x02%channel%\x02 per registrar-lo."
   limit_exceeded: "\x0304✗\x03 Heu assolit el màxim de %max% canals registrats."
   throttled: "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de registrar un altre canal."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Acaba el\x03           : Permanent"
   forbidden_status: "  \x0314Estat\x03              : \x0304Prohibit\x03"
   forbidden_reason: "  \x0314Motiu\x03              : %reason%"
+  pending_deletion_status: "  14Estat              : 07Pendent d'eliminació"
+  pending_deletion_at: "  14Eliminat           : %date%"
+  pending_deletion_until: "  14Elim. definitiva   : %date%"
+  pending_deletion_notice: "  07Aquest canal està congelat a ChanServ i no pot ser registrat."
 
 help:
   syntax:           "HELP [command [sub-option]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "mai"
     unknown_creator: "desconegut"
 
+restore:
+  syntax:           "RESTORE <#channel>"
+  short:            "Restaurar un canal pendent d'eliminació."
+  help:             "Restaura un canal que va ser eliminat manualment i encara està dins del període de gràcia. Requereix permís IRCop: chanserv.restore."
+  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat restaurat."
+  not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
+  not_pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 no està pendent d'eliminació."
+
 drop:
-  syntax:           "DROP <#channel>"
+  syntax:           "DROP <#channel> [FORCE]"
   short:            "Eliminar un canal registrat."
   help:             "Treu un canal registrat de la base de dades."
-  success:          "\x0303✔\x03 El canal \x02%channel%\x02 ha estat eliminat."
+  success:          "03✔ El canal %channel% ha estat marcat per a eliminació i pot ser restaurat durant el període de gràcia."
+  force_success:    "\x0303✔\x03 El canal \x02%channel%\x02 ha estat eliminat permanentment."
+  pending_deletion: "\x0304✗\x03 El canal \x02%channel%\x02 ja està pendent d'eliminació. Utilitza DROP <#channel> FORCE per eliminar-lo permanentment."
   not_registered:   "\x0304✗\x03 El canal \x02%channel%\x02 no està registrat."
 
 suspend:
@@ -356,6 +371,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Eliminar un canal registrat (DROP)"
+  chanserv.drop.force: "Forçar l'eliminació permanent d'un canal en període de gràcia (DROP FORCE)"
+  chanserv.restore: "Restaurar un canal pendent d'eliminació (RESTORE)"
   chanserv.suspend: "Suspendre o treure la suspensió d'un canal (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Prohibir o treure la prohibició d'un canal (FORBID/UNFORBID)"
   chanserv.noexpire: "Establir o treure la protecció contra l'expiració d'un canal (NOEXPIRE)"

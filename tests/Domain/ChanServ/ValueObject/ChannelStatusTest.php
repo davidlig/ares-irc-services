@@ -32,14 +32,22 @@ final class ChannelStatusTest extends TestCase
             $results[$status->value] = match ($status) {
                 ChannelStatus::Active => 'active',
                 ChannelStatus::Suspended => 'suspended',
+                ChannelStatus::PendingDeletion => 'pending_deletion',
                 ChannelStatus::Forbidden => 'forbidden',
             };
         }
 
-        self::assertCount(3, $results);
+        self::assertCount(4, $results);
         self::assertSame('active', $results['active']);
         self::assertSame('suspended', $results['suspended']);
+        self::assertSame('pending_deletion', $results['pending_deletion']);
         self::assertSame('forbidden', $results['forbidden']);
+    }
+
+    #[Test]
+    public function pendingDeletionHasCorrectValue(): void
+    {
+        self::assertSame('pending_deletion', ChannelStatus::PendingDeletion->value);
     }
 
     #[Test]

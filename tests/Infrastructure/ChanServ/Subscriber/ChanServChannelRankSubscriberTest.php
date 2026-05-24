@@ -2560,6 +2560,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
@@ -2582,6 +2583,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::atLeastOnce())->method('listAll')->willReturn([$channel]);
@@ -2599,6 +2601,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
         $channel->method('getName')->willReturn('#test');
 
         $registry = new ChannelRankSyncPendingRegistry();
@@ -2624,6 +2627,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
@@ -2646,6 +2650,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
         $channel->method('getName')->willReturn('#test');
 
         $registry = new ChannelRankSyncPendingRegistry();
@@ -2669,6 +2674,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -2694,6 +2700,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
         $channel->method('getName')->willReturn('#test');
 
         $registry = new ChannelRankSyncPendingRegistry();
@@ -2726,6 +2733,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     {
         $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
+        $channel->method('isBlocked')->willReturn(true);
 
         $coreChannel = new \App\Domain\IRC\Network\Channel(new ChannelName('#test'));
 

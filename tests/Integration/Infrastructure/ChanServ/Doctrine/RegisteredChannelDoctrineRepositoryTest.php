@@ -382,4 +382,25 @@ final class RegisteredChannelDoctrineRepositoryTest extends DoctrineIntegrationT
 
         self::assertSame([], $result);
     }
+
+    #[Test]
+    public function findPendingDeletionBeforeReturnsOnlyExpiredManualDrops(): void
+    {
+        $expired = RegisteredChannel::register('#expired-drop', 1, 'Expired');
+        $expired->markPendingDeletion(new DateTimeImmutable('-8 days'));
+        $this->repository->save($expired);
+
+        $fresh = RegisteredChannel::register('#fresh-drop', 1, 'Fresh');
+        $fresh->markPendingDeletion(new DateTimeImmutable('-1 day'));
+        $this->repository->save($fresh);
+
+        $active = RegisteredChannel::register('#active-drop', 1, 'Active');
+        $this->repository->save($active);
+        $this->flushAndClear();
+
+        $result = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'));
+
+        self::assertCount(1, $result);
+        self::assertSame('#expired-drop', $result[0]->getName());
+    }
 }

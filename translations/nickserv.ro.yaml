@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja înregistrată."
   already_pending:  "\x0304✗\x03 Porecla \x02%nickname%\x02 are deja o verificare în așteptare.\n  Folosiți \x0303/msg %bot% VERIFY <token>\x03 sau \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi înregistrată în această rețea."
+  pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi înregistrată."
   invalid_email:    "\x0304✗\x03 Adresa de e-mail furnizată nu este validă."
   email_already_used: "\x0304✗\x03 E-mailul \x02%email%\x02 este deja folosit de o altă poreclă. Folosiți o adresă diferită."
   throttled:          "\x0304✗\x03 Trebuie să așteptați \x02%minutes%\x02 minut(e) înainte de a încerca să vă înregistrați din nou."
@@ -83,6 +84,7 @@ identify:
   pending:          "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptarea verificării e-mailului.\n  Executați \x0303/msg %bot% VERIFY <token>\x03 sau \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 Porecla \x02%nickname%\x02 este suspendată. Motiv: %reason%"
   forbidden:        "\x0304✗\x03 Porecla \x02%nickname%\x02 nu poate fi folosită în această rețea."
+  pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi folosită."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,6 +120,7 @@ info:
   status_registered:  "\x0303Înregistrat\x03"
   status_suspended:   "\x0304Suspendat\x03"
   status_forbidden:   "\x0304Interzis\x03"
+  status_pending_deletion: "07În așteptare ștergere"
   reason:           "  \x0314Motiv\x03                   : %reason%"
   suspended_until:  "  \x0314Se termină la\x03           : %date%"
   suspended_permanent: "  \x0314Se termină la\x03           : Permanent"
@@ -131,6 +134,9 @@ info:
   email:            "  \x0314E-mail\x03                  : %email%"
   vhost:            "  \x0314VHost\x03                   : %vhost%"
   no_expire:        "  \x0314Nu expiră niciodată\x03     : Da"
+  pending_deletion_at: "  14Șters                  : %date%"
+  pending_deletion_until: "  14Ștergere definitivă    : %date%"
+  pending_deletion_notice: "  07Această poreclă este în așteptare de ștergere și nu poate fi înregistrată."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanale cu acces:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fondator\x03)"
@@ -319,6 +325,8 @@ permissions:
   nickserv.suspend: "Suspendare sau anulare suspendare a unei porecle (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Forțare redenumire a unei porecle conectate la o poreclă aleatorie (RENAME)"
   nickserv.drop: "Eliminare a unei porecle înregistrate (DROP)"
+  nickserv.drop.force: "Forțați ștergerea definitivă a unei porecle recuperabile (DROP FORCE)"
+  nickserv.restore: "Restaurați o poreclă în așteptare de ștergere (RESTORE)"
   nickserv.forbid: "Interzicere sau anulare interzicere a unei porecle (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Interzicere sau permitere a modelelor de vhost (FORBIDVHOST)"
   nickserv.saset: "Modificare a setărilor altei porecle (SASET)"
@@ -388,7 +396,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <poreclă>"
+  syntax:           "DROP <poreclă> [FORCE]"
   short:            "Eliminați o poreclă înregistrată."
   help:             |
     Elimină o poreclă înregistrată din baza de date.
@@ -408,8 +416,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 Nu se poate elimina utilizatorul root \x02%nickname%\x02."
   cannot_drop_oper:   "\x0304✗\x03 Nu se poate elimina operatorul IRC \x02%nickname%\x02."
   cannot_drop_self:    "\x0304✗\x03 Nu vă puteți elimina propria poreclă."
-  success:            "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost eliminată."
+  success:            "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost marcată pentru ștergere și poate fi restaurată în perioada de grație."
+  force_success:      "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost ștearsă definitiv."
+  pending_deletion:   "\x0304✗\x03 Porecla \x02%nickname%\x02 este deja în așteptare de ștergere. Folosiți DROP <poreclă> FORCE pentru a o șterge definitiv."
   cannot_drop_service: "\x0304✗\x03 Nu se poate elimina porecla de serviciu \x02%nickname%\x02."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <poreclă>"
+  short:            "Restaurați o poreclă în așteptare de ștergere."
+  help:             "Restaurează o poreclă care a fost ștearsă manual și se află încă în perioada de grație. Necesită permisiune IRCop: nickserv.restore."
+  success:          "\x0303✓\x03 Porecla \x02%nickname%\x02 a fost restaurată."
+  not_registered:   "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este înregistrată."
+  not_pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este în așteptare de ștergere."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

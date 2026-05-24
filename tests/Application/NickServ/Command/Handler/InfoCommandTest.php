@@ -103,6 +103,40 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function replyPendingDeletionStatus(): void
+    {
+        $account = RegisteredNick::createPending('Nick', 'hash', 'user@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+        $account->markPendingDeletion(new DateTimeImmutable('2026-05-01 12:00:00'));
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn($account);
+
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand(
+            $nickRepo,
+            $this->createStub(NetworkUserLookupPort::class),
+            new VhostDisplayResolver(''),
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            7,
+        );
+
+        $cmd->execute($this->createContext(new SenderView('UID1', 'Caller', 'i', 'h', 'c', 'ip'), ['Nick'], $notifier, $translator));
+
+        self::assertContains('info.status', $messages);
+        self::assertContains('info.pending_deletion_at', $messages);
+        self::assertContains('info.pending_deletion_until', $messages);
+        self::assertContains('info.pending_deletion_notice', $messages);
+    }
+
+    #[Test]
     public function replyPrivateWhenPrivateAndNotOwner(): void
     {
         $account = $this->createStub(RegisteredNick::class);

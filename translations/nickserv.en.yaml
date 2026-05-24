@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 Nickname \x02%nickname%\x02 is already registered."
   already_pending:  "\x0304✗\x03 Nickname \x02%nickname%\x02 already has a pending verification.\n  Use \x0303/msg %bot% VERIFY <token>\x03 or \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be registered on this network."
+  pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending deletion and cannot be registered."
   invalid_email:    "\x0304✗\x03 The email address provided is not valid."
   email_already_used: "\x0304✗\x03 The email \x02%email%\x02 is already in use by another nickname. Use a different address."
   throttled:          "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before trying to register again."
@@ -62,6 +63,7 @@ recover:
   pending:          "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending email verification."
   suspended:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Reason: %reason%"
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be used on this network."
+  pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending deletion and cannot be used."
   no_email:         "\x0304✗\x03 No email is set for nickname \x02%nickname%\x02. Recovery is not available."
   throttled:        "\x0304✗\x03 You must wait \x02%minutes%\x02 minute(s) before requesting another recovery email."
   invalid_token:    "\x0304✗\x03 The token is invalid or has expired. Request a new one with \x0303RECOVER %nickname%\x03."
@@ -83,6 +85,7 @@ identify:
   pending:          "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending email verification.\n  Run \x0303/msg %bot% VERIFY <token>\x03 or \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 Nickname \x02%nickname%\x02 is suspended. Reason: %reason%"
   forbidden:        "\x0304✗\x03 Nickname \x02%nickname%\x02 cannot be used on this network."
+  pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending deletion and cannot be used."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,6 +121,7 @@ info:
   status_registered:  "\x0303Registered\x03"
   status_suspended:   "\x0304Suspended\x03"
   status_forbidden:   "\x0304Forbidden\x03"
+  status_pending_deletion: "07Pending deletion"
   reason:           "  \x0314Reason\x03          : %reason%"
   suspended_until:  "  \x0314Ends on\x03         : %date%"
   suspended_permanent: "  \x0314Ends on\x03         : Permanent"
@@ -131,6 +135,9 @@ info:
   email:            "  \x0314Email\x03           : %email%"
   vhost:            "  \x0314VHost\x03           : %vhost%"
   no_expire:        "  \x0314Never Expires\x03   : Yes"
+  pending_deletion_at: "  14Dropped                : %date%"
+  pending_deletion_until: "  14Hard delete on         : %date%"
+  pending_deletion_notice: "  07This nickname is pending deletion and cannot be registered."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AChannels with access:\x03"
   channels_entry_founder:   "  %channel% (\x0303Founder\x03)"
@@ -319,6 +326,8 @@ permissions:
   nickserv.suspend: "Suspend or unsuspend a nickname (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Force rename a connected nickname to a random nick (RENAME)"
   nickserv.drop: "Drop a registered nickname (DROP)"
+  nickserv.drop.force: "Permanently force-delete a recoverable nickname drop (DROP force)"
+  nickserv.restore: "Restore a nickname pending deletion (RESTORE)"
   nickserv.forbid: "Forbid or unforbid a nickname (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Forbid or allow vhost patterns (FORBIDVHOST)"
   nickserv.saset: "Modify another nickname's settings (SASET)"
@@ -388,7 +397,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <nickname>"
+  syntax:           "DROP <nickname> [FORCE]"
   short:            "Drop a registered nickname."
   help:             |
     Drops a registered nickname from the database.
@@ -408,8 +417,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 Cannot drop root user \x02%nickname%\x02."
   cannot_drop_oper:   "\x0304✗\x03 Cannot drop IRC operator \x02%nickname%\x02."
   cannot_drop_self:    "\x0304✗\x03 You cannot drop your own nickname."
-  success:            "\x0303✓\x03 Nickname \x02%nickname%\x02 has been dropped."
+  success:            "\x0303✓\x03 Nickname \x02%nickname%\x02 has been marked for deletion and can be restored during the grace period."
+  force_success:      "\x0303✓\x03 Nickname \x02%nickname%\x02 has been permanently dropped."
+  pending_deletion:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is already pending deletion. Use DROP <nickname> force to delete it permanently."
   cannot_drop_service: "\x0304✗\x03 Cannot drop service nickname \x02%nickname%\x02."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <nickname>"
+  short:            "Restore a nickname pending deletion."
+  help:             "Restores a nickname that was manually dropped and is still within the deletion grace period. Requires IRCop permission: nickserv.restore."
+  success:          "\x0303✓\x03 Nickname \x02%nickname%\x02 has been restored."
+  not_registered:   "\x0304✗\x03 Nickname \x02%nickname%\x02 is not registered."
+  not_pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 is not pending deletion."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

@@ -23,6 +23,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
+        private readonly int $dropGraceDays = 7,
     ) {
     }
 
@@ -112,6 +113,23 @@ final readonly class InfoCommand implements ChanServCommandInterface
             if (null !== $channel->getForbiddenReason()) {
                 $context->replyRaw($context->trans('info.forbidden_reason', ['%reason%' => $channel->getForbiddenReason()]));
             }
+            $context->replyRaw($context->trans('info.footer'));
+
+            return;
+        }
+
+        if ($channel->isPendingDeletion()) {
+            $context->replyRaw($context->trans('info.header', ['%channel%' => $channelName]));
+            $context->replyRaw($context->trans('info.pending_deletion_status'));
+            $pendingDeletionAt = $channel->getPendingDeletionAt();
+            if (null !== $pendingDeletionAt) {
+                $context->replyRaw($context->trans('info.pending_deletion_at', ['%date%' => $context->formatDate($pendingDeletionAt)]));
+            }
+            $expiresAt = $channel->getPendingDeletionExpiresAt($this->dropGraceDays);
+            if (null !== $expiresAt) {
+                $context->replyRaw($context->trans('info.pending_deletion_until', ['%date%' => $context->formatDate($expiresAt)]));
+            }
+            $context->replyRaw($context->trans('info.pending_deletion_notice'));
             $context->replyRaw($context->trans('info.footer'));
 
             return;

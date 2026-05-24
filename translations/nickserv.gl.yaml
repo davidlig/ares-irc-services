@@ -37,6 +37,7 @@ register:
   already_registered: "\x0304✗\x03 O alcume \x02%nickname%\x02 xa está rexistrado."
   already_pending:  "\x0304✗\x03 O alcume \x02%nickname%\x02 xa ten unha verificación pendente.\n  Use \x0303/msg %bot% VERIFY <token>\x03 ou \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode rexistrar nesta rede."
+  pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 está pendente de eliminación e non se pode rexistrar."
   invalid_email:    "\x0304✗\x03 O enderezo de correo electrónico proporcionado non é válido."
   email_already_used: "\x0304✗\x03 O correo electrónico \x02%email%\x02 xa está en uso por outro alcume. Use un enderezo diferente."
   throttled:          "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de tentar rexistrarse de novo."
@@ -91,6 +92,7 @@ identify:
   pending:          "\x0304✗\x03 O alcume \x02%nickname%\x02 ten unha verificación de correo pendente.\n  Execute \x0303/msg %bot% VERIFY <token>\x03 ou \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode usar nesta rede."
+  pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 está pendente de eliminación e non se pode usar."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -126,7 +128,8 @@ info:
   status_registered:  "\x0303Rexistrado\x03"
   status_suspended:   "\x0304Suspendido\x03"
   status_forbidden:   "\x0304Prohibido\x03"
-  reason:           "  \x0314Motivo\x03            : %reason%"
+  status_pending_deletion: "07Pendente de eliminación"
+  reason:           "  \x0314Motivo\x03                 : %reason%"
   suspended_until:  "  \x0314Finaliza o\x03        : %date%"
   suspended_permanent: "  \x0314Finaliza o\x03        : Permanente"
   registered_at:    "  \x0314Rexistrado\x03        : %date%"
@@ -139,6 +142,9 @@ info:
   email:            "  \x0314Correo-e\x03          : %email%"
   vhost:            "  \x0314VHost\x03             : %vhost%"
   no_expire:        "  \x0314Nunca caduca\x03      : Si"
+  pending_deletion_at: "  14Eliminado              : %date%"
+  pending_deletion_until: "  14Elim. definitiva       : %date%"
+  pending_deletion_notice: "  07Este alcume está pendente de eliminación e non se pode rexistrar."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanles con acceso:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
@@ -327,6 +333,8 @@ permissions:
   nickserv.suspend: "Suspender ou reactivar un alcume (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Forzar o renomeado dun alcume conectado a un alcume aleatorio (RENAME)"
   nickserv.drop: "Eliminar un alcume rexistrado (DROP)"
+  nickserv.drop.force: "Forzar a eliminación permanente dun alcume recuperable (DROP FORCE)"
+  nickserv.restore: "Restaurar un alcume pendente de eliminación (RESTORE)"
   nickserv.forbid: "Prohibir ou desprohibir un alcume (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Prohibir ou permitir patróns de vhost (FORBIDVHOST)"
   nickserv.saset: "Modificar a configuración do alcume doutro usuario (SASET)"
@@ -396,7 +404,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <alcume>"
+  syntax:           "DROP <alcume> [FORCE]"
   short:            "Eliminar un alcume rexistrado."
   help:             |
     Elimina un alcume rexistrado da base de datos.
@@ -416,8 +424,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 Non se pode eliminar o usuario root \x02%nickname%\x02."
   cannot_drop_oper:   "\x0304✗\x03 Non se pode eliminar o operador de IRC \x02%nickname%\x02."
   cannot_drop_self:    "\x0304✗\x03 Non pode eliminar o seu propio alcume."
-  success:            "\x0303✓\x03 O alcume \x02%nickname%\x02 foi eliminado."
+  success:            "\x0303✓\x03 O alcume \x02%nickname%\x02 foi marcado para eliminación e pode ser restaurado durante o período de graza."
+  force_success:      "\x0303✓\x03 O alcume \x02%nickname%\x02 foi eliminado permanentemente."
+  pending_deletion:   "\x0304✗\x03 O alcume \x02%nickname%\x02 xa está pendente de eliminación. Use DROP <alcume> FORCE para eliminalo permanentemente."
   cannot_drop_service: "\x0304✗\x03 Non se pode eliminar o alcume de servizo \x02%nickname%\x02."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <alcume>"
+  short:            "Restaurar un alcume pendente de eliminación."
+  help:             "Restaura un alcume que foi eliminado manualmente e aínda está dentro do período de graza. Require permiso IRCop: nickserv.restore."
+  success:          "\x0303✓\x03 O alcume \x02%nickname%\x02 foi restaurado."
+  not_registered:   "\x0304✗\x03 O alcume \x02%nickname%\x02 non está rexistrado."
+  not_pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 non está pendente de eliminación."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

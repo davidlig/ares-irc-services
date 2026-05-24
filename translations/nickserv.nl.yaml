@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is al geregistreerd."
   already_pending:  "\x0304✗\x03 Bijnaam \x02%nickname%\x02 heeft al een lopende verificatie.\n  Gebruik \x0303/msg %bot% VERIFY <token>\x03 of \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden geregistreerd op dit netwerk."
+  pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden geregistreerd."
   invalid_email:    "\x0304✗\x03 Het opgegeven e-mailadres is niet geldig."
   email_already_used: "\x0304✗\x03 De e-mail \x02%email%\x02 is al in gebruik door een andere bijnaam. Gebruik een ander adres."
   throttled:          "\x0304✗\x03 U moet \x02%minutes%\x02 minu(u)t(en) wachten voordat u opnieuw probeert te registreren."
@@ -83,6 +84,7 @@ identify:
   pending:          "\x0304✗\x03 Bijnaam \x02%nickname%\x02 wacht op e-mailverificatie.\n  Voer \x0303/msg %bot% VERIFY <token>\x03 uit of \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is geschorst. Reden: %reason%"
   forbidden:        "\x0304✗\x03 Bijnaam \x02%nickname%\x02 kan niet worden gebruikt op dit netwerk."
+  pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden gebruikt."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,7 +120,8 @@ info:
   status_registered:  "\x0303Geregistreerd\x03"
   status_suspended:   "\x0304Geschorst\x03"
   status_forbidden:   "\x0304Verboden\x03"
-  reason:           "  \x0314Reden\x03                : %reason%"
+  status_pending_deletion: "07Verwijdering in afwachting"
+  reason:           "  \x0314Reden\x03                  : %reason%"
   suspended_until:  "  \x0314Eindigt op\x03           : %date%"
   suspended_permanent: "  \x0314Eindigt op\x03           : Permanent"
   registered_at:    "  \x0314Geregistreerd\x03        : %date%"
@@ -130,7 +133,10 @@ info:
   language:         "  \x0314Taal\x03                 : %language%"
   email:            "  \x0314E-mail\x03               : %email%"
   vhost:            "  \x0314VHost\x03                : %vhost%"
-  no_expire:        "  \x0314Vervalt nooit\x03        : Ja"
+  no_expire:        "  \x0314Vervalt nooit\x03          : Ja"
+  pending_deletion_at: "  14Verwijderd             : %date%"
+  pending_deletion_until: "  14Definitief op          : %date%"
+  pending_deletion_notice: "  07Deze nickname staat op het punt verwijderd te worden en kan niet worden geregistreerd."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AKanalen met toegang:\x03"
   channels_entry_founder:   "  %channel% (\x0303Oprichter\x03)"
@@ -319,6 +325,8 @@ permissions:
   nickserv.suspend: "Schors of hef schorsing van een bijnaam op (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Forceer hernoeming van een verbonden bijnaam naar een willekeurige bijnaam (RENAME)"
   nickserv.drop: "Laat een geregistreerde bijnaam vallen (DROP)"
+  nickserv.drop.force: "Definitief een herstelbare bijnaam verwijderen (DROP FORCE)"
+  nickserv.restore: "Een bijnaam die op verwijdering wacht herstellen (RESTORE)"
   nickserv.forbid: "Verbied of hef verbod van een bijnaam op (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Verbied of sta vhost-patronen toe (FORBIDVHOST)"
   nickserv.saset: "Wijzig instellingen van een andere bijnaam (SASET)"
@@ -388,7 +396,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <bijnaam>"
+  syntax:           "DROP <bijnaam> [FORCE]"
   short:            "Laat een geregistreerde bijnaam vallen."
   help:             |
     Verwijdert een geregistreerde bijnaam uit de database.
@@ -408,8 +416,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 Kan rootgebruiker \x02%nickname%\x02 niet verwijderen."
   cannot_drop_oper:   "\x0304✗\x03 Kan IRC-operator \x02%nickname%\x02 niet verwijderen."
   cannot_drop_self:    "\x0304✗\x03 U kunt uw eigen bijnaam niet verwijderen."
-  success:            "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is verwijderd."
+  success:            "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is gemarkeerd voor verwijdering en kan tijdens de respijtperiode worden hersteld."
+  force_success:      "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is definitief verwijderd."
+  pending_deletion:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat al op het punt verwijderd te worden. Gebruik DROP <bijnaam> FORCE om hem definitief te verwijderen."
   cannot_drop_service: "\x0304✗\x03 Kan service-bijnaam \x02%nickname%\x02 niet verwijderen."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <bijnaam>"
+  short:            "Een bijnaam die op verwijdering wacht herstellen."
+  help:             "Herstelt een bijnaam die handmatig is verwijderd en zich nog in de respijtperiode bevindt. Vereist IRCop-toestemming: nickserv.restore."
+  success:          "\x0303✓\x03 Bijnaam \x02%nickname%\x02 is hersteld."
+  not_registered:   "\x0304✗\x03 Bijnaam \x02%nickname%\x02 is niet geregistreerd."
+  not_pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat niet op het punt verwijderd te worden."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

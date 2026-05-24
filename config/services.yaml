@@ -62,6 +62,9 @@ parameters:
     # Inactivity expiry: days without use after which a registered nick is dropped (0 = disabled)
     nickserv.inactivity_expiry_days_default: 0
     nickserv.inactivity_expiry_days: '%env(int:default:nickserv.inactivity_expiry_days_default:NICKSERV_INACTIVITY_EXPIRY_DAYS)%'
+    # Manual DROP grace: days before a soft-deleted nick is permanently purged (0 = next maintenance run)
+    nickserv.drop_grace_days_default: 7
+    nickserv.drop_grace_days: '%env(int:default:nickserv.drop_grace_days_default:NICKSERV_DROP_GRACE_DAYS)%'
     # History retention: days to keep nickname action history (0 = forever)
     nickserv.history_retention_days_default: 30
     nickserv.history_retention_days: '%env(int:default:nickserv.history_retention_days_default:NICKSERV_HISTORY_RETENTION_DAYS)%'
@@ -94,6 +97,9 @@ parameters:
     # Inactivity expiry: days without use after which a registered channel is dropped (0 = disabled)
     chanserv.inactivity_expiry_days_default: 0
     chanserv.inactivity_expiry_days: '%env(int:default:chanserv.inactivity_expiry_days_default:CHANSERV_INACTIVITY_EXPIRY_DAYS)%'
+    # Manual DROP grace: days before a soft-deleted channel is permanently purged (0 = next maintenance run)
+    chanserv.drop_grace_days_default: 7
+    chanserv.drop_grace_days: '%env(int:default:chanserv.drop_grace_days_default:CHANSERV_DROP_GRACE_DAYS)%'
 
     # MemoServ pseudo-client
     memoserv.nick_default: 'MemoServ'
@@ -687,6 +693,8 @@ services:
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\InfoCommand:
+        arguments:
+            $dropGraceDays: '%chanserv.drop_grace_days%'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\HelpCommand:
@@ -817,6 +825,10 @@ services:
             $eventDispatcher: '@event_dispatcher'
             $debug: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
             $logger: '@monolog.logger.irc'
+            $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
+
+    App\Application\ChanServ\Command\Handler\RestoreCommand:
+        tags: ['chanserv.command']
 
     App\Application\ChanServ\Service\ChannelSuspensionService:
         arguments:
@@ -1052,6 +1064,11 @@ services:
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\InfoCommand:
+        arguments:
+            $dropGraceDays: '%nickserv.drop_grace_days%'
+        tags: ['nickserv.command']
+
+    App\Application\NickServ\Command\Handler\RestoreCommand:
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\SetCommand:
@@ -1343,6 +1360,14 @@ services:
             $inactivityExpiryDays: '%nickserv.inactivity_expiry_days%'
         tags: ['maintenance.task']
 
+    App\Application\NickServ\Maintenance\PurgePendingDeletionNicknamesTask:
+        arguments:
+            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $dropService: '@App\Application\NickServ\Service\NickDropService'
+            $intervalSeconds: '%maintenance.interval%'
+            $dropGraceDays: '%nickserv.drop_grace_days%'
+        tags: ['maintenance.task']
+
     App\Application\NickServ\Maintenance\CleanupHistoryTask:
         arguments:
             $historyRepository: '@App\Domain\NickServ\Repository\NickHistoryRepositoryInterface'
@@ -1358,6 +1383,15 @@ services:
             $logger:               '@monolog.logger.maintenance'
             $intervalSeconds:      '%maintenance.interval%'
             $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
+        tags: ['maintenance.task']
+
+    App\Application\ChanServ\Maintenance\PurgePendingDeletionChannelsTask:
+        arguments:
+            $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
+            $dropService: '@App\Application\ChanServ\Service\ChanDropService'
+            $logger: '@monolog.logger.maintenance'
+            $intervalSeconds: '%maintenance.interval%'
+            $dropGraceDays: '%chanserv.drop_grace_days%'
         tags: ['maintenance.task']
 
     App\Application\ChanServ\Maintenance\CleanupChannelHistoryTask:

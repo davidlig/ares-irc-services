@@ -52,6 +52,11 @@ interface RegisteredChannelRepositoryInterface
     public function findExpiredSuspensions(): array;
 
     /**
+     * @return RegisteredChannel[] Channels manually dropped before the threshold and ready for hard deletion
+     */
+    public function findPendingDeletionBefore(DateTimeImmutable $threshold): array;
+
+    /**
      * @return RegisteredChannel[] Channels that are currently forbidden
      */
     public function findForbiddenChannels(): array;

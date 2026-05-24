@@ -30,6 +30,7 @@ final readonly class InfoCommand implements NickServCommandInterface
         private readonly VhostDisplayResolver $vhostDisplayResolver,
         private readonly ChannelAccessRepositoryInterface $accessRepository,
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
+        private readonly int $dropGraceDays = 7,
     ) {
     }
 
@@ -101,6 +102,12 @@ final readonly class InfoCommand implements NickServCommandInterface
 
         if ($account->isForbidden()) {
             $this->replyForbidden($context, $account);
+
+            return;
+        }
+
+        if ($account->isPendingDeletion()) {
+            $this->replyPendingDeletion($context, $account);
 
             return;
         }
@@ -197,6 +204,22 @@ final readonly class InfoCommand implements NickServCommandInterface
         if (null !== $account->getReason()) {
             $context->reply('info.reason', ['reason' => $account->getReason()]);
         }
+        $context->reply('info.footer');
+    }
+
+    private function replyPendingDeletion(NickServContext $context, RegisteredNick $account): void
+    {
+        $context->reply('info.header', ['nickname' => $account->getNickname()]);
+        $context->reply('info.status', ['status' => $context->trans('info.status_pending_deletion')]);
+        $pendingDeletionAt = $account->getPendingDeletionAt();
+        if (null !== $pendingDeletionAt) {
+            $context->reply('info.pending_deletion_at', ['date' => $context->formatDate($pendingDeletionAt)]);
+        }
+        $expiresAt = $account->getPendingDeletionExpiresAt($this->dropGraceDays);
+        if (null !== $expiresAt) {
+            $context->reply('info.pending_deletion_until', ['date' => $context->formatDate($expiresAt)]);
+        }
+        $context->reply('info.pending_deletion_notice');
         $context->reply('info.footer');
     }
 

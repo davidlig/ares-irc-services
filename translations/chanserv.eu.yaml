@@ -20,6 +20,7 @@ register:
   help:             "Erregistratu eta lotu kanal bat zure ezizenarekin. %nickserv% zerbitzuan identifikatuta egon behar duzu."
   success:          "\x0303✔\x03 \x02%channel%\x02 kanala erregistratu da."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago sarean."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ezabatzearen zain dago eta ezin da erregistratu."
   insufficient_channel_rank: "\x0304✗\x03 \x02%channel%\x02 erregistratzeko gutxienez operadore maila izan behar duzu."
   limit_exceeded: "\x0304✗\x03 Erregistratutako kanalen gehieneko kopurura iritsi zara: %max%."
   throttled: "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu beste kanal bat erregistratu aurretik."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Amaiera\x03            : Iraunkorra"
   forbidden_status: "  \x0314Egoera\x03             : \x0304Debekatua\x03"
   forbidden_reason: "  \x0314Arrazoia\x03           : %reason%"
+  pending_deletion_status: "  14Egoera             : 07Ezabatzeke"
+  pending_deletion_at: "  14Ezabatuta          : %date%"
+  pending_deletion_until: "  14Behin betiko       : %date%"
+  pending_deletion_notice: "  07Kanal hau ChanServ-en izoztuta dago eta ezin da erregistratu."
 
 help:
   syntax:           "HELP [komandoa [azpi-aukera]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "inoiz ez"
     unknown_creator: "ezezaguna"
 
+restore:
+  syntax:           "RESTORE <#kanala>"
+  short:            "Ezabatzearen zain dagoen kanala berreskuratu."
+  help:             "Eskuz ezabatutako eta oraindik grazia epearen barruan dagoen kanala berreskuratzen du. IRCop baimena behar du: chanserv.restore."
+  success:          "\x0303✔\x03 \x02%channel%\x02 kanala berreskuratu da."
+  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
+  not_pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala ez dago ezabatzearen zain."
+
 drop:
-  syntax:           "DROP <#kanala>"
+  syntax:           "DROP <#kanala> [FORCE]"
   short:            "Ezabatu erregistratutako kanal bat."
   help:             "Erregistratutako kanal bat datu-basetik kentzen du."
-  success:          "\x0303✔\x03 \x02%channel%\x02 kanala ezabatu da."
+  success:          "03✔ %channel% kanala ezabatzeko markatu da eta grazia aldian berreskuratu daiteke."
+  force_success:    "\x0303✔\x03 \x02%channel%\x02 kanala behin betiko ezabatu da."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanala jada ezabatzearen zain dago. Erabili DROP <#kanala> FORCE behin betiko ezabatzeko."
   not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanala ez dago erregistratuta."
 
 suspend:
@@ -356,6 +371,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Ezabatu erregistratutako kanal bat (DROP)"
+  chanserv.drop.force: "Berreskuragarria den kanal baten ezabaketa behin betiko behartu (DROP FORCE)"
+  chanserv.restore: "Ezabatzearen zain dagoen kanala berreskuratu (RESTORE)"
   chanserv.suspend: "Etten du edo etenaldia kendu kanal bati (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Debekatu edo des-debekatu kanal bat (FORBID/UNFORBID)"
   chanserv.noexpire: "Ezarri edo kendu iraungitze babesa kanal batentzat (NOEXPIRE)"

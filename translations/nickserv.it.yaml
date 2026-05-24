@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è già registrato."
   already_pending:  "\x0304✗\x03 Il nickname \x02%nickname%\x02 ha già una verifica in sospeso.\n  Usi \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 non può essere registrato su questa rete."
+  pending_deletion: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è in attesa di cancellazione e non può essere registrato."
   invalid_email:    "\x0304✗\x03 L'indirizzo email fornito non è valido."
   email_already_used: "\x0304✗\x03 L'email \x02%email%\x02 è già in uso da un altro nickname. Usi un indirizzo diverso."
   throttled:          "\x0304✗\x03 Deve attendere \x02%minutes%\x02 minuto/i prima di provare a registrarsi di nuovo."
@@ -83,6 +84,7 @@ identify:
   pending:          "\x0304✗\x03 Il nickname \x02%nickname%\x02 è in attesa di verifica email.\n  Esegua \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 è sospeso. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 Il nickname \x02%nickname%\x02 non può essere usato su questa rete."
+  pending_deletion: "\x0304✗\x03 Il nickname \x02%nickname%\x02 è in attesa di cancellazione e non può essere usato."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,7 +120,8 @@ info:
   status_registered:  "\x0303Registrato\x03"
   status_suspended:   "\x0304Sospeso\x03"
   status_forbidden:   "\x0304Vietato\x03"
-  reason:           "  \x0314Motivo\x03              : %reason%"
+  status_pending_deletion: "07In attesa di cancellazione"
+  reason:           "  \x0314Motivo\x03                 : %reason%"
   suspended_until:  "  \x0314Termina il\x03          : %date%"
   suspended_permanent: "  \x0314Termina il\x03          : Permanente"
   registered_at:    "  \x0314Registrato\x03          : %date%"
@@ -131,6 +134,9 @@ info:
   email:            "  \x0314Email\x03               : %email%"
   vhost:            "  \x0314VHost\x03               : %vhost%"
   no_expire:        "  \x0314Mai in scadenza\x03     : Sì"
+  pending_deletion_at: "  14Eliminato              : %date%"
+  pending_deletion_until: "  14Elim. definitiva       : %date%"
+  pending_deletion_notice: "  07Questo nickname è in attesa di cancellazione e non può essere registrato."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanali con accesso:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fondatore\x03)"
@@ -319,6 +325,8 @@ permissions:
   nickserv.suspend: "Sospendere o riattivare un nickname (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Forzare il rename di un nickname connesso a un nick casuale (RENAME)"
   nickserv.drop: "Eliminare un nickname registrato (DROP)"
+  nickserv.drop.force: "Forzare l'eliminazione permanente di un nickname recuperabile (DROP FORCE)"
+  nickserv.restore: "Ripristinare un nickname in attesa di cancellazione (RESTORE)"
   nickserv.forbid: "Vietare o riammettere un nickname (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Vietare o consentire pattern vhost (FORBIDVHOST)"
   nickserv.saset: "Modificare le impostazioni di un altro nickname (SASET)"
@@ -388,7 +396,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <nickname>"
+  syntax:           "DROP <nickname> [FORCE]"
   short:            "Elimina un nickname registrato."
   help:             |
     Elimina un nickname registrato dal database.
@@ -408,8 +416,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 Impossibile eliminare l'utente root \x02%nickname%\x02."
   cannot_drop_oper:   "\x0304✗\x03 Impossibile eliminare l'IRC operator \x02%nickname%\x02."
   cannot_drop_self:    "\x0304✗\x03 Non può eliminare il proprio nickname."
-  success:            "\x0303✓\x03 Il nickname \x02%nickname%\x02 è stato eliminato."
+  success:            "\x0303✓\x03 Il nickname \x02%nickname%\x02 è stato contrassegnato per la cancellazione e può essere ripristinato durante il periodo di grazia."
+  force_success:      "\x0303✓\x03 Il nickname \x02%nickname%\x02 è stato eliminato definitivamente."
+  pending_deletion:   "\x0304✗\x03 Il nickname \x02%nickname%\x02 è già in attesa di cancellazione. Usa DROP <nickname> FORCE per eliminarlo definitivamente."
   cannot_drop_service: "\x0304✗\x03 Impossibile eliminare il nickname di servizio \x02%nickname%\x02."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <nickname>"
+  short:            "Ripristinare un nickname in attesa di cancellazione."
+  help:             "Ripristina un nickname che è stato eliminato manualmente ed è ancora nel periodo di grazia. Richiede il permesso IRCop: nickserv.restore."
+  success:          "\x0303✓\x03 Il nickname \x02%nickname%\x02 è stato ripristinato."
+  not_registered:   "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è registrato."
+  not_pending_deletion: "\x0304✗\x03 Il nickname \x02%nickname%\x02 non è in attesa di cancellazione."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

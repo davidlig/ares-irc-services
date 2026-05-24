@@ -9,6 +9,7 @@ use App\Domain\NickServ\Service\PasswordHasherInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
 use InvalidArgumentException;
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -643,5 +644,51 @@ final class RegisteredNickTest extends TestCase
         $nick->setNoExpire(false);
 
         self::assertFalse($nick->isNoExpire());
+    }
+
+    #[Test]
+    public function markPendingDeletionAndRestore(): void
+    {
+        $at = new DateTimeImmutable('2026-05-01 12:00:00');
+        $nick = RegisteredNick::createPending('Nick', 'hash', 'user@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick->activate();
+
+        $nick->markPendingDeletion($at);
+
+        self::assertSame(NickStatus::PendingDeletion, $nick->getStatus());
+        self::assertTrue($nick->isPendingDeletion());
+        self::assertFalse($nick->isRegistered());
+        self::assertSame($at, $nick->getPendingDeletionAt());
+        self::assertSame('2026-05-08 12:00:00', $nick->getPendingDeletionExpiresAt(7)?->format('Y-m-d H:i:s'));
+        self::assertSame($at, $nick->getPendingDeletionExpiresAt(0));
+
+        $nick->restoreFromPendingDeletion();
+
+        self::assertSame(NickStatus::Registered, $nick->getStatus());
+        self::assertTrue($nick->isRegistered());
+        self::assertNull($nick->getPendingDeletionAt());
+    }
+
+    #[Test]
+    public function markPendingDeletionThrowsWhenNotRegistered(): void
+    {
+        $nick = RegisteredNick::createPending('Nick', 'hash', 'user@example.com', 'en', new DateTimeImmutable('+1 hour'));
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Only registered accounts can be marked for deletion.');
+
+        $nick->markPendingDeletion();
+    }
+
+    #[Test]
+    public function restoreFromPendingDeletionThrowsWhenNotPendingDeletion(): void
+    {
+        $nick = RegisteredNick::createPending('Nick', 'hash', 'user@example.com', 'en', new DateTimeImmutable('+1 hour'));
+        $nick->activate();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Only accounts pending deletion can be restored.');
+
+        $nick->restoreFromPendingDeletion();
     }
 }

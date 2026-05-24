@@ -75,6 +75,31 @@ final class InfoCommandTest extends TestCase
     }
 
     #[Test]
+    public function showsPendingDeletionStatus(): void
+    {
+        $channel = RegisteredChannel::register('#test', 1, 'Desc');
+        $channel->markPendingDeletion(new DateTimeImmutable('2026-05-01 12:00:00'));
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $cmd = new InfoCommand($channelRepo, $nickRepo, 7);
+        $cmd->execute($this->createContext(['#test'], $notifier, $translator));
+
+        self::assertContains('info.pending_deletion_status', $messages);
+        self::assertContains('info.pending_deletion_at', $messages);
+        self::assertContains('info.pending_deletion_until', $messages);
+        self::assertContains('info.pending_deletion_notice', $messages);
+    }
+
+    #[Test]
     public function throwsWhenChannelNotRegistered(): void
     {
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);

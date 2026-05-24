@@ -104,6 +104,9 @@ class RegisteredNick
     /** When true, the nickname will never expire due to inactivity. */
     private bool $noExpire = false;
 
+    /** Set when a manual DROP starts the recoverable deletion grace period. */
+    private ?DateTimeImmutable $pendingDeletionAt = null;
+
     /**
      * Creates a new pending registration awaiting email verification.
      */
@@ -188,6 +191,31 @@ class RegisteredNick
     public function isRegistered(): bool
     {
         return NickStatus::Registered === $this->status;
+    }
+
+    public function isPendingDeletion(): bool
+    {
+        return NickStatus::PendingDeletion === $this->status;
+    }
+
+    public function markPendingDeletion(?DateTimeImmutable $at = null): void
+    {
+        if (!$this->isRegistered()) {
+            throw new LogicException('Only registered accounts can be marked for deletion.');
+        }
+
+        $this->status = NickStatus::PendingDeletion;
+        $this->pendingDeletionAt = $at ?? new DateTimeImmutable();
+    }
+
+    public function restoreFromPendingDeletion(): void
+    {
+        if (!$this->isPendingDeletion()) {
+            throw new LogicException('Only accounts pending deletion can be restored.');
+        }
+
+        $this->status = NickStatus::Registered;
+        $this->pendingDeletionAt = null;
     }
 
     public function isSuspended(): bool
@@ -290,6 +318,20 @@ class RegisteredNick
     public function getSuspendedUntil(): ?DateTimeImmutable
     {
         return $this->suspendedUntil;
+    }
+
+    public function getPendingDeletionAt(): ?DateTimeImmutable
+    {
+        return $this->pendingDeletionAt;
+    }
+
+    public function getPendingDeletionExpiresAt(int $graceDays): ?DateTimeImmutable
+    {
+        if (null === $this->pendingDeletionAt || $graceDays <= 0) {
+            return $this->pendingDeletionAt;
+        }
+
+        return $this->pendingDeletionAt->modify(sprintf('+%d days', $graceDays));
     }
 
     public function getLastSeenAt(): ?DateTimeImmutable

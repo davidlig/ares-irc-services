@@ -367,6 +367,39 @@ final class RegisterCommandTest extends TestCase
     }
 
     #[Test]
+    public function replyPendingDeletionWhenNickPendingDeletion(): void
+    {
+        $sender = new SenderView('UID1', 'Dropped', 'i', 'h', 'c', 'ip');
+        $existing = $this->createStub(RegisteredNick::class);
+        $existing->method('getStatus')->willReturn(NickStatus::PendingDeletion);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByEmail')->willReturn(null);
+        $nickRepo->method('findByNick')->willReturn($existing);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $messages = [];
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $nickRepo,
+            $this->createStub(PasswordHasherInterface::class),
+            new RegisterThrottleRegistry(),
+            new NickServClientKeyResolver(),
+            $this->createStub(MessageBusInterface::class),
+            $translator,
+            $this->createStub(LoggerInterface::class),
+            0,
+        );
+
+        $cmd->execute($this->createContext($sender, ['password', 'user@example.com'], $notifier, $translator));
+
+        self::assertSame(['register.pending_deletion'], $messages);
+    }
+
+    #[Test]
     public function successPathSavesAccountAndRepliesPending(): void
     {
         $sender = new SenderView('UID1', 'NewNick', 'i', 'h', 'c', 'ip');

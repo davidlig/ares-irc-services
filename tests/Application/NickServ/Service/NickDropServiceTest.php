@@ -194,6 +194,91 @@ final class NickDropServiceTest extends TestCase
         $service->dropNick($nick, 'manual', null);
     }
 
+    #[Test]
+    public function softDropNickMarksPendingDeletionWithoutDispatchingDropEvent(): void
+    {
+        $nick = $this->createNickWithId('SoftNick', 301);
+
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::once())->method('save')->with($nick);
+        $nickRepository->expects(self::never())->method('delete');
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn(null);
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $debug = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debug->expects(self::once())->method('log')->with('OperUser', 'DROP', 'SoftNick', null, null, 'manual', self::anything());
+
+        $service = new NickDropService(
+            $nickRepository,
+            $userLookup,
+            $this->createStub(NickForceService::class),
+            $eventDispatcher,
+            $debug,
+            $this->createStub(LoggerInterface::class),
+            'Guest-',
+        );
+
+        $service->softDropNick($nick, 'OperUser');
+
+        self::assertTrue($nick->isPendingDeletion());
+    }
+
+    #[Test]
+    public function softDropNickForcesOnlineUserToGuestNick(): void
+    {
+        $nick = $this->createNickWithId('SoftOnline', 303);
+        $onlineUser = new SenderView('UID303', 'SoftOnline', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'o', '');
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::once())->method('save')->with($nick);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByNick')->willReturn($onlineUser);
+        $forceService = $this->createMock(NickForceService::class);
+        $forceService->expects(self::once())->method('forceGuestNick')->with('UID303', null, 'nick-drop');
+
+        $service = new NickDropService(
+            $nickRepository,
+            $userLookup,
+            $forceService,
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(ServiceDebugNotifierInterface::class),
+            $this->createStub(LoggerInterface::class),
+            'Guest-',
+        );
+
+        $service->softDropNick($nick, 'OperUser');
+    }
+
+    #[Test]
+    public function restoreNickRestoresAndSaves(): void
+    {
+        $nick = $this->createNickWithId('RestoreNick', 302);
+        $nick->markPendingDeletion(new DateTimeImmutable('-1 day'));
+
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::once())->method('save')->with($nick);
+
+        $debug = $this->createMock(ServiceDebugNotifierInterface::class);
+        $debug->expects(self::once())->method('log')->with('OperUser', 'RESTORE', 'RestoreNick', null, null, 'manual');
+
+        $service = new NickDropService(
+            $nickRepository,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickForceService::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $debug,
+            $this->createStub(LoggerInterface::class),
+            'Guest-',
+        );
+
+        $service->restoreNick($nick, 'OperUser');
+
+        self::assertTrue($nick->isRegistered());
+    }
+
     private function createNickWithId(string $nickname, int $id): RegisteredNick
     {
         $nick = RegisteredNick::createPending($nickname, 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));

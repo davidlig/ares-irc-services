@@ -115,6 +115,7 @@ final class DebugChannelJoinSubscriberTest extends TestCase
     {
         $registered = $this->createStub(RegisteredChannel::class);
         $registered->method('isSuspended')->willReturn(true);
+        $registered->method('isBlocked')->willReturn(true);
 
         $registeredRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $registeredRepo->method('findByChannelName')->willReturn($registered);

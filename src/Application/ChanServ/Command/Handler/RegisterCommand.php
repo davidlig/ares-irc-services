@@ -122,6 +122,13 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         $channelNameLower = strtolower($channelName);
 
         if ($this->channelRepository->existsByChannelName($channelNameLower)) {
+            $existing = $this->channelRepository->findByChannelName($channelNameLower);
+            if (null !== $existing && $existing->isPendingDeletion()) {
+                $context->reply('register.pending_deletion', ['%channel%' => $channelName]);
+
+                return;
+            }
+
             throw ChannelAlreadyRegisteredException::forChannel($channelName);
         }
 

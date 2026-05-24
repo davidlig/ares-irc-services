@@ -20,6 +20,7 @@ register:
   help:             "Bir kanalı kaydedin ve rumuzunuza bağlayın. %nickserv% ile kimliğiniz doğrulanmış olmalıdır."
   success:          "\x0303✔\x03 \x02%channel%\x02 kanalı kaydedildi."
   channel_not_on_network: "\x0304✗\x03 \x02%channel%\x02 kanalı ağda mevcut değil."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi bekliyor ve kaydedilemez."
   insufficient_channel_rank: "\x0304✗\x03 Bu kanalı kaydetmek için \x02%channel%\x02 üzerinde en az operatör durumunda olmalısınız."
   limit_exceeded: "\x0304✗\x03 Maksimum %max% kayıtlı kanal sınırına ulaştınız."
   throttled: "\x0304✗\x03 Başka bir kanal kaydetmeden önce \x02%minutes%\x02 dakika beklemelisiniz."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Bitiş tarihi\x03       : Kalıcı"
   forbidden_status: "  \x0314Durum\x03              : \x0304Yasaklandı\x03"
   forbidden_reason: "  \x0314Sebep\x03              : %reason%"
+  pending_deletion_status: "  14Durum              : 07Silinme bekleniyor"
+  pending_deletion_at: "  14Silindi            : %date%"
+  pending_deletion_until: "  14Kalıcı silinme     : %date%"
+  pending_deletion_notice: "  07Bu kanal ChanServ'de dondurulmuştur ve kaydedilemez."
 
 help:
   syntax:           "HELP [komut [alt-seçenek]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "hiçbir zaman"
     unknown_creator: "bilinmiyor"
 
+restore:
+  syntax:           "RESTORE <#channel>"
+  short:            "Silinmeyi bekleyen bir kanalı geri yükle."
+  help:             "Manuel olarak bırakılmış ve hala ödemesiz dönem içinde olan bir kanalı geri yükler. IRCop izni gerektirir: chanserv.restore."
+  success:          "\x0303✔\x03 \x02%channel%\x02 kanalı geri yüklendi."
+  not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
+  not_pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı silinmeyi beklemiyor."
+
 drop:
-  syntax:           "DROP <#channel>"
+  syntax:           "DROP <#channel> [FORCE]"
   short:            "Kayıtlı bir kanalı bırakın."
   help:             "Veritabanından kayıtlı bir kanalı kaldırır."
-  success:          "\x0303✔\x03 \x02%channel%\x02 kanalı bırakıldı."
+  success:          "03✔ Kanal %channel% silinmek üzere işaretlendi ve ödemesiz dönem boyunca geri yüklenebilir."
+  force_success:    "\x0303✔\x03 \x02%channel%\x02 kanalı kalıcı olarak silindi."
+  pending_deletion: "\x0304✗\x03 \x02%channel%\x02 kanalı zaten silinmeyi bekliyor. Kalıcı olarak silmek için DROP <#channel> FORCE kullanın."
   not_registered:   "\x0304✗\x03 \x02%channel%\x02 kanalı kayıtlı değil."
 
 suspend:
@@ -356,6 +371,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Kayıtlı bir kanalı bırakın (DROP)"
+  chanserv.drop.force: "Kurtarılabilir bir kanalı kalıcı olarak zorla sil (DROP FORCE)"
+  chanserv.restore: "Silinmeyi bekleyen bir kanalı geri yükle (RESTORE)"
   chanserv.suspend: "Bir kanalı askıya alın veya askıyı kaldırın (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Bir kanalı yasaklayın veya yasağı kaldırın (FORBID/UNFORBID)"
   chanserv.noexpire: "Bir kanal için süre sonu korumasını ayarlayın veya kaldırın (NOEXPIRE)"

@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 \x02%nickname%\x02 rumuzu zaten kayıtlı."
   already_pending:  "\x0304✗\x03 \x02%nickname%\x02 rumuzu için zaten bekleyen bir doğrulama var.\n  \x0303/msg %bot% VERIFY <token>\x03 veya \x0303/msg %bot% RESEND\x03 kullanın."
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kaydedilemez."
+  pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi bekliyor ve kaydedilemez."
   invalid_email:    "\x0304✗\x03 Sağlanan e-posta adresi geçerli değil."
   email_already_used: "\x0304✗\x03 \x02%email%\x02 e-postası zaten başka bir rumuz tarafından kullanılıyor. Farklı bir adres kullanın."
   throttled:          "\x0304✗\x03 Tekrar kayıt olmayı denemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
@@ -83,6 +84,7 @@ identify:
   pending:          "\x0304✗\x03 \x02%nickname%\x02 rumuzu e-posta doğrulaması bekliyor.\n  \x0303/msg %bot% VERIFY <token>\x03 veya \x0303/msg %bot% RESEND\x03 komutunu çalıştırın."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Sebep: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kullanılamaz."
+  pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi bekliyor ve kullanılamaz."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,6 +120,7 @@ info:
   status_registered:  "\x0303Kayıtlı\x03"
   status_suspended:   "\x0304Askıya alındı\x03"
   status_forbidden:   "\x0304Yasaklandı\x03"
+  status_pending_deletion: "07Silinmeyi bekliyor"
   reason:           "  \x0314Sebep\x03              : %reason%"
   suspended_until:  "  \x0314Bitiş tarihi\x03       : %date%"
   suspended_permanent: "  \x0314Bitiş tarihi\x03       : Kalıcı"
@@ -131,6 +134,9 @@ info:
   email:            "  \x0314E-posta\x03            : %email%"
   vhost:            "  \x0314VHost\x03              : %vhost%"
   no_expire:        "  \x0314Hiç Sona Ermez\x03     : Evet"
+  pending_deletion_at: "  14Silindi                : %date%"
+  pending_deletion_until: "  14Kalıcı silinme         : %date%"
+  pending_deletion_notice: "  07Bu rumuz silinmeyi bekliyor ve kaydedilemez."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0AErişim sahibi olunan kanallar:\x03"
   channels_entry_founder:   "  %channel% (\x0303Kurucu\x03)"
@@ -319,6 +325,8 @@ permissions:
   nickserv.suspend: "Bir rumuzu askıya alın veya askıyı kaldırın (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Bağlı bir rumuzu rastgele bir rumuza zorla değiştirin (RENAME)"
   nickserv.drop: "Kayıtlı bir rumuzu bırakın (DROP)"
+  nickserv.drop.force: "Kurtarılabilir bir rumuzu kalıcı olarak zorla sil (DROP FORCE)"
+  nickserv.restore: "Silinmeyi bekleyen bir rumuzu geri yükle (RESTORE)"
   nickserv.forbid: "Bir rumuzu yasaklayın veya yasağı kaldırın (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Vhost kalıplarını yasaklayın veya izin verin (FORBIDVHOST)"
   nickserv.saset: "Başka bir rumuzun ayarlarını değiştirin (SASET)"
@@ -388,7 +396,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <nickname>"
+  syntax:           "DROP <nickname> [FORCE]"
   short:            "Kayıtlı bir rumuzu bırakın."
   help:             |
     Veritabanından kayıtlı bir rumuzu bırakır.
@@ -408,8 +416,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 Root kullanıcı \x02%nickname%\x02 bırakılamaz."
   cannot_drop_oper:   "\x0304✗\x03 IRC operatörü \x02%nickname%\x02 bırakılamaz."
   cannot_drop_self:    "\x0304✗\x03 Kendi rumuzunuzu bırakamazsınız."
-  success:            "\x0303✓\x03 \x02%nickname%\x02 rumuzu bırakıldı."
+  success:            "\x0303✓\x03 \x02%nickname%\x02 rumuzu silinmek üzere işaretlendi ve ödemesiz dönem içinde geri yüklenebilir."
+  force_success:      "\x0303✓\x03 \x02%nickname%\x02 rumuzu kalıcı olarak silindi."
+  pending_deletion:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu zaten silinmeyi bekliyor. Kalıcı olarak silmek için DROP <nickname> FORCE kullanın."
   cannot_drop_service: "\x0304✗\x03 Hizmet rumuzu \x02%nickname%\x02 bırakılamaz."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <nickname>"
+  short:            "Silinmeyi bekleyen bir rumuzu geri yükle."
+  help:             "Manuel olarak bırakılmış ve hala ödemesiz dönem içinde olan bir rumuzu geri yükler. IRCop izni gerektirir: nickserv.restore."
+  success:          "\x0303✓\x03 \x02%nickname%\x02 rumuzu geri yüklendi."
+  not_registered:   "\x0304✗\x03 \x02%nickname%\x02 rumuzu kayıtlı değil."
+  not_pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi beklemiyor."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

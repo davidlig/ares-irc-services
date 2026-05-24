@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 El apodo \x02%nickname%\x02 ya está registrado."
   already_pending:  "\x0304✗\x03 El apodo \x02%nickname%\x02 ya tiene un registro pendiente de verificación.\n  Usa \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 El apodo \x02%nickname%\x02 no puede ser registrado en esta red."
+  pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de eliminación y no puede ser registrado."
   invalid_email:    "\x0304✗\x03 La dirección de correo electrónico no es válida."
   email_already_used: "\x0304✗\x03 El correo \x02%email%\x02 ya está en uso por otro apodo. Usa otra dirección."
   throttled:          "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de intentar registrar de nuevo."
@@ -83,6 +84,7 @@ identify:
   pending:          "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de verificación de email.\n  Ejecuta \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido. Razón: %reason%"
   forbidden:        "\x0304✗\x03 El apodo \x02%nickname%\x02 no puede ser utilizado en esta red."
+  pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de eliminación y no puede ser usado."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,6 +120,7 @@ info:
   status_registered:  "\x0303Registrado\x03"
   status_suspended:   "\x0304Suspendido\x03"
   status_forbidden:   "\x0304Prohibido\x03"
+  status_pending_deletion: "07Pendiente de eliminación"
   reason:           "  \x0314Razón\x03                  : %reason%"
   suspended_until:  "  \x0314Fecha fin\x03              : %date%"
   suspended_permanent: "  \x0314Fecha fin\x03              : Permanente"
@@ -131,6 +134,9 @@ info:
   email:            "  \x0314Correo\x03                 : %email%"
   vhost:            "  \x0314VHost\x03                  : %vhost%"
   no_expire:        "  \x0314Nunca expira\x03           : Sí"
+  pending_deletion_at: "  14Eliminado              : %date%"
+  pending_deletion_until: "  14Elim. definitiva       : %date%"
+  pending_deletion_notice: "  07Este apodo está pendiente de eliminación y no puede ser registrado."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanales con acceso:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
@@ -319,6 +325,8 @@ permissions:
   nickserv.suspend: "Suspender o reactivar un apodo (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Forzar cambio de apodo de un apodo conectado a uno aleatorio (RENAME)"
   nickserv.drop: "Eliminar un apodo registrado (DROP)"
+  nickserv.drop.force: "Forzar la eliminación permanente de un apodo en periodo de gracia (DROP FORCE)"
+  nickserv.restore: "Restaurar un apodo pendiente de eliminación (RESTORE)"
   nickserv.forbid: "Prohibir o deshacer la prohibición de un apodo (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Prohibir o permitir patrones de vhost (FORBIDVHOST)"
   nickserv.saset: "Modificar la configuración de otro apodo (SASET)"
@@ -388,7 +396,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <apodo>"
+  syntax:           "DROP <apodo> [FORCE]"
   short:            "Elimina un apodo registrado."
   help:             |
     Elimina un apodo registrado de la base de datos.
@@ -408,8 +416,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 No se puede eliminar al usuario root \x02%nickname%\x02."
   cannot_drop_oper:   "\x0304✗\x03 No se puede eliminar al IRC operator \x02%nickname%\x02."
   cannot_drop_self:    "\x0304✗\x03 No puedes eliminar tu propio apodo."
-  success:            "\x0303✓\x03 El apodo \x02%nickname%\x02 ha sido eliminado."
+  success:            "\x0303✓\x03 El apodo \x02%nickname%\x02 ha sido marcado para eliminación y puede ser restaurado durante el periodo de gracia."
+  force_success:      "\x0303✓\x03 El apodo \x02%nickname%\x02 ha sido eliminado permanentemente."
+  pending_deletion:   "\x0304✗\x03 El apodo \x02%nickname%\x02 ya está pendiente de eliminación. Usa DROP <apodo> FORCE para eliminarlo permanentemente."
   cannot_drop_service: "\x0304✗\x03 No se puede eliminar el apodo de servicio \x02%nickname%\x02."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <apodo>"
+  short:            "Restaurar un apodo pendiente de eliminación."
+  help:             "Restaura un apodo que fue eliminado manualmente y aún está dentro del periodo de gracia. Requiere permiso IRCop: nickserv.restore."
+  success:          "\x0303✓\x03 El apodo \x02%nickname%\x02 ha sido restaurado."
+  not_registered:   "\x0304✗\x03 El apodo \x02%nickname%\x02 no está registrado."
+  not_pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 no está pendiente de eliminación."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

@@ -16,6 +16,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -185,7 +186,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -218,7 +219,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -310,7 +311,7 @@ final class RegisterCommandTest extends TestCase
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
-        $existing = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $existing = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
@@ -343,12 +344,12 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->with(self::callback(static function ($ch): bool {
-            if (!$ch instanceof \App\Domain\ChanServ\Entity\RegisteredChannel
+            if (!$ch instanceof RegisteredChannel
                 || '#test' !== strtolower($ch->getName())
                 || 10 !== $ch->getFounderNickId()) {
                 return false;
             }
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($ch, 1);
 
@@ -384,7 +385,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 42);
         });
@@ -445,6 +446,40 @@ final class RegisterCommandTest extends TestCase
     }
 
     #[Test]
+    public function repliesPendingDeletionWhenChannelIsPendingDeletion(): void
+    {
+        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(10);
+        $channel = RegisteredChannel::register('#test', 10, 'Desc');
+        $channel->markPendingDeletion();
+        $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $channelRepo->method('existsByChannelName')->willReturn(true);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $messages = [];
+        $notifier = $this->createStub(ChanServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+
+        $cmd = new RegisterCommand(
+            $channelRepo,
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+            new ChannelRegisterThrottleRegistry(),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createNonRootRegistry(),
+            3,
+            0,
+        );
+
+        $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $this->createStub(ChannelLookupPort::class)));
+
+        self::assertSame(['register.pending_deletion'], $messages);
+    }
+
+    #[Test]
     public function replyThrottleExpiresWhenCooldownElapses(): void
     {
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip');
@@ -454,7 +489,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -512,7 +547,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -547,7 +582,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -582,7 +617,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->expects(self::once())->method('existsByChannelName')->with('#testchan')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -796,7 +831,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -831,7 +866,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -860,12 +895,12 @@ final class RegisterCommandTest extends TestCase
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
-        $existing = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $existing = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -895,12 +930,12 @@ final class RegisterCommandTest extends TestCase
         $sender = new SenderView('UID1', 'RootAdmin', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: false);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
-        $existing = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $existing = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -935,7 +970,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -970,7 +1005,7 @@ final class RegisterCommandTest extends TestCase
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([]);
         $channelRepo->expects(self::once())->method('save')->willReturnCallback(static function ($channel): void {
-            $ref = new ReflectionProperty(\App\Domain\ChanServ\Entity\RegisteredChannel::class, 'id');
+            $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
             $ref->setAccessible(true);
             $ref->setValue($channel, 1);
         });
@@ -1028,7 +1063,7 @@ final class RegisterCommandTest extends TestCase
         $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: false);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
-        $existing = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $existing = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('existsByChannelName')->willReturn(false);
         $channelRepo->method('findByFounderNickId')->willReturn([$existing, $existing, $existing]);

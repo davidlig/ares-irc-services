@@ -20,6 +20,7 @@ register:
   help:             "Καταχωρήστε και συσχετίστε ένα κανάλι με το ψευδώνυμό σας. Πρέπει να είστε ταυτοποιημένοι με το %nickserv%."
   success:          "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει καταχωρηθεί."
   channel_not_on_network: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν υπάρχει στο δίκτυο."
+  pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι σε αναμονή διαγραφής και δεν μπορεί να καταχωρηθεί."
   insufficient_channel_rank: "\x0304✗\x03 Πρέπει να έχεις τουλάχιστον κατάσταση operator στο \x02%channel%\x02 για να το καταχωρήσεις."
   limit_exceeded: "\x0304✗\x03 Έχετε φτάσει το μέγιστο όριο των %max% καταχωρημένων καναλιών."
   throttled: "\x0304✗\x03 Πρέπει να περιμένετε \x02%minutes%\x02 λεπτό(ά) πριν καταχωρήσετε άλλο κανάλι."
@@ -48,6 +49,10 @@ info:
   suspended_permanent: "  \x0314Λήγει στις\x03      : Μόνιμη"
   forbidden_status: "  \x0314Κατάσταση\x03       : \x0304Απαγορευμένο\x03"
   forbidden_reason: "  \x0314Αιτία\x03           : %reason%"
+  pending_deletion_status: "  14Κατάσταση          : 07Σε εκκρεμότητα διαγραφής"
+  pending_deletion_at: "  14Διαγράφηκε         : %date%"
+  pending_deletion_until: "  14Οριστική διαγραφή  : %date%"
+  pending_deletion_notice: "  07Αυτό το κανάλι είναι παγωμένο στο ChanServ και δεν μπορεί να καταχωρηθεί."
 
 help:
   syntax:           "HELP [command [sub-option]]"
@@ -314,11 +319,21 @@ akick:
     never_expires:  "ποτέ"
     unknown_creator: "άγνωστος"
 
+restore:
+  syntax:           "RESTORE <#channel>"
+  short:            "Επαναφορά καναλιού σε αναμονή διαγραφής."
+  help:             "Επαναφέρει ένα κανάλι που διαγράφηκε χειροκίνητα και βρίσκεται ακόμα εντός της περιόδου χάριτος. Απαιτεί άδεια IRCop: chanserv.restore."
+  success:          "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει επαναφερθεί."
+  not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
+  not_pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι σε αναμονή διαγραφής."
+
 drop:
-  syntax:           "DROP <#channel>"
+  syntax:           "DROP <#channel> [FORCE]"
   short:            "Διαγραφή καταχωρημένου καναλιού."
   help:             "Αφαιρεί ένα καταχωρημένο κανάλι από τη βάση δεδομένων."
-  success:          "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει διαγραφεί."
+  success:          "03✔ Το κανάλι %channel% έχει επισημανθεί για διαγραφή και μπορεί να αποκατασταθεί κατά την περίοδο χάριτος."
+  force_success:    "\x0303✔\x03 Το κανάλι \x02%channel%\x02 έχει διαγραφεί οριστικά."
+  pending_deletion: "\x0304✗\x03 Το κανάλι \x02%channel%\x02 είναι ήδη σε αναμονή διαγραφής. Χρησιμοποιήστε DROP <#channel> FORCE για οριστική διαγραφή."
   not_registered:   "\x0304✗\x03 Το κανάλι \x02%channel%\x02 δεν είναι καταχωρημένο."
 
 suspend:
@@ -356,6 +371,8 @@ debug_channel:
 
 permissions:
   chanserv.drop: "Διαγραφή καταχωρημένου καναλιού (DROP)"
+  chanserv.drop.force: "Μόνιμη διαγραφή ανακτήσιμης εγκατάλειψης καναλιού (DROP FORCE)"
+  chanserv.restore: "Επαναφορά καναλιού σε αναμονή διαγραφής (RESTORE)"
   chanserv.suspend: "Αναστολή ή άρση αναστολής καναλιού (SUSPEND/UNSUSPEND)"
   chanserv.forbid: "Απαγόρευση ή άρση απαγόρευσης καναλιού (FORBID/UNFORBID)"
   chanserv.noexpire: "Ορισμός ή αφαίρεση προστασίας λήξης για κανάλι (NOEXPIRE)"

@@ -29,6 +29,7 @@ register:
   already_registered: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està registrat."
   already_pending:  "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja té una verificació pendent.\n  Utilitzeu \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot registrar en aquesta xarxa."
+  pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no pot ser registrat."
   invalid_email:    "\x0304✗\x03 L'adreça de correu proporcionada no és vàlida."
   email_already_used: "\x0304✗\x03 El correu \x02%email%\x02 ja està en ús per un altre sobrenom. Utilitzeu una adreça diferent."
   throttled:          "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans d'intentar registrar-vos de nou."
@@ -83,6 +84,7 @@ identify:
   pending:          "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té una verificació de correu pendent.\n  Executeu \x0303/msg %bot% VERIFY <token>\x03 o \x0303/msg %bot% RESEND\x03."
   suspended:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
+  pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no pot ser utilitzat."
 
 # --- STATUS -----------------------------------------------------------------
 status:
@@ -118,6 +120,7 @@ info:
   status_registered:  "\x0303Registrat\x03"
   status_suspended:   "\x0304Suspès\x03"
   status_forbidden:   "\x0304Prohibit\x03"
+  status_pending_deletion: "07Pendent d'eliminació"
   reason:           "  \x0314Motiu\x03                 : %reason%"
   suspended_until:  "  \x0314Acaba el\x03              : %date%"
   suspended_permanent: "  \x0314Acaba el\x03              : Permanent"
@@ -131,6 +134,9 @@ info:
   email:            "  \x0314Correu\x03                : %email%"
   vhost:            "  \x0314VHost\x03                 : %vhost%"
   no_expire:        "  \x0314Mai expira\x03            : Sí"
+  pending_deletion_at: "  14Eliminat               : %date%"
+  pending_deletion_until: "  14Elim. definitiva       : %date%"
+  pending_deletion_notice: "  07Aquest sobrenom està pendent d'eliminació i no pot ser registrat."
   footer:           "\x0314─────────────────────────────\x03"
   channels_header:  "\x0314\x0ACanals amb accés:\x03"
   channels_entry_founder:   "  %channel% (\x0303Fundador\x03)"
@@ -319,6 +325,8 @@ permissions:
   nickserv.suspend: "Suspendre o treure la suspensió d'un sobrenom (SUSPEND/UNSUSPEND)"
   nickserv.rename: "Forçar el canvi de nom d'un sobrenom connectat a un sobrenom aleatori (RENAME)"
   nickserv.drop: "Eliminar un sobrenom registrat (DROP)"
+  nickserv.drop.force: "Forçar l'eliminació permanent d'un sobrenom en període de gràcia (DROP FORCE)"
+  nickserv.restore: "Restaurar un sobrenom pendent d'eliminació (RESTORE)"
   nickserv.forbid: "Prohibir o treure la prohibició d'un sobrenom (FORBID/UNFORBID)"
   nickserv.forbidvhost: "Prohibir o permetre patrons de vhost (FORBIDVHOST)"
   nickserv.saset: "Modificar la configuració d'un altre sobrenom (SASET)"
@@ -388,7 +396,7 @@ rename:
 
 # --- DROP (IRCop) --------------------------------------------------------------
 drop:
-  syntax:           "DROP <nickname>"
+  syntax:           "DROP <nickname> [FORCE]"
   short:            "Eliminar un sobrenom registrat."
   help:             |
     Elimina un sobrenom registrat de la base de dades.
@@ -408,8 +416,19 @@ drop:
   cannot_drop_root:   "\x0304✗\x03 No es pot eliminar l'usuari root \x02%nickname%\x02."
   cannot_drop_oper:   "\x0304✗\x03 No es pot eliminar l'operador d'IRC \x02%nickname%\x02."
   cannot_drop_self:    "\x0304✗\x03 No podeu eliminar el vostre propi sobrenom."
-  success:            "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat eliminat."
+  success:            "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat marcat per a eliminació i pot ser restaurat durant el període de gràcia."
+  force_success:      "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat eliminat permanentment."
+  pending_deletion:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 ja està pendent d'eliminació. Utilitza DROP <nickname> FORCE per eliminar-lo permanentment."
   cannot_drop_service: "\x0304✗\x03 No es pot eliminar el sobrenom de servei \x02%nickname%\x02."
+
+# --- RESTORE (IRCop) -----------------------------------------------------------
+restore:
+  syntax:           "RESTORE <nickname>"
+  short:            "Restaurar un sobrenom pendent d'eliminació."
+  help:             "Restaura un sobrenom que va ser eliminat manualment i encara està dins del període de gràcia. Requereix permís IRCop: nickserv.restore."
+  success:          "\x0303✓\x03 El sobrenom \x02%nickname%\x02 ha estat restaurat."
+  not_registered:   "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està registrat."
+  not_pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no està pendent d'eliminació."
 
 # --- FORBID (IRCop) --------------------------------------------------------------
 forbid:

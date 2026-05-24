@@ -350,6 +350,27 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
         self::assertContains('Expired2', $nicknames);
     }
 
+    #[Test]
+    public function findPendingDeletionBeforeReturnsOnlyExpiredManualDrops(): void
+    {
+        $expired = $this->createRegisteredNick('ExpiredDrop', 'expireddrop@example.com');
+        $expired->markPendingDeletion(new DateTimeImmutable('-8 days'));
+        $this->repository->save($expired);
+
+        $fresh = $this->createRegisteredNick('FreshDrop', 'freshdrop@example.com');
+        $fresh->markPendingDeletion(new DateTimeImmutable('-1 day'));
+        $this->repository->save($fresh);
+
+        $active = $this->createRegisteredNick('ActiveDrop', 'activedrop@example.com');
+        $this->repository->save($active);
+        $this->flushAndClear();
+
+        $result = $this->repository->findPendingDeletionBefore(new DateTimeImmutable('-7 days'));
+
+        self::assertCount(1, $result);
+        self::assertSame('ExpiredDrop', $result[0]->getNickname());
+    }
+
     private function createRegisteredNick(string $nickname, string $email): RegisteredNick
     {
         $nick = RegisteredNick::createPending(
