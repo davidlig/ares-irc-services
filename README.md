@@ -1,13 +1,13 @@
 # Ares IRC Services
 
-[![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?style=flat&logo=php)](https://php.net)
+[![PHP](https://img.shields.io/badge/PHP-8.5-777BB4?style=flat&logo=php)](https://php.net)
 [![Symfony](https://img.shields.io/badge/Symfony-7.4-black?style=flat&logo=symfony)](https://symfony.com)
 [![License](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-WIP-orange.svg)]()
 
 > **Under active development.** Functionality and APIs may change.
 
-A modular, protocol-agnostic IRC services daemon built with **PHP 8.4**, **Symfony 7.4**, **Doctrine ORM 3.6**, and **Clean Architecture / DDD** principles. Ships with NickServ, ChanServ, MemoServ, and OperServ — all protocol-independent via a strategy pattern backed by a tagged-service registry.
+A modular, protocol-agnostic IRC services daemon built with **PHP 8.5**, **Symfony 7.4**, **Doctrine ORM 3.6**, and **Clean Architecture / DDD** principles. Ships with NickServ, ChanServ, MemoServ, and OperServ — all protocol-independent via a strategy pattern backed by a tagged-service registry.
 
 ---
 
@@ -94,7 +94,7 @@ IRC operator management with a role-based permission system. **IRCOP** ADD/DEL/L
 
 | Dependency | Minimum version |
 |------------|----------------|
-| PHP | 8.4 |
+| PHP | 8.5 |
 | Composer | 2.x |
 
 **Required PHP extensions:**

@@ -46,7 +46,7 @@ Pattern: ONE message with multiple tool calls
 
 - **Think Before Coding**: Present a structured step-by-step plan or pseudocode before writing code. Wait for approval before generating code.
 - **Refactoring**: Before adding features, analyze for architectural violations and code smells (especially "Long Methods" or SRP violations). If a method has too much logic, propose refactoring via "Extract Method" before proceeding.
-- **Code Style (PHP CS Fixer)**: All code MUST comply with `.php-cs-fixer.dist.php`. Format code or ensure alignment with strict Symfony standards and PHP 8.4 features.
+- **Code Style (PHP CS Fixer)**: All code MUST comply with `.php-cs-fixer.dist.php`. Format code or ensure alignment with strict Symfony standards and PHP 8.5 features.
 - **Commit Order (CRITICAL)**: Run PHP CS Fixer BEFORE committing: (1) implement code, (2) run `./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php`, (3) then commit. Never commit first and fix style separately.
 - **Git Management**: Commit when task is done. Messages MUST be in English, follow Conventional Commits (`feat:`, `fix:`, `refactor:`).
 - **README Sync**: If you add/change/remove features, commands, or config vars, update `README.md`.

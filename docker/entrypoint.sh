@@ -37,9 +37,12 @@ fi
 # 3. Sync .env.local with new keys from .env
 /app/docker/sync-env.sh
 
-# 4. Run composer install
-echo "==> Running composer install"
-composer install -n --no-dev --optimize-autoloader --classmap-authoritative --no-scripts
+# 4. Ensure production dependencies are present. Dependencies are installed at
+# image build time so container startup stays fast and deterministic.
+if [ ! -f /app/vendor/autoload.php ]; then
+    echo "ERROR: /app/vendor/autoload.php not found. Rebuild the Docker image."
+    exit 1
+fi
 
 # 5. Run database migrations
 echo "==> Running database migrations"
@@ -47,4 +50,4 @@ php bin/console doctrine:migrations:migrate -n
 
 # 6. Start IRC services
 echo "==> Starting Ares IRC Services"
-exec php bin/console irc:connect
+exec "$@"

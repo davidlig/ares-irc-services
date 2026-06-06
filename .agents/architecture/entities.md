@@ -55,7 +55,7 @@ final readonly class ChannelAccess
 }
 ```
 
-### Property Hooks (PHP 8.4)
+### Property Hooks (PHP 8.5)
 
 Use `get`/`set` hooks where logic is needed:
 
