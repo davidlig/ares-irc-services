@@ -16,11 +16,13 @@ final class Version20260510150000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE motd ADD shown_count INT NOT NULL DEFAULT 0');
+        $motd = $schema->getTable('motd');
+        $motd->addColumn('shown_count', 'integer', ['default' => 0]);
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE motd DROP shown_count');
+        $motd = $schema->getTable('motd');
+        $motd->dropColumn('shown_count');
     }
 }

@@ -16,17 +16,23 @@ final class Version20260524020000 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('ALTER TABLE registered_nicks ADD pending_deletion_at DATETIME DEFAULT NULL');
-        $this->addSql('CREATE INDEX idx_status_pending_deletion ON registered_nicks (status, pending_deletion_at)');
-        $this->addSql('ALTER TABLE registered_channels ADD pending_deletion_at DATETIME DEFAULT NULL');
-        $this->addSql('CREATE INDEX idx_registered_channels_pending_deletion ON registered_channels (status, pending_deletion_at)');
+        $nicks = $schema->getTable('registered_nicks');
+        $nicks->addColumn('pending_deletion_at', 'datetime_immutable', ['notnull' => false]);
+        $nicks->addIndex(['status', 'pending_deletion_at'], 'idx_status_pending_deletion');
+
+        $channels = $schema->getTable('registered_channels');
+        $channels->addColumn('pending_deletion_at', 'datetime_immutable', ['notnull' => false]);
+        $channels->addIndex(['status', 'pending_deletion_at'], 'idx_registered_channels_pending_deletion');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP INDEX idx_status_pending_deletion');
-        $this->addSql('ALTER TABLE registered_nicks DROP pending_deletion_at');
-        $this->addSql('DROP INDEX idx_registered_channels_pending_deletion');
-        $this->addSql('ALTER TABLE registered_channels DROP pending_deletion_at');
+        $nicks = $schema->getTable('registered_nicks');
+        $nicks->dropIndex('idx_status_pending_deletion');
+        $nicks->dropColumn('pending_deletion_at');
+
+        $channels = $schema->getTable('registered_channels');
+        $channels->dropIndex('idx_registered_channels_pending_deletion');
+        $channels->dropColumn('pending_deletion_at');
     }
 }
