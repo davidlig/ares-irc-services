@@ -27,8 +27,7 @@ final readonly class SenderView
         /** Host currently displayed by the IRCd (vhost if set, else cloakedHost). */
         public string $displayHost = '',
         public string $modes = '',
-    ) {
-    }
+    ) {}
 
     public function toUserMask(): string
     {

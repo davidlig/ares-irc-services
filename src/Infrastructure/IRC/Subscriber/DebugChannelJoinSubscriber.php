@@ -43,8 +43,7 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ServiceUidRegistry $uidRegistry,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

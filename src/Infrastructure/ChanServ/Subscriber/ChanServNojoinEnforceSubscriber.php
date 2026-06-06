@@ -47,8 +47,7 @@ final readonly class ChanServNojoinEnforceSubscriber implements EventSubscriberI
         private string $chanservNick,
         private string $defaultLanguage = 'en',
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

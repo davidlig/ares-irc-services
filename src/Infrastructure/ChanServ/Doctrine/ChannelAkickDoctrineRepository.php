@@ -11,9 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class ChannelAkickDoctrineRepository implements ChannelAkickRepositoryInterface
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function save(ChannelAkick $akick): void
     {

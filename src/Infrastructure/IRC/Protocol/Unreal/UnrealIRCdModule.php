@@ -28,8 +28,7 @@ final readonly class UnrealIRCdModule implements ProtocolRuntimeModuleInterface
         private readonly UnrealIRCdChannelModeSupport $channelModeSupport,
         private readonly UnrealIRCdUserModeSupport $userModeSupport,
         private readonly UnrealIRCdNickReservation $nickReservation,
-    ) {
-    }
+    ) {}
 
     public function getProtocolName(): string
     {

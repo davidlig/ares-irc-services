@@ -20,6 +20,5 @@ final readonly class ChannelSyncedEvent
     public function __construct(
         public readonly Channel $channel,
         public readonly bool $channelSetupApplicable = true,
-    ) {
-    }
+    ) {}
 }

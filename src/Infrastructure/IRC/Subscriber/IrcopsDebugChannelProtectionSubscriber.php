@@ -33,8 +33,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         private string $chanservNick,
         private ?string $debugChannel,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

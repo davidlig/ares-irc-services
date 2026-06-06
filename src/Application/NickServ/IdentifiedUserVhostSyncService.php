@@ -30,8 +30,7 @@ final readonly class IdentifiedUserVhostSyncService
         private readonly VhostDisplayResolver $displayResolver,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     /**
      * Sync displayed vhost to the user's current identified state.

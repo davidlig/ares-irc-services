@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ChanServEntryMsgSubscriber::class)]
 final class ChanServEntryMsgSubscriberTest extends TestCase
 {
-    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+    private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
 
     private ChanServNotifierInterface&MockObject $notifier;
 
@@ -44,9 +44,7 @@ final class ChanServEntryMsgSubscriberTest extends TestCase
     private function createUidRegistry(string $uid = '001CHAN'): ServiceUidRegistry
     {
         $provider = new class('chanserv', 'ChanServ', $uid) implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {

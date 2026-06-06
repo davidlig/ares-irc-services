@@ -12,8 +12,7 @@ readonly class NickProtectabilityResult
         public NickProtectabilityStatus $status,
         public string $nickname,
         public ?RegisteredNick $account = null,
-    ) {
-    }
+    ) {}
 
     public static function allowed(string $nickname, ?RegisteredNick $account): self
     {

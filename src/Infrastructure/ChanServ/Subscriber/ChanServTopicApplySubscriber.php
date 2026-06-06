@@ -24,8 +24,7 @@ final readonly class ChanServTopicApplySubscriber implements EventSubscriberInte
         private ChannelLookupPort $channelLookup,
         private ChannelServiceActionsPort $channelServiceActions,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

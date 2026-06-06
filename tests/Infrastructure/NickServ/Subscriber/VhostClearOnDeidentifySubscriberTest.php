@@ -18,9 +18,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(VhostClearOnDeidentifySubscriber::class)]
 final class VhostClearOnDeidentifySubscriberTest extends TestCase
 {
-    private NetworkUserLookupPort&MockObject $userLookup;
+    private MockObject&NetworkUserLookupPort $userLookup;
 
-    private NickServNotifierInterface&MockObject $notifier;
+    private MockObject&NickServNotifierInterface $notifier;
 
     private VhostClearOnDeidentifySubscriber $subscriber;
 

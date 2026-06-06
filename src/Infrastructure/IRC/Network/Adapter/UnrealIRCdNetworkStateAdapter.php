@@ -49,8 +49,7 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function getSupportedProtocol(): string
     {

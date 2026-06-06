@@ -25,7 +25,7 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(ChanServRejoinSubscriber::class)]
 final class ChanServRejoinSubscriberTest extends TestCase
 {
-    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+    private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
 
     private ChannelLookupPort&MockObject $channelLookup;
 

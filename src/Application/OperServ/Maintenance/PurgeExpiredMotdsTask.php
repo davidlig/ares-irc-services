@@ -24,8 +24,7 @@ final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
         private string $defaultLanguage,
         private string $defaultTimezone,
         private int $intervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

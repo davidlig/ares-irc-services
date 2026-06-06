@@ -13,8 +13,7 @@ final readonly class SessionLanguagePruner implements InMemoryPrunableInterface
     public function __construct(
         private readonly SessionLanguageRegistry $registry,
         private readonly NetworkUserLookupPort $userLookup,
-    ) {
-    }
+    ) {}
 
     public function prune(): int
     {

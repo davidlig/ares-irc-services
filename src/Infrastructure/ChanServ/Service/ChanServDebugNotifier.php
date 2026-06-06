@@ -25,8 +25,7 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
         private string $defaultLanguage,
         private ?string $debugChannel,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getServiceName(): string
     {
@@ -38,9 +37,7 @@ final readonly class ChanServDebugNotifier implements ServiceDebugNotifierInterf
         return null !== $this->debugChannel && '' !== $this->debugChannel;
     }
 
-    public function ensureChannelJoined(): void
-    {
-    }
+    public function ensureChannelJoined(): void {}
 
     public function notify(string $message): void
     {

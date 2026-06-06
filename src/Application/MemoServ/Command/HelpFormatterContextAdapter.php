@@ -13,8 +13,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 {
     public function __construct(
         private MemoServContext $context,
-    ) {
-    }
+    ) {}
 
     public function reply(string $key, array $params = []): void
     {

@@ -40,8 +40,7 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         private readonly ChannelHistoryService $historyService,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly int $historyViewLimit = 40,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

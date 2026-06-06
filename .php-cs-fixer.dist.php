@@ -15,11 +15,12 @@ return (new PhpCsFixer\Config())
         '@Symfony' => true,
         '@Symfony:risky' => true,
 
-        // Specific rules for modern PHP (8.0+)
+        // Specific rules for modern PHP (8.4+)
         '@PHP80Migration:risky' => true,
         '@PHP81Migration' => true,
         '@PHP82Migration' => true,
-        '@PHP83Migration' => true, // Includes applicable improvements up to PHP 8.4
+        '@PHP83Migration' => true,
+        '@PHP84Migration' => true,
 
         // Mandatory strict typing
         'declare_strict_types' => true,
@@ -59,6 +60,19 @@ return (new PhpCsFixer\Config())
         // PHPUnit
         'php_unit_strict' => true,
         'php_unit_construct' => true,
+
+        // Modern PHP 8.4+ type formatting
+        'nullable_type_declaration_for_default_null_value' => true,
+        'ordered_types' => [
+            'sort_algorithm' => 'alpha',
+            'null_adjustment' => 'always_last',
+        ],
+
+        // Cleaner code
+        'single_line_empty_body' => true,
+        'no_superfluous_phpdoc_tags' => [
+            'remove_inheritdoc' => false,
+        ],
     ])
     ->setRiskyAllowed(true)
     ->setFinder($finder)

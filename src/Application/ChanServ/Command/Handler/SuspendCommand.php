@@ -28,8 +28,7 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChannelSuspensionService $suspensionService,
         private readonly EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

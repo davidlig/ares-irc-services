@@ -13,9 +13,7 @@ use function count;
 
 final class MemoDoctrineRepository implements MemoRepositoryInterface
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function save(Memo $memo): void
     {

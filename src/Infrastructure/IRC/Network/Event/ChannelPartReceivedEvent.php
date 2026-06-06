@@ -13,6 +13,5 @@ final readonly class ChannelPartReceivedEvent
         public readonly ChannelName $channelName,
         public readonly string $reason,
         public readonly bool $wasKicked = false,
-    ) {
-    }
+    ) {}
 }

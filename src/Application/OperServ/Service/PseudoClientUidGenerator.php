@@ -14,8 +14,7 @@ class PseudoClientUidGenerator
 
     public function __construct(
         private readonly ActiveConnectionHolderInterface $connectionHolder,
-    ) {
-    }
+    ) {}
 
     public function generate(): ?string
     {

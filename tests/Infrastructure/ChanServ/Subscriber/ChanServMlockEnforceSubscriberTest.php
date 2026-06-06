@@ -27,7 +27,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ChanServMlockEnforceSubscriber::class)]
 final class ChanServMlockEnforceSubscriberTest extends TestCase
 {
-    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+    private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
 
     private ChannelLookupPort&MockObject $channelLookup;
 

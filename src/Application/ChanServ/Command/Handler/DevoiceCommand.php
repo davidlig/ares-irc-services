@@ -25,8 +25,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         private NetworkUserLookupPort $userLookup,
         private ChanServAccessHelper $accessHelper,
         private RegisteredNickRepositoryInterface $nickRepository,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

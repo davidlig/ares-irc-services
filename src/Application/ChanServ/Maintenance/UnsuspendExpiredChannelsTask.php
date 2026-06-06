@@ -26,8 +26,7 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
         private LoggerInterface $logger,
         private readonly string $serverName,
         private readonly int $intervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

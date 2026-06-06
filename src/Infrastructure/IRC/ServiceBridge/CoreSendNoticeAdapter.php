@@ -20,8 +20,7 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
     public function __construct(
         private ActiveConnectionHolder $connectionHolder,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function sendNotice(string $senderUid, string $targetUid, string $message): void
     {

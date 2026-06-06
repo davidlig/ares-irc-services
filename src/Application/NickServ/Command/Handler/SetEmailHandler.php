@@ -30,8 +30,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
         private readonly TranslationInterface $translator,
         private readonly LoggerInterface $logger,
         private readonly EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {

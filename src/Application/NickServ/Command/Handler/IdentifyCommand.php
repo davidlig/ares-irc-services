@@ -41,8 +41,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly int $identifyMaxFailedAttempts,
         private readonly int $identifyFailedWindowSeconds,
         private readonly int $identifyLockoutSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

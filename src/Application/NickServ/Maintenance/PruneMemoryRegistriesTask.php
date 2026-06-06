@@ -23,8 +23,7 @@ final readonly class PruneMemoryRegistriesTask implements MaintenanceTaskInterfa
         private readonly iterable $prunables,
         private readonly LoggerInterface $logger,
         private readonly int $intervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

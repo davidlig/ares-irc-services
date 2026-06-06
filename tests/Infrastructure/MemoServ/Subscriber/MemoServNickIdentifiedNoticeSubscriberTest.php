@@ -21,11 +21,11 @@ final class MemoServNickIdentifiedNoticeSubscriberTest extends TestCase
 {
     private MemoRepositoryInterface&MockObject $memoRepository;
 
-    private RegisteredNickRepositoryInterface&MockObject $nickRepository;
+    private MockObject&RegisteredNickRepositoryInterface $nickRepository;
 
     private MemoServNotifierInterface&MockObject $notifier;
 
-    private TranslatorInterface&MockObject $translator;
+    private MockObject&TranslatorInterface $translator;
 
     private MemoServNickIdentifiedNoticeSubscriber $subscriber;
 

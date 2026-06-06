@@ -19,8 +19,7 @@ class ProtocolNetworkStateRouter implements EventSubscriberInterface
     public function __construct(
         private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly array $adapters,
-    ) {
-    }
+    ) {}
 
     /**
      * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.

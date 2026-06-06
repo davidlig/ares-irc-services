@@ -20,8 +20,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
         private EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {

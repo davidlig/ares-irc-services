@@ -417,7 +417,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
         $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 20, 'valid-token', new DateTimeImmutable()->modify('+1 hour'));
         $dispatched = null;
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
@@ -489,7 +489,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
         $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 20, 'valid-token', new DateTimeImmutable()->modify('+1 hour'));
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
@@ -498,10 +498,8 @@ final class SetFounderHandlerTest extends TestCase
             return $e;
         });
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (): void {
-        });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendMessage')->willReturnCallback(static function (): void {});
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
@@ -548,7 +546,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
         $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 20, 'valid-token', new DateTimeImmutable()->modify('+1 hour'));
         $dispatchedIp = '';
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
@@ -557,10 +555,8 @@ final class SetFounderHandlerTest extends TestCase
             return $e;
         });
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (): void {
-        });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendMessage')->willReturnCallback(static function (): void {});
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
@@ -699,7 +695,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($newAccount);
         $nickRepo->method('findById')->willReturn($currentFounder);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 10, 'my-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 10, 'my-token', new DateTimeImmutable()->modify('+1 hour'));
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -745,7 +741,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($newAccount);
         $nickRepo->method('findById')->willReturn($currentFounder);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 20, 'my-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 20, 'my-token', new DateTimeImmutable()->modify('+1 hour'));
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -796,7 +792,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
         $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, $newAccount]]);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 20, 'valid-token', new DateTimeImmutable()->modify('+1 hour'));
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -847,7 +843,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->expects(self::atLeastOnce())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
         $nickRepo->expects(self::atLeastOnce())->method('findById')->willReturnMap([[10, $currentFounder], [20, null]]);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 20, 'valid-token', new DateTimeImmutable()->modify('+1 hour'));
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -943,7 +939,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($newAccount);
         $nickRepo->method('findById')->willReturn($currentFounder);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 10, 'stored-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 10, 'stored-token', new DateTimeImmutable()->modify('+1 hour'));
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -989,7 +985,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($newAccount);
         $nickRepo->method('findById')->willReturn($currentFounder);
         $registry = new FounderChangeTokenRegistry();
-        $registry->store(1, 20, 'stored-token', (new DateTimeImmutable())->modify('+1 hour'));
+        $registry->store(1, 20, 'stored-token', new DateTimeImmutable()->modify('+1 hour'));
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -1333,9 +1329,7 @@ final class SetFounderHandlerTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -1348,9 +1342,7 @@ final class SetFounderHandlerTest extends TestCase
             }
         };
         $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -1363,9 +1355,7 @@ final class SetFounderHandlerTest extends TestCase
             }
         };
         $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -1378,9 +1368,7 @@ final class SetFounderHandlerTest extends TestCase
             }
         };
         $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {

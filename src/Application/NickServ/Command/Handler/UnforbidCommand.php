@@ -19,8 +19,7 @@ final class UnforbidCommand implements NickServCommandInterface, AuditableComman
     public function __construct(
         private readonly ForbiddenNickService $forbiddenService,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

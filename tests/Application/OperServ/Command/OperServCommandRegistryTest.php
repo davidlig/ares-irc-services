@@ -129,8 +129,7 @@ final class OperServCommandRegistryTest extends TestCase
             public function __construct(
                 private readonly string $name,
                 private readonly array $aliases,
-            ) {
-            }
+            ) {}
 
             public function getName(): string
             {
@@ -182,9 +181,7 @@ final class OperServCommandRegistryTest extends TestCase
                 return null;
             }
 
-            public function execute(OperServContext $context): void
-            {
-            }
+            public function execute(OperServContext $context): void {}
         };
     }
 }

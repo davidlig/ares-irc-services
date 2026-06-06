@@ -21,8 +21,7 @@ final readonly class OperRoleModesDeidentifiedSubscriber implements EventSubscri
         private ActiveConnectionHolder $connectionHolder,
         private NetworkUserLookupPort $userLookup,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

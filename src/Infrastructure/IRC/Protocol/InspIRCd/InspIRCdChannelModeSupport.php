@@ -49,8 +49,7 @@ final readonly class InspIRCdChannelModeSupport implements ChannelModeSupportInt
         private ?string $permanentModeLetter,
         private bool $hasRegisteredMode,
         private ?string $registeredModeLetter,
-    ) {
-    }
+    ) {}
 
     public function hasVoice(): bool
     {

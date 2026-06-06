@@ -35,8 +35,7 @@ final readonly class NetworkStateSubscriber implements EventSubscriberInterface
         private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly ChannelRepositoryInterface $channelRepository,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     /**
      * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.

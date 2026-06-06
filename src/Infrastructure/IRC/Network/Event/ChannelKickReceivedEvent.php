@@ -12,6 +12,5 @@ final readonly class ChannelKickReceivedEvent
         public readonly ChannelName $channelName,
         public readonly string $targetId,
         public readonly string $reason,
-    ) {
-    }
+    ) {}
 }

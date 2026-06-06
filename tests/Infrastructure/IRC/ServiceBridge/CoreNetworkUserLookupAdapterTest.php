@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(CoreNetworkUserLookupAdapter::class)]
 final class CoreNetworkUserLookupAdapterTest extends TestCase
 {
-    private NetworkUserRepositoryInterface&MockObject $repository;
+    private MockObject&NetworkUserRepositoryInterface $repository;
 
     private CoreNetworkUserLookupAdapter $adapter;
 

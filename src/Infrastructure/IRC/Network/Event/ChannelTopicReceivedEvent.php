@@ -13,6 +13,5 @@ final readonly class ChannelTopicReceivedEvent
         public readonly ?string $topic,
         public readonly ?string $setterNick = null,
         public readonly ?string $sourceUid = null,
-    ) {
-    }
+    ) {}
 }

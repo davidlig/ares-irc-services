@@ -29,9 +29,7 @@ final class ChanServContextTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -44,9 +42,7 @@ final class ChanServContextTest extends TestCase
             }
         };
         $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -59,9 +55,7 @@ final class ChanServContextTest extends TestCase
             }
         };
         $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -74,9 +68,7 @@ final class ChanServContextTest extends TestCase
             }
         };
         $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {

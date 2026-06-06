@@ -41,7 +41,7 @@ final class PurgePendingDeletionNicknamesTaskTest extends TestCase
         $repo->expects(self::once())
             ->method('findPendingDeletionBefore')
             ->with(self::callback(static function (DateTimeImmutable $threshold): bool {
-                $expected = (new DateTimeImmutable())->modify('-7 days');
+                $expected = new DateTimeImmutable()->modify('-7 days');
 
                 return $expected->format('Y-m-d') === $threshold->format('Y-m-d');
             }))

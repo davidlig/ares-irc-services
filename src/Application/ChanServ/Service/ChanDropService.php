@@ -30,8 +30,7 @@ readonly class ChanDropService
         private ServiceDebugNotifierInterface $debug,
         private LoggerInterface $logger,
         private ChannelServiceActionsPort $channelActions,
-    ) {
-    }
+    ) {}
 
     /**
      * Starts a recoverable manual drop without cleaning dependent data.

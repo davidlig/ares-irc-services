@@ -20,8 +20,7 @@ final class UseripCommand implements NickServCommandInterface, AuditableCommandI
 
     public function __construct(
         private readonly NetworkUserLookupPort $userLookup,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

@@ -15,8 +15,7 @@ final readonly class CoreBurstCompleteAdapter implements BurstCompletePort
 {
     public function __construct(
         private BurstCompleteRegistry $burstCompleteRegistry,
-    ) {
-    }
+    ) {}
 
     public function isComplete(): bool
     {

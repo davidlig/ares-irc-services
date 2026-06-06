@@ -17,6 +17,5 @@ final readonly class UserJoinedChannelEvent
         public readonly Uid $uid,
         public readonly ChannelName $channel,
         public readonly ChannelMemberRole $role,
-    ) {
-    }
+    ) {}
 }

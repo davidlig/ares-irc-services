@@ -25,8 +25,7 @@ readonly class ForbiddenNickService
         private ActiveConnectionHolderInterface $connectionHolder,
         private LoggerInterface $logger,
         private string $defaultLanguage = 'en',
-    ) {
-    }
+    ) {}
 
     public function forbid(string $nickname, string $reason, ?string $operatorNick = null): RegisteredNick
     {

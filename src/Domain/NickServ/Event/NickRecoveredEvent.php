@@ -20,6 +20,5 @@ final readonly class NickRecoveredEvent
         public string $performedByIp,
         public string $performedByHost,
         public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {
-    }
+    ) {}
 }

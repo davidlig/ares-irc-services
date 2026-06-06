@@ -27,8 +27,7 @@ final class NickServSasetVoter extends Voter
         private readonly IrcopAccessHelper $accessHelper,
         private readonly RootUserRegistry $rootRegistry,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
-    ) {
-    }
+    ) {}
 
     protected function supports(string $attribute, mixed $subject): bool
     {

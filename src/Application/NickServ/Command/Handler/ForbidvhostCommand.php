@@ -28,8 +28,7 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
         private readonly ForbiddenVhostService $forbiddenVhostService,
         private readonly ForbiddenPatternValidator $patternValidator,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

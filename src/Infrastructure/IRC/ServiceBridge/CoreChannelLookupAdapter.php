@@ -18,8 +18,7 @@ final readonly class CoreChannelLookupAdapter implements ChannelLookupPort
 {
     public function __construct(
         private ChannelRepositoryInterface $channelRepository,
-    ) {
-    }
+    ) {}
 
     public function findByChannelName(string $channelName): ?ChannelView
     {

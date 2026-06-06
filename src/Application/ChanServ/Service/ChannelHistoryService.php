@@ -12,8 +12,7 @@ final readonly class ChannelHistoryService
 {
     public function __construct(
         private ChannelHistoryRepositoryInterface $historyRepository,
-    ) {
-    }
+    ) {}
 
     public function recordAction(
         int $channelId,

@@ -14,8 +14,7 @@ final readonly class ActiveChannelModeSupportProvider implements ActiveChannelMo
     public function __construct(
         private ActiveConnectionHolder $connectionHolder,
         private NullChannelModeSupport $nullSupport,
-    ) {
-    }
+    ) {}
 
     public function getSupport(): ChannelModeSupportInterface
     {

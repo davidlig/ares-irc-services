@@ -25,8 +25,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
         private OperRoleRepositoryInterface $roleRepository,
         private IrcopAccessHelper $accessHelper,
         private IrcopModeApplier $modeApplier,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

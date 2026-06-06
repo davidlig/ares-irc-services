@@ -24,8 +24,7 @@ final readonly class IRCEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     /**
      * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.

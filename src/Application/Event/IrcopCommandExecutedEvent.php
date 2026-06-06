@@ -16,6 +16,5 @@ final readonly class IrcopCommandExecutedEvent
         public ?string $targetIp = null,
         public ?string $reason = null,
         public array $extra = [],
-    ) {
-    }
+    ) {}
 }

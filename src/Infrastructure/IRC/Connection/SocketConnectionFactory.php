@@ -15,8 +15,7 @@ class SocketConnectionFactory implements ConnectionFactoryInterface
     public function __construct(
         private readonly int $timeoutSeconds = 30,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function create(ServerLink $link): ConnectionInterface
     {

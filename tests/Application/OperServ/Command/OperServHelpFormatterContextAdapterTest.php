@@ -65,9 +65,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -80,9 +78,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
             }
         };
         $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -95,9 +91,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
             }
         };
         $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -110,9 +104,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
             }
         };
         $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -135,8 +127,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
                 private readonly bool $operOnly,
                 private readonly string $cmdName,
                 private readonly ?string $requiredPermission,
-            ) {
-            }
+            ) {}
 
             public function getName(): string
             {
@@ -188,9 +179,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
                 return $this->requiredPermission;
             }
 
-            public function execute(OperServContext $c): void
-            {
-            }
+            public function execute(OperServContext $c): void {}
         };
     }
 

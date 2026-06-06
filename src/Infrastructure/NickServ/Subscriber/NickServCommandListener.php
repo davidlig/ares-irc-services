@@ -32,8 +32,7 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
         private SendNoticePort $sendNotice,
         private UserMessageTypeResolver $messageTypeResolver,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function getServiceName(): string
     {

@@ -12,9 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class RegisteredChannelDoctrineRepository implements RegisteredChannelRepositoryInterface
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function save(RegisteredChannel $channel): void
     {

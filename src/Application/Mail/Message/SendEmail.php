@@ -13,6 +13,5 @@ final readonly class SendEmail
         public readonly string $to,
         public readonly string $subject,
         public readonly string $body,
-    ) {
-    }
+    ) {}
 }

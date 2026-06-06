@@ -15,8 +15,7 @@ final readonly class SymfonyAuthorizationContext implements AuthorizationContext
 {
     public function __construct(
         private TokenStorageInterface $tokenStorage,
-    ) {
-    }
+    ) {}
 
     public function setCurrentUser(SenderView $user): void
     {

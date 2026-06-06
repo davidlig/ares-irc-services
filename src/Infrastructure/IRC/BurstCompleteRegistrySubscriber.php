@@ -21,8 +21,7 @@ final class BurstCompleteRegistrySubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly BurstCompleteRegistry $registry,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

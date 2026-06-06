@@ -12,8 +12,7 @@ final readonly class PendingVerificationPruner implements InMemoryPrunableInterf
     public function __construct(
         private readonly PendingVerificationRegistry $registry,
         private readonly int $maxAgeSecondsForResend = 86400,
-    ) {
-    }
+    ) {}
 
     public function prune(): int
     {

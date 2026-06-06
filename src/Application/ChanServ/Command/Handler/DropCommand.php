@@ -23,8 +23,7 @@ final class DropCommand implements ChanServCommandInterface, AuditableCommandInt
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChanDropService $dropService,
         private readonly ?AuthorizationCheckerInterface $authorizationChecker = null,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

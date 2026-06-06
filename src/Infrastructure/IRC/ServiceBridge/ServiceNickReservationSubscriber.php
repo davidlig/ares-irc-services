@@ -36,8 +36,7 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
         private readonly NetworkUserLookupPort $userLookup,
         private readonly iterable $serviceListeners,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

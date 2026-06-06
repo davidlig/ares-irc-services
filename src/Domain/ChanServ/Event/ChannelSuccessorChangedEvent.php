@@ -18,6 +18,5 @@ final readonly class ChannelSuccessorChangedEvent
         public string $performedByIp,
         public string $performedByHost,
         public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {
-    }
+    ) {}
 }

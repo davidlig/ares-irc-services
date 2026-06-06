@@ -10,8 +10,7 @@ final readonly class SendEmailHandler
 {
     public function __construct(
         private readonly MailerInterface $mailer,
-    ) {
-    }
+    ) {}
 
     public function __invoke(SendEmail $message): void
     {

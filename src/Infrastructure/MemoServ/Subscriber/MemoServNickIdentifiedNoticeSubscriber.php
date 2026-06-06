@@ -22,8 +22,7 @@ final readonly class MemoServNickIdentifiedNoticeSubscriber implements EventSubs
         private MemoServNotifierInterface $notifier,
         private TranslatorInterface $translator,
         private string $defaultLanguage = 'en',
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

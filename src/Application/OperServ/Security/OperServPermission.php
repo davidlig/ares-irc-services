@@ -16,7 +16,5 @@ final class OperServPermission
 
     public const string MOTD = 'operserv.motd';
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

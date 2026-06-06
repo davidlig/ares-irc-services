@@ -24,8 +24,7 @@ final class ClearusersCommand implements ChanServCommandInterface, AuditableComm
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChanServNotifierInterface $notifier,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

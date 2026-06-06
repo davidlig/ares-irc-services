@@ -12,8 +12,7 @@ final readonly class OperRoleForcedVhostSubscriber implements EventSubscriberInt
 {
     public function __construct(
         private ForcedVhostApplier $vhostApplier,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

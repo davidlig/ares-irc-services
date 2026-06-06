@@ -26,8 +26,7 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
     {

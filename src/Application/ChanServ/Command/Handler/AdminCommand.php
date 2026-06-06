@@ -25,8 +25,7 @@ final readonly class AdminCommand implements ChanServCommandInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private NetworkUserLookupPort $userLookup,
         private ChanServAccessHelper $accessHelper,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

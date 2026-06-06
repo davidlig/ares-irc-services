@@ -50,8 +50,7 @@ final readonly class NickServService
         private readonly string $defaultLanguage = 'en',
         private readonly string $defaultTimezone = 'UTC',
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     /**
      * Dispatch a command received from a network user.

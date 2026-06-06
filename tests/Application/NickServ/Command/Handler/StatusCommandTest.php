@@ -97,7 +97,7 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function pendingShowsPendingAndExpiry(): void
     {
-        $expires = (new DateTimeImmutable())->modify('+30 minutes');
+        $expires = new DateTimeImmutable()->modify('+30 minutes');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getStatus')->willReturn(NickStatus::Pending);
         $account->method('getExpiresAt')->willReturn($expires);
@@ -325,7 +325,7 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function suspendedWithExpiryShowsUntilDate(): void
     {
-        $until = (new DateTimeImmutable())->modify('+7 days');
+        $until = new DateTimeImmutable()->modify('+7 days');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getStatus')->willReturn(NickStatus::Suspended);
         $account->method('getReason')->willReturn('Abuse');
@@ -359,7 +359,7 @@ final class StatusCommandTest extends TestCase
     #[Test]
     public function pendingWithExpiryShowsFormatDate(): void
     {
-        $expires = (new DateTimeImmutable())->modify('+30 minutes');
+        $expires = new DateTimeImmutable()->modify('+30 minutes');
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getStatus')->willReturn(NickStatus::Pending);
         $account->method('getExpiresAt')->willReturn($expires);
@@ -464,9 +464,7 @@ final class StatusCommandTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -479,9 +477,7 @@ final class StatusCommandTest extends TestCase
             }
         };
         $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -494,9 +490,7 @@ final class StatusCommandTest extends TestCase
             }
         };
         $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -509,9 +503,7 @@ final class StatusCommandTest extends TestCase
             }
         };
         $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {

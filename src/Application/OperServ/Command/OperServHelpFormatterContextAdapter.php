@@ -10,8 +10,7 @@ final readonly class OperServHelpFormatterContextAdapter implements HelpFormatte
 {
     public function __construct(
         private OperServContext $context,
-    ) {
-    }
+    ) {}
 
     public function reply(string $key, array $params = []): void
     {

@@ -40,8 +40,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         private RootUserRegistry $rootRegistry,
         private int $maxChannelsPerNick = 3,
         private int $registerMinIntervalSeconds = 21600,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

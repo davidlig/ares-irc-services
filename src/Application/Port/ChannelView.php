@@ -27,8 +27,7 @@ final readonly class ChannelView
         public array $members = [],
         public int $timestamp = 0,
         public array $modeParams = [],
-    ) {
-    }
+    ) {}
 
     public function getModeParam(string $letter): ?string
     {

@@ -13,6 +13,5 @@ final class MessageReceivedEvent extends Event
     public function __construct(
         public readonly IRCMessage $message,
         public readonly DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {
-    }
+    ) {}
 }

@@ -19,8 +19,7 @@ final readonly class ChanServChannelUnforbiddenSubscriber implements EventSubscr
         private ChannelServiceActionsPort $channelServiceActions,
         private ChannelLookupPort $channelLookup,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

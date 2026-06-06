@@ -30,8 +30,7 @@ final readonly class OperServContext implements IrcopContextInterface
         private readonly OperServCommandRegistry $registry,
         private readonly IrcopAccessHelper $accessHelper,
         private readonly ServiceNicknameRegistry $serviceNicks,
-    ) {
-    }
+    ) {}
 
     public function getSender(): ?SenderView
     {

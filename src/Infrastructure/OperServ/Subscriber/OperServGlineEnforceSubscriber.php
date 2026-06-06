@@ -20,8 +20,7 @@ final readonly class OperServGlineEnforceSubscriber implements EventSubscriberIn
         private GlineRepositoryInterface $glineRepository,
         private ActiveConnectionHolderInterface $connectionHolder,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

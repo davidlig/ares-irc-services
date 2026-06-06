@@ -34,8 +34,7 @@ final readonly class InspIRCdCapab
         private array $userModes,
         private array $extbans,
         private array $capabilities,
-    ) {
-    }
+    ) {}
 
     /**
      * Build from the set of raw CAPAB lines received between CAPAB START and CAPAB END.

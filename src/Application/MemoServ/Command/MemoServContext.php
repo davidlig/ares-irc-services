@@ -28,8 +28,7 @@ final readonly class MemoServContext implements IrcopContextInterface
         private readonly string $messageType,
         private readonly MemoServCommandRegistry $registry,
         private readonly ServiceNicknameRegistry $serviceNicks,
-    ) {
-    }
+    ) {}
 
     public function getSender(): ?SenderView
     {

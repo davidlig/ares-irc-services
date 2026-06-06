@@ -35,8 +35,7 @@ final readonly class ChanServCommandListener implements ServiceCommandListenerIn
         private RegisteredNickRepositoryInterface $nickRepository,
         private string $defaultLanguage,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function getServiceName(): string
     {

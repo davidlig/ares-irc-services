@@ -44,8 +44,7 @@ final readonly class SendCommand implements MemoServCommandInterface
         private int $maxMemosPerNick,
         private int $maxMemosPerChannel,
         private int $sendMinIntervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

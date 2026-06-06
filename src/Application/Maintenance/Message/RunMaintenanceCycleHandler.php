@@ -10,8 +10,7 @@ final readonly class RunMaintenanceCycleHandler
 {
     public function __construct(
         private readonly MaintenanceScheduler $maintenanceScheduler,
-    ) {
-    }
+    ) {}
 
     public function __invoke(RunMaintenanceCycle $message): void
     {

@@ -20,8 +20,7 @@ final class NoexpireCommand implements ChanServCommandInterface, AuditableComman
 
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

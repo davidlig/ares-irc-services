@@ -25,8 +25,7 @@ final readonly class InspIRCdNickReservation implements ServiceNickReservationIn
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function reserveNick(string $nick, string $reason): void
     {

@@ -19,6 +19,5 @@ final readonly class NickUnsuspendedEvent
         public string $performedByIp,
         public string $performedByHost,
         public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {
-    }
+    ) {}
 }

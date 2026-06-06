@@ -19,8 +19,7 @@ final readonly class ChannelSyncCompletedMarkerSubscriber implements EventSubscr
 {
     public function __construct(
         private ChannelSyncCompletedRegistryInterface $registry,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

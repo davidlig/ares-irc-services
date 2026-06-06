@@ -37,8 +37,7 @@ readonly class NickDropService
         private LoggerInterface $logger,
         private IdentifiedSessionRegistry $sessionRegistry,
         private string $guestPrefix = 'Guest-',
-    ) {
-    }
+    ) {}
 
     /**
      * Starts a recoverable manual drop without cleaning dependent data.

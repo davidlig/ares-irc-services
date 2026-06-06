@@ -14,6 +14,5 @@ final readonly class ConnectToServerCommand
         public readonly string $description,
         public readonly string $protocol,
         public readonly bool $useTls = false,
-    ) {
-    }
+    ) {}
 }

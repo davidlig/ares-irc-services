@@ -36,8 +36,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             public function __construct(
                 private readonly string $name,
                 private readonly string $permission,
-            ) {
-            }
+            ) {}
 
             public function getName(): string
             {
@@ -94,18 +93,14 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
-            {
-            }
+            public function execute(NickServContext $context): void {}
         };
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -118,9 +113,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             }
         };
         $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -133,9 +126,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             }
         };
         $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -148,9 +139,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             }
         };
         $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -169,9 +158,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
     private function createPermissionRegistry(array $permissions): PermissionRegistry
     {
         $provider = new class($permissions) implements PermissionProviderInterface {
-            public function __construct(private array $perms)
-            {
-            }
+            public function __construct(private array $perms) {}
 
             public function getServiceName(): string
             {

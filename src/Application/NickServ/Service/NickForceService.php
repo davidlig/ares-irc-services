@@ -43,8 +43,7 @@ readonly class NickForceService
         private EventBusInterface $eventDispatcher,
         private LoggerInterface $logger,
         private string $guestPrefix = 'Guest-',
-    ) {
-    }
+    ) {}
 
     /**
      * Forces a user to change to a Guest- nickname with full cleanup.

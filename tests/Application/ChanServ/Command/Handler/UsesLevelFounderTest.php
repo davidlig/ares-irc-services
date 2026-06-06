@@ -90,7 +90,7 @@ final class UsesLevelFounderTest extends TestCase
     public function usesLevelFounderReturnsExpectedValue(string $handlerClass, bool $expected): void
     {
         $method = new ReflectionMethod($handlerClass, 'usesLevelFounder');
-        $instance = (new ReflectionClass($handlerClass))
+        $instance = new ReflectionClass($handlerClass)
             ->newInstanceWithoutConstructor();
         self::assertSame($expected, $method->invoke($instance));
     }

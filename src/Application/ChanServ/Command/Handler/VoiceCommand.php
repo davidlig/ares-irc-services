@@ -26,8 +26,7 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private NetworkUserLookupPort $userLookup,
         private ChanServAccessHelper $accessHelper,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

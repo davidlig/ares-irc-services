@@ -27,8 +27,7 @@ final readonly class StatusCommand implements NickServCommandInterface
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NetworkUserLookupPort $userLookup,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

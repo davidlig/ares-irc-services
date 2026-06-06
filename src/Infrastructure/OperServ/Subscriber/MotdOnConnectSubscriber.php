@@ -63,8 +63,7 @@ final class MotdOnConnectSubscriber implements EventSubscriberInterface
         private readonly NickForceService $nickForce,
         private readonly ?string $debugChannel,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

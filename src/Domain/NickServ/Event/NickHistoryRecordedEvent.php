@@ -13,6 +13,5 @@ final readonly class NickHistoryRecordedEvent
 {
     public function __construct(
         public NickHistory $history,
-    ) {
-    }
+    ) {}
 }

@@ -23,7 +23,7 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(ChanServTopicApplySubscriber::class)]
 final class ChanServTopicApplySubscriberTest extends TestCase
 {
-    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+    private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
 
     private ChannelLookupPort&MockObject $channelLookup;
 

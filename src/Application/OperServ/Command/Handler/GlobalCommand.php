@@ -43,8 +43,7 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
         private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly SendNoticePort $sendNoticePort,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

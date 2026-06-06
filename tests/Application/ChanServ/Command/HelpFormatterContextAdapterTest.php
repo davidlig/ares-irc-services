@@ -61,9 +61,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -76,9 +74,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
         };
         $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -91,9 +87,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
         };
         $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -106,9 +100,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             }
         };
         $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -240,9 +232,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
         $registry = new ChanServCommandRegistry([$cmd]);
         $context = $this->createContext(
@@ -327,9 +317,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
         $registry = new ChanServCommandRegistry([$cmd]);
         $context = $this->createContext(
@@ -411,9 +399,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
         $registry = new ChanServCommandRegistry([$cmd]);
         $context = $this->createContext(
@@ -495,9 +481,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
         $registry = new ChanServCommandRegistry([$cmd]);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -582,9 +566,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
         $registry = new ChanServCommandRegistry([$cmd]);
         $context = $this->createContext(
@@ -694,9 +676,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
 
         $context = $this->createContext(
@@ -808,9 +788,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
         $registry = new ChanServCommandRegistry([$dropCmd]);
 
@@ -961,9 +939,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         );
 
         $chanServPermission = new readonly class('ChanServ', [ChanServPermission::DROP]) implements PermissionProviderInterface {
-            public function __construct(private string $name, private array $perms)
-            {
-            }
+            public function __construct(private string $name, private array $perms) {}
 
             public function getServiceName(): string
             {
@@ -1018,9 +994,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         );
 
         $chanServPermission = new readonly class('ChanServ', [ChanServPermission::DROP]) implements PermissionProviderInterface {
-            public function __construct(private string $name, private array $perms)
-            {
-            }
+            public function __construct(private string $name, private array $perms) {}
 
             public function getServiceName(): string
             {
@@ -1127,9 +1101,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
         $infoCmd = new class implements ChanServCommandInterface {
             public function getName(): string
@@ -1197,9 +1169,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $c): void
-            {
-            }
+            public function execute(ChanServContext $c): void {}
         };
         $registry = new ChanServCommandRegistry([$dropCmd, $infoCmd]);
 
@@ -1231,9 +1201,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         );
 
         $chanServPermission = new readonly class('ChanServ', [ChanServPermission::DROP]) implements PermissionProviderInterface {
-            public function __construct(private string $name, private array $perms)
-            {
-            }
+            public function __construct(private string $name, private array $perms) {}
 
             public function getServiceName(): string
             {

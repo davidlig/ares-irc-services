@@ -12,6 +12,5 @@ final readonly class IrcopAuditData
         public ?string $targetIp = null,
         public ?string $reason = null,
         public array $extra = [],
-    ) {
-    }
+    ) {}
 }

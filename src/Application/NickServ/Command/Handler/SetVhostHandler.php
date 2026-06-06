@@ -27,8 +27,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         private readonly NetworkUserLookupPort $userLookup,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
         private readonly ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
-    ) {
-    }
+    ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {

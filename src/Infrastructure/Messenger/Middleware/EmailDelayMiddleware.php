@@ -21,8 +21,7 @@ final readonly class EmailDelayMiddleware implements MiddlewareInterface
     public function __construct(
         private readonly int $emailDelaySeconds,
         private readonly ClockInterface $clock,
-    ) {
-    }
+    ) {}
 
     public function handle(Envelope $envelope, StackInterface $stack): Envelope
     {

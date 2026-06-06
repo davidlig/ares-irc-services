@@ -45,8 +45,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly LoggerInterface $logger,
         private readonly int $maxGlines = 1000,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

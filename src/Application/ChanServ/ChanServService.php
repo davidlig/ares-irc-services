@@ -64,8 +64,7 @@ final readonly class ChanServService implements ChanServDispatchPort
         private readonly string $defaultLanguage = 'en',
         private readonly string $defaultTimezone = 'UTC',
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     /**
      * @param string     $rawText Full text of the PRIVMSG (e.g. "REGISTER #channel desc")
@@ -167,7 +166,7 @@ final readonly class ChanServService implements ChanServDispatchPort
             $handler->execute($context);
 
             $this->dispatchAuditEvents($handler, $context, $sender, $cmdName, $args, $requiredPermission, $isLevelFounder, $account);
-        } catch (ChannelNotRegisteredException|ChannelAlreadyRegisteredException|InsufficientAccessException $e) {
+        } catch (ChannelAlreadyRegisteredException|ChannelNotRegisteredException|InsufficientAccessException $e) {
             throw $e;
         } catch (Throwable $e) {
             $this->logger->error('ChanServ dispatch error: ' . $e->getMessage(), [

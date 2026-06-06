@@ -15,7 +15,7 @@ use Symfony\Component\Mime\Email;
 #[CoversClass(SymfonyMailerAdapter::class)]
 final class SymfonyMailerAdapterTest extends TestCase
 {
-    private SymfonyMailerInterface&MockObject $symfonyMailer;
+    private MockObject&SymfonyMailerInterface $symfonyMailer;
 
     private SymfonyMailerAdapter $adapter;
 

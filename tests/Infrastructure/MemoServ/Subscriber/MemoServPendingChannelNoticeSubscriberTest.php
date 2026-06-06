@@ -37,9 +37,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 
     private const string MEMOSERV_UID = '001MEMO';
 
-    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+    private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
 
-    private RegisteredNickRepositoryInterface&MockObject $nickRepository;
+    private MockObject&RegisteredNickRepositoryInterface $nickRepository;
 
     private MemoRepositoryInterface&MockObject $memoRepository;
 
@@ -53,9 +53,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
 
     private MemoServNotifierInterface&MockObject $notifier;
 
-    private NetworkUserLookupPort&MockObject $userLookup;
+    private MockObject&NetworkUserLookupPort $userLookup;
 
-    private TranslatorInterface&MockObject $translator;
+    private MockObject&TranslatorInterface $translator;
 
     private MemoServPendingChannelNoticeSubscriber $subscriber;
 
@@ -89,9 +89,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
     private function createUidRegistry(): ServiceUidRegistry
     {
         $provider = new class('memoserv', 'MemoServ', self::MEMOSERV_UID) implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {

@@ -30,8 +30,7 @@ final readonly class OpCommand implements ChanServCommandInterface
         private ChannelLevelRepositoryInterface $levelRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
         private NetworkUserLookupPort $userLookup,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

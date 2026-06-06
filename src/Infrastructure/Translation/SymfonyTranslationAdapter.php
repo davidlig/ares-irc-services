@@ -11,8 +11,7 @@ final readonly class SymfonyTranslationAdapter implements TranslationInterface
 {
     public function __construct(
         private TranslatorInterface $translator,
-    ) {
-    }
+    ) {}
 
     public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
     {

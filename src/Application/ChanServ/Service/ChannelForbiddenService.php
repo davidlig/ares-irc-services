@@ -25,8 +25,7 @@ readonly class ChannelForbiddenService
         private ChannelLookupPort $channelLookup,
         private EventBusInterface $eventDispatcher,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function forbid(
         string $channelName,

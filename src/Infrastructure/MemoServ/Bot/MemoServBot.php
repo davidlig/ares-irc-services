@@ -32,8 +32,7 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
         private readonly string $memoservIdent = 'MemoServ',
         private readonly string $memoservRealname = 'Memo Service',
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

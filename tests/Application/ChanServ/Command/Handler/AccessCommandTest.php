@@ -298,8 +298,7 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
@@ -338,10 +337,8 @@ final class AccessCommandTest extends TestCase
         });
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (): void {
-        });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendMessage')->willReturnCallback(static function (): void {});
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
@@ -376,10 +373,8 @@ final class AccessCommandTest extends TestCase
         });
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (): void {
-        });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendMessage')->willReturnCallback(static function (): void {});
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
@@ -518,8 +513,7 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
@@ -649,8 +643,7 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
@@ -897,8 +890,7 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
@@ -935,8 +927,7 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
-        });
+        $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
@@ -1008,9 +999,7 @@ final class AccessCommandTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -1023,9 +1012,7 @@ final class AccessCommandTest extends TestCase
             }
         };
         $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -1038,9 +1025,7 @@ final class AccessCommandTest extends TestCase
             }
         };
         $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -1053,9 +1038,7 @@ final class AccessCommandTest extends TestCase
             }
         };
         $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {

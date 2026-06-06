@@ -16,6 +16,5 @@ final readonly class UserNickChangedEvent
         public readonly Uid $uid,
         public readonly Nick $oldNick,
         public readonly Nick $newNick,
-    ) {
-    }
+    ) {}
 }

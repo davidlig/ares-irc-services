@@ -60,8 +60,7 @@ final class ChanServCommandRegistryTest extends TestCase
             public function __construct(
                 private readonly string $name,
                 private readonly array $aliases,
-            ) {
-            }
+            ) {}
 
             public function getName(): string
             {
@@ -128,9 +127,7 @@ final class ChanServCommandRegistryTest extends TestCase
                 return false;
             }
 
-            public function execute(ChanServContext $context): void
-            {
-            }
+            public function execute(ChanServContext $context): void {}
         };
     }
 }

@@ -24,8 +24,7 @@ final readonly class NickHistorySubscriber implements EventSubscriberInterface
     public function __construct(
         private NickHistoryService $historyService,
         private RegisteredNickRepositoryInterface $nickRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

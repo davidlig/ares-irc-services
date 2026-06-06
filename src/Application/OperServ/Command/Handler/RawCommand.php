@@ -24,8 +24,7 @@ final class RawCommand implements OperServCommandInterface, AuditableCommandInte
     public function __construct(
         private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

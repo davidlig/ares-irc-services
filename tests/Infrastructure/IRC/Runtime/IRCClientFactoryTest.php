@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(IRCClientFactory::class)]
 final class IRCClientFactoryTest extends TestCase
 {
-    private ProtocolRuntimeModuleRegistryInterface&MockObject $moduleRegistry;
+    private MockObject&ProtocolRuntimeModuleRegistryInterface $moduleRegistry;
 
     private ConnectionFactoryInterface&MockObject $connectionFactory;
 

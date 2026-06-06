@@ -36,8 +36,7 @@ final readonly class ChanServContext implements IrcopContextInterface
         private readonly NetworkUserLookupPort $userLookup,
         private readonly ServiceNicknameRegistry $serviceNicks,
         public readonly bool $isLevelFounder = false,
-    ) {
-    }
+    ) {}
 
     public function getSender(): ?SenderView
     {

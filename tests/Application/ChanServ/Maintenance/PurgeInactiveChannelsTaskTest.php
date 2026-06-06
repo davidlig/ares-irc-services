@@ -95,7 +95,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channelRepo->expects(self::once())
             ->method('findRegisteredInactiveSince')
             ->with(self::callback(static function (DateTimeImmutable $t): bool {
-                $expected = (new DateTimeImmutable())->modify('-90 days');
+                $expected = new DateTimeImmutable()->modify('-90 days');
 
                 return $t->format('Y-m-d') === $expected->format('Y-m-d');
             }))

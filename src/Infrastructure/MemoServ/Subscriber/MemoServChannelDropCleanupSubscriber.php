@@ -19,8 +19,7 @@ final readonly class MemoServChannelDropCleanupSubscriber implements EventSubscr
         private MemoRepositoryInterface $memoRepository,
         private MemoIgnoreRepositoryInterface $memoIgnoreRepository,
         private MemoSettingsRepositoryInterface $memoSettingsRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

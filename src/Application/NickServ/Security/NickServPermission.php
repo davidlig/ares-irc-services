@@ -46,7 +46,5 @@ final readonly class NickServPermission
     /** IRCop permission to view and manage nickname action history. */
     public const string HISTORY = 'nickserv.history';
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 }

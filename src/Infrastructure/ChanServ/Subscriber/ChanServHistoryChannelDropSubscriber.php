@@ -12,8 +12,7 @@ final readonly class ChanServHistoryChannelDropSubscriber implements EventSubscr
 {
     public function __construct(
         private ChannelHistoryRepositoryInterface $historyRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

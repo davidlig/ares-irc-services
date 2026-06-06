@@ -21,8 +21,7 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
         private OperIrcopRepositoryInterface $operIrcopRepository,
         private GlineRepositoryInterface $glineRepository,
         private MotdRepositoryInterface $motdRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

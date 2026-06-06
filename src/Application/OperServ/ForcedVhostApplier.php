@@ -25,8 +25,7 @@ final readonly class ForcedVhostApplier
         private ActiveConnectionHolderInterface $connectionHolder,
         private VhostDisplayResolver $vhostDisplayResolver,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function applyForcedVhostIfApplicable(int $nickId, string $nickname, string $uid): bool
     {

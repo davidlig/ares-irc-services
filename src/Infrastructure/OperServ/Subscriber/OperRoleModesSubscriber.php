@@ -17,8 +17,7 @@ final readonly class OperRoleModesSubscriber implements EventSubscriberInterface
     public function __construct(
         private OperIrcopRepositoryInterface $ircopRepository,
         private IrcopModeApplier $modeApplier,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

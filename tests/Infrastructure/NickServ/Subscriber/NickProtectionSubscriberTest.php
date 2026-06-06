@@ -38,9 +38,9 @@ final class NickProtectionSubscriberTest extends TestCase
 {
     private BurstState $burstState;
 
-    private NetworkUserLookupPort&MockObject $networkUserLookup;
+    private MockObject&NetworkUserLookupPort $networkUserLookup;
 
-    private NickServNotifierInterface&MockObject $notifier;
+    private MockObject&NickServNotifierInterface $notifier;
 
     private NickProtectionSubscriber $subscriber;
 

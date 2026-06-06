@@ -10,9 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final class MemoSettingsDoctrineRepository implements MemoSettingsRepositoryInterface
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function save(MemoSettings $settings): void
     {

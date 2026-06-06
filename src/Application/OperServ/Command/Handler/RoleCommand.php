@@ -41,8 +41,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         private ForcedVhostApplier $vhostApplier,
         private VhostValidator $vhostValidator,
         private EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

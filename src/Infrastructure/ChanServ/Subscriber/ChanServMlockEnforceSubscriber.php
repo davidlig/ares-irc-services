@@ -38,8 +38,7 @@ final readonly class ChanServMlockEnforceSubscriber implements EventSubscriberIn
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ChannelServiceActionsPort $channelServiceActions,
         private BurstCompletePort $burstCompletePort,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

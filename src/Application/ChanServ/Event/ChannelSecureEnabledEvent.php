@@ -12,6 +12,5 @@ final readonly class ChannelSecureEnabledEvent
 {
     public function __construct(
         public string $channelName,
-    ) {
-    }
+    ) {}
 }

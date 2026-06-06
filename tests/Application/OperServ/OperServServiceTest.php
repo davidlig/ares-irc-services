@@ -41,9 +41,7 @@ final class OperServServiceTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -56,9 +54,7 @@ final class OperServServiceTest extends TestCase
             }
         };
         $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -71,9 +67,7 @@ final class OperServServiceTest extends TestCase
             }
         };
         $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -86,9 +80,7 @@ final class OperServServiceTest extends TestCase
             }
         };
         $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -895,9 +887,7 @@ final class OperServServiceTest extends TestCase
         $contextHolder->context = null;
 
         $auditableHandler = new class($contextHolder) implements OperServCommandInterface, AuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             private ?IrcopAuditData $auditData = null;
 
@@ -1028,9 +1018,7 @@ final class OperServServiceTest extends TestCase
         $auditableHandler = new class($contextHolder) implements OperServCommandInterface, AuditableCommandInterface {
             private ?IrcopAuditData $auditData = null;
 
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -1147,8 +1135,7 @@ final class OperServServiceTest extends TestCase
                 private readonly ?string $requiredPermission,
                 private readonly int $minArgs,
                 private readonly stdClass $contextHolder,
-            ) {
-            }
+            ) {}
 
             public function getName(): string
             {

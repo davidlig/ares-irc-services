@@ -19,8 +19,7 @@ class ServiceUidGenerator implements ServiceUidGeneratorInterface
 
     public function __construct(
         private readonly ActiveConnectionHolderInterface $connectionHolder,
-    ) {
-    }
+    ) {}
 
     public function generateUid(string $serviceKey): string
     {

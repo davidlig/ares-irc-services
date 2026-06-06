@@ -26,8 +26,7 @@ abstract class AbstractProtocolHandler implements ProtocolHandlerInterface
     public function __construct(
         protected readonly LoggerInterface $logger = new NullLogger(),
         protected readonly ?EventDispatcherInterface $eventDispatcher = null,
-    ) {
-    }
+    ) {}
 
     /**
      * Dispatches NetworkBurstCompleteEvent so service bots can introduce

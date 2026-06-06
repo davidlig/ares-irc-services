@@ -22,8 +22,7 @@ final readonly class PurgeExpiredPendingTask implements MaintenanceTaskInterface
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly LoggerInterface $logger,
         private readonly int $intervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

@@ -28,8 +28,7 @@ final readonly class ReadCommand implements MemoServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private MemoRepositoryInterface $memoRepository,
         private ChanServAccessHelper $accessHelper,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

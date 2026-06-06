@@ -11,7 +11,5 @@ namespace App\Domain\IRC\Event;
  */
 final readonly class IrcMessageProcessedEvent
 {
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 }

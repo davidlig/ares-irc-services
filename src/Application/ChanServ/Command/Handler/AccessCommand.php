@@ -35,8 +35,7 @@ final readonly class AccessCommand implements ChanServCommandInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private ChanServAccessHelper $accessHelper,
         private EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

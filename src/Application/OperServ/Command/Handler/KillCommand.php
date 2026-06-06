@@ -34,8 +34,7 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         private readonly IrcopAccessHelper $accessHelper,
         private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

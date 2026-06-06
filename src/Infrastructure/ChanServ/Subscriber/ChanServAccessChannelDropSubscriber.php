@@ -12,8 +12,7 @@ final readonly class ChanServAccessChannelDropSubscriber implements EventSubscri
 {
     public function __construct(
         private ChannelAccessRepositoryInterface $accessRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

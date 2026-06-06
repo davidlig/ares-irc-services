@@ -23,8 +23,7 @@ final readonly class ChanServEntryMsgSubscriber implements EventSubscriberInterf
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChanServNotifierInterface $notifier,
         private ServiceUidRegistry $uidRegistry,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

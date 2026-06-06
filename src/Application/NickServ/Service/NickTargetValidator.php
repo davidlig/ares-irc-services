@@ -18,8 +18,7 @@ readonly class NickTargetValidator
         private OperIrcopRepositoryInterface $ircopRepository,
         private ServiceUidRegistry $serviceUidRegistry,
         private RegisteredNickRepositoryInterface $nickRepository,
-    ) {
-    }
+    ) {}
 
     public function validate(string $nickname): NickProtectabilityResult
     {

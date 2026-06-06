@@ -10,9 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class ChannelLevelDoctrineRepository implements ChannelLevelRepositoryInterface
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function save(ChannelLevel $level): void
     {

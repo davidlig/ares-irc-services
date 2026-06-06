@@ -21,8 +21,7 @@ final readonly class IrcServiceUser implements UserInterface
 
     public function __construct(
         private SenderView $senderView,
-    ) {
-    }
+    ) {}
 
     public function getRoles(): array
     {
@@ -39,9 +38,7 @@ final readonly class IrcServiceUser implements UserInterface
         return $roles;
     }
 
-    public function eraseCredentials(): void
-    {
-    }
+    public function eraseCredentials(): void {}
 
     public function getUserIdentifier(): string
     {

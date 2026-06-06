@@ -27,8 +27,7 @@ readonly class UserLanguageResolver implements UserLanguageResolverInterface
         private RegisteredNickRepositoryInterface $nickRepository,
         private SessionLanguageRegistry $sessionLanguageRegistry,
         private string $defaultLanguage = 'en',
-    ) {
-    }
+    ) {}
 
     public function resolve(SenderView $user): string
     {

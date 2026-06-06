@@ -26,8 +26,7 @@ final readonly class ChanServAccessHelper
     public function __construct(
         private ChannelAccessRepositoryInterface $accessRepository,
         private ChannelLevelRepositoryInterface $levelRepository,
-    ) {
-    }
+    ) {}
 
     public function getLevelValue(int $channelId, string $key): int
     {

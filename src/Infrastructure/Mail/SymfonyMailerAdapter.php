@@ -19,15 +19,14 @@ final readonly class SymfonyMailerAdapter implements MailerInterface
         private readonly SymfonyMailerInterface $mailer,
         private readonly string $from,
         private readonly string $senderName,
-    ) {
-    }
+    ) {}
 
     public function send(string $to, string $subject, string $body): void
     {
         $parsed = Address::create($this->from);
         $fromAddress = new Address($parsed->getAddress(), $this->senderName);
 
-        $email = (new Email())
+        $email = new Email()
             ->from($fromAddress)
             ->to($to)
             ->subject($subject)

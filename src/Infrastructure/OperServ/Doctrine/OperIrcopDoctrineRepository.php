@@ -10,9 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class OperIrcopDoctrineRepository implements OperIrcopRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private EntityManagerInterface $em) {}
 
     public function find(int $id): ?OperIrcop
     {

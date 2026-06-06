@@ -15,8 +15,7 @@ final readonly class ForbiddenVhostCleanupSubscriber implements EventSubscriberI
 {
     public function __construct(
         private ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

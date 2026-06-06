@@ -27,6 +27,5 @@ final readonly class ChannelJoinReceivedEvent
         public readonly array $members,
         public readonly array $listModes = [],
         public readonly array $modeParams = [],
-    ) {
-    }
+    ) {}
 }

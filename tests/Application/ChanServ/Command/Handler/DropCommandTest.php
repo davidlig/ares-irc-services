@@ -215,7 +215,7 @@ final class DropCommandTest extends TestCase
         $dropService->expects(self::never())->method('softDropChannel');
 
         $messages = [];
-        (new DropCommand($repo, $dropService))->execute($this->createContext($sender, null, ['#test'], $messages, channelRepository: $repo));
+        new DropCommand($repo, $dropService)->execute($this->createContext($sender, null, ['#test'], $messages, channelRepository: $repo));
 
         self::assertContains('drop.pending_deletion', $messages);
     }
@@ -234,7 +234,7 @@ final class DropCommandTest extends TestCase
         $dropService->expects(self::never())->method('hardDropChannel');
 
         $messages = [];
-        (new DropCommand($repo, $dropService, $authorization))->execute($this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo));
+        new DropCommand($repo, $dropService, $authorization)->execute($this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo));
 
         self::assertContains('error.permission_denied', $messages);
     }
@@ -337,9 +337,7 @@ final class DropCommandTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider1 = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -352,9 +350,7 @@ final class DropCommandTest extends TestCase
             }
         };
         $provider2 = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -367,9 +363,7 @@ final class DropCommandTest extends TestCase
             }
         };
         $provider3 = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -382,9 +376,7 @@ final class DropCommandTest extends TestCase
             }
         };
         $provider4 = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {

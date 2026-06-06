@@ -22,7 +22,7 @@ foreach ($args as $arg) {
     }
 }
 
-$parser = (new ParserFactory())->createForHostVersion();
+$parser = new ParserFactory()->createForHostVersion();
 
 $violations = [];
 $filesChecked = 0;
@@ -69,8 +69,7 @@ foreach ($iterator as $file) {
             private array &$methodReturns,
             private array &$classStack,
             private int &$closureDepth,
-        ) {
-        }
+        ) {}
 
         public function enterNode(Node $node): mixed
         {

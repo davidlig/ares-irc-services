@@ -12,8 +12,7 @@ final readonly class RegisterThrottlePruner implements InMemoryPrunableInterface
     public function __construct(
         private readonly RegisterThrottleRegistry $registry,
         private readonly int $minIntervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function prune(): int
     {

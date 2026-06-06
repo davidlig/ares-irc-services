@@ -10,9 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class ChannelAccessDoctrineRepository implements ChannelAccessRepositoryInterface
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function save(ChannelAccess $access): void
     {

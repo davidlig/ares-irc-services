@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(NickHistoryNickDropSubscriber::class)]
 final class NickHistoryNickDropSubscriberTest extends TestCase
 {
-    private NickHistoryRepositoryInterface&MockObject $historyRepository;
+    private MockObject&NickHistoryRepositoryInterface $historyRepository;
 
     private NickHistoryNickDropSubscriber $subscriber;
 

@@ -33,8 +33,7 @@ final readonly class ChanServAkickEnforceSubscriber implements EventSubscriberIn
         private ChannelServiceActionsPort $channelServiceActions,
         private string $chanservNick,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

@@ -16,6 +16,5 @@ final readonly class NetworkSyncCompleteEvent
     public function __construct(
         public readonly ConnectionInterface $connection,
         public readonly string $serverSid,
-    ) {
-    }
+    ) {}
 }

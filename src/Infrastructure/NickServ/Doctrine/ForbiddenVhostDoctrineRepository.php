@@ -10,9 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class ForbiddenVhostDoctrineRepository implements ForbiddenVhostRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private EntityManagerInterface $em) {}
 
     public function save(ForbiddenVhost $forbiddenVhost): void
     {

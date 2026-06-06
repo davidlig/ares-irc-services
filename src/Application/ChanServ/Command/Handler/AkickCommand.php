@@ -50,8 +50,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         private ChannelLookupPort $channelLookup,
         private EventBusInterface $eventDispatcher,
         private ?BurstCompletePort $burstCompletePort = null,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

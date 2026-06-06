@@ -31,8 +31,7 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
     {

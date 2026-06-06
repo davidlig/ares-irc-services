@@ -31,8 +31,7 @@ final class IrcopPermissionVoter extends Voter
     public function __construct(
         private readonly IrcopAccessHelper $accessHelper,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-    ) {
-    }
+    ) {}
 
     protected function supports(string $attribute, mixed $subject): bool
     {

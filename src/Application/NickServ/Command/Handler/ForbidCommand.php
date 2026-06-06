@@ -29,8 +29,7 @@ final class ForbidCommand implements NickServCommandInterface, AuditableCommandI
         private readonly ForbiddenNickService $forbiddenService,
         private readonly NickDropService $dropService,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

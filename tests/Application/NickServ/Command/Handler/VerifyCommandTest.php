@@ -28,9 +28,7 @@ final class VerifyCommandTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -43,9 +41,7 @@ final class VerifyCommandTest extends TestCase
             }
         };
         $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -58,9 +54,7 @@ final class VerifyCommandTest extends TestCase
             }
         };
         $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -73,9 +67,7 @@ final class VerifyCommandTest extends TestCase
             }
         };
         $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -207,7 +199,7 @@ final class VerifyCommandTest extends TestCase
     public function successActivatesAccountAndReplies(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip');
-        $expires = (new DateTimeImmutable())->modify('+1 hour');
+        $expires = new DateTimeImmutable()->modify('+1 hour');
         $pending = new PendingVerificationRegistry();
         $pending->store('Nick', 'valid-token', $expires);
 
@@ -338,7 +330,7 @@ final class VerifyCommandTest extends TestCase
     public function successRegistersIdentifiedSession(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip');
-        $expires = (new DateTimeImmutable())->modify('+1 hour');
+        $expires = new DateTimeImmutable()->modify('+1 hour');
         $pending = new PendingVerificationRegistry();
         $pending->store('Nick', 'valid-token', $expires);
 

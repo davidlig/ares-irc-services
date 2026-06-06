@@ -22,8 +22,7 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

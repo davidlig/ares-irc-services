@@ -24,8 +24,7 @@ final readonly class SyncCompleteDispatcherSubscriber implements EventSubscriber
     public function __construct(
         private ActiveConnectionHolder $connectionHolder,
         private EventDispatcherInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

@@ -29,7 +29,7 @@ $removedSetters = [
     'updateReason' => 'reason',
 ];
 
-$parser = (new ParserFactory())->createForHostVersion();
+$parser = new ParserFactory()->createForHostVersion();
 $printer = new PrettyPrinter\Standard();
 
 $directories = [
@@ -72,8 +72,7 @@ foreach ($directories as $dir) {
             public function __construct(
                 private array $removedSetters,
                 private int &$replaced,
-            ) {
-            }
+            ) {}
 
             public function leaveNode(Node $node): mixed
             {

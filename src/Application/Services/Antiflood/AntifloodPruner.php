@@ -15,8 +15,7 @@ final readonly class AntifloodPruner implements InMemoryPrunableInterface
     public function __construct(
         private AntifloodRegistry $registry,
         private int $windowSeconds,
-    ) {
-    }
+    ) {}
 
     public function prune(): int
     {

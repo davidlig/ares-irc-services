@@ -21,7 +21,7 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(ChanServTopicSyncSubscriber::class)]
 final class ChanServTopicSyncSubscriberTest extends TestCase
 {
-    private RegisteredChannelRepositoryInterface&MockObject $channelRepository;
+    private MockObject&RegisteredChannelRepositoryInterface $channelRepository;
 
     private ChannelServiceActionsPort&MockObject $channelServiceActions;
 

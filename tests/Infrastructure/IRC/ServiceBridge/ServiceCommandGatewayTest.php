@@ -18,9 +18,9 @@ use stdClass;
 #[CoversClass(ServiceCommandGateway::class)]
 final class ServiceCommandGatewayTest extends TestCase
 {
-    private ServiceCommandListenerInterface&MockObject $nickservListener;
+    private MockObject&ServiceCommandListenerInterface $nickservListener;
 
-    private ServiceCommandListenerInterface&MockObject $chanservListener;
+    private MockObject&ServiceCommandListenerInterface $chanservListener;
 
     private LoggerInterface&MockObject $logger;
 

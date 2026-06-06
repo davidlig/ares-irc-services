@@ -47,8 +47,7 @@ final readonly class MemoServService
         private readonly string $defaultLanguage = 'en',
         private readonly string $defaultTimezone = 'UTC',
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     /**
      * @param string     $rawText Full text of the PRIVMSG (e.g. "SEND nick message")

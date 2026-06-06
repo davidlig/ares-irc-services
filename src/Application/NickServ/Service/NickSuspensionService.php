@@ -18,8 +18,7 @@ readonly class NickSuspensionService
         private NickForceService $forceService,
         private string $guestPrefix = 'Guest-',
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     /**
      * If the suspended user is connected, force rename to guest nick

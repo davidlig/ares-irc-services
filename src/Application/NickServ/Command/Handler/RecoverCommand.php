@@ -40,8 +40,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
         private readonly EventBusInterface $eventDispatcher,
         private readonly int $recoverTokenTtlSeconds,
         private readonly int $recoverMinIntervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

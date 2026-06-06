@@ -29,8 +29,7 @@ class SocketConnection implements ConnectionInterface
         private readonly bool $useTls = false,
         private readonly int $timeoutSeconds = 30,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function connect(): void
     {

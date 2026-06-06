@@ -28,8 +28,7 @@ final readonly class CtcpHandler implements EventSubscriberInterface
         private UserLanguageResolver $languageResolver,
         private ServiceUidRegistry $uidRegistry,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

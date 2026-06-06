@@ -22,8 +22,7 @@ final readonly class DisableCommand implements MemoServCommandInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private MemoSettingsRepositoryInterface $memoSettingsRepository,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

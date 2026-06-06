@@ -25,8 +25,7 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
         private readonly NickDropService $dropService,
         private readonly int $intervalSeconds,
         private readonly int $inactivityExpiryDays,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {
@@ -49,7 +48,7 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
             return;
         }
 
-        $threshold = (new DateTimeImmutable())->modify(sprintf('-%d days', $this->inactivityExpiryDays));
+        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', $this->inactivityExpiryDays));
         $inactive = $this->nickRepository->findRegisteredInactiveSince($threshold);
 
         foreach ($inactive as $nick) {

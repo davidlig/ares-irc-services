@@ -36,9 +36,7 @@ class Motd
 
     private int $shownCount = 0;
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public static function create(
         string $text,

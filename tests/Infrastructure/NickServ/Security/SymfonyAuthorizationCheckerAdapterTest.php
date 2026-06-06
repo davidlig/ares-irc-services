@@ -14,7 +14,7 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface 
 #[CoversClass(SymfonyAuthorizationCheckerAdapter::class)]
 final class SymfonyAuthorizationCheckerAdapterTest extends TestCase
 {
-    private SymfonyAuthorizationCheckerInterface&MockObject $symfonyChecker;
+    private MockObject&SymfonyAuthorizationCheckerInterface $symfonyChecker;
 
     private SymfonyAuthorizationCheckerAdapter $adapter;
 

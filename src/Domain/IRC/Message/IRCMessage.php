@@ -19,8 +19,7 @@ readonly class IRCMessage
         public readonly array $params = [],
         public readonly ?string $trailing = null,
         public readonly MessageDirection $direction = MessageDirection::Incoming,
-    ) {
-    }
+    ) {}
 
     public function toRawLine(): string
     {

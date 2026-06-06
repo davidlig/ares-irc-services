@@ -34,8 +34,7 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
         private TranslatorInterface $translator,
         private ServiceUidRegistry $uidRegistry,
         private string $defaultLanguage = 'en',
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

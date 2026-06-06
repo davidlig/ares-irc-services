@@ -20,8 +20,7 @@ final class NoexpireCommand implements NickServCommandInterface, AuditableComman
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

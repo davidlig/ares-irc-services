@@ -35,8 +35,7 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
         private readonly string $defaultLanguage,
         private readonly ?string $debugChannel,
         private readonly LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getServiceName(): string
     {
@@ -48,9 +47,7 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
         return null !== $this->debugChannel && '' !== $this->debugChannel;
     }
 
-    public function ensureChannelJoined(): void
-    {
-    }
+    public function ensureChannelJoined(): void {}
 
     public function notify(string $message): void
     {

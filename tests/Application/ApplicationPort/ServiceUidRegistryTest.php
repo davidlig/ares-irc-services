@@ -25,9 +25,7 @@ final class ServiceUidRegistryTest extends TestCase
     public function getUidReturnsUidForKnownService(): void
     {
         $provider = new class('nickserv', 'NickServ', '002AAAAAA') implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {
@@ -62,9 +60,7 @@ final class ServiceUidRegistryTest extends TestCase
     public function getUidByNicknameReturnsUidForKnownNickname(): void
     {
         $provider = new class('nickserv', 'NickServ', '002AAAAAA') implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {
@@ -93,9 +89,7 @@ final class ServiceUidRegistryTest extends TestCase
     public function fromIterableWithMultipleProviders(): void
     {
         $nickserv = new class('nickserv', 'NickServ', '002AAAAAA') implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {
@@ -114,9 +108,7 @@ final class ServiceUidRegistryTest extends TestCase
         };
 
         $chanserv = new class('chanserv', 'ChanServ', '002BBBBBB') implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {
@@ -146,9 +138,7 @@ final class ServiceUidRegistryTest extends TestCase
     public function getUidByUidReturnsUidWhenFound(): void
     {
         $provider = new class('nickserv', 'NickServ', '002AAAAAA') implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {

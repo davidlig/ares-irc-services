@@ -16,8 +16,7 @@ final readonly class CoreSendCtcpAdapter implements SendCtcpPort
     public function __construct(
         private ActiveConnectionHolder $connectionHolder,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function sendCtcpReply(string $senderUid, string $targetUid, string $command, string $response): void
     {

@@ -12,6 +12,5 @@ final readonly class ConnectionEstablishedEvent
     public function __construct(
         public readonly ServerLink $serverLink,
         public readonly DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {
-    }
+    ) {}
 }

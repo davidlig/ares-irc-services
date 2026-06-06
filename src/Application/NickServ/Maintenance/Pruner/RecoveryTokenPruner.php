@@ -12,8 +12,7 @@ final readonly class RecoveryTokenPruner implements InMemoryPrunableInterface
     public function __construct(
         private readonly RecoveryTokenRegistry $registry,
         private readonly int $maxAgeSecondsForRecover = 86400,
-    ) {
-    }
+    ) {}
 
     public function prune(): int
     {

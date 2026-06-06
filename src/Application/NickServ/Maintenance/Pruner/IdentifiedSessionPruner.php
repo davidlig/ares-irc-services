@@ -13,8 +13,7 @@ final readonly class IdentifiedSessionPruner implements InMemoryPrunableInterfac
     public function __construct(
         private readonly IdentifiedSessionRegistry $registry,
         private readonly NetworkUserLookupPort $userLookup,
-    ) {
-    }
+    ) {}
 
     public function prune(): int
     {

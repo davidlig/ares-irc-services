@@ -28,8 +28,7 @@ final readonly class IrcopModeApplier
         private RegisteredNickRepositoryInterface $nickRepository,
         private NetworkUserLookupPort $userLookup,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     /**
      * Apply modes for a role to a user identified by their registered nickname.

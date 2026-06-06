@@ -14,6 +14,5 @@ final readonly class UserDeidentifiedEvent
         public string $uid,
         public int $nickId,
         public string $nickname,
-    ) {
-    }
+    ) {}
 }

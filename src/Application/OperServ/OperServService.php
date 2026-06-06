@@ -43,8 +43,7 @@ final readonly class OperServService
         private string $defaultLanguage = 'en',
         private string $defaultTimezone = 'UTC',
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function dispatch(string $rawText, SenderView $sender): void
     {

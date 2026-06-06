@@ -41,8 +41,7 @@ final readonly class ListCommand implements MemoServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private MemoRepositoryInterface $memoRepository,
         private ChanServAccessHelper $accessHelper,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

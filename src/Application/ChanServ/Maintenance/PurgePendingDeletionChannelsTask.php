@@ -21,8 +21,7 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
         private LoggerInterface $logger,
         private int $intervalSeconds,
         private int $dropGraceDays,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {
@@ -41,7 +40,7 @@ final readonly class PurgePendingDeletionChannelsTask implements MaintenanceTask
 
     public function run(): void
     {
-        $threshold = (new DateTimeImmutable())->modify(sprintf('-%d days', max(0, $this->dropGraceDays)));
+        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', max(0, $this->dropGraceDays)));
         $expired = $this->channelRepository->findPendingDeletionBefore($threshold);
 
         foreach ($expired as $channel) {

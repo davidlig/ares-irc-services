@@ -60,8 +60,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelLevelRepositoryInterface $levelRepository,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

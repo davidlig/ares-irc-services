@@ -28,8 +28,7 @@ final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterfa
         private readonly LoggerInterface $logger,
         private readonly int $intervalSeconds,
         private readonly int $inactivityExpiryDays,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {
@@ -52,7 +51,7 @@ final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterfa
             return;
         }
 
-        $threshold = (new DateTimeImmutable())->modify(sprintf('-%d days', $this->inactivityExpiryDays));
+        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', $this->inactivityExpiryDays));
         $inactive = $this->channelRepository->findRegisteredInactiveSince($threshold);
 
         foreach ($inactive as $channel) {

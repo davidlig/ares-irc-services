@@ -14,8 +14,7 @@ final readonly class SymfonyAuthorizationCheckerAdapter implements Authorization
 {
     public function __construct(
         private SymfonyAuthorizationCheckerInterface $authorizationChecker,
-    ) {
-    }
+    ) {}
 
     public function isGranted(string $attribute, mixed $subject = null): bool
     {

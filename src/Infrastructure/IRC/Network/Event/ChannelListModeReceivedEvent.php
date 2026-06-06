@@ -18,6 +18,5 @@ final readonly class ChannelListModeReceivedEvent
         public readonly ChannelName $channelName,
         public readonly string $modeChar,
         public readonly array $params,
-    ) {
-    }
+    ) {}
 }

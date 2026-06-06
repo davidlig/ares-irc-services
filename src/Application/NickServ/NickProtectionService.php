@@ -42,8 +42,7 @@ final readonly class NickProtectionService
         private readonly string $guestPrefix = 'Guest-',
         private readonly string $defaultLanguage = 'en',
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function onUserJoined(SenderView $user): void
     {

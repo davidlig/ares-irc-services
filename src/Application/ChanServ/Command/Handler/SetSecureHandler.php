@@ -15,8 +15,7 @@ final readonly class SetSecureHandler implements SetOptionHandlerInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {

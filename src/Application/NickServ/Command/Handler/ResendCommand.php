@@ -34,8 +34,7 @@ final readonly class ResendCommand implements NickServCommandInterface
         private readonly TranslationInterface $translator,
         private readonly LoggerInterface $logger,
         private readonly int $resendMinIntervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

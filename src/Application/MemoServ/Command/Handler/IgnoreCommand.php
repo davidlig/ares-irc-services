@@ -34,8 +34,7 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         private ChanServAccessHelper $accessHelper,
         private int $ignoreListLimitNick,
         private int $ignoreListLimitChannel,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

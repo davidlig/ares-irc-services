@@ -52,8 +52,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function getSupportedProtocol(): string
     {
@@ -274,7 +273,7 @@ final class InspIRCdNetworkStateAdapter implements NetworkStateAdapterInterface
     }
 
     /** @return array{list<string>, string}|null */
-    private function extractFjoinParts(string $entry, int|false $comma, int|false $colon): ?array
+    private function extractFjoinParts(string $entry, false|int $comma, false|int $colon): ?array
     {
         if (false === $comma) {
             return false === $colon ? null : [[], substr($entry, 0, $colon)];

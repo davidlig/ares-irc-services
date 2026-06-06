@@ -23,6 +23,5 @@ final readonly class UserJoinedNetworkDTO
         public bool $isIdentified = false,
         public bool $isOper = false,
         public string $serverSid = '',
-    ) {
-    }
+    ) {}
 }

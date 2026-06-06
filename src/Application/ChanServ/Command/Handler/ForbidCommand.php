@@ -23,8 +23,7 @@ final class ForbidCommand implements ChanServCommandInterface, AuditableCommandI
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChannelForbiddenService $forbiddenService,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

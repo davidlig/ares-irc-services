@@ -43,7 +43,7 @@ final class PortTest extends TestCase
     #[Test]
     public function portOneAnd65535Accepted(): void
     {
-        self::assertSame(1, (new Port(1))->value);
-        self::assertSame(65535, (new Port(65535))->value);
+        self::assertSame(1, new Port(1)->value);
+        self::assertSame(65535, new Port(65535)->value);
     }
 }

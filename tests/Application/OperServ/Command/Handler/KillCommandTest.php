@@ -82,9 +82,7 @@ final class KillCommandTest extends TestCase
     private function createServiceNicks(): \App\Application\ApplicationPort\ServiceNicknameRegistry
     {
         $provider = new class('operserv', 'OperServ') implements \App\Application\ApplicationPort\ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {

@@ -12,8 +12,7 @@ final readonly class NetworkUidResolver implements UidResolverInterface
 {
     public function __construct(
         private NetworkUserRepositoryInterface $userRepository,
-    ) {
-    }
+    ) {}
 
     public function resolveUidToNick(string $uid): ?string
     {

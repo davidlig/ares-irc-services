@@ -43,8 +43,7 @@ final readonly class ChanServUnsuspendSubscriber implements EventSubscriberInter
         private TranslatorInterface $translator,
         private string $defaultLanguage = 'en',
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

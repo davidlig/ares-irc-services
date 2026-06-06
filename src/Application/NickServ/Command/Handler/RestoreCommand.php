@@ -19,8 +19,7 @@ final class RestoreCommand implements NickServCommandInterface, AuditableCommand
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickDropService $dropService,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

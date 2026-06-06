@@ -19,8 +19,7 @@ final readonly class DoctrineIdentityMapClearSubscriber implements EventSubscrib
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

@@ -9,6 +9,5 @@ final readonly class UserModeReceivedEvent
     public function __construct(
         public readonly string $sourceId,
         public readonly string $modeStr,
-    ) {
-    }
+    ) {}
 }

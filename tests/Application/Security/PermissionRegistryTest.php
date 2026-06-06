@@ -101,8 +101,7 @@ final class PermissionRegistryTest extends TestCase
             public function __construct(
                 private string $serviceName,
                 private array $permissions,
-            ) {
-            }
+            ) {}
 
             public function getServiceName(): string
             {

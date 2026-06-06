@@ -19,6 +19,5 @@ final readonly class UserLeftChannelEvent
         public readonly ChannelName $channel,
         public readonly string $reason,
         public readonly bool $wasKicked,
-    ) {
-    }
+    ) {}
 }

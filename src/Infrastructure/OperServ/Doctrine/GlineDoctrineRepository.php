@@ -13,9 +13,7 @@ use function strtolower;
 
 final readonly class GlineDoctrineRepository implements GlineRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private EntityManagerInterface $em) {}
 
     public function save(Gline $gline): void
     {

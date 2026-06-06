@@ -21,8 +21,7 @@ final class ClearaccessCommand implements ChanServCommandInterface, AuditableCom
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChannelAccessRepositoryInterface $accessRepository,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

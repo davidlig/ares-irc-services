@@ -43,8 +43,7 @@ readonly class NickServContext implements IrcopContextInterface
         private readonly PendingVerificationRegistry $pendingVerificationRegistry,
         private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
         private readonly ServiceNicknameRegistry $serviceNicks,
-    ) {
-    }
+    ) {}
 
     public function getSender(): ?SenderView
     {

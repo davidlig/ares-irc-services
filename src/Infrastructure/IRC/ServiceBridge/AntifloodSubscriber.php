@@ -56,8 +56,7 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         private int $windowSeconds,
         private int $cooldownSeconds,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

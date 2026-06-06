@@ -20,6 +20,5 @@ final readonly class NickDropEvent
         /** Reason for drop: e.g. 'inactivity', 'manual' */
         public string $reason,
         public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {
-    }
+    ) {}
 }

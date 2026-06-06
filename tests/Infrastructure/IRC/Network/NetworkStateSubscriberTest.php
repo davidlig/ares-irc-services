@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(NetworkStateSubscriber::class)]
 final class NetworkStateSubscriberTest extends TestCase
 {
-    private NetworkUserRepositoryInterface&MockObject $userRepository;
+    private MockObject&NetworkUserRepositoryInterface $userRepository;
 
     private ChannelRepositoryInterface&MockObject $channelRepository;
 

@@ -30,8 +30,7 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
         private readonly NickDropService $dropService,
         private readonly LoggerInterface $logger,
         private readonly ?AuthorizationCheckerInterface $authorizationChecker = null,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

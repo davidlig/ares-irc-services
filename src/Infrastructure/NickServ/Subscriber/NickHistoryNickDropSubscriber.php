@@ -15,8 +15,7 @@ final readonly class NickHistoryNickDropSubscriber implements EventSubscriberInt
 {
     public function __construct(
         private NickHistoryRepositoryInterface $historyRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

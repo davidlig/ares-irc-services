@@ -19,8 +19,7 @@ final readonly class MemoServNickDropCleanupSubscriber implements EventSubscribe
         private MemoRepositoryInterface $memoRepository,
         private MemoIgnoreRepositoryInterface $memoIgnoreRepository,
         private MemoSettingsRepositoryInterface $memoSettingsRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

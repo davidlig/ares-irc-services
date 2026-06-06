@@ -11,8 +11,7 @@ readonly class ForbiddenVhostService
 {
     public function __construct(
         private ForbiddenVhostRepositoryInterface $repository,
-    ) {
-    }
+    ) {}
 
     public function forbid(string $pattern, ?int $creatorNickId = null): ForbiddenVhost
     {

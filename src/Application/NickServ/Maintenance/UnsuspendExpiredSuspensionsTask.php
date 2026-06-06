@@ -19,8 +19,7 @@ final readonly class UnsuspendExpiredSuspensionsTask implements MaintenanceTaskI
         private LoggerInterface $logger,
         private readonly string $serverName,
         private readonly int $intervalSeconds,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

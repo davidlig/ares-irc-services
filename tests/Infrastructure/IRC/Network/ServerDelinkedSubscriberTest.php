@@ -23,7 +23,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 #[CoversClass(ServerDelinkedSubscriber::class)]
 final class ServerDelinkedSubscriberTest extends TestCase
 {
-    private NetworkUserRepositoryInterface&MockObject $userRepository;
+    private MockObject&NetworkUserRepositoryInterface $userRepository;
 
     private EventDispatcherInterface&MockObject $eventDispatcher;
 

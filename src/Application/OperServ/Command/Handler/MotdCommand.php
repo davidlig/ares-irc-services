@@ -28,8 +28,7 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
     public function __construct(
         private readonly MotdRepositoryInterface $motdRepository,
         private readonly ?ServiceDebugNotifierInterface $debugNotifier = null,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {
@@ -314,7 +313,7 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
             'd' => $number * 86400,
         };
 
-        return (new DateTimeImmutable())->modify('+' . $seconds . ' seconds');
+        return new DateTimeImmutable()->modify('+' . $seconds . ' seconds');
     }
 
     private function notifyFinalized(OperServContext $context, Motd $motd): void

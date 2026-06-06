@@ -15,8 +15,7 @@ final readonly class CoreApplyOutgoingChannelModesAdapter implements ApplyOutgoi
 {
     public function __construct(
         private ApplyOutgoingChannelModesApplicatorInterface $applicator,
-    ) {
-    }
+    ) {}
 
     public function applyOutgoingChannelModes(string $channelName, string $modeStr, array $params = []): void
     {

@@ -21,8 +21,7 @@ final readonly class ForcedVhost
 
     private function __construct(
         private string $pattern,
-    ) {
-    }
+    ) {}
 
     public static function fromPattern(string $pattern): self
     {

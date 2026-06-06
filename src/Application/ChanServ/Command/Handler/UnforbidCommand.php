@@ -17,8 +17,7 @@ final class UnforbidCommand implements ChanServCommandInterface, AuditableComman
 
     public function __construct(
         private readonly ChannelForbiddenService $forbiddenService,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

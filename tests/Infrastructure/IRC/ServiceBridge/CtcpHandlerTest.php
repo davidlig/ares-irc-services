@@ -80,9 +80,7 @@ final class CtcpHandlerTest extends TestCase
     private function createUidRegistry(string $nickservUid = '002AAAAAA'): ServiceUidRegistry
     {
         $provider = new class('nickserv', 'NickServ', $nickservUid) implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {
@@ -111,9 +109,7 @@ final class CtcpHandlerTest extends TestCase
     private function createUidRegistryWithUid(string $uid): ServiceUidRegistry
     {
         $provider = new class('nickserv', 'NickServ', $uid) implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {

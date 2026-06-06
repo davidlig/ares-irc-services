@@ -33,8 +33,7 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         private readonly NickTargetValidator $targetValidator,
         private readonly NickSuspensionService $suspensionService,
         private readonly EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

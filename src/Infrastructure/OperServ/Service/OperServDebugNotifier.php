@@ -35,8 +35,7 @@ final readonly class OperServDebugNotifier implements ServiceDebugNotifierInterf
         private string $defaultLanguage,
         private ?string $debugChannel,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public function getServiceName(): string
     {

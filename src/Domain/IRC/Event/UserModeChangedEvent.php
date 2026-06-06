@@ -16,6 +16,5 @@ final readonly class UserModeChangedEvent
         public readonly Uid $uid,
         /** Mode delta string, e.g. "+r" or "-r" */
         public readonly string $modeDelta,
-    ) {
-    }
+    ) {}
 }

@@ -46,8 +46,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         private readonly LoggerInterface $logger,
         private readonly int $registerMinIntervalSeconds,
         private readonly string $guestPrefix = 'Guest-',
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

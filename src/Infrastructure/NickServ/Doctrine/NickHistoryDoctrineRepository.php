@@ -15,8 +15,7 @@ final readonly class NickHistoryDoctrineRepository implements NickHistoryReposit
 {
     public function __construct(
         private EntityManagerInterface $em,
-    ) {
-    }
+    ) {}
 
     public function save(NickHistory $history): void
     {

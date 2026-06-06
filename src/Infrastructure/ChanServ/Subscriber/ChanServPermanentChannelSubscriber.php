@@ -27,8 +27,7 @@ final readonly class ChanServPermanentChannelSubscriber implements EventSubscrib
         private ChannelLookupPort $channelLookup,
         private ChannelServiceActionsPort $channelServiceActions,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

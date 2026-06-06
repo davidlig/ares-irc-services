@@ -72,9 +72,7 @@ final class GlobalCommandTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -96,9 +94,7 @@ final class GlobalCommandTest extends TestCase
 
         if (null !== $nickservUid) {
             $providers['nickserv'] = new class($nickservUid) implements ServiceUidProviderInterface {
-                public function __construct(private string $uid)
-                {
-                }
+                public function __construct(private string $uid) {}
 
                 public function getServiceKey(): string
                 {

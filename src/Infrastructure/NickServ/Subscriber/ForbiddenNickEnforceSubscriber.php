@@ -24,8 +24,7 @@ final readonly class ForbiddenNickEnforceSubscriber implements EventSubscriberIn
         private PendingNickRestoreRegistryInterface $pendingRegistry,
         private NetworkUserLookupPort $userLookup,
         private LoggerInterface $logger,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

@@ -39,8 +39,7 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         private int $founderMinIntervalSeconds = 600,
         private int $maxChannelsPerNick = 3,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {

@@ -15,8 +15,7 @@ final readonly class ChannelHistoryDoctrineRepository implements ChannelHistoryR
 {
     public function __construct(
         private EntityManagerInterface $em,
-    ) {
-    }
+    ) {}
 
     public function save(ChannelHistory $history): void
     {

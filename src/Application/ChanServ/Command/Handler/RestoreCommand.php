@@ -19,8 +19,7 @@ final class RestoreCommand implements ChanServCommandInterface, AuditableCommand
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChanDropService $dropService,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

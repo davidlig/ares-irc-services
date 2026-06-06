@@ -60,8 +60,7 @@ final class MemoServCommandRegistryTest extends TestCase
             public function __construct(
                 private readonly string $name,
                 private readonly array $aliases,
-            ) {
-            }
+            ) {}
 
             public function getName(): string
             {
@@ -113,9 +112,7 @@ final class MemoServCommandRegistryTest extends TestCase
                 return null;
             }
 
-            public function execute(MemoServContext $context): void
-            {
-            }
+            public function execute(MemoServContext $context): void {}
         };
     }
 }

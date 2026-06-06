@@ -15,7 +15,5 @@ use App\Application\Port\UserJoinedNetworkDTO;
  */
 final readonly class UserJoinedNetworkAppEvent
 {
-    public function __construct(public readonly UserJoinedNetworkDTO $user)
-    {
-    }
+    public function __construct(public readonly UserJoinedNetworkDTO $user) {}
 }

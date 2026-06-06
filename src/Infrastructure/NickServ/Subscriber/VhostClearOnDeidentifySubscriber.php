@@ -20,8 +20,7 @@ final readonly class VhostClearOnDeidentifySubscriber implements EventSubscriber
     public function __construct(
         private readonly NetworkUserLookupPort $userLookup,
         private readonly NickServNotifierInterface $notifier,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

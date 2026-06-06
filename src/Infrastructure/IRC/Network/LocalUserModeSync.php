@@ -18,8 +18,7 @@ final readonly class LocalUserModeSync implements LocalUserModeSyncInterface
 {
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function apply(Uid $uid, string $modeDelta): void
     {

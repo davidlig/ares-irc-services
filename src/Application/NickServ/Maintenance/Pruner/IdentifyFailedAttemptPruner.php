@@ -12,8 +12,7 @@ final readonly class IdentifyFailedAttemptPruner implements InMemoryPrunableInte
     public function __construct(
         private readonly IdentifyFailedAttemptRegistry $registry,
         private readonly int $windowSeconds,
-    ) {
-    }
+    ) {}
 
     public function prune(): int
     {

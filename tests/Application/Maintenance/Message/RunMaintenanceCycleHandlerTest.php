@@ -34,9 +34,7 @@ final class RunMaintenanceCycleHandlerTest extends TestCase
         $holder = new stdClass();
         $holder->ran = false;
         $task = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {

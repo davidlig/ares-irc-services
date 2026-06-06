@@ -112,9 +112,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     private function createUidRegistry(string $uid = self::CHANSERV_UID): ServiceUidRegistry
     {
         $provider = new class('chanserv', 'ChanServ', $uid) implements ServiceUidProviderInterface {
-            public function __construct(private string $key, private string $nick, private string $uid)
-            {
-            }
+            public function __construct(private string $key, private string $nick, private string $uid) {}
 
             public function getServiceKey(): string
             {

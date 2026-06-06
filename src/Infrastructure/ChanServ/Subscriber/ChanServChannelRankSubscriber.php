@@ -69,8 +69,7 @@ final readonly class ChanServChannelRankSubscriber implements EventSubscriberInt
         private ChannelRankSyncPendingRegistry $syncPendingRegistry,
         private ServiceUidRegistry $uidRegistry,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

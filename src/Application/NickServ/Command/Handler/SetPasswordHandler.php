@@ -19,8 +19,7 @@ final readonly class SetPasswordHandler implements SetOptionHandlerInterface
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly PasswordHasherInterface $passwordHasher,
         private readonly EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {

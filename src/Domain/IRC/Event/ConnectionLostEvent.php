@@ -13,6 +13,5 @@ final readonly class ConnectionLostEvent
         public readonly ServerLink $serverLink,
         public readonly ?string $reason,
         public readonly DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {
-    }
+    ) {}
 }

@@ -61,8 +61,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         private readonly SkipIdentifiedModeStripRegistryInterface $skipIdentifiedModeStripRegistry,
         private readonly ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

@@ -187,7 +187,7 @@ $entityGetters = [
     ],
 ];
 
-$parser = (new ParserFactory())->createForHostVersion();
+$parser = new ParserFactory()->createForHostVersion();
 $printer = new PrettyPrinter\Standard();
 
 $baseDir = __DIR__ . '/../';

@@ -60,8 +60,7 @@ final class NickServCommandRegistryTest extends TestCase
             public function __construct(
                 private readonly string $name,
                 private readonly array $aliases,
-            ) {
-            }
+            ) {}
 
             public function getName(): string
             {
@@ -118,9 +117,7 @@ final class NickServCommandRegistryTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
-            {
-            }
+            public function execute(NickServContext $context): void {}
         };
     }
 }

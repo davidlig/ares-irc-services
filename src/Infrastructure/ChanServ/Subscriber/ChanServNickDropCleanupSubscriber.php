@@ -30,8 +30,7 @@ final readonly class ChanServNickDropCleanupSubscriber implements EventSubscribe
         private RegisteredChannelRepositoryInterface $channelRepository,
         private EventDispatcherInterface $eventDispatcher,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

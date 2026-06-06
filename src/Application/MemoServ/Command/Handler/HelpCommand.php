@@ -17,8 +17,7 @@ final readonly class HelpCommand implements MemoServCommandInterface
 {
     public function __construct(
         private UnifiedHelpFormatter $formatter,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

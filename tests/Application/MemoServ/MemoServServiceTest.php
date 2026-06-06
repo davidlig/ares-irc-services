@@ -37,9 +37,7 @@ final class MemoServServiceTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -52,9 +50,7 @@ final class MemoServServiceTest extends TestCase
             }
         };
         $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -67,9 +63,7 @@ final class MemoServServiceTest extends TestCase
             }
         };
         $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -82,9 +76,7 @@ final class MemoServServiceTest extends TestCase
             }
         };
         $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -118,9 +110,7 @@ final class MemoServServiceTest extends TestCase
         $contextHolder = new stdClass();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -252,9 +242,7 @@ final class MemoServServiceTest extends TestCase
         $contextHolder->context = null;
 
         $permissionHandler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -352,9 +340,7 @@ final class MemoServServiceTest extends TestCase
         $contextHolder->context = null;
 
         $identifiedHandler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -444,9 +430,7 @@ final class MemoServServiceTest extends TestCase
         $contextHolder->context = null;
 
         $minArgsHandler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -621,9 +605,7 @@ final class MemoServServiceTest extends TestCase
         $contextHolder = new stdClass();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -711,9 +693,7 @@ final class MemoServServiceTest extends TestCase
         $contextHolder = new stdClass();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -886,9 +866,7 @@ final class MemoServServiceTest extends TestCase
         $contextHolder->context = null;
 
         $auditableHandler = new class($contextHolder) implements MemoServCommandInterface, AuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             private ?IrcopAuditData $auditData = null;
 
@@ -1013,9 +991,7 @@ final class MemoServServiceTest extends TestCase
         $contextHolder->context = null;
 
         $nonAuditableHandler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -1114,9 +1090,7 @@ final class MemoServServiceTest extends TestCase
 
         // Handler implements AuditableCommandInterface but getAuditData returns null (command failed)
         $auditableHandler = new class($contextHolder) implements MemoServCommandInterface, AuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {

@@ -19,8 +19,7 @@ final readonly class InviteCommand implements ChanServCommandInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChanServAccessHelper $accessHelper,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

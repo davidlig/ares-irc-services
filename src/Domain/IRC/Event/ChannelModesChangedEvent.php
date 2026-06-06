@@ -12,7 +12,5 @@ use App\Domain\IRC\Network\Channel;
  */
 final readonly class ChannelModesChangedEvent
 {
-    public function __construct(public readonly Channel $channel)
-    {
-    }
+    public function __construct(public readonly Channel $channel) {}
 }

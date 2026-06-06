@@ -51,15 +51,15 @@ final class MemoServCommandListenerTest extends TestCase
 
     private MemoServService $memoServService;
 
-    private NetworkUserLookupPort&MockObject $userLookup;
+    private MockObject&NetworkUserLookupPort $userLookup;
 
     private MemoServNotifierInterface&MockObject $memoServNotifier;
 
     private UserMessageTypeResolver $messageTypeResolver;
 
-    private SymfonyTranslatorInterface&MockObject $translator;
+    private MockObject&SymfonyTranslatorInterface $translator;
 
-    private RegisteredNickRepositoryInterface&MockObject $nickRepository;
+    private MockObject&RegisteredNickRepositoryInterface $nickRepository;
 
     private LoggerInterface&MockObject $logger;
 
@@ -456,9 +456,7 @@ final class MemoServCommandListenerTest extends TestCase
     private function createCaptureContextHandler(stdClass $contextHolder): MemoServCommandInterface
     {
         return new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -523,8 +521,7 @@ final class MemoServCommandListenerTest extends TestCase
             public function __construct(
                 private readonly string $name,
                 private readonly Throwable $exception,
-            ) {
-            }
+            ) {}
 
             public function getName(): string
             {
@@ -586,9 +583,7 @@ final class MemoServCommandListenerTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -601,9 +596,7 @@ final class MemoServCommandListenerTest extends TestCase
             }
         };
         $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -616,9 +609,7 @@ final class MemoServCommandListenerTest extends TestCase
             }
         };
         $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -631,9 +622,7 @@ final class MemoServCommandListenerTest extends TestCase
             }
         };
         $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {
@@ -657,9 +646,7 @@ final class MemoServCommandListenerTest extends TestCase
     private function createApplicationTranslator(): TranslationInterface
     {
         return new readonly class($this->translator) implements TranslationInterface {
-            public function __construct(private SymfonyTranslatorInterface $translator)
-            {
-            }
+            public function __construct(private SymfonyTranslatorInterface $translator) {}
 
             public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
             {

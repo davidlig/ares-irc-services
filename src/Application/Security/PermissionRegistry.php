@@ -14,8 +14,7 @@ final readonly class PermissionRegistry
      */
     public function __construct(
         private iterable $providers,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<string> All available permissions from all services, sorted alphabetically

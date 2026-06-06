@@ -19,8 +19,7 @@ final readonly class ChanServHistorySubscriber implements EventSubscriberInterfa
     public function __construct(
         private ChannelHistoryService $historyService,
         private RegisteredNickRepositoryInterface $nickRepository,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

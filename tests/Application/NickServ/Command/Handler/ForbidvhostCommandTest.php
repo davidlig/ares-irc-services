@@ -520,9 +520,7 @@ final class ForbidvhostCommandTest extends TestCase
     private function createServiceNicks(): ServiceNicknameRegistry
     {
         $provider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {

@@ -24,8 +24,7 @@ final readonly class InfoCommand implements ChanServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
         private readonly int $dropGraceDays = 7,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

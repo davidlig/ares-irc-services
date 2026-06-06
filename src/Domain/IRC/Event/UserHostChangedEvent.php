@@ -16,6 +16,5 @@ final readonly class UserHostChangedEvent
     public function __construct(
         public readonly Uid $uid,
         public readonly string $newHost,
-    ) {
-    }
+    ) {}
 }

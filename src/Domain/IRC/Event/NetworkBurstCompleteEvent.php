@@ -18,6 +18,5 @@ final readonly class NetworkBurstCompleteEvent
     public function __construct(
         public readonly ConnectionInterface $connection,
         public readonly string $serverSid,
-    ) {
-    }
+    ) {}
 }

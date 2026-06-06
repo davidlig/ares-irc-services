@@ -21,8 +21,7 @@ final readonly class VerifyCommand implements NickServCommandInterface
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly IdentifiedSessionRegistry $identifiedRegistry,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

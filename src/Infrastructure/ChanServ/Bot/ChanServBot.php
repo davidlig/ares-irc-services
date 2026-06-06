@@ -45,8 +45,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         private readonly string $chanservIdent = 'ChanServ',
         private readonly string $chanservRealname = 'Channel Registration Services',
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

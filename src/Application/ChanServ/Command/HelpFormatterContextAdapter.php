@@ -30,8 +30,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         private IrcopAccessHelper $accessHelper,
         private RootUserRegistry $rootRegistry,
         private PermissionRegistry $permissionRegistry,
-    ) {
-    }
+    ) {}
 
     public function reply(string $key, array $params = []): void
     {

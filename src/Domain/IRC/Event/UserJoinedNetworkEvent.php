@@ -12,7 +12,5 @@ use App\Domain\IRC\Network\NetworkUser;
  */
 final readonly class UserJoinedNetworkEvent
 {
-    public function __construct(public readonly NetworkUser $user)
-    {
-    }
+    public function __construct(public readonly NetworkUser $user) {}
 }

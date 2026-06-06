@@ -11,8 +11,7 @@ final readonly class PendingEmailChangePruner implements InMemoryPrunableInterfa
 {
     public function __construct(
         private readonly PendingEmailChangeRegistry $registry,
-    ) {
-    }
+    ) {}
 
     public function prune(): int
     {

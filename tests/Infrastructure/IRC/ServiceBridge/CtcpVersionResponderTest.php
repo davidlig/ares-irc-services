@@ -21,9 +21,7 @@ final class CtcpVersionResponderTest extends TestCase
     private function createTranslator(string $returnValue = ''): TranslatorInterface
     {
         return new class($returnValue) implements TranslatorInterface {
-            public function __construct(private string $return)
-            {
-            }
+            public function __construct(private string $return) {}
 
             public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
             {

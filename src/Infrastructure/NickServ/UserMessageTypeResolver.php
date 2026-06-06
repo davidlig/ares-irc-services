@@ -18,8 +18,7 @@ final readonly class UserMessageTypeResolver implements UserMessageTypeResolverI
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
-    ) {
-    }
+    ) {}
 
     /**
      * @return 'NOTICE'|'PRIVMSG'

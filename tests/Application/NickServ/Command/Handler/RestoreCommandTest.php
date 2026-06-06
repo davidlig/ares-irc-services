@@ -83,7 +83,7 @@ final class RestoreCommandTest extends TestCase
         $dropService->expects(self::never())->method('restoreNick');
 
         $messages = [];
-        (new RestoreCommand($repo, $dropService))->execute($this->createContext(['Target'], $messages));
+        new RestoreCommand($repo, $dropService)->execute($this->createContext(['Target'], $messages));
 
         self::assertContains('restore.not_pending_deletion', $messages);
     }
@@ -95,7 +95,7 @@ final class RestoreCommandTest extends TestCase
         $repo->expects(self::never())->method('findByNick');
         $messages = [];
 
-        (new RestoreCommand($repo, $this->createStub(NickDropService::class)))->execute($this->createContextWithoutSender(['Target'], $messages));
+        new RestoreCommand($repo, $this->createStub(NickDropService::class))->execute($this->createContextWithoutSender(['Target'], $messages));
 
         self::assertSame([], $messages);
     }
@@ -107,7 +107,7 @@ final class RestoreCommandTest extends TestCase
         $repo->method('findByNick')->willReturn(null);
         $messages = [];
 
-        (new RestoreCommand($repo, $this->createStub(NickDropService::class)))->execute($this->createContext(['Target'], $messages));
+        new RestoreCommand($repo, $this->createStub(NickDropService::class))->execute($this->createContext(['Target'], $messages));
 
         self::assertContains('restore.not_registered', $messages);
     }

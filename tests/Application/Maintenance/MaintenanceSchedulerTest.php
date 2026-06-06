@@ -22,9 +22,7 @@ final class MaintenanceSchedulerTest extends TestCase
         $holder = new stdClass();
         $holder->runOrder = [];
         $taskA = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -47,9 +45,7 @@ final class MaintenanceSchedulerTest extends TestCase
             }
         };
         $taskB = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -86,9 +82,7 @@ final class MaintenanceSchedulerTest extends TestCase
         $holder = new stdClass();
         $holder->runOrder = [];
         $taskOk = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -111,9 +105,7 @@ final class MaintenanceSchedulerTest extends TestCase
             }
         };
         $taskFails = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -137,9 +129,7 @@ final class MaintenanceSchedulerTest extends TestCase
             }
         };
         $taskNever = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -176,9 +166,7 @@ final class MaintenanceSchedulerTest extends TestCase
         $holder = new stdClass();
         $holder->runCount = 0;
         $task = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -216,9 +204,7 @@ final class MaintenanceSchedulerTest extends TestCase
         $holder = new stdClass();
         $holder->runCount = 0;
         $task = new class($holder) implements MaintenanceTaskInterface {
-            public function __construct(private readonly stdClass $holder)
-            {
-            }
+            public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
             {
@@ -269,9 +255,7 @@ final class MaintenanceSchedulerTest extends TestCase
                 return 100;
             }
 
-            public function run(): void
-            {
-            }
+            public function run(): void {}
         };
 
         $logMessages = [];
@@ -315,8 +299,7 @@ final class MaintenanceSchedulerTest extends TestCase
 
         $logErrors = [];
         $logger = $this->createStub(LoggerInterface::class);
-        $logger->method('info')->willReturnCallback(static function (): void {
-        });
+        $logger->method('info')->willReturnCallback(static function (): void {});
         $logger->method('error')->willReturnCallback(static function (string $message) use (&$logErrors): void {
             $logErrors[] = $message;
         });

@@ -37,8 +37,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         private readonly RootUserRegistry $rootRegistry,
         private readonly PermissionRegistry $permissionRegistry,
         private readonly int $inactivityExpiryDays = 0,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

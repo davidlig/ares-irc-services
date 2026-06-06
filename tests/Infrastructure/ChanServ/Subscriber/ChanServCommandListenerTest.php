@@ -42,15 +42,15 @@ final class ChanServCommandListenerTest extends TestCase
 
     private ChanServDispatchPort&MockObject $chanServService;
 
-    private NetworkUserLookupPort&MockObject $userLookup;
+    private MockObject&NetworkUserLookupPort $userLookup;
 
     private ChanServNotifierInterface&MockObject $chanServNotifier;
 
     private UserMessageTypeResolver $messageTypeResolver;
 
-    private TranslatorInterface&MockObject $translator;
+    private MockObject&TranslatorInterface $translator;
 
-    private RegisteredNickRepositoryInterface&MockObject $nickRepository;
+    private MockObject&RegisteredNickRepositoryInterface $nickRepository;
 
     private LoggerInterface&MockObject $logger;
 

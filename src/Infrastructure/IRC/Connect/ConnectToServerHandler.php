@@ -18,8 +18,7 @@ final readonly class ConnectToServerHandler implements ConnectToServerHandlerInt
 {
     public function __construct(
         private readonly IRCClientFactoryInterface $clientFactory,
-    ) {
-    }
+    ) {}
 
     public function handle(ConnectToServerCommand $command): IrcSessionInterface
     {

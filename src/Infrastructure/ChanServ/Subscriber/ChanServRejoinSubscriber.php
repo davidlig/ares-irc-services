@@ -28,8 +28,7 @@ final readonly class ChanServRejoinSubscriber implements EventSubscriberInterfac
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private ChannelServiceActionsPort $channelServiceActions,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

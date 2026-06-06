@@ -28,8 +28,7 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
         private readonly NetworkUserRepositoryInterface $userRepository,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

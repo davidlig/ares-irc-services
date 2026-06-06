@@ -30,8 +30,7 @@ final readonly class CoreServiceChannelRegistrationAdapter implements ServiceCha
     public function __construct(
         private ChannelRepositoryInterface $channelRepository,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function registerServiceChannelJoin(
         string $channelName,

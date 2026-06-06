@@ -12,8 +12,7 @@ final readonly class VhostDisplayResolver
 {
     public function __construct(
         private readonly string $vhostSuffix = '',
-    ) {
-    }
+    ) {}
 
     /**
      * Returns the vhost string to send to the IRCd / show to the user.

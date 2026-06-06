@@ -16,6 +16,5 @@ final readonly class ServerDelinkedEvent
         public readonly string $serverSid,
         /** Optional reason from the SQUIT message. */
         public readonly string $reason = '',
-    ) {
-    }
+    ) {}
 }

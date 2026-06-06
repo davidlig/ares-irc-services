@@ -25,8 +25,7 @@ final readonly class DelCommand implements MemoServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private MemoRepositoryInterface $memoRepository,
         private ChanServAccessHelper $accessHelper,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

@@ -23,8 +23,7 @@ final readonly class CleanupHistoryTask implements MaintenanceTaskInterface
         private LoggerInterface $logger,
         private readonly int $intervalSeconds,
         private readonly int $retentionDays,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {
@@ -47,7 +46,7 @@ final readonly class CleanupHistoryTask implements MaintenanceTaskInterface
             return;
         }
 
-        $threshold = (new DateTimeImmutable())->modify(sprintf('-%d days', $this->retentionDays));
+        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', $this->retentionDays));
         $deleted = $this->historyRepository->deleteOlderThan($threshold);
 
         if ($deleted > 0) {

@@ -31,8 +31,7 @@ final class OperServBot implements OperServNotifierInterface, ServiceNicknamePro
         private readonly string $operservIdent = 'OperServ',
         private readonly string $operservRealname = 'Network Operations Services',
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

@@ -16,9 +16,7 @@ final class ServiceNicknameRegistryTest extends TestCase
     private function createProvider(string $key, string $nickname): ServiceNicknameProviderInterface
     {
         return new class($key, $nickname) implements ServiceNicknameProviderInterface {
-            public function __construct(private string $key, private string $nick)
-            {
-            }
+            public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
             {

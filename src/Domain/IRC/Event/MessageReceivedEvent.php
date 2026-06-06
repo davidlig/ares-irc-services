@@ -12,6 +12,5 @@ final readonly class MessageReceivedEvent
     public function __construct(
         public IRCMessage $message,
         public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
-    ) {
-    }
+    ) {}
 }

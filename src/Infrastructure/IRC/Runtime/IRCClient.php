@@ -37,8 +37,7 @@ class IRCClient implements IrcSessionInterface
         private readonly BurstCompleteRegistry $burstCompleteRegistry,
         private readonly int $maintenanceDispatchIntervalSeconds,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function connect(ServerLink $link): void
     {

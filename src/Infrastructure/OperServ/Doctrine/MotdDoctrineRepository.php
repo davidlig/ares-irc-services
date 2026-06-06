@@ -10,9 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class MotdDoctrineRepository implements MotdRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private EntityManagerInterface $em) {}
 
     public function save(Motd $motd): void
     {

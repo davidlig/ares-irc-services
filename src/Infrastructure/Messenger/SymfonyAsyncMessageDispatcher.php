@@ -11,8 +11,7 @@ final readonly class SymfonyAsyncMessageDispatcher implements AsyncMessageDispat
 {
     public function __construct(
         private MessageBusInterface $messageBus,
-    ) {
-    }
+    ) {}
 
     public function dispatch(object $message): object
     {

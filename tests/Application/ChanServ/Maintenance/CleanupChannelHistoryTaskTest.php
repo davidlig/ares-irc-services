@@ -80,7 +80,7 @@ final class CleanupChannelHistoryTaskTest extends TestCase
         $historyRepo->expects(self::once())
             ->method('deleteOlderThan')
             ->with(self::callback(static function (DateTimeImmutable $threshold) use ($retentionDays): bool {
-                $expected = (new DateTimeImmutable())->modify(sprintf('-%d days', $retentionDays));
+                $expected = new DateTimeImmutable()->modify(sprintf('-%d days', $retentionDays));
 
                 return $threshold->format('Y-m-d') === $expected->format('Y-m-d');
             }))

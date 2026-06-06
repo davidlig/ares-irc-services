@@ -14,8 +14,7 @@ final class IrcopCommandAuditSubscriber implements EventSubscriberInterface
     public function __construct(
         private readonly ServiceDebugNotifierRegistry $registry,
         private readonly IrcopPermissionDetector $detector,
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

@@ -40,8 +40,7 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
         private readonly string $nickservIdent = 'NickServ',
         private readonly string $nickservRealname = 'Nickname Registration Services',
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

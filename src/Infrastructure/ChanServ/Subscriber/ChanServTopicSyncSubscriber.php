@@ -32,8 +32,7 @@ final readonly class ChanServTopicSyncSubscriber implements EventSubscriberInter
         private string $chanservNick,
         private string $nickservNick,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

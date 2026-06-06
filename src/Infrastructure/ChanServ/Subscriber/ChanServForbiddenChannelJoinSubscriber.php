@@ -24,8 +24,7 @@ final readonly class ChanServForbiddenChannelJoinSubscriber implements EventSubs
         private ChannelLookupPort $channelLookup,
         private ChannelForbiddenService $forbiddenService,
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public static function getSubscribedEvents(): array
     {

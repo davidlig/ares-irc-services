@@ -14,8 +14,7 @@ final readonly class SetMsgHandler implements SetOptionHandlerInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-    ) {
-    }
+    ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {

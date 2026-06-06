@@ -23,8 +23,7 @@ final readonly class CoreNetworkUserLookupAdapter implements NetworkUserLookupPo
 {
     public function __construct(
         private NetworkUserRepositoryInterface $networkUserRepository,
-    ) {
-    }
+    ) {}
 
     public function findByUid(string $uid): ?SenderView
     {

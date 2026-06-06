@@ -54,13 +54,9 @@ final class ConnectCommandTest extends TestCase
     private function createClientThatReturnsFromRun(): IrcSessionInterface
     {
         return new class implements IrcSessionInterface {
-            public function run(): void
-            {
-            }
+            public function run(): void {}
 
-            public function disconnect(?string $reason = null): void
-            {
-            }
+            public function disconnect(?string $reason = null): void {}
 
             public function getProtocolName(): string
             {
@@ -313,8 +309,7 @@ final class HandlerStub implements ConnectToServerHandlerInterface
     public function __construct(
         private readonly ?IrcSessionInterface $client,
         private readonly ?Throwable $throw = null,
-    ) {
-    }
+    ) {}
 
     public function handle(ConnectToServerCommand $command): IrcSessionInterface
     {

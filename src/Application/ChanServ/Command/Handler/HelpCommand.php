@@ -26,8 +26,7 @@ final readonly class HelpCommand implements ChanServCommandInterface
         private RootUserRegistry $rootRegistry,
         private PermissionRegistry $permissionRegistry,
         private readonly int $inactivityExpiryDays = 0,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

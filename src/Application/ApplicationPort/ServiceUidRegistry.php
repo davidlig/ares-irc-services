@@ -15,8 +15,7 @@ class ServiceUidRegistry
      */
     public function __construct(
         private array $providers = [],
-    ) {
-    }
+    ) {}
 
     /**
      * Create from iterable of tagged services.

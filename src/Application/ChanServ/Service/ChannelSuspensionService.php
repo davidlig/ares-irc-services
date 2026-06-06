@@ -34,8 +34,7 @@ readonly class ChannelSuspensionService
         private TranslationInterface $translator,
         private string $defaultLanguage = 'en',
         private LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function enforceSuspension(RegisteredChannel $channel): void
     {

@@ -29,8 +29,7 @@ final readonly class IRCClientFactory implements IRCClientFactoryInterface
         private readonly BurstCompleteRegistry $burstCompleteRegistry,
         private readonly int $maintenanceDispatchIntervalSeconds,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {
-    }
+    ) {}
 
     public function create(string $protocolName, ServerLink $link): IRCClient
     {

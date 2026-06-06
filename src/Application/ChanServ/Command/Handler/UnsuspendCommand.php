@@ -22,8 +22,7 @@ final class UnsuspendCommand implements ChanServCommandInterface, AuditableComma
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

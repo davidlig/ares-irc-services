@@ -14,8 +14,7 @@ final readonly class IrcopAccessHelper
         private RootUserRegistry $rootUserRegistry,
         private OperIrcopRepositoryInterface $ircopRepository,
         private OperRoleRepositoryInterface $roleRepository,
-    ) {
-    }
+    ) {}
 
     public function isRoot(string $nick): bool
     {

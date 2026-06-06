@@ -9,6 +9,5 @@ final readonly class UserQuitReceivedEvent
     public function __construct(
         public readonly string $sourceId,
         public readonly string $reason,
-    ) {
-    }
+    ) {}
 }

@@ -27,8 +27,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private readonly IdentifiedUserVhostSyncService $identifiedUserVhostSync,
         private readonly BurstState $burstState,
         private readonly NetworkUserLookupPort $networkUserLookup,
-    ) {
-    }
+    ) {}
 
     /**
      * Priorities per Symfony 7.4 event_dispatcher: higher = runs earlier; range -256..256.

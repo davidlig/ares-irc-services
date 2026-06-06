@@ -17,8 +17,7 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private EventBusInterface $eventDispatcher,
         private MlockStateFromChannelResolver $mlockStateResolver,
-    ) {
-    }
+    ) {}
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
     {

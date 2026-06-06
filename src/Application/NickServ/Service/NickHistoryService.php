@@ -15,8 +15,7 @@ final readonly class NickHistoryService
 {
     public function __construct(
         private NickHistoryRepositoryInterface $historyRepository,
-    ) {
-    }
+    ) {}
 
     /**
      * Record a history entry for a nickname.

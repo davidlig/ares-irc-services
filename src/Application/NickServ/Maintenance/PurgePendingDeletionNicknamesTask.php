@@ -19,8 +19,7 @@ final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTas
         private NickDropService $dropService,
         private int $intervalSeconds,
         private int $dropGraceDays,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {
@@ -39,7 +38,7 @@ final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTas
 
     public function run(): void
     {
-        $threshold = (new DateTimeImmutable())->modify(sprintf('-%d days', max(0, $this->dropGraceDays)));
+        $threshold = new DateTimeImmutable()->modify(sprintf('-%d days', max(0, $this->dropGraceDays)));
         $expired = $this->nickRepository->findPendingDeletionBefore($threshold);
 
         foreach ($expired as $nick) {

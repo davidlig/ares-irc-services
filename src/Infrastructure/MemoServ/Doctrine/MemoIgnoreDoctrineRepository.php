@@ -12,9 +12,7 @@ use function array_filter;
 
 final class MemoIgnoreDoctrineRepository implements MemoIgnoreRepositoryInterface
 {
-    public function __construct(private readonly EntityManagerInterface $em)
-    {
-    }
+    public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function save(MemoIgnore $ignore): void
     {

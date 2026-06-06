@@ -37,8 +37,7 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
         private readonly NickHistoryRepositoryInterface $historyRepository,
         private readonly NickHistoryService $historyService,
         private readonly int $historyViewLimit = 40,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

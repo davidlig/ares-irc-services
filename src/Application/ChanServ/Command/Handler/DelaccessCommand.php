@@ -28,8 +28,7 @@ final readonly class DelaccessCommand implements ChanServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelAccessRepositoryInterface $accessRepository,
         private EventBusInterface $eventDispatcher,
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

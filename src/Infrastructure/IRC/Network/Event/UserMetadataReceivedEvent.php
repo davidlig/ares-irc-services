@@ -10,6 +10,5 @@ final readonly class UserMetadataReceivedEvent
         public readonly string $targetUid,
         public readonly string $key,
         public readonly string $value,
-    ) {
-    }
+    ) {}
 }

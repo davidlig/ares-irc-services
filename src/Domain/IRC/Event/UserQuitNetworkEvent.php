@@ -28,6 +28,5 @@ final readonly class UserQuitNetworkEvent
         public readonly string $hostname = '',
         /** IP address in base64 format from IRCd */
         public readonly string $ipBase64 = '',
-    ) {
-    }
+    ) {}
 }

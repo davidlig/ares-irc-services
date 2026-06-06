@@ -26,8 +26,7 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
         private readonly NickTargetValidator $targetValidator,
         private readonly LoggerInterface $logger,
         private readonly string $guestPrefix = 'Guest-',
-    ) {
-    }
+    ) {}
 
     public function getName(): string
     {

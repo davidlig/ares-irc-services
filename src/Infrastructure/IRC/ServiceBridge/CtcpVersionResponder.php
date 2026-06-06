@@ -60,8 +60,7 @@ final readonly class CtcpVersionResponder
     public function __construct(
         private TranslatorInterface $translator,
         private UserLanguageResolver $languageResolver,
-    ) {
-    }
+    ) {}
 
     public function getVersionResponse(): string
     {

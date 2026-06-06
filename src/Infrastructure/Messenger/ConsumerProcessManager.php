@@ -36,8 +36,7 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
     public function __construct(
         private readonly string $consolePath,
         private readonly array $transportNames = ['async', 'async_emails'],
-    ) {
-    }
+    ) {}
 
     public function start(): void
     {

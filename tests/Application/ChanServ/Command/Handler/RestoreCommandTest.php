@@ -83,7 +83,7 @@ final class RestoreCommandTest extends TestCase
         $dropService->expects(self::never())->method('restoreChannel');
 
         $messages = [];
-        (new RestoreCommand($repo, $dropService))->execute($this->createContext(['#test'], $messages));
+        new RestoreCommand($repo, $dropService)->execute($this->createContext(['#test'], $messages));
 
         self::assertContains('restore.not_pending_deletion', $messages);
     }
@@ -95,7 +95,7 @@ final class RestoreCommandTest extends TestCase
         $repo->expects(self::never())->method('findByChannelName');
         $messages = [];
 
-        (new RestoreCommand($repo, $this->createStub(ChanDropService::class)))->execute($this->createContextWithoutSender(['#test'], $messages));
+        new RestoreCommand($repo, $this->createStub(ChanDropService::class))->execute($this->createContextWithoutSender(['#test'], $messages));
 
         self::assertSame([], $messages);
     }
@@ -105,7 +105,7 @@ final class RestoreCommandTest extends TestCase
     {
         $messages = [];
 
-        (new RestoreCommand($this->createStub(RegisteredChannelRepositoryInterface::class), $this->createStub(ChanDropService::class)))->execute($this->createContext(['notchannel'], $messages));
+        new RestoreCommand($this->createStub(RegisteredChannelRepositoryInterface::class), $this->createStub(ChanDropService::class))->execute($this->createContext(['notchannel'], $messages));
 
         self::assertContains('error.invalid_channel', $messages);
     }
@@ -117,7 +117,7 @@ final class RestoreCommandTest extends TestCase
         $repo->method('findByChannelName')->willReturn(null);
         $messages = [];
 
-        (new RestoreCommand($repo, $this->createStub(ChanDropService::class)))->execute($this->createContext(['#test'], $messages));
+        new RestoreCommand($repo, $this->createStub(ChanDropService::class))->execute($this->createContext(['#test'], $messages));
 
         self::assertContains('restore.not_registered', $messages);
     }

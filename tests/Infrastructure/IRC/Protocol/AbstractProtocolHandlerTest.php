@@ -79,9 +79,7 @@ final class AbstractProtocolHandlerTest extends TestCase
             ->with('PONG :server');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
-            {
-            }
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -100,9 +98,7 @@ final class AbstractProtocolHandlerTest extends TestCase
             ->with('PONG :target');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
-            {
-            }
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -121,9 +117,7 @@ final class AbstractProtocolHandlerTest extends TestCase
             ->with('PONG :');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
-            {
-            }
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -141,9 +135,7 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection->expects(self::never())->method('writeLine');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
-            {
-            }
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -161,9 +153,7 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection->expects(self::never())->method('writeLine');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
-            {
-            }
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -181,9 +171,7 @@ final class AbstractProtocolHandlerTest extends TestCase
         $connection->expects(self::never())->method('writeLine');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
-            {
-            }
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -216,9 +204,7 @@ final class AbstractProtocolHandlerTest extends TestCase
                 $this->dispatchSyncComplete($connection, $sid);
             }
 
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
-            {
-            }
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -240,9 +226,7 @@ final class AbstractProtocolHandlerTest extends TestCase
                 $this->dispatchSyncComplete($connection, $sid);
             }
 
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void
-            {
-            }
+            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
