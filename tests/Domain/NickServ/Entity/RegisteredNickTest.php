@@ -589,7 +589,6 @@ final class RegisteredNickTest extends TestCase
 
         $reflection = new ReflectionClass($nick);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($nick, 99);
 
         self::assertSame(99, $nick->getId());
@@ -622,7 +621,7 @@ final class RegisteredNickTest extends TestCase
 
         self::assertFalse($nick->isNoExpire());
 
-        $nick->setNoExpire(true);
+        $nick->changeNoExpire(true);
 
         self::assertTrue($nick->isNoExpire());
     }
@@ -638,10 +637,10 @@ final class RegisteredNickTest extends TestCase
             new DateTimeImmutable('+1 hour'),
         );
 
-        $nick->setNoExpire(true);
+        $nick->changeNoExpire(true);
         self::assertTrue($nick->isNoExpire());
 
-        $nick->setNoExpire(false);
+        $nick->changeNoExpire(false);
 
         self::assertFalse($nick->isNoExpire());
     }

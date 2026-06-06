@@ -63,6 +63,7 @@ recover:
   pending:          "\x0304✗\x03 \x02%nickname%\x02 ezizenak posta elektronikoaren egiaztapena zain du."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 ezizena etenda dago. Arrazoia: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 ezizena ezin da sare honetan erabili."
+  pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzeko zain dago eta ezin da erabili."
   no_email:         "\x0304✗\x03 Ez dago posta elektronikorik ezarrita \x02%nickname%\x02 ezizenarentzat. Berreskurapena ez dago erabilgarri."
   throttled:        "\x0304✗\x03 \x02%minutes%\x02 minutu itxaron behar duzu beste berreskuratze posta elektroniko bat eskatu aurretik."
   invalid_token:    "\x0304✗\x03 Tokena baliogabea da edo iraungi da. Eskatu berri bat honekin \x0303RECOVER %nickname%\x03."

@@ -6,16 +6,16 @@ namespace App\Application\NickServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function sprintf;
 use function str_starts_with;
@@ -36,8 +36,8 @@ final readonly class NickProtectionService
         private readonly IdentifiedSessionRegistry $identifiedRegistry,
         private readonly SessionLanguageRegistry $sessionLanguageRegistry,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
-        private readonly TranslatorInterface $translator,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly TranslationInterface $translator,
+        private readonly EventBusInterface $eventDispatcher,
         private readonly ForbiddenNickService $forbiddenService,
         private readonly string $guestPrefix = 'Guest-',
         private readonly string $defaultLanguage = 'en',

@@ -12,13 +12,13 @@ use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\EventBusInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_diff;
 use function count;
@@ -40,7 +40,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         private IrcopModeApplier $modeApplier,
         private ForcedVhostApplier $vhostApplier,
         private VhostValidator $vhostValidator,
-        private EventDispatcherInterface $eventDispatcher,
+        private EventBusInterface $eventDispatcher,
     ) {
     }
 
@@ -495,7 +495,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         $oldModes = $role->getUserModes();
 
         if ('' === $modesArg) {
-            $role->setUserModes([]);
+            $role->changeUserModes([]);
             $this->roleRepository->save($role);
 
             $this->modeApplier->updateModesForRole($role->getId(), $oldModes, []);
@@ -519,7 +519,7 @@ final readonly class RoleCommand implements OperServCommandInterface
             return;
         }
 
-        $role->setUserModes($modes);
+        $role->changeUserModes($modes);
         $this->roleRepository->save($role);
 
         $this->modeApplier->updateModesForRole($role->getId(), $oldModes, $modes);
@@ -583,7 +583,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         $clearKeywords = ['OFF', ''];
 
         if ('' === $normalized || in_array(strtoupper($normalized), $clearKeywords, true)) {
-            $role->setForcedVhostPattern(null);
+            $role->changeForcedVhostPattern(null);
             $this->roleRepository->save($role);
 
             $this->vhostApplier->updateVhostForRole($role->getId(), null);
@@ -605,7 +605,7 @@ final readonly class RoleCommand implements OperServCommandInterface
             return;
         }
 
-        $role->setForcedVhostPattern($normalized);
+        $role->changeForcedVhostPattern($normalized);
         $this->roleRepository->save($role);
 
         $this->vhostApplier->updateVhostForRole($role->getId(), $normalized);

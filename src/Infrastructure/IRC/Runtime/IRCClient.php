@@ -2,26 +2,28 @@
 
 declare(strict_types=1);
 
-namespace App\Application\IRC;
+namespace App\Infrastructure\IRC\Runtime;
 
+use App\Application\IRC\BurstCompleteRegistry;
+use App\Application\IRC\IrcSessionInterface;
 use App\Application\Maintenance\Message\RunMaintenanceCycle;
+use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\EventBusInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
-use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Domain\IRC\Server\ServerLink;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Orchestrates the lifecycle of an IRC server-to-server link:
  * connect, run the read loop, and disconnect.
  */
-class IRCClient
+class IRCClient implements IrcSessionInterface
 {
     private ?ServerLink $activeLink = null;
 
@@ -30,8 +32,8 @@ class IRCClient
     public function __construct(
         private readonly ConnectionInterface $connection,
         private readonly ProtocolHandlerInterface $protocol,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly MessageBusInterface $messageBus,
+        private readonly EventBusInterface $eventDispatcher,
+        private readonly AsyncMessageDispatcherInterface $messageBus,
         private readonly BurstCompleteRegistry $burstCompleteRegistry,
         private readonly int $maintenanceDispatchIntervalSeconds,
         private readonly LoggerInterface $logger = new NullLogger(),

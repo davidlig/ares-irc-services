@@ -159,7 +159,6 @@ final class ChannelAkickTest extends TestCase
 
         $reflection = new ReflectionClass($akick);
         $property = $reflection->getProperty('id');
-        $property->setAccessible(true);
         $property->setValue($akick, 42);
 
         self::assertSame(42, $akick->getId());

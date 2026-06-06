@@ -14,6 +14,7 @@ use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\SenderView;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\TranslationInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -22,7 +23,6 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(MotdCommand::class)]
 final class MotdCommandTest extends TestCase
@@ -41,7 +41,7 @@ final class MotdCommandTest extends TestCase
         return new ServiceNicknameRegistry([]);
     }
 
-    private function createContext(array $args, ?SenderView $sender = null, ?TranslatorInterface $translator = null, ?OperServNotifierInterface $notifier = null): OperServContext
+    private function createContext(array $args, ?SenderView $sender = null, ?TranslationInterface $translator = null, ?OperServNotifierInterface $notifier = null): OperServContext
     {
         $sender ??= new SenderView(
             uid: '001ABC',
@@ -55,7 +55,7 @@ final class MotdCommandTest extends TestCase
             serverSid: '001',
         );
 
-        $translator ??= $this->createStub(TranslatorInterface::class);
+        $translator ??= $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
         $notifier ??= $this->createStub(OperServNotifierInterface::class);

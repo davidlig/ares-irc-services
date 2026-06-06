@@ -252,7 +252,6 @@ final class OperServDebugNotifierTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $role = OperRole::create('OPER', 'Oper role');
@@ -299,7 +298,6 @@ final class OperServDebugNotifierTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\ChanServ\Maintenance;
 
 use App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -14,7 +15,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use stdClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(PurgeInactiveChannelsTask::class)]
 final class PurgeInactiveChannelsTaskTest extends TestCase
@@ -24,7 +24,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     {
         $task = new PurgeInactiveChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             3600,
             90,
@@ -38,7 +38,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     {
         $task = new PurgeInactiveChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             7200,
             60,
@@ -52,7 +52,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
     {
         $task = new PurgeInactiveChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             3600,
             90,
@@ -67,7 +67,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::never())->method('findRegisteredInactiveSince');
         $channelRepo->expects(self::never())->method('delete');
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $task = new PurgeInactiveChannelsTask(
@@ -103,7 +103,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channelRepo->expects(self::once())->method('delete')->with($channel);
 
         $dispatched = [];
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static function (object $event) use (&$dispatched): bool {
@@ -147,7 +147,7 @@ final class PurgeInactiveChannelsTaskTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findRegisteredInactiveSince')->willReturn([new stdClass()]);
         $channelRepo->expects(self::never())->method('delete');
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $task = new PurgeInactiveChannelsTask(

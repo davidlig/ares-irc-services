@@ -12,6 +12,7 @@ use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -21,7 +22,6 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(DelCommand::class)]
 final class DelCommandTest extends TestCase
@@ -31,7 +31,7 @@ final class DelCommandTest extends TestCase
         ?RegisteredNick $senderAccount,
         array $args,
         MemoServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
     ): MemoServContext {
         return new MemoServContext(
             $sender,
@@ -62,7 +62,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -87,7 +87,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -112,7 +112,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -140,7 +140,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -171,7 +171,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -196,7 +196,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -222,7 +222,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -250,7 +250,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -278,7 +278,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -304,7 +304,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -334,7 +334,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
@@ -366,7 +366,7 @@ final class DelCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);

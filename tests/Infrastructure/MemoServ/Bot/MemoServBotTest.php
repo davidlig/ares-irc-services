@@ -11,6 +11,7 @@ use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use App\Infrastructure\MemoServ\Bot\MemoServBot;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -71,7 +72,7 @@ final class MemoServBotTest extends TestCase
             'Memo Service',
             'memoserv',
         )->willReturn($introLine);
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getIntroductionFormatter')->willReturn($formatter);
 
         $this->connectionHolder->setProtocolModule($module);
@@ -138,7 +139,7 @@ final class MemoServBotTest extends TestCase
         $this->connectionHolder->onBurstComplete($event);
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturn('PRIVMSG 001U :Hi');
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->connectionHolder->setProtocolModule($module);
         $this->bot->sendMessage('001U', 'Hi', 'PRIVMSG');
@@ -158,7 +159,7 @@ final class MemoServBotTest extends TestCase
         $this->connectionHolder->onBurstComplete($event);
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturnCallback(static fn (): string => 'NOTICE 001U :x');
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->connectionHolder->setProtocolModule($module);
         $this->bot->sendMessage('001U', "First\n\nSecond", 'NOTICE');
@@ -178,7 +179,7 @@ final class MemoServBotTest extends TestCase
         $handler = $this->createMock(ProtocolHandlerInterface::class);
         $handler->expects(self::once())->method('formatMessage')
             ->with(self::callback(static fn ($msg): bool => 'NOTICE' === $msg->command));
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->connectionHolder->setProtocolModule($module);
         $this->bot->sendMessage('001U', 'Test', 'UNKNOWN_TYPE');
@@ -220,11 +221,11 @@ final class MemoServBotTest extends TestCase
         $bot->onBurstComplete($event);
     }
 
-    private function createModuleWithHandlerThatReturnsLine(string $line): ProtocolModuleInterface
+    private function createModuleWithHandlerThatReturnsLine(string $line): ProtocolRuntimeModuleInterface
     {
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturn($line);
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
 
         return $module;

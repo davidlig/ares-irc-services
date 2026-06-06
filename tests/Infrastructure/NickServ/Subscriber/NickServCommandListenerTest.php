@@ -17,9 +17,11 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\SessionLanguageRegistry;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\TranslationInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Exception\InvalidCredentialsException;
@@ -36,8 +38,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 #[CoversClass(NickServCommandListener::class)]
@@ -101,7 +101,7 @@ final class NickServCommandListenerTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $this->nickServNotifier = $this->createMock(NickServNotifierInterface::class);
         $this->messageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
         $this->nickServService = new NickServService(
@@ -116,7 +116,7 @@ final class NickServCommandListenerTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
         );
@@ -377,7 +377,7 @@ final class NickServCommandListenerTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServService(
@@ -392,7 +392,7 @@ final class NickServCommandListenerTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
         );

@@ -16,13 +16,13 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HelpFormatterContextAdapter::class)]
 final class HelpFormatterContextAdapterTest extends TestCase
@@ -46,7 +46,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     private function createContext(
         ?SenderView $sender,
         NickServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         NickServCommandRegistry $registry,
     ): NickServContext {
         return new NickServContext(
@@ -140,7 +140,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -163,7 +163,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $notifier,
@@ -180,7 +180,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
     #[Test]
     public function transDelegatesToContext(): void
     {
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -201,7 +201,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $registry,
         );
         $adapter = $this->createAdapter($context);
@@ -219,7 +219,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new NickServCommandRegistry([]),
         );
         $adapter = $this->createAdapter($context);
@@ -234,7 +234,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, true),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new NickServCommandRegistry([]),
         );
         $adapter = $this->createAdapter($context);
@@ -249,7 +249,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new NickServCommandRegistry([]),
         );
         $adapter = $this->createAdapter($context);
@@ -268,7 +268,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -292,7 +292,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $registry,
         );
         $adapter = $this->createAdapter($context);
@@ -311,7 +311,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -331,7 +331,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new NickServCommandRegistry([]),
         );
         $adapter = $this->createAdapter($context);
@@ -345,7 +345,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $context = $this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', true, false),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new NickServCommandRegistry([]),
         );
         $adapter = $this->createAdapter($context);

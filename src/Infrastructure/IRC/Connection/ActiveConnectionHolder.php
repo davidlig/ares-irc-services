@@ -9,6 +9,7 @@ use App\Application\Port\ProtocolModuleInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -76,6 +77,10 @@ final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, E
 
     public function getProtocolHandler(): ?ProtocolHandlerInterface
     {
-        return $this->protocolModule?->getHandler();
+        if (!$this->protocolModule instanceof ProtocolRuntimeModuleInterface) {
+            return null;
+        }
+
+        return $this->protocolModule->getHandler();
     }
 }

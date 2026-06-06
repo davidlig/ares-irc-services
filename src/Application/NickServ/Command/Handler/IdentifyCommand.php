@@ -11,6 +11,7 @@ use App\Application\NickServ\IdentifyFailedAttemptRegistry;
 use App\Application\NickServ\NickServClientKeyResolver;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\VhostDisplayResolver;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -18,7 +19,6 @@ use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * IDENTIFY <nickname> <password>.
@@ -36,7 +36,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly NickServClientKeyResolver $clientKeyResolver,
         private readonly VhostDisplayResolver $vhostDisplayResolver,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly EventBusInterface $eventDispatcher,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
         private readonly int $identifyMaxFailedAttempts,
         private readonly int $identifyFailedWindowSeconds,

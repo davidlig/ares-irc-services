@@ -31,11 +31,9 @@ final class InspIRCdNickReservationTest extends TestCase
 
         $reflection = new ReflectionClass($this->connectionHolder);
         $property = $reflection->getProperty('connection');
-        $property->setAccessible(true);
         $property->setValue($this->connectionHolder, $connection);
 
         $sidProperty = $reflection->getProperty('serverSid');
-        $sidProperty->setAccessible(true);
         $sidProperty->setValue($this->connectionHolder, '001');
     }
 

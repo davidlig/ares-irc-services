@@ -6,13 +6,13 @@ namespace App\Tests\Infrastructure\IRC\Logging;
 
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
-use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
 use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\Logging\IRCEventSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -16,6 +16,7 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Security\PermissionProviderInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -25,7 +26,6 @@ use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HelpFormatterContextAdapter::class)]
 final class HelpFormatterContextAdapterIrcopTest extends TestCase
@@ -206,7 +206,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -245,7 +245,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -284,7 +284,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -333,7 +333,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -371,7 +371,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -414,7 +414,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -457,7 +457,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',
@@ -486,7 +486,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
             'HELP',
             [],
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             'UTC',
             'NOTICE',

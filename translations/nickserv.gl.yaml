@@ -71,6 +71,7 @@ recover:
   pending:          "\x0304✗\x03 O alcume \x02%nickname%\x02 ten unha verificación de correo pendente."
   suspended:        "\x0304✗\x03 O alcume \x02%nickname%\x02 está suspendido. Motivo: %reason%"
   forbidden:        "\x0304✗\x03 O alcume \x02%nickname%\x02 non se pode usar nesta rede."
+  pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 está pendente de eliminación e non se pode usar."
   no_email:         "\x0304✗\x03 Non hai un correo electrónico configurado para o alcume \x02%nickname%\x02. A recuperación non está dispoñible."
   throttled:        "\x0304✗\x03 Debe agardar \x02%minutes%\x02 minuto(s) antes de solicitar outro correo de recuperación."
   invalid_token:    "\x0304✗\x03 O token non é válido ou caducou. Solicite un novo con \x0303RECOVER %nickname%\x03."

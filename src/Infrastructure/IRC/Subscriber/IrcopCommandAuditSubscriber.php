@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Subscriber;
 
+use App\Application\Event\IrcopCommandExecutedEvent;
 use App\Application\Port\ServiceDebugNotifierRegistry;
 use App\Application\Security\IrcopPermissionDetector;
-use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class IrcopCommandAuditSubscriber implements EventSubscriberInterface

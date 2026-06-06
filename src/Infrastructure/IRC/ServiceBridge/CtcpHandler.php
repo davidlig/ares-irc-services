@@ -8,7 +8,7 @@ use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendCtcpPort;
 use App\Application\Port\SendNoticePort;
-use App\Domain\IRC\Event\MessageReceivedEvent;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\NickServ\UserLanguageResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;

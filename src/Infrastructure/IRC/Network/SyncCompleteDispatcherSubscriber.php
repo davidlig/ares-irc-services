@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network;
 
-use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

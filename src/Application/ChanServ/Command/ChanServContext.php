@@ -10,12 +10,12 @@ use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class ChanServContext implements IrcopContextInterface
 {
@@ -26,7 +26,7 @@ final readonly class ChanServContext implements IrcopContextInterface
         /** @var string[] */
         public readonly array $args,
         private readonly ChanServNotifierInterface $notifier,
-        private readonly TranslatorInterface $translator,
+        private readonly TranslationInterface $translator,
         private readonly string $language,
         private readonly string $timezone,
         private readonly string $messageType,

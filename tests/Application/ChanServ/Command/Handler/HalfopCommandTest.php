@@ -14,6 +14,7 @@ use App\Application\ChanServ\Command\Handler\HalfopCommand;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -24,7 +25,6 @@ use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HalfopCommand::class)]
 final class HalfopCommandTest extends TestCase
@@ -34,7 +34,7 @@ final class HalfopCommandTest extends TestCase
         ?RegisteredNick $senderAccount,
         array $args,
         ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -68,7 +68,7 @@ final class HalfopCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
@@ -109,7 +109,7 @@ final class HalfopCommandTest extends TestCase
             $modeCalls[] = [$ch, $uid, $letter, $add];
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
@@ -134,7 +134,7 @@ final class HalfopCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(
@@ -172,7 +172,7 @@ final class HalfopCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
         );
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
 
         $context = new ChanServContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -214,7 +214,7 @@ final class HalfopCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new ChanServContext(
@@ -265,7 +265,7 @@ final class HalfopCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
@@ -301,7 +301,7 @@ final class HalfopCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
@@ -340,7 +340,7 @@ final class HalfopCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
@@ -367,7 +367,7 @@ final class HalfopCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new HalfopCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);

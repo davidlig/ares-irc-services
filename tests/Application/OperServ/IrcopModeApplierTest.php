@@ -73,7 +73,7 @@ final class IrcopModeApplierTest extends TestCase
     public function applyModesForNickReturnsFalseWhenUserNotIdentified(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
         $applier = $this->createApplier();
 
         self::assertFalse($applier->applyModesForNick('TestNick', $role));
@@ -100,7 +100,7 @@ final class IrcopModeApplierTest extends TestCase
         ));
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
@@ -133,7 +133,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
@@ -173,7 +173,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'q', 'W']);
+        $role->changeUserModes(['H', 'q', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
@@ -193,7 +193,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($this->createStub(ProtocolModuleInterface::class));
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
@@ -233,7 +233,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
@@ -253,7 +253,7 @@ final class IrcopModeApplierTest extends TestCase
     public function removeModesForNickReturnsFalseWhenUserNotIdentified(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
         $applier = $this->createApplier();
 
         self::assertFalse($applier->removeModesForNick('TestNick', $role));
@@ -269,7 +269,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn(null);
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder);
 
@@ -301,7 +301,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($this->createStub(ProtocolModuleInterface::class));
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
@@ -341,7 +341,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'q', 'W']);
+        $role->changeUserModes(['H', 'q', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
@@ -361,7 +361,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn($this->createStub(ProtocolModuleInterface::class));
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
 
         $applier = $this->createApplier($identifiedRegistry, $connectionHolder, $userLookup);
 
@@ -385,7 +385,7 @@ final class IrcopModeApplierTest extends TestCase
         );
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'W']);
+        $role->changeUserModes(['H', 'W']);
 
         $applier->updateModesForRole(1, ['H', 'W'], ['H', 'W']);
 
@@ -398,7 +398,7 @@ final class IrcopModeApplierTest extends TestCase
         $identifiedRegistry = new IdentifiedSessionRegistry();
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['H', 'q']);
+        $role->changeUserModes(['H', 'q']);
         $roleId = 1;
 
         $ircop = OperIrcop::create(42, $role, null, null);
@@ -464,7 +464,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['q']);
+        $role->changeUserModes(['q']);
         $roleId = 1;
 
         $ircop = OperIrcop::create(42, $role, null, null);
@@ -506,7 +506,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['q']);
+        $role->changeUserModes(['q']);
         $roleId = 1;
 
         $ircop = OperIrcop::create(42, $role, null, null);
@@ -549,7 +549,7 @@ final class IrcopModeApplierTest extends TestCase
         $connectionHolder->method('getServerSid')->willReturn('SID');
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['q']);
+        $role->changeUserModes(['q']);
         $roleId = 1;
 
         $ircop = OperIrcop::create(42, $role, null, null);

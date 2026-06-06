@@ -131,7 +131,6 @@ final class UnsuspendExpiredSuspensionsTaskTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($nick, $id);
 
         return $nick;

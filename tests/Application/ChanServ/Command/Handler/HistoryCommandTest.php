@@ -17,6 +17,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelHistory;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface;
@@ -542,7 +543,7 @@ final class HistoryCommandTest extends TestCase
             message: 'history.message.suspended',
             extraData: ['duration' => '7d', 'expires_at' => '2024-01-22', 'ip' => '192.168.1.1', 'host' => 'oper@test'],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $history2 = ChannelHistory::record(
             channelId: 1,
@@ -552,7 +553,7 @@ final class HistoryCommandTest extends TestCase
             message: 'history.message.email_changed',
             extraData: ['old_founder' => 'OldNick', 'new_founder' => 'NewNick'],
         );
-        $history2->setId(2);
+        $history2 = self::historyWithId($history2, 2);
 
         $history3 = ChannelHistory::record(
             channelId: 1,
@@ -562,7 +563,7 @@ final class HistoryCommandTest extends TestCase
             message: 'Custom message not a translation key',
             extraData: ['mask' => '*@bad.host', 'level' => '10', 'target_nickname' => 'BadUser'],
         );
-        $history3->setId(3);
+        $history3 = self::historyWithId($history3, 3);
 
         $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $historyRepo->method('countByChannelId')->willReturn(3);
@@ -595,7 +596,7 @@ final class HistoryCommandTest extends TestCase
             message: 'Test message',
             extraData: [],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $historyRepo->method('countByChannelId')->willReturn(1);
@@ -634,7 +635,7 @@ final class HistoryCommandTest extends TestCase
             message: 'Test message',
             extraData: [],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $historyRepo->method('countByChannelId')->willReturn(1);
@@ -862,7 +863,7 @@ final class HistoryCommandTest extends TestCase
             message: 'history.message.successor_changed',
             extraData: ['old_successor' => 'OldSucc', 'new_successor' => 'NewSucc'],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $historyRepo->method('countByChannelId')->willReturn(1);
@@ -892,7 +893,7 @@ final class HistoryCommandTest extends TestCase
             message: 'history.message.founder_changed',
             extraData: ['old_founder' => null, 'new_founder' => 'NewFounder'],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $historyRepo->method('countByChannelId')->willReturn(1);
@@ -922,7 +923,7 @@ final class HistoryCommandTest extends TestCase
             message: 'history.message.access_add',
             extraData: ['target_nickname' => 'TargetUser', 'level' => '50'],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $historyRepo->method('countByChannelId')->willReturn(1);
@@ -952,7 +953,7 @@ final class HistoryCommandTest extends TestCase
             message: 'history.message.akick_add',
             extraData: ['mask' => '*!*@bad.host'],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $historyRepo = $this->createStub(ChannelHistoryRepositoryInterface::class);
         $historyRepo->method('countByChannelId')->willReturn(1);
@@ -1003,7 +1004,6 @@ final class HistoryCommandTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($nick, $id);
 
         return $nick;
@@ -1015,7 +1015,6 @@ final class HistoryCommandTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, $id);
 
         return $channel;
@@ -1035,7 +1034,7 @@ final class HistoryCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $historyRepoFinal = $historyRepo ?? $this->createStub(ChannelHistoryRepositoryInterface::class);
@@ -1062,7 +1061,7 @@ final class HistoryCommandTest extends TestCase
     private function createContextWithNullSender(array $args, ChannelHistoryRepositoryInterface $historyRepo): ChanServContext
     {
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(
@@ -1097,7 +1096,7 @@ final class HistoryCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(
@@ -1125,5 +1124,19 @@ final class HistoryCommandTest extends TestCase
         $provider->method('getNickname')->willReturn('ChanServ');
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private static function historyWithId(ChannelHistory $history, int $id): ChannelHistory
+    {
+        return new ChannelHistory(
+            id: $id,
+            channelId: $history->getChannelId(),
+            action: $history->getAction(),
+            performedBy: $history->getPerformedBy(),
+            performedByNickId: $history->getPerformedByNickId(),
+            performedAt: $history->getPerformedAt(),
+            message: $history->getMessage(),
+            extraData: $history->getExtraData(),
+        );
     }
 }

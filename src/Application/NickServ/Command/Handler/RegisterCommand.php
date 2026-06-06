@@ -10,14 +10,14 @@ use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\NickServClientKeyResolver;
 use App\Application\NickServ\RegisterThrottleRegistry;
+use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function sprintf;
@@ -41,8 +41,8 @@ final readonly class RegisterCommand implements NickServCommandInterface
         private readonly PasswordHasherInterface $passwordHasher,
         private readonly RegisterThrottleRegistry $throttleRegistry,
         private readonly NickServClientKeyResolver $clientKeyResolver,
-        private readonly MessageBusInterface $messageBus,
-        private readonly TranslatorInterface $translator,
+        private readonly AsyncMessageDispatcherInterface $messageBus,
+        private readonly TranslationInterface $translator,
         private readonly LoggerInterface $logger,
         private readonly int $registerMinIntervalSeconds,
         private readonly string $guestPrefix = 'Guest-',

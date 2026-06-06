@@ -33,7 +33,6 @@ final class AntifloodPrunerTest extends TestCase
         $oldTimestamp = time() - 3600;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('timestampsByKey');
-        $property->setAccessible(true);
         $property->setValue($registry, ['key1' => [$oldTimestamp]]);
 
         $pruner = new AntifloodPruner($registry, 60);

@@ -7,12 +7,12 @@ namespace App\Application\OperServ\Command;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class OperServContext implements IrcopContextInterface
 {
@@ -23,7 +23,7 @@ final readonly class OperServContext implements IrcopContextInterface
         /** @var string[] */
         public readonly array $args,
         private readonly OperServNotifierInterface $notifier,
-        private readonly TranslatorInterface $translator,
+        private readonly TranslationInterface $translator,
         private readonly string $language,
         private readonly string $timezone,
         private readonly string $messageType,

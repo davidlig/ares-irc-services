@@ -14,8 +14,10 @@ use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
@@ -30,8 +32,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NickProtectionSubscriber::class)]
 final class NickProtectionSubscriberTest extends TestCase
@@ -52,7 +52,7 @@ final class NickProtectionSubscriberTest extends TestCase
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
 
@@ -65,7 +65,7 @@ final class NickProtectionSubscriberTest extends TestCase
             new SessionLanguageRegistry(),
             $pendingRegistry,
             $translator,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 

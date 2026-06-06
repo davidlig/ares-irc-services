@@ -17,6 +17,7 @@ use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -25,7 +26,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(DropCommand::class)]
 final class DropCommandTest extends TestCase
@@ -295,7 +295,6 @@ final class DropCommandTest extends TestCase
         $channel = RegisteredChannel::register($name, 1, 'Test description');
 
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($channel, $id);
 
         return $channel;
@@ -314,7 +313,7 @@ final class DropCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(

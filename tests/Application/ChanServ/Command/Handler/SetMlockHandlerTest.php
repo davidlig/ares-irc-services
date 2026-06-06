@@ -15,23 +15,23 @@ use App\Application\ChanServ\Service\MlockStateFromChannelResolver;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetMlockHandler::class)]
 final class SetMlockHandlerTest extends TestCase
 {
     private function createContext(
         ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         ?ChannelLookupPort $channelLookup = null,
         ?ChannelModeSupportInterface $modeSupport = null,
     ): ChanServContext {
@@ -58,14 +58,14 @@ final class SetMlockHandlerTest extends TestCase
     {
         $channel = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         $resolver = new MlockStateFromChannelResolver();
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetMlockHandler($channelRepo, $eventDispatcher, $resolver);
@@ -86,7 +86,7 @@ final class SetMlockHandlerTest extends TestCase
         $lookup = $this->createMock(ChannelLookupPort::class);
         $lookup->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
         $dispatched = null;
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static function (object $e) use (&$dispatched): bool {
@@ -109,7 +109,7 @@ final class SetMlockHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetMlockHandler($channelRepo, $eventDispatcher, $resolver);
@@ -137,7 +137,7 @@ final class SetMlockHandlerTest extends TestCase
         $support->method('getChannelSettingModesUnsetWithParam')->willReturn([]);
         $support->method('getChannelSettingModesWithParamOnSet')->willReturn([]);
         $support->method('getPermanentChannelModeLetter')->willReturn('P');
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnArgument(0);
         $resolver = new MlockStateFromChannelResolver();
         $messages = [];
@@ -146,7 +146,7 @@ final class SetMlockHandlerTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetMlockHandler($channelRepo, $eventDispatcher, $resolver);
@@ -163,7 +163,7 @@ final class SetMlockHandlerTest extends TestCase
         $channel->method('getName')->willReturn('#test');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('save')->with($channel);
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
         $resolver = new MlockStateFromChannelResolver();
         $messages = [];
@@ -175,7 +175,7 @@ final class SetMlockHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetMlockHandler($channelRepo, $eventDispatcher, $resolver);

@@ -12,6 +12,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\ServiceNickReservationInterface;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
@@ -19,7 +20,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ForbiddenNickService::class)]
 final class ForbiddenNickServiceTest extends TestCase
@@ -265,7 +265,7 @@ final class ForbiddenNickServiceTest extends TestCase
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::once())->method('findByUid')->with('UID123')->willReturn($onlineUser);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())->method('trans')->with(
             'protection.nick_forbidden',
             ['%nickname%' => 'BadNick', '%reason%' => 'Spam reason'],
@@ -299,7 +299,7 @@ final class ForbiddenNickServiceTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn(null);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())->method('trans')->with(
             'protection.nick_forbidden',
             ['%nickname%' => 'Unknown', '%reason%' => 'Spam reason'],
@@ -362,7 +362,7 @@ final class ForbiddenNickServiceTest extends TestCase
             $this->createStub(NickForceService::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $connectionHolder,
             $this->createStub(LoggerInterface::class),
             'en',
@@ -387,7 +387,6 @@ final class ForbiddenNickServiceTest extends TestCase
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
-        $connectionHolder->method('getConnection')->willReturn(null);
         $connectionHolder->method('getServerSid')->willReturn(null);
 
         $forbiddenService = new ForbiddenNickService(
@@ -395,7 +394,7 @@ final class ForbiddenNickServiceTest extends TestCase
             $this->createStub(NickForceService::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $connectionHolder,
             $this->createStub(LoggerInterface::class),
             'en',
@@ -444,7 +443,7 @@ final class ForbiddenNickServiceTest extends TestCase
             $this->createStub(NickForceService::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $connectionHolder,
             $this->createStub(LoggerInterface::class),
             'en',
@@ -470,7 +469,6 @@ final class ForbiddenNickServiceTest extends TestCase
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($protocolModule);
-        $connectionHolder->method('getConnection')->willReturn(null);
         $connectionHolder->method('getServerSid')->willReturn(null);
 
         $forbiddenService = new ForbiddenNickService(
@@ -478,7 +476,7 @@ final class ForbiddenNickServiceTest extends TestCase
             $this->createStub(NickForceService::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $connectionHolder,
             $this->createStub(LoggerInterface::class),
             'en',
@@ -494,7 +492,7 @@ final class ForbiddenNickServiceTest extends TestCase
         ?NickForceService $forceService = null,
         ?NetworkUserLookupPort $userLookup = null,
         ?NickServNotifierInterface $notifier = null,
-        ?TranslatorInterface $translator = null,
+        ?TranslationInterface $translator = null,
         ?ServiceNickReservationInterface $reservation = null,
         bool $hasProtocolModule = true,
     ): ForbiddenNickService {
@@ -516,7 +514,7 @@ final class ForbiddenNickServiceTest extends TestCase
             $forceService ?? $this->createStub(NickForceService::class),
             $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
             $notifier ?? $this->createStub(NickServNotifierInterface::class),
-            $translator ?? $this->createStub(TranslatorInterface::class),
+            $translator ?? $this->createStub(TranslationInterface::class),
             $connectionHolder,
             $this->createStub(LoggerInterface::class),
             'en',

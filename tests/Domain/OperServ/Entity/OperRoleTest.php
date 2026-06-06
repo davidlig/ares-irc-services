@@ -65,7 +65,7 @@ final class OperRoleTest extends TestCase
     {
         $role = OperRole::create('Test', 'Old description');
 
-        $role->setDescription('New description');
+        $role->updateDescription('New description');
 
         self::assertSame('New description', $role->getDescription());
     }
@@ -209,7 +209,6 @@ final class OperRoleTest extends TestCase
 
         $reflection = new ReflectionClass($role);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($role, 42);
 
         self::assertSame(42, $role->getId());
@@ -222,7 +221,6 @@ final class OperRoleTest extends TestCase
 
         $reflection = new ReflectionClass($role);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($role, 123);
 
         self::assertSame(123, $role->getId());
@@ -269,7 +267,7 @@ final class OperRoleTest extends TestCase
     {
         $role = OperRole::create('Test');
 
-        $role->setUserModes(['H', 'q']);
+        $role->changeUserModes(['H', 'q']);
 
         self::assertSame(['H', 'q'], $role->getUserModes());
     }
@@ -278,8 +276,8 @@ final class OperRoleTest extends TestCase
     public function setUserModesEmptyArrayStoresNull(): void
     {
         $role = OperRole::create('Test');
-        $role->setUserModes(['H']);
-        $role->setUserModes([]);
+        $role->changeUserModes(['H']);
+        $role->changeUserModes([]);
 
         self::assertSame([], $role->getUserModes());
     }
@@ -289,7 +287,7 @@ final class OperRoleTest extends TestCase
     {
         $role = OperRole::create('Test');
 
-        $role->setUserModes(['H', 'q', 'H']);
+        $role->changeUserModes(['H', 'q', 'H']);
 
         self::assertSame(['H', 'q'], $role->getUserModes());
     }
@@ -299,7 +297,7 @@ final class OperRoleTest extends TestCase
     {
         $role = OperRole::create('Test');
 
-        $role->setUserModes(['z', 'a', 'H', 'q']);
+        $role->changeUserModes(['z', 'a', 'H', 'q']);
 
         self::assertSame(['z', 'a', 'H', 'q'], $role->getUserModes());
     }
@@ -317,7 +315,7 @@ final class OperRoleTest extends TestCase
     {
         $role = OperRole::create('Test');
 
-        $role->setForcedVhostPattern('admin.ares');
+        $role->changeForcedVhostPattern('admin.ares');
 
         self::assertSame('admin.ares', $role->getForcedVhostPattern());
     }
@@ -326,9 +324,9 @@ final class OperRoleTest extends TestCase
     public function setForcedVhostPatternWithNullClearsValue(): void
     {
         $role = OperRole::create('Test');
-        $role->setForcedVhostPattern('admin.ares');
+        $role->changeForcedVhostPattern('admin.ares');
 
-        $role->setForcedVhostPattern(null);
+        $role->changeForcedVhostPattern(null);
 
         self::assertNull($role->getForcedVhostPattern());
     }
@@ -338,7 +336,7 @@ final class OperRoleTest extends TestCase
     {
         $role = OperRole::create('Test');
 
-        $role->setForcedVhostPattern('');
+        $role->changeForcedVhostPattern('');
 
         self::assertSame('', $role->getForcedVhostPattern());
     }

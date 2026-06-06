@@ -131,7 +131,6 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $oldTimestamp = time() - 3600;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('failuresByKey');
-        $property->setAccessible(true);
         $property->setValue($registry, [
             'key1' => [$oldTimestamp],
             'key2' => [$oldTimestamp],
@@ -207,7 +206,6 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $oldTimestamp = time() - 10;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('failuresByKey');
-        $property->setAccessible(true);
         $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
         self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 1, 1));
@@ -232,7 +230,6 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $oldTimestamp = time() - 10;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('failuresByKey');
-        $property->setAccessible(true);
         $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
         self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 1, 1));
@@ -263,7 +260,6 @@ final class IdentifyFailedAttemptRegistryTest extends TestCase
         $oldTimestamp = time() - 10;
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('failuresByKey');
-        $property->setAccessible(true);
         $property->setValue($registry, ['key' => [$oldTimestamp, $oldTimestamp, $oldTimestamp]]);
 
         self::assertSame(0, $registry->getRemainingLockoutSeconds('key', 3, 100, 1));

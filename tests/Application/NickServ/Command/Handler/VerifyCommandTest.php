@@ -14,13 +14,13 @@ use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(VerifyCommand::class)]
 final class VerifyCommandTest extends TestCase
@@ -100,7 +100,7 @@ final class VerifyCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         NickServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         PendingVerificationRegistry $pendingRegistry,
     ): NickServContext {
         return new NickServContext(
@@ -125,7 +125,7 @@ final class VerifyCommandTest extends TestCase
     {
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $pending = new PendingVerificationRegistry();
 
         $cmd = new VerifyCommand($this->createStub(RegisteredNickRepositoryInterface::class), new IdentifiedSessionRegistry());
@@ -144,7 +144,7 @@ final class VerifyCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new VerifyCommand($nickRepo, new IdentifiedSessionRegistry());
@@ -168,7 +168,7 @@ final class VerifyCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new VerifyCommand($nickRepo, new IdentifiedSessionRegistry());
@@ -194,7 +194,7 @@ final class VerifyCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new VerifyCommand($nickRepo, new IdentifiedSessionRegistry());
@@ -225,7 +225,7 @@ final class VerifyCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new VerifyCommand($nickRepo, new IdentifiedSessionRegistry());
@@ -358,7 +358,7 @@ final class VerifyCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new VerifyCommand($nickRepo, $identified);

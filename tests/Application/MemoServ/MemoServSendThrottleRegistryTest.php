@@ -64,7 +64,6 @@ final class MemoServSendThrottleRegistryTest extends TestCase
         $oldDatetime = new DateTimeImmutable('-10 seconds');
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('lastSendAt');
-        $property->setAccessible(true);
         $property->setValue($registry, ['UID1' => $oldDatetime]);
 
         $remaining = $registry->getRemainingCooldownSeconds('UID1', 1);

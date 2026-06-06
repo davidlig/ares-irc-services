@@ -344,7 +344,6 @@ final class GlineTest extends TestCase
         $gline = Gline::create('*@host');
         $ref = new ReflectionClass($gline);
         $prop = $ref->getProperty('id');
-        $prop->setAccessible(true);
         $prop->setValue($gline, 123);
 
         self::assertSame(123, $gline->getId());

@@ -82,7 +82,6 @@ final class RecoveryTokenRegistryTest extends TestCase
         // Simulate aging by setting lastRecoverAt to an old timestamp
         $reflection = new ReflectionClass($registry);
         $prop = $reflection->getProperty('lastRecoverAt');
-        $prop->setAccessible(true);
         $lastRecoverAt = $prop->getValue($registry);
         $lastRecoverAt[strtolower('OldNick')] = new DateTimeImmutable('-2 seconds');
         $prop->setValue($registry, $lastRecoverAt);

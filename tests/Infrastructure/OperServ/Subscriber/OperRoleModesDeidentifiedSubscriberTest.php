@@ -188,7 +188,6 @@ final class OperRoleModesDeidentifiedSubscriberTest extends TestCase
     {
         $reflection = new ReflectionClass($holder);
         $property = $reflection->getProperty('serverSid');
-        $property->setAccessible(true);
         $property->setValue($holder, $sid);
     }
 }

@@ -10,6 +10,7 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\BurstCompletePort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
+use App\Application\Port\EventBusInterface;
 use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\ChanServ\Entity\ChannelAkick;
 use App\Domain\ChanServ\Entity\ChannelLevel;
@@ -19,9 +20,7 @@ use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\ValueObject\UserMask;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
@@ -49,7 +48,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
         private ChannelAccessRepositoryInterface $accessRepository,
         private ChanServAccessHelper $accessHelper,
         private ChannelLookupPort $channelLookup,
-        private EventDispatcherInterface $eventDispatcher,
+        private EventBusInterface $eventDispatcher,
         private ?BurstCompletePort $burstCompletePort = null,
     ) {
     }
@@ -199,7 +198,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
             }
 
             $userMask = $this->buildUserMask($user->nick, $user->ident, $user->hostname);
-            if ($akick->matches((string) $userMask)) {
+            if ($akick->matches($userMask)) {
                 $notifier->setChannelModes($view->name, '+b', [$akick->getMask()]);
                 $notifier->kickFromChannel($view->name, $uid, $reason);
             }
@@ -507,9 +506,9 @@ final readonly class AkickCommand implements ChanServCommandInterface
         return $this->akickRepository->findByChannelAndMask($channelId, $item);
     }
 
-    private function buildUserMask(string $nick, string $ident, string $host): UserMask
+    private function buildUserMask(string $nick, string $ident, string $host): string
     {
-        return UserMask::fromParts($nick, $ident, $host);
+        return sprintf('%s!%s@%s', $nick, $ident, $host);
     }
 
     /**

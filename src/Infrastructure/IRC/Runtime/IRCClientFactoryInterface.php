@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\IRC;
+namespace App\Infrastructure\IRC\Runtime;
 
 use App\Domain\IRC\Server\ServerLink;
 

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Application\ChanServ\Maintenance;
 
 use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 
@@ -24,7 +24,7 @@ final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterfa
 {
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly EventBusInterface $eventDispatcher,
         private readonly LoggerInterface $logger,
         private readonly int $intervalSeconds,
         private readonly int $inactivityExpiryDays,

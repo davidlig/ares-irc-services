@@ -12,7 +12,7 @@ use App\Application\Port\SendNoticePort;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Application\Services\Antiflood\AntifloodRegistry;
 use App\Application\Services\Antiflood\ClientKeyResolver;
-use App\Domain\IRC\Event\MessageReceivedEvent;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

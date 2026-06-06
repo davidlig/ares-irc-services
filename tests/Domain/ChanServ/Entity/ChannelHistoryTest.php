@@ -114,19 +114,17 @@ final class ChannelHistoryTest extends TestCase
     }
 
     #[Test]
-    public function setIdSetsIdForDoctrineHydration(): void
+    public function constructorAcceptsPersistedId(): void
     {
-        $history = ChannelHistory::record(
+        $history = new ChannelHistory(
+            id: 100,
             channelId: 42,
             action: 'TEST',
             performedBy: 'Admin',
             performedByNickId: 5,
+            performedAt: new DateTimeImmutable('2024-01-15 10:30:00'),
             message: 'Test message',
         );
-
-        self::assertSame(0, $history->getId());
-
-        $history->setId(100);
 
         self::assertSame(100, $history->getId());
     }

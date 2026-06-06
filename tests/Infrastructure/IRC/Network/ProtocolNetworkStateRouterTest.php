@@ -6,10 +6,10 @@ namespace App\Tests\Infrastructure\IRC\Network;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\ProtocolModuleInterface;
-use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Message\MessageDirection;
 use App\Domain\IRC\Network\NetworkStateAdapterInterface;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\Network\ProtocolNetworkStateRouter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

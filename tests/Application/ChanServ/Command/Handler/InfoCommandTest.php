@@ -14,6 +14,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -24,7 +25,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(InfoCommand::class)]
 final class InfoCommandTest extends TestCase
@@ -32,7 +32,7 @@ final class InfoCommandTest extends TestCase
     private function createContext(
         array $args,
         ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         ?ChannelLookupPort $channelLookup = null,
         ?RegisteredNick $senderAccount = null,
         ?SenderView $sender = null,
@@ -65,7 +65,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -87,7 +87,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo, 7);
@@ -106,7 +106,7 @@ final class InfoCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn(null);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -132,7 +132,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -162,7 +162,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -187,7 +187,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -213,7 +213,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -239,7 +239,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -265,7 +265,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -292,7 +292,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -318,7 +318,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -446,7 +446,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -474,7 +474,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -502,7 +502,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -544,7 +544,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = 'chanserv', string $locale = 'en'): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $this->createStub(RegisteredNickRepositoryInterface::class));
@@ -564,7 +564,6 @@ final class InfoCommandTest extends TestCase
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $channel = RegisteredChannel::createForbidden('#Test', 'Some reason');
         $reasonProp = $reflection->getProperty('forbiddenReason');
-        $reasonProp->setAccessible(true);
         $reasonProp->setValue($channel, null);
 
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -575,7 +574,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], string $domain = 'chanserv', string $locale = 'en'): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $this->createStub(RegisteredNickRepositoryInterface::class));
@@ -590,7 +589,7 @@ final class InfoCommandTest extends TestCase
     public function showsNoExpireLineWhenNoExpireIsOn(): void
     {
         $channel = RegisteredChannel::register('#Test', 1, 'Desc');
-        $channel->setNoExpire(true);
+        $channel->changeNoExpire(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $founder = $this->createStub(RegisteredNick::class);
@@ -603,7 +602,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -628,7 +627,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -657,7 +656,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -686,7 +685,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -715,7 +714,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $senderAccount = $this->createStub(RegisteredNick::class);
@@ -749,7 +748,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $sender = new SenderView('UID1', 'OperNick', 'i', 'h', 'c', 'ip', isIdentified: false, isOper: true);
@@ -780,7 +779,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         // Sender is identified but NOT founder and NOT oper — hits the final return false in isSenderFounderOrOper
@@ -814,7 +813,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -861,7 +860,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -891,7 +890,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -921,7 +920,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
@@ -951,7 +950,7 @@ final class InfoCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$rawMessages): void {
             $rawMessages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);

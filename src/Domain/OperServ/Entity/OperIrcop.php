@@ -71,7 +71,7 @@ class OperIrcop
         return $this->reason;
     }
 
-    public function setReason(?string $reason): void
+    public function updateReason(?string $reason): void
     {
         $this->reason = $reason;
     }

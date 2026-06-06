@@ -63,6 +63,7 @@ recover:
   pending:          "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de vérification e-mail."
   suspended:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 est suspendu. Raison : %reason%"
   forbidden:        "\x0304✗\x03 Le surnom \x02%nickname%\x02 ne peut pas être utilisé sur ce réseau."
+  pending_deletion: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de suppression et ne peut pas être utilisé."
   no_email:         "\x0304✗\x03 Aucun e-mail n'est défini pour le surnom \x02%nickname%\x02. La récupération n'est pas disponible."
   throttled:        "\x0304✗\x03 Vous devez attendre \x02%minutes%\x02 minute(s) avant de demander un autre e-mail de récupération."
   invalid_token:    "\x0304✗\x03 Le jeton est invalide ou a expiré. Demandez-en un nouveau avec \x0303RECOVER %nickname%\x03."

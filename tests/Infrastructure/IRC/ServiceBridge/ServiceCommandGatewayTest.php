@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ServiceCommandListenerInterface;
-use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Message\IRCMessage;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\ServiceBridge\ServiceCommandGateway;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

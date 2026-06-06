@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol;
 
-use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolModuleRegistryInterface;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleRegistryInterface;
 use InvalidArgumentException;
 
 use function sprintf;
@@ -14,13 +15,13 @@ use function sprintf;
  * Registry of protocol modules (Unreal, InspIRCd, etc.). Built from tagged modules;
  * no hardcoded list of IRCd types in code.
  */
-final readonly class ProtocolModuleRegistry implements ProtocolModuleRegistryInterface
+final readonly class ProtocolModuleRegistry implements ProtocolModuleRegistryInterface, ProtocolRuntimeModuleRegistryInterface
 {
-    /** @var array<string, ProtocolModuleInterface> */
+    /** @var array<string, ProtocolRuntimeModuleInterface> */
     private array $modules;
 
     /**
-     * @param iterable<ProtocolModuleInterface> $modules
+     * @param iterable<ProtocolRuntimeModuleInterface> $modules
      */
     public function __construct(iterable $modules)
     {
@@ -31,7 +32,7 @@ final readonly class ProtocolModuleRegistry implements ProtocolModuleRegistryInt
         $this->modules = $map;
     }
 
-    public function get(string $protocolName): ProtocolModuleInterface
+    public function get(string $protocolName): ProtocolRuntimeModuleInterface
     {
         $module = $this->modules[$protocolName] ?? null;
         if (null === $module) {

@@ -63,6 +63,7 @@ recover:
   pending:          "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de verificación de email."
   suspended:        "\x0304✗\x03 El apodo \x02%nickname%\x02 está suspendido. Razón: %reason%"
   forbidden:        "\x0304✗\x03 El apodo \x02%nickname%\x02 no puede usarse en esta red."
+  pending_deletion: "\x0304✗\x03 El apodo \x02%nickname%\x02 está pendiente de eliminación y no puede ser usado."
   no_email:         "\x0304✗\x03 No hay email configurado para el apodo \x02%nickname%\x02. La recuperación no está disponible."
   throttled:        "\x0304✗\x03 Debes esperar \x02%minutes%\x02 minuto(s) antes de solicitar otro correo de recuperación."
   invalid_token:    "\x0304✗\x03 El token no es válido o ha expirado. Solicita uno nuevo con \x0303RECOVER %nickname%\x03."

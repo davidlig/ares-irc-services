@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Application\NickServ\Service;
 
 use App\Application\NickServ\IdentifiedSessionRegistry;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 
@@ -32,7 +32,7 @@ readonly class NickDropService
         private RegisteredNickRepositoryInterface $nickRepository,
         private NetworkUserLookupPort $userLookup,
         private NickForceService $forceService,
-        private EventDispatcherInterface $eventDispatcher,
+        private EventBusInterface $eventDispatcher,
         private ServiceDebugNotifierInterface $debug,
         private LoggerInterface $logger,
         private IdentifiedSessionRegistry $sessionRegistry,

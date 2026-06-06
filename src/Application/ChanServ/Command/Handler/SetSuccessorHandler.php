@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServContext;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelSuccessorChangedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 
@@ -19,7 +19,7 @@ final readonly class SetSuccessorHandler implements SetOptionHandlerInterface
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
-        private EventDispatcherInterface $eventDispatcher,
+        private EventBusInterface $eventDispatcher,
     ) {
     }
 

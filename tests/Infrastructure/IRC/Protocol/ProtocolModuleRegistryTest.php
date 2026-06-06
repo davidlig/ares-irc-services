@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Protocol;
 
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -19,9 +19,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ProtocolModuleRegistry::class)]
 final class ProtocolModuleRegistryTest extends TestCase
 {
-    private function createModule(string $name): ProtocolModuleInterface
+    private function createModule(string $name): ProtocolRuntimeModuleInterface
     {
-        $m = $this->createStub(ProtocolModuleInterface::class);
+        $m = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $m->method('getProtocolName')->willReturn($name);
         $m->method('getHandler')->willReturn($this->createStub(ProtocolHandlerInterface::class));
         $m->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));

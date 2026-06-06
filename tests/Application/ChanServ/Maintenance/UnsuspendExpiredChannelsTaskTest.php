@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\ChanServ\Maintenance;
 
 use App\Application\ChanServ\Maintenance\UnsuspendExpiredChannelsTask;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -14,7 +15,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use ReflectionProperty;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(UnsuspendExpiredChannelsTask::class)]
 final class UnsuspendExpiredChannelsTaskTest extends TestCase
@@ -26,7 +26,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     {
         $task = new UnsuspendExpiredChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new NullLogger(),
             self::SERVER_NAME,
             3600,
@@ -40,7 +40,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     {
         $task = new UnsuspendExpiredChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new NullLogger(),
             self::SERVER_NAME,
             7200,
@@ -54,7 +54,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
     {
         $task = new UnsuspendExpiredChannelsTask(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new NullLogger(),
             self::SERVER_NAME,
             3600,
@@ -78,7 +78,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             ->willReturn([$channel1, $channel2]);
         $channelRepo->expects(self::exactly(2))->method('save');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::exactly(2))->method('dispatch')
             ->willReturnCallback(static fn (ChannelUnsuspendedEvent $event): ChannelUnsuspendedEvent => $event);
 
@@ -101,7 +101,7 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
             ->willReturn([]);
         $channelRepo->expects(self::never())->method('save');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $task = new UnsuspendExpiredChannelsTask(
@@ -119,7 +119,6 @@ final class UnsuspendExpiredChannelsTaskTest extends TestCase
         $channel = RegisteredChannel::register($name, 1, $description);
 
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($channel, $id);
 
         return $channel;

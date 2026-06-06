@@ -13,8 +13,10 @@ use App\Application\ChanServ\Command\Handler\UnsuspendCommand;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\IrcopAuditData;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -23,8 +25,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UnsuspendCommand::class)]
 final class UnsuspendCommandTest extends TestCase
@@ -134,7 +134,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand(
             $channelRepository,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $messages = [];
@@ -154,7 +154,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand(
             $channelRepository,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $messages = [];
@@ -176,7 +176,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand(
             $channelRepository,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $messages = [];
@@ -195,14 +195,13 @@ final class UnsuspendCommandTest extends TestCase
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, 1);
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
         $channelRepository->expects(self::once())->method('save')->with($channel);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::isInstanceOf(ChannelUnsuspendedEvent::class));
 
         $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
@@ -222,7 +221,7 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::never())->method('findByChannelName');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $cmd = new UnsuspendCommand($channelRepository, $eventDispatcher);
@@ -252,7 +251,6 @@ final class UnsuspendCommandTest extends TestCase
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, 1);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -260,7 +258,7 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand(
             $channelRepository,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $messages = [];
@@ -277,7 +275,7 @@ final class UnsuspendCommandTest extends TestCase
     {
         return new UnsuspendCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
     }
 
@@ -299,7 +297,7 @@ final class UnsuspendCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(
@@ -394,7 +392,6 @@ final class UnsuspendCommandTest extends TestCase
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, 1);
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -402,7 +399,7 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository->expects(self::once())->method('save');
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
             $dispatchedEvents[] = $event;
 
@@ -429,7 +426,6 @@ final class UnsuspendCommandTest extends TestCase
         $channel->suspend('Abuse', null);
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, 1);
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -437,7 +433,7 @@ final class UnsuspendCommandTest extends TestCase
         $channelRepository->expects(self::once())->method('save');
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
             $dispatchedEvents[] = $event;
 

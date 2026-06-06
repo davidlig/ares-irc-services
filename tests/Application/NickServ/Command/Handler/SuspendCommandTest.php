@@ -17,7 +17,9 @@ use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickSuspensionService;
 use App\Application\NickServ\Service\NickTargetValidator;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -26,8 +28,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SuspendCommand::class)]
 final class SuspendCommandTest extends TestCase
@@ -137,7 +137,7 @@ final class SuspendCommandTest extends TestCase
         $suspensionService->expects(self::once())->method('enforceSuspension');
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
@@ -182,7 +182,7 @@ final class SuspendCommandTest extends TestCase
         $suspensionService->expects(self::once())->method('enforceSuspension');
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
@@ -234,7 +234,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -257,7 +257,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -281,7 +281,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -306,7 +306,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -333,7 +333,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $validator,
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -360,7 +360,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $validator,
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -387,7 +387,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $validator,
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -414,7 +414,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $validator,
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -445,7 +445,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $validator,
             $suspensionService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -482,7 +482,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $validator,
             $suspensionService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -514,7 +514,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $validator,
             $suspensionService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -546,7 +546,7 @@ final class SuspendCommandTest extends TestCase
             $nickRepository,
             $validator,
             $suspensionService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -561,8 +561,8 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
     }
 
@@ -586,7 +586,6 @@ final class SuspendCommandTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($nick, $id);
 
         return $nick;
@@ -603,7 +602,7 @@ final class SuspendCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

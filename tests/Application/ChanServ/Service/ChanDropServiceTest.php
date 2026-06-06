@@ -6,6 +6,7 @@ namespace App\Tests\Application\ChanServ\Service;
 
 use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Port\ChannelServiceActionsPort;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
@@ -15,7 +16,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionProperty;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(ChanDropService::class)]
 final class ChanDropServiceTest extends TestCase
@@ -28,7 +28,7 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::once())->method('delete')->with($channel);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (ChannelDropEvent $event): bool => 42 === $event->channelId
                 && '#test' === $event->channelName
                 && 'manual' === $event->reason));
@@ -65,7 +65,7 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::once())->method('delete');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (ChannelDropEvent $event): bool => 'inactivity' === $event->reason));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -100,7 +100,7 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::once())->method('delete');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -136,7 +136,7 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('save')->with($channel);
         $channelRepository->expects(self::never())->method('delete');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -175,7 +175,7 @@ final class ChanDropServiceTest extends TestCase
 
         $service = new ChanDropService(
             $channelRepository,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $debug,
             $this->createStub(LoggerInterface::class),
             $channelActions,
@@ -190,7 +190,7 @@ final class ChanDropServiceTest extends TestCase
     public function softDropChannelRemovesPModeWhenNoExpire(): void
     {
         $channel = $this->createChannelWithId('#softperm', 205);
-        $channel->setNoExpire(true);
+        $channel->changeNoExpire(true);
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::once())->method('save')->with($channel);
@@ -209,7 +209,7 @@ final class ChanDropServiceTest extends TestCase
 
         $service = new ChanDropService(
             $channelRepository,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
             $channelActions,
@@ -222,7 +222,7 @@ final class ChanDropServiceTest extends TestCase
     public function restoreChannelSetsPModeWhenNoExpire(): void
     {
         $channel = $this->createChannelWithId('#restoreperm', 206);
-        $channel->setNoExpire(true);
+        $channel->changeNoExpire(true);
         $channel->markPendingDeletion();
 
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -242,7 +242,7 @@ final class ChanDropServiceTest extends TestCase
 
         $service = new ChanDropService(
             $channelRepository,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
             $channelActions,
@@ -256,7 +256,6 @@ final class ChanDropServiceTest extends TestCase
         $channel = RegisteredChannel::register($name, 1, 'Test description');
 
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($channel, $id);
 
         return $channel;

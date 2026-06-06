@@ -23,7 +23,7 @@ use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceNickReservationInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -32,7 +32,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(GlobalCommand::class)]
 final class GlobalCommandTest extends TestCase
@@ -50,7 +49,7 @@ final class GlobalCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         OperServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
     ): OperServContext {
         $registry = new OperServCommandRegistry([]);
 
@@ -210,7 +209,7 @@ final class GlobalCommandTest extends TestCase
             $messages[] = $msg;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $context = $this->createContext(null, ['TestBot!bot@test.com', 'PRIVMSG', 'Hello'], $notifier, $translator);
@@ -231,7 +230,7 @@ final class GlobalCommandTest extends TestCase
             $messages[] = $msg;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $context = $this->createContext($sender, ['TestBot!bot@test.com', 'INVALID', 'Hello'], $notifier, $translator);
@@ -253,7 +252,7 @@ final class GlobalCommandTest extends TestCase
             $messages[] = $msg;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $context = $this->createContext($sender, ['invalid_mask', 'PRIVMSG', 'Hello'], $notifier, $translator);
@@ -275,7 +274,7 @@ final class GlobalCommandTest extends TestCase
             $messages[] = $msg;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $connectedUser = new SenderView('UID2', 'TestBot', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', '', '');
@@ -301,7 +300,7 @@ final class GlobalCommandTest extends TestCase
             $messages[] = $msg;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -330,7 +329,7 @@ final class GlobalCommandTest extends TestCase
             $messages[] = $msg;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -358,7 +357,7 @@ final class GlobalCommandTest extends TestCase
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -387,12 +386,9 @@ final class GlobalCommandTest extends TestCase
         $module->method('getNickReservation')->willReturn($nickReservation);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createStub(ConnectionInterface::class);
-
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('001');
-        $connectionHolder->method('getConnection')->willReturn($connection);
 
         $context = $this->createContext($sender, ['TestBot!bot@test.com', 'PRIVMSG', 'Hello World'], $notifier, $translator);
         $command = $this->createCommand(
@@ -416,7 +412,7 @@ final class GlobalCommandTest extends TestCase
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -445,12 +441,9 @@ final class GlobalCommandTest extends TestCase
         $module->method('getNickReservation')->willReturn($nickReservation);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createStub(ConnectionInterface::class);
-
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('001');
-        $connectionHolder->method('getConnection')->willReturn($connection);
 
         $context = $this->createContext($sender, ['TestBot!bot@test.com', 'NOTICE', 'Hello'], $notifier, $translator);
         $command = $this->createCommand(
@@ -476,7 +469,7 @@ final class GlobalCommandTest extends TestCase
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -534,7 +527,7 @@ final class GlobalCommandTest extends TestCase
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -583,7 +576,7 @@ final class GlobalCommandTest extends TestCase
             new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', ''),
             ['TestBot!bot@test.com', 'PRIVMSG', 'Hello'],
             $this->createStub(OperServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
         );
 
         self::assertNull($cmd->getAuditData($context));
@@ -596,7 +589,7 @@ final class GlobalCommandTest extends TestCase
 
         $notifier = $this->createStub(OperServNotifierInterface::class);
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $key) => $key);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -625,12 +618,9 @@ final class GlobalCommandTest extends TestCase
         $module->method('getNickReservation')->willReturn($nickReservation);
         $module->method('getServiceActions')->willReturn($serviceActions);
 
-        $connection = $this->createStub(ConnectionInterface::class);
-
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn($module);
         $connectionHolder->method('getServerSid')->willReturn('001');
-        $connectionHolder->method('getConnection')->willReturn($connection);
 
         $cmd = $this->createCommand(
             userLookup: $userLookup,

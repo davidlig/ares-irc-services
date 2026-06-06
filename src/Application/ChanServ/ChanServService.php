@@ -10,25 +10,25 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\AuditableCommandInterface;
+use App\Application\Event\IrcopCommandExecutedEvent;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChanServDispatchPort;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
+use App\Application\Port\UserLanguageResolverInterface;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Infrastructure\NickServ\UserLanguageResolver;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function array_slice;
@@ -50,17 +50,17 @@ final readonly class ChanServService implements ChanServDispatchPort
         private readonly ChanServCommandRegistry $commandRegistry,
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly UserLanguageResolver $languageResolver,
+        private readonly UserLanguageResolverInterface $languageResolver,
         private readonly ChanServNotifierInterface $notifier,
         private readonly UserMessageTypeResolverInterface $messageTypeResolver,
-        private readonly TranslatorInterface $translator,
+        private readonly TranslationInterface $translator,
         private readonly ChannelLookupPort $channelLookup,
         private readonly ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private readonly NetworkUserLookupPort $userLookup,
         private readonly ServiceNicknameRegistry $serviceNicks,
         private readonly AuthorizationContextInterface $authorizationContext,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly EventBusInterface $eventDispatcher,
         private readonly string $defaultLanguage = 'en',
         private readonly string $defaultTimezone = 'UTC',
         private readonly LoggerInterface $logger = new NullLogger(),

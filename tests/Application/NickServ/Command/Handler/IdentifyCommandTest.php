@@ -16,8 +16,10 @@ use App\Application\NickServ\NickServClientKeyResolver;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -25,8 +27,6 @@ use App\Infrastructure\NickServ\PendingNickRestoreRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(IdentifyCommand::class)]
 final class IdentifyCommandTest extends TestCase
@@ -35,7 +35,7 @@ final class IdentifyCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         NickServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
     ): NickServContext {
         return new NickServContext(
             $sender,
@@ -63,11 +63,11 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
 
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
 
         $cmd = new IdentifyCommand(
             $nickRepo,
@@ -96,14 +96,14 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -134,14 +134,14 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -174,7 +174,7 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         // Client key for SenderView(uid, nick, ident, hostname, cloaked, ip) is 'host:h'
         $clientKey = $clientKeyResolver->getClientKey(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'));
         for ($i = 0; $i < 5; ++$i) {
@@ -186,7 +186,7 @@ final class IdentifyCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -218,14 +218,14 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -259,14 +259,14 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -303,14 +303,14 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -346,14 +346,14 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -391,7 +391,7 @@ final class IdentifyCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -402,7 +402,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -429,14 +429,14 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -480,7 +480,7 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::anything());
 
         $messages = [];
@@ -490,7 +490,7 @@ final class IdentifyCommandTest extends TestCase
         });
         $notifier->method('setUserAccount')->willReturnCallback(static function (): void {});
         $notifier->method('setUserVhost')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -538,7 +538,7 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::anything());
 
         $messages = [];
@@ -550,7 +550,7 @@ final class IdentifyCommandTest extends TestCase
         $notifier->method('setUserAccount')->willReturnCallback(static function (): void {});
         $notifier->method('setUserVhost')->willReturnCallback(static function (): void {});
         $notifier->method('forceNick')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -596,7 +596,7 @@ final class IdentifyCommandTest extends TestCase
         $failedAttempt = new IdentifyFailedAttemptRegistry();
         $clientKeyResolver = new NickServClientKeyResolver();
         $vhostResolver = new VhostDisplayResolver('');
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::anything());
 
         $messages = [];
@@ -607,7 +607,7 @@ final class IdentifyCommandTest extends TestCase
         });
         $notifier->method('setUserAccount')->willReturnCallback(static function (): void {});
         $notifier->method('setUserVhost')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -656,7 +656,7 @@ final class IdentifyCommandTest extends TestCase
         $notifier->expects(self::once())->method('setUserVhost')->with('UID1', '', 'SID');
         $notifier->method('sendMessage');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -667,7 +667,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $pendingRegistry,
             5,
             300,
@@ -689,7 +689,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -709,7 +709,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -729,7 +729,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -749,7 +749,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -769,7 +769,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -789,7 +789,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -809,7 +809,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -829,7 +829,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -849,7 +849,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -869,7 +869,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -889,7 +889,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -984,7 +984,7 @@ final class IdentifyCommandTest extends TestCase
         $nickRepo->expects(self::once())->method('save')->with($account);
 
         $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('admin.network');
+        $role->changeForcedVhostPattern('admin.network');
         $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(1, $role);
 
         $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -994,7 +994,7 @@ final class IdentifyCommandTest extends TestCase
         $notifier->expects(self::once())->method('setUserAccount');
         $notifier->expects(self::never())->method('setUserVhost');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -1005,7 +1005,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $ircopRepo,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -1044,7 +1044,7 @@ final class IdentifyCommandTest extends TestCase
         $notifier->expects(self::once())->method('setUserAccount');
         $notifier->expects(self::once())->method('setUserVhost')->with('UID1', 'personal.vhost', 'SID');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -1055,7 +1055,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $ircopRepo,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,
@@ -1091,7 +1091,7 @@ final class IdentifyCommandTest extends TestCase
         $notifier->expects(self::once())->method('setUserAccount');
         $notifier->expects(self::once())->method('setUserVhost')->with('UID1', 'user.vhost', 'SID');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new IdentifyCommand(
@@ -1102,7 +1102,7 @@ final class IdentifyCommandTest extends TestCase
             new NickServClientKeyResolver(),
             new VhostDisplayResolver(''),
             $ircopRepo,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
             5,
             300,

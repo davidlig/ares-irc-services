@@ -9,6 +9,7 @@ use App\Application\ChanServ\Service\ChannelForbiddenService;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelView;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelForbiddenEvent;
 use App\Domain\ChanServ\Event\ChannelUnforbiddenEvent;
@@ -18,7 +19,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(ChannelForbiddenService::class)]
 final class ChannelForbiddenServiceTest extends TestCase
@@ -31,7 +31,7 @@ final class ChannelForbiddenServiceTest extends TestCase
 
     private ChannelLookupPort $channelLookup;
 
-    private EventDispatcherInterface $eventDispatcher;
+    private EventBusInterface $eventDispatcher;
 
     private LoggerInterface $logger;
 
@@ -41,7 +41,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $this->dropService = $this->createStub(ChanDropService::class);
         $this->channelServiceActions = $this->createStub(ChannelServiceActionsPort::class);
         $this->channelLookup = $this->createStub(ChannelLookupPort::class);
-        $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createStub(EventBusInterface::class);
         $this->logger = $this->createStub(LoggerInterface::class);
     }
 
@@ -50,7 +50,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         ?ChanDropService $dropService = null,
         ?ChannelServiceActionsPort $channelServiceActions = null,
         ?ChannelLookupPort $channelLookup = null,
-        ?EventDispatcherInterface $eventDispatcher = null,
+        ?EventBusInterface $eventDispatcher = null,
         ?LoggerInterface $logger = null,
     ): ChannelForbiddenService {
         return new ChannelForbiddenService(
@@ -69,7 +69,6 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, $id);
 
         return $channel;
@@ -81,7 +80,6 @@ final class ChannelForbiddenServiceTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, $id);
 
         return $channel;
@@ -94,7 +92,6 @@ final class ChannelForbiddenServiceTest extends TestCase
             ->willReturnCallback(static function (RegisteredChannel $channel): void {
                 $reflection = new ReflectionClass(RegisteredChannel::class);
                 $idProp = $reflection->getProperty('id');
-                $idProp->setAccessible(true);
 
                 if (!$idProp->isInitialized($channel)) {
                     $idProp->setValue($channel, 999);
@@ -113,7 +110,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn(null);
 
         $dispatchedEvent = null;
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvent): object {
@@ -150,7 +147,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $dropService->expects(self::never())->method('dropChannel');
 
         $dispatchedEvent = null;
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvent): object {
@@ -197,7 +194,7 @@ final class ChannelForbiddenServiceTest extends TestCase
             ->method('setChannelModes')
             ->with('#taken', '+ntims', []);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         $this->createService(
@@ -216,7 +213,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn(null);
 
         $dispatchedEvent = null;
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvent): object {
@@ -433,7 +430,7 @@ final class ChannelForbiddenServiceTest extends TestCase
             ->method('delete')
             ->with($channel);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event): object {
@@ -486,7 +483,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
         $dispatchedEvent = null;
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvent): object {
@@ -512,7 +509,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn(null);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $this->createService(eventDispatcher: $eventDispatcher)->unforbid('#ghost', 'OperNick');
@@ -526,7 +523,7 @@ final class ChannelForbiddenServiceTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $this->createService(eventDispatcher: $eventDispatcher)->unforbid('#active', 'OperNick');

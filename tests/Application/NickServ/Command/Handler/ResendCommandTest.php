@@ -12,7 +12,9 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
+use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -21,8 +23,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ResendCommand::class)]
 final class ResendCommandTest extends TestCase
@@ -31,7 +31,7 @@ final class ResendCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         NickServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         PendingVerificationRegistry $pendingRegistry,
     ): NickServContext {
         return new NickServContext(
@@ -55,8 +55,8 @@ final class ResendCommandTest extends TestCase
     public function doesNothingWhenSenderNull(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $messageBus = $this->createStub(MessageBusInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $logger = $this->createStub(LoggerInterface::class);
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
@@ -70,8 +70,8 @@ final class ResendCommandTest extends TestCase
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn(null);
-        $messageBus = $this->createStub(MessageBusInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $logger = $this->createStub(LoggerInterface::class);
 
@@ -94,8 +94,8 @@ final class ResendCommandTest extends TestCase
         $account->method('isPending')->willReturn(false);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
-        $messageBus = $this->createStub(MessageBusInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $logger = $this->createStub(LoggerInterface::class);
 
@@ -119,8 +119,8 @@ final class ResendCommandTest extends TestCase
         $account->method('getEmail')->willReturn('user@example.com');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
-        $messageBus = $this->createStub(MessageBusInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $logger = $this->createStub(LoggerInterface::class);
         $pending = new PendingVerificationRegistry();
@@ -147,7 +147,7 @@ final class ResendCommandTest extends TestCase
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
         $dispatched = [];
-        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
             $dispatched[] = $m;
 
@@ -155,7 +155,7 @@ final class ResendCommandTest extends TestCase
         });
 
         $translatorCalls = [];
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'nickserv', string $locale = 'en') use (&$translatorCalls): string {
             $translatorCalls[] = ['id' => $id, 'params' => $params, 'domain' => $domain, 'locale' => $locale];
 
@@ -195,8 +195,8 @@ final class ResendCommandTest extends TestCase
         $account->method('getEmail')->willReturn(null);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
-        $messageBus = $this->createStub(MessageBusInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $logger = $this->createStub(LoggerInterface::class);
         $pending = new PendingVerificationRegistry();
@@ -222,13 +222,13 @@ final class ResendCommandTest extends TestCase
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
         $dispatched = [];
-        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
             $dispatched[] = $m;
 
             return new Envelope($m);
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $logger = $this->createStub(LoggerInterface::class);
         $pending = new PendingVerificationRegistry();
@@ -255,9 +255,9 @@ final class ResendCommandTest extends TestCase
         $account->method('getEmail')->willReturn('user@example.com');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
-        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $messageBus->method('dispatch')->willThrowException(new RuntimeException('SMTP failure'));
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
@@ -287,13 +287,13 @@ final class ResendCommandTest extends TestCase
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($account);
         $dispatched = [];
-        $messageBus = $this->createStub(MessageBusInterface::class);
+        $messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $messageBus->method('dispatch')->willReturnCallback(static function (object $m) use (&$dispatched): Envelope {
             $dispatched[] = $m;
 
             return new Envelope($m);
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $logger = $this->createStub(LoggerInterface::class);
         $pending = new PendingVerificationRegistry();
@@ -316,8 +316,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -329,8 +329,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -342,8 +342,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -355,8 +355,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -368,8 +368,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -381,8 +381,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -394,8 +394,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -407,8 +407,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -420,8 +420,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -433,8 +433,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );
@@ -446,8 +446,8 @@ final class ResendCommandTest extends TestCase
     {
         $cmd = new ResendCommand(
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
         );

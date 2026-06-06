@@ -8,12 +8,12 @@ use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Carries all the context a NickServ command needs to execute.
@@ -33,7 +33,7 @@ readonly class NickServContext implements IrcopContextInterface
         /** @var string[] */
         public readonly array $args,
         private readonly NickServNotifierInterface $notifier,
-        private readonly TranslatorInterface $translator,
+        private readonly TranslationInterface $translator,
         private readonly string $language,
         /** PHP timezone identifier (e.g. UTC, Europe/Madrid) used when displaying dates. */
         private readonly string $timezone,

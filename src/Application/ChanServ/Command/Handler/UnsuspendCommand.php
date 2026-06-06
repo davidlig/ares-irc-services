@@ -9,9 +9,9 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 
@@ -21,7 +21,7 @@ final class UnsuspendCommand implements ChanServCommandInterface, AuditableComma
 
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly EventBusInterface $eventDispatcher,
     ) {
     }
 

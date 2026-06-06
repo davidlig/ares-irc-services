@@ -25,7 +25,6 @@ final class NickServPermissionTest extends TestCase
         $reflection = new ReflectionClass(NickServPermission::class);
         $constructor = $reflection->getConstructor();
         self::assertNotNull($constructor);
-        $constructor->setAccessible(true);
         $constructor->invoke($reflection->newInstanceWithoutConstructor());
         self::assertTrue(true);
     }

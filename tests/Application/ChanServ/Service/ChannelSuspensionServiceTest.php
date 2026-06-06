@@ -11,11 +11,11 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ChannelSuspensionService::class)]
 final class ChannelSuspensionServiceTest extends TestCase
@@ -37,7 +37,7 @@ final class ChannelSuspensionServiceTest extends TestCase
     private function createService(
         ?ChannelServiceActionsPort $channelServiceActions = null,
         ?ChanServNotifierInterface $notifier = null,
-        ?TranslatorInterface $translator = null,
+        ?TranslationInterface $translator = null,
     ): ChannelSuspensionService {
         return new ChannelSuspensionService(
             $channelServiceActions ?? $this->createStub(ChannelServiceActionsPort::class),
@@ -48,9 +48,9 @@ final class ChannelSuspensionServiceTest extends TestCase
         );
     }
 
-    private function createStubTranslator(): TranslatorInterface
+    private function createStubTranslator(): TranslationInterface
     {
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(
             static fn (string $id): string => $id,
         );
@@ -183,7 +183,7 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
 
         $translatedArgs = [];
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())
             ->method('trans')
             ->willReturnCallback(static function (
@@ -231,7 +231,7 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
 
         $translatedArgs = [];
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())
             ->method('trans')
             ->willReturnCallback(static function (
@@ -276,7 +276,7 @@ final class ChannelSuspensionServiceTest extends TestCase
         $this->modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
 
         $translatedArgs = [];
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())
             ->method('trans')
             ->willReturnCallback(static function (

@@ -157,6 +157,8 @@ services:
         arguments:
             $handlers: !tagged_iterator irc.protocol_handler
 
+    App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleRegistryInterface: '@App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry'
+
     App\Application\Mail\MailerInterface:
         class: App\Infrastructure\Mail\SymfonyMailerAdapter
         arguments:
@@ -169,6 +171,12 @@ services:
     App\Infrastructure\Messenger\Middleware\EmailDelayMiddleware:
         arguments:
             $emailDelaySeconds: '%mailer.send_delay_seconds%'
+
+    App\Application\Mail\Message\SendEmailHandler:
+        tags: ['messenger.message_handler']
+
+    App\Application\Maintenance\Message\RunMaintenanceCycleHandler:
+        tags: ['messenger.message_handler']
 
     # --- Service Nickname Registry (dynamic service names for placeholders) ---------
 
@@ -189,9 +197,9 @@ services:
 
     # --- Application services — inject the irc Monolog channel ---------------
 
-    App\Application\IRC\IRCClientFactoryInterface: '@App\Application\IRC\IRCClientFactory'
+    App\Infrastructure\IRC\Runtime\IRCClientFactoryInterface: '@App\Infrastructure\IRC\Runtime\IRCClientFactory'
 
-    App\Application\IRC\IRCClientFactory:
+    App\Infrastructure\IRC\Runtime\IRCClientFactory:
         arguments:
             $maintenanceDispatchIntervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
@@ -207,7 +215,7 @@ services:
 
     # --- CLI command — inject .env defaults so the command runs without arguments ---
 
-    App\Application\IRC\Connect\ConnectToServerHandlerInterface: '@App\Application\IRC\Connect\ConnectToServerHandler'
+    App\Application\IRC\Connect\ConnectToServerHandlerInterface: '@App\Infrastructure\IRC\Connect\ConnectToServerHandler'
 
     App\UI\CLI\ConnectCommand:
         arguments:
@@ -383,7 +391,7 @@ services:
             $messageTypeResolver: '@App\Infrastructure\NickServ\UserMessageTypeResolver'
             $notifier: '@App\Application\OperServ\Command\OperServNotifierInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
             $maxMessages: '%services.antiflood_max_messages%'
@@ -489,7 +497,7 @@ services:
     App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder:
         arguments:
             $translator: '@translator'
-            $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
+            $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
 
     App\Infrastructure\IRC\ServiceBridge\CtcpHandler:
         arguments:
@@ -497,7 +505,7 @@ services:
             $sendNotice: '@App\Application\Port\SendNoticePort'
             $versionResponder: '@App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
-            $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
+            $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
@@ -585,7 +593,7 @@ services:
             $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
             $guestPrefix: '%services.guest_prefix%'
             $defaultLanguage: '%services.default_language%'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $logger: '@monolog.logger.irc'
 
     App\Application\NickServ\Service\NickForceService:
@@ -595,7 +603,7 @@ services:
             $pendingRegistry: '@App\Application\NickServ\PendingNickRestoreRegistryInterface'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $logger: '@monolog.logger.irc'
             $guestPrefix: '%services.guest_prefix%'
 
@@ -611,7 +619,7 @@ services:
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $forceService: '@App\Application\NickServ\Service\NickForceService'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $debug: '@App\Infrastructure\NickServ\Service\NickServDebugNotifier'
             $logger: '@monolog.logger.irc'
             $sessionRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
@@ -672,7 +680,7 @@ services:
     App\Application\ChanServ\ChanServService:
         arguments:
             $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
-            $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
+            $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
@@ -726,12 +734,12 @@ services:
 
     App\Application\ChanServ\Command\Handler\AccessCommand:
         arguments:
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\DelaccessCommand:
         arguments:
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\LevelsCommand:
@@ -761,7 +769,7 @@ services:
     App\Application\ChanServ\Command\Handler\AkickCommand:
         arguments:
             $accessRepository: '@App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\DropCommand:
@@ -774,13 +782,13 @@ services:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
             $suspensionService: '@App\Application\ChanServ\Service\ChannelSuspensionService'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\UnsuspendCommand:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['chanserv.command']
 
     App\Application\ChanServ\Command\Handler\HistoryCommand:
@@ -823,7 +831,7 @@ services:
     App\Application\ChanServ\Service\ChanDropService:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $debug: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
             $logger: '@monolog.logger.irc'
             $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
@@ -837,7 +845,7 @@ services:
             $notifier: '@App\Application\ChanServ\Command\ChanServNotifierInterface'
             $channelLookup: '@App\Application\Port\ChannelLookupPort'
             $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
-            $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $translator: '@App\Application\Port\TranslationInterface'
             $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
 
@@ -857,7 +865,7 @@ services:
     App\Application\ChanServ\Maintenance\UnsuspendExpiredChannelsTask:
         arguments:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $serverName: '%irc.server_name%'
             $intervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
@@ -869,7 +877,7 @@ services:
             $dropService: '@App\Application\ChanServ\Service\ChanDropService'
             $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
             $channelLookup: '@App\Application\Port\ChannelLookupPort'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\ChanServ\Subscriber\ChanServChannelForbiddenSubscriber:
@@ -919,7 +927,7 @@ services:
             $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
             $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
             $debugNotifier: '@App\Infrastructure\ChanServ\Service\ChanServDebugNotifier'
-            $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
@@ -935,7 +943,7 @@ services:
     App\Application\MemoServ\MemoServService:
         arguments:
             $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
-            $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
+            $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
@@ -1051,7 +1059,7 @@ services:
         arguments:
             $recoverTokenTtlSeconds: '%nickserv.recover_token_ttl_seconds%'
             $recoverMinIntervalSeconds: '%nickserv.recover_min_interval_seconds%'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\StatusCommand:
@@ -1077,11 +1085,11 @@ services:
 
     App\Application\NickServ\Command\Handler\SetPasswordHandler:
         arguments:
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
 
     App\Application\NickServ\Command\Handler\SetEmailHandler:
         arguments:
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
 
     App\Application\NickServ\Command\Handler\SasetCommand:
         arguments:
@@ -1109,13 +1117,13 @@ services:
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
             $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
             $suspensionService: '@App\Application\NickServ\Service\NickSuspensionService'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\UnsuspendCommand:
         arguments:
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $eventDispatcher: '@event_dispatcher'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\RenameCommand:
@@ -1186,7 +1194,7 @@ services:
             $forceService: '@App\Application\NickServ\Service\NickForceService'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
-            $translator: '@Symfony\Contracts\Translation\TranslatorInterface'
+            $translator: '@App\Application\Port\TranslationInterface'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $logger: '@monolog.logger.irc'
             $defaultLanguage: '%services.default_language%'
@@ -1305,7 +1313,7 @@ services:
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker:  '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
             $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
-            $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
+            $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $defaultLanguage:      '%services.default_language%'
             $defaultTimezone:      '%services.default_timezone%'
             $logger:               '@monolog.logger.irc'
@@ -1380,7 +1388,7 @@ services:
     App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask:
         arguments:
             $channelRepository:    '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
-            $eventDispatcher:     '@event_dispatcher'
+            $eventDispatcher:     '@App\Application\Port\EventBusInterface'
             $logger:               '@monolog.logger.maintenance'
             $intervalSeconds:      '%maintenance.interval%'
             $inactivityExpiryDays: '%chanserv.inactivity_expiry_days%'
@@ -1446,12 +1454,24 @@ services:
         arguments:
             $defaultLanguage: '%services.default_language%'
 
+    App\Application\Port\UserLanguageResolverInterface:
+        alias: App\Infrastructure\NickServ\UserLanguageResolver
+
     # --- UserMessageTypeResolver — NOTICE vs PRIVMSG preference -----------------
 
     App\Application\Port\UserMessageTypeResolverInterface:
         alias: App\Infrastructure\NickServ\UserMessageTypeResolver
 
     App\Infrastructure\NickServ\UserMessageTypeResolver: ~
+
+    App\Application\Port\EventBusInterface:
+        alias: App\Infrastructure\Event\SymfonyEventBus
+
+    App\Application\Port\AsyncMessageDispatcherInterface:
+        alias: App\Infrastructure\Messenger\SymfonyAsyncMessageDispatcher
+
+    App\Application\Port\TranslationInterface:
+        alias: App\Infrastructure\Translation\SymfonyTranslationAdapter
 
     # --- OperServ Domain --------------------------------------------------------
 
@@ -1485,7 +1505,7 @@ services:
     App\Application\OperServ\OperServService:
         arguments:
             $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
-            $languageResolver: '@App\Infrastructure\NickServ\UserLanguageResolver'
+            $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
@@ -1675,7 +1695,7 @@ services:
         arguments:
             $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
             $debugNotifier: '@App\Infrastructure\OperServ\Service\OperServDebugNotifier'
-            $translator: '@translator'
+            $translator: '@App\Application\Port\TranslationInterface'
             $logger: '@monolog.logger.maintenance'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'

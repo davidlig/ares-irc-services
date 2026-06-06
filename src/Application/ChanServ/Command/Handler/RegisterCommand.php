@@ -9,13 +9,13 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ChannelView;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function count;
@@ -36,7 +36,7 @@ final readonly class RegisterCommand implements ChanServCommandInterface
         private RegisteredChannelRepositoryInterface $channelRepository,
         private ChannelLevelRepositoryInterface $levelRepository,
         private ChannelRegisterThrottleRegistry $throttleRegistry,
-        private EventDispatcherInterface $eventDispatcher,
+        private EventBusInterface $eventDispatcher,
         private RootUserRegistry $rootRegistry,
         private int $maxChannelsPerNick = 3,
         private int $registerMinIntervalSeconds = 21600,

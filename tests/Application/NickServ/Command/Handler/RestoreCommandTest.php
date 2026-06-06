@@ -15,6 +15,7 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickDropService;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
@@ -22,7 +23,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use stdClass;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RestoreCommand::class)]
 final class RestoreCommandTest extends TestCase
@@ -140,7 +140,7 @@ final class RestoreCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

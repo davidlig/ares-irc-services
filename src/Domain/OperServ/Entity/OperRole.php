@@ -56,7 +56,7 @@ class OperRole
         return $this->description;
     }
 
-    public function setDescription(string $description): void
+    public function updateDescription(string $description): void
     {
         $this->description = $description;
     }
@@ -106,7 +106,7 @@ class OperRole
     /**
      * @param array<int, string> $modes
      */
-    public function setUserModes(array $modes): void
+    public function changeUserModes(array $modes): void
     {
         if (empty($modes)) {
             $this->userModes = null;
@@ -122,7 +122,7 @@ class OperRole
         return $this->forcedVhostPattern;
     }
 
-    public function setForcedVhostPattern(?string $pattern): void
+    public function changeForcedVhostPattern(?string $pattern): void
     {
         $this->forcedVhostPattern = $pattern;
     }

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Network;
 
 use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Message\MessageDirection;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\Network\SyncCompleteDispatcherSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

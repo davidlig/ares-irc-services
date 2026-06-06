@@ -9,6 +9,7 @@ use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\MemoServSendThrottleRegistry;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\MemoServ\Entity\Memo;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
@@ -17,7 +18,6 @@ use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function array_slice;
 use function implode;
@@ -39,7 +39,7 @@ final readonly class SendCommand implements MemoServCommandInterface
         private MemoServSendThrottleRegistry $throttleRegistry,
         private ChanServAccessHelper $accessHelper,
         private NetworkUserLookupPort $userLookup,
-        private TranslatorInterface $translator,
+        private TranslationInterface $translator,
         private string $defaultLanguage,
         private int $maxMemosPerNick,
         private int $maxMemosPerChannel,

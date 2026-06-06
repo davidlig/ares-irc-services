@@ -72,6 +72,6 @@ final class SenderViewTest extends TestCase
 
         $mask = $view->toUserMask();
 
-        self::assertSame('TestNick!testident@testhost.example.com', $mask->value);
+        self::assertSame('TestNick!testident@testhost.example.com', $mask);
     }
 }

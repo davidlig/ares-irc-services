@@ -7,11 +7,11 @@ namespace App\Application\NickServ\Service;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 use function str_starts_with;
@@ -40,7 +40,7 @@ readonly class NickForceService
         private PendingNickRestoreRegistryInterface $pendingRegistry,
         private NetworkUserLookupPort $userLookup,
         private RegisteredNickRepositoryInterface $nickRepository,
-        private EventDispatcherInterface $eventDispatcher,
+        private EventBusInterface $eventDispatcher,
         private LoggerInterface $logger,
         private string $guestPrefix = 'Guest-',
     ) {

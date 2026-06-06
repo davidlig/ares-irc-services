@@ -16,6 +16,7 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickHistoryService;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\NickHistory;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\NickHistoryRepositoryInterface;
@@ -454,7 +455,7 @@ final class HistoryCommandTest extends TestCase
             message: 'history.message.suspended',
             extraData: ['duration' => '7d', 'expires_at' => '2024-01-22', 'ip' => '192.168.1.1', 'host' => 'oper@test'],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $history2 = NickHistory::record(
             nickId: 1,
@@ -464,7 +465,7 @@ final class HistoryCommandTest extends TestCase
             message: 'history.message.email_changed',
             extraData: ['old_email' => 'old@test.com', 'new_email' => 'new@test.com'],
         );
-        $history2->setId(2);
+        $history2 = self::historyWithId($history2, 2);
 
         $history3 = NickHistory::record(
             nickId: 1,
@@ -474,7 +475,7 @@ final class HistoryCommandTest extends TestCase
             message: 'Custom message not a translation key',
             extraData: ['method' => 'email'],
         );
-        $history3->setId(3);
+        $history3 = self::historyWithId($history3, 3);
 
         $historyRepo = $this->createStub(NickHistoryRepositoryInterface::class);
         $historyRepo->method('countByNickId')->willReturn(3);
@@ -505,7 +506,7 @@ final class HistoryCommandTest extends TestCase
             message: 'Test message',
             extraData: [],
         );
-        $history1->setId(1);
+        $history1 = self::historyWithId($history1, 1);
 
         $historyRepo = $this->createStub(NickHistoryRepositoryInterface::class);
         $historyRepo->method('countByNickId')->willReturn(1);
@@ -639,7 +640,6 @@ final class HistoryCommandTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($nick, $id);
 
         return $nick;
@@ -656,7 +656,7 @@ final class HistoryCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $historyRepoFinal = $historyRepo ?? $this->createStub(NickHistoryRepositoryInterface::class);
@@ -681,7 +681,7 @@ final class HistoryCommandTest extends TestCase
     private function createContextWithNullSender(array $args, NickHistoryRepositoryInterface $historyRepo): NickServContext
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(
@@ -762,7 +762,7 @@ final class HistoryCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(
@@ -789,5 +789,19 @@ final class HistoryCommandTest extends TestCase
         $provider->method('getNickname')->willReturn('NickServ');
 
         return new ServiceNicknameRegistry([$provider]);
+    }
+
+    private static function historyWithId(NickHistory $history, int $id): NickHistory
+    {
+        return new NickHistory(
+            id: $id,
+            nickId: $history->getNickId(),
+            action: $history->getAction(),
+            performedBy: $history->getPerformedBy(),
+            performedByNickId: $history->getPerformedByNickId(),
+            performedAt: $history->getPerformedAt(),
+            message: $history->getMessage(),
+            extraData: $history->getExtraData(),
+        );
     }
 }

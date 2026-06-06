@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Application\IRC;
+namespace App\Tests\Infrastructure\IRC\Runtime;
 
 use App\Application\IRC\BurstCompleteRegistry;
-use App\Application\IRC\IRCClient;
 use App\Application\Maintenance\Message\RunMaintenanceCycle;
+use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\EventBusInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Domain\IRC\Event\IrcMessageProcessedEvent;
-use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Domain\IRC\Server\ServerLink;
@@ -19,13 +19,13 @@ use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
+use App\Infrastructure\IRC\Runtime\IRCClient;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(IRCClient::class)]
 final class IRCClientTest extends TestCase
@@ -34,9 +34,9 @@ final class IRCClientTest extends TestCase
 
     private ProtocolHandlerInterface $protocol;
 
-    private EventDispatcherInterface $eventDispatcher;
+    private EventBusInterface $eventDispatcher;
 
-    private MessageBusInterface $messageBus;
+    private AsyncMessageDispatcherInterface $messageBus;
 
     private BurstCompleteRegistry $burstCompleteRegistry;
 
@@ -53,10 +53,10 @@ final class IRCClientTest extends TestCase
         $this->protocol = $this->createStub(ProtocolHandlerInterface::class);
         $this->protocol->method('getProtocolName')->willReturn('unreal');
 
-        $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createStub(EventBusInterface::class);
         $this->eventDispatcher->method('dispatch')->willReturnArgument(0);
 
-        $this->messageBus = $this->createStub(MessageBusInterface::class);
+        $this->messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $this->messageBus->method('dispatch')->willReturn(new Envelope(new stdClass()));
 
         $this->burstCompleteRegistry = new BurstCompleteRegistry();
@@ -92,10 +92,10 @@ final class IRCClientTest extends TestCase
         $this->protocol = $this->createMock(ProtocolHandlerInterface::class);
         $this->protocol->expects(self::once())->method('performHandshake')
             ->with($this->connection, $this->link);
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::once())->method('dispatch')
             ->with(self::callback(static fn ($event): bool => $event instanceof ConnectionEstablishedEvent));
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::never())->method('dispatch');
         $this->client = $this->createClient();
 
@@ -122,7 +122,7 @@ final class IRCClientTest extends TestCase
         $this->protocol->expects(self::atLeastOnce())->method('getProtocolName')->willReturn('unreal');
         $this->protocol->expects(self::once())->method('parseRawLine')->with($rawLine)->willReturn($message);
         $this->protocol->expects(self::once())->method('handleIncoming')->with($message, $this->connection);
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::atLeastOnce())->method('dispatch')->willReturnCallback(
             static function (object $event) use (&$dispatched): object {
                 $dispatched[] = $event;
@@ -130,7 +130,7 @@ final class IRCClientTest extends TestCase
                 return $event;
             }
         );
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::never())->method('dispatch');
         $this->client = $this->createClient();
 
@@ -151,9 +151,9 @@ final class IRCClientTest extends TestCase
         $this->protocol = $this->createMock(ProtocolHandlerInterface::class);
         $this->protocol->expects(self::atLeastOnce())->method('getProtocolName')->willReturn('unreal');
         $this->protocol->expects(self::never())->method('parseRawLine');
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::never())->method('dispatch');
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::never())->method('dispatch');
         $this->client = $this->createClient();
 
@@ -171,9 +171,9 @@ final class IRCClientTest extends TestCase
         $this->protocol->expects(self::once())->method('parseRawLine')->with(':s PING x')
             ->willReturn(new IRCMessage('PING', 's', ['x']));
         $this->protocol->expects(self::once())->method('handleIncoming');
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnArgument(0);
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::never())->method('dispatch');
         $this->client = $this->createClient();
 
@@ -191,9 +191,9 @@ final class IRCClientTest extends TestCase
         $this->protocol->expects(self::once())->method('parseRawLine')->with(':s PING y')
             ->willReturn(new IRCMessage('PING', 's', ['y']));
         $this->protocol->expects(self::once())->method('handleIncoming');
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnArgument(0);
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::never())->method('dispatch');
         $this->client = $this->createClient();
 
@@ -214,9 +214,9 @@ final class IRCClientTest extends TestCase
         $this->protocol->expects(self::atLeastOnce())->method('getProtocolName')->willReturn('unreal');
         $this->protocol->expects(self::atLeastOnce())->method('parseRawLine')->with($rawLine)->willReturn($message);
         $this->protocol->expects(self::atLeastOnce())->method('handleIncoming');
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::atLeastOnce())->method('dispatch')->willReturnArgument(0);
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::once())->method('dispatch')
             ->with(self::callback(static fn ($m): bool => $m instanceof RunMaintenanceCycle))
             ->willReturnCallback(static fn (object $m): Envelope => new Envelope($m));
@@ -239,9 +239,9 @@ final class IRCClientTest extends TestCase
         $this->protocol->expects(self::atLeastOnce())->method('getProtocolName')->willReturn('unreal');
         $this->protocol->expects(self::atLeastOnce())->method('parseRawLine')->with($rawLine)->willReturn($message);
         $this->protocol->expects(self::atLeastOnce())->method('handleIncoming');
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::atLeastOnce())->method('dispatch')->willReturnArgument(0);
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::never())->method('dispatch');
         $this->client = $this->createClient();
 
@@ -257,7 +257,7 @@ final class IRCClientTest extends TestCase
         $this->connection->expects(self::once())->method('disconnect');
         $this->protocol = $this->createMock(ProtocolHandlerInterface::class);
         $this->protocol->expects(self::once())->method('performHandshake')->with($this->connection, $this->link);
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createMock(EventBusInterface::class);
         $this->eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
             static function (object $event) use (&$dispatched): object {
                 $dispatched[] = $event;
@@ -265,7 +265,7 @@ final class IRCClientTest extends TestCase
                 return $event;
             }
         );
-        $this->messageBus = $this->createMock(MessageBusInterface::class);
+        $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $this->messageBus->expects(self::never())->method('dispatch');
         $this->client = $this->createClient();
 
@@ -284,9 +284,9 @@ final class IRCClientTest extends TestCase
         $this->connection->expects(self::once())->method('disconnect');
         $this->protocol = $this->createStub(ProtocolHandlerInterface::class);
         $this->protocol->method('getProtocolName')->willReturn('unreal');
-        $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $this->eventDispatcher = $this->createStub(EventBusInterface::class);
         $this->eventDispatcher->method('dispatch')->willReturnArgument(0);
-        $this->messageBus = $this->createStub(MessageBusInterface::class);
+        $this->messageBus = $this->createStub(AsyncMessageDispatcherInterface::class);
         $this->messageBus->method('dispatch')->willReturn(new Envelope(new stdClass()));
         $this->client = $this->createClient();
 

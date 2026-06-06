@@ -12,8 +12,10 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\AccessCommand;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -26,8 +28,6 @@ use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(AccessCommand::class)]
 final class AccessCommandTest extends TestCase
@@ -37,7 +37,7 @@ final class AccessCommandTest extends TestCase
         ?RegisteredNick $senderAccount,
         array $args,
         ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         bool $isLevelFounder = false,
     ): ChanServContext {
         return new ChanServContext(
@@ -88,10 +88,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['notachannel', 'LIST'], $notifier, $translator));
 
         self::assertSame(['error.invalid_channel'], $messages);
@@ -114,10 +114,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, null, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertSame(['error.not_identified'], $messages);
@@ -136,10 +136,10 @@ final class AccessCommandTest extends TestCase
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
 
         $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
 
@@ -173,10 +173,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertSame(['access.list.empty{"%bot%":"","%nickserv%":"NickServ","%chanserv%":"ChanServ","%memoserv%":"MemoServ","%operserv%":"OperServ","%channel%":"#test"}'], $messages);
@@ -206,10 +206,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator));
 
         self::assertSame([
@@ -237,10 +237,10 @@ final class AccessCommandTest extends TestCase
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
 
         $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
 
@@ -262,10 +262,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'INVALID'], $notifier, $translator));
 
         self::assertCount(1, $messages);
@@ -300,10 +300,10 @@ final class AccessCommandTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '100'], $notifier, $translator));
 
         self::assertSame(['access.add.done'], $messages);
@@ -330,7 +330,7 @@ final class AccessCommandTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($targetNick);
 
         $dispatchedIp = '';
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
             $dispatchedIp = $e->performedByIp;
 
@@ -342,7 +342,7 @@ final class AccessCommandTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
         $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $eventDispatcher);
@@ -368,7 +368,7 @@ final class AccessCommandTest extends TestCase
         $nickRepo->method('findByNick')->willReturn($targetNick);
 
         $dispatchedIp = '';
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
             $dispatchedIp = $e->performedByIp;
 
@@ -380,7 +380,7 @@ final class AccessCommandTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
         $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $eventDispatcher);
@@ -404,10 +404,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', '', '100'], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
@@ -428,10 +428,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'SomeNick', '0'], $notifier, $translator));
 
         self::assertSame(['access.level_range'], $messages);
@@ -453,10 +453,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Unregistered', '100'], $notifier, $translator));
 
         self::assertSame(['error.nick_not_registered'], $messages);
@@ -483,10 +483,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Founder', '100'], $notifier, $translator));
 
         self::assertSame(['access.founder_not_in_list'], $messages);
@@ -520,10 +520,10 @@ final class AccessCommandTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator));
 
         self::assertSame(['access.del.done'], $messages);
@@ -545,10 +545,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', '   '], $notifier, $translator));
 
         self::assertSame(['error.syntax'], $messages);
@@ -574,10 +574,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator));
 
         self::assertSame(['access.del.not_in_list'], $messages);
@@ -613,10 +613,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '100'], $notifier, $translator));
 
         self::assertSame(['access.cannot_manage_level'], $messages);
@@ -651,10 +651,10 @@ final class AccessCommandTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '75'], $notifier, $translator));
 
         self::assertSame(['access.add.done'], $messages);
@@ -683,10 +683,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'NewNick', '10'], $notifier, $translator));
 
         self::assertSame(['access.max_entries'], $messages);
@@ -722,10 +722,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator));
 
         self::assertSame(['access.cannot_manage_level'], $messages);
@@ -747,10 +747,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'Unregistered'], $notifier, $translator));
 
         self::assertSame(['error.nick_not_registered'], $messages);
@@ -787,10 +787,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'TargetNick', '100'], $notifier, $translator));
 
         self::assertSame(['access.cannot_manage_level'], $messages);
@@ -803,7 +803,7 @@ final class AccessCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $this->createStub(ChannelLevelRepositoryInterface::class));
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
 
         self::assertSame('ACCESS', $cmd->getName());
         self::assertSame([], $cmd->getAliases());
@@ -824,7 +824,7 @@ final class AccessCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $this->createStub(ChannelLevelRepositoryInterface::class));
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
 
         self::assertFalse($cmd->allowsSuspendedChannel());
     }
@@ -836,7 +836,7 @@ final class AccessCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $this->createStub(ChannelLevelRepositoryInterface::class));
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
 
         self::assertFalse($cmd->allowsForbiddenChannel());
     }
@@ -862,10 +862,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'LIST'], $notifier, $translator, true));
 
         self::assertStringContainsString('access.list.header', $messages[0]);
@@ -899,10 +899,10 @@ final class AccessCommandTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'OtherNick', '100'], $notifier, $translator, true));
 
         self::assertSame(['access.add.done'], $messages);
@@ -937,10 +937,10 @@ final class AccessCommandTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'DEL', 'OtherNick'], $notifier, $translator, true));
 
         self::assertSame(['access.del.done'], $messages);
@@ -966,10 +966,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'Founder', '100'], $notifier, $translator, true));
 
         self::assertSame(['access.founder_not_in_list'], $messages);
@@ -996,10 +996,10 @@ final class AccessCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventDispatcherInterface::class));
+        $cmd = new AccessCommand($channelRepo, $accessRepo, $nickRepo, $accessHelper, $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, $account, ['#test', 'ADD', 'NewNick', '10'], $notifier, $translator, true));
 
         self::assertSame(['access.max_entries'], $messages);

@@ -10,6 +10,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 #[CoversClass(Memo::class)]
 final class MemoTest extends TestCase
@@ -94,10 +95,10 @@ final class MemoTest extends TestCase
     }
 
     #[Test]
-    public function setIdAndGetIdUsedByDoctrine(): void
+    public function getIdReturnsHydratedDoctrineId(): void
     {
         $memo = new Memo(10, null, 5, 'Hello');
-        $memo->setId(42);
+        self::hydrateId($memo, 42);
 
         self::assertSame(42, $memo->getId());
     }
@@ -106,5 +107,10 @@ final class MemoTest extends TestCase
     public function messageMaxLengthConstant(): void
     {
         self::assertSame(255, Memo::MESSAGE_MAX_LENGTH);
+    }
+
+    private static function hydrateId(Memo $memo, int $id): void
+    {
+        new ReflectionProperty(Memo::class, 'id')->setValue($memo, $id);
     }
 }

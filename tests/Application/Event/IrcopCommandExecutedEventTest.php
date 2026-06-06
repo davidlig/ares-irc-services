@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Domain\IRC\Event;
+namespace App\Tests\Application\Event;
 
-use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
+use App\Application\Event\IrcopCommandExecutedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -60,7 +60,7 @@ final class IrcopCommandExecutedEventTest extends TestCase
     }
 
     #[Test]
-    public function eventExtendsSymfonyEvent(): void
+    public function eventIsPlainDomainObject(): void
     {
         $event = new IrcopCommandExecutedEvent(
             serviceName: 'operserv',
@@ -69,6 +69,6 @@ final class IrcopCommandExecutedEventTest extends TestCase
             permission: 'test.permission',
         );
 
-        self::assertInstanceOf(\Symfony\Contracts\EventDispatcher\Event::class, $event);
+        self::assertNotInstanceOf(\Symfony\Contracts\EventDispatcher\Event::class, $event);
     }
 }

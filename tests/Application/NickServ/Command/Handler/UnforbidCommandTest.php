@@ -16,11 +16,11 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(UnforbidCommand::class)]
 final class UnforbidCommandTest extends TestCase
@@ -210,7 +210,7 @@ final class UnforbidCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

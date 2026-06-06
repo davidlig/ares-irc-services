@@ -91,7 +91,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $event = new NickIdentifiedEvent(42, 'TestNick', '001ABCD');
 
         $role = OperRole::create('ADMIN', 'Admin role');
-        $role->setUserModes(['o', 's']);
+        $role->changeUserModes(['o', 's']);
 
         $ircop = OperIrcop::create(42, $role, null, null);
 

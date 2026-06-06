@@ -13,12 +13,12 @@ use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickSuspensionService;
 use App\Application\NickServ\Service\NickTargetValidator;
+use App\Application\Port\EventBusInterface;
 use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function sprintf;
@@ -32,7 +32,7 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickTargetValidator $targetValidator,
         private readonly NickSuspensionService $suspensionService,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly EventBusInterface $eventDispatcher,
     ) {
     }
 

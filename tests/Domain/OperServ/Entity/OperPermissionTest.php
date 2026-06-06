@@ -52,7 +52,7 @@ final class OperPermissionTest extends TestCase
     {
         $permission = OperPermission::create('operserv.kline.add', 'Original description');
 
-        $permission->setDescription('Updated description');
+        $permission->updateDescription('Updated description');
 
         self::assertSame('Updated description', $permission->getDescription());
     }
@@ -63,7 +63,6 @@ final class OperPermissionTest extends TestCase
         $permission = OperPermission::create('operserv.test');
         $reflection = new ReflectionClass($permission);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($permission, 123);
 
         self::assertSame(123, $permission->getId());

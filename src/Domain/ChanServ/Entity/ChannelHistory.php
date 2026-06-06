@@ -121,9 +121,4 @@ final class ChannelHistory
             'extra_data' => $this->extraData,
         ];
     }
-
-    public function setId(int $id): void
-    {
-        $this->id = $id;
-    }
 }

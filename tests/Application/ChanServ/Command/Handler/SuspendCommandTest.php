@@ -15,8 +15,10 @@ use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Command\IrcopAuditData;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -24,8 +26,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SuspendCommand::class)]
 final class SuspendCommandTest extends TestCase
@@ -168,7 +168,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = new SuspendCommand(
             $channelRepository,
             $this->createStub(ChannelSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -192,7 +192,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = new SuspendCommand(
             $channelRepository,
             $this->createStub(ChannelSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -215,7 +215,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = new SuspendCommand(
             $channelRepository,
             $this->createStub(ChannelSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -238,7 +238,7 @@ final class SuspendCommandTest extends TestCase
         $suspensionService->expects(self::once())->method('enforceSuspension')->with($channel);
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
@@ -287,7 +287,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = new SuspendCommand(
             $channelRepository,
             $suspensionService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -340,7 +340,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = new SuspendCommand(
             $channelRepository,
             $suspensionService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $cmd->execute($context);
@@ -357,7 +357,7 @@ final class SuspendCommandTest extends TestCase
         return new SuspendCommand(
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelSuspensionService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
     }
 
@@ -372,7 +372,6 @@ final class SuspendCommandTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, $id);
 
         return $channel;
@@ -391,7 +390,7 @@ final class SuspendCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(
@@ -431,7 +430,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = new SuspendCommand(
             $channelRepository,
             $suspensionService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
         $cmd->execute($context);
 
@@ -459,7 +458,7 @@ final class SuspendCommandTest extends TestCase
         $cmd = new SuspendCommand(
             $channelRepository,
             $suspensionService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
         $cmd->execute($context);
 
@@ -483,7 +482,7 @@ final class SuspendCommandTest extends TestCase
         $suspensionService->expects(self::once())->method('enforceSuspension');
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
             $dispatchedEvents[] = $event;
 
@@ -520,7 +519,7 @@ final class SuspendCommandTest extends TestCase
         $suspensionService->expects(self::once())->method('enforceSuspension');
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
             $dispatchedEvents[] = $event;
 
@@ -556,7 +555,7 @@ final class SuspendCommandTest extends TestCase
         $suspensionService->expects(self::once())->method('enforceSuspension');
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         $eventDispatcher->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
             $dispatchedEvents[] = $event;
 

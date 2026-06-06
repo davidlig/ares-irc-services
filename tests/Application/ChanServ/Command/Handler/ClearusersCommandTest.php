@@ -17,13 +17,13 @@ use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ClearusersCommand::class)]
 final class ClearusersCommandTest extends TestCase
@@ -531,7 +531,6 @@ final class ClearusersCommandTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredChannel::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, $id);
 
         return $channel;
@@ -554,7 +553,7 @@ final class ClearusersCommandTest extends TestCase
             $notifier->method('getServiceKey')->willReturn('chanserv');
         }
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $channelModeSupport = $this->createStub(ChannelModeSupportInterface::class);

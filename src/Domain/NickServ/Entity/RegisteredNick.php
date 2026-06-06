@@ -440,7 +440,7 @@ class RegisteredNick
      * Set or clear the no-expire flag.
      * When true, the nickname will never expire due to inactivity.
      */
-    public function setNoExpire(bool $noExpire): void
+    public function changeNoExpire(bool $noExpire): void
     {
         $this->noExpire = $noExpire;
     }

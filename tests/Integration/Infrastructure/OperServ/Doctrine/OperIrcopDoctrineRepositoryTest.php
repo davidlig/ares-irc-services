@@ -29,7 +29,6 @@ final class OperIrcopDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     private function setAddedAt(OperIrcop $ircop, DateTimeImmutable $time): void
     {
         $ref = new ReflectionProperty($ircop, 'addedAt');
-        $ref->setAccessible(true);
         $ref->setValue($ircop, $time);
     }
 

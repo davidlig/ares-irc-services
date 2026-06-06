@@ -32,7 +32,6 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
 
         $reflection = new ReflectionClass($this->connectionHolder);
         $property = $reflection->getProperty('connection');
-        $property->setAccessible(true);
         $property->setValue($this->connectionHolder, $connection);
     }
 

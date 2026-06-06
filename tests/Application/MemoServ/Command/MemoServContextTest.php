@@ -10,13 +10,13 @@ use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(MemoServContext::class)]
 final class MemoServContextTest extends TestCase
@@ -100,7 +100,7 @@ final class MemoServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg, string $type) use (&$sent): void {
             $sent[] = ['uid' => $uid, 'msg' => $msg, 'type' => $type];
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params, string $domain, ?string $locale): string => $id . '|' . ($params['%name%'] ?? ''));
         $registry = new MemoServCommandRegistry([]);
         $sender = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip');
@@ -134,7 +134,7 @@ final class MemoServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function () use (&$sent): void {
             $sent[] = true;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturn('translated');
         $registry = new MemoServCommandRegistry([]);
         $context = new MemoServContext(
@@ -164,7 +164,7 @@ final class MemoServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $uid, string $msg) use (&$sent): void {
             $sent[] = ['uid' => $uid, 'msg' => $msg];
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $registry = new MemoServCommandRegistry([]);
         $sender = new SenderView('UID2', 'User', 'i', 'h', 'c', 'ip');
         $context = new MemoServContext(
@@ -196,7 +196,7 @@ final class MemoServContextTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function () use (&$sent): void {
             $sent[] = true;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $registry = new MemoServCommandRegistry([]);
         $context = new MemoServContext(
             null,
@@ -221,7 +221,7 @@ final class MemoServContextTest extends TestCase
     public function gettersReturnInjectedValues(): void
     {
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $registry = new MemoServCommandRegistry([]);
         $context = new MemoServContext(
             null,
@@ -267,7 +267,7 @@ final class MemoServContextTest extends TestCase
     #[Test]
     public function transReturnsTranslationWithWrappedParams(): void
     {
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params): string => $id . ':' . ($params['%nick%'] ?? ''));
         $context = new MemoServContext(
             null,
@@ -296,7 +296,7 @@ final class MemoServContextTest extends TestCase
             'LIST',
             [],
             $this->createStub(MemoServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             $timezone,
             'NOTICE',
@@ -311,7 +311,7 @@ final class MemoServContextTest extends TestCase
         $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
         $account = $this->createStub(RegisteredNick::class);
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $serviceNicks = $this->createServiceNicks();
 
         $context = new MemoServContext(
@@ -337,7 +337,7 @@ final class MemoServContextTest extends TestCase
         $sender = new SenderView('UID123', 'TestNick', 'ident', 'host', 'cloak', 'ip');
         $account = $this->createStub(RegisteredNick::class);
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $serviceNicks = $this->createServiceNicks();
 
         $context = new MemoServContext(

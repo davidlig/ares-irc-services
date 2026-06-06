@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Port;
 
-use App\Domain\IRC\ValueObject\UserMask;
+use function sprintf;
 
 /**
  * DTO for "user who sent a command" or "user on network" as seen by Services.
@@ -30,8 +30,8 @@ final readonly class SenderView
     ) {
     }
 
-    public function toUserMask(): UserMask
+    public function toUserMask(): string
     {
-        return UserMask::fromParts($this->nick, $this->ident, $this->hostname);
+        return sprintf('%s!%s@%s', $this->nick, $this->ident, $this->hostname);
     }
 }

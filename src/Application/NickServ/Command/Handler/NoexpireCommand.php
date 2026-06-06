@@ -117,7 +117,7 @@ final class NoexpireCommand implements NickServCommandInterface, AuditableComman
         $action = strtoupper($context->args[1]);
         $account = $this->nickRepository->findByNick($targetNick);
 
-        $account->setNoExpire($newValue);
+        $account->changeNoExpire($newValue);
         $this->nickRepository->save($account);
 
         $this->auditData = new IrcopAuditData(target: $targetNick, extra: ['option' => $action]);

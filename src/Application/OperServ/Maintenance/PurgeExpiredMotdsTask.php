@@ -6,11 +6,11 @@ namespace App\Application\OperServ\Maintenance;
 
 use App\Application\Maintenance\MaintenanceTaskInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\TranslationInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use DateTimeZone;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function sprintf;
 
@@ -19,7 +19,7 @@ final readonly class PurgeExpiredMotdsTask implements MaintenanceTaskInterface
     public function __construct(
         private MotdRepositoryInterface $motdRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
-        private TranslatorInterface $translator,
+        private TranslationInterface $translator,
         private LoggerInterface $logger,
         private string $defaultLanguage,
         private string $defaultTimezone,

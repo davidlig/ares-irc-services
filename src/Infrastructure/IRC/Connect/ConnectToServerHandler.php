@@ -2,15 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Application\IRC\Connect;
+namespace App\Infrastructure\IRC\Connect;
 
-use App\Application\IRC\IRCClient;
-use App\Application\IRC\IRCClientFactoryInterface;
+use App\Application\IRC\Connect\ConnectToServerCommand;
+use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
+use App\Application\IRC\IrcSessionInterface;
 use App\Domain\IRC\Server\ServerLink;
 use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
+use App\Infrastructure\IRC\Runtime\IRCClientFactoryInterface;
 
 final readonly class ConnectToServerHandler implements ConnectToServerHandlerInterface
 {
@@ -19,7 +21,7 @@ final readonly class ConnectToServerHandler implements ConnectToServerHandlerInt
     ) {
     }
 
-    public function handle(ConnectToServerCommand $command): IRCClient
+    public function handle(ConnectToServerCommand $command): IrcSessionInterface
     {
         $serverLink = new ServerLink(
             serverName: new ServerName($command->serverName),

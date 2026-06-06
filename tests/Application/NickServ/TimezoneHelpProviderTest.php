@@ -220,7 +220,6 @@ final class TimezoneHelpProviderTest extends TestCase
     {
         $reflection = new ReflectionClass(TimezoneHelpProvider::class);
         $property = $reflection->getProperty('byRegion');
-        $property->setAccessible(true);
         $property->setValue(null, null);
 
         $provider = new TimezoneHelpProvider();

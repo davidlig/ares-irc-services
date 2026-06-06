@@ -9,15 +9,15 @@ use App\Application\Helper\SecureToken;
 use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\EventBusInterface;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickPasswordChangedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function count;
@@ -33,11 +33,11 @@ final readonly class RecoverCommand implements NickServCommandInterface
 {
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly MessageBusInterface $messageBus,
-        private readonly TranslatorInterface $translator,
+        private readonly AsyncMessageDispatcherInterface $messageBus,
+        private readonly TranslationInterface $translator,
         private readonly PasswordHasherInterface $passwordHasher,
         private readonly LoggerInterface $logger,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly EventBusInterface $eventDispatcher,
         private readonly int $recoverTokenTtlSeconds,
         private readonly int $recoverMinIntervalSeconds,
     ) {

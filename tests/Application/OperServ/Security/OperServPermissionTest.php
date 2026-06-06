@@ -57,7 +57,6 @@ final class OperServPermissionTest extends TestCase
 
         self::assertTrue($constructor->isPrivate(), 'Class should not be instantiable');
 
-        $constructor->setAccessible(true);
         $instance = $reflection->newInstanceWithoutConstructor();
         $constructor->invoke($instance);
 

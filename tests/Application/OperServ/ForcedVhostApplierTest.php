@@ -87,7 +87,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function applyForcedVhostAppliesVhostWhenRoleHasPattern(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('admin.network');
+        $role->changeForcedVhostPattern('admin.network');
         $ircop = OperIrcop::create(123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -122,7 +122,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function applyForcedVhostCleansNickname(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('staff.ares');
+        $role->changeForcedVhostPattern('staff.ares');
         $ircop = OperIrcop::create(123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -185,7 +185,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function updateVhostForRoleAppliesVhostToIdentifiedIrcops(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('admin.network');
+        $role->changeForcedVhostPattern('admin.network');
         $ircop = OperIrcop::create(123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -310,7 +310,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function applyForcedVhostReturnsFalseWhenPatternEmpty(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('');
+        $role->changeForcedVhostPattern('');
         $ircop = OperIrcop::create(123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -344,7 +344,7 @@ final class ForcedVhostApplierTest extends TestCase
     public function applyForcedVhostReturnsFalseWhenPatternInvalid(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('invalid-pattern-no-dot');
+        $role->changeForcedVhostPattern('invalid-pattern-no-dot');
         $ircop = OperIrcop::create(123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -522,11 +522,10 @@ final class ForcedVhostApplierTest extends TestCase
     {
         $roleRefl = new ReflectionClass(OperRole::class);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
 
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $roleIdProp->setValue($role, 1);
-        $role->setForcedVhostPattern('admin.network');
+        $role->changeForcedVhostPattern('admin.network');
         $ircop = OperIrcop::create(123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);

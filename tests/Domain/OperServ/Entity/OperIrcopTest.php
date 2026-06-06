@@ -171,7 +171,7 @@ final class OperIrcopTest extends TestCase
 
         self::assertSame('Original reason', $ircop->getReason());
 
-        $ircop->setReason('Updated reason');
+        $ircop->updateReason('Updated reason');
 
         self::assertSame('Updated reason', $ircop->getReason());
     }
@@ -189,7 +189,7 @@ final class OperIrcopTest extends TestCase
 
         self::assertSame('Will be cleared', $ircop->getReason());
 
-        $ircop->setReason(null);
+        $ircop->updateReason(null);
 
         self::assertNull($ircop->getReason());
     }
@@ -207,7 +207,7 @@ final class OperIrcopTest extends TestCase
 
         self::assertNull($ircop->getReason());
 
-        $ircop->setReason('Now has reason');
+        $ircop->updateReason('Now has reason');
 
         self::assertSame('Now has reason', $ircop->getReason());
     }
@@ -221,7 +221,6 @@ final class OperIrcopTest extends TestCase
 
         $reflection = new ReflectionClass($ircop);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($ircop, 999);
 
         self::assertSame(999, $ircop->getId());

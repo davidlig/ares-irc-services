@@ -12,7 +12,9 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickPasswordChangedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -20,15 +22,13 @@ use App\Domain\NickServ\Service\PasswordHasherInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetPasswordHandler::class)]
 final class SetPasswordHandlerTest extends TestCase
 {
     private function createContext(
         NickServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
     ): NickServContext {
         return new NickServContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -59,10 +59,10 @@ final class SetPasswordHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventDispatcherInterface::class));
+        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $account, '');
 
         self::assertSame(['error.syntax'], $messages);
@@ -82,10 +82,10 @@ final class SetPasswordHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventDispatcherInterface::class));
+        $handler = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class));
         $handler->handle($this->createContext($notifier, $translator), $account, 'newpass');
 
         self::assertSame(['set.password.success'], $messages);
@@ -168,7 +168,7 @@ final class SetPasswordHandlerTest extends TestCase
         $nickRepo->expects(self::once())->method('save')->with($account);
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
@@ -188,7 +188,7 @@ final class SetPasswordHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new NickServContext(
@@ -225,7 +225,7 @@ final class SetPasswordHandlerTest extends TestCase
         $nickRepo->expects(self::once())->method('save')->with($account);
 
         $dispatchedEvents = [];
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
@@ -245,7 +245,7 @@ final class SetPasswordHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $context = new NickServContext(

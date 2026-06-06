@@ -19,7 +19,6 @@ final class SocketConnectionTest extends TestCase
     private function waitForSocketData(SocketConnection $conn): void
     {
         $ref = new ReflectionProperty($conn, 'socket');
-        $ref->setAccessible(true);
         $sock = $ref->getValue($conn);
         $read = [$sock];
         $write = null;

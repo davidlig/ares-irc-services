@@ -12,6 +12,7 @@ use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -20,7 +21,6 @@ use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServContext::class)]
 final class OperServContextTest extends TestCase
@@ -74,7 +74,7 @@ final class OperServContextTest extends TestCase
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects($this->once())
             ->method('trans')
             ->with(
@@ -106,7 +106,7 @@ final class OperServContextTest extends TestCase
     {
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects($this->never())->method('sendMessage');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturn('translated');
 
         $context = $this->createContext(
@@ -154,7 +154,7 @@ final class OperServContextTest extends TestCase
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params): string => $id . '|' . ($params['%key%'] ?? ''));
 
         $context = $this->createContext(notifier: $notifier, translator: $translator);
@@ -168,7 +168,7 @@ final class OperServContextTest extends TestCase
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects($this->once())
             ->method('trans')
             ->with(
@@ -190,7 +190,7 @@ final class OperServContextTest extends TestCase
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects($this->once())
             ->method('trans')
             ->with(
@@ -383,7 +383,7 @@ final class OperServContextTest extends TestCase
         string $command = 'TEST',
         array $args = [],
         ?OperServNotifierInterface $notifier = null,
-        ?TranslatorInterface $translator = null,
+        ?TranslationInterface $translator = null,
         string $language = 'en',
         string $timezone = 'UTC',
         string $messageType = 'notice',
@@ -396,7 +396,7 @@ final class OperServContextTest extends TestCase
             command: $command,
             args: $args,
             notifier: $notifier ?? $this->createStub(OperServNotifierInterface::class),
-            translator: $translator ?? $this->createStub(TranslatorInterface::class),
+            translator: $translator ?? $this->createStub(TranslationInterface::class),
             language: $language,
             timezone: $timezone,
             messageType: $messageType,

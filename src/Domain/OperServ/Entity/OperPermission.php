@@ -44,7 +44,7 @@ class OperPermission
         return $this->description;
     }
 
-    public function setDescription(string $description): void
+    public function updateDescription(string $description): void
     {
         $this->description = $description;
     }

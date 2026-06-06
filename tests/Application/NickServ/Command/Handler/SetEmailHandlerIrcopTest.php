@@ -13,16 +13,16 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingEmailChangeRegistry;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
+use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetEmailHandler::class)]
 final class SetEmailHandlerIrcopTest extends TestCase
@@ -40,14 +40,14 @@ final class SetEmailHandlerIrcopTest extends TestCase
         $nickRepo->method('findByEmail')->willReturn(null);
         $nickRepo->expects(self::once())->method('save')->with($account);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         $handler = new SetEmailHandler(
             $nickRepo,
             new PendingEmailChangeRegistry(),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             $eventDispatcher,
         );
@@ -76,10 +76,10 @@ final class SetEmailHandlerIrcopTest extends TestCase
         $handler = new SetEmailHandler(
             $nickRepo,
             new PendingEmailChangeRegistry(),
-            $this->createStub(MessageBusInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $messages = [];
@@ -97,7 +97,7 @@ final class SetEmailHandlerIrcopTest extends TestCase
             $messages[] = $msg;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

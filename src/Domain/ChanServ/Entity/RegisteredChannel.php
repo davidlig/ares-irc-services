@@ -406,7 +406,7 @@ class RegisteredChannel
         return $this->noExpire;
     }
 
-    public function setNoExpire(bool $noExpire): void
+    public function changeNoExpire(bool $noExpire): void
     {
         $this->noExpire = $noExpire;
     }

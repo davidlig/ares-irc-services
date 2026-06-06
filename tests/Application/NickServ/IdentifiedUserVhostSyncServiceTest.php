@@ -46,7 +46,6 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
 
         $refl = new ReflectionClass($account);
         $idProp = $refl->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($account, 1);
 
         return $account;
@@ -208,7 +207,7 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         $repo->expects(self::atLeastOnce())->method('findByNick')->with('davidlig')->willReturn($account);
 
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('admin.network');
+        $role->changeForcedVhostPattern('admin.network');
         $ircop = OperIrcop::create(1, $role);
 
         $ircopRepo = $this->createMock(OperIrcopRepositoryInterface::class);

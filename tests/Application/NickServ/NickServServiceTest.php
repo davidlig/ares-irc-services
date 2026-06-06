@@ -8,6 +8,7 @@ use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Application\Event\IrcopCommandExecutedEvent;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
@@ -19,8 +20,9 @@ use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\SessionLanguageRegistry;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
-use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
@@ -31,8 +33,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NickServService::class)]
 final class NickServServiceTest extends TestCase
@@ -117,7 +117,7 @@ final class NickServServiceTest extends TestCase
         $authorizationChecker = $this->createStub(AuthorizationCheckerInterface::class);
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createStub(NickServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $pendingRegistry = new PendingVerificationRegistry();
         $recoveryRegistry = new RecoveryTokenRegistry();
         $logger = $this->createStub(LoggerInterface::class);
@@ -211,7 +211,7 @@ final class NickServServiceTest extends TestCase
             $pendingRegistry,
             $recoveryRegistry,
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $logger,
@@ -234,7 +234,7 @@ final class NickServServiceTest extends TestCase
         $authorizationChecker = $this->createStub(AuthorizationCheckerInterface::class);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(NickServNotifierInterface::class);
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $pendingRegistry = new PendingVerificationRegistry();
         $recoveryRegistry = new RecoveryTokenRegistry();
         $logger = $this->createStub(LoggerInterface::class);
@@ -269,7 +269,7 @@ final class NickServServiceTest extends TestCase
             $pendingRegistry,
             $recoveryRegistry,
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $logger,
@@ -293,11 +293,11 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $service->dispatch('   ', $sender);
@@ -383,7 +383,7 @@ final class NickServServiceTest extends TestCase
             ->with(NickServPermission::IDENTIFIED_OWNER, self::anything())
             ->willReturn(false);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id
         );
@@ -402,7 +402,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $service->dispatch('NEEDPERM', $sender);
@@ -489,7 +489,7 @@ final class NickServServiceTest extends TestCase
             ->with('IDENTIFIED', self::anything())
             ->willReturn(false);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
         );
@@ -508,7 +508,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $service->dispatch('NEEDID', $sender);
@@ -589,7 +589,7 @@ final class NickServServiceTest extends TestCase
             }
         };
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . ($params['syntax'] ?? '') : $id
         );
@@ -608,7 +608,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $service->dispatch('TWOARGS onlyone', $sender);
@@ -695,11 +695,11 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
 
         $this->expectException(RuntimeException::class);
@@ -800,7 +800,7 @@ final class NickServServiceTest extends TestCase
             ->with('NICKSERV_ADMIN', self::anything())
             ->willReturn(true);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'nickserv' === $event->serviceName
@@ -833,7 +833,7 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
@@ -927,7 +927,7 @@ final class NickServServiceTest extends TestCase
             ->with('NICKSERV_OP', self::anything())
             ->willReturn(true);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -947,7 +947,7 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
@@ -1048,7 +1048,7 @@ final class NickServServiceTest extends TestCase
             ->willReturn(true);
 
         // Event should NOT be dispatched when auditData is null
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -1068,7 +1068,7 @@ final class NickServServiceTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
             $this->createStub(NickServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
@@ -1174,7 +1174,7 @@ final class NickServServiceTest extends TestCase
 
         $registry = new NickServCommandRegistry([$handler]);
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturn('drop.pending_deletion-translated');
 
         $service = new NickServService(
@@ -1189,7 +1189,7 @@ final class NickServServiceTest extends TestCase
             new PendingVerificationRegistry(),
             new RecoveryTokenRegistry(),
             $this->createServiceNicks(),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $this->createStub(LoggerInterface::class),
@@ -1293,11 +1293,11 @@ final class NickServServiceTest extends TestCase
                 new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry(), 'en'),
                 $this->createStub(NickServNotifierInterface::class),
                 new UserMessageTypeResolver($nickRepository),
-                $this->createStub(TranslatorInterface::class),
+                $this->createStub(TranslationInterface::class),
                 new PendingVerificationRegistry(),
                 new RecoveryTokenRegistry(),
                 $this->createServiceNicks(),
-                $this->createStub(EventDispatcherInterface::class),
+                $this->createStub(EventBusInterface::class),
                 'en',
                 'UTC',
                 $this->createStub(LoggerInterface::class),

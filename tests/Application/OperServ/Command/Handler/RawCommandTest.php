@@ -13,11 +13,11 @@ use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RawCommand::class)]
 final class RawCommandTest extends TestCase
@@ -35,7 +35,7 @@ final class RawCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         OperServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
     ): OperServContext {
         return new OperServContext(
             $sender,
@@ -149,7 +149,7 @@ final class RawCommandTest extends TestCase
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
 
         $cmd = $this->createCommand();
         $cmd->execute($this->createContext(null, ['test'], $notifier, $translator));
@@ -165,7 +165,7 @@ final class RawCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = $this->createCommand();
@@ -184,7 +184,7 @@ final class RawCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
@@ -205,7 +205,7 @@ final class RawCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
@@ -227,7 +227,7 @@ final class RawCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $connectionHolder = $this->createMock(ActiveConnectionHolderInterface::class);

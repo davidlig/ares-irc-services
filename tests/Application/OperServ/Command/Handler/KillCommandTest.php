@@ -17,6 +17,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
@@ -28,7 +29,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use ReflectionClass;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(KillCommand::class)]
 final class KillCommandTest extends TestCase
@@ -59,7 +59,7 @@ final class KillCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         OperServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         OperServCommandRegistry $registry,
         IrcopAccessHelper $accessHelper,
     ): OperServContext {
@@ -187,7 +187,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -212,7 +212,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $rootRegistry = new RootUserRegistry('RootUser');
@@ -246,7 +246,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -257,7 +257,6 @@ final class KillCommandTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $role = OperRole::create('OPER', 'Oper role');
@@ -291,7 +290,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -329,7 +328,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -371,7 +370,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -409,7 +408,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -441,7 +440,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -470,7 +469,7 @@ final class KillCommandTest extends TestCase
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper(false);
 
         $cmd = $this->createCommand();
@@ -486,7 +485,7 @@ final class KillCommandTest extends TestCase
             null,
             ['BadUser', 'Flooding'],
             $this->createStub(OperServNotifierInterface::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             new OperServCommandRegistry([]),
             $this->createAccessHelper(false),
         );
@@ -505,7 +504,7 @@ final class KillCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 

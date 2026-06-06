@@ -9,10 +9,10 @@ use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function sprintf;
 use function str_contains;
@@ -31,7 +31,7 @@ readonly class ChannelSuspensionService
         private ChanServNotifierInterface $notifier,
         private ChannelLookupPort $channelLookup,
         private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
-        private TranslatorInterface $translator,
+        private TranslationInterface $translator,
         private string $defaultLanguage = 'en',
         private LoggerInterface $logger = new NullLogger(),
     ) {

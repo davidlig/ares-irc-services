@@ -6,7 +6,7 @@ namespace App\Infrastructure\IRC\Logging;
 
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
-use App\Domain\IRC\Event\MessageReceivedEvent;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\Security\SensitiveDataRedactor;
 use DateTimeInterface;
 use Psr\Log\LoggerInterface;

@@ -15,8 +15,10 @@ use App\Application\MemoServ\MemoServService;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\SessionLanguageRegistry;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\IRC\Connection\ConnectionInterface;
@@ -35,8 +37,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface as SymfonyTranslatorInterface;
 use Throwable;
 
 #[CoversClass(MemoServCommandListener::class)]
@@ -56,7 +57,7 @@ final class MemoServCommandListenerTest extends TestCase
 
     private UserMessageTypeResolver $messageTypeResolver;
 
-    private TranslatorInterface&MockObject $translator;
+    private SymfonyTranslatorInterface&MockObject $translator;
 
     private RegisteredNickRepositoryInterface&MockObject $nickRepository;
 
@@ -96,7 +97,8 @@ final class MemoServCommandListenerTest extends TestCase
         $this->memoServNotifier = $this->createMock(MemoServNotifierInterface::class);
         $this->nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $this->messageTypeResolver = new UserMessageTypeResolver($this->nickRepository);
-        $this->translator = $this->createMock(TranslatorInterface::class);
+        $this->translator = $this->createMock(SymfonyTranslatorInterface::class);
+        $applicationTranslator = $this->createApplicationTranslator();
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->memoServService = new MemoServService(
@@ -105,11 +107,11 @@ final class MemoServCommandListenerTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
-            $this->translator,
+            $applicationTranslator,
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -198,11 +200,11 @@ final class MemoServCommandListenerTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
-            $this->translator,
+            $this->createApplicationTranslator(),
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -267,11 +269,11 @@ final class MemoServCommandListenerTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
-            $this->translator,
+            $this->createApplicationTranslator(),
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -317,11 +319,11 @@ final class MemoServCommandListenerTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
-            $this->translator,
+            $this->createApplicationTranslator(),
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -376,11 +378,11 @@ final class MemoServCommandListenerTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
-            $this->translator,
+            $this->createApplicationTranslator(),
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -414,11 +416,11 @@ final class MemoServCommandListenerTest extends TestCase
             new UserLanguageResolver($this->createStub(RegisteredNickRepositoryInterface::class), new SessionLanguageRegistry()),
             $this->memoServNotifier,
             $this->messageTypeResolver,
-            $this->translator,
+            $this->createApplicationTranslator(),
             $this->createServiceNicks(),
             $this->createStub(AuthorizationContextInterface::class),
             $this->createStub(AuthorizationCheckerInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             'en',
             'UTC',
             $this->logger,
@@ -650,5 +652,19 @@ final class MemoServCommandListenerTest extends TestCase
             $memoservProvider,
             $operservProvider,
         ]);
+    }
+
+    private function createApplicationTranslator(): TranslationInterface
+    {
+        return new readonly class($this->translator) implements TranslationInterface {
+            public function __construct(private SymfonyTranslatorInterface $translator)
+            {
+            }
+
+            public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
+            {
+                return $this->translator->trans($id, $parameters, $domain, $locale);
+            }
+        };
     }
 }

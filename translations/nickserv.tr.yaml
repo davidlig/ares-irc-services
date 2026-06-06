@@ -63,6 +63,7 @@ recover:
   pending:          "\x0304✗\x03 \x02%nickname%\x02 rumuzu e-posta doğrulaması bekliyor."
   suspended:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu askıya alınmış. Sebep: %reason%"
   forbidden:        "\x0304✗\x03 \x02%nickname%\x02 rumuzu bu ağda kullanılamaz."
+  pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi bekliyor ve kullanılamaz."
   no_email:         "\x0304✗\x03 \x02%nickname%\x02 rumuzu için e-posta ayarlanmamış. Kurtarma kullanılamaz."
   throttled:        "\x0304✗\x03 Başka bir kurtarma e-postası istemeden önce \x02%minutes%\x02 dakika beklemelisiniz."
   invalid_token:    "\x0304✗\x03 Token geçersiz veya süresi dolmuş. \x0303RECOVER %nickname%\x03 ile yeni bir tane isteyin."

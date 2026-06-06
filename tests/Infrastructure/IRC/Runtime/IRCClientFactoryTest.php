@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Application\IRC;
+namespace App\Tests\Infrastructure\IRC\Runtime;
 
 use App\Application\IRC\BurstCompleteRegistry;
-use App\Application\IRC\IRCClient;
-use App\Application\IRC\IRCClientFactory;
-use App\Application\Port\ProtocolModuleRegistryInterface;
+use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\EventBusInterface;
 use App\Domain\IRC\Connection\ConnectionFactoryInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
@@ -17,17 +16,19 @@ use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Runtime\IRCClient;
+use App\Infrastructure\IRC\Runtime\IRCClientFactory;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleRegistryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(IRCClientFactory::class)]
 final class IRCClientFactoryTest extends TestCase
 {
-    private ProtocolModuleRegistryInterface&MockObject $moduleRegistry;
+    private ProtocolRuntimeModuleRegistryInterface&MockObject $moduleRegistry;
 
     private ConnectionFactoryInterface&MockObject $connectionFactory;
 
@@ -39,7 +40,7 @@ final class IRCClientFactoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->moduleRegistry = $this->createMock(ProtocolModuleRegistryInterface::class);
+        $this->moduleRegistry = $this->createMock(ProtocolRuntimeModuleRegistryInterface::class);
         $this->connectionFactory = $this->createMock(ConnectionFactoryInterface::class);
         $this->connectionHolder = new ActiveConnectionHolder();
 
@@ -47,8 +48,8 @@ final class IRCClientFactoryTest extends TestCase
             $this->moduleRegistry,
             $this->connectionFactory,
             $this->connectionHolder,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             new BurstCompleteRegistry(),
             60,
         );
@@ -69,7 +70,7 @@ final class IRCClientFactoryTest extends TestCase
         $connection = $this->createStub(ConnectionInterface::class);
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('getProtocolName')->willReturn('unreal');
-        $module = $this->createStub(\App\Application\Port\ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
 
         $this->moduleRegistry->expects(self::once())->method('get')->with('unreal')->willReturn($module);

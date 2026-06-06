@@ -88,7 +88,6 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
 
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('lastRegistrationAt');
-        $property->setAccessible(true);
         $property->setValue($registry, [1 => new DateTimeImmutable('-2 seconds')]);
 
         self::assertSame(0, $registry->getRemainingCooldownSeconds(1, 1));
@@ -101,7 +100,6 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
 
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('lastRegistrationAt');
-        $property->setAccessible(true);
         $property->setValue($registry, [
             1 => new DateTimeImmutable('-2 seconds'),
             2 => new DateTimeImmutable('+1 hour'),
@@ -119,7 +117,6 @@ final class ChannelRegisterThrottleRegistryTest extends TestCase
 
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('lastRegistrationAt');
-        $property->setAccessible(true);
         $property->setValue($registry, [1 => new DateTimeImmutable('-2 seconds')]);
 
         $removed = $registry->pruneExpiredCooldowns(1);

@@ -6,7 +6,7 @@ namespace App\UI\CLI;
 
 use App\Application\IRC\Connect\ConnectToServerCommand;
 use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
-use App\Application\IRC\IRCClient;
+use App\Application\IRC\IrcSessionInterface;
 use App\Infrastructure\Messenger\ConsumerProcessManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -149,7 +149,7 @@ class ConnectCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function registerSignalHandlers(IRCClient $client): void
+    private function registerSignalHandlers(IrcSessionInterface $client): void
     {
         // @codeCoverageIgnoreStart
         // Cannot test PCNTL signal handlers in unit tests.

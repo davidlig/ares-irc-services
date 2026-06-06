@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Subscriber;
 
+use App\Application\Event\IrcopCommandExecutedEvent;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Application\Port\ServiceDebugNotifierRegistry;
 use App\Application\Security\IrcopPermissionDetector;
-use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Infrastructure\IRC\Subscriber\IrcopCommandAuditSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

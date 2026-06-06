@@ -52,7 +52,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
 
         $connectionHolderReflection = new ReflectionClass($connectionHolder);
         $moduleProperty = $connectionHolderReflection->getProperty('protocolModule');
-        $moduleProperty->setAccessible(true);
         $moduleProperty->setValue($connectionHolder, $module);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -104,7 +103,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
 
         $connectionHolderReflection = new ReflectionClass($connectionHolder);
         $moduleProperty = $connectionHolderReflection->getProperty('protocolModule');
-        $moduleProperty->setAccessible(true);
         $moduleProperty->setValue($connectionHolder, $module);
 
         $existingUser = new SenderView(
@@ -173,7 +171,6 @@ final class ServiceNickReservationSubscriberTest extends TestCase
 
         $connectionHolderReflection = new ReflectionClass($connectionHolder);
         $moduleProperty = $connectionHolderReflection->getProperty('protocolModule');
-        $moduleProperty->setAccessible(true);
         $moduleProperty->setValue($connectionHolder, $module);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);

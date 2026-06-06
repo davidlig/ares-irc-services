@@ -7,15 +7,15 @@ namespace App\Application\ChanServ\Command\Handler;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Event\ChannelMlockUpdatedEvent;
 use App\Application\ChanServ\Service\MlockStateFromChannelResolver;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 final readonly class SetMlockHandler implements SetOptionHandlerInterface
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
-        private EventDispatcherInterface $eventDispatcher,
+        private EventBusInterface $eventDispatcher,
         private MlockStateFromChannelResolver $mlockStateResolver,
     ) {
     }

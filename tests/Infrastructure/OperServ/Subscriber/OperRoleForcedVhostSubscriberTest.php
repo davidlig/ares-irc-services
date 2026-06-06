@@ -38,7 +38,7 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
     public function onNickIdentifiedCallsApplyForcedVhost(): void
     {
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('admin.network');
+        $role->changeForcedVhostPattern('admin.network');
         $ircop = OperIrcop::create(123, $role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);

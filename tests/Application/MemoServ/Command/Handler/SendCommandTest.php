@@ -14,6 +14,7 @@ use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\MemoServ\MemoServSendThrottleRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -27,7 +28,6 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SendCommand::class)]
 final class SendCommandTest extends TestCase
@@ -37,7 +37,7 @@ final class SendCommandTest extends TestCase
         ?RegisteredNick $senderAccount,
         array $args,
         MemoServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
     ): MemoServContext {
         return new MemoServContext(
             $sender,
@@ -67,7 +67,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -96,7 +96,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -125,7 +125,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -156,7 +156,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -187,7 +187,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -219,7 +219,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -256,7 +256,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -294,7 +294,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -324,7 +324,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -362,7 +362,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -399,7 +399,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -436,7 +436,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -473,7 +473,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -508,7 +508,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
 
         $notifier = $this->createStub(MemoServNotifierInterface::class);
 
@@ -537,7 +537,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
 
         $notifier = $this->createStub(MemoServNotifierInterface::class);
 
@@ -574,7 +574,7 @@ final class SendCommandTest extends TestCase
         $recipientView = new SenderView('UID2', 'Other', 'i', 'h', 'c', 'ip');
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($recipientView);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], ?string $domain = null, ?string $locale = null): string => $id);
 
         $messages = [];
@@ -604,7 +604,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -646,7 +646,7 @@ final class SendCommandTest extends TestCase
         $recipientView = new SenderView('UID2', 'Other', 'i', 'h', 'c', 'ip');
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($recipientView);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = [], ?string $domain = null, ?string $locale = null): string => $id);
 
         $messages = [];
@@ -691,7 +691,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -728,7 +728,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -768,7 +768,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -804,7 +804,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -842,7 +842,7 @@ final class SendCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $messages = [];
@@ -873,7 +873,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -898,7 +898,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -923,7 +923,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -948,7 +948,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -973,7 +973,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -998,7 +998,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -1023,7 +1023,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -1048,7 +1048,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -1073,7 +1073,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,
@@ -1098,7 +1098,7 @@ final class SendCommandTest extends TestCase
                 $this->createStub(ChannelLevelRepositoryInterface::class),
             ),
             $this->createStub(NetworkUserLookupPort::class),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             'en',
             20,
             50,

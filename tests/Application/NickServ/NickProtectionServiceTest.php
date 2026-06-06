@@ -11,8 +11,10 @@ use App\Application\NickServ\NickProtectionService;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\NickServ\SessionLanguageRegistry;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
@@ -20,7 +22,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(NickProtectionService::class)]
 final class NickProtectionServiceTest extends TestCase
@@ -36,7 +37,7 @@ final class NickProtectionServiceTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $service = new NickProtectionService(
@@ -48,7 +49,7 @@ final class NickProtectionServiceTest extends TestCase
             new SessionLanguageRegistry(),
             $pendingRegistry,
             $translator,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -76,7 +77,7 @@ final class NickProtectionServiceTest extends TestCase
         $notifier->expects(self::once())->method('forceNick')->with('UID1', self::stringStartsWith('Guest-'));
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
         $pendingRegistry->method('consume')->willReturn(false);
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $service = new NickProtectionService(
@@ -88,7 +89,7 @@ final class NickProtectionServiceTest extends TestCase
             new SessionLanguageRegistry(),
             $pendingRegistry,
             $translator,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -115,8 +116,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -149,8 +150,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $forbiddenService,
         );
 
@@ -169,7 +170,6 @@ final class NickProtectionServiceTest extends TestCase
         // Set ID via reflection since it's set by Doctrine on persistence
         $reflection = new ReflectionClass($account);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($account, 1);
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
@@ -178,7 +178,7 @@ final class NickProtectionServiceTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('forceNick');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         $identifiedRegistry = new IdentifiedSessionRegistry();
@@ -192,7 +192,7 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $eventDispatcher,
             $this->createStub(ForbiddenNickService::class),
         );
@@ -218,8 +218,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -244,8 +244,8 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -274,8 +274,8 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -308,8 +308,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -334,7 +334,7 @@ final class NickProtectionServiceTest extends TestCase
         $notifier->expects(self::once())->method('forceNick')->with('UID1', self::stringStartsWith('Guest-'));
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
         $pendingRegistry->method('consume')->willReturn(false);
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $service = new NickProtectionService(
@@ -346,7 +346,7 @@ final class NickProtectionServiceTest extends TestCase
             new SessionLanguageRegistry(),
             $pendingRegistry,
             $translator,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -374,8 +374,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $pendingRegistry,
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -411,8 +411,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $pendingRegistry,
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -448,8 +448,8 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -486,8 +486,8 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -512,7 +512,7 @@ final class NickProtectionServiceTest extends TestCase
         $notifier->expects(self::once())->method('forceNick')->with('UID1', self::stringStartsWith('Guest-'));
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
         $pendingRegistry->method('consume')->willReturn(false);
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         // Register a DIFFERENT nick — user IS identified but to the wrong account
@@ -528,7 +528,7 @@ final class NickProtectionServiceTest extends TestCase
             new SessionLanguageRegistry(),
             $pendingRegistry,
             $translator,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -549,7 +549,7 @@ final class NickProtectionServiceTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::atLeastOnce())->method('sendMessage');
         $notifier->expects(self::once())->method('forceNick')->with('UID1', self::stringStartsWith('Guest-'));
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         // Register a DIFFERENT nick — identified to OtherNick, not RegNick
@@ -565,7 +565,7 @@ final class NickProtectionServiceTest extends TestCase
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $translator,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -582,7 +582,6 @@ final class NickProtectionServiceTest extends TestCase
 
         $reflection = new ReflectionClass($account);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($account, 1);
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
@@ -591,7 +590,7 @@ final class NickProtectionServiceTest extends TestCase
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('forceNick');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         // Registry is EMPTY — simulating service restart
@@ -605,7 +604,7 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $eventDispatcher,
             $this->createStub(ForbiddenNickService::class),
         );
@@ -625,7 +624,7 @@ final class NickProtectionServiceTest extends TestCase
         $repo->expects(self::atLeastOnce())->method('findByNick')->with('MyNick')->willReturn($account);
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())->method('forceNick')->with('UID1', self::stringStartsWith('Guest-'));
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $service = new NickProtectionService(
@@ -637,7 +636,7 @@ final class NickProtectionServiceTest extends TestCase
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
             $translator,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -676,10 +675,10 @@ final class NickProtectionServiceTest extends TestCase
         $notifier->expects(self::exactly(2))->method('sendMessage');
         $notifier->expects(self::once())->method('forceNick');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
-        $translator = $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $service = new NickProtectionService(
@@ -704,7 +703,6 @@ final class NickProtectionServiceTest extends TestCase
     {
         $reflection = new ReflectionClass($nick);
         $property = $reflection->getProperty('id');
-        $property->setAccessible(true);
         $property->setValue($nick, $id);
     }
 
@@ -726,8 +724,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -753,8 +751,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -783,8 +781,8 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -817,8 +815,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -851,8 +849,8 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -883,8 +881,8 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -915,8 +913,8 @@ final class NickProtectionServiceTest extends TestCase
             $identifiedRegistry,
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -945,8 +943,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -974,8 +972,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -1006,8 +1004,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 
@@ -1041,8 +1039,8 @@ final class NickProtectionServiceTest extends TestCase
             new IdentifiedSessionRegistry(),
             new SessionLanguageRegistry(),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\Symfony\Contracts\Translation\TranslatorInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
         );
 

@@ -11,9 +11,12 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\SetFounderHandler;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
+use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
@@ -29,16 +32,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetFounderHandler::class)]
 final class SetFounderHandlerTest extends TestCase
 {
     private function createContext(
         ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         array $args,
         string $senderNick = 'Founder',
         bool $isLevelFounder = false,
@@ -75,7 +75,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -83,8 +83,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             new FounderChangeTokenRegistry(),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle($this->createContext($notifier, $translator, ['#test', 'FOUNDER', '']), $channel, '   ');
@@ -105,7 +105,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -113,8 +113,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             new FounderChangeTokenRegistry(),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle($this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'Nobody']), $channel, 'Nobody');
@@ -141,7 +141,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -149,8 +149,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             new FounderChangeTokenRegistry(),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle($this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'Suspended']), $channel, 'Suspended');
@@ -177,7 +177,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -185,8 +185,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             new FounderChangeTokenRegistry(),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle($this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'Pending']), $channel, 'Pending');
@@ -212,7 +212,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -220,8 +220,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             new FounderChangeTokenRegistry(),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle($this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'Founder']), $channel, 'Founder');
@@ -248,7 +248,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -256,8 +256,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             new FounderChangeTokenRegistry(),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle($this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'Successor']), $channel, 'Successor');
@@ -288,7 +288,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -296,8 +296,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             new FounderChangeTokenRegistry(),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
             3600,
             600,
@@ -330,7 +330,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -338,8 +338,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             new FounderChangeTokenRegistry(),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle($this->createContext($notifier, $translator, ['#test', 'FOUNDER', 'NewFounder']), $channel, 'NewFounder');
@@ -371,7 +371,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -379,8 +379,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -419,7 +419,7 @@ final class SetFounderHandlerTest extends TestCase
         $registry = new FounderChangeTokenRegistry();
         $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
         $dispatched = null;
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static function (object $e) use (&$dispatched): bool {
@@ -441,7 +441,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -450,7 +450,7 @@ final class SetFounderHandlerTest extends TestCase
             $nickRepo,
             $registry,
             $eventDispatcher,
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -491,7 +491,7 @@ final class SetFounderHandlerTest extends TestCase
         $registry = new FounderChangeTokenRegistry();
         $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
         $dispatchedIp = '';
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
             $dispatchedIp = $e->performedByIp;
 
@@ -502,7 +502,7 @@ final class SetFounderHandlerTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -511,7 +511,7 @@ final class SetFounderHandlerTest extends TestCase
             $nickRepo,
             $registry,
             $eventDispatcher,
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -550,7 +550,7 @@ final class SetFounderHandlerTest extends TestCase
         $registry = new FounderChangeTokenRegistry();
         $registry->store(1, 20, 'valid-token', (new DateTimeImmutable())->modify('+1 hour'));
         $dispatchedIp = '';
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $e) use (&$dispatchedIp): object {
             $dispatchedIp = $e->performedByIp;
 
@@ -561,7 +561,7 @@ final class SetFounderHandlerTest extends TestCase
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -570,7 +570,7 @@ final class SetFounderHandlerTest extends TestCase
             $nickRepo,
             $registry,
             $eventDispatcher,
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -607,10 +607,10 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
-        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 
         $handler = new SetFounderHandler(
@@ -618,7 +618,7 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $messageBus,
             $translator,
         );
@@ -656,7 +656,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -664,8 +664,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
             3600,
             600,
@@ -705,7 +705,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -713,8 +713,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -751,7 +751,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -759,8 +759,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -803,7 +803,7 @@ final class SetFounderHandlerTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -811,8 +811,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -854,7 +854,7 @@ final class SetFounderHandlerTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -862,8 +862,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -900,10 +900,10 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
-        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('Mail failure'));
 
         $handler = new SetFounderHandler(
@@ -911,7 +911,7 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $messageBus,
             $translator,
         );
@@ -949,7 +949,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -957,8 +957,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -995,7 +995,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -1003,8 +1003,8 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -1041,10 +1041,10 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
-        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 
         $handler = new SetFounderHandler(
@@ -1052,7 +1052,7 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $messageBus,
             $translator,
         );
@@ -1090,10 +1090,10 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
-        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 
         $handler = new SetFounderHandler(
@@ -1101,7 +1101,7 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $messageBus,
             $translator,
         );
@@ -1139,10 +1139,10 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
-        $messageBus = $this->createMock(MessageBusInterface::class);
+        $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 
         $handler = new SetFounderHandler(
@@ -1150,7 +1150,7 @@ final class SetFounderHandlerTest extends TestCase
             $accessRepo,
             $nickRepo,
             $registry,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $messageBus,
             $translator,
         );
@@ -1186,7 +1186,7 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo->expects(self::once())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
         $nickRepo->expects(self::once())->method('findById')->with(20)->willReturn($newAccount);
         $dispatched = null;
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static function (object $e) use (&$dispatched): bool {
@@ -1208,7 +1208,7 @@ final class SetFounderHandlerTest extends TestCase
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (string $ch, string $m) use (&$channelNotices): void {
             $channelNotices[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -1217,7 +1217,7 @@ final class SetFounderHandlerTest extends TestCase
             $nickRepo,
             new FounderChangeTokenRegistry(),
             $eventDispatcher,
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -1254,14 +1254,14 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
         $nickRepo->expects(self::once())->method('findById')->with(20)->willReturn($newAccount);
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -1270,7 +1270,7 @@ final class SetFounderHandlerTest extends TestCase
             $nickRepo,
             new FounderChangeTokenRegistry(),
             $eventDispatcher,
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(
@@ -1302,14 +1302,14 @@ final class SetFounderHandlerTest extends TestCase
         $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepo->expects(self::once())->method('findByNick')->with('NewFounder')->willReturn($newAccount);
         $nickRepo->expects(self::once())->method('findById')->with(20)->willReturn(null);
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
         $notifier->method('sendNoticeToChannel')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetFounderHandler(
@@ -1318,7 +1318,7 @@ final class SetFounderHandlerTest extends TestCase
             $nickRepo,
             new FounderChangeTokenRegistry(),
             $eventDispatcher,
-            $this->createStub(MessageBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
             $translator,
         );
         $handler->handle(

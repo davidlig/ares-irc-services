@@ -16,6 +16,7 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\ForbiddenVhostService;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\ForbiddenVhost;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -23,7 +24,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ForbidvhostCommand::class)]
 final class ForbidvhostCommandTest extends TestCase
@@ -378,7 +378,6 @@ final class ForbidvhostCommandTest extends TestCase
         $ref = new ReflectionClass(ForbiddenVhost::class);
         $forbidden = ForbiddenVhost::create('pirated.com', 1);
         $idProp = $ref->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($forbidden, 10);
 
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
@@ -471,7 +470,7 @@ final class ForbidvhostCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(
@@ -498,7 +497,7 @@ final class ForbidvhostCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(
@@ -552,7 +551,7 @@ final class ForbidvhostCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

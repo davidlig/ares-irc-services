@@ -7,6 +7,7 @@ namespace App\Tests\Application\NickServ\Service;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\Service\NickDropService;
 use App\Application\NickServ\Service\NickForceService;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\ServiceDebugNotifierInterface;
@@ -19,7 +20,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(NickDropService::class)]
 final class NickDropServiceTest extends TestCase
@@ -38,7 +38,7 @@ final class NickDropServiceTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::never())->method('forceGuestNick');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (NickDropEvent $event): bool => 42 === $event->nickId
                 && 'TestNick' === $event->nickname
                 && 'manual' === $event->reason));
@@ -86,7 +86,7 @@ final class NickDropServiceTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::once())->method('forceGuestNick')->with('UID123', null, 'nick-drop');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -123,7 +123,7 @@ final class NickDropServiceTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::never())->method('forceGuestNick');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (NickDropEvent $event): bool => 'inactivity' === $event->reason));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -168,7 +168,7 @@ final class NickDropServiceTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::never())->method('forceGuestNick');
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -211,7 +211,7 @@ final class NickDropServiceTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(null);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
@@ -255,7 +255,7 @@ final class NickDropServiceTest extends TestCase
             $nickRepository,
             $userLookup,
             $forceService,
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
             $sessionRegistry,
@@ -285,7 +285,7 @@ final class NickDropServiceTest extends TestCase
             $nickRepository,
             $userLookup,
             $this->createStub(NickForceService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
             $sessionRegistry,
@@ -313,7 +313,7 @@ final class NickDropServiceTest extends TestCase
             $nickRepository,
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(NickForceService::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $debug,
             $this->createStub(LoggerInterface::class),
             new IdentifiedSessionRegistry(),
@@ -332,7 +332,6 @@ final class NickDropServiceTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($nick, $id);
 
         return $nick;

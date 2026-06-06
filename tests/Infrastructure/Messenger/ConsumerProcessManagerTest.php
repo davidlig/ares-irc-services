@@ -103,7 +103,6 @@ final class ConsumerProcessManagerTest extends TestCase
 
             $reflection = new ReflectionClass($manager);
             $pipesProperty = $reflection->getProperty('pipes');
-            $pipesProperty->setAccessible(true);
             $pipes = $pipesProperty->getValue($manager);
 
             self::assertNotNull($pipes);
@@ -167,7 +166,6 @@ final class ConsumerProcessManagerTest extends TestCase
 
             $reflection = new ReflectionClass($manager);
             $processProperty = $reflection->getProperty('process');
-            $processProperty->setAccessible(true);
             $processProperty->setValue($manager, null);
 
             self::assertFalse($manager->isRunning());

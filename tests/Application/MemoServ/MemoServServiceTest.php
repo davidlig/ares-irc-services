@@ -8,6 +8,7 @@ use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Application\Event\IrcopCommandExecutedEvent;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
@@ -16,8 +17,9 @@ use App\Application\MemoServ\MemoServService;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\SessionLanguageRegistry;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
-use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
+use App\Application\Port\TranslationInterface;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
@@ -28,8 +30,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(MemoServService::class)]
 final class MemoServServiceTest extends TestCase
@@ -112,7 +112,7 @@ final class MemoServServiceTest extends TestCase
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createStub(MemoServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $logger = $this->createStub(LoggerInterface::class);
 
         $contextHolder = new stdClass();
@@ -205,7 +205,7 @@ final class MemoServServiceTest extends TestCase
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(MemoServNotifierInterface::class);
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $notifier->method('getNick')->willReturn('MemoServ');
         $translator->expects(self::once())->method('trans')
             ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'MemoServ'], 'memoserv', 'en')
@@ -236,7 +236,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createServiceNicks(),
         );
 
@@ -318,7 +318,7 @@ final class MemoServServiceTest extends TestCase
             ->with('MEMOSERV_OP_TEST', self::anything())
             ->willReturn(false);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id
         );
@@ -415,7 +415,7 @@ final class MemoServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
         );
@@ -504,7 +504,7 @@ final class MemoServServiceTest extends TestCase
             }
         };
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . ($params['syntax'] ?? '') : $id
         );
@@ -591,7 +591,7 @@ final class MemoServServiceTest extends TestCase
         $notifier->expects(self::once())->method('sendMessage')
             ->with($sender->uid, self::stringContains('service_disabled'), 'NOTICE');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
 
         $service = $this->createMemoServService(
@@ -687,7 +687,7 @@ final class MemoServServiceTest extends TestCase
             $nickRepository,
             $this->createStub(MemoServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createServiceNicks(),
             'en',
             'UTC',
@@ -777,7 +777,7 @@ final class MemoServServiceTest extends TestCase
             $nickRepository,
             $this->createStub(MemoServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createServiceNicks(),
             'fr',
             'Europe/Paris',
@@ -865,7 +865,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(MemoServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createServiceNicks(),
             'en',
             'UTC',
@@ -966,7 +966,7 @@ final class MemoServServiceTest extends TestCase
             ->with('MEMOSERV_ADMIN', self::anything())
             ->willReturn(true);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'memoserv' === $event->serviceName
@@ -990,7 +990,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createServiceNicks(),
             'en',
             'UTC',
@@ -1079,7 +1079,7 @@ final class MemoServServiceTest extends TestCase
             ->with('MEMOSERV_OP', self::anything())
             ->willReturn(true);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -1090,7 +1090,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(MemoServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createServiceNicks(),
             'en',
             'UTC',
@@ -1186,7 +1186,7 @@ final class MemoServServiceTest extends TestCase
             ->willReturn(true);
 
         // Event should NOT be dispatched when auditData is null
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -1197,7 +1197,7 @@ final class MemoServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(MemoServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createServiceNicks(),
             'en',
             'UTC',
@@ -1220,14 +1220,14 @@ final class MemoServServiceTest extends TestCase
         RegisteredNickRepositoryInterface $nickRepository,
         MemoServNotifierInterface $notifier,
         UserMessageTypeResolver $messageTypeResolver,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         ServiceNicknameRegistry $serviceNicks,
         string $defaultLanguage = 'en',
         string $defaultTimezone = 'UTC',
         ?LoggerInterface $logger = null,
         ?AuthorizationContextInterface $authorizationContext = null,
         ?AuthorizationCheckerInterface $authorizationChecker = null,
-        ?EventDispatcherInterface $eventDispatcher = null,
+        ?EventBusInterface $eventDispatcher = null,
     ): MemoServService {
         return new MemoServService(
             $registry,
@@ -1239,7 +1239,7 @@ final class MemoServServiceTest extends TestCase
             $serviceNicks,
             $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
-            $eventDispatcher ?? $this->createStub(EventDispatcherInterface::class),
+            $eventDispatcher ?? $this->createStub(EventBusInterface::class),
             $defaultLanguage,
             $defaultTimezone,
             $logger ?? $this->createStub(LoggerInterface::class),

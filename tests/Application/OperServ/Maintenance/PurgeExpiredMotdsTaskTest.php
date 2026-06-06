@@ -6,6 +6,7 @@ namespace App\Tests\Application\OperServ\Maintenance;
 
 use App\Application\OperServ\Maintenance\PurgeExpiredMotdsTask;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\TranslationInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use DateTimeImmutable;
@@ -13,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(PurgeExpiredMotdsTask::class)]
 final class PurgeExpiredMotdsTaskTest extends TestCase
@@ -79,7 +79,7 @@ final class PurgeExpiredMotdsTaskTest extends TestCase
         ?ServiceDebugNotifierInterface $debugNotifier = null,
         int $intervalSeconds = 3600,
     ): PurgeExpiredMotdsTask {
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
             if ('motd.list.shown_count' === $id) {
                 return 'shown ' . $params['%count%'] . ' times';

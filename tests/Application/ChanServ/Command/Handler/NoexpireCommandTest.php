@@ -15,6 +15,7 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -23,7 +24,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(NoexpireCommand::class)]
 final class NoexpireCommandTest extends TestCase
@@ -282,7 +282,7 @@ final class NoexpireCommandTest extends TestCase
     public function executeWithOffClearsNoExpireAndRepliesSuccessOff(): void
     {
         $channel = $this->createChannelWithId('#test', 1);
-        $channel->setNoExpire(true);
+        $channel->changeNoExpire(true);
 
         self::assertTrue($channel->isNoExpire(), 'noExpire should be true before OFF');
 
@@ -328,7 +328,7 @@ final class NoexpireCommandTest extends TestCase
     public function executeWithLowerCaseOffWorks(): void
     {
         $channel = $this->createChannelWithId('#test', 1);
-        $channel->setNoExpire(true);
+        $channel->changeNoExpire(true);
 
         $messages = [];
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -361,7 +361,6 @@ final class NoexpireCommandTest extends TestCase
         $channel = RegisteredChannel::register($name, 1, 'Test description');
 
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($channel, $id);
 
         return $channel;
@@ -380,7 +379,7 @@ final class NoexpireCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(

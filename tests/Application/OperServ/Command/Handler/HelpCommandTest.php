@@ -14,13 +14,13 @@ use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
@@ -39,7 +39,7 @@ final class HelpCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         OperServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         OperServCommandRegistry $registry,
         IrcopAccessHelper $accessHelper,
     ): OperServContext {
@@ -69,7 +69,7 @@ final class HelpCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -146,7 +146,7 @@ final class HelpCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -223,7 +223,7 @@ final class HelpCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(false);
 
@@ -300,7 +300,7 @@ final class HelpCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(false);
         $registry = new OperServCommandRegistry([]);
@@ -321,7 +321,7 @@ final class HelpCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -399,7 +399,7 @@ final class HelpCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -477,7 +477,7 @@ final class HelpCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -557,7 +557,7 @@ final class HelpCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 

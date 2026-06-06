@@ -23,8 +23,10 @@ use App\Application\ChanServ\Command\Handler\SetUrlHandler;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
 use App\Application\ChanServ\Service\MlockStateFromChannelResolver;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -36,8 +38,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use stdClass;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetCommand::class)]
 final class SetCommandTest extends TestCase
@@ -47,7 +47,7 @@ final class SetCommandTest extends TestCase
         ?RegisteredNick $senderAccount,
         array $args,
         ChanServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
     ): ChanServContext {
         return new ChanServContext(
             $sender,
@@ -75,9 +75,9 @@ final class SetCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $nickRepo ??= $this->createStub(RegisteredNickRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $eventDispatcher = $this->createStub(EventDispatcherInterface::class);
-        $messageBus = $this->createStub(\Symfony\Component\Messenger\MessageBusInterface::class);
-        $trans = $this->createStub(TranslatorInterface::class);
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $messageBus = $this->createStub(\App\Application\Port\AsyncMessageDispatcherInterface::class);
+        $trans = $this->createStub(TranslationInterface::class);
         $trans->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $logger = $this->createStub(LoggerInterface::class);
 
@@ -97,7 +97,7 @@ final class SetCommandTest extends TestCase
                 3,
                 $logger,
             ),
-            new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventDispatcherInterface::class)),
+            new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class)),
             new SetDescHandler($channelRepo),
             new SetUrlHandler($channelRepo),
             new SetEmailHandler($channelRepo),
@@ -121,7 +121,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
@@ -146,7 +146,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
@@ -166,7 +166,7 @@ final class SetCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
         );
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = $this->createSetCommand($channelRepo, $accessHelper);
@@ -190,7 +190,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(2);
@@ -348,7 +348,7 @@ final class SetCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
         );
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(2);
@@ -372,7 +372,7 @@ final class SetCommandTest extends TestCase
             $this->createStub(ChannelLevelRepositoryInterface::class),
         );
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(2);
@@ -396,7 +396,7 @@ final class SetCommandTest extends TestCase
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(2);
@@ -435,12 +435,12 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
         $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
-        $messageBus = $this->createMock(\Symfony\Component\Messenger\MessageBusInterface::class);
+        $messageBus = $this->createMock(\App\Application\Port\AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 
         $cmd = new SetCommand(
@@ -451,7 +451,7 @@ final class SetCommandTest extends TestCase
                 $this->createStub(ChannelAccessRepositoryInterface::class),
                 $nickRepo,
                 new FounderChangeTokenRegistry(),
-                $this->createStub(EventDispatcherInterface::class),
+                $this->createStub(EventBusInterface::class),
                 $messageBus,
                 $translator,
                 3600,
@@ -459,14 +459,14 @@ final class SetCommandTest extends TestCase
                 3,
                 $this->createStub(LoggerInterface::class),
             ),
-            new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventDispatcherInterface::class)),
+            new SetSuccessorHandler($channelRepo, $nickRepo, $this->createStub(EventBusInterface::class)),
             new SetDescHandler($channelRepo),
             new SetUrlHandler($channelRepo),
             new SetEmailHandler($channelRepo),
             new SetEntrymsgHandler($channelRepo),
-            new SetTopiclockHandler($channelRepo, $this->createStub(EventDispatcherInterface::class), new MlockStateFromChannelResolver()),
-            new SetMlockHandler($channelRepo, $this->createStub(EventDispatcherInterface::class), new MlockStateFromChannelResolver()),
-            new SetSecureHandler($channelRepo, $this->createStub(EventDispatcherInterface::class)),
+            new SetTopiclockHandler($channelRepo, $this->createStub(EventBusInterface::class), new MlockStateFromChannelResolver()),
+            new SetMlockHandler($channelRepo, $this->createStub(EventBusInterface::class), new MlockStateFromChannelResolver()),
+            new SetSecureHandler($channelRepo, $this->createStub(EventBusInterface::class)),
         );
         $cmd->execute($this->createContext(
             new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
@@ -499,7 +499,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
@@ -540,7 +540,7 @@ final class SetCommandTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);

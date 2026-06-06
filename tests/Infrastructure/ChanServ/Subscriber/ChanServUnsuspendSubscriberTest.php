@@ -671,7 +671,6 @@ final class ChanServUnsuspendSubscriberTest extends TestCase
         $channel = RegisteredChannel::register($name, 1, $description);
 
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($channel, $id);
 
         return $channel;

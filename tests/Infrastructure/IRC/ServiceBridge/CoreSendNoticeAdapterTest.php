@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\Port\ProtocolModuleInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -53,7 +53,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturn('NOTICE 001USER :Hi');
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->connectionHolder->setProtocolModule($module);
 
@@ -71,7 +71,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
         $handler->method('formatMessage')->willReturnCallback(static fn ($msg) => 'NOTICE 001USER :' . $msg->trailing);
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->connectionHolder->setProtocolModule($module);
 

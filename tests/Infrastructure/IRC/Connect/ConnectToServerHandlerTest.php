@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Application\IRC\Connect;
+namespace App\Tests\Infrastructure\IRC\Connect;
 
 use App\Application\IRC\Connect\ConnectToServerCommand;
-use App\Application\IRC\Connect\ConnectToServerHandler;
-use App\Application\IRC\IRCClient;
-use App\Application\IRC\IRCClientFactoryInterface;
 use App\Domain\IRC\Server\ServerLink;
+use App\Infrastructure\IRC\Connect\ConnectToServerHandler;
+use App\Infrastructure\IRC\Runtime\IRCClient;
+use App\Infrastructure\IRC\Runtime\IRCClientFactoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

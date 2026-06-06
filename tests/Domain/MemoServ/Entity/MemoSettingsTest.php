@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 #[CoversClass(MemoSettings::class)]
 final class MemoSettingsTest extends TestCase
@@ -52,10 +53,10 @@ final class MemoSettingsTest extends TestCase
     }
 
     #[Test]
-    public function setIdAndGetIdUsedByDoctrine(): void
+    public function getIdReturnsHydratedDoctrineId(): void
     {
         $settings = new MemoSettings(10, null, true);
-        $settings->setId(7);
+        self::hydrateId($settings, 7);
 
         self::assertSame(7, $settings->getId());
     }
@@ -71,5 +72,10 @@ final class MemoSettingsTest extends TestCase
 
         $settings->disable();
         self::assertFalse($settings->isEnabled());
+    }
+
+    private static function hydrateId(MemoSettings $settings, int $id): void
+    {
+        new ReflectionProperty(MemoSettings::class, 'id')->setValue($settings, $id);
     }
 }

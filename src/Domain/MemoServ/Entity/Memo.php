@@ -102,12 +102,4 @@ class Memo
     {
         $this->readAt = $at ?? new DateTimeImmutable();
     }
-
-    /**
-     * Used by Doctrine hydration; do not call directly.
-     */
-    public function setId(int $id): void
-    {
-        $this->id = $id;
-    }
 }

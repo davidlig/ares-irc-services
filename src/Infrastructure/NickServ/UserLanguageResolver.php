@@ -6,6 +6,8 @@ namespace App\Infrastructure\NickServ;
 
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\UserLanguageResolverInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 /**
@@ -19,7 +21,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
  * This service is shared across all IRC services (NickServ, ChanServ, etc.)
  * so they all use the same language preference transparently.
  */
-readonly class UserLanguageResolver
+readonly class UserLanguageResolver implements UserLanguageResolverInterface
 {
     public function __construct(
         private RegisteredNickRepositoryInterface $nickRepository,
@@ -42,7 +44,7 @@ readonly class UserLanguageResolver
      * Resolves language when the caller already has the RegisteredNick entity,
      * avoiding a second findByNick call.
      */
-    public function resolveFromAccount(SenderView $user, ?\App\Domain\NickServ\Entity\RegisteredNick $account): string
+    public function resolveFromAccount(SenderView $user, ?RegisteredNick $account): string
     {
         if (null !== $account) {
             return $account->getLanguage();

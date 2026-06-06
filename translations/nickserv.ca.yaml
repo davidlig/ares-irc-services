@@ -63,6 +63,7 @@ recover:
   pending:          "\x0304✗\x03 El sobrenom \x02%nickname%\x02 té una verificació de correu pendent."
   suspended:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està suspès. Motiu: %reason%"
   forbidden:        "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no es pot utilitzar en aquesta xarxa."
+  pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no es pot utilitzar."
   no_email:         "\x0304✗\x03 No hi ha cap correu establert per al sobrenom \x02%nickname%\x02. La recuperació no està disponible."
   throttled:        "\x0304✗\x03 Heu d'esperar \x02%minutes%\x02 minut(s) abans de sol·licitar un altre correu de recuperació."
   invalid_token:    "\x0304✗\x03 El token no és vàlid o ha expirat. Sol·liciteu-ne un de nou amb \x0303RECOVER %nickname%\x03."

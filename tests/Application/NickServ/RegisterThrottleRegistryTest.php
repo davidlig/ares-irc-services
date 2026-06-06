@@ -140,7 +140,6 @@ final class RegisterThrottleRegistryTest extends TestCase
         $oldDatetime = new DateTimeImmutable('-3600 seconds');
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('lastAttemptAt');
-        $property->setAccessible(true);
         $property->setValue($registry, [
             'old1' => $oldDatetime,
             'old2' => $oldDatetime,
@@ -192,7 +191,6 @@ final class RegisterThrottleRegistryTest extends TestCase
         $oldDatetime = new DateTimeImmutable('-10 seconds');
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('lastAttemptAt');
-        $property->setAccessible(true);
         $property->setValue($registry, ['client1' => $oldDatetime]);
 
         self::assertSame(0, $registry->getRemainingCooldownSeconds('client1', 1));

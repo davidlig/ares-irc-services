@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Connection;
 
-use App\Application\Port\ProtocolModuleInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -62,7 +62,7 @@ final class ActiveConnectionHolderTest extends TestCase
     #[Test]
     public function setProtocolModuleAndGetProtocolModule(): void
     {
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $this->holder->setProtocolModule($module);
         self::assertSame($module, $this->holder->getProtocolModule());
     }
@@ -77,7 +77,7 @@ final class ActiveConnectionHolderTest extends TestCase
     public function getProtocolHandlerDelegatesToModuleWhenSet(): void
     {
         $handler = $this->createStub(ProtocolHandlerInterface::class);
-        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->holder->setProtocolModule($module);
         self::assertSame($handler, $this->holder->getProtocolHandler());

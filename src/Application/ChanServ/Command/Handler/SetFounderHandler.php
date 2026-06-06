@@ -8,6 +8,9 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\FounderChangeTokenRegistry;
 use App\Application\Helper\SecureToken;
 use App\Application\Mail\Message\SendEmail;
+use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\EventBusInterface;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
@@ -17,9 +20,6 @@ use App\Domain\NickServ\ValueObject\NickStatus;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 use function count;
@@ -32,9 +32,9 @@ final readonly class SetFounderHandler implements SetOptionHandlerInterface
         private ChannelAccessRepositoryInterface $accessRepository,
         private RegisteredNickRepositoryInterface $nickRepository,
         private FounderChangeTokenRegistry $founderTokenRegistry,
-        private EventDispatcherInterface $eventDispatcher,
-        private MessageBusInterface $messageBus,
-        private TranslatorInterface $translator,
+        private EventBusInterface $eventDispatcher,
+        private AsyncMessageDispatcherInterface $messageBus,
+        private TranslationInterface $translator,
         private int $founderTokenTtlSeconds = 3600,
         private int $founderMinIntervalSeconds = 600,
         private int $maxChannelsPerNick = 3,

@@ -13,18 +13,20 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Application\Event\IrcopCommandExecutedEvent;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\IrcopCommandExecutedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
@@ -34,8 +36,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ChanServService::class)]
 final class ChanServServiceTest extends TestCase
@@ -120,7 +120,7 @@ final class ChanServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
         $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
@@ -237,7 +237,7 @@ final class ChanServServiceTest extends TestCase
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $notifier = $this->createMock(ChanServNotifierInterface::class);
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
         $translator->expects(self::once())->method('trans')
             ->with('unknown_command', ['%command%' => 'UNKNOWN', '%bot%' => 'ChanServ'], 'chanserv', 'en')
@@ -276,7 +276,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
@@ -376,7 +376,7 @@ final class ChanServServiceTest extends TestCase
             ->with('CHANSERV_OP_TEST', self::anything())
             ->willReturn(false);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.permission_denied' === $id ? 'Permission denied' : $id
         );
@@ -496,7 +496,7 @@ final class ChanServServiceTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())->method('trans')
             ->with('drop.pending_deletion', self::anything(), 'chanserv', 'en')
             ->willReturn('Channel #test is pending deletion');
@@ -616,7 +616,7 @@ final class ChanServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id): string => 'error.not_identified' === $id ? 'Not identified' : $id
         );
@@ -728,7 +728,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
             static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . ($params['syntax'] ?? '') : $id
         );
@@ -853,7 +853,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $this->createStub(ChanServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -960,7 +960,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $this->createStub(ChanServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -1066,7 +1066,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $this->createStub(ChanServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -1172,7 +1172,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $this->createStub(ChanServNotifierInterface::class),
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -1289,7 +1289,7 @@ final class ChanServServiceTest extends TestCase
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => true);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'chanserv' === $event->serviceName
@@ -1316,7 +1316,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -1422,7 +1422,7 @@ final class ChanServServiceTest extends TestCase
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => true);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -1436,7 +1436,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(ChanServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -1549,7 +1549,7 @@ final class ChanServServiceTest extends TestCase
             ->willReturnCallback(static fn (string $permission): bool => true);
 
         // Event should NOT be dispatched when auditData is null
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -1563,7 +1563,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(ChanServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -1590,7 +1590,7 @@ final class ChanServServiceTest extends TestCase
         RegisteredNickRepositoryInterface $nickRepository,
         ChanServNotifierInterface $notifier,
         UserMessageTypeResolver $messageTypeResolver,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         ChannelLookupPort $channelLookup,
         ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         NetworkUserLookupPort $userLookup,
@@ -1600,7 +1600,7 @@ final class ChanServServiceTest extends TestCase
         ?LoggerInterface $logger = null,
         ?AuthorizationContextInterface $authorizationContext = null,
         ?AuthorizationCheckerInterface $authorizationChecker = null,
-        ?EventDispatcherInterface $eventDispatcher = null,
+        ?EventBusInterface $eventDispatcher = null,
     ): ChanServService {
         return new ChanServService(
             $registry,
@@ -1616,7 +1616,7 @@ final class ChanServServiceTest extends TestCase
             $serviceNicks,
             $authorizationContext ?? $this->createStub(AuthorizationContextInterface::class),
             $authorizationChecker ?? $this->createStub(AuthorizationCheckerInterface::class),
-            $eventDispatcher ?? $this->createStub(EventDispatcherInterface::class),
+            $eventDispatcher ?? $this->createStub(EventBusInterface::class),
             $defaultLanguage,
             $defaultTimezone,
             $logger ?? $this->createStub(LoggerInterface::class),
@@ -1712,7 +1712,7 @@ final class ChanServServiceTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())->method('trans')
             ->with('suspend.channel_suspended', self::anything(), 'chanserv', 'en')
             ->willReturn('Channel #test is suspended');
@@ -1842,7 +1842,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(ChanServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -1956,7 +1956,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $notifier,
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -2064,7 +2064,7 @@ final class ChanServServiceTest extends TestCase
             $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(ChanServNotifierInterface::class),
             new UserMessageTypeResolver($this->createStub(RegisteredNickRepositoryInterface::class)),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -2165,7 +2165,7 @@ final class ChanServServiceTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())->method('trans')
             ->with('forbid.channel_forbidden', self::anything(), 'chanserv', 'en')
             ->willReturn('Channel #test is forbidden');
@@ -2297,7 +2297,7 @@ final class ChanServServiceTest extends TestCase
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepository->method('findByChannelName')->willReturn($channel);
 
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::once())->method('trans')
             ->with('forbid.channel_forbidden', self::anything(), 'chanserv', 'en')
             ->willReturn('Channel #test is forbidden');
@@ -2448,7 +2448,7 @@ final class ChanServServiceTest extends TestCase
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'chanserv' === $event->serviceName
@@ -2471,7 +2471,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -2598,7 +2598,7 @@ final class ChanServServiceTest extends TestCase
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -2613,7 +2613,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -2739,7 +2739,7 @@ final class ChanServServiceTest extends TestCase
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -2754,7 +2754,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -2872,7 +2872,7 @@ final class ChanServServiceTest extends TestCase
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -2887,7 +2887,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -3006,7 +3006,7 @@ final class ChanServServiceTest extends TestCase
             ->with('chanserv.level_founder', self::anything())
             ->willReturn(true);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::never())
             ->method('dispatch');
 
@@ -3021,7 +3021,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -3148,7 +3148,7 @@ final class ChanServServiceTest extends TestCase
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'chanserv' === $event->serviceName
@@ -3170,7 +3170,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),
@@ -3297,7 +3297,7 @@ final class ChanServServiceTest extends TestCase
             ->method('isGranted')
             ->willReturnCallback(static fn (string $permission): bool => 'IDENTIFIED' === $permission || 'chanserv.level_founder' === $permission);
 
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'chanserv' === $event->serviceName
@@ -3319,7 +3319,7 @@ final class ChanServServiceTest extends TestCase
             $nickRepository,
             $notifier,
             new UserMessageTypeResolver($nickRepository),
-            $this->createStub(TranslatorInterface::class),
+            $this->createStub(TranslationInterface::class),
             $this->createStub(ChannelLookupPort::class),
             $modeSupportProvider,
             $this->createStub(NetworkUserLookupPort::class),

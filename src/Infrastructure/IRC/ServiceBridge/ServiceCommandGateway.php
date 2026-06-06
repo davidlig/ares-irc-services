@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ServiceCommandListenerInterface;
-use App\Domain\IRC\Event\MessageReceivedEvent;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

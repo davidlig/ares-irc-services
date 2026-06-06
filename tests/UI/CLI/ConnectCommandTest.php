@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\UI\CLI;
 
-use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\IRC\Connect\ConnectToServerCommand;
 use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
-use App\Application\IRC\IRCClient;
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
+use App\Application\IRC\IrcSessionInterface;
 use App\Infrastructure\Messenger\ConsumerProcessManagerInterface;
 use App\UI\CLI\ConnectCommand;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -18,8 +15,6 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
-use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Throwable;
 
 #[CoversClass(ConnectCommand::class)]
@@ -56,11 +51,20 @@ final class ConnectCommandTest extends TestCase
         );
     }
 
-    private function createClientThatReturnsFromRun(): IRCClient
+    private function createClientThatReturnsFromRun(): IrcSessionInterface
     {
-        return new class($this->createStub(ConnectionInterface::class), $this->createStub(ProtocolHandlerInterface::class), $this->createStub(EventDispatcherInterface::class), $this->createStub(MessageBusInterface::class), new BurstCompleteRegistry(), 1) extends IRCClient {
+        return new class implements IrcSessionInterface {
             public function run(): void
             {
+            }
+
+            public function disconnect(?string $reason = null): void
+            {
+            }
+
+            public function getProtocolName(): string
+            {
+                return 'test';
             }
         };
     }
@@ -177,7 +181,7 @@ final class ConnectCommandTest extends TestCase
     #[Test]
     public function signalHandlerGracefulShutdown(): void
     {
-        $clientMock = $this->createMock(IRCClient::class);
+        $clientMock = $this->createMock(IrcSessionInterface::class);
         $clientMock->expects(self::once())->method('disconnect')->with('SIGTERM');
         $clientMock->method('run')->willReturnCallback(static function () use ($clientMock): void {
             $clientMock->disconnect('SIGTERM');
@@ -200,7 +204,7 @@ final class ConnectCommandTest extends TestCase
     #[Test]
     public function signalHandlerInterrupt(): void
     {
-        $clientMock = $this->createMock(IRCClient::class);
+        $clientMock = $this->createMock(IrcSessionInterface::class);
         $clientMock->expects(self::once())->method('disconnect')->with('CTRL+C');
         $clientMock->method('run')->willReturnCallback(static function () use ($clientMock): void {
             $clientMock->disconnect('CTRL+C');
@@ -223,7 +227,7 @@ final class ConnectCommandTest extends TestCase
     #[Test]
     public function consumerProcessRestartOnTermination(): void
     {
-        $clientMock = $this->createMock(IRCClient::class);
+        $clientMock = $this->createMock(IrcSessionInterface::class);
         $clientMock->expects(self::once())->method('disconnect')->with('SIGTERM');
         $clientMock->method('run')->willReturnCallback(static function () use ($clientMock): void {
             $clientMock->disconnect('SIGTERM');
@@ -280,7 +284,7 @@ final class ConnectCommandTest extends TestCase
     #[Test]
     public function sighupHandlerDisconnectsClient(): void
     {
-        $clientMock = $this->createMock(IRCClient::class);
+        $clientMock = $this->createMock(IrcSessionInterface::class);
         $clientMock->expects(self::once())->method('disconnect')->with('SIGHUP');
         $clientMock->method('run')->willReturnCallback(static function () use ($clientMock): void {
             $clientMock->disconnect('SIGHUP');
@@ -307,12 +311,12 @@ final class HandlerStub implements ConnectToServerHandlerInterface
     public ?ConnectToServerCommand $capturedCommand = null;
 
     public function __construct(
-        private readonly ?IRCClient $client,
+        private readonly ?IrcSessionInterface $client,
         private readonly ?Throwable $throw = null,
     ) {
     }
 
-    public function handle(ConnectToServerCommand $command): IRCClient
+    public function handle(ConnectToServerCommand $command): IrcSessionInterface
     {
         $this->capturedCommand = $command;
         if (null !== $this->throw) {

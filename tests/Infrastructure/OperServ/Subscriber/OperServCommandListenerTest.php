@@ -17,9 +17,11 @@ use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\OperServService;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -34,8 +36,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Throwable;
 
 #[CoversClass(OperServCommandListener::class)]
@@ -227,7 +227,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = self::createStub(TranslatorInterface::class);
+        $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
 
@@ -242,7 +242,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createServiceNicks(),
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventDispatcherInterface::class),
+            self::createStub(EventBusInterface::class),
             'en',
             'UTC',
         );
@@ -287,7 +287,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = self::createStub(TranslatorInterface::class);
+        $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
 
@@ -302,7 +302,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createServiceNicks(),
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventDispatcherInterface::class),
+            self::createStub(EventBusInterface::class),
             'en',
             'UTC',
         );
@@ -349,7 +349,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = self::createStub(TranslatorInterface::class);
+        $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
 
@@ -364,7 +364,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createServiceNicks(),
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventDispatcherInterface::class),
+            self::createStub(EventBusInterface::class),
             'en',
             'UTC',
         );
@@ -415,7 +415,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = self::createStub(TranslatorInterface::class);
+        $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
 
@@ -430,7 +430,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createServiceNicks(),
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventDispatcherInterface::class),
+            self::createStub(EventBusInterface::class),
             'en',
             'UTC',
         );
@@ -482,7 +482,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = self::createStub(TranslatorInterface::class);
+        $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
 
@@ -497,7 +497,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createServiceNicks(),
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventDispatcherInterface::class),
+            self::createStub(EventBusInterface::class),
             'en',
             'UTC',
         );
@@ -548,7 +548,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = self::createStub(TranslatorInterface::class);
+        $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
         $accessHelper = self::createAccessHelper();
 
@@ -563,7 +563,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createServiceNicks(),
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventDispatcherInterface::class),
+            self::createStub(EventBusInterface::class),
             'en',
             'UTC',
         );
@@ -617,7 +617,7 @@ final class OperServCommandListenerTest extends TestCase
         $operServNotifier = self::createStub(OperServNotifierInterface::class);
         $messageTypeResolver = self::createStub(UserMessageTypeResolverInterface::class);
         $messageTypeResolver->method('resolve')->willReturn('NOTICE');
-        $translator = self::createStub(TranslatorInterface::class);
+        $translator = self::createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = self::createAccessHelper();
 
@@ -632,7 +632,7 @@ final class OperServCommandListenerTest extends TestCase
             self::createServiceNicks(),
             self::createStub(AuthorizationContextInterface::class),
             self::createStub(AuthorizationCheckerInterface::class),
-            self::createStub(EventDispatcherInterface::class),
+            self::createStub(EventBusInterface::class),
             'en',
             'UTC',
         );

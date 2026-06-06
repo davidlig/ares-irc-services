@@ -16,6 +16,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -25,7 +26,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use ReflectionClass;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(GlineCommand::class)]
 final class GlineCommandTest extends TestCase
@@ -833,7 +833,7 @@ final class GlineCommandTest extends TestCase
     {
         $notifier = $this->createMock(OperServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper(false);
         $registry = new OperServCommandRegistry([]);
 
@@ -1321,7 +1321,7 @@ final class GlineCommandTest extends TestCase
     public function getAuditDataReturnsNullBeforeExecute(): void
     {
         $cmd = $this->createCommand();
-        $context = $this->createContext($this->createSender(), ['LIST'], $this->createStub(OperServNotifierInterface::class), $this->createStub(TranslatorInterface::class), new OperServCommandRegistry([]), $this->createAccessHelper(false));
+        $context = $this->createContext($this->createSender(), ['LIST'], $this->createStub(OperServNotifierInterface::class), $this->createStub(TranslationInterface::class), new OperServCommandRegistry([]), $this->createAccessHelper(false));
 
         self::assertNull($cmd->getAuditData($context));
     }
@@ -1461,9 +1461,9 @@ final class GlineCommandTest extends TestCase
         return $notifier;
     }
 
-    private function createTranslator(): TranslatorInterface
+    private function createTranslator(): TranslationInterface
     {
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return $translator;
@@ -1483,7 +1483,7 @@ final class GlineCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         OperServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         OperServCommandRegistry $registry,
         IrcopAccessHelper $accessHelper,
     ): OperServContext {

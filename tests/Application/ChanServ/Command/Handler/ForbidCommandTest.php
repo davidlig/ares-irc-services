@@ -17,13 +17,13 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(ForbidCommand::class)]
 final class ForbidCommandTest extends TestCase
@@ -209,7 +209,6 @@ final class ForbidCommandTest extends TestCase
         $sender = $this->createSender();
         $forbiddenChannel = RegisteredChannel::createForbidden('#test', 'abuse');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($forbiddenChannel, 1);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -234,7 +233,6 @@ final class ForbidCommandTest extends TestCase
         $sender = $this->createSender();
         $channel = RegisteredChannel::createForbidden('#test', 'old reason');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($channel, 1);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -259,12 +257,10 @@ final class ForbidCommandTest extends TestCase
         $sender = $this->createSender();
         $channel = RegisteredChannel::register('#test', 1, 'Test channel');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($channel, 1);
 
         $forbiddenChannel = RegisteredChannel::createForbidden('#test', 'abuse');
         $ref2 = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref2->setAccessible(true);
         $ref2->setValue($forbiddenChannel, 2);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -300,7 +296,6 @@ final class ForbidCommandTest extends TestCase
         $sender = $this->createSender();
         $forbiddenChannel = RegisteredChannel::createForbidden('#test', 'abuse');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($forbiddenChannel, 1);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -328,7 +323,6 @@ final class ForbidCommandTest extends TestCase
         $sender = $this->createSender();
         $channel = RegisteredChannel::createForbidden('#test', 'old reason');
         $ref = new ReflectionProperty(RegisteredChannel::class, 'id');
-        $ref->setAccessible(true);
         $ref->setValue($channel, 1);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -411,7 +405,7 @@ final class ForbidCommandTest extends TestCase
         $notifier->method('getNick')->willReturn('ChanServ');
         $notifier->method('getServiceKey')->willReturn('chanserv');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new ChanServContext(

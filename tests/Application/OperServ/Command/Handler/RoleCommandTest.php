@@ -19,8 +19,10 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserModeSupportInterface;
 use App\Application\Security\PermissionProviderInterface;
 use App\Application\Security\PermissionRegistry;
@@ -35,8 +37,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use ReflectionClass;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(RoleCommand::class)]
 final class RoleCommandTest extends TestCase
@@ -100,7 +100,7 @@ final class RoleCommandTest extends TestCase
             $modeApplier,
             $vhostApplier,
             new VhostValidator('virtual'),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
     }
 
@@ -108,7 +108,7 @@ final class RoleCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         OperServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         OperServCommandRegistry $registry,
         IrcopAccessHelper $accessHelper,
     ): OperServContext {
@@ -138,7 +138,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(false);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -161,7 +161,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -184,7 +184,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -207,7 +207,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -230,7 +230,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -256,7 +256,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -280,7 +280,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -304,7 +304,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -330,7 +330,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -353,7 +353,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -495,7 +495,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -528,7 +528,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -560,7 +560,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -592,7 +592,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -619,7 +619,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -652,7 +652,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -685,7 +685,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -712,7 +712,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -763,7 +763,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'operserv', string $locale = 'en'): string {
             if ('permissions.operserv.kill' === $id) {
                 return 'Disconnect a user from the network';
@@ -825,7 +825,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'operserv', string $locale = 'en'): string {
             if ('permissions.nickserv.drop' === $id && 'nickserv' === $domain) {
                 return 'Delete a registered nickname (DROP)';
@@ -926,7 +926,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], string $domain = 'operserv', string $locale = 'en'): string {
             if ('permissions.unknown.perm' === $id && 'unknown' === $domain) {
                 return 'permissions.unknown.perm';
@@ -983,7 +983,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1035,7 +1035,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1070,7 +1070,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1097,7 +1097,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1126,7 +1126,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1157,7 +1157,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1193,7 +1193,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1220,7 +1220,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1249,7 +1249,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1279,7 +1279,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1310,7 +1310,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -1333,7 +1333,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -1357,7 +1357,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1383,7 +1383,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1409,12 +1409,12 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setUserModes(['o', 'a']);
+        $role->changeUserModes(['o', 'a']);
 
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $roleRepo->method('findByName')->willReturn($role);
@@ -1438,17 +1438,16 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
         $savedRoles = [];
         $role = OperRole::create('CUSTOM', 'Custom role', false);
-        $role->setUserModes(['o', 'a']);
+        $role->changeUserModes(['o', 'a']);
 
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
@@ -1477,7 +1476,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1486,7 +1485,6 @@ final class RoleCommandTest extends TestCase
 
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
@@ -1515,7 +1513,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1543,14 +1541,13 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
         $role = OperRole::create('ADMIN', 'Admin role', true);
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -1595,7 +1592,7 @@ final class RoleCommandTest extends TestCase
             $modeApplier,
             $vhostApplier,
             new VhostValidator('virtual'),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
         );
         $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+o'], $notifier, $translator, $registry, $accessHelper));
 
@@ -1612,7 +1609,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -1635,7 +1632,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
@@ -1659,7 +1656,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1685,7 +1682,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1711,12 +1708,12 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
         $role = OperRole::create('ADMIN', 'Admin role', true);
-        $role->setForcedVhostPattern('admin.ares');
+        $role->changeForcedVhostPattern('admin.ares');
 
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $roleRepo->method('findByName')->willReturn($role);
@@ -1740,7 +1737,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1749,7 +1746,6 @@ final class RoleCommandTest extends TestCase
 
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
@@ -1778,7 +1774,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1806,7 +1802,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1834,17 +1830,16 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
         $savedRoles = [];
         $role = OperRole::create('CUSTOM', 'Custom role', false);
-        $role->setForcedVhostPattern('admin.ares');
+        $role->changeForcedVhostPattern('admin.ares');
 
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
@@ -1873,17 +1868,16 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
         $savedRoles = [];
         $role = OperRole::create('CUSTOM', 'Custom role', false);
-        $role->setForcedVhostPattern('admin.ares');
+        $role->changeForcedVhostPattern('admin.ares');
 
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $roleRepo = $this->createMock(OperRoleRepositoryInterface::class);
@@ -1933,7 +1927,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -1993,7 +1987,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -2046,7 +2040,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -2073,7 +2067,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -2110,7 +2104,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -2137,7 +2131,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -2196,7 +2190,7 @@ final class RoleCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Application\ChanServ\Maintenance;
 
 use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 
@@ -22,7 +22,7 @@ final readonly class UnsuspendExpiredChannelsTask implements MaintenanceTaskInte
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
-        private EventDispatcherInterface $eventDispatcher,
+        private EventBusInterface $eventDispatcher,
         private LoggerInterface $logger,
         private readonly string $serverName,
         private readonly int $intervalSeconds,

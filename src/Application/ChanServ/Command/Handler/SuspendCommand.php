@@ -10,11 +10,11 @@ use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Command\AuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
+use App\Application\Port\EventBusInterface;
 use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use DateTimeImmutable;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function array_slice;
 use function sprintf;
@@ -27,7 +27,7 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChannelSuspensionService $suspensionService,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly EventBusInterface $eventDispatcher,
     ) {
     }
 

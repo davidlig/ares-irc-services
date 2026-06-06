@@ -126,7 +126,6 @@ final class ForbiddenVhostTest extends TestCase
 
         $reflection = new ReflectionClass($forbidden);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($forbidden, 42);
 
         self::assertSame(42, $forbidden->getId());

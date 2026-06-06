@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\Unreal;
 
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UserModeSupportInterface;
 use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
+use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 
 /**
  * UnrealIRCd protocol module: handler, service actions, introduction formatter, vhost builder, channel mode support, nick reservation.
  */
-final readonly class UnrealIRCdModule implements ProtocolModuleInterface
+final readonly class UnrealIRCdModule implements ProtocolRuntimeModuleInterface
 {
     public const string PROTOCOL_NAME = 'unreal';
 

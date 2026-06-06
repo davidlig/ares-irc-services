@@ -6,12 +6,12 @@ namespace App\Application\MemoServ\Command;
 
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class MemoServContext implements IrcopContextInterface
 {
@@ -22,7 +22,7 @@ final readonly class MemoServContext implements IrcopContextInterface
         /** @var string[] */
         public readonly array $args,
         private readonly MemoServNotifierInterface $notifier,
-        private readonly TranslatorInterface $translator,
+        private readonly TranslationInterface $translator,
         private readonly string $language,
         private readonly string $timezone,
         private readonly string $messageType,

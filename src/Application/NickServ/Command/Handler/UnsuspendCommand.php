@@ -9,9 +9,9 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
+use App\Application\Port\EventBusInterface;
 use App\Domain\NickServ\Event\NickUnsuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function sprintf;
 
@@ -21,7 +21,7 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly EventBusInterface $eventDispatcher,
     ) {
     }
 

@@ -165,7 +165,7 @@ final class NoexpireCommand implements ChanServCommandInterface, AuditableComman
 
     private function performNoexpire(ChanServContext $context, string $channelName, object $channel, bool $newValue): void
     {
-        $channel->setNoExpire($newValue);
+        $channel->changeNoExpire($newValue);
         $this->channelRepository->save($channel);
 
         $action = $newValue ? 'ON' : 'OFF';

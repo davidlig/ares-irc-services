@@ -8,6 +8,7 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\Service\NickForceService;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -19,7 +20,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use function str_starts_with;
 use function strlen;
@@ -49,7 +49,7 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             'Guest-',
         );
@@ -76,7 +76,7 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             'Guest-',
         );
@@ -105,7 +105,7 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $logger,
             'Guest-',
         );
@@ -121,7 +121,7 @@ final class NickForceServiceTest extends TestCase
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
 
         $user = $this->createOnlineUser();
         $account = $this->createNickWithId('TestNick', 42);
@@ -169,7 +169,7 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             'Guest-',
         );
@@ -199,7 +199,7 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             'Guest-',
         );
@@ -227,7 +227,7 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             'Guest-',
         );
@@ -255,7 +255,7 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $logger,
             'Guest-',
         );
@@ -284,7 +284,7 @@ final class NickForceServiceTest extends TestCase
             $pendingRegistry,
             $userLookup,
             $this->createStub(RegisteredNickRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(LoggerInterface::class),
             'Renamed-',
         );
@@ -316,7 +316,6 @@ final class NickForceServiceTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredNick::class);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($nick, $id);
 
         return $nick;

@@ -186,7 +186,6 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $role = OperRole::create('OPER', 'Oper role');
@@ -326,7 +325,6 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'encoded', true, false, 'SID1', 'c', 'i');
@@ -606,7 +604,6 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $role = OperRole::create('OPER', 'Oper role');

@@ -16,6 +16,7 @@ use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -26,7 +27,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use ReflectionClass;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(IrcopCommand::class)]
 final class IrcopCommandTest extends TestCase
@@ -57,7 +57,7 @@ final class IrcopCommandTest extends TestCase
         ?SenderView $sender,
         array $args,
         OperServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         OperServCommandRegistry $registry,
         IrcopAccessHelper $accessHelper,
     ): OperServContext {
@@ -87,7 +87,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(false);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -111,7 +111,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -135,7 +135,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -159,7 +159,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -183,7 +183,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -210,7 +210,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -367,7 +367,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -375,13 +375,11 @@ final class IrcopCommandTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -411,14 +409,13 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
         $nick = RegisteredNick::createPending('TestNick', 'hash', 'test@test.com', 'en', new DateTimeImmutable('+1 day'));
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -444,7 +441,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -452,7 +449,6 @@ final class IrcopCommandTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -479,7 +475,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -487,13 +483,11 @@ final class IrcopCommandTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $existingIrcop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $role, 1, null);
@@ -524,7 +518,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -532,19 +526,16 @@ final class IrcopCommandTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $oldRole = \App\Domain\OperServ\Entity\OperRole::create('OPER', 'Oper role');
         $oldRoleRefl = new ReflectionClass($oldRole);
         $oldRoleIdProp = $oldRoleRefl->getProperty('id');
-        $oldRoleIdProp->setAccessible(true);
         $oldRoleIdProp->setValue($oldRole, 1);
 
         $newRole = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
         $newRoleRefl = new ReflectionClass($newRole);
         $newRoleIdProp = $newRoleRefl->getProperty('id');
-        $newRoleIdProp->setAccessible(true);
         $newRoleIdProp->setValue($newRole, 2);
 
         $existingIrcop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $oldRole, 1, null);
@@ -576,7 +567,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -584,7 +575,6 @@ final class IrcopCommandTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
@@ -616,7 +606,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -641,7 +631,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -668,7 +658,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -676,7 +666,6 @@ final class IrcopCommandTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -704,7 +693,7 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
@@ -712,19 +701,16 @@ final class IrcopCommandTest extends TestCase
         $nick->activate();
         $nickRefl = new ReflectionClass($nick);
         $nickIdProp = $nickRefl->getProperty('id');
-        $nickIdProp->setAccessible(true);
         $nickIdProp->setValue($nick, 42);
 
         $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $role, 1, null);
         $ircopRefl = new ReflectionClass($ircop);
         $ircopIdProp = $ircopRefl->getProperty('id');
-        $ircopIdProp->setAccessible(true);
         $ircopIdProp->setValue($ircop, 100);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -753,14 +739,13 @@ final class IrcopCommandTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
         $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
-        $roleIdProp->setAccessible(true);
         $roleIdProp->setValue($role, 1);
 
         $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $role, 1, null);

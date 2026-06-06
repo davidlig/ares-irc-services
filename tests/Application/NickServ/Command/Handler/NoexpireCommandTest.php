@@ -14,6 +14,7 @@ use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
@@ -21,7 +22,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const PASSWORD_BCRYPT;
 
@@ -227,7 +227,7 @@ final class NoexpireCommandTest extends TestCase
     public function executeWithOffClearsNoExpireAndRepliesSuccessOff(): void
     {
         $nick = $this->createNickWithId('TestNick', 1);
-        $nick->setNoExpire(true);
+        $nick->changeNoExpire(true);
 
         self::assertTrue($nick->isNoExpire(), 'noExpire should be true before OFF');
 
@@ -273,7 +273,7 @@ final class NoexpireCommandTest extends TestCase
     public function executeWithLowerCaseOffWorks(): void
     {
         $nick = $this->createNickWithId('TestNick', 1);
-        $nick->setNoExpire(true);
+        $nick->changeNoExpire(true);
 
         $messages = [];
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
@@ -309,7 +309,6 @@ final class NoexpireCommandTest extends TestCase
 
         $reflection = new ReflectionClass(RegisteredNick::class);
         $property = $reflection->getProperty('id');
-        $property->setAccessible(true);
         $property->setValue($nick, $id);
 
         return $nick;
@@ -327,7 +326,7 @@ final class NoexpireCommandTest extends TestCase
             $messages[] = $message;
         });
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(

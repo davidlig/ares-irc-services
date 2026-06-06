@@ -14,12 +14,12 @@ use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(OperServHelpFormatterContextAdapter::class)]
 final class OperServHelpFormatterContextAdapterTest extends TestCase
@@ -41,7 +41,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true);
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper($isRoot);
         $registry ??= new OperServCommandRegistry([]);
@@ -208,7 +208,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $notifier->method('getNick')->willReturn('OperServ');
 
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => 'translated.' . $id);
         $accessHelper = $this->createAccessHelper(false);
         $registry = new OperServCommandRegistry([]);
@@ -249,7 +249,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $notifier->method('getNick')->willReturn('OperServ');
 
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $accessHelper = $this->createAccessHelper(false);
         $registry = new OperServCommandRegistry([]);
 
@@ -379,7 +379,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip');
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $registry = new OperServCommandRegistry([]);
 
@@ -429,7 +429,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
     {
         $notifier = $this->createStub(OperServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $registry = new OperServCommandRegistry([]);
         $accessHelper = $this->createAccessHelper(isRoot: false);

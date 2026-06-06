@@ -9,6 +9,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 #[CoversClass(MemoIgnore::class)]
 final class MemoIgnoreTest extends TestCase
@@ -52,11 +53,16 @@ final class MemoIgnoreTest extends TestCase
     }
 
     #[Test]
-    public function setIdAndGetIdUsedByDoctrine(): void
+    public function getIdReturnsHydratedDoctrineId(): void
     {
         $ignore = new MemoIgnore(10, null, 5);
-        $ignore->setId(99);
+        self::hydrateId($ignore, 99);
 
         self::assertSame(99, $ignore->getId());
+    }
+
+    private static function hydrateId(MemoIgnore $ignore, int $id): void
+    {
+        new ReflectionProperty(MemoIgnore::class, 'id')->setValue($ignore, $id);
     }
 }

@@ -16,6 +16,7 @@ use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -25,7 +26,6 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[CoversClass(SetVhostHandler::class)]
 final class SetVhostHandlerTest extends TestCase
@@ -33,7 +33,7 @@ final class SetVhostHandlerTest extends TestCase
     private function createContext(
         ?SenderView $sender,
         NickServNotifierInterface $notifier,
-        TranslatorInterface $translator,
+        TranslationInterface $translator,
         string $value,
     ): NickServContext {
         return new NickServContext(
@@ -134,7 +134,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -170,7 +170,7 @@ final class SetVhostHandlerTest extends TestCase
         });
         $notifier->expects(self::once())->method('setUserVhost')->with('UID2', '', 'SID1');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -208,7 +208,7 @@ final class SetVhostHandlerTest extends TestCase
         });
         $notifier->expects(self::once())->method('setUserVhost')->with('UID2', 'test', 'SID1');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -243,7 +243,7 @@ final class SetVhostHandlerTest extends TestCase
         });
         $notifier->expects(self::never())->method('setUserVhost');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -280,7 +280,7 @@ final class SetVhostHandlerTest extends TestCase
         });
         $notifier->expects(self::never())->method('setUserVhost');
 
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -306,7 +306,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -336,7 +336,7 @@ final class SetVhostHandlerTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('setUserVhost')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -366,7 +366,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -393,7 +393,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -422,7 +422,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -461,7 +461,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class));
@@ -499,7 +499,7 @@ final class SetVhostHandlerTest extends TestCase
             $messages[] = $m;
         });
         $notifier->method('setUserVhost')->willReturnCallback(static function (): void {});
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class));
@@ -535,7 +535,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $this->createStub(NetworkUserLookupPort::class), $ircopRepo, $this->createStub(ForbiddenVhostRepositoryInterface::class));
@@ -571,7 +571,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $forbiddenRepo);
@@ -608,7 +608,7 @@ final class SetVhostHandlerTest extends TestCase
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
             $messages[] = $m;
         });
-        $translator = $this->createStub(TranslatorInterface::class);
+        $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $handler = new SetVhostHandler($nickRepo, $validator, $displayResolver, $userLookup, $ircopRepo, $forbiddenRepo);

@@ -28,7 +28,6 @@ final class ChannelAkickDoctrineRepositoryTest extends DoctrineIntegrationTestCa
     private function setCreatedAt(ChannelAkick $akick, DateTimeImmutable $time): void
     {
         $ref = new ReflectionProperty($akick, 'createdAt');
-        $ref->setAccessible(true);
         $ref->setValue($akick, $time);
     }
 

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Network;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Domain\IRC\Event\MessageReceivedEvent;
 use App\Domain\IRC\Network\NetworkStateAdapterInterface;
+use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

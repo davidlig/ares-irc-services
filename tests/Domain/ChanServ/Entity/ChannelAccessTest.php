@@ -85,7 +85,6 @@ final class ChannelAccessTest extends TestCase
         $access = new ChannelAccess(1, 10, 50);
         $reflection = new ReflectionClass($access);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($access, 99);
 
         self::assertSame(99, $access->getId());

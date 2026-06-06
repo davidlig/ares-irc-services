@@ -182,11 +182,9 @@ final class NickServIdentifiedOwnerVoterTest extends TestCase
         $context = $reflection->newInstanceWithoutConstructor();
 
         $senderProp = $reflection->getProperty('sender');
-        $senderProp->setAccessible(true);
         $senderProp->setValue($context, $sender);
 
         $accountProp = $reflection->getProperty('senderAccount');
-        $accountProp->setAccessible(true);
         $accountProp->setValue($context, $account);
 
         return $context;

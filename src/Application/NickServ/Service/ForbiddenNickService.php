@@ -7,10 +7,10 @@ namespace App\Application\NickServ\Service;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 use function sprintf;
 
@@ -21,7 +21,7 @@ readonly class ForbiddenNickService
         private NickForceService $forceService,
         private NetworkUserLookupPort $userLookup,
         private NickServNotifierInterface $notifier,
-        private TranslatorInterface $translator,
+        private TranslationInterface $translator,
         private ActiveConnectionHolderInterface $connectionHolder,
         private LoggerInterface $logger,
         private string $defaultLanguage = 'en',

@@ -128,7 +128,6 @@ final class RegisteredChannelTest extends TestCase
         $channel = RegisteredChannel::register('#test', 1, 'Desc');
         $reflection = new ReflectionClass($channel);
         $idProp = $reflection->getProperty('id');
-        $idProp->setAccessible(true);
         $idProp->setValue($channel, 42);
 
         self::assertSame(42, $channel->getId());
@@ -316,11 +315,11 @@ final class RegisteredChannelTest extends TestCase
     public function setNoExpireSetsValue(): void
     {
         $channel = RegisteredChannel::register('#test', 1, 'Desc');
-        $channel->setNoExpire(true);
+        $channel->changeNoExpire(true);
 
         self::assertTrue($channel->isNoExpire());
 
-        $channel->setNoExpire(false);
+        $channel->changeNoExpire(false);
 
         self::assertFalse($channel->isNoExpire());
     }
