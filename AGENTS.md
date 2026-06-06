@@ -1,6 +1,6 @@
-# Ares IRC Services — Clean Architecture, DDD & PHP 8.4
+# Ares IRC Services — Clean Architecture, DDD & PHP 8.5
 
-You are an expert Symfony 7.4 Architect using PHP 8.4. All rules here are NON-NEGOTIABLE.
+You are an expert Symfony 7.4 Architect using PHP 8.5. All rules here are NON-NEGOTIABLE.
 
 ---
 
@@ -18,7 +18,7 @@ Launch multiple independent operations in a SINGLE message:
 
 ### 1.2 Documentation Lookup with Context7 MCP (CRITICAL)
 
-When you need documentation for Symfony 7.4, PHP 8.4, Doctrine ORM 3.6, PHPUnit 13, or any library in `composer.json`, use Context7 MCP if available:
+When you need documentation for Symfony 7.4, PHP 8.5, Doctrine ORM 3.6, PHPUnit 13, or any library in `composer.json`, use Context7 MCP if available:
 
 1. `context7_resolve-library-id` — find the library ID
 2. `context7_query-docs` — ask the specific question
@@ -82,7 +82,7 @@ If any step fails, fix it and re-run from the failed step — never skip ahead.
 - **NEVER** put business logic in Controllers or Bots
 - **NEVER** import `Domain\IRC` entities in Application layer — use `Port/` DTOs and interfaces
 - **NEVER** use `match`/`switch` over protocol names — use `ProtocolModuleRegistry`
-- PHP 8.4 features: constructor promotion, property hooks, typed constants (`const string X = 'v';`)
+- PHP 8.5 features: constructor promotion, property hooks, typed constants (`const string X = 'v';`)
 - Use Yoda conditions: `if (null === $variable)`
 
 ---
@@ -156,3 +156,42 @@ When IRC or MariaDB MCP servers are available, use them for live smoke/integrati
 - Never run destructive commands against real nicks or real channels.
 - Always create temporary resources for live tests, such as `NickTest<suffix>` or `#test-<suffix>`.
 - Use `OPENCODE_IRC_ROOT_NICK` only when root, IRCop, or founder privileges are required.
+
+<!-- code-review-graph MCP tools -->
+## MCP Tools: code-review-graph
+
+**IMPORTANT: This project has a knowledge graph. ALWAYS use the
+code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
+the codebase.** The graph is faster, cheaper (fewer tokens), and gives
+you structural context (callers, dependents, test coverage) that file
+scanning cannot.
+
+### When to use graph tools FIRST
+
+- **Exploring code**: `semantic_search_nodes` or `query_graph` instead of Grep
+- **Understanding impact**: `get_impact_radius` instead of manually tracing imports
+- **Code review**: `detect_changes` + `get_review_context` instead of reading entire files
+- **Finding relationships**: `query_graph` with callers_of/callees_of/imports_of/tests_for
+- **Architecture questions**: `get_architecture_overview` + `list_communities`
+
+Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
+
+### Key Tools
+
+| Tool | Use when |
+| ------ | ---------- |
+| `detect_changes` | Reviewing code changes — gives risk-scored analysis |
+| `get_review_context` | Need source snippets for review — token-efficient |
+| `get_impact_radius` | Understanding blast radius of a change |
+| `get_affected_flows` | Finding which execution paths are impacted |
+| `query_graph` | Tracing callers, callees, imports, tests, dependencies |
+| `semantic_search_nodes` | Finding functions/classes by name or keyword |
+| `get_architecture_overview` | Understanding high-level codebase structure |
+| `refactor_tool` | Planning renames, finding dead code |
+
+### Workflow
+
+1. The graph auto-updates on file changes (via hooks).
+2. Use `detect_changes` for code review.
+3. Use `get_affected_flows` to understand impact.
+4. Use `query_graph` pattern="tests_for" to check coverage.
