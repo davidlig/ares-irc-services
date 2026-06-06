@@ -30,6 +30,9 @@ jobs:
       - name: Create DB directory
         run: mkdir -p var/data
 
+      - name: Run migrations
+        run: php bin/console doctrine:migrations:migrate --no-interaction --env=test
+
       - name: Lint container
         run: php bin/console lint:container
 
