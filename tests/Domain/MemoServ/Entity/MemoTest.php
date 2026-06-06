@@ -109,6 +109,15 @@ final class MemoTest extends TestCase
         self::assertSame(255, Memo::MESSAGE_MAX_LENGTH);
     }
 
+    #[Test]
+    public function constructorRejectsMessageAboveMaxLength(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Message cannot exceed 255 characters.');
+
+        new Memo(10, null, 5, str_repeat('x', Memo::MESSAGE_MAX_LENGTH + 1));
+    }
+
     private static function hydrateId(Memo $memo, int $id): void
     {
         new ReflectionProperty(Memo::class, 'id')->setValue($memo, $id);

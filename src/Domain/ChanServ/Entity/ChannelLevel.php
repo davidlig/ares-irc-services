@@ -82,14 +82,7 @@ class ChannelLevel
 
     private string $levelKey;
 
-    private int $value {
-        set(int $value) {
-            if ($value < self::LEVEL_MIN || $value > self::LEVEL_MAX) {
-                throw new InvalidArgumentException(sprintf('Level value must be between %d and %d.', self::LEVEL_MIN, self::LEVEL_MAX));
-            }
-            $this->value = $value;
-        }
-    }
+    private int $value;
 
     public function __construct(
         int $channelId,
@@ -98,6 +91,7 @@ class ChannelLevel
     ) {
         $this->channelId = $channelId;
         $this->levelKey = $levelKey;
+        self::assertValidValue($value);
         $this->value = $value;
     }
 
@@ -118,11 +112,19 @@ class ChannelLevel
 
     public function updateLevelValue(int $value): void
     {
+        self::assertValidValue($value);
         $this->value = $value;
     }
 
     public static function getDefault(string $levelKey): int
     {
         return self::DEFAULTS[$levelKey] ?? 0;
+    }
+
+    private static function assertValidValue(int $value): void
+    {
+        if ($value < self::LEVEL_MIN || $value > self::LEVEL_MAX) {
+            throw new InvalidArgumentException(sprintf('Level value must be between %d and %d.', self::LEVEL_MIN, self::LEVEL_MAX));
+        }
     }
 }

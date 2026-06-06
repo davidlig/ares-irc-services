@@ -26,14 +26,7 @@ class Memo
 
     private int $senderNickId;
 
-    private string $message {
-        set(string $value) {
-            if (strlen($value) > self::MESSAGE_MAX_LENGTH) {
-                throw new InvalidArgumentException(sprintf('Message cannot exceed %d characters.', self::MESSAGE_MAX_LENGTH));
-            }
-            $this->message = $value;
-        }
-    }
+    private string $message;
 
     private DateTimeImmutable $createdAt;
 
@@ -54,6 +47,7 @@ class Memo
         $this->targetNickId = $targetNickId;
         $this->targetChannelId = $targetChannelId;
         $this->senderNickId = $senderNickId;
+        self::assertValidMessage($message);
         $this->message = $message;
         $this->createdAt = $createdAt ?? new DateTimeImmutable();
     }
@@ -101,5 +95,12 @@ class Memo
     public function markAsRead(?DateTimeImmutable $at = null): void
     {
         $this->readAt = $at ?? new DateTimeImmutable();
+    }
+
+    private static function assertValidMessage(string $message): void
+    {
+        if (strlen($message) > self::MESSAGE_MAX_LENGTH) {
+            throw new InvalidArgumentException(sprintf('Message cannot exceed %d characters.', self::MESSAGE_MAX_LENGTH));
+        }
     }
 }

@@ -37,14 +37,7 @@ class RegisteredChannel
 
     private ?string $email = null;
 
-    private string $entrymsg {
-        set(string $value) {
-            if (strlen($value) > self::ENTRYMSG_MAX_LENGTH) {
-                throw new InvalidArgumentException(sprintf('Entry message cannot exceed %d characters.', self::ENTRYMSG_MAX_LENGTH));
-            }
-            $this->entrymsg = $value;
-        }
-    }
+    private string $entrymsg;
 
     private bool $topicLock = false;
 
@@ -264,6 +257,7 @@ class RegisteredChannel
 
     public function updateEntrymsg(string $entrymsg): void
     {
+        self::assertValidEntrymsg($entrymsg);
         $this->entrymsg = $entrymsg;
     }
 
@@ -409,5 +403,12 @@ class RegisteredChannel
     public function changeNoExpire(bool $noExpire): void
     {
         $this->noExpire = $noExpire;
+    }
+
+    private static function assertValidEntrymsg(string $entrymsg): void
+    {
+        if (strlen($entrymsg) > self::ENTRYMSG_MAX_LENGTH) {
+            throw new InvalidArgumentException(sprintf('Entry message cannot exceed %d characters.', self::ENTRYMSG_MAX_LENGTH));
+        }
     }
 }

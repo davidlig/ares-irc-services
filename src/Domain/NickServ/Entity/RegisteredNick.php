@@ -47,25 +47,10 @@ class RegisteredNick
     private ?string $passwordHash;
 
     /** Null for FORBIDDEN entries. One email per account (unique across nicks). */
-    private ?string $email {
-        set(?string $value) {
-            if (null !== $value && false === filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                throw new InvalidArgumentException('Invalid email address.');
-            }
-            $this->email = $value;
-        }
-    }
+    private ?string $email;
 
     /** BCP-47 language tag: 'en', 'es', etc. */
-    private string $language {
-        set(string $value) {
-            $lang = strtolower($value);
-            if (!in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
-                throw new InvalidArgumentException(sprintf('Unsupported language "%s". Supported: %s.', $value, implode(', ', self::SUPPORTED_LANGUAGES)));
-            }
-            $this->language = $lang;
-        }
-    }
+    private string $language;
 
     /** Null for FORBIDDEN entries. */
     private ?DateTimeImmutable $registeredAt;
@@ -122,8 +107,9 @@ class RegisteredNick
         $nick->nicknameLower = strtolower($nickname);
         $nick->status = NickStatus::Pending;
         $nick->passwordHash = $passwordHash;
+        self::assertValidEmail($email);
         $nick->email = $email;
-        $nick->language = $language;
+        $nick->language = self::normalizeLanguage($language);
         $nick->registeredAt = new DateTimeImmutable();
         $nick->expiresAt = $expiresAt;
 
@@ -144,7 +130,7 @@ class RegisteredNick
         $nick->status = NickStatus::Forbidden;
         $nick->passwordHash = null;
         $nick->email = null;
-        $nick->language = $language;
+        $nick->language = self::normalizeLanguage($language);
         $nick->registeredAt = null;
         $nick->reason = $reason;
 
@@ -390,12 +376,13 @@ class RegisteredNick
 
     public function changeEmail(string $email): void
     {
+        self::assertValidEmail($email);
         $this->email = $email;
     }
 
     public function changeLanguage(string $language): void
     {
-        $this->language = $language;
+        $this->language = self::normalizeLanguage($language);
     }
 
     public function markSeen(): void
@@ -485,5 +472,22 @@ class RegisteredNick
         }
 
         return password_verify($plainPassword, $this->passwordHash);
+    }
+
+    private static function assertValidEmail(?string $email): void
+    {
+        if (null !== $email && false === filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Invalid email address.');
+        }
+    }
+
+    private static function normalizeLanguage(string $language): string
+    {
+        $lang = strtolower($language);
+        if (!in_array($lang, self::SUPPORTED_LANGUAGES, true)) {
+            throw new InvalidArgumentException(sprintf('Unsupported language "%s". Supported: %s.', $language, implode(', ', self::SUPPORTED_LANGUAGES)));
+        }
+
+        return $lang;
     }
 }

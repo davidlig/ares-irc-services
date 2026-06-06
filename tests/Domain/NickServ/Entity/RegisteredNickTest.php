@@ -300,6 +300,23 @@ final class RegisteredNickTest extends TestCase
     }
 
     #[Test]
+    public function updateForbiddenReasonRejectsNonForbiddenNick(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Cannot update forbidden reason on a non-forbidden account.');
+
+        $nick->updateForbiddenReason('New reason');
+    }
+
+    #[Test]
     public function expiredChecksPendingAndTimestamp(): void
     {
         $expired = RegisteredNick::createPending(
@@ -345,6 +362,22 @@ final class RegisteredNickTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         $nick->changeEmail('not-an-email');
+    }
+
+    #[Test]
+    public function changeEmailAcceptsValidEmail(): void
+    {
+        $nick = RegisteredNick::createPending(
+            'Nick',
+            'hash',
+            'user@example.com',
+            'en',
+            new DateTimeImmutable('+1 hour'),
+        );
+
+        $nick->changeEmail('new@example.com');
+
+        self::assertSame('new@example.com', $nick->getEmail());
     }
 
     #[Test]
