@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: composer install --no-progress --prefer-dist --optimize-autoloader
 
+      - name: Create DB directory
+        run: mkdir -p var/data
+
       - name: Lint container
         run: php bin/console lint:container
 
