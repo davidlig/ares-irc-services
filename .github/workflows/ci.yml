@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: PHP 8.5 — Lint, CS & Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: pcov
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Lint container
+        run: php bin/console lint:container
+
+      - name: Lint YAML
+        run: php bin/console lint:yaml . --exclude vendor/ --parse-tags
+
+      - name: Check coding standards
+        run: ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff
+
+      - name: Run tests with coverage
+        run: ./vendor/bin/phpunit --coverage-clover=var/coverage/clover.xml
+
+      - name: Check coverage threshold
+        run: ./scripts/check-coverage.sh 100

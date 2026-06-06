@@ -1,0 +1,579 @@
+## [1.0.0-alpha] - 2026-06-06
+
+### 🚀 Features
+
+- Scaffold DDD directory structure for IRC services
+- *(domain)* Add core IRC domain layer
+- *(application)* Add IRC client and connect use case
+- *(infrastructure)* Add socket connection and multi-protocol handlers
+- *(ui)* Add irc:connect console command
+- *(config)* Add IRC link environment variables and wire DI parameters
+- *(cli)* Make irc:connect arguments optional with .env fallbacks
+- *(logging)* Add structured logging with 30-day rotating log files
+- Track network users and channels from IRC protocol messages
+- *(nickserv)* Implement NickServ service with modular command architecture and i18n
+- *(nickserv)* Enforce nick protection on NICK changes to registered nicks
+- *(nickserv)* Refactor HELP with intro, short descriptions and SET sub-options
+- *(nickserv)* Improve HELP formatting, ordering, sub-option drill-down and colors
+- *(nickserv)* Skip re-identify if already authenticated; kill ghost on IDENTIFY
+- *(nickserv)* Record quit message with IRC origin; fix quit-tracking for nick changes
+- *(nickserv)* Detect already-identified sessions and inform user
+- *(nickserv)* Nick lifecycle states, maintenance scheduler, VERIFY/RESEND/STATUS
+- *(nickserv)* Implement two-step email change with token validation
+- Real email sending for NickServ and SQLite as default DB
+- *(irc)* Sync channel state from MODE, TOPIC (Unreal) and FJOIN, FMODE, LMODE, FTOPIC (InspIRCd)
+- *(nickserv)* Add SET VHOST for custom virtual host
+- *(nickserv)* Integrate Symfony Security Core for authorization
+- *(nickserv)* STATUS shows connection/identification state and INFO shows reason for suspended/forbidden
+- *(nickserv)* Throttle RESEND with configurable minimum interval
+- *(messenger)* Add async queue for maintenance and email, lifecycle-bound consumer
+- *(messenger)* Dedicated email queue and delay via middleware
+- *(mail)* Use network name as email sender display name
+- *(nickserv)* Enforce unique email per account (one email per nickname)
+- *(nickserv)* Throttle REGISTER by host/IP and fix InspIRCd UID parsing
+- *(maintenance)* Dedicated log channel, EOS gate, and extended cycle logging
+- *(nickserv)* Add timezone for date display (INFO) and SET TIMEZONE
+- *(nickserv)* Timezone help, central date formatting, and throttle fix
+- *(nickserv)* Add IDENTIFY lockout after repeated failed attempts
+- *(nickserv)* Add maintenance task to prune stale in-memory registries
+- *(irc)* Clean up user state on server delink (SQUIT)
+- *(nickserv)* Add vhost support and abstract server SID
+- *(nickserv)* Add vhost support with protocol-specific builders
+- *(nickserv)* Vhost validation, configurable suffix and unique constraint
+- *(nickserv)* Add RECOVER command and Helper SecureToken/EmailMasker
+- *(nickserv)* Add inactivity expiry for registered nicknames
+- *(nickserv)* Add SET MSG ON|OFF for NOTICE vs PRIVMSG preference
+- *(protocol)* Add channel service actions and mode support for ChanServ
+- *(chanserv)* Add ChanServ module
+- *(ChanServ)* Defer topic persistence to DB until channel sync completed
+- *(ChanServ)* Apply channel setup (+r, MLOCK, topic) only on link or when channel was empty
+- *(chanserv)* Update channel last used on join and leave (PART/KICK/QUIT)
+- *(ChanServ)* Allow DEOP, DEVOICE, DEHALFOP, DEADMIN on self when user has access
+- *(chanserv)* Send ENTRYMSG notice on user join
+- *(nickserv,chanserv)* Unify HELP design and improve command descriptions
+- *(chanserv)* SET optional value, founder/successor rules, INFO order, founder email
+- *(chanserv)* Add DELACCESS command to remove own access from channel
+- *(nickserv)* Add channel list to INFO command for identified users
+- *(chanserv)* Add max channels per nick limit
+- *(chanserv)* Add cooldown between channel registrations
+- *(chanserv)* Add channel expiration by inactivity (default 45 days)
+- *(chanserv)* Add MEMOREAD and MEMOCHANGE to LEVELS for MemoServ
+- *(memoserv)* Add MemoServ memo service for nicknames and channels
+- *(memoserv)* Add message length limit, cannot send to self, notify recipient if online
+- *(memoserv)* Use message/mensaje in user-facing strings, translate service disabled, update ignored copy
+- *(memoserv)* LIST shows sender nick in blue and date per line
+- *(memoserv)* Notify pending messages on NickServ identify
+- *(memoserv)* Add configurable ignore list limit per nick and channel
+- Add tests and tooling for code coverage
+- *(ChanServ)* Introduce ChanServDispatchPort for testability
+- Add tests to improve coverage (ChanServ, MemoServ, NickServ)
+- Add HELP command for OperServ
+- *(OperServ)* Add protected roles migration and show role description in ROLE LIST
+- *(chanserv)* Add AKICK command with dangerous mask protection
+- *(chanserv)* Protect users with access from AKICK
+- *(chanserv)* Improve ACCESS LIST output format
+- *(chanserv)* Improve AKICK LIST output format
+- *(chanserv)* Update AKICK list format to remove colon and dash
+- *(chanserv)* Remove AKICK ENFORCE subcommand and make ban application burst-aware
+- *(chanserv)* AKICK ADD now kicks matching users from channel
+- *(chanserv)* Enforce AKICKs after burst completion
+- *(services)* Reserve service nicks before bot introduction
+- *(services)* Dynamic service nickname registry for configurable bot names
+- *(chanserv)* Add +P (permanent) channel mode support for registered channels
+- *(ctcp)* Add CTCP VERSION response with ASCII art tribute
+- *(chanserv)* Add LEVEL_UNREGISTERED (-1) for non-identified users
+- *(security)* Add unified permission voters infrastructure for IRCOP commands
+- *(security)* Add PermissionProviderInterface and per-service permission classes
+- *(operserv)* ROLE PERMS LIST now shows assigned and available permissions
+- *(operserv)* Implement IRCOP role mode synchronization on role changes and user de-identification
+- Add NickDropEvent cleanup subscribers for ChanServ and OperServ
+- Add migration to make channel_akick.creator_nick_id nullable
+- *(operserv)* Show permission descriptions in ROLE PERMS LIST
+- *(operserv)* Add ROLE VHOST command for forced vhost patterns
+- *(OperServ)* GLOBAL allows service nick, pseudo-client disconnects after message
+- *(OperServ)* GLOBAL uses existing service UID instead of creating pseudo-client
+- *(OperServ)* GLOBAL accepts service name without mask, updates help
+- *(OperServ)* Add debug action logging to GLOBAL command
+- *(OperServ)* GLOBAL-specific debug message format
+- *(audit)* Add automatic IRCop command audit logging system
+- *(nickserv)* Add IRCop HELP section with permission filtering and USERIP command
+- *(nickserv)* Add SUSPEND command with automatic rename for IRCops
+- *(nickserv)* Add RENAME IRCop command
+- *(nickserv)* Add DROP IRCop command and refactor nick cleanup
+- Add Docker containerization with automatic config sync
+- *(nickserv)* Prevent registration of nicks starting with guest prefix
+- *(nickserv)* Allow IRCops to drop pending nicks
+- *(nickserv)* Add FORBID/UNFORBID commands with NickTargetValidator refactoring
+- *(nickserv)* Apply SQLINE/QLINE on FORBID and remove on UNFORBID
+- Add nickserv.set permission for IRCops
+- *(nickserv)* Add FORBIDVHOST command for IRCops
+- *(nickserv)* Add SASET command and per-service debug notifications
+- *(nickserv)* Add NOEXPIRE command for IRCops
+- *(nickserv)* Add HISTORY command for tracking nickname actions
+- *(nickserv)* Show last connection IP/host in INFO for IRCops
+- *(chanserv)* Add DROP command with IRCop permission integration
+- *(chanserv)* Add channel suspension domain model
+- *(chanserv)* Add SUSPEND/UNSUSPEND commands and enforce suspension
+- *(operserv)* Resolve permission descriptions from each service's translation domain
+- *(chanserv)* Log UNSUSPEND to debug notifier on channel unsuspend
+- *(chanserv)* Add suspension notice and unsuspend reason translations
+- *(chanserv)* Add forbidden channel domain model
+- *(chanserv)* Add FORBID/UNFORBID commands and application services
+- *(chanserv)* Add forbidden channel enforcement subscribers and protocol support
+- *(chanserv)* Add FORBID/UNFORBID translations (en/es)
+- *(chanserv)* Add level_founder permission and forbidden channel enforcement
+- *(chanserv)* Add allowsForbiddenChannel() to commands that operate on forbidden channels
+- *(chanserv)* Add usesLevelFounder() to ChanServCommandInterface and all handlers
+- *(chanserv)* Add level_founder audit dispatch with decodeIp() in ChanServService
+- *(chanserv)* Add option/value/founder_action formatting to ChanServDebugNotifier
+- *(chanserv)* Add debug translations for level_founder audit (en+es)
+- *(chanserv)* Add NOEXPIRE IRCop command for channels
+- *(chanserv)* Add HISTORY IRCop command for channel audit trail
+- Make history view limit configurable and change Extra format to arrow
+- *(chanserv)* Add CLEARUSERS IRCop command to kick all users from a channel
+- *(chanserv)* Add CLEARACCESS IRCop command to clear channel access list
+- *(chanserv)* Add channel drop subscriber to cascade delete access entries
+- *(inspircd)* Add InspIRCdCapab VO and ChannelModeSupportFactory
+- *(inspircd)* Parse remote CAPAB to build dynamic channel mode support
+- *(docker)* Improve build with dynamic UID, pcntl extension and config validation
+- Add OperServ RAW command for sending raw IRCd protocol lines
+- *(docker)* Add MariaDB/MySQL support with pdo_mysql extension
+- *(operserv)* Restrict HELP to IRCops and reorder GLOBAL before RAW
+- *(antiflood)* Add command rate limiting with single lockout notice
+- *(antiflood)* Log blocked users to IRCops debug channel
+- *(oper)* Add MOTD command with ADD/DEL/LIST/CLEAN and on-connect delivery
+- *(irc)* Per-service per-protocol umodes for service introduction
+- *(i18n)* Add 12 new languages bringing total to 14
+- *(i18n)* Add 72 translation files for 12 new languages
+- *(nickserv)* Allow SET LANGUAGE for unregistered users via temporary session
+- *(i18n)* Display one language per line in SET LANGUAGE help output
+- *(nickserv)* Add preferred language to INFO output and realign all INFO labels across 14 languages
+- *(operserv)* Track MOTD delivery counts
+- *(nickserv,chanserv)* Add recoverable manual DROP with configurable grace period
+
+### 🐛 Bug Fixes
+
+- *(config)* Remove abstract tag from AbstractProtocolHandler in services.yaml
+- *(protocol)* Correct UnrealIRCd 4.x+ handshake to avoid LINK_OLD_PROTOCOL
+- *(protocol)* Handle PING/PONG and EOS to keep server link alive
+- Add DEFAULT_URI to silence symfony/router framework warning in CLI
+- *(nickserv)* Resolve circular dependency, SVSLOGIN, burst protection and misc bugs
+- *(i18n)* Correct parameter wrapping and IRC formatting in translations
+- *(nickserv)* Use SVS2MODE +r for authentication and fix UnrealIRCd integration
+- *(nickserv)* Correct IRC color bug, mandatory IDENTIFY nick, hide passwords in logs
+- *(nickserv)* Translate KILL reason using target language; include source nick
+- *(irc)* Inject MaintenanceScheduler into IRCClientFactory
+- Remove readonly from mutable in-memory registries
+- *(nickserv)* Show 'now online' only when user is identified (+r)
+- *(nickserv)* Enforce nick protection on nick change and hide email/vhost when not identified
+- *(irc)* Update in-memory user nick in repository on nick change
+- *(nickserv)* Nick protection on /nick and after IDENTIFY
+- Skip nick protection when UID is in identified session registry
+- *(config)* Use parameter for MAILER_SEND_DELAY_SECONDS env default
+- *(cli)* Handle SIGHUP so consumer is stopped when terminal is closed
+- *(messenger)* Apply email delay only in consumer, not when dispatching
+- Apply +r locally after IDENTIFY/VERIFY so SET and STATUS see user as identified
+- Build listener map in method to avoid readonly property modification
+- *(nickserv)* Clear vhost when user loses +r (e.g. on nick change)
+- *(nickserv)* Apply or clear vhost on IDENTIFY to another account
+- *(nickserv)* Clear vhost for non-identified users on burst/join
+- *(ChanServ)* Only send NOTICE to channel if it exists and has at least one user
+- *(ChanServ)* SECURE strips excess rank so user keeps only max allowed by access level
+- *(NickServ)* Skip CHGHOST when requested host equals current display host
+- *(NickServ)* Always send vhost clear on de-identify
+- Add missing ChannelLevel import in OpCommand handler
+- *(chanserv)* SECURE min level for rank grant, sender > target for rank removal, translate insufficient access
+- *(chanserv)* Avoid double parentheses in MLOCK no-modes message
+- *(chanserv)* Sync Core channel state when services send MODE for MLOCK
+- *(chanserv)* Strip all prefix ranks above desired on founder change and sync
+- Remove unused imports in InfoCommand and fix docblock formatting
+- Move CHANSERV_INACTIVITY_EXPIRY_DAYS to ChanServ section in .env
+- *(memoserv)* Flush single memo entity in repository save
+- *(tests)* Resolve PHPUnit 13 deprecations (with without expects, any())
+- *(tests)* Add expects for ChannelServiceActionsPort in ChanServTopicSyncSubscriberTest
+- *(tests)* Replace expects(any()) with concrete counts to fix PHPUnit 13 deprecations
+- Remove PHPUnit Notices in NickServBotTest by using stubs
+- Move already_admin and role_changed to correct YAML nesting level
+- Show OperServ commands only to ROOT users in HELP
+- Update translations header format to match other services
+- Align OperServ translations with ChanServ/NickServ format
+- Use isRoot() instead of isOper for OperServ HELP access check
+- Apply SECURE strip on channels synced via SJOIN
+- Inject %bot% placeholder in all translation calls
+- Remove unsupported source attributes from phpunit config
+- Skip vhost clear when user has no custom vhost set
+- *(chanserv)* Allow nick-specific AKICK masks with fewer than 4 chars
+- *(i18n)* Use translation key for 'No reason' in AKICK notice
+- *(chanserv)* Change AKICK ADD argument order
+- *(chanserv)* Remove 'never' from AKICK expiry, use '0' for permanent
+- *(test)* Make RegisterThrottleRegistry test deterministic
+- *(test)* Remove flaky timing test, use deterministic test instead
+- *(chanserv)* Treat invalid expiry as reason, not as permanent
+- *(chanserv)* Require valid expiry format if argument provided
+- *(tests)* Update AkickCommand tests after ENFORCE removal
+- *(chanserv)* Replace expired AKICK instead of rejecting
+- Add missing mock expectations to eliminate PHPUnit notices
+- *(mlock)* Preserve +P (permanent) channel mode during MLOCK enforcement
+- *(mlock)* Conditionally preserve +r and +P modes based on IRCd support
+- *(chanserv)* Check if +r already present before sending MODE
+- *(di)* Use correct service names for authorization in OperServ
+- *(operserv)* Only apply missing IRCOP modes on identify
+- *(operserv)* Update local NetworkUser state after applying/removing IRCOP modes
+- *(operserv)* Dispatch NickIdentifiedEvent on auto-identify
+- Show 'unknown' for AKICK creator when nick is dropped
+- *(operserv)* Expose KILL permission in OperServIrcopPermission
+- *(voter)* Use lowercase dot notation for IRCOP permissions
+- *(nickserv)* Respect forced vhost from IRCop roles over personal vhost
+- *(nickserv)* Prevent double vhost application during IDENTIFY
+- *(operserv)* Restore personal vhost when forced vhost removed from role
+- *(tests)* Use expects() with with() in mocks to avoid PHPUnit deprecations
+- *(nickserv)* Update NetworkUser vhost state after sending CHGHOST
+- *(operserv)* Allow GLINE masks with specific user and wildcard host
+- *(OperServ)* GLOBAL command now includes sender in broadcast
+- *(config)* Remove serviceNicks argument from GlobalCommand service definition
+- *(OperServ)* GLOBAL detects service nickname in mask format
+- *(OperServ)* Debug message format for commands without duration
+- *(OperServ)* Use generic debug format with prefixed reason
+- *(OperServ)* Use translations for debug reason prefix
+- *(chanserv)* Apply +r (registered) mode on channel registration
+- *(test)* Remove AllowMockObjectsWithoutExpectations from OperServCommandListenerTest
+- *(test)* Update HelpFormatterContextAdapterTest for new constructor signature
+- *(nickserv)* Implement AuditableCommandInterface in USERIP for proper audit logging
+- *(test)* Add tests for getIrcopCommands() and hasIrcopAccess() methods
+- *(test)* Achieve 100% coverage for HelpFormatterContextAdapter and fix race conditions
+- *(test)* Separate HelpFormatterContextAdapterIrcopTest to achieve 100% coverage
+- *(chanserv)* Exclude +P permanent mode from MLOCK capture
+- Kick unauthorized users from IRCOPS_DEBUG_CHANNEL during burst
+- *(i18n)* Align column spacing in STATUS suspended_until translation
+- *(i18n)* Rename 'Suspendido hasta' to 'Fecha fin' in STATUS/INFO translations
+- *(i18n)* Align columns and normalize whitespace in nickserv.es.yaml
+- *(tests)* Use createStub for dependencies without expectations
+- Pass %bot% placeholder to email subject translations
+- *(mail)* Use %bot% placeholder instead of %nickserv%/%chanserv% in emails
+- *(nickserv)* Remove 'manual drop' reason from DROP command audit
+- *(audit)* Only dispatch IRCop command event when auditData is not null
+- *(tests)* Add full audit properties coverage in service tests
+- Remove duplicate 'protection' key in translation files
+- Use reason field in IrcopAuditData for FORBID command
+- Pass nickname to protection.nick_forbidden translation
+- Handle forbidden nicks during burst by integrating into NickProtectionService
+- Restore HELP translations and fix IRCop vhost bug
+- SET command should not be oper-only
+- Remove duplicate footer in IRCop commands section
+- Prevent SET VHOST for users with forced vhost from IRCop role
+- Change 'tu cuenta' to 'tu nickname' in Spanish translations
+- Replace remaining 'account' with 'nickname' in translations
+- *(nickserv)* Use 'option' key in NOEXPIRE audit data
+- *(nickserv)* Show option in debug message for toggle commands
+- *(chanserv)* Restore channel modes on unsuspend by running maintenance synchronously
+- Always log DROP actions to debug notifier, not only manual drops
+- Use IRC_SERVER_NAME as operator in maintenance tasks instead of wildcard
+- *(chanserv)* Forbid level_founder bypass on forbidden channels and add missing translation key
+- Keep 'Extra' label with orange arrow in history format
+- InspIRCd S2S link protocol implementation
+- Replace SVS2MODE/SVSMODE with InspIRCd-native METADATA and MODE commands
+- *(inspircd)* Correct InspIRCd 4.x protocol handling for UID, METADATA and vhost
+- Use hrtime instead of time() for sleep assertion in EmailDelayMiddlewareTest
+- *(inspircd)* Fix KICK S2S format and IRCOPS debug channel protection
+- Use FMODE with service UID for InspIRCd channel mode enforcement
+- *(chanserv)* Hide topic in INFO when channel has +s or +p mode
+- *(inspircd)* Use service UID as FTOPIC source instead of server SID
+- *(chanserv)* Show topic author in INFO command for InspIRCd
+- *(migrations)* Use modifyColumn instead of changeColumn in Version20260328184511
+- *(migrations)* Remove duplicate no_expire column from Version20260411035026
+- *(chanserv)* Exempt IRCOP/ROOT from throttle and channel limit on REGISTER
+- *(security)* Prevent IP exposure in CHGHOST when clearing vhost
+- *(operserv)* Reject non-IRCops before showing syntax on oper-only commands
+- *(antiflood)* Exempt IRCops from shared IP bucket so they are never blocked
+- *(antiflood)* Exempt root admins from rate limiting, not just server IRCops
+- *(antiflood)* Show human-readable IP in debug channel and exempt root admins
+- Multiple critical IRC protocol bugs and 100% test coverage
+- InspIRCd INVITE requires timestamp and re-enforce MLOCK/+r/topic on every channel sync
+- Apply registered channel modes/MLOCK/topic/rank on IRCOPS_DEBUG_CHANNEL when ChanServ creates it but it was missing from IRCd burst
+- Always apply stored topic when channel is new or was empty
+- Track service-joined channels locally so INVITE and other commands use correct channel timestamp
+- *(oper)* Update MOTD syntax translations
+- *(chanserv)* Update channel lastUsed on ChannelSyncedEvent during burst
+- *(test)* Update unsupported-language assertions for 14-language set
+- *(nickserv)* Correct info.language padding misalignment across all 14 languages
+- *(operserv)* Auto-create permissions from registry on ROLE PERMS ADD, add ALL/CLEAR subcommands
+- *(i18n)* Align command syntax brackets with AGENTS.md rules across all 14 languages
+- *(operserv)* Supply snomask parameter when setting +s mode on InspIRCd
+- *(operserv)* Use +* as default snomask to avoid opertype permission errors
+- *(nickserv)* Add missing SASET translation block to 13 languages
+- *(inspircd)* Remove ircop-only user modes that require IRCd-side config
+- *(protocol)* Resolve IRCd compatibility inconsistencies
+- *(irc)* Preserve ChanServ rank on debug channel burst
+- *(operserv)* Join MOTD debug bots without rank
+- *(chanserv)* Require channel rank for registration
+- *(nickserv)* Restore nick after pending guest rename
+- *(nickserv)* Block commands for accounts in pending deletion state
+- *(chanserv)* Deny auto-ranks for nicks in pending deletion state
+- *(nickserv)* Invalidate identification session on DROP
+- *(chanserv)* Deny desired rank for suspended and pending deletion nick accounts
+- *(chanserv)* Strip ranks for non-identified users on secure channels
+- *(security)* Close 5 auth bypass vectors in nick/channel protection
+- Pending_deletion STATUS translations, format and alignment
+
+### 💼 Other
+
+- *(nickserv)* Add resend.throttled message for RESEND rate limit
+- *(chanserv)* Move INVITE after LEVELS in help command list
+- *(chanserv)* Move HALFOP/DEHALFOP before VOICE/DEVOICE in help command list
+- *(chanserv)* Move INFO after REGISTER in help command list
+- *(nickserv)* Place INFO after SET, STATUS after INFO in help command list
+
+### 🚜 Refactor
+
+- *(maintenance)* Rename env var to generic MAINTENANCE_INTERVAL
+- Apply .cursorrules and add property hooks to RegisteredNick
+- *(irc)* Separate protocol adapters from network state persistence
+- *(domain)* Make Uid protocol-agnostic
+- *(events)* Align subscriber priorities with Symfony 7.4 docs
+- Remove non-documentation comments from source
+- *(nickserv)* Extract methods in InfoCommand for clarity
+- Decouple domain from Doctrine, split SetCommand, add NickProtectionService, remove repos from IRC adapters
+- Decouple IRCd protocol from services core
+- Decouple services from core via ports and Service Command Gateway
+- *(nickserv)* Sync vhost for identified users on connect via dedicated service
+- One protocol module per IRCd type, remove generic delegators
+- *(irc)* Dispatch ChannelSyncedEvent before UserJoinedChannelEvent
+- *(services)* Move SET handlers into command namespace
+- *(irc)* Normalize adapter housekeeping changes
+- Align codebase with .cursorrules (Core/Services, readonly, ports, entity methods)
+- *(chanserv)* Batch channel rank MODE and strip only actual prefix letters
+- Apply .cursorrules (memory, priorities, final/readonly, Yoda, SRP)
+- Make IRCEventSubscriber final readonly
+- Extract validateAddArgs, ensureCanAddAccess, performAddAccess in AccessCommand
+- Add resolveMemberContext and applySecureStripOnJoin in ChanServChannelRankSubscriber
+- Unify HELP design with UnifiedHelpFormatter and adapters
+- Reorganize .env with grouped sections by service
+- *(tests)* Remove AllowMockObjectsWithoutExpectations, use stubs and expects
+- Annotate unreachable code with @codeCoverageIgnore
+- Use PASSWORD_DEFAULT instead of fixed Argon2id algorithm
+- Fix AGENTS.md violations and improve architecture
+- Use PHP 8.4 property hooks for entity validation
+- Split AGENTS.md into modular skills
+- Remove all default permissions from OperServ roles
+- Remove hardcoded roles - all roles stored in database only
+- Rename AdminAccessHelper to IrcopAccessHelper
+- Rename OperAdmin to OperIrcop throughout codebase
+- Consolidate 13 fragmented migrations into single baseline schema
+- *(chanserv)* Use translation keys for ACCESS LIST and AKICK LIST output
+- Abstract +r and +P mode letters to protocol-specific configuration
+- Unify string concatenation and introduce UserMask ValueObject
+- Add typed constants for PHP 8.4+ compliance
+- Replace signature colors with red hearts using unicode escape
+- *(services)* Migrate ChanServ and MemoServ to voter-based authorization
+- *(services)* Migrate OperServ to voter-based authorization
+- *(security)* Empty permission lists until commands are implemented
+- *(security)* Remove unused permission constants and update docs
+- *(security)* Remove OperServ permission constants until commands are implemented
+- Introduce NickForceService for unified guest nick forcing
+- *(env)* Rename IRC_SERVICES_HOST to IRC_SERVICES_VHOST
+- *(test)* Use #[Test] attribute instead of test prefix
+- Unify FORBIDVHOST LIST format with ChanServ LIST commands
+- Remove '(IRCop only)' suffix from permission translations
+- *(translations)* Standardize terminology and placeholders
+- *(nickserv)* Change history entry format to use # prefix
+- *(security)* Extract permission constants to dedicated classes
+- *(chanserv)* Replace kick-all with channel notice on suspension
+- Reorder IRCop command display order in ChanServ and NickServ
+- *(chanserv)* Simplify topic lock check in ChanServTopicSyncSubscriber
+- Remove all references to Anope from source code and docs
+- *(migrations)* Rewrite all migrations to use Doctrine Schema API for SQLite/MariaDB compatibility
+- Auto-generate service UIDs on burst instead of hardcoding in .env
+- Reorganize .agents/ skills and slim AGENTS.md (488→133 lines)
+- *(i18n)* Replace nickname/nick/nicks with apodo/apodos in Spanish translations for terminological consistency
+- Centralize relative expiry parsing
+- Enforce max 3 returns, PHP 8.4 array functions, fix auth bypass bugs
+- Enforce architecture boundaries
+
+### 📚 Documentation
+
+- Add README with installation and configuration guide
+- Add CC BY-NC 4.0 license with attribution integrity
+- Document PHP extensions and stack in README
+- Set Unreal 6.2.2 and InspIRCd 4.9.0 in README
+- Update architecture and running docs
+- Add AGENTS.md for agentic coding guidelines
+- Expand AGENTS.md with full rules, remove .cursorrules from .gitignore
+- Sync README Architecture section with current codebase structure
+- Update README architecture and MemoServ docs
+- Document PHPUnit test suite
+- Add .agents structure by type and remove testing section from README
+- Update testing-coverage-priorities with current coverage and covered list
+- Update testing-coverage Summary (795 tests, 1884 assertions, coverage %)
+- Update testing Summary (823 tests, 1960 assertions)
+- Require running php-cs-fixer before every commit
+- Update testing summary to 878 tests, 2068 assertions
+- Add CRITICAL RULE for test doubles and mocks in testing README
+- Add Agent 5 division and commands to testing-coverage-priorities
+- Use English only in markdown; add Division by Agents section
+- Add mandatory 100% test coverage rule (NON-NEGOTIABLE)
+- Use scripts/check-coverage.sh for coverage verification in AGENTS.md
+- *(services)* Add IRCOP commands permission system documentation
+- *(services)* Add commands.md skill for IRC service commands
+- *(agents)* Update skills table with all available skill files
+- *(agents)* Add parallel execution workflow to AGENTS.md and skill files
+- *(agents)* Reorganize pre-commit verification order
+- Simplify README.md for production use
+- *(agents)* Add php -l syntax check as first verification step
+- *(agents)* Add Golden Rules section for mandatory parallelization
+- *(agents)* Update IRCop and ChanServ command docs for level_founder and forbidden channel rules
+- *(agents)* Update documentation for level_founder audit and translation rules
+- Add ChanServ HISTORY command documentation and env config
+- Change license from CC-BY-NC-4.0 to AGPL-3.0-or-later and remove ChanServ HISTORY section from README
+- Add test server links for trying the bots
+- Rewrite README.md with full command reference and i18n docs, reorganize .env
+- Add live MCP validation guidance
+
+### ⚡ Performance
+
+- O(1) findByNick and O(user channels) on QUIT
+
+### 🎨 Styling
+
+- *(nickserv)* Info symbol in help header; fix blank lines between sections
+- *(nickserv)* Color commands green (\x0303) in all user-facing messages
+- Apply PHP-CS-Fixer to codebase
+- Add strict_types declaration to config reference
+- Add type declarations to class constants
+- Apply PHP CS Fixer to HelpCommand (Yoda, use function strlen)
+- Apply php-cs-fixer to test files
+- Apply php-cs-fixer formatting
+- Improve php-cs-fixer rules for PHP 8.5
+
+### 🧪 Testing
+
+- Adjust PHPUnit coverage configuration
+- Add unit tests for Domain layer
+- Add unit tests for Application layer
+- Add unit tests for Infrastructure layer
+- Add unit tests for NickServ command handlers
+- Add unit tests for ChanServ command handlers
+- Add unit tests for MemoServ command handlers
+- Add unit tests for remaining NickServ command handlers
+- Add unit tests for remaining ChanServ command handlers
+- Add unit tests for MemoServ command handlers
+- Add UI ConnectCommand and ConnectToServerHandler tests
+- Add protocol handler tests for Unreal and InspIRCd
+- Add subscriber, voter, and integration tests to improve coverage
+- Add coverage tests for complex subscribers and bots
+- Add RegisteredNickDoctrineRepository tests for findRegisteredInactiveSince and deleteExpiredPending
+- Add missing Infrastructure subscriber and bridge tests
+- Add IRCClientTest for connection loop and lifecycle
+- Add SymfonyAuthorizationCheckerAdapterTest, update coverage Summary
+- Add Connection layer tests (ActiveConnectionHolder, SocketConnectionFactory, SocketConnection)
+- Add IRCClientFactoryTest
+- Simplify redundant tests (SymfonyAuthorizationCheckerAdapter, SocketConnectionFactory)
+- Add ServiceBridge and SyncCompleteDispatcher tests
+- Add ProtocolHandlerRegistry, ProtocolNetworkStateRouter, and extend adapter/gateway tests
+- Extend ChanServAccessHelper coverage
+- Add IdentifiedSessionRegistry, IdentifyFailedAttemptRegistry, PendingEmailChangeRegistry, BurstState tests
+- Add TimezoneHelpProvider edges, NickServPermission, ChannelDropEvent, NickIdentifiedEvent
+- ChanServAccessHelper canManageLevel returns false when level not strictly higher
+- Extend ChannelAccess, IdentifyFailedAttemptRegistry, UnifiedHelpFormatter coverage
+- RecoveryTokenRegistry consume missing nick, ChannelRegisterThrottleRegistry cooldown; docs: update test count
+- ChanServService dispatch guards (operOnly, notIdentified, syntax), UnifiedHelpFormatter omit HELP in general list; docs: update test count
+- NickServService and MemoServService dispatch guards (empty, operOnly, notIdentified, syntax); docs: update test count
+- ChanServAccessHelper getDesiredPrefixLetter (a,h,v,empty), UnifiedHelpFormatter shouldShowCommandInGeneralHelp; docs: update test count
+- EmailMasker mask empty local part; docs: update test count
+- MlockStateFromChannelResolver skips disallowed letters, omits empty param, deduplicates; docs: update test count
+- SecureToken hex(0) returns empty string; docs: update test count
+- ChannelName equals false, VhostValidator max length boundary; docs: update test count
+- Uid max length boundary, Nick equals false; docs: update test count
+- ChannelMemberRole fromSjoinEntry no prefix, highestRoleFromLetters single and unknown; docs: update test count
+- HelpCommand oneArg command help, general help with inactivity expiry; docs: update test count
+- HelpCommand HELP cmd sub shows subcommand help; docs: update test count
+- HelpCommand unknown sub falls back to command help; docs: update test count
+- InviteCommand when sender null completes without sending invite; docs: update test count
+- *(ChanServ)* Extend Domain ChanServ coverage with boundary and default cases
+- *(Domain/IRC)* Complete coverage for Channel, ChannelMember, ChannelMemberRole, NetworkUser
+- *(NickServ)* Extend Domain NickServ tests coverage
+- *(Application/Helper)* Add edge-case tests for EmailMasker and SecureToken
+- *(Application/Port)* Add ChannelView test for members, timestamp and modeParams
+- *(MemoServ)* Add MemoServContext and HelpFormatterContextAdapter tests
+- *(Application/Shared)* Extend UnifiedHelpFormatter coverage
+- *(Infrastructure/Messenger)* Add ConsumerProcessManagerTest
+- *(ChanServ)* Add tests for context, handlers, listener and maintenance
+- *(IRC)* Add IRCClient maintenance cycle dispatch tests
+- *(Mail)* Extend SendEmail, SendEmailHandler and add SymfonyMailerAdapter tests
+- *(Maintenance)* Extend MaintenanceScheduler and RunMaintenanceCycleHandler tests
+- *(MemoServ)* Extend domain entity and exception tests
+- *(Infrastructure)* Add NickServ/MemoServ listener tests and fix DoctrineIdentityMapClear
+- Add coverage for NickServ context, services, maintenance and IRC network
+- Add coverage for classes below 100%
+- Add AllowMockObjectsWithoutExpectations to fix PHPUnit 13 notices
+- Add coverage for NickStatus, RunMaintenanceCycle, SocketConnection, MemoDoctrineRepository
+- Improve coverage for AccessCommand, ChanServService, NickProtectionService, adapters and enricher
+- Add NickServBot coverage (sendMessage, setUserAccount)
+- *(Agent 4)* Extend IRC Core coverage for adapters and NetworkEventEnricher
+- *(MemoServ)* Improve coverage for Agent 3 (HelpCommand, ListCommand, DelCommand, throttle, bot)
+- Increase Application layer coverage from 68% to 80%
+- Improve coverage from 85% to 95% and fix deprecations
+- Fix PHPUnit notices (0 remaining)
+- Add coverage for StatusCommand, SetEmailHandler, DeopCommand
+- Improve coverage from 97.50% to 98.11% lines
+- *(NickServBot)* Cover setUserVhost when not connected (writeToConnection false)
+- Update phpunit config and test suites (ChanServ, NickServ)
+- Improve test coverage to 99.06% lines (2157 tests, 5846 assertions)
+- Improve coverage to 99.56% lines (2203 tests, 6474 assertions)
+- Improve coverage to 99.61% lines (2207 tests, 6514 assertions)
+- Achieve 100% code coverage
+- Add OperServ command tests (HelpCommand, IrcopCommand, RoleCommand)
+- *(OperServ)* Add complete test coverage for OperServ module
+- Achieve 100% test coverage
+- *(chanserv)* Complete 100% test coverage for AkickCommand
+- *(chanserv)* Complete 100% test coverage for ChannelAkick entity
+- *(chanserv)* Achieve 100% test coverage for AkickCommand
+- Achieve 100% coverage for ChanServAkickEnforceSubscriber and AkickCommand
+- Add tests for getSender() and getSenderAccount() in Context classes
+- Complete coverage for IrcopContextInterface and permission branches
+- Achieve 100% test coverage for services and command handlers
+- Add coverage for non-auditable handler with permission check
+- Add IRCop mode tests for SetVhostHandler
+- Add test for option without value in debug notifier
+- *(chanserv)* Add 100% coverage for SUSPEND/UNSUSPEND feature
+- *(chanserv)* Add level_founder audit tests and usesLevelFounder verification
+- *(inspircd)* Add tests for InspIRCdCapab and ChannelModeSupportFactory
+- *(inspircd)* Update existing tests for dynamic channel mode support
+- Update getOrder assertions for reordered ChanServ/NickServ commands
+- *(infrastructure)* Add buildModeParams coverage for InspIRCd and UnrealIRCd UserModeSupport
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove Controller directory and simplify routing config
+- *(protocol)* Align PROTOCTL capabilities with Anope's set
+- Add PHP-CS-Fixer and dev config
+- Align generated reference config with Symfony output
+- *(php-cs-fixer)* Remove redundant comments
+- *(config)* Add NICKSERV_RESEND_MIN_INTERVAL and nickserv.resend_min_interval
+- Apply php-cs-fixer config, reference and NickServ handler updates
+- Add Symfony Messenger and doctrine transport config
+- Unify IRC SID to IRC_SERVER_SID in .env
+- Update composer.json (license, name, version constraints)
+- Update config reference schema
+- Remove unused src/Entity and src/Repository directories
+- Exclude doctrine channel from app log to reduce noise
+- *(nickserv)* Do not log NOTICE output to irc channel
+- Extend NickServ repository and notifier, add mail translations
+- Add ChanServ env variables to .env
+- Update config reference
+- Exclude config/reference.php from php-cs-fixer via notPath
+- Add .vscode to gitignore
+- *(test)* Add phpunit setup and test env config
+- Update .gitignore — remove /.roo/, use /docs/
+- Update dependencies (symfony 7.4.7, doctrine/dbal 4.4.3)
+- Update dependencies (phpunit 13.0.6, symfony 7.4.8)
+- Set APP_ENV to prod
+- Ignore backups/ directory
+- Change NICKSERV_GUEST_PREFIX to Ares-
+- Change default language to English and update README accordingly
+- *(opencode)* Add project MCP config
+- Target PHP 8.5 runtime
+- Configure code review graph
+
+### ◀️ Revert
+
+- Undo PHPUnit notices cleanup
