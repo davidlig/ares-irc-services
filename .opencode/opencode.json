@@ -18,6 +18,15 @@
         "-c",
         "set -a; . ./.opencode/mcp.env; set +a; exec npx -y @oleander/mcp-server-mariadb"
       ]
+    },
+    "code-review-graph": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "sh",
+        "-c",
+        "exec ./.venv/bin/python3 -m code_review_graph serve"
+      ]
     }
   }
 }
