@@ -5,6 +5,7 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue.svg)](LICENSE)
 [![Coverage](https://codecov.io/gh/davidlig/ares-irc-services/branch/main/graph/badge.svg)](https://codecov.io/gh/davidlig/ares-irc-services)
 [![Release](https://img.shields.io/github/v/release/davidlig/ares-irc-services?include_prereleases&label=release)](https://github.com/davidlig/ares-irc-services/releases)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/davidlig/ares-irc-services)
 
 > **Under active development.** Functionality and APIs may change.
 
