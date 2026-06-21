@@ -68,6 +68,27 @@ final class PendingNickRestoreRegistryTest extends TestCase
     }
 
     #[Test]
+    public function multipleMarksOnSameUidRequireMultipleConsumes(): void
+    {
+        $this->registry->mark('001ABCD');
+        $this->registry->mark('001ABCD');
+
+        // Peek returns true while there are pending tokens
+        self::assertTrue($this->registry->peek('001ABCD'));
+
+        // First consume: still pending after
+        self::assertTrue($this->registry->consume('001ABCD'));
+        self::assertTrue($this->registry->peek('001ABCD'));
+
+        // Second consume: fully consumed
+        self::assertTrue($this->registry->consume('001ABCD'));
+        self::assertFalse($this->registry->peek('001ABCD'));
+
+        // Third consume: idempotent
+        self::assertFalse($this->registry->consume('001ABCD'));
+    }
+
+    #[Test]
     public function multipleUidsTrackedIndependently(): void
     {
         $this->registry->mark('001AAAA');
