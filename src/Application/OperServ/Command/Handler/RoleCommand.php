@@ -491,42 +491,40 @@ final readonly class RoleCommand implements OperServCommandInterface
         $userModeSupport = $protocolModule->getUserModeSupport();
         $validModes = $userModeSupport->getIrcOpUserModes();
 
+        if (empty($validModes)) {
+            $context->reply('role.modes.set.not_supported');
+
+            return;
+        }
+
         $oldModes = $role->getUserModes();
 
         if ('' === $modesArg) {
             $role->changeUserModes([]);
             $this->roleRepository->save($role);
-
             $this->modeApplier->updateModesForRole($role->getId(), $oldModes, []);
-
             $context->reply('role.modes.set.cleared', ['%role%' => $role->getName()]);
+        } else {
+            $modesStr = ltrim($modesArg, '+');
+            $modes = str_split($modesStr);
+            $modes = array_unique($modes);
 
-            return;
+            $invalidModes = array_diff($modes, $validModes);
+            if (!empty($invalidModes)) {
+                $context->reply('role.modes.set.invalid_modes', [
+                    '%invalid%' => '+' . implode('', $invalidModes),
+                    '%valid%' => '+' . implode('', $validModes),
+                ]);
+            } else {
+                $role->changeUserModes($modes);
+                $this->roleRepository->save($role);
+                $this->modeApplier->updateModesForRole($role->getId(), $oldModes, $modes);
+                $context->reply('role.modes.set.done', [
+                    '%modes%' => '+' . implode('', $modes),
+                    '%role%' => $role->getName(),
+                ]);
+            }
         }
-
-        $modesStr = ltrim($modesArg, '+');
-        $modes = str_split($modesStr);
-        $modes = array_unique($modes);
-
-        $invalidModes = array_diff($modes, $validModes);
-        if (!empty($invalidModes)) {
-            $context->reply('role.modes.set.invalid_modes', [
-                '%invalid%' => '+' . implode('', $invalidModes),
-                '%valid%' => '+' . implode('', $validModes),
-            ]);
-
-            return;
-        }
-
-        $role->changeUserModes($modes);
-        $this->roleRepository->save($role);
-
-        $this->modeApplier->updateModesForRole($role->getId(), $oldModes, $modes);
-
-        $context->reply('role.modes.set.done', [
-            '%modes%' => '+' . implode('', $modes),
-            '%role%' => $role->getName(),
-        ]);
     }
 
     private function doVhost(OperServContext $context): void

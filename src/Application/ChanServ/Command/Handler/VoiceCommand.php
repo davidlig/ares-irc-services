@@ -101,8 +101,8 @@ final readonly class VoiceCommand implements ChanServCommandInterface
             return;
         }
 
-        [$channelName, $targetNick, $targetSender] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'v', true);
+        [$channelName, $targetNick, $channel, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'v', true, $channel->getCreatedAt()->getTimestamp());
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('voice.notice_grant', [
@@ -114,7 +114,7 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         $context->reply('voice.done', ['%nickname%' => $targetNick]);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateVoiceExecute(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -139,7 +139,7 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         return $this->validateVoiceSender($context, $channel, $channelName, $targetNick);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateVoiceSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
     {
         $senderAccount = $context->senderAccount;
@@ -163,7 +163,7 @@ final readonly class VoiceCommand implements ChanServCommandInterface
         return $this->validateVoiceTarget($context, $channel, $channelName, $targetNick, $targetAccount);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateVoiceTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
@@ -187,6 +187,6 @@ final readonly class VoiceCommand implements ChanServCommandInterface
             }
         }
 
-        return [$channelName, $targetNick, $targetSender];
+        return [$channelName, $targetNick, $channel, $targetSender];
     }
 }

@@ -157,6 +157,7 @@ role:
       invalid_mode: "\x0304✗\x03 Tryb \x02%mode%\x02 nie jest prawidłowym trybem IRCOP."
       invalid_modes: "\x0304✗\x03 Nieprawidłowe tryby: %invalid%. Prawidłowe tryby: %valid%."
       no_irc_user_modes: "\x0304✗\x03 Obecny IRCD nie ma skonfigurowanych trybów IRCOP."
+      not_supported: "\x0304✗\x03 Obecny protokół nie obsługuje ustawiania trybów użytkownika IRCOP z poziomu Usług."
 
   vhost:
     syntax:         "ROLE VHOST <rola> {VIEW|SET} [wzorzec]"

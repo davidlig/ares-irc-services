@@ -44,9 +44,9 @@ readonly class ChanDropService
         $channel->markPendingDeletion();
         $this->channelRepository->save($channel);
 
-        $this->channelActions->setChannelModes($channelName, '-r');
+        $this->channelActions->setChannelModes($channelName, '-r', [], $channel->getCreatedAt()->getTimestamp());
         if ($channel->isNoExpire()) {
-            $this->channelActions->setChannelModes($channelName, '-P');
+            $this->channelActions->setChannelModes($channelName, '-P', [], $channel->getCreatedAt()->getTimestamp());
         }
 
         $this->debug->log(
@@ -72,9 +72,9 @@ readonly class ChanDropService
         $channel->restoreFromPendingDeletion();
         $this->channelRepository->save($channel);
 
-        $this->channelActions->setChannelModes($channelName, '+r');
+        $this->channelActions->setChannelModes($channelName, '+r', [], $channel->getCreatedAt()->getTimestamp());
         if ($channel->isNoExpire()) {
-            $this->channelActions->setChannelModes($channelName, '+P');
+            $this->channelActions->setChannelModes($channelName, '+P', [], $channel->getCreatedAt()->getTimestamp());
         }
 
         $this->debug->log(

@@ -105,8 +105,8 @@ final readonly class OpCommand implements ChanServCommandInterface
             return;
         }
 
-        [$channelName, $targetNick, $targetUid] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetUid, 'o', true);
+        [$channelName, $targetNick, $channel, $targetUid] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetUid, 'o', true, $channel->getCreatedAt()->getTimestamp());
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('op.notice_grant', [
@@ -118,7 +118,7 @@ final readonly class OpCommand implements ChanServCommandInterface
         $context->reply('op.done', ['%nickname%' => $targetNick]);
     }
 
-    /** @return array{string, string, string}|null */
+    /** @return array{string, string, RegisteredChannel, string}|null */
     private function validateOpExecute(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -143,7 +143,7 @@ final readonly class OpCommand implements ChanServCommandInterface
         return $this->validateOpSender($context, $channel, $channelName, $targetNick);
     }
 
-    /** @return array{string, string, string}|null */
+    /** @return array{string, string, RegisteredChannel, string}|null */
     private function validateOpSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
     {
         $senderAccount = $context->senderAccount;
@@ -171,7 +171,7 @@ final readonly class OpCommand implements ChanServCommandInterface
         return $this->validateOpTarget($context, $channel, $channelName, $targetNick, $targetAccount);
     }
 
-    /** @return array{string, string, string}|null */
+    /** @return array{string, string, RegisteredChannel, string}|null */
     private function validateOpTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
@@ -196,7 +196,7 @@ final readonly class OpCommand implements ChanServCommandInterface
             }
         }
 
-        return [$channelName, $targetNick, $targetUid];
+        return [$channelName, $targetNick, $channel, $targetUid];
     }
 
     private function getLevelValue(int $channelId, string $key): int

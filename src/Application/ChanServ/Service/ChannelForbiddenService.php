@@ -130,7 +130,7 @@ readonly class ChannelForbiddenService
 
         $this->kickAllUsers($channelName, $view);
 
-        $this->channelServiceActions->setChannelModes($channelName, '+ntims', []);
+        $this->channelServiceActions->setChannelModes($channelName, '+ntims', [], $view->timestamp);
 
         $this->logger->info(sprintf(
             'ChannelForbidden: Enforced forbidden channel %s (bot joined, users kicked, +ntims set)',

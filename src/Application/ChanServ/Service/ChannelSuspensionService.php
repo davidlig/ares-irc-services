@@ -71,7 +71,7 @@ readonly class ChannelSuspensionService
         }
 
         $modeStr = '-' . implode('', $modesToRemove);
-        $this->channelServiceActions->setChannelModes($channelName, $modeStr, []);
+        $this->channelServiceActions->setChannelModes($channelName, $modeStr, [], $view->timestamp);
 
         $this->logger->info(sprintf(
             'ChannelSuspension: removed modes %s from %s',
@@ -100,7 +100,7 @@ readonly class ChannelSuspensionService
         }
 
         $modeStr = '+' . implode('', $modesToSet);
-        $this->channelServiceActions->setChannelModes($channelName, $modeStr, []);
+        $this->channelServiceActions->setChannelModes($channelName, $modeStr, [], $view->timestamp);
 
         $this->logger->info(sprintf(
             'ChannelSuspension: restored modes %s on %s',

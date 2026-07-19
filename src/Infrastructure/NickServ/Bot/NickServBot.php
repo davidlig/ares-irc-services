@@ -158,7 +158,7 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
             }
         }
 
-        $this->userLookup->updateVhost($targetUid, $vhost);
+        $this->userLookup->updateVhost($targetUid, '' === $vhost ? '*' : $vhost);
     }
 
     private function getServerSid(): string

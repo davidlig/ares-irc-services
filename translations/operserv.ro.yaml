@@ -157,6 +157,7 @@ role:
       invalid_mode: "\x0304✗\x03 Modul \x02%mode%\x02 nu este un mod IRCOP valid."
       invalid_modes: "\x0304✗\x03 Moduri invalide: %invalid%. Moduri valide: %valid%."
       no_irc_user_modes: "\x0304✗\x03 IRCd-ul actual nu are moduri IRCOP configurate."
+      not_supported: "\x0304✗\x03 Protocolul actual nu suportă setarea modurilor de utilizator IRCOP din Servicii."
 
   vhost:
     syntax:         "ROLE VHOST <rol> {VIEW|SET} [model]"

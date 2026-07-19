@@ -56,9 +56,10 @@ final class RoleCommandTest extends TestCase
         OperPermissionRepositoryInterface $permRepo,
         IrcopAccessHelper $accessHelper,
         PermissionRegistry $permissionRegistry,
+        array $ircOpModes = ['o', 'a', 'N', 'O'],
     ): RoleCommand {
         $userModeSupport = $this->createStub(UserModeSupportInterface::class);
-        $userModeSupport->method('getIrcOpUserModes')->willReturn(['o', 'a', 'N', 'O']);
+        $userModeSupport->method('getIrcOpUserModes')->willReturn($ircOpModes);
 
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
         $protocolModule->method('getUserModeSupport')->willReturn($userModeSupport);
@@ -1522,6 +1523,33 @@ final class RoleCommandTest extends TestCase
         $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+xyz'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.modes.set.invalid_modes', $messages);
+    }
+
+    #[Test]
+    public function modesSetWhenNotSupportedReturnsError(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $role = OperRole::create('ADMIN', 'Admin role', true);
+
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $roleRepo->method('findByName')->willReturn($role);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]), []);
+        $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+o'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('role.modes.set.not_supported', $messages);
     }
 
     #[Test]

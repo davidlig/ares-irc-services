@@ -107,7 +107,7 @@ final readonly class AdminCommand implements ChanServCommandInterface
         }
 
         [$channelName, $targetNick, $channel, $targetSender] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'a', true);
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'a', true, $channel->getCreatedAt()->getTimestamp());
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('admin.notice_grant', [

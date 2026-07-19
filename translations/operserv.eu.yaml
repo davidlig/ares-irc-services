@@ -157,6 +157,7 @@ role:
       invalid_mode: "\x0304✗\x03 \x02%mode%\x02 modua ez da IRCOP modu baliozkoa."
       invalid_modes: "\x0304✗\x03 Modu baliogabeak: %invalid%. Modu baliozkoak: %valid%."
       no_irc_user_modes: "\x0304✗\x03 Uneko IRCdk ez du IRCOP modurik konfiguratuta."
+      not_supported: "\x0304✗\x03 Uneko protokoloak ez du onartzen Zerbitzuetatik IRCOP erabiltzaile moduak ezartzea."
 
   vhost:
     syntax:         "ROLE VHOST <rola> {VIEW|SET} [eredua]"

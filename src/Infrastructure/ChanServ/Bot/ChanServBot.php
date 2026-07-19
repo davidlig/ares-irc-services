@@ -145,25 +145,25 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         $this->writeToConnection($rawLine);
     }
 
-    public function setChannelModes(string $channelName, string $modeStr, array $params = []): void
+    public function setChannelModes(string $channelName, string $modeStr, array $params = [], ?int $channelTimestamp = null): void
     {
         $module = $this->connectionHolder->getProtocolModule();
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
             $view = $this->channelLookup->findByChannelName($channelName);
-            $channelTimestamp = $view?->timestamp;
+            $channelTimestamp ??= $view?->timestamp;
             $module->getServiceActions()->setChannelModes($sid, $channelName, $modeStr, $params, $this->uid, $channelTimestamp);
             $this->applyOutgoingChannelModes->applyOutgoingChannelModes($channelName, $modeStr, $params);
         }
     }
 
-    public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add): void
+    public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add, ?int $channelTimestamp = null): void
     {
         $module = $this->connectionHolder->getProtocolModule();
         $sid = $this->connectionHolder->getServerSid() ?? '';
         if (null !== $module && '' !== $sid) {
             $view = $this->channelLookup->findByChannelName($channelName);
-            $channelTimestamp = $view?->timestamp;
+            $channelTimestamp ??= $view?->timestamp;
             $module->getServiceActions()->setChannelMemberMode($sid, $channelName, $targetUid, $modeLetter, $add, $this->uid, $channelTimestamp);
         }
     }
@@ -175,7 +175,7 @@ final class ChanServBot implements ChanServNotifierInterface, ChannelServiceActi
         if (null !== $module && '' !== $sid) {
             if (null === $channelTimestamp) {
                 $view = $this->channelLookup->findByChannelName($channelName);
-                $channelTimestamp = $view?->timestamp;
+                $channelTimestamp ??= $view?->timestamp;
             }
             $module->getServiceActions()->inviteUserToChannel($sid, $channelName, $targetUid, $this->uid, $channelTimestamp);
         }

@@ -157,6 +157,7 @@ role:
       invalid_mode: "\x0304✗\x03 Der Mode \x02%mode%\x02 ist kein gültiger IRCOP-Mode."
       invalid_modes: "\x0304✗\x03 Ungültige Modes: %invalid%. Gültige Modes: %valid%."
       no_irc_user_modes: "\x0304✗\x03 Der aktuelle IRCD hat keine IRCOP-Modes konfiguriert."
+      not_supported: "\x0304✗\x03 Das aktuelle Protokoll unterstützt das Setzen von IRCOP-Benutzermodi über Services nicht."
 
   vhost:
     syntax:         "ROLE VHOST <Rolle> {VIEW|SET} [Muster]"

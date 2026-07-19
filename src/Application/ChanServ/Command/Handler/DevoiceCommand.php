@@ -100,8 +100,8 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
             return;
         }
 
-        [$channelName, $targetNick, $targetSender] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'v', false);
+        [$channelName, $targetNick, $channel, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'v', false, $channel->getCreatedAt()->getTimestamp());
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('voice.notice_grant', [
@@ -113,7 +113,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         $context->reply('devoice.done', ['%nickname%' => $targetNick]);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDevoiceExecute(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -138,7 +138,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         return $this->validateDevoiceSender($context, $channel, $channelName, $targetNick);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDevoiceSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
     {
         $senderAccount = $context->senderAccount;
@@ -155,7 +155,7 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
         return $this->validateDevoiceTarget($context, $channel, $channelName, $targetNick);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDevoiceTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
@@ -178,6 +178,6 @@ final readonly class DevoiceCommand implements ChanServCommandInterface
             return null;
         }
 
-        return [$channelName, $targetNick, $targetSender];
+        return [$channelName, $targetNick, $channel, $targetSender];
     }
 }

@@ -106,8 +106,8 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
             return;
         }
 
-        [$channelName, $targetNick, $targetSender] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', false);
+        [$channelName, $targetNick, $channel, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', false, $channel->getCreatedAt()->getTimestamp());
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('halfop.notice_grant', [
@@ -119,7 +119,7 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
         $context->reply('dehalfop.done', ['%nickname%' => $targetNick]);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDehalfopExecute(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -144,7 +144,7 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
         return $this->validateDehalfopSender($context, $channel, $channelName, $targetNick);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDehalfopSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
     {
         $senderAccount = $context->senderAccount;
@@ -161,7 +161,7 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
         return $this->validateDehalfopTarget($context, $channel, $channelName, $targetNick);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDehalfopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
@@ -184,6 +184,6 @@ final readonly class DehalfopCommand implements ChanServCommandInterface
             return null;
         }
 
-        return [$channelName, $targetNick, $targetSender];
+        return [$channelName, $targetNick, $channel, $targetSender];
     }
 }

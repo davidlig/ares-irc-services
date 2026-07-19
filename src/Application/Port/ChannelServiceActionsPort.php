@@ -12,9 +12,9 @@ namespace App\Application\Port;
  */
 interface ChannelServiceActionsPort
 {
-    public function setChannelModes(string $channelName, string $modeStr, array $params = []): void;
+    public function setChannelModes(string $channelName, string $modeStr, array $params = [], ?int $channelTimestamp = null): void;
 
-    public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add): void;
+    public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add, ?int $channelTimestamp = null): void;
 
     /**
      * Invite a user to a channel.

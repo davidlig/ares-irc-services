@@ -198,7 +198,7 @@ final readonly class AkickCommand implements ChanServCommandInterface
 
             $userMask = $this->buildUserMask($user->nick, $user->ident, $user->hostname);
             if ($akick->matches($userMask)) {
-                $notifier->setChannelModes($view->name, '+b', [$akick->getMask()]);
+                $notifier->setChannelModes($view->name, '+b', [$akick->getMask()], $view->timestamp);
                 $notifier->kickFromChannel($view->name, $uid, $reason);
             }
         }

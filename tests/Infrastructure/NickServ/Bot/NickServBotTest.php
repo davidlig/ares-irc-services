@@ -442,7 +442,7 @@ final class NickServBotTest extends TestCase
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
-        $userLookup->expects(self::once())->method('updateVhost')->with('001USER', '');
+        $userLookup->expects(self::once())->method('updateVhost')->with('001USER', '*');
 
         $this->connectionHolder->setProtocolModule($module);
 
@@ -560,7 +560,7 @@ final class NickServBotTest extends TestCase
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
-        $userLookup->expects(self::once())->method('updateVhost')->with('001USER', '');
+        $userLookup->expects(self::once())->method('updateVhost')->with('001USER', '*');
 
         $this->connectionHolder->setProtocolModule($module);
 

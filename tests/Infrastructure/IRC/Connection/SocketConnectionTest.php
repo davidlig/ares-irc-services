@@ -130,9 +130,11 @@ final class SocketConnectionTest extends TestCase
         self::assertSame("PING 123\r\n", $received);
 
         fwrite($client, "PONG 123\r\n");
-        fclose($client);
+        $this->waitForSocketData($conn);
         $line = $conn->readLine();
         self::assertSame('PONG 123', $line);
+
+        fclose($client);
 
         $conn->disconnect();
         self::assertFalse($conn->isConnected());

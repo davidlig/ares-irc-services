@@ -103,13 +103,13 @@ final readonly class DeopCommand implements ChanServCommandInterface
             return;
         }
 
-        [$channelName, $targetNick, $targetSender] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'o', false);
+        [$channelName, $targetNick, $channel, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'o', false, $channel->getCreatedAt()->getTimestamp());
         $context->getNotifier()->sendNoticeToChannel($channelName, $context->trans('op.notice_grant', ['%from%' => $context->sender->nick, '%to%' => $targetNick, '%mode%' => '-o']));
         $context->reply('deop.done', ['%nickname%' => $targetNick]);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDeopExecute(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -132,7 +132,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
         return $this->validateDeopSender($context, $channel, $channelName, $targetNick);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDeopSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
     {
         $senderAccount = $context->senderAccount;
@@ -152,7 +152,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
         return $this->validateDeopTarget($context, $channel, $channelName, $targetNick, $senderLevel);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateDeopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, int $senderLevel): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
@@ -174,7 +174,7 @@ final readonly class DeopCommand implements ChanServCommandInterface
             return null;
         }
 
-        return [$channelName, $targetNick, $targetSender];
+        return [$channelName, $targetNick, $channel, $targetSender];
     }
 
     private function getLevelValue(int $channelId, string $key): int

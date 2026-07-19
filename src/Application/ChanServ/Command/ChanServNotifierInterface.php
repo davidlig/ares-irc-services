@@ -20,9 +20,9 @@ interface ChanServNotifierInterface
     /** Send a NOTICE to a channel (e.g. "Ares da +o a davidlig"). */
     public function sendNoticeToChannel(string $channelName, string $message): void;
 
-    public function setChannelModes(string $channelName, string $modeStr, array $params = []): void;
+    public function setChannelModes(string $channelName, string $modeStr, array $params = [], ?int $channelTimestamp = null): void;
 
-    public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add): void;
+    public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add, ?int $channelTimestamp = null): void;
 
     /**
      * @param int|null $channelTimestamp Channel creation timestamp (required by InspIRCd for TS validation)

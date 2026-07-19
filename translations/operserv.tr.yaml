@@ -157,6 +157,7 @@ role:
       invalid_mode: "\x0304✗\x03 \x02%mode%\x02 modu geçerli bir IRCOP modu değil."
       invalid_modes: "\x0304✗\x03 Geçersiz modlar: %invalid%. Geçerli modlar: %valid%."
       no_irc_user_modes: "\x0304✗\x03 Mevcut IRCD'de yapılandırılmış IRCOP modu yok."
+      not_supported: "\x0304✗\x03 Mevcut protokol Servislerden IRCOP kullanıcı modlarının ayarlanmasını desteklemiyor."
 
   vhost:
     syntax:         "ROLE VHOST <rol> {VIEW|SET} [kalıp]"

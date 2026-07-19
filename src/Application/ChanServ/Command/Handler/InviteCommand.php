@@ -118,7 +118,7 @@ final readonly class InviteCommand implements ChanServCommandInterface
             return;
         }
 
-        $context->getNotifier()->inviteToChannel($channelName, $context->sender->uid);
+        $context->getNotifier()->inviteToChannel($channelName, $context->sender->uid, $channel->getCreatedAt()->getTimestamp());
         $context->reply('invite.done', ['%channel%' => $channelName]);
 
         $notice = $context->trans('invite.notice_channel', ['%nickname%' => $context->sender->nick]);

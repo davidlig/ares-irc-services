@@ -105,8 +105,8 @@ final readonly class HalfopCommand implements ChanServCommandInterface
             return;
         }
 
-        [$channelName, $targetNick, $targetSender] = $validation;
-        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', true);
+        [$channelName, $targetNick, $channel, $targetSender] = $validation;
+        $context->getNotifier()->setChannelMemberMode($channelName, $targetSender->uid, 'h', true, $channel->getCreatedAt()->getTimestamp());
         $context->getNotifier()->sendNoticeToChannel(
             $channelName,
             $context->trans('halfop.notice_grant', [
@@ -118,7 +118,7 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         $context->reply('halfop.done', ['%nickname%' => $targetNick]);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateHalfopExecute(ChanServContext $context): ?array
     {
         $channelName = $context->getChannelNameArg(0);
@@ -143,7 +143,7 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         return $this->validateHalfopSender($context, $channel, $channelName, $targetNick);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateHalfopSender(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick): ?array
     {
         $senderAccount = $context->senderAccount;
@@ -167,7 +167,7 @@ final readonly class HalfopCommand implements ChanServCommandInterface
         return $this->validateHalfopTarget($context, $channel, $channelName, $targetNick, $targetAccount);
     }
 
-    /** @return array{string, string, SenderView}|null */
+    /** @return array{string, string, RegisteredChannel, SenderView}|null */
     private function validateHalfopTarget(ChanServContext $context, RegisteredChannel $channel, string $channelName, string $targetNick, $targetAccount): ?array
     {
         $targetSender = $this->userLookup->findByNick($targetNick);
@@ -191,6 +191,6 @@ final readonly class HalfopCommand implements ChanServCommandInterface
             }
         }
 
-        return [$channelName, $targetNick, $targetSender];
+        return [$channelName, $targetNick, $channel, $targetSender];
     }
 }
