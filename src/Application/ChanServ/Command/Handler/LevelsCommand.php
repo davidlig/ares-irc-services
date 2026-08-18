@@ -8,6 +8,7 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -192,7 +193,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         return $keys;
     }
 
-    private function doList(ChanServContext $context, \App\Domain\ChanServ\Entity\RegisteredChannel $channel, ChannelModeSupportInterface $modeSupport): void
+    private function doList(ChanServContext $context, RegisteredChannel $channel, ChannelModeSupportInterface $modeSupport): void
     {
         $visibleKeys = $this->visibleLevelKeys($modeSupport);
         $byKey = [];
@@ -207,7 +208,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         }
     }
 
-    private function doSet(ChanServContext $context, \App\Domain\ChanServ\Entity\RegisteredChannel $channel, string $channelName, ChannelModeSupportInterface $modeSupport): void
+    private function doSet(ChanServContext $context, RegisteredChannel $channel, string $channelName, ChannelModeSupportInterface $modeSupport): void
     {
         $levelKey = strtoupper(trim($context->args[2] ?? ''));
         $valueStr = trim($context->args[3] ?? '');
@@ -246,7 +247,7 @@ final readonly class LevelsCommand implements ChanServCommandInterface
         $context->reply('levels.set.done', ['%key%' => $levelKey, '%value%' => (string) $value]);
     }
 
-    private function doReset(ChanServContext $context, \App\Domain\ChanServ\Entity\RegisteredChannel $channel): void
+    private function doReset(ChanServContext $context, RegisteredChannel $channel): void
     {
         $this->levelRepository->removeAllForChannel($channel->getId());
         $context->reply('levels.reset.done');

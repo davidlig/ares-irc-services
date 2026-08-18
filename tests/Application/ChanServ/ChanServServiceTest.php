@@ -19,14 +19,17 @@ use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
@@ -115,7 +118,7 @@ final class ChanServServiceTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
         $logger = $this->createStub(LoggerInterface::class);
 
         $contextHolder = new stdClass();
@@ -476,7 +479,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isPendingDeletion')->willReturn(true);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -494,7 +497,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -609,7 +612,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$identifiedHandler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -719,7 +722,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$minArgsHandler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -827,7 +830,7 @@ final class ChanServServiceTest extends TestCase
         $registry = new ChanServCommandRegistry([$throwingHandler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -934,7 +937,7 @@ final class ChanServServiceTest extends TestCase
         $registry = new ChanServCommandRegistry([$throwingHandler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -1040,7 +1043,7 @@ final class ChanServServiceTest extends TestCase
         $registry = new ChanServCommandRegistry([$throwingHandler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -1146,7 +1149,7 @@ final class ChanServServiceTest extends TestCase
         $registry = new ChanServCommandRegistry([$throwingHandler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -1284,7 +1287,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$auditableHandler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('getNick')->willReturn('ChanServ');
@@ -1406,7 +1409,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$nonAuditableHandler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -1531,7 +1534,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$auditableHandler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -1680,7 +1683,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isCurrentlySuspended')->willReturn(true);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -1698,7 +1701,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -1806,7 +1809,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -1907,7 +1910,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isCurrentlySuspended')->willReturn(false);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -1918,7 +1921,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -2024,7 +2027,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -2125,7 +2128,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isForbidden')->willReturn(true);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -2149,7 +2152,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -2255,7 +2258,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isForbidden')->willReturn(true);
 
         $channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -2279,7 +2282,7 @@ final class ChanServServiceTest extends TestCase
 
         $registry = new ChanServCommandRegistry([$handler]);
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $service = $this->createChanServService(
             $registry,
@@ -2385,7 +2388,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
         $account->method('getLanguage')->willReturn('en');
         $account->method('getTimezone')->willReturn('UTC');
@@ -2393,7 +2396,7 @@ final class ChanServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($account);
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isForbidden')->willReturn(false);
         $channel->method('isCurrentlySuspended')->willReturn(false);
         $channel->method('isFounder')->willReturn(false);
@@ -2423,7 +2426,7 @@ final class ChanServServiceTest extends TestCase
                 && ['founder_action' => true, 'option' => 'DESC', 'value' => 'desc'] === $event->extra));
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $registry = new ChanServCommandRegistry([$handler]);
 
@@ -2533,7 +2536,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
         $account->method('getLanguage')->willReturn('en');
         $account->method('getTimezone')->willReturn('UTC');
@@ -2541,7 +2544,7 @@ final class ChanServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($account);
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isForbidden')->willReturn(false);
         $channel->method('isCurrentlySuspended')->willReturn(false);
         $channel->method('isFounder')->willReturn(true);
@@ -2563,7 +2566,7 @@ final class ChanServServiceTest extends TestCase
             ->method('dispatch');
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $registry = new ChanServCommandRegistry([$handler]);
 
@@ -2673,7 +2676,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(99);
         $account->method('getLanguage')->willReturn('en');
         $account->method('getTimezone')->willReturn('UTC');
@@ -2681,7 +2684,7 @@ final class ChanServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($account);
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isForbidden')->willReturn(false);
         $channel->method('isCurrentlySuspended')->willReturn(false);
         $channel->method('isFounder')->willReturn(false);
@@ -2702,7 +2705,7 @@ final class ChanServServiceTest extends TestCase
             ->method('dispatch');
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $registry = new ChanServCommandRegistry([$handler]);
 
@@ -2812,7 +2815,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
         $account->method('getLanguage')->willReturn('en');
         $account->method('getTimezone')->willReturn('UTC');
@@ -2833,7 +2836,7 @@ final class ChanServServiceTest extends TestCase
             ->method('dispatch');
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $registry = new ChanServCommandRegistry([$handler]);
 
@@ -2943,7 +2946,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
         $account->method('getLanguage')->willReturn('en');
         $account->method('getTimezone')->willReturn('UTC');
@@ -2965,7 +2968,7 @@ final class ChanServServiceTest extends TestCase
             ->method('dispatch');
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $registry = new ChanServCommandRegistry([$handler]);
 
@@ -3075,7 +3078,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
         $account->method('getLanguage')->willReturn('en');
         $account->method('getTimezone')->willReturn('UTC');
@@ -3083,7 +3086,7 @@ final class ChanServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($account);
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isForbidden')->willReturn(false);
         $channel->method('isCurrentlySuspended')->willReturn(false);
         $channel->method('isFounder')->willReturn(false);
@@ -3112,7 +3115,7 @@ final class ChanServServiceTest extends TestCase
                 && '*' === $event->targetIp));
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $registry = new ChanServCommandRegistry([$handler]);
 
@@ -3222,7 +3225,7 @@ final class ChanServServiceTest extends TestCase
             }
         };
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
         $account->method('getLanguage')->willReturn('en');
         $account->method('getTimezone')->willReturn('UTC');
@@ -3230,7 +3233,7 @@ final class ChanServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($account);
 
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isForbidden')->willReturn(false);
         $channel->method('isCurrentlySuspended')->willReturn(false);
         $channel->method('isFounder')->willReturn(false);
@@ -3259,7 +3262,7 @@ final class ChanServServiceTest extends TestCase
                 && '!!invalid-base64!!' === $event->targetIp));
 
         $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
-        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(\App\Application\Port\ChannelModeSupportInterface::class));
+        $modeSupportProvider->method('getSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         $registry = new ChanServCommandRegistry([$handler]);
 

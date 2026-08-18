@@ -16,6 +16,7 @@ use App\Infrastructure\MemoServ\Bot\MemoServBot;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 #[CoversClass(MemoServBot::class)]
 final class MemoServBotTest extends TestCase
@@ -196,7 +197,7 @@ final class MemoServBotTest extends TestCase
         $module = $this->createStub(ProtocolModuleInterface::class);
         $module->method('getIntroductionFormatter')->willReturn($formatter);
 
-        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info')
             ->with('MemoServ introduced to network.', [
                 'uid' => self::MEMOSERV_UID,

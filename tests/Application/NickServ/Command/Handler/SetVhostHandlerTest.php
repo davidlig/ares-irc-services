@@ -17,6 +17,7 @@ use App\Application\NickServ\VhostValidator;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\NickServ\Entity\ForbiddenVhost;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -543,7 +544,7 @@ final class SetVhostHandlerTest extends TestCase
         $account->method('getId')->willReturn(1);
         $account->expects(self::never())->method('changeVhost');
 
-        $forbidden = $this->createMock(\App\Domain\NickServ\Entity\ForbiddenVhost::class);
+        $forbidden = $this->createMock(ForbiddenVhost::class);
         $forbidden->expects(self::once())->method('matches')->with('pirated.host.com')->willReturn(true);
 
         $forbiddenRepo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
@@ -579,7 +580,7 @@ final class SetVhostHandlerTest extends TestCase
         $account->method('getId')->willReturn(1);
         $account->expects(self::once())->method('changeVhost')->with('clean.host.com');
 
-        $forbidden = $this->createMock(\App\Domain\NickServ\Entity\ForbiddenVhost::class);
+        $forbidden = $this->createMock(ForbiddenVhost::class);
         $forbidden->expects(self::once())->method('matches')->with('clean.host.com')->willReturn(false);
 
         $forbiddenRepo = $this->createMock(ForbiddenVhostRepositoryInterface::class);

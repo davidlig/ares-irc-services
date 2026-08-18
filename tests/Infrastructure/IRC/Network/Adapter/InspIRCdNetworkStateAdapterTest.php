@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\IRC\Network\Adapter;
 use App\Domain\IRC\Event\ServerDelinkedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
 use App\Domain\IRC\Message\IRCMessage;
+use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter;
 use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
@@ -644,12 +645,12 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(3, $captured->members);
         self::assertSame('abc123', $captured->members[0]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Op, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::Op, $captured->members[0]['role']);
         self::assertSame(['o', 'v'], $captured->members[0]['prefixLetters']);
         self::assertSame('def456', $captured->members[1]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Voice, $captured->members[1]['role']);
+        self::assertSame(ChannelMemberRole::Voice, $captured->members[1]['role']);
         self::assertSame('ghi789', $captured->members[2]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::HalfOp, $captured->members[2]['role']);
+        self::assertSame(ChannelMemberRole::HalfOp, $captured->members[2]['role']);
     }
 
     #[Test]
@@ -857,7 +858,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(1, $captured->members);
         self::assertSame('abc123', $captured->members[0]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -879,7 +880,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(1, $captured->members);
         self::assertSame('abc123', $captured->members[0]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -1330,7 +1331,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertSame(0, $captured->timestamp);
         self::assertCount(1, $captured->members);
         self::assertSame('994AAAAAQ', $captured->members[0]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -1354,7 +1355,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertSame(1704067200, $captured->timestamp);
         self::assertCount(1, $captured->members);
         self::assertSame('994AAAAAQ', $captured->members[0]['uid']->value);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -1374,7 +1375,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -1394,7 +1395,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69', '1704067200', 'v'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Voice, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::Voice, $captured->members[0]['role']);
         self::assertSame(['v'], $captured->members[0]['prefixLetters']);
     }
 
@@ -1414,7 +1415,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69', '1704067200', 'q'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Owner, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::Owner, $captured->members[0]['role']);
         self::assertSame(['q'], $captured->members[0]['prefixLetters']);
     }
 
@@ -1434,7 +1435,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69', '1704067200', 'a'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::Admin, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::Admin, $captured->members[0]['role']);
         self::assertSame(['a'], $captured->members[0]['prefixLetters']);
     }
 
@@ -1454,7 +1455,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage(new IRCMessage('IJOIN', '994AAAAAQ', ['#test', '69', '1704067200', 'h'], null));
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
-        self::assertSame(\App\Domain\IRC\Network\ChannelMemberRole::HalfOp, $captured->members[0]['role']);
+        self::assertSame(ChannelMemberRole::HalfOp, $captured->members[0]['role']);
         self::assertSame(['h'], $captured->members[0]['prefixLetters']);
     }
 

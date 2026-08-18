@@ -21,6 +21,7 @@ use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\MemoServ\Exception\MemoDisabledException;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
@@ -595,7 +596,7 @@ final class MemoServServiceTest extends TestCase
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('es');
         $account->method('getTimezone')->willReturn('Europe/Madrid');
 

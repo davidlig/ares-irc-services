@@ -8,6 +8,7 @@ use App\Application\Event\IrcopCommandExecutedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\EventDispatcher\Event;
 
 #[CoversClass(IrcopCommandExecutedEvent::class)]
 final class IrcopCommandExecutedEventTest extends TestCase
@@ -69,6 +70,6 @@ final class IrcopCommandExecutedEventTest extends TestCase
             permission: 'test.permission',
         );
 
-        self::assertNotInstanceOf(\Symfony\Contracts\EventDispatcher\Event::class, $event);
+        self::assertNotInstanceOf(Event::class, $event);
     }
 }

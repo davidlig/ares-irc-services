@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
+use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Event\ChannelUnforbiddenEvent;
 use App\Infrastructure\ChanServ\Subscriber\ChanServChannelUnforbiddenSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -27,7 +28,7 @@ final class ChanServChannelUnforbiddenSubscriberTest extends TestCase
     #[Test]
     public function onChannelUnforbiddenPartsChannelWhenChannelExistsOnNetwork(): void
     {
-        $channelView = new \App\Application\Port\ChannelView(
+        $channelView = new ChannelView(
             name: '#forbidden',
             modes: '+ntims',
             topic: null,

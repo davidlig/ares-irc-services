@@ -23,6 +23,7 @@ use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -35,6 +36,7 @@ use App\Infrastructure\OperServ\Subscriber\OperServCommandListener;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
 
@@ -210,7 +212,7 @@ final class OperServCommandListenerTest extends TestCase
             'OperServ',
         );
         $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            self::createStub(ConnectionInterface::class),
             '001',
         ));
 
@@ -241,7 +243,7 @@ final class OperServCommandListenerTest extends TestCase
         $userLookup = self::createStub(NetworkUserLookupPort::class);
         $sendNotice = self::createStub(SendNoticePort::class);
         $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $logger = self::createStub(\Psr\Log\LoggerInterface::class);
+        $logger = self::createStub(LoggerInterface::class);
 
         $listener = new OperServCommandListener(
             $operServBot,
@@ -270,7 +272,7 @@ final class OperServCommandListenerTest extends TestCase
             'OperServ',
         );
         $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            self::createStub(ConnectionInterface::class),
             '001',
         ));
 
@@ -301,7 +303,7 @@ final class OperServCommandListenerTest extends TestCase
         $userLookup = self::createStub(NetworkUserLookupPort::class);
         $sendNotice = self::createStub(SendNoticePort::class);
         $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $logger = self::createStub(\Psr\Log\LoggerInterface::class);
+        $logger = self::createStub(LoggerInterface::class);
 
         $listener = new OperServCommandListener(
             $operServBot,
@@ -330,7 +332,7 @@ final class OperServCommandListenerTest extends TestCase
             'OperServ',
         );
         $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            self::createStub(ConnectionInterface::class),
             '001',
         ));
 
@@ -367,7 +369,7 @@ final class OperServCommandListenerTest extends TestCase
         $sendNotice->expects(self::never())->method('sendMessage');
 
         $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::never())->method('warning');
         $logger->expects(self::never())->method('error');
 
@@ -398,7 +400,7 @@ final class OperServCommandListenerTest extends TestCase
             'OperServ',
         );
         $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            self::createStub(ConnectionInterface::class),
             '001',
         ));
 
@@ -431,7 +433,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $sendNotice = self::createStub(SendNoticePort::class);
         $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('warning')->with('OperServ: could not resolve sender UID: ' . self::SENDER_UID);
 
         $listener = new OperServCommandListener(
@@ -463,7 +465,7 @@ final class OperServCommandListenerTest extends TestCase
             'OperServ',
         );
         $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            self::createStub(ConnectionInterface::class),
             '001',
         ));
 
@@ -498,7 +500,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $sendNotice = self::createStub(SendNoticePort::class);
         $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $logger = self::createStub(\Psr\Log\LoggerInterface::class);
+        $logger = self::createStub(LoggerInterface::class);
 
         $listener = new OperServCommandListener(
             $operServBot,
@@ -529,7 +531,7 @@ final class OperServCommandListenerTest extends TestCase
             'OperServ',
         );
         $operServBot->onBurstComplete(new NetworkBurstCompleteEvent(
-            self::createStub(\App\Domain\IRC\Connection\ConnectionInterface::class),
+            self::createStub(ConnectionInterface::class),
             '001',
         ));
 
@@ -564,7 +566,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $sendNotice = self::createStub(SendNoticePort::class);
         $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('debug')->with(
             'OperServ: command from {nick} [{uid}]: {text}',
             self::callback(static fn (array $context): bool => isset(
@@ -633,7 +635,7 @@ final class OperServCommandListenerTest extends TestCase
 
         $sendNotice = self::createStub(SendNoticePort::class);
         $userMessageTypeResolver = new UserMessageTypeResolver($nickRepository);
-        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('error')->with(
             self::stringContains('OperServ dispatch error:'),
             self::callback(static fn (array $context): bool => isset($context['exception'], $context['sender'], $context['text']))

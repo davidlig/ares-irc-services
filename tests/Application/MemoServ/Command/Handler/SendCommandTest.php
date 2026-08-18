@@ -15,11 +15,13 @@ use App\Application\MemoServ\MemoServSendThrottleRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\MemoServ\Entity\Memo;
 use App\Domain\MemoServ\Entity\MemoIgnore;
+use App\Domain\MemoServ\Exception\MemoDisabledException;
 use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
@@ -344,7 +346,7 @@ final class SendCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('getName')->willReturn('#test');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -419,7 +421,7 @@ final class SendCommandTest extends TestCase
     {
         $senderAccount = $this->createStub(RegisteredNick::class);
         $senderAccount->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('getName')->willReturn('#test');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -456,7 +458,7 @@ final class SendCommandTest extends TestCase
     {
         $senderAccount = $this->createStub(RegisteredNick::class);
         $senderAccount->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('getName')->willReturn('#test');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -514,7 +516,7 @@ final class SendCommandTest extends TestCase
 
         $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
 
-        $this->expectException(\App\Domain\MemoServ\Exception\MemoDisabledException::class);
+        $this->expectException(MemoDisabledException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $senderAccount, ['Other', 'Hello'], $notifier, $translator));
     }
 
@@ -523,7 +525,7 @@ final class SendCommandTest extends TestCase
     {
         $senderAccount = $this->createStub(RegisteredNick::class);
         $senderAccount->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -543,7 +545,7 @@ final class SendCommandTest extends TestCase
 
         $cmd = new SendCommand($nickRepo, $channelRepo, $memoRepo, $ignoreRepo, $settingsRepo, $throttle, $accessHelper, $userLookup, $translator, 'en', 20, 50, 0);
 
-        $this->expectException(\App\Domain\MemoServ\Exception\MemoDisabledException::class);
+        $this->expectException(MemoDisabledException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $senderAccount, ['#test', 'Hello'], $notifier, $translator));
     }
 
@@ -711,7 +713,7 @@ final class SendCommandTest extends TestCase
     {
         $senderAccount = $this->createStub(RegisteredNick::class);
         $senderAccount->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('getName')->willReturn('#test');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -748,7 +750,7 @@ final class SendCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(42);
         $channel->method('getName')->willReturn('#mychan');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -788,7 +790,7 @@ final class SendCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -824,7 +826,7 @@ final class SendCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('getName')->willReturn('#test');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);

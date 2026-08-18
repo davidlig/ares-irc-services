@@ -6,6 +6,7 @@ namespace App\Tests\Application\NickServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\Handler\RecoverCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
@@ -289,7 +290,7 @@ final class RecoverCommandTest extends TestCase
 
         self::assertSame(['recover.email_sent'], $messages);
         self::assertCount(1, $dispatched);
-        self::assertInstanceOf(\App\Application\Mail\Message\SendEmail::class, $dispatched[0]);
+        self::assertInstanceOf(SendEmail::class, $dispatched[0]);
 
         $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'recovery_token_subject' === $c['id']);
         self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');

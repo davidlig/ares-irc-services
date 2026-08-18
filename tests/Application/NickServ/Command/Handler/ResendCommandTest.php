@@ -6,6 +6,7 @@ namespace App\Tests\Application\NickServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\Handler\ResendCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
@@ -176,7 +177,7 @@ final class ResendCommandTest extends TestCase
 
         self::assertSame(['resend.success'], $messages);
         self::assertCount(1, $dispatched);
-        self::assertInstanceOf(\App\Application\Mail\Message\SendEmail::class, $dispatched[0]);
+        self::assertInstanceOf(SendEmail::class, $dispatched[0]);
 
         $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'resend_verification_subject' === $c['id']);
         self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');

@@ -15,6 +15,9 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -351,9 +354,9 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $roleRepo->method('hasPermission')->willReturn(true);
 
-        $role = $this->createStub(\App\Domain\OperServ\Entity\OperRole::class);
+        $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(1);
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getRole')->willReturn($role);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -362,7 +365,7 @@ final class OperServHelpFormatterContextAdapterTest extends TestCase
         $rootRegistry = new RootUserRegistry('');
         $accessHelper = new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(42);
 
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip');

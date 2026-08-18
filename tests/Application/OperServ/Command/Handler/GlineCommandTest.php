@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command\Handler;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\Handler\GlineCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -17,9 +19,13 @@ use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Gline;
+use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -334,7 +340,7 @@ final class GlineCommandTest extends TestCase
         $cmd = new GlineCommand(
             $glineRepo,
             $userLookup,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(OperIrcopRepositoryInterface::class),
             new RootUserRegistry(''),
             $accessHelper,
@@ -365,7 +371,7 @@ final class GlineCommandTest extends TestCase
         $cmd = new GlineCommand(
             $this->createStub(GlineRepositoryInterface::class),
             $userLookup,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(OperIrcopRepositoryInterface::class),
             new RootUserRegistry(''),
             $accessHelper,
@@ -857,7 +863,7 @@ final class GlineCommandTest extends TestCase
             new SenderView('UIDROOT', 'TestUser', 'ident', 'host999.com', 'clines', 'test==', false, true, 'SID1', 'h', 'o', 'host999.com')
         );
 
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
 
         // TestUser is root, and is online with ident@host999.com
@@ -894,7 +900,7 @@ final class GlineCommandTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(null); // Root user not online
 
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
 
         $glineRepo = $this->createMock(GlineRepositoryInterface::class);
@@ -943,17 +949,17 @@ final class GlineCommandTest extends TestCase
         $accessHelper = $this->createAccessHelper(true);
         $registry = new OperServCommandRegistry([]);
 
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getNickId')->willReturn(42);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getNickname')->willReturn('IrcopNick');
         $nick->method('getId')->willReturn(42);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findAll')->willReturn([$ircop]);
 
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn($nick);
 
         // IRCop is online with nick!ident@host format
@@ -991,17 +997,17 @@ final class GlineCommandTest extends TestCase
         $accessHelper = $this->createAccessHelper(false);
         $registry = new OperServCommandRegistry([]);
 
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getNickId')->willReturn(42);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getNickname')->willReturn('IrcopNick');
         $nick->method('getId')->willReturn(42);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findAll')->willReturn([$ircop]);
 
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn($nick);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -1138,10 +1144,10 @@ final class GlineCommandTest extends TestCase
         $glineRepo = $this->createStub(GlineRepositoryInterface::class);
         $glineRepo->method('findAll')->willReturn([$gline]);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getNickname')->willReturn('CreatorNick');
 
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn($nick);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -1181,7 +1187,7 @@ final class GlineCommandTest extends TestCase
         $glineRepo = $this->createStub(GlineRepositoryInterface::class);
         $glineRepo->method('findAll')->willReturn([$gline]);
 
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn(null);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -1216,13 +1222,13 @@ final class GlineCommandTest extends TestCase
         $accessHelper = $this->createAccessHelper(true);
         $registry = new OperServCommandRegistry([]);
 
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getNickId')->willReturn(99);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findAll')->willReturn([$ircop]);
 
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn(null);
 
         $glineRepo = $this->createMock(GlineRepositoryInterface::class);
@@ -1268,17 +1274,17 @@ final class GlineCommandTest extends TestCase
         $accessHelper = $this->createAccessHelper(true);
         $registry = new OperServCommandRegistry([]);
 
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getNickId')->willReturn(42);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getNickname')->willReturn('IrcopNick');
         $nick->method('getId')->willReturn(42);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findAll')->willReturn([$ircop]);
 
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn($nick);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -1401,7 +1407,7 @@ final class GlineCommandTest extends TestCase
     {
         $glineRepo = $this->createStub(GlineRepositoryInterface::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $rootRegistry = new RootUserRegistry('');
         $accessHelper = $this->createAccessHelper(false);
@@ -1426,7 +1432,7 @@ final class GlineCommandTest extends TestCase
         ?ActiveConnectionHolderInterface $connectionHolder = null,
     ): GlineCommand {
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $rootRegistry = new RootUserRegistry('');
         $accessHelper = $this->createAccessHelper(false);
@@ -1474,7 +1480,7 @@ final class GlineCommandTest extends TestCase
         $rootUsers = $isRoot ? 'TestUser' : '';
         $rootRegistry = new RootUserRegistry($rootUsers);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(\App\Domain\OperServ\Repository\OperRoleRepositoryInterface::class);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
 
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
@@ -1503,9 +1509,9 @@ final class GlineCommandTest extends TestCase
         );
     }
 
-    private function createServiceNicks(): \App\Application\ApplicationPort\ServiceNicknameRegistry
+    private function createServiceNicks(): ServiceNicknameRegistry
     {
-        $provider = new class('operserv', 'OperServ') implements \App\Application\ApplicationPort\ServiceNicknameProviderInterface {
+        $provider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
             public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
@@ -1519,7 +1525,7 @@ final class GlineCommandTest extends TestCase
             }
         };
 
-        return new \App\Application\ApplicationPort\ServiceNicknameRegistry([$provider]);
+        return new ServiceNicknameRegistry([$provider]);
     }
 
     #[Test]

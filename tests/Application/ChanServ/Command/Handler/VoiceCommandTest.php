@@ -15,7 +15,10 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\ChannelAccess;
+use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -144,7 +147,7 @@ final class VoiceCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(100);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -209,7 +212,7 @@ final class VoiceCommandTest extends TestCase
         );
 
         $cmd = new VoiceCommand($channelRepo, $nickRepo, $userLookup, $accessHelper);
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
         $cmd->execute($context);
     }
 
@@ -266,7 +269,7 @@ final class VoiceCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(100);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -300,7 +303,7 @@ final class VoiceCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(100);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -336,10 +339,10 @@ final class VoiceCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $senderAccess = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $senderAccess = $this->createStub(ChannelAccess::class);
         $senderAccess->method('getLevel')->willReturn(100);
         $accessRepo->method('findByChannelAndNick')->willReturnOnConsecutiveCalls($senderAccess, null);
-        $level = $this->createStub(\App\Domain\ChanServ\Entity\ChannelLevel::class);
+        $level = $this->createStub(ChannelLevel::class);
         $level->method('getValue')->willReturn(50);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn($level);

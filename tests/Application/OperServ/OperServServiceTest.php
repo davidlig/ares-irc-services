@@ -26,6 +26,7 @@ use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
@@ -119,7 +120,7 @@ final class OperServServiceTest extends TestCase
         $roleRepo->method('hasPermission')->willReturn($hasPermission);
 
         if ($hasPermission) {
-            $role = $this->createStub(\App\Domain\OperServ\Entity\OperRole::class);
+            $role = $this->createStub(OperRole::class);
             $role->method('getId')->willReturn(1);
 
             $ircop = $this->createStub(OperIrcop::class);
@@ -537,7 +538,7 @@ final class OperServServiceTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(10);
 
-        $role = $this->createStub(\App\Domain\OperServ\Entity\OperRole::class);
+        $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(1);
 
         $ircop = $this->createStub(OperIrcop::class);

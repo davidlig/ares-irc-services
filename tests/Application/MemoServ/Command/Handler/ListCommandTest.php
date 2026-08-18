@@ -15,6 +15,7 @@ use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -134,7 +135,7 @@ final class ListCommandTest extends TestCase
 
         $cmd = new ListCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
 
-        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext($sender, $account, ['#mychan'], $notifier, $translator));
     }
 

@@ -11,6 +11,7 @@ use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
@@ -44,7 +45,7 @@ final class OperRoleForcedVhostSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(123);
         $nick->method('getNickname')->willReturn('davidlig');
 

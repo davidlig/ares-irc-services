@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command\Handler;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\Command\Handler\KillCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -23,6 +26,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,14 +42,14 @@ final class KillCommandTest extends TestCase
         $rootUsers = $isRoot ? 'TestUser' : '';
         $rootRegistry = new RootUserRegistry($rootUsers);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(\App\Domain\OperServ\Repository\OperRoleRepositoryInterface::class);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
 
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
 
     private function createModeApplier(): IrcopModeApplier
     {
-        $identifiedRegistry = new \App\Application\NickServ\IdentifiedSessionRegistry();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getProtocolModule')->willReturn(null);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -79,9 +83,9 @@ final class KillCommandTest extends TestCase
         );
     }
 
-    private function createServiceNicks(): \App\Application\ApplicationPort\ServiceNicknameRegistry
+    private function createServiceNicks(): ServiceNicknameRegistry
     {
-        $provider = new class('operserv', 'OperServ') implements \App\Application\ApplicationPort\ServiceNicknameProviderInterface {
+        $provider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
             public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
@@ -95,7 +99,7 @@ final class KillCommandTest extends TestCase
             }
         };
 
-        return new \App\Application\ApplicationPort\ServiceNicknameRegistry([$provider]);
+        return new ServiceNicknameRegistry([$provider]);
     }
 
     #[Test]
@@ -217,7 +221,7 @@ final class KillCommandTest extends TestCase
         $accessHelper = new IrcopAccessHelper(
             $rootRegistry,
             $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(\App\Domain\OperServ\Repository\OperRoleRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class),
         );
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);

@@ -15,7 +15,11 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\ChannelAccess;
+use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -112,7 +116,7 @@ final class InviteCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InviteCommand($channelRepo, $accessHelper);
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
     }
 
@@ -128,7 +132,7 @@ final class InviteCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(200);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
@@ -170,7 +174,7 @@ final class InviteCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(200);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
@@ -201,10 +205,10 @@ final class InviteCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $level = $this->createStub(\App\Domain\ChanServ\Entity\ChannelLevel::class);
+        $level = $this->createStub(ChannelLevel::class);
         $level->method('getValue')->willReturn(15);
         $levelRepo->method('findByChannelAndKey')->willReturn($level);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(5);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
@@ -213,7 +217,7 @@ final class InviteCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new InviteCommand($channelRepo, $accessHelper);
-        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test'], $notifier, $translator));
     }
 

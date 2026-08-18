@@ -15,10 +15,13 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use DateTimeImmutable;
@@ -48,7 +51,7 @@ final class IrcopCommandTest extends TestCase
         $connectionHolder->method('getProtocolModule')->willReturn(null);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $userLookup = $this->createStub(\App\Application\Port\NetworkUserLookupPort::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
 
         return new IrcopModeApplier($identifiedRegistry, $connectionHolder, $ircopRepo, $nickRepo, $userLookup, new NullLogger());
     }
@@ -377,7 +380,7 @@ final class IrcopCommandTest extends TestCase
         $nickIdProp = $nickRefl->getProperty('id');
         $nickIdProp->setValue($nick, 42);
 
-        $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
+        $role = OperRole::create('ADMIN', 'Admin role');
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
         $roleIdProp->setValue($role, 1);
@@ -485,12 +488,12 @@ final class IrcopCommandTest extends TestCase
         $nickIdProp = $nickRefl->getProperty('id');
         $nickIdProp->setValue($nick, 42);
 
-        $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
+        $role = OperRole::create('ADMIN', 'Admin role');
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
         $roleIdProp->setValue($role, 1);
 
-        $existingIrcop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $role, 1, null);
+        $existingIrcop = OperIrcop::create(42, $role, 1, null);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($nick);
@@ -528,17 +531,17 @@ final class IrcopCommandTest extends TestCase
         $nickIdProp = $nickRefl->getProperty('id');
         $nickIdProp->setValue($nick, 42);
 
-        $oldRole = \App\Domain\OperServ\Entity\OperRole::create('OPER', 'Oper role');
+        $oldRole = OperRole::create('OPER', 'Oper role');
         $oldRoleRefl = new ReflectionClass($oldRole);
         $oldRoleIdProp = $oldRoleRefl->getProperty('id');
         $oldRoleIdProp->setValue($oldRole, 1);
 
-        $newRole = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
+        $newRole = OperRole::create('ADMIN', 'Admin role');
         $newRoleRefl = new ReflectionClass($newRole);
         $newRoleIdProp = $newRoleRefl->getProperty('id');
         $newRoleIdProp->setValue($newRole, 2);
 
-        $existingIrcop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $oldRole, 1, null);
+        $existingIrcop = OperIrcop::create(42, $oldRole, 1, null);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($nick);
@@ -577,8 +580,8 @@ final class IrcopCommandTest extends TestCase
         $nickIdProp = $nickRefl->getProperty('id');
         $nickIdProp->setValue($nick, 42);
 
-        $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
-        $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $role, 1, null);
+        $role = OperRole::create('ADMIN', 'Admin role');
+        $ircop = OperIrcop::create(42, $role, 1, null);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($nick);
@@ -703,12 +706,12 @@ final class IrcopCommandTest extends TestCase
         $nickIdProp = $nickRefl->getProperty('id');
         $nickIdProp->setValue($nick, 42);
 
-        $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
+        $role = OperRole::create('ADMIN', 'Admin role');
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
         $roleIdProp->setValue($role, 1);
 
-        $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $role, 1, null);
+        $ircop = OperIrcop::create(42, $role, 1, null);
         $ircopRefl = new ReflectionClass($ircop);
         $ircopIdProp = $ircopRefl->getProperty('id');
         $ircopIdProp->setValue($ircop, 100);
@@ -743,12 +746,12 @@ final class IrcopCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $accessHelper = $this->createAccessHelper(true);
 
-        $role = \App\Domain\OperServ\Entity\OperRole::create('ADMIN', 'Admin role');
+        $role = OperRole::create('ADMIN', 'Admin role');
         $roleRefl = new ReflectionClass($role);
         $roleIdProp = $roleRefl->getProperty('id');
         $roleIdProp->setValue($role, 1);
 
-        $ircop = \App\Domain\OperServ\Entity\OperIrcop::create(42, $role, 1, null);
+        $ircop = OperIrcop::create(42, $role, 1, null);
 
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn(null);

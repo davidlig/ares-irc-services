@@ -16,6 +16,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -111,7 +112,7 @@ final class InfoCommandTest extends TestCase
 
         $cmd = new InfoCommand($channelRepo, $nickRepo);
 
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
 
         $cmd->execute($this->createContext(['#test'], $notifier, $translator));
     }

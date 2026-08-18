@@ -16,6 +16,8 @@ use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -107,7 +109,7 @@ final class LevelsCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand($channelRepo, $levelRepo);
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'LIST'], $notifier, $translator));
     }
 
@@ -127,7 +129,7 @@ final class LevelsCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         $cmd = new LevelsCommand($channelRepo, $levelRepo);
-        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'LIST'], $notifier, $translator));
     }
 

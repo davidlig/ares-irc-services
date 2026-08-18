@@ -14,7 +14,11 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\ChannelAccess;
+use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -83,7 +87,7 @@ final class DeopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(300);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -115,7 +119,7 @@ final class DeopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(300);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -194,7 +198,7 @@ final class DeopCommandTest extends TestCase
             $this->createServiceNicks(),
         );
 
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
 
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['#test', 'Nick'], $notifier, $translator));
     }
@@ -237,7 +241,7 @@ final class DeopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $senderAccess = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $senderAccess = $this->createStub(ChannelAccess::class);
         $senderAccess->method('getLevel')->willReturn(10);
         $accessRepo->method('findByChannelAndNick')->willReturn($senderAccess);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -256,7 +260,7 @@ final class DeopCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
-        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'TargetNick'], $notifier, $translator));
     }
 
@@ -269,7 +273,7 @@ final class DeopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $senderAccess = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $senderAccess = $this->createStub(ChannelAccess::class);
         $senderAccess->method('getLevel')->willReturn(300);
         $accessRepo->method('findByChannelAndNick')->willReturn($senderAccess);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -314,13 +318,13 @@ final class DeopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(100);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturnCallback(function (int $channelId, string $key) {
-            if (\App\Domain\ChanServ\Entity\ChannelLevel::KEY_OPDEOP === $key) {
-                $level = $this->createStub(\App\Domain\ChanServ\Entity\ChannelLevel::class);
+            if (ChannelLevel::KEY_OPDEOP === $key) {
+                $level = $this->createStub(ChannelLevel::class);
                 $level->method('getValue')->willReturn(50);
 
                 return $level;

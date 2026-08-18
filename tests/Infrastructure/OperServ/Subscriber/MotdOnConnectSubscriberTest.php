@@ -20,6 +20,7 @@ use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
@@ -399,7 +400,7 @@ final class MotdOnConnectSubscriberTest extends TestCase
         $l = $this->createStub(NetworkUserLookupPort::class);
         $l->method('findByNick')->willReturn(null);
         $n = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $n->method('findByNick')->willReturn($this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class));
+        $n->method('findByNick')->willReturn($this->createStub(RegisteredNick::class));
 
         $sa = $this->createMock(ProtocolServiceActionsInterface::class);
         $sa->expects(self::never())->method('introducePseudoClient');

@@ -20,6 +20,7 @@ use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
+use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
@@ -75,7 +76,7 @@ final class RoleCommandTest extends TestCase
             $connectionHolder,
             $ircopRepo,
             $nickRepo,
-            $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
             new NullLogger(),
         );
 
@@ -85,7 +86,7 @@ final class RoleCommandTest extends TestCase
             $nickRepo,
             new IdentifiedSessionRegistry(),
             $notifier,
-            $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
             $connectionHolder,
             new VhostDisplayResolver(),
             new NullLogger(),
@@ -1587,7 +1588,7 @@ final class RoleCommandTest extends TestCase
             $connectionHolder,
             $ircopRepo,
             $nickRepo,
-            $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
             new NullLogger(),
         );
 
@@ -1597,7 +1598,7 @@ final class RoleCommandTest extends TestCase
             $nickRepo,
             new IdentifiedSessionRegistry(),
             $nsNotifier,
-            $this->createStub(\App\Application\Port\NetworkUserLookupPort::class),
+            $this->createStub(NetworkUserLookupPort::class),
             $connectionHolder,
             new VhostDisplayResolver(),
             new NullLogger(),

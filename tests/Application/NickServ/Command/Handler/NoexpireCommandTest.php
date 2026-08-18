@@ -10,6 +10,7 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\Handler\NoexpireCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
@@ -321,7 +322,7 @@ final class NoexpireCommandTest extends TestCase
     ): NickServContext {
         $sender = new SenderView('UID123', 'TestOper', 'test', 'test', 'test', '127.0.0.1', true, true, 'SID001', 'test', 'o', '');
 
-        $notifier = $this->createStub(\App\Application\NickServ\Command\NickServNotifierInterface::class);
+        $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $type, string $message) use (&$messages): void {
             $messages[] = $message;
         });

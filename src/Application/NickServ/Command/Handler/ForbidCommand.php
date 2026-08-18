@@ -11,6 +11,8 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\NickServ\Service\NickDropService;
+use App\Application\NickServ\Service\NickProtectabilityResult;
+use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickTargetValidator;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -148,14 +150,14 @@ final class ForbidCommand implements NickServCommandInterface, AuditableCommandI
         $context->reply('forbid.success', ['%nickname%' => $targetNick]);
     }
 
-    private function replyProtectabilityError(NickServContext $context, \App\Application\NickServ\Service\NickProtectabilityResult $result): void
+    private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
     {
         $nickname = $result->nickname;
 
         match ($result->status) {
-            \App\Application\NickServ\Service\NickProtectabilityStatus::IsRoot => $context->reply('forbid.cannot_forbid_root', ['%nickname%' => $nickname]),
-            \App\Application\NickServ\Service\NickProtectabilityStatus::IsIrcop => $context->reply('forbid.cannot_forbid_oper', ['%nickname%' => $nickname]),
-            \App\Application\NickServ\Service\NickProtectabilityStatus::IsService => $context->reply('forbid.cannot_forbid_service', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsRoot => $context->reply('forbid.cannot_forbid_root', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsIrcop => $context->reply('forbid.cannot_forbid_oper', ['%nickname%' => $nickname]),
+            NickProtectabilityStatus::IsService => $context->reply('forbid.cannot_forbid_service', ['%nickname%' => $nickname]),
         };
     }
 

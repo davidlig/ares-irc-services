@@ -15,7 +15,9 @@ use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelView;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -26,9 +28,12 @@ use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\IRC\Event\UserLeftChannelEvent;
+use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\ValueObject\ChannelName;
+use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\ChanServ\ChannelRankSyncPendingRegistry;
 use App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber;
@@ -182,7 +187,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteWhenChannelLookupReturnsNullDoesNotCallSetChannelModes(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -202,7 +207,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteWithRegisteredChannelAndMemberCallsSetChannelModes(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(true);
@@ -228,10 +233,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: false,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(10);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -264,7 +269,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncWhenDesiredRankAboveCurrentGrantsMode(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -290,10 +295,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -327,7 +332,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithListModeB(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(true);
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
 
@@ -340,10 +345,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(50);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -380,7 +385,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedRemovingMode(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -400,7 +405,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function resolveMemberContextWithFindByNickFallback(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(true);
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
 
@@ -413,10 +418,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -454,7 +459,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserLeftChannelUpdatesLastUsed(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->expects(self::never())->method('isSecure');
         $channel->expects(self::once())->method('touchLastUsed');
@@ -468,10 +473,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -500,7 +505,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $event = new UserLeftChannelEvent(
             uid: new Uid('001USER'),
-            nick: new \App\Domain\IRC\ValueObject\Nick('TestUser'),
+            nick: new Nick('TestUser'),
             channel: new ChannelName('#test'),
             reason: '',
             wasKicked: false,
@@ -511,7 +516,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelWithHasRoleNoSecureIdentified(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
@@ -525,10 +530,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -566,7 +571,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelWithNoRoleSecureNoAccess(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(true);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
@@ -579,10 +584,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(10);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -620,7 +625,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelWithFounderCheck(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(true);
@@ -645,7 +650,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
 
@@ -674,7 +679,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelWithUnauthenticatedUser(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -699,7 +704,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: false,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
 
@@ -725,7 +730,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function collectOpsWhenRankAboveDesiredMultiplePrefixes(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -750,10 +755,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(30);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -786,7 +791,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function collectOpsForSecureStripMultiplePrefixes(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -837,7 +842,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             $members[] = ['uid' => sprintf('001USER%d', $i), 'roleLetter' => '', 'prefixLetters' => []];
         }
 
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -861,10 +866,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -920,7 +925,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     public function onUserJoinedChannelWhenUserNotInNetworkDoesNothing(): void
     {
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class));
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($this->createStub(RegisteredChannel::class));
         $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->userLookup->expects(self::once())->method('findByUid')->with('001USER')->willReturn(null);
         $this->userLookup->expects(self::once())->method('findByNick')->with('001USER')->willReturn(null);
@@ -939,7 +944,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelTouchLastUsedWhenIdentifiedUserWithAccessJoinsNonSecureChannel(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
@@ -954,10 +959,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(50);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -995,7 +1000,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelWithEmptyPrefixLettersFallsBackToCurrentLetter(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -1021,10 +1026,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(30);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -1057,7 +1062,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelWhenDesiredEmptyDoesNothing(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
@@ -1071,7 +1076,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -1102,7 +1107,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelWhenNotIdentifiedDoesNothing(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
@@ -1116,10 +1121,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: false,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -1156,7 +1161,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelSecureStripAboveDesired(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(true);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
@@ -1170,10 +1175,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(30);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -1229,7 +1234,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $event = new UserLeftChannelEvent(
             uid: new Uid('001USER'),
-            nick: new \App\Domain\IRC\ValueObject\Nick('TestUser'),
+            nick: new Nick('TestUser'),
             channel: new ChannelName('#test'),
             reason: '',
             wasKicked: false,
@@ -1241,7 +1246,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     public function onUserLeftChannelWhenUserNotInNetworkDoesNothing(): void
     {
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
-        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class));
+        $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($this->createStub(RegisteredChannel::class));
         $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
         $this->userLookup->expects(self::once())->method('findByUid')->with('001USER')->willReturn(null);
         $this->userLookup->expects(self::once())->method('findByNick')->with('001USER')->willReturn(null);
@@ -1251,7 +1256,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $event = new UserLeftChannelEvent(
             uid: new Uid('001USER'),
-            nick: new \App\Domain\IRC\ValueObject\Nick('TestUser'),
+            nick: new Nick('TestUser'),
             channel: new ChannelName('#test'),
             reason: '',
             wasKicked: false,
@@ -1262,7 +1267,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserLeftChannelWhenDesiredEmptyDoesNothing(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
         $sender = new SenderView(
@@ -1274,7 +1279,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -1296,7 +1301,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $event = new UserLeftChannelEvent(
             uid: new Uid('001USER'),
-            nick: new \App\Domain\IRC\ValueObject\Nick('TestUser'),
+            nick: new Nick('TestUser'),
             channel: new ChannelName('#test'),
             reason: '',
             wasKicked: false,
@@ -1307,7 +1312,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserLeftChannelWhenNotIdentifiedDoesNothing(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
         $sender = new SenderView(
@@ -1319,10 +1324,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: false,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -1350,7 +1355,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $event = new UserLeftChannelEvent(
             uid: new Uid('001USER'),
-            nick: new \App\Domain\IRC\ValueObject\Nick('TestUser'),
+            nick: new Nick('TestUser'),
             channel: new ChannelName('#test'),
             reason: '',
             wasKicked: false,
@@ -1378,7 +1383,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWhenChannelNotSecureDoesNothing(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::once())->method('isSecure')->willReturn(false);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -1398,7 +1403,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedBreaksWhenParamIdxExceedsParams(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -1418,7 +1423,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithListModeE(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -1438,7 +1443,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWithListModeI(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -1458,7 +1463,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWhenRankAtOrBelowDesiredDoesNotStrip(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
@@ -1471,10 +1476,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);
@@ -1511,7 +1516,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelSkipsChanservUid(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(false);
 
@@ -1546,7 +1551,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelWhenMemberContextNullSkipsMember(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(false);
 
@@ -1582,7 +1587,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelWhenCurrentRankEqualsDesiredDoesNothing(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -1608,10 +1613,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
         $this->channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -1644,7 +1649,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelSecureNoAccessStripsAll(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -1720,7 +1725,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onIrcMessageProcessedWithPendingChannelProcessesSync(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(false);
 
@@ -1778,7 +1783,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onIrcMessageProcessedWithMultiplePendingChannels(): void
     {
-        $channel1 = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel1 = $this->createStub(RegisteredChannel::class);
         $channel1->method('getName')->willReturn('#chan1');
         $channel1->method('isSecure')->willReturn(false);
 
@@ -1816,7 +1821,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedWhenTargetUserNotInNetworkSkipsIteration(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
@@ -1855,7 +1860,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelSecureEnabledWhenChannelNotSecureDoesNothing(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(false);
 
         $registry = new ChannelRankSyncPendingRegistry();
@@ -1873,7 +1878,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelSecureEnabledWhenChannelIsSecureAddsToPendingRegistry(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
         $channel->expects(self::once())->method('getName')->willReturn('#test');
 
@@ -1917,7 +1922,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelFounderChangedWhenChannelFoundAddsToPendingRegistry(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::once())->method('getName')->willReturn('#test');
 
         $registry = new ChannelRankSyncPendingRegistry();
@@ -1945,7 +1950,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function collectOpsForSecureStripReturnsCorrectUsers(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -1995,7 +2000,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function collectOpsForSecureStripWithPrefixLettersFallback(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -2041,7 +2046,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelStripsRanksOnSecureChannel(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -2091,7 +2096,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelSecureWithEmptyCurrentLetterNoStrip(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -2137,7 +2142,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelSecureNoAccessWithRoleStripsRank(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(true);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
@@ -2151,7 +2156,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -2182,7 +2187,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelSecureNoAccessWithVoiceStripsVoice(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(true);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
@@ -2196,7 +2201,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
@@ -2233,7 +2238,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelSecureStripUsingPrefixLettersFromSjoin(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -2283,7 +2288,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelSecureStripWithPartialPrefixLetters(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -2333,7 +2338,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelSecureStripWithoutQModeSupport(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->method('isSecure')->willReturn(true);
 
@@ -2383,7 +2388,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function syncRanksForChannelRankAboveDesiredWithoutQModeSupport(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -2409,10 +2414,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(30);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -2449,7 +2454,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function collectOpsWhenRankAboveDesiredWithEmptyCurrentLetter(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->method('isSecure')->willReturn(false);
@@ -2475,10 +2480,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: true,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
@@ -2511,12 +2516,12 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelSyncedWithSecureChannelStripsOpFromUnidentifiedUser(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getName')->willReturn('#test');
         $channel->expects(self::once())->method('touchLastUsed');
         $channel->method('isSecure')->willReturn(true);
 
-        $coreChannel = new \App\Domain\IRC\Network\Channel(new ChannelName('#test'));
+        $coreChannel = new Channel(new ChannelName('#test'));
 
         $view = new ChannelView(
             name: '#test',
@@ -2566,7 +2571,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelSyncedWhenChannelNotRegisteredDoesNothing(): void
     {
-        $coreChannel = new \App\Domain\IRC\Network\Channel(new ChannelName('#test'));
+        $coreChannel = new Channel(new ChannelName('#test'));
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn(null);
@@ -2580,7 +2585,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelSkipsSuspendedChannel(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
         $channel->method('isBlocked')->willReturn(true);
 
@@ -2602,7 +2607,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onSyncCompleteSkipsSuspendedChannel(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getName')->willReturn('#test');
         $channel->method('isSuspended')->willReturn(true);
         $channel->method('isBlocked')->willReturn(true);
@@ -2621,7 +2626,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onIrcMessageProcessedSkipsSuspendedChannel(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
         $channel->method('isBlocked')->willReturn(true);
         $channel->method('getName')->willReturn('#test');
@@ -2646,7 +2651,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelModeReceivedSkipsSuspendedChannel(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
         $channel->method('isSuspended')->willReturn(true);
         $channel->method('isBlocked')->willReturn(true);
@@ -2669,7 +2674,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelSecureEnabledSkipsSuspendedChannel(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSecure')->willReturn(true);
         $channel->method('isSuspended')->willReturn(true);
         $channel->method('isBlocked')->willReturn(true);
@@ -2694,7 +2699,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserLeftChannelSkipsSuspendedChannel(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
         $channel->method('isBlocked')->willReturn(true);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
@@ -2709,7 +2714,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
 
         $event = new UserLeftChannelEvent(
             uid: new Uid('001USER'),
-            nick: new \App\Domain\IRC\ValueObject\Nick('TestUser'),
+            nick: new Nick('TestUser'),
             channel: new ChannelName('#test'),
             reason: '',
             wasKicked: false,
@@ -2720,7 +2725,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelFounderChangedSkipsSuspendedChannel(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
         $channel->method('isBlocked')->willReturn(true);
         $channel->method('getName')->willReturn('#test');
@@ -2753,11 +2758,11 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onChannelSyncedSkipsSuspendedChannel(): void
     {
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('isSuspended')->willReturn(true);
         $channel->method('isBlocked')->willReturn(true);
 
-        $coreChannel = new \App\Domain\IRC\Network\Channel(new ChannelName('#test'));
+        $coreChannel = new Channel(new ChannelName('#test'));
 
         $this->channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $this->channelRepository->expects(self::once())->method('findByChannelName')->with('#test')->willReturn($channel);
@@ -2772,7 +2777,7 @@ final class ChanServChannelRankSubscriberTest extends TestCase
     #[Test]
     public function onUserJoinedChannelSecureStripsRoleWhenNotIdentified(): void
     {
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::atLeastOnce())->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->expects(self::atLeastOnce())->method('isSecure')->willReturn(true);
         $sender = new SenderView(
@@ -2784,10 +2789,10 @@ final class ChanServChannelRankSubscriberTest extends TestCase
             ipBase64: '',
             isIdentified: false,
         );
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('isRegistered')->willReturn(true);
-        $accessStub = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessStub = $this->createStub(ChannelAccess::class);
         $accessStub->method('getLevel')->willReturn(100);
         $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('getSupportedPrefixModes')->willReturn(['q', 'a', 'o', 'h', 'v']);

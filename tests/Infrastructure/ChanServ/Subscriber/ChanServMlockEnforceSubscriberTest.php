@@ -13,6 +13,7 @@ use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
@@ -317,7 +318,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
             ->method('setChannelModes');
         $this->burstCompletePort->expects(self::never())->method('isComplete');
 
-        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncComplete($event);
     }
@@ -816,7 +817,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->burstCompletePort->expects(self::never())->method('isComplete');
         $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
-        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncComplete($event);
     }
@@ -846,7 +847,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->burstCompletePort->expects(self::never())->method('isComplete');
         $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
-        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncComplete($event);
     }
@@ -1001,7 +1002,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->burstCompletePort->expects(self::never())->method('isComplete');
         $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
-        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncComplete($event);
     }
@@ -1484,7 +1485,7 @@ final class ChanServMlockEnforceSubscriberTest extends TestCase
         $this->burstCompletePort->expects(self::never())->method('isComplete');
         $this->modeSupport->expects(self::never())->method('getChannelSettingModesUnsetWithoutParam');
 
-        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkSyncCompleteEvent($connection, '001');
         $this->subscriber->onSyncComplete($event);
     }

@@ -13,6 +13,7 @@ use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -476,7 +477,7 @@ final class IgnoreCommandTest extends TestCase
         $ignoredAccount->method('getNickname')->willReturn('Other');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($ignoredAccount);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -513,7 +514,7 @@ final class IgnoreCommandTest extends TestCase
         $ignoredAccount->method('getNickname')->willReturn('Other');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($ignoredAccount);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -549,7 +550,7 @@ final class IgnoreCommandTest extends TestCase
         $ignoredAccount->method('getNickname')->willReturn('Other');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($ignoredAccount);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -586,7 +587,7 @@ final class IgnoreCommandTest extends TestCase
         $ignoredNick->method('getNickname')->willReturn('IgnoredUser');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn($ignoredNick);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -624,7 +625,7 @@ final class IgnoreCommandTest extends TestCase
         $ignoredAccount->method('getNickname')->willReturn('Other');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($ignoredAccount);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -654,7 +655,7 @@ final class IgnoreCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('isFounder')->willReturn(true);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -690,7 +691,7 @@ final class IgnoreCommandTest extends TestCase
         $ignoredAccount->method('getNickname')->willReturn('Other');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($ignoredAccount);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);

@@ -12,10 +12,14 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\DehalfopCommand;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -85,7 +89,7 @@ final class DehalfopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(200);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -119,7 +123,7 @@ final class DehalfopCommandTest extends TestCase
     #[Test]
     public function replyNotSupportedWhenIrcdLacksHalfopMode(): void
     {
-        $modeSupport = $this->createStub(\App\Application\Port\ChannelModeSupportInterface::class);
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('hasHalfOp')->willReturn(false);
 
         $context = new ChanServContext(
@@ -227,7 +231,7 @@ final class DehalfopCommandTest extends TestCase
             ),
         );
 
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
 
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['#test', 'Nick'], $notifier, $translator));
     }
@@ -271,7 +275,7 @@ final class DehalfopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(10);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -289,7 +293,7 @@ final class DehalfopCommandTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $accessHelper,
         );
-        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'TargetNick'], $notifier, $translator));
     }
 
@@ -301,7 +305,7 @@ final class DehalfopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(200);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
@@ -340,7 +344,7 @@ final class DehalfopCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $senderAccess = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $senderAccess = $this->createStub(ChannelAccess::class);
         $senderAccess->method('getLevel')->willReturn(300);
         $accessRepo->method('findByChannelAndNick')->willReturn($senderAccess);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);

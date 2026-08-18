@@ -10,6 +10,7 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -204,7 +205,7 @@ final class ChanServLevelFounderVoterTest extends TestCase
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(1);
 
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getRole')->willReturn($role);
 
         $roleRepository = $this->createMock(OperRoleRepositoryInterface::class);
@@ -251,7 +252,7 @@ final class ChanServLevelFounderVoterTest extends TestCase
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(1);
 
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getRole')->willReturn($role);
 
         $roleRepository = $this->createMock(OperRoleRepositoryInterface::class);

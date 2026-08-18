@@ -13,6 +13,9 @@ use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -131,7 +134,7 @@ final class ReadCommandTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(5);
         $channel->method('isFounder')->willReturn(false);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -140,7 +143,7 @@ final class ReadCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $accessRepo->method('findByChannelAndNick')->willReturn(null);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $levelRepo->method('findByChannelAndKey')->willReturn(new \App\Domain\ChanServ\Entity\ChannelLevel(5, \App\Domain\ChanServ\Entity\ChannelLevel::KEY_MEMOREAD, 300));
+        $levelRepo->method('findByChannelAndKey')->willReturn(new ChannelLevel(5, ChannelLevel::KEY_MEMOREAD, 300));
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
         $messages = [];
@@ -153,7 +156,7 @@ final class ReadCommandTest extends TestCase
 
         $cmd = new ReadCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
 
-        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', '1'], $notifier, $translator));
     }
 
@@ -303,7 +306,7 @@ final class ReadCommandTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -337,7 +340,7 @@ final class ReadCommandTest extends TestCase
         $senderNick->method('getNickname')->willReturn('Sender');
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn($senderNick);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(10);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);

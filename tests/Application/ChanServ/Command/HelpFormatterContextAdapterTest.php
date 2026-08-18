@@ -22,6 +22,7 @@ use App\Application\Port\TranslationInterface;
 use App\Application\Security\PermissionProviderInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -1011,7 +1012,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $roleRef = new ReflectionProperty(OperRole::class, 'id');
         $roleRef->setValue($operRole, 5);
 
-        $operIrcop = \App\Domain\OperServ\Entity\OperIrcop::create(1, $operRole, null, null);
+        $operIrcop = OperIrcop::create(1, $operRole, null, null);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($operIrcop);
@@ -1218,7 +1219,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
         $roleRef = new ReflectionProperty(OperRole::class, 'id');
         $roleRef->setValue($operRole, 5);
 
-        $operIrcop = \App\Domain\OperServ\Entity\OperIrcop::create(1, $operRole, null, null);
+        $operIrcop = OperIrcop::create(1, $operRole, null, null);
 
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($operIrcop);

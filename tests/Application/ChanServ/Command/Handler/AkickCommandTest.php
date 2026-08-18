@@ -13,6 +13,7 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\AkickCommand;
 use App\Application\Port\BurstCompletePort;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChannelView;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
@@ -20,6 +21,7 @@ use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelAkick;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
@@ -1343,7 +1345,7 @@ final class AkickCommandTest extends TestCase
         $burstComplete = $this->createStub(BurstCompletePort::class);
         $burstComplete->method('isComplete')->willReturn(true);
 
-        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 1, [['uid' => 'UID2', 'roleLetter' => '']]);
+        $channelView = new ChannelView('#test', '', null, 1, [['uid' => 'UID2', 'roleLetter' => '']]);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 
@@ -1464,7 +1466,7 @@ final class AkickCommandTest extends TestCase
 
         $cmd = new AkickCommand($channelRepo, $akickRepo, $nickRepo, $accessRepo, $accessHelper, $this->createStub(ChannelLookupPort::class), $this->createStub(EventBusInterface::class));
 
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
         $cmd->execute($this->createContext($sender, $account, ['#unregistered', 'LIST'], $notifier, $translator));
     }
 
@@ -1509,7 +1511,7 @@ final class AkickCommandTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 2, [
+        $channelView = new ChannelView('#test', '', null, 2, [
             ['uid' => 'UID2', 'roleLetter' => ''],
         ]);
 
@@ -1903,7 +1905,7 @@ final class AkickCommandTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
-        $channelView = new \App\Application\Port\ChannelView('#test', '+nt', null, 0, []);
+        $channelView = new ChannelView('#test', '+nt', null, 0, []);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 
@@ -2053,7 +2055,7 @@ final class AkickCommandTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
-        $channelView = new \App\Application\Port\ChannelView('#test', '+nt', null, 2, [
+        $channelView = new ChannelView('#test', '+nt', null, 2, [
             ['uid' => 'UID2', 'roleLetter' => ''],
         ]);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
@@ -2134,7 +2136,7 @@ final class AkickCommandTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ([] !== $params ? json_encode($params) : ''));
 
-        $channelView = new \App\Application\Port\ChannelView('#test', '+nt', null, 2, [
+        $channelView = new ChannelView('#test', '+nt', null, 2, [
             ['uid' => 'UID2', 'roleLetter' => ''],
         ]);
         $channelLookup = $this->createStub(ChannelLookupPort::class);

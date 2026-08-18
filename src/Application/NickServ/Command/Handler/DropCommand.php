@@ -14,6 +14,7 @@ use App\Application\NickServ\Service\NickDropService;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickTargetValidator;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
@@ -133,7 +134,7 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
         return $this->resolveAccountDropAction($context, $targetNick, $account, $force);
     }
 
-    private function resolveAccountDropAction(NickServContext $context, string $targetNick, \App\Domain\NickServ\Entity\RegisteredNick $account, bool $force): array
+    private function resolveAccountDropAction(NickServContext $context, string $targetNick, RegisteredNick $account, bool $force): array
     {
         $result = ['action' => 'soft', 'nickname' => $targetNick, 'account' => $account];
 

@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 #[CoversClass(DoctrineIdentityMapClearSubscriber::class)]
 final class DoctrineIdentityMapClearSubscriberTest extends TestCase
@@ -40,6 +41,6 @@ final class DoctrineIdentityMapClearSubscriberTest extends TestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $subscriber = new DoctrineIdentityMapClearSubscriber($entityManager);
 
-        self::assertInstanceOf(\Symfony\Component\EventDispatcher\EventSubscriberInterface::class, $subscriber);
+        self::assertInstanceOf(EventSubscriberInterface::class, $subscriber);
     }
 }

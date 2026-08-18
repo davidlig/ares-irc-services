@@ -20,6 +20,7 @@ use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
+use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -436,7 +437,7 @@ final class RegisterCommandTest extends TestCase
 
         $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
 
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException::class);
+        $this->expectException(ChannelAlreadyRegisteredException::class);
 
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
     }
@@ -528,7 +529,7 @@ final class RegisterCommandTest extends TestCase
 
         $cmd = new RegisterCommand($channelRepo, $levelRepo, $throttle, $this->createStub(EventBusInterface::class), $this->createNonRootRegistry(), 3, 0);
 
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException::class);
+        $this->expectException(ChannelAlreadyRegisteredException::class);
 
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Desc'], $notifier, $translator, $channelLookup));
     }

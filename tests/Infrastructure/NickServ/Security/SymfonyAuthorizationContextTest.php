@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\NickServ\Security;
 
 use App\Application\Port\SenderView;
+use App\Infrastructure\NickServ\Security\IrcServiceToken;
 use App\Infrastructure\NickServ\Security\SymfonyAuthorizationContext;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,7 +23,7 @@ final class SymfonyAuthorizationContextTest extends TestCase
 
         $tokenStorage->expects(self::once())
             ->method('setToken')
-            ->with(self::callback(static fn ($token): bool => $token instanceof \App\Infrastructure\NickServ\Security\IrcServiceToken));
+            ->with(self::callback(static fn ($token): bool => $token instanceof IrcServiceToken));
 
         $context = new SymfonyAuthorizationContext($tokenStorage);
         $context->setCurrentUser($sender);

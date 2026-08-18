@@ -8,6 +8,7 @@ use App\Domain\NickServ\Entity\ForbiddenVhost;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use App\Infrastructure\NickServ\Doctrine\ForbiddenVhostDoctrineRepository;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -189,7 +190,7 @@ final class ForbiddenVhostDoctrineRepositoryTest extends DoctrineIntegrationTest
 
         $forbidden2 = ForbiddenVhost::create('*.unique.com', 2);
 
-        $this->expectException(\Doctrine\DBAL\Exception\UniqueConstraintViolationException::class);
+        $this->expectException(UniqueConstraintViolationException::class);
         $this->repository->save($forbidden2);
         $this->entityManager->flush();
     }

@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol;
 
+use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Message\IRCMessage;
+use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(AbstractProtocolHandler::class)]
 final class AbstractProtocolHandlerTest extends TestCase
@@ -74,12 +78,12 @@ final class AbstractProtocolHandlerTest extends TestCase
     #[Test]
     public function handleIncomingWithPingRespondsWithPong(): void
     {
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::once())->method('writeLine')
             ->with('PONG :server');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
+            public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -93,12 +97,12 @@ final class AbstractProtocolHandlerTest extends TestCase
     #[Test]
     public function handleIncomingWithPingWithParamRespondsWithPong(): void
     {
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::once())->method('writeLine')
             ->with('PONG :target');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
+            public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -112,12 +116,12 @@ final class AbstractProtocolHandlerTest extends TestCase
     #[Test]
     public function handleIncomingWithPingWithEmptyTargetRespondsWithEmptyPong(): void
     {
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::once())->method('writeLine')
             ->with('PONG :');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
+            public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -131,11 +135,11 @@ final class AbstractProtocolHandlerTest extends TestCase
     #[Test]
     public function handleIncomingWithNonPingDoesNothing(): void
     {
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
+            public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -149,11 +153,11 @@ final class AbstractProtocolHandlerTest extends TestCase
     #[Test]
     public function handleIncomingWithJoinDoesNothing(): void
     {
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
+            public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -167,11 +171,11 @@ final class AbstractProtocolHandlerTest extends TestCase
     #[Test]
     public function handleIncomingWithErrorLogsCritical(): void
     {
-        $connection = $this->createMock(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createMock(ConnectionInterface::class);
         $connection->expects(self::never())->method('writeLine');
 
         $handler = new class extends AbstractProtocolHandler {
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
+            public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -185,13 +189,13 @@ final class AbstractProtocolHandlerTest extends TestCase
     #[Test]
     public function dispatchSyncCompleteDispatchesNetworkSyncCompleteEvent(): void
     {
-        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
-        $eventDispatcher = $this->createMock(\Symfony\Contracts\EventDispatcher\EventDispatcherInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
 
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static function (object $event) use ($connection): bool {
-                self::assertInstanceOf(\App\Domain\IRC\Event\NetworkSyncCompleteEvent::class, $event);
+                self::assertInstanceOf(NetworkSyncCompleteEvent::class, $event);
                 self::assertSame($connection, $event->connection);
                 self::assertSame('0AB', $event->serverSid);
 
@@ -199,12 +203,12 @@ final class AbstractProtocolHandlerTest extends TestCase
             }));
 
         $handler = new class(eventDispatcher: $eventDispatcher) extends AbstractProtocolHandler {
-            public function dispatchSyncCompleteForTest(\App\Domain\IRC\Connection\ConnectionInterface $connection, string $sid): void
+            public function dispatchSyncCompleteForTest(ConnectionInterface $connection, string $sid): void
             {
                 $this->dispatchSyncComplete($connection, $sid);
             }
 
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
+            public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
 
             public function getProtocolName(): string
             {
@@ -218,15 +222,15 @@ final class AbstractProtocolHandlerTest extends TestCase
     #[Test]
     public function dispatchSyncCompleteDoesNothingWhenEventDispatcherIsNull(): void
     {
-        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
 
         $handler = new class(eventDispatcher: null) extends AbstractProtocolHandler {
-            public function dispatchSyncCompleteForTest(\App\Domain\IRC\Connection\ConnectionInterface $connection, string $sid): void
+            public function dispatchSyncCompleteForTest(ConnectionInterface $connection, string $sid): void
             {
                 $this->dispatchSyncComplete($connection, $sid);
             }
 
-            public function performHandshake(\App\Domain\IRC\Connection\ConnectionInterface $connection, \App\Domain\IRC\Server\ServerLink $link): void {}
+            public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
 
             public function getProtocolName(): string
             {

@@ -10,7 +10,10 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\NickServ\Security\IrcServiceUser;
 use App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -39,7 +42,7 @@ final class NickServSasetVoterTest extends TestCase
         $this->accessHelper = new IrcopAccessHelper(
             $this->rootRegistry,
             $this->ircopRepository,
-            $this->createStub(\App\Domain\OperServ\Repository\OperRoleRepositoryInterface::class)
+            $this->createStub(OperRoleRepositoryInterface::class)
         );
         $this->voter = new NickServSasetVoter($this->accessHelper, $this->rootRegistry, $this->ircopRepository);
     }
@@ -199,13 +202,13 @@ final class NickServSasetVoterTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
-        $role = $this->createStub(\App\Domain\OperServ\Entity\OperRole::class);
+        $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(1);
 
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getRole')->willReturn($role);
 
-        $roleRepository = $this->createMock(\App\Domain\OperServ\Repository\OperRoleRepositoryInterface::class);
+        $roleRepository = $this->createMock(OperRoleRepositoryInterface::class);
         $roleRepository->expects(self::once())->method('hasPermission')->with(1, NickServPermission::SASET)->willReturn(true);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -246,13 +249,13 @@ final class NickServSasetVoterTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
-        $role = $this->createStub(\App\Domain\OperServ\Entity\OperRole::class);
+        $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(1);
 
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getRole')->willReturn($role);
 
-        $roleRepository = $this->createMock(\App\Domain\OperServ\Repository\OperRoleRepositoryInterface::class);
+        $roleRepository = $this->createMock(OperRoleRepositoryInterface::class);
         $roleRepository->expects(self::once())->method('hasPermission')->with(1, NickServPermission::SASET)->willReturn(false);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
@@ -293,7 +296,7 @@ final class NickServSasetVoterTest extends TestCase
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
 
-        $roleRepository = $this->createStub(\App\Domain\OperServ\Repository\OperRoleRepositoryInterface::class);
+        $roleRepository = $this->createStub(OperRoleRepositoryInterface::class);
 
         $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
         $ircopRepository->expects(self::once())->method('findByNickId')->with(1)->willReturn(null);

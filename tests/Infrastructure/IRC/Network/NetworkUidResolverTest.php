@@ -12,12 +12,13 @@ use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\NetworkUidResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(NetworkUidResolver::class)]
 final class NetworkUidResolverTest extends TestCase
 {
-    private NetworkUserRepositoryInterface&\PHPUnit\Framework\MockObject\MockObject $userRepository;
+    private MockObject&NetworkUserRepositoryInterface $userRepository;
 
     private UidResolverInterface $resolver;
 

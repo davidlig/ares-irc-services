@@ -32,6 +32,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
+use Symfony\Component\Messenger\Envelope;
 
 #[CoversClass(SetFounderHandler::class)]
 final class SetFounderHandlerTest extends TestCase
@@ -605,7 +606,7 @@ final class SetFounderHandlerTest extends TestCase
         });
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
+        $envelope = new Envelope(new stdClass());
         $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 
@@ -898,7 +899,7 @@ final class SetFounderHandlerTest extends TestCase
         });
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-        $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
+        $envelope = new Envelope(new stdClass());
         $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('Mail failure'));
 
@@ -1039,7 +1040,7 @@ final class SetFounderHandlerTest extends TestCase
         });
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
-        $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
+        $envelope = new Envelope(new stdClass());
         $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 
@@ -1088,7 +1089,7 @@ final class SetFounderHandlerTest extends TestCase
         });
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
-        $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
+        $envelope = new Envelope(new stdClass());
         $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 
@@ -1137,7 +1138,7 @@ final class SetFounderHandlerTest extends TestCase
         });
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%email_hint%'] ?? ''));
-        $envelope = new \Symfony\Component\Messenger\Envelope(new stdClass());
+        $envelope = new Envelope(new stdClass());
         $messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);
         $messageBus->expects(self::once())->method('dispatch')->willReturn($envelope);
 

@@ -8,6 +8,7 @@ use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
+use App\Application\Port\ChannelView;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceChannelRegistrationPort;
@@ -304,7 +305,7 @@ final class ChanServBotTest extends TestCase
     #[Test]
     public function sendNoticeToChannelWithMembersWritesLine(): void
     {
-        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 5);
+        $channelView = new ChannelView('#test', '', null, 5);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 
@@ -495,7 +496,7 @@ final class ChanServBotTest extends TestCase
     #[Test]
     public function sendNoticeToChannelWhenMemberCountZeroReturnsEarly(): void
     {
-        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 0);
+        $channelView = new ChannelView('#test', '', null, 0);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 
@@ -580,7 +581,7 @@ final class ChanServBotTest extends TestCase
     #[Test]
     public function sendNoticeToChannelWhenModuleNullReturnsEarly(): void
     {
-        $channelView = new \App\Application\Port\ChannelView('#test', '', null, 5);
+        $channelView = new ChannelView('#test', '', null, 5);
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $channelLookup->method('findByChannelName')->willReturn($channelView);
 

@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 use App\Application\ChanServ\Service\ChannelForbiddenService;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
+use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
@@ -79,7 +80,7 @@ final class ChanServForbiddenChannelJoinSubscriberTest extends TestCase
         $channelServiceActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelServiceActions->expects(self::once())->method('kickFromChannel');
 
-        $view = new \App\Application\Port\ChannelView('#forbidden', '+nt', null, 1);
+        $view = new ChannelView('#forbidden', '+nt', null, 1);
         $channelLookup = $this->createMock(ChannelLookupPort::class);
         $channelLookup->expects(self::once())->method('findByChannelName')->with('#forbidden')->willReturn($view);
 

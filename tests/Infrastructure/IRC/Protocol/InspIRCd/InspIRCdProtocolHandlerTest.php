@@ -12,12 +12,19 @@ use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport;
+use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 use function count;
 
@@ -30,7 +37,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
             sid: $sid,
             connectionHolder: $connectionHolder ?? new ActiveConnectionHolder(),
             modeSupportFactory: $factory ?? new InspIRCdChannelModeSupportFactory(),
-            logger: new \Psr\Log\NullLogger(),
+            logger: new NullLogger(),
         );
     }
 
@@ -291,7 +298,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
             sid: '0A0',
             connectionHolder: $connectionHolder,
             modeSupportFactory: $factory,
-            logger: new \Psr\Log\NullLogger(),
+            logger: new NullLogger(),
         );
 
         $module = $this->createModuleWithHandler($handler, $connectionHolder, $modeSupport);
@@ -322,7 +329,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
             sid: '0A0',
             connectionHolder: $connectionHolder,
             modeSupportFactory: $factory,
-            logger: new \Psr\Log\NullLogger(),
+            logger: new NullLogger(),
         );
 
         $module = $this->createModuleWithHandler($handler, $connectionHolder, $modeSupport);
@@ -351,7 +358,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
             sid: '0A0',
             connectionHolder: $connectionHolder,
             modeSupportFactory: null,
-            logger: new \Psr\Log\NullLogger(),
+            logger: new NullLogger(),
         );
 
         $factory = new InspIRCdChannelModeSupportFactory();
@@ -381,7 +388,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
             sid: '0A0',
             connectionHolder: $connectionHolder,
             modeSupportFactory: $factory,
-            logger: new \Psr\Log\NullLogger(),
+            logger: new NullLogger(),
         );
 
         $module = $this->createModuleWithHandler($handler, $connectionHolder, $modeSupport);
@@ -404,16 +411,16 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         self::assertTrue($module->getChannelModeSupport()->hasPermanentChannelMode());
     }
 
-    private function createModuleWithHandler(InspIRCdProtocolHandler $handler, ActiveConnectionHolder $connectionHolder, \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport $modeSupport): InspIRCdModule
+    private function createModuleWithHandler(InspIRCdProtocolHandler $handler, ActiveConnectionHolder $connectionHolder, InspIRCdChannelModeSupport $modeSupport): InspIRCdModule
     {
         return new InspIRCdModule(
             handler: $handler,
-            serviceActions: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions($connectionHolder, new \Psr\Log\NullLogger()),
-            introductionFormatter: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter(),
-            vhostCommandBuilder: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder(),
+            serviceActions: new InspIRCdProtocolServiceActions($connectionHolder, new NullLogger()),
+            introductionFormatter: new InspIRCdServiceIntroductionFormatter(),
+            vhostCommandBuilder: new InspIRCdVhostCommandBuilder(),
             channelModeSupport: $modeSupport,
-            userModeSupport: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport(),
-            nickReservation: new \App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation($connectionHolder, new \Psr\Log\NullLogger()),
+            userModeSupport: new InspIRCdUserModeSupport(),
+            nickReservation: new InspIRCdNickReservation($connectionHolder, new NullLogger()),
         );
     }
 }

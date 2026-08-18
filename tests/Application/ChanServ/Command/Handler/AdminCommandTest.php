@@ -12,11 +12,13 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\AdminCommand;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -37,7 +39,7 @@ final class AdminCommandTest extends TestCase
         TranslationInterface $translator,
         bool $hasAdminMode = true,
     ): ChanServContext {
-        $modeSupport = $this->createStub(\App\Application\Port\ChannelModeSupportInterface::class);
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
         $modeSupport->method('hasAdmin')->willReturn($hasAdminMode);
 
         return new ChanServContext(
@@ -172,7 +174,7 @@ final class AdminCommandTest extends TestCase
             ),
         );
 
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
 
         $cmd->execute($this->createContext($sender, $account, ['#test', 'Nick'], $notifier, $translator));
     }

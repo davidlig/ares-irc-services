@@ -20,6 +20,7 @@ use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -286,7 +287,7 @@ final class UnsuspendCommandTest extends TestCase
 
     private function createContext(
         ?SenderView $sender,
-        ?\App\Domain\NickServ\Entity\RegisteredNick $senderAccount,
+        ?RegisteredNick $senderAccount,
         array $args,
         array &$messages,
         ?RegisteredChannelRepositoryInterface $channelRepository = null,

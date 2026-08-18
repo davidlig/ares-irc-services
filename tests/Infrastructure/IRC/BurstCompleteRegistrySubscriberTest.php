@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC;
 
 use App\Application\IRC\BurstCompleteRegistry;
+use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
@@ -58,7 +59,7 @@ final class BurstCompleteRegistrySubscriberTest extends TestCase
     #[Test]
     public function onBurstCompleteSetsBurstCompleteTrue(): void
     {
-        $connection = $this->createStub(\App\Domain\IRC\Connection\ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
         self::assertFalse($this->registry->isBurstComplete());

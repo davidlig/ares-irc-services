@@ -13,6 +13,9 @@ use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -126,7 +129,7 @@ final class DelCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(5);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -154,7 +157,7 @@ final class DelCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(5);
         $channel->method('isFounder')->willReturn(false);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -163,7 +166,7 @@ final class DelCommandTest extends TestCase
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $accessRepo->method('findByChannelAndNick')->willReturn(null);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $levelRepo->method('findByChannelAndKey')->willReturn(new \App\Domain\ChanServ\Entity\ChannelLevel(5, \App\Domain\ChanServ\Entity\ChannelLevel::KEY_MEMOCHANGE, 300));
+        $levelRepo->method('findByChannelAndKey')->willReturn(new ChannelLevel(5, ChannelLevel::KEY_MEMOCHANGE, 300));
         $accessHelper = new ChanServAccessHelper($accessRepo, $levelRepo);
 
         $messages = [];
@@ -176,7 +179,7 @@ final class DelCommandTest extends TestCase
 
         $cmd = new DelCommand($channelRepo, $memoRepo, $accessHelper);
 
-        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#mychan', '1'], $notifier, $translator));
     }
 
@@ -264,7 +267,7 @@ final class DelCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(5);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
@@ -318,7 +321,7 @@ final class DelCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(5);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
@@ -348,7 +351,7 @@ final class DelCommandTest extends TestCase
     {
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(5);
         $channel->method('isFounder')->willReturn(true);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);

@@ -10,11 +10,14 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
+use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
@@ -134,7 +137,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $event = new UserJoinedChannelEvent(
             uid: new Uid(self::MEMOSERV_UID),
             channel: new ChannelName('#test'),
-            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+            role: ChannelMemberRole::None,
         );
 
         $this->channelRepository->expects(self::never())->method('findByChannelName');
@@ -156,7 +159,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
             channel: new ChannelName('#test'),
-            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+            role: ChannelMemberRole::None,
         );
 
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn(null);
@@ -178,9 +181,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
             channel: new ChannelName('#test'),
-            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+            role: ChannelMemberRole::None,
         );
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
@@ -202,9 +205,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
             channel: new ChannelName('#test'),
-            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+            role: ChannelMemberRole::None,
         );
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
@@ -226,9 +229,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
             channel: new ChannelName('#test'),
-            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+            role: ChannelMemberRole::None,
         );
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
 
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
@@ -250,9 +253,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
             channel: new ChannelName('#test'),
-            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+            role: ChannelMemberRole::None,
         );
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $sender = new SenderView(
             uid: '001USER',
@@ -282,9 +285,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
             channel: new ChannelName('#test'),
-            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+            role: ChannelMemberRole::None,
         );
-        $channel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createStub(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $sender = new SenderView(
             uid: '001USER',
@@ -318,9 +321,9 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $event = new UserJoinedChannelEvent(
             uid: new Uid('001USER'),
             channel: new ChannelName('#test'),
-            role: \App\Domain\IRC\Network\ChannelMemberRole::None,
+            role: ChannelMemberRole::None,
         );
-        $channel = $this->createMock(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $channel = $this->createMock(RegisteredChannel::class);
         $channel->method('getId')->willReturn(self::CHANNEL_ID);
         $channel->expects(self::atLeastOnce())->method('isFounder')->with(self::NICK_ID)->willReturn(false);
 
@@ -337,7 +340,7 @@ final class MemoServPendingChannelNoticeSubscriberTest extends TestCase
         $account->method('getId')->willReturn(self::NICK_ID);
         $account->method('getLanguage')->willReturn('en');
 
-        $access = new \App\Domain\ChanServ\Entity\ChannelAccess(self::CHANNEL_ID, self::NICK_ID, 250);
+        $access = new ChannelAccess(self::CHANNEL_ID, self::NICK_ID, 250);
 
         $this->channelRepository->expects(self::atLeastOnce())->method('findByChannelName')->with('#test')->willReturn($channel);
         $this->memoSettingsRepository->expects(self::atLeastOnce())->method('isEnabledForChannel')->with(self::CHANNEL_ID)->willReturn(true);

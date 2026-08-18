@@ -20,6 +20,7 @@ use App\Application\Port\TranslationInterface;
 use App\Application\Security\PermissionProviderInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -302,7 +303,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(10);
         $role->method('hasPermission')->willReturnCallback(static fn (string $perm): bool => 'nickserv.userip' === $perm);
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getRole')->willReturn($role);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
@@ -383,7 +384,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $rootRegistry = new RootUserRegistry('');
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(10);
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getRole')->willReturn($role);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
@@ -426,7 +427,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         $rootRegistry = new RootUserRegistry('');
         $role = $this->createStub(OperRole::class);
         $role->method('getId')->willReturn(10);
-        $ircop = $this->createStub(\App\Domain\OperServ\Entity\OperIrcop::class);
+        $ircop = $this->createStub(OperIrcop::class);
         $ircop->method('getRole')->willReturn($role);
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);

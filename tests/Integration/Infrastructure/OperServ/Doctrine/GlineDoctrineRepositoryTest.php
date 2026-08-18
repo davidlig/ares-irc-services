@@ -6,13 +6,14 @@ namespace App\Tests\Integration\Infrastructure\OperServ\Doctrine;
 
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
+use App\Infrastructure\OperServ\Doctrine\GlineDoctrineRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-#[CoversClass(\App\Infrastructure\OperServ\Doctrine\GlineDoctrineRepository::class)]
+#[CoversClass(GlineDoctrineRepository::class)]
 final class GlineDoctrineRepositoryTest extends KernelTestCase
 {
     private ?EntityManagerInterface $em = null;

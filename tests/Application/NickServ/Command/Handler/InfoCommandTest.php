@@ -16,6 +16,8 @@ use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\ChannelAccess;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -629,7 +631,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showUserChannelsWhenIdentified(): void
     {
-        $founderChannel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $founderChannel = $this->createStub(RegisteredChannel::class);
         $founderChannel->method('getId')->willReturn(1);
         $founderChannel->method('getName')->willReturn('#founderchan');
         $account = $this->createStub(RegisteredNick::class);
@@ -674,10 +676,10 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showChannelsWithAccessOnly(): void
     {
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getChannelId')->willReturn(1);
         $access->method('getLevel')->willReturn(200);
-        $accessChannel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $accessChannel = $this->createStub(RegisteredChannel::class);
         $accessChannel->method('getId')->willReturn(1);
         $accessChannel->method('getName')->willReturn('#accesschan');
         $account = $this->createStub(RegisteredNick::class);
@@ -723,7 +725,7 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showSuccessorChannelsWhenIdentified(): void
     {
-        $successorChannel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $successorChannel = $this->createStub(RegisteredChannel::class);
         $successorChannel->method('getId')->willReturn(2);
         $successorChannel->method('getName')->willReturn('#successorchan');
         $account = $this->createStub(RegisteredNick::class);
@@ -850,13 +852,13 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showChannelsWithAccessAndFounder(): void
     {
-        $founderChannel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $founderChannel = $this->createStub(RegisteredChannel::class);
         $founderChannel->method('getId')->willReturn(1);
         $founderChannel->method('getName')->willReturn('#founderchan');
-        $accessEntry = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessEntry = $this->createStub(ChannelAccess::class);
         $accessEntry->method('getChannelId')->willReturn(2);
         $accessEntry->method('getLevel')->willReturn(100);
-        $accessChannel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $accessChannel = $this->createStub(RegisteredChannel::class);
         $accessChannel->method('getId')->willReturn(2);
         $accessChannel->method('getName')->willReturn('#accesschan');
         $account = $this->createStub(RegisteredNick::class);
@@ -903,13 +905,13 @@ final class InfoCommandTest extends TestCase
     #[Test]
     public function showChannelsWithAccessAndSuccessor(): void
     {
-        $successorChannel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $successorChannel = $this->createStub(RegisteredChannel::class);
         $successorChannel->method('getId')->willReturn(1);
         $successorChannel->method('getName')->willReturn('#successorchan');
-        $accessEntry = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $accessEntry = $this->createStub(ChannelAccess::class);
         $accessEntry->method('getChannelId')->willReturn(2);
         $accessEntry->method('getLevel')->willReturn(150);
-        $accessChannel = $this->createStub(\App\Domain\ChanServ\Entity\RegisteredChannel::class);
+        $accessChannel = $this->createStub(RegisteredChannel::class);
         $accessChannel->method('getId')->willReturn(2);
         $accessChannel->method('getName')->willReturn('#accesschan');
         $account = $this->createStub(RegisteredNick::class);

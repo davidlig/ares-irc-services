@@ -10,6 +10,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\TimezoneHelpProvider;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Port\SenderView;
 use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
 
@@ -110,7 +111,7 @@ final readonly class HelpCommand implements NickServCommandInterface
         $this->executeHelpForCommand($context, $sender);
     }
 
-    private function executeHelpForCommand(NickServContext $context, \App\Application\Port\SenderView $sender): void
+    private function executeHelpForCommand(NickServContext $context, SenderView $sender): void
     {
         $targetCmd = strtoupper($context->args[0]);
         $handler = $context->getRegistry()->find($targetCmd);

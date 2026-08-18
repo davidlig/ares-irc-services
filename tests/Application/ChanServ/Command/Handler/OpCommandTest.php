@@ -14,11 +14,16 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\ChanServ\Entity\ChannelAccess;
+use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
+use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -58,7 +63,7 @@ final class OpCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -83,7 +88,7 @@ final class OpCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -107,12 +112,12 @@ final class OpCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(300);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn(null);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $account = $this->createStub(RegisteredNick::class);
@@ -140,13 +145,13 @@ final class OpCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(300);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
         $targetAccount = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($targetAccount);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(null);
@@ -175,13 +180,13 @@ final class OpCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $access = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $access = $this->createStub(ChannelAccess::class);
         $access->method('getLevel')->willReturn(300);
         $accessRepo->method('findByChannelAndNick')->willReturn($access);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
         $targetAccount = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($targetAccount);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(new SenderView('UID2', 'TargetNick', 'i', 'h', 'c', 'ip'));
@@ -215,13 +220,13 @@ final class OpCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn(null);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $translator = $this->createStub(TranslationInterface::class);
 
         $cmd = new OpCommand($channelRepo, $accessRepo, $levelRepo, $nickRepo, $userLookup);
-        $this->expectException(\App\Domain\ChanServ\Exception\ChannelNotRegisteredException::class);
+        $this->expectException(ChannelNotRegisteredException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $this->createStub(RegisteredNick::class), ['#test', 'Nick'], $notifier, $translator));
     }
 
@@ -234,7 +239,7 @@ final class OpCommandTest extends TestCase
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -263,7 +268,7 @@ final class OpCommandTest extends TestCase
         $accessRepo->method('findByChannelAndNick')->willReturn(null);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
@@ -271,7 +276,7 @@ final class OpCommandTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
 
         $cmd = new OpCommand($channelRepo, $accessRepo, $levelRepo, $nickRepo, $userLookup);
-        $this->expectException(\App\Domain\ChanServ\Exception\InsufficientAccessException::class);
+        $this->expectException(InsufficientAccessException::class);
         $cmd->execute($this->createContext(new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'), $account, ['#test', 'TargetNick'], $notifier, $translator));
     }
 
@@ -285,16 +290,16 @@ final class OpCommandTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($channel);
         $accessRepo = $this->createStub(ChannelAccessRepositoryInterface::class);
-        $senderAccess = $this->createStub(\App\Domain\ChanServ\Entity\ChannelAccess::class);
+        $senderAccess = $this->createStub(ChannelAccess::class);
         $senderAccess->method('getLevel')->willReturn(300);
         $accessRepo->method('findByChannelAndNick')->willReturnOnConsecutiveCalls($senderAccess, null);
-        $level = $this->createStub(\App\Domain\ChanServ\Entity\ChannelLevel::class);
+        $level = $this->createStub(ChannelLevel::class);
         $level->method('getValue')->willReturn(50);
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn($level);
         $targetAccount = $this->createStub(RegisteredNick::class);
         $targetAccount->method('getId')->willReturn(2);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($targetAccount);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(new SenderView('UID2', 'TargetNick', 'i', 'h', 'c', 'ip'));
@@ -327,7 +332,7 @@ final class OpCommandTest extends TestCase
         $levelRepo = $this->createStub(ChannelLevelRepositoryInterface::class);
         $levelRepo->method('findByChannelAndKey')->willReturn(null);
         $targetAccount = $this->createStub(RegisteredNick::class);
-        $nickRepo = $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findByNick')->willReturn($targetAccount);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn(new SenderView('UID2', 'TargetNick', 'i', 'h', 'c', 'ip'));
@@ -360,7 +365,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -374,7 +379,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -388,7 +393,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -402,7 +407,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -416,7 +421,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -430,7 +435,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -444,7 +449,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -458,7 +463,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -472,7 +477,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -486,7 +491,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -500,7 +505,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -515,7 +520,7 @@ final class OpCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $this->createStub(ChannelAccessRepositoryInterface::class),
             $this->createStub(ChannelLevelRepositoryInterface::class),
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );

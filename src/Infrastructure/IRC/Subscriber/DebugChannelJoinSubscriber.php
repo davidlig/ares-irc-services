@@ -7,8 +7,10 @@ namespace App\Infrastructure\IRC\Subscriber;
 use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
@@ -89,7 +91,7 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
     }
 
     private function applyRegisteredChannelSetup(
-        \App\Domain\ChanServ\Entity\RegisteredChannel $registered,
+        RegisteredChannel $registered,
     ): void {
         $channelName = $this->debugChannel;
         $modeSupport = $this->modeSupportProvider->getSupport();
@@ -106,7 +108,7 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
 
     private function applyRegisteredAndPermanentModes(
         string $channelName,
-        \App\Application\Port\ChannelModeSupportInterface $modeSupport,
+        ChannelModeSupportInterface $modeSupport,
     ): void {
         $modesToSet = [];
 
@@ -134,8 +136,8 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
 
     private function applyMlock(
         string $channelName,
-        \App\Domain\ChanServ\Entity\RegisteredChannel $registered,
-        \App\Application\Port\ChannelModeSupportInterface $modeSupport,
+        RegisteredChannel $registered,
+        ChannelModeSupportInterface $modeSupport,
     ): void {
         if (!$registered->isMlockActive()) {
             return;
@@ -180,7 +182,7 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
 
     private function applyTopic(
         string $channelName,
-        \App\Domain\ChanServ\Entity\RegisteredChannel $registered,
+        RegisteredChannel $registered,
     ): void {
         $storedTopic = $registered->getTopic();
         if (null === $storedTopic) {

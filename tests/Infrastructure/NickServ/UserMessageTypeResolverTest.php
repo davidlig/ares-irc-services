@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\NickServ;
 
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -29,7 +30,7 @@ final class UserMessageTypeResolverTest extends TestCase
     #[Test]
     public function resolveReturnsAccountMessageTypeWhenRegistered(): void
     {
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getMessageType')->willReturn('PRIVMSG');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findByNick')->willReturn($account);

@@ -13,6 +13,7 @@ use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\SenderView;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -136,7 +137,7 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         ]);
     }
 
-    private function validateTarget(OperServContext $context, ?\App\Application\Port\SenderView $target, string $targetNick): ?string
+    private function validateTarget(OperServContext $context, ?SenderView $target, string $targetNick): ?string
     {
         if (null === $target) {
             $context->reply('kill.user_not_online', ['%nickname%' => $targetNick]);
@@ -154,7 +155,7 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         return $errorKey;
     }
 
-    private function isOper(\App\Application\Port\SenderView $target, string $targetNickLower): bool
+    private function isOper(SenderView $target, string $targetNickLower): bool
     {
         if (!$target->isOper || !$target->isIdentified) {
             return false;

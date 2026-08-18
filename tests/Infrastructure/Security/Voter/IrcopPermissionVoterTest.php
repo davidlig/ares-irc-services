@@ -9,6 +9,7 @@ use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
 use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -88,7 +89,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $voter = new IrcopPermissionVoter(
             $accessHelper,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+            $this->createStub(RegisteredNickRepositoryInterface::class)
         );
 
         $context = $this->createStub(IrcopContextInterface::class);
@@ -109,7 +110,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $voter = new IrcopPermissionVoter(
             $accessHelper,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+            $this->createStub(RegisteredNickRepositoryInterface::class)
         );
 
         $context = $this->createStub(IrcopContextInterface::class);
@@ -131,7 +132,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $voter = new IrcopPermissionVoter(
             $accessHelper,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+            $this->createStub(RegisteredNickRepositoryInterface::class)
         );
 
         $context = $this->createStub(IrcopContextInterface::class);
@@ -163,7 +164,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $voter = new IrcopPermissionVoter(
             $accessHelper,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+            $this->createStub(RegisteredNickRepositoryInterface::class)
         );
 
         $account = $this->createStub(RegisteredNick::class);
@@ -199,7 +200,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $voter = new IrcopPermissionVoter(
             $accessHelper,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+            $this->createStub(RegisteredNickRepositoryInterface::class)
         );
 
         $account = $this->createStub(RegisteredNick::class);
@@ -225,7 +226,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         $voter = new IrcopPermissionVoter(
             $accessHelper,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+            $this->createStub(RegisteredNickRepositoryInterface::class)
         );
 
         $context = $this->createStub(IrcopContextInterface::class);
@@ -247,7 +248,7 @@ final class IrcopPermissionVoterTest extends TestCase
 
         return new IrcopPermissionVoter(
             $accessHelper,
-            $this->createStub(\App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface::class)
+            $this->createStub(RegisteredNickRepositoryInterface::class)
         );
     }
 

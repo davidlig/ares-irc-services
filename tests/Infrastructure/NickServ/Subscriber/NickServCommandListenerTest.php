@@ -12,6 +12,7 @@ use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\NickServService;
+use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
@@ -24,6 +25,7 @@ use App\Application\Port\SendNoticePort;
 use App\Application\Port\TranslationInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
+use App\Domain\IRC\LocalUserModeSyncInterface;
 use App\Domain\NickServ\Exception\InvalidCredentialsException;
 use App\Domain\NickServ\Exception\NickAlreadyRegisteredException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -86,8 +88,8 @@ final class NickServCommandListenerTest extends TestCase
             new ActiveConnectionHolder(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
-            $this->createStub(\App\Application\NickServ\PendingNickRestoreRegistryInterface::class),
-            $this->createStub(\App\Domain\IRC\LocalUserModeSyncInterface::class),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncInterface::class),
             $uidGenerator,
             'services.example.com',
             'NickServ',

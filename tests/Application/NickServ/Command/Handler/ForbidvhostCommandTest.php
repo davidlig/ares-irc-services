@@ -18,6 +18,7 @@ use App\Application\NickServ\Service\ForbiddenVhostService;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\ForbiddenVhost;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -540,7 +541,7 @@ final class ForbidvhostCommandTest extends TestCase
     {
         $sender = new SenderView('UID123', 'TestUser', 'ident', 'host', 'name', 'ip');
 
-        $account = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn($senderAccountId);
         $account->method('getNickname')->willReturn('TestUser');
 

@@ -11,6 +11,7 @@ use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
@@ -18,6 +19,7 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\AbstractLogger;
 use Psr\Log\NullLogger;
 use ReflectionClass;
 
@@ -191,7 +193,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(123);
         $nick->method('getNickname')->willReturn('davidlig');
 
@@ -234,7 +236,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(123);
         $nick->method('getNickname')->willReturn('davidlig');
 
@@ -277,7 +279,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(123);
         $nick->method('getNickname')->willReturn('davidlig');
 
@@ -358,7 +360,7 @@ final class ForcedVhostApplierTest extends TestCase
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
 
-        $logger = new class extends \Psr\Log\AbstractLogger {
+        $logger = new class extends AbstractLogger {
             public array $warnings = [];
 
             public function log($level, $message, array $context = []): void
@@ -429,7 +431,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(123);
         $nick->method('getNickname')->willReturn('davidlig');
 
@@ -470,7 +472,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(123);
         $nick->method('getNickname')->willReturn('davidlig');
 
@@ -489,7 +491,7 @@ final class ForcedVhostApplierTest extends TestCase
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
 
-        $logger = new class extends \Psr\Log\AbstractLogger {
+        $logger = new class extends AbstractLogger {
             public array $warnings = [];
 
             public function log($level, $message, array $context = []): void
@@ -531,7 +533,7 @@ final class ForcedVhostApplierTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByRoleId')->willReturn([$ircop]);
 
-        $nick = $this->createStub(\App\Domain\NickServ\Entity\RegisteredNick::class);
+        $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(123);
         $nick->method('getNickname')->willReturn('davidlig');
         $nick->method('getVhost')->willReturn('personal.vhost');
@@ -554,7 +556,7 @@ final class ForcedVhostApplierTest extends TestCase
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('getServerSid')->willReturn('001');
 
-        $logger = new class extends \Psr\Log\AbstractLogger {
+        $logger = new class extends AbstractLogger {
             public array $infos = [];
 
             public function log($level, $message, array $context = []): void

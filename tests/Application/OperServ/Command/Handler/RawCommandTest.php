@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command\Handler;
 
+use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
+use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\Handler\RawCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -14,6 +16,8 @@ use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,8 +29,8 @@ final class RawCommandTest extends TestCase
     private function createAccessHelper(): IrcopAccessHelper
     {
         $rootRegistry = new RootUserRegistry('');
-        $ircopRepo = $this->createStub(\App\Domain\OperServ\Repository\OperIrcopRepositoryInterface::class);
-        $roleRepo = $this->createStub(\App\Domain\OperServ\Repository\OperRoleRepositoryInterface::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
 
         return new IrcopAccessHelper($rootRegistry, $ircopRepo, $roleRepo);
     }
@@ -53,9 +57,9 @@ final class RawCommandTest extends TestCase
         );
     }
 
-    private function createServiceNicks(): \App\Application\ApplicationPort\ServiceNicknameRegistry
+    private function createServiceNicks(): ServiceNicknameRegistry
     {
-        $provider = new class('operserv', 'OperServ') implements \App\Application\ApplicationPort\ServiceNicknameProviderInterface {
+        $provider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
             public function __construct(private string $key, private string $nick) {}
 
             public function getServiceKey(): string
@@ -69,7 +73,7 @@ final class RawCommandTest extends TestCase
             }
         };
 
-        return new \App\Application\ApplicationPort\ServiceNicknameRegistry([$provider]);
+        return new ServiceNicknameRegistry([$provider]);
     }
 
     private function createCommand(
