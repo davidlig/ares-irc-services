@@ -52,7 +52,13 @@ class SocketConnection implements ConnectionInterface
             error_message: $errorMessage,
             timeout: $this->timeoutSeconds,
             flags: STREAM_CLIENT_CONNECT,
-            context: stream_context_create(),
+            context: stream_context_create([
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                ],
+            ]),
         );
 
         if (false === $socket) {

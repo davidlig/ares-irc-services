@@ -173,7 +173,7 @@ Add to `.env` and config:
 ```yaml
 # config/services.yaml parameters
 parameters:
-    irc.protocol: '%env(IRC_PROTOCOL)%'  # 'unreal', 'inspircd', '<name>'
+    irc.protocol: '%env(IRC_PROTOCOL)%'  # 'unreal', 'unrealudb', 'inspircd', '<name>'
 ```
 
 ## 13. Verify

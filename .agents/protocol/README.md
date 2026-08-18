@@ -35,6 +35,7 @@ class ProtocolDelegator {
     public function handle(string $rawLine): IRCMessage {
         return match ($this->protocol) {
             'unreal' => $this->unrealHandler->parse($rawLine),
+            'unrealudb' => $this->unrealUdbHandler->parse($rawLine),
             'inspircd' => $this->inspircdHandler->parse($rawLine),
         };
     }
@@ -84,6 +85,7 @@ $connection->writeLine($rawLine);
 | IRCd | Local Docs | Official Online |
 |------|------------|-----------------|
 | UnrealIRCd 6 | `docs/unrealircd/` | https://www.unrealircd.org/docs/ |
+| UnrealIRCd-UDB 6 | `docs/unrealudb/` | https://github.com/davidlig/unrealircd-udb |
 | InspIRCd 4 | `docs/inspircd/` | https://docs.inspircd.org/ |
 | Base RFCs | `docs/rfc/` (rfc1459, rfc2812, rfc7194) | — |
 

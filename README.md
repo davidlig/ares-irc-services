@@ -38,6 +38,7 @@ A modular, protocol-agnostic IRC services daemon built with **PHP 8.5**, **Symfo
 | IRCd | Driver | S2S protocol | SID format | Auth | Plain/TLS ports (typical) |
 |------|--------|-------------|------------|------|---------------------------|
 | [UnrealIRCd](https://www.unrealircd.org/) 6.2.x | `unreal` | 6.2.x | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
+| [UnrealIRCd-UDB](https://github.com/davidlig/unrealircd-udb) 6.2.x | `unrealudb` | 6.2.x with UDB | 3-digit numeric (`002`) | Plaintext link password | 6900,7000 / 6901,7001 |
 | [InspIRCd](https://www.inspircd.org/) 4.10.x | `inspircd` | SpanTree v4 (1206) | 3-char alphanum (`0A0`) | Plaintext (no CHALLENGE) | 7000 / 7001 |
 
 The port you configure in `.env.local` (`IRC_IRCD_PORT`) must match whatever you set in your IRCd's `link` / `<link>` block.
@@ -160,7 +161,7 @@ All variables live in `.env.local`. Required variables are marked with ⚠.
 | `IRC_IRCD_HOST` | `127.0.0.1` | IRCd hostname or IP |
 | `IRC_IRCD_PORT` | `7000` | IRCd server-link listener port |
 | `IRC_LINK_PASSWORD` | `pass` | ⚠ Shared link password |
-| `IRC_PROTOCOL` | `unreal` | ⚠ `unreal` or `inspircd` |
+| `IRC_PROTOCOL` | `unreal` | ⚠ `unreal`, `unrealudb`, or `inspircd` |
 | `IRC_USE_TLS` | `false` | `true` to wrap the link in TLS |
 | `IRC_SERVER_SID` | `002` | ⚠ 3-digit numeric (Unreal) or 3-char alphanum (InspIRCd) |
 
@@ -462,7 +463,7 @@ php bin/console irc:connect services.example.com irc.example.com 6697 secret \
 | `port` | `IRC_IRCD_PORT` | IRCd server-link port |
 | `password` | `IRC_LINK_PASSWORD` | Link password |
 | `description` | `IRC_DESCRIPTION` | Text in `/MAP` and `/LINKS` |
-| `--protocol` / `-p` | `IRC_PROTOCOL` | `unreal` or `inspircd` |
+| `--protocol` / `-p` | `IRC_PROTOCOL` | `unreal`, `unrealudb` or `inspircd` |
 | `--tls` | `IRC_USE_TLS` | Wrap connection in TLS |
 
 ---

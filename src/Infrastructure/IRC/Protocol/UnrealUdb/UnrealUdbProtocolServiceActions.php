@@ -1,0 +1,163 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
+
+use App\Application\Port\ProtocolServiceActionsInterface;
+use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+
+use function sprintf;
+
+/**
+ * UnrealUdb: SVSLOGIN (account) + SVS2MODE (+r), SVSMODE, SVSNICK, KILL.
+ *
+ * setUserAccount sends both SVSLOGIN and SVS2MODE:
+ * - SVSLOGIN associates the user with the account (required for +R channels, WHOIS)
+ * - SVS2MODE sets +r mode and notifies the user's client.
+ *
+ * Service join: send JOIN with UID as source (RFC 2813 / client-style join on S2S link).
+ * Then set member mode (+q/+o etc) so the bot gets the desired privilege.
+ */
+final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceActionsInterface
+{
+    public function __construct(
+        private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly LoggerInterface $logger = new NullLogger(),
+    ) {}
+
+    public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
+    {
+        // UDB natively handles the +r mode when it detects a matching password during identification on the IRCD.
+        // Therefore, we don't send SVSLOGIN or SVS2MODE here.
+    }
+
+    public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void
+    {
+        $this->write(sprintf(':%s SVSMODE %s %s', $serverSid, $targetUid, $modes));
+    }
+
+    public function forceNick(string $serverSid, string $targetUid, string $newNick): void
+    {
+        $this->write(sprintf(':%s SVSNICK %s %s %d', $serverSid, $targetUid, $newNick, time()));
+    }
+
+    public function killUser(string $serverSid, string $targetUid, string $reason): void
+    {
+        $this->write(sprintf(':%s KILL %s :%s', $serverSid, $targetUid, $reason));
+    }
+
+    public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = '', ?int $channelTimestamp = null): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $paramStr = [] === $params ? '' : ' ' . implode(' ', $params);
+        $this->write(sprintf(':%s MODE %s %s%s', $prefix, $channelName, $modeStr, $paramStr));
+    }
+
+    public function setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = '', ?int $channelTimestamp = null): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $delta = $add ? '+' . $modeLetter : '-' . $modeLetter;
+        $this->write(sprintf(':%s MODE %s %s %s', $prefix, $channelName, $delta, $targetUid));
+    }
+
+    public function inviteUserToChannel(string $serverSid, string $channelName, string $targetUid, string $serviceUid = '', ?int $channelTimestamp = null): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $this->write(sprintf(':%s INVITE %s %s', $prefix, $targetUid, $channelName));
+    }
+
+    public function joinChannelAsService(string $serverSid, string $channelName, string $serviceUid, string $maxPrefixLetter, ?int $channelTimestamp = null): void
+    {
+        // JOIN as the bot (UID as source) — same as a client joining; S2S accepts :UID JOIN #channel
+        $this->write(sprintf(':%s JOIN %s', $serviceUid, $channelName));
+        if ('' !== $maxPrefixLetter) {
+            $this->setChannelMemberMode($serverSid, $channelName, $serviceUid, $maxPrefixLetter, true, $serviceUid);
+        }
+    }
+
+    public function setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = '', ?int $channelCreationTs = null): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $trailing = null === $topic ? '' : ' :' . $topic;
+        $this->write(sprintf(':%s TOPIC %s%s', $prefix, $channelName, $trailing));
+    }
+
+    public function kickFromChannel(string $serverSid, string $channelName, string $targetUid, string $reason, string $serviceUid = ''): void
+    {
+        $prefix = '' !== $serviceUid ? $serviceUid : $serverSid;
+        $this->write(sprintf(':%s KICK %s %s :%s', $prefix, $channelName, $targetUid, $reason));
+    }
+
+    public function partChannelAsService(string $serverSid, string $channelName, string $serviceUid): void
+    {
+        $this->write(sprintf(':%s PART %s', $serviceUid, $channelName));
+    }
+
+    /**
+     * UnrealUdb DB INS K::G.
+     */
+    public function addGline(string $serverSid, string $userMask, string $hostMask, int $duration, string $reason): void
+    {
+        $this->write(sprintf(
+            'DB * INS K::G::%s@%s',
+            $userMask,
+            $hostMask,
+        ));
+    }
+
+    /**
+     * UnrealUdb DB DEL K::G.
+     */
+    public function removeGline(string $serverSid, string $userMask, string $hostMask): void
+    {
+        $this->write(sprintf(
+            'DB * DEL K::G::%s@%s',
+            $userMask,
+            $hostMask,
+        ));
+    }
+
+    /**
+     * UnrealUdb: introduce a temporary pseudo-client with UID.
+     * Format: :serverSid UID nick hopcount timestamp ident vhost uid servicestamp umodes * * * :realname
+     * Umodes: +B (bot only, not a full service like NickServ).
+     */
+    public function introducePseudoClient(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname): void
+    {
+        $ts = time();
+        $line = sprintf(
+            ':%s UID %s 1 %d %s %s %s 0 +BDIopqR %s * * * :%s',
+            $serverSid,
+            $nick,
+            $ts,
+            $ident,
+            $vhost,
+            $uid,
+            $vhost,
+            $realname,
+        );
+        $this->write($line);
+    }
+
+    /**
+     * UnrealUdb: disconnect a pseudo-client.
+     * Format: :uid QUIT :reason.
+     */
+    public function quitPseudoClient(string $serverSid, string $uid, string $reason): void
+    {
+        $this->write(sprintf(':%s QUIT :%s', $uid, $reason));
+    }
+
+    private function write(string $line): void
+    {
+        if (!$this->connectionHolder->isConnected()) {
+            return;
+        }
+
+        $this->connectionHolder->writeLine($line);
+        $this->logger->debug('> ' . $line);
+    }
+}
