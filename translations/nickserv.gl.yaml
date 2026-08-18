@@ -96,6 +96,7 @@ identify:
   pending_deletion: "\x0304✗\x03 O alcume \x02%nickname%\x02 está pendente de eliminación e non se pode usar."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 O alcume foi migrado, a partir de agora tes que identificarte con /NICK %nickname%:<TúaContrasinal>"
 status:
   syntax:           "STATUS <alcume>"
   short:            "Mostrar o estado de rexistro dun alcume."

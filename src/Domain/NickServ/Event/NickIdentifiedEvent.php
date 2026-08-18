@@ -15,5 +15,7 @@ final readonly class NickIdentifiedEvent
         public string $nickname,
         /** UID of the user who identified (for sending NOTICEs). */
         public string $uid,
+        /** Whether the identification was implicit (e.g. user connected with +r via IRCd). */
+        public bool $implicit = false,
     ) {}
 }

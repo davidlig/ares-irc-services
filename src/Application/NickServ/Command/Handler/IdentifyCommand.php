@@ -13,9 +13,11 @@ use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
+use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
@@ -38,6 +40,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly OperIrcopRepositoryInterface $ircopRepository,
         private readonly EventBusInterface $eventDispatcher,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
+        private readonly PasswordMigrationStateInterface $migrationState,
         private readonly int $identifyMaxFailedAttempts,
         private readonly int $identifyFailedWindowSeconds,
         private readonly int $identifyLockoutSeconds,
@@ -149,7 +152,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             return;
         }
 
-        $this->handleSuccessfulIdentification($context, $sender, $account, $targetNick, $clientKey);
+        $this->handleSuccessfulIdentification($password, $context, $sender, $account, $targetNick, $clientKey);
     }
 
     private function isLockedOut(NickServContext $context, string $clientKey): bool
@@ -181,6 +184,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             ]),
             $account->isForbidden() => $this->replyAndReturn($context, 'identify.forbidden', ['nickname' => $targetNick]),
             $account->isPendingDeletion() => $this->replyAndReturn($context, 'identify.pending_deletion', ['nickname' => $targetNick]),
+            $this->migrationState->isMigrated($targetNick) => $this->replyAndReturn($context, 'identify.udb_migrated', ['nickname' => $targetNick]),
             default => null,
         };
 
@@ -195,6 +199,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
     }
 
     private function handleSuccessfulIdentification(
+        string $password,
         NickServContext $context,
         SenderView $sender,
         RegisteredNick $account,
@@ -215,6 +220,12 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             $account->getId(),
             $account->getNickname(),
             $sender->uid,
+        ));
+
+        $this->eventDispatcher->dispatch(new NickPasswordProvidedEvent(
+            $account->getId(),
+            $account->getNickname(),
+            $password,
         ));
     }
 

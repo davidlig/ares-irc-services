@@ -13,6 +13,7 @@ use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -1045,5 +1046,140 @@ final class NickProtectionServiceTest extends TestCase
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');
+    }
+
+    #[Test]
+    public function enforceProtectionAutoIdentifiesWhenNickMigratedEvenIfUserFlagFalse(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $user = new SenderView('UID1', 'MigratedNick', 'i', 'h', 'c', 'ip', false);
+        $account = RegisteredNick::createPending('MigratedNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+
+        $reflection = new ReflectionClass($account);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($account, 1);
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('MigratedNick')->willReturn($account);
+        $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('forceNick');
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
+        $migrationState->expects(self::atLeastOnce())->method('isMigrated')->with('MigratedNick')->willReturn(true);
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $eventDispatcher,
+            $this->createStub(ForbiddenNickService::class),
+            $migrationState,
+        );
+
+        $service->enforceProtection($user);
+
+        self::assertSame('MigratedNick', $identifiedRegistry->findNick('UID1'));
+    }
+
+    #[Test]
+    public function enforceProtectionForcesGuestWhenNickMigratedButAccountNotRegistered(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $user = new SenderView('UID1', 'PendingNick', 'i', 'h', 'c', 'ip', false);
+        $account = RegisteredNick::createPending('PendingNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturn($account);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('forceNick')->with('UID1', self::stringStartsWith('Guest-'));
+        $notifier->expects(self::exactly(2))->method('sendMessage');
+
+        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
+        $migrationState->expects(self::atLeastOnce())->method('isMigrated')->with('PendingNick')->willReturn(true);
+
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        $service = new NickProtectionService(
+            $repo,
+            $this->createStub(NetworkUserLookupPort::class),
+            $notifier,
+            $burstState,
+            new IdentifiedSessionRegistry(),
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $translator,
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+            $migrationState,
+        );
+
+        $service->enforceProtection($user);
+    }
+
+    #[Test]
+    public function onNickChangedAutoIdentifiesWhenNickMigratedEvenIfUserFlagFalse(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $user = new SenderView('UID1', 'MigratedNick', 'i', 'h', 'c', 'ip', false);
+        $account = RegisteredNick::createPending('MigratedNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+
+        $reflection = new ReflectionClass($account);
+        $idProp = $reflection->getProperty('id');
+        $idProp->setValue($account, 1);
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects(self::atLeastOnce())->method('findByNick')->with('MigratedNick')->willReturn($account);
+        $repo->expects(self::once())->method('save')->with(self::identicalTo($account));
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('forceNick');
+        $notifier->expects(self::never())->method('sendMessage');
+
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
+        $migrationState->expects(self::atLeastOnce())->method('isMigrated')->with('MigratedNick')->willReturn(true);
+
+        $service = new NickProtectionService(
+            $repo,
+            $userLookup,
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $eventDispatcher,
+            $this->createStub(ForbiddenNickService::class),
+            $migrationState,
+        );
+
+        $service->onNickChanged('UID1', 'OldNick', 'MigratedNick');
+
+        self::assertSame('MigratedNick', $identifiedRegistry->findNick('UID1'));
     }
 }

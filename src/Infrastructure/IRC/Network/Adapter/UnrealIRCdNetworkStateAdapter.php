@@ -20,6 +20,7 @@ use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelPartReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserHostReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserMetadataReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
@@ -66,11 +67,11 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
             'SJOIN' => $this->handleSjoin($message),
             'PART' => $this->handlePart($message),
             'KICK' => $this->handleKick($message),
-            'UMODE2' => $this->handleUmode2($message),
+            'UMODE2', 'SVS2MODE', 'SVSMODE' => $this->handleUmode2($message),
             'SETHOST' => $this->handleSethost($message),
             'MD' => $this->handleMd($message),
             'TOPIC' => $this->handleTopic($message),
-            'MODE' => $this->handleMode($message),
+            'MODE', 'SMODE' => $this->handleMode($message),
             default => null,
         };
     }
@@ -381,8 +382,13 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
 
     private function handleUmode2(IRCMessage $message): void
     {
-        $sourceId = $message->prefix ?? '';
-        $modeStr = $message->params[0] ?? $message->trailing ?? '';
+        if ('UMODE2' === $message->command) {
+            $sourceId = $message->prefix ?? '';
+            $modeStr = $message->params[0] ?? $message->trailing ?? '';
+        } else {
+            $sourceId = $message->params[0] ?? '';
+            $modeStr = $message->trailing ?? ($message->params[1] ?? '');
+        }
 
         if ('' === $sourceId || '' === $modeStr) {
             return;
@@ -416,11 +422,11 @@ final class UnrealIRCdNetworkStateAdapter implements NetworkStateAdapterInterfac
         $key = $message->params[2] ?? '';
         $value = $message->trailing ?? ($message->params[3] ?? '');
 
-        if ('' === $uidStr || 'account' !== $key) {
+        if ('' === $uidStr || '' === $key) {
             return;
         }
 
-        $this->logger->debug(sprintf('MD: client %s account = %s', $uidStr, $value));
+        $this->eventDispatcher->dispatch(new UserMetadataReceivedEvent($uidStr, $key, $value));
     }
 
     private function handleTopic(IRCMessage $message): void

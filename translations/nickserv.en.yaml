@@ -88,6 +88,7 @@ identify:
   pending_deletion: "\x0304✗\x03 Nickname \x02%nickname%\x02 is pending deletion and cannot be used."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 The nickname has been migrated, from now on you must identify with /NICK %nickname%:<YourPassword>"
 status:
   syntax:           "STATUS <nickname>"
   short:            "Display the registration status of a nickname."

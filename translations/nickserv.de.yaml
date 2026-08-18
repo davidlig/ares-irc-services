@@ -88,6 +88,7 @@ identify:
   pending_deletion: "\x0304✗\x03 Der Nickname \x02%nickname%\x02 steht zur Löschung an und kann nicht verwendet werden."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 Der Nickname wurde migriert, ab sofort musst du dich mit /NICK %nickname%:<DeinPasswort> identifizieren"
 status:
   syntax:           "STATUS <nickname>"
   short:            "Den Registrierungsstatus eines Nicknames anzeigen."

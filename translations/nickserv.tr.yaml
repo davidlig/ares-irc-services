@@ -88,6 +88,7 @@ identify:
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 rumuzu silinmeyi bekliyor ve kullanılamaz."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 Rumuz taşındı, bundan sonra /NICK %nickname%:<Sifreniz> ile kimlik doğrulamalısınız"
 status:
   syntax:           "STATUS <nickname>"
   short:            "Bir rumuzun kayıt durumunu gösterin."

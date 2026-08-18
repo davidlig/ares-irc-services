@@ -11,8 +11,11 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\NickServClientKeyResolver;
 use App\Application\NickServ\RegisterThrottleRegistry;
 use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\EventBusInterface;
+use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
@@ -42,6 +45,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         private readonly RegisterThrottleRegistry $throttleRegistry,
         private readonly NickServClientKeyResolver $clientKeyResolver,
         private readonly AsyncMessageDispatcherInterface $messageBus,
+        private readonly EventBusInterface $eventDispatcher,
         private readonly TranslationInterface $translator,
         private readonly LoggerInterface $logger,
         private readonly int $registerMinIntervalSeconds,
@@ -127,7 +131,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         $this->executeRegister($context, $sender);
     }
 
-    private function validateRegister(NickServContext $context, \App\Application\Port\SenderView $sender): ?string
+    private function validateRegister(NickServContext $context, SenderView $sender): ?string
     {
         $clientKey = $this->clientKeyResolver->getClientKey($sender);
         $remaining = $this->throttleRegistry->getRemainingCooldownSeconds($clientKey, $this->registerMinIntervalSeconds);
@@ -191,7 +195,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         };
     }
 
-    private function executeRegister(NickServContext $context, \App\Application\Port\SenderView $sender): void
+    private function executeRegister(NickServContext $context, SenderView $sender): void
     {
         $nick = $sender->nick;
         $password = $context->args[0];
@@ -211,6 +215,12 @@ final readonly class RegisterCommand implements NickServCommandInterface
 
         $this->nickRepository->save($registered);
         $context->getPendingVerificationRegistry()->store($nick, $token, $expiresAt);
+
+        $this->eventDispatcher->dispatch(new NickPasswordProvidedEvent(
+            null,
+            $nick,
+            $password,
+        ));
 
         try {
             $locale = $context->getLanguage();

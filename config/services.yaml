@@ -237,6 +237,13 @@ services:
             $eventDispatcher: '@event_dispatcher'
         tags: ['irc.protocol_handler']
 
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler:
+        arguments:
+            $sid:             '%irc.server_sid%'
+            $logger:          '@monolog.logger.irc'
+            $eventDispatcher: '@event_dispatcher'
+        tags: ['irc.protocol_handler']
+
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
             $sid:                '%irc.server_sid%'
@@ -285,6 +292,26 @@ services:
             $channelModeSupport: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport'
             $userModeSupport: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdUserModeSupport'
             $nickReservation: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation'
+        tags: ['irc.protocol_module']
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport: ~
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbUserModeSupport: ~
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbMigrationState: ~
+
+    App\Application\Port\PasswordMigrationStateInterface:
+        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbMigrationState
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbModule:
+        arguments:
+            $handler: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler'
+            $serviceActions: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions'
+            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
+            $vhostCommandBuilder: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbVhostCommandBuilder'
+            $channelModeSupport: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport'
+            $userModeSupport: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbUserModeSupport'
+            $nickReservation: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation'
         tags: ['irc.protocol_module']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory: ~
@@ -336,6 +363,10 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
 
+    App\Infrastructure\IRC\Network\Adapter\UnrealUdbNetworkStateAdapter:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
     App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter:
         arguments:
             $logger: '@monolog.logger.irc'
@@ -349,6 +380,7 @@ services:
         arguments:
             $adapters:
                 unreal: '@App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter'
+                unrealudb: '@App\Infrastructure\IRC\Network\Adapter\UnrealUdbNetworkStateAdapter'
                 inspircd: '@App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter'
         tags: ['kernel.event_subscriber']
 

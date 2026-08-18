@@ -410,8 +410,8 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             return;
         }
 
-        if ('accountname' === $event->key || 'accountid' === $event->key) {
-            if ('' === $event->value) {
+        if ('account' === $event->key || 'accountname' === $event->key || 'accountid' === $event->key) {
+            if ('' === $event->value || '*' === $event->value || '0' === $event->value) {
                 $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '-r'));
             } else {
                 $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '+r'));

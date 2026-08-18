@@ -88,6 +88,7 @@ identify:
   pending_deletion: "\x0304✗\x03 Le surnom \x02%nickname%\x02 est en attente de suppression et ne peut pas être utilisé."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 Le pseudo a été migré, vous devez désormais vous identifier avec /NICK %nickname%:<VotreMotDePasse>"
 status:
   syntax:           "STATUS <surnom>"
   short:            "Afficher le statut d'enregistrement d'un surnom."

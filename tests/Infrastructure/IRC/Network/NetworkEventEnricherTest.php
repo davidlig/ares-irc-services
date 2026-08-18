@@ -2055,6 +2055,48 @@ final class NetworkEventEnricherTest extends TestCase
     }
 
     #[Test]
+    public function onUserMetadataReceivedAccountDispatchesPlusRWhenUserFound(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABCDEF'),
+            new Nick('TestNick'),
+            new Ident('test'),
+            'test.host',
+            'cloak.host',
+            'vhost',
+            '+i',
+            new DateTimeImmutable('@0'),
+            'Real Name',
+            '001',
+            'aXB4',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'account', 'TestAccount'));
+
+        self::assertInstanceOf(UserModeChangedEvent::class, $captured);
+        self::assertSame('+r', $captured->modeDelta);
+    }
+
+    #[Test]
     public function onUserMetadataReceivedAccountNameDispatchesPlusRWhenUserFound(): void
     {
         $user = new NetworkUser(
@@ -2175,6 +2217,48 @@ final class NetworkEventEnricherTest extends TestCase
         );
 
         $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'accountname', ''));
+
+        self::assertInstanceOf(UserModeChangedEvent::class, $captured);
+        self::assertSame('-r', $captured->modeDelta);
+    }
+
+    #[Test]
+    public function onUserMetadataReceivedStarValueDispatchesMinusR(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABCDEF'),
+            new Nick('TestNick'),
+            new Ident('test'),
+            'test.host',
+            'cloak.host',
+            'vhost',
+            '+i',
+            new DateTimeImmutable('@0'),
+            'Real Name',
+            '001',
+            'aXB4',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+
+        $captured = null;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$captured): object {
+                $captured = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onUserMetadataReceived(new UserMetadataReceivedEvent('001ABCDEF', 'account', '*'));
 
         self::assertInstanceOf(UserModeChangedEvent::class, $captured);
         self::assertSame('-r', $captured->modeDelta);

@@ -6,6 +6,7 @@ namespace App\Tests\Application\NickServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
+use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\Handler\RegisterCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
@@ -15,6 +16,7 @@ use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\RegisterThrottleRegistry;
 use App\Application\Port\AsyncMessageDispatcherInterface;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -79,6 +81,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -116,6 +119,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -155,6 +159,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             3600,
@@ -194,6 +199,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -232,6 +238,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -273,6 +280,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -314,6 +322,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -355,6 +364,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -389,6 +399,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $translator,
             $this->createStub(LoggerInterface::class),
             0,
@@ -443,6 +454,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -453,7 +465,7 @@ final class RegisterCommandTest extends TestCase
 
         self::assertSame(['register.pending'], $messages);
         self::assertCount(1, $dispatched);
-        self::assertInstanceOf(\App\Application\Mail\Message\SendEmail::class, $dispatched[0]);
+        self::assertInstanceOf(SendEmail::class, $dispatched[0]);
 
         $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'register_verification_subject' === $c['id']);
         self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');
@@ -497,6 +509,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -537,6 +550,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -568,6 +582,7 @@ final class RegisterCommandTest extends TestCase
             $throttle,
             $clientKeyResolver,
             $messageBus,
+            $this->createStub(EventBusInterface::class),
             $translator,
             $logger,
             0,
@@ -600,6 +615,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -616,6 +632,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -632,6 +649,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -648,6 +666,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -664,6 +683,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -680,6 +700,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -696,6 +717,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -712,6 +734,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -728,6 +751,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -744,6 +768,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,
@@ -760,6 +785,7 @@ final class RegisterCommandTest extends TestCase
             new RegisterThrottleRegistry(),
             new NickServClientKeyResolver(),
             $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(EventBusInterface::class),
             $this->createStub(TranslationInterface::class),
             $this->createStub(LoggerInterface::class),
             0,

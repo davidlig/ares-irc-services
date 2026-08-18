@@ -16,11 +16,13 @@ use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
+use App\Domain\IRC\Event\UserModeChangedEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use App\Domain\IRC\ValueObject\Nick;
@@ -55,6 +57,7 @@ final class NickProtectionSubscriberTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
+        $migrationState = $this->createStub(PasswordMigrationStateInterface::class);
 
         $nickProtectionService = new NickProtectionService(
             $nickRepository,
@@ -67,6 +70,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $migrationState,
         );
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -76,6 +80,7 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->notifier,
             new VhostDisplayResolver(),
             $ircopRepository,
+            $migrationState,
         );
 
         $this->subscriber = new NickProtectionSubscriber(
@@ -98,6 +103,7 @@ final class NickProtectionSubscriberTest extends TestCase
                 UserJoinedNetworkAppEvent::class => ['onUserJoined', 0],
                 UserQuitNetworkEvent::class => ['onUserQuit', 0],
                 UserNickChangedEvent::class => ['onNickChanged', 0],
+                UserModeChangedEvent::class => ['onUserModeChanged', 0],
                 NetworkBurstCompleteEvent::class => ['onBurstComplete', -256],
             ],
             $events,
@@ -228,10 +234,28 @@ final class NickProtectionSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onNickChangedDelegatesToNickProtectionService(): void
+    public function onNickChangedDelegatesToNickProtectionServiceAndSyncsVhostWhenUserFound(): void
     {
-        $this->networkUserLookup->expects(self::never())->method('findByUid');
-        $this->notifier->expects(self::never())->method('setUserVhost');
+        $senderView = new SenderView(
+            uid: '001ABC',
+            nick: 'NewNick',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
+
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn($senderView);
+
+        $this->notifier->expects(self::once())
+            ->method('setUserVhost')
+            ->with('001ABC', '', '001');
+
         $event = new UserNickChangedEvent(
             new Uid('001ABC'),
             new Nick('OldNick'),
@@ -239,7 +263,83 @@ final class NickProtectionSubscriberTest extends TestCase
         );
 
         $this->subscriber->onNickChanged($event);
-        self::assertTrue(true, 'No exception when delegating onNickChanged');
+    }
+
+    #[Test]
+    public function onUserModeChangedIgnoresNonIdentifiedModeDeltas(): void
+    {
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $this->notifier->expects(self::never())->method('setUserVhost');
+
+        $event = new UserModeChangedEvent(new Uid('001ABC'), '+i');
+        $this->subscriber->onUserModeChanged($event);
+
+        $eventMinus = new UserModeChangedEvent(new Uid('001ABC'), '-r');
+        $this->subscriber->onUserModeChanged($eventMinus);
+    }
+
+    #[Test]
+    public function onUserModeChangedDoesNothingWhenUserNotFound(): void
+    {
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn(null);
+
+        $this->notifier->expects(self::never())->method('setUserVhost');
+
+        $event = new UserModeChangedEvent(new Uid('001ABC'), '+r');
+        $this->subscriber->onUserModeChanged($event);
+    }
+
+    #[Test]
+    public function onUserModeChangedDoesNothingWhenUserNotIdentified(): void
+    {
+        $senderView = new SenderView(
+            uid: '001ABC',
+            nick: 'Test',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
+
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn($senderView);
+
+        $this->notifier->expects(self::never())->method('setUserVhost');
+
+        $event = new UserModeChangedEvent(new Uid('001ABC'), '+r');
+        $this->subscriber->onUserModeChanged($event);
+    }
+
+    #[Test]
+    public function onUserModeChangedSyncsVhostAndEnforcesProtectionWhenIdentified(): void
+    {
+        $senderView = new SenderView(
+            uid: '001ABC',
+            nick: 'Test',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: true,
+            serverSid: '001',
+        );
+
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn($senderView);
+
+        $this->notifier->expects(self::never())->method('setUserVhost');
+
+        $event = new UserModeChangedEvent(new Uid('001ABC'), '+r');
+        $this->subscriber->onUserModeChanged($event);
     }
 
     #[Test]

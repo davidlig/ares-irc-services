@@ -10,9 +10,12 @@ use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
+use App\Domain\IRC\Event\UserModeChangedEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
+use function str_contains;
 
 /**
  * Subscriber: forwards Application-layer events to NickServ services.
@@ -40,6 +43,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             UserJoinedNetworkAppEvent::class => ['onUserJoined', 0],
             UserQuitNetworkEvent::class => ['onUserQuit', 0],
             UserNickChangedEvent::class => ['onNickChanged', 0],
+            UserModeChangedEvent::class => ['onUserModeChanged', 0],
             NetworkBurstCompleteEvent::class => ['onBurstComplete', -256],
         ];
     }
@@ -79,6 +83,26 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             $event->oldNick->value,
             $event->newNick->value,
         );
+
+        $senderView = $this->networkUserLookup->findByUid($event->uid->value);
+        if (null !== $senderView) {
+            $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+        }
+    }
+
+    public function onUserModeChanged(UserModeChangedEvent $event): void
+    {
+        if (!str_contains($event->modeDelta, 'r') || str_contains($event->modeDelta, '-r')) {
+            return;
+        }
+
+        $senderView = $this->networkUserLookup->findByUid($event->uid->value);
+        if (null === $senderView || !$senderView->isIdentified) {
+            return;
+        }
+
+        $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+        $this->nickProtectionService->enforceProtection($senderView);
     }
 
     public function onUserQuit(UserQuitNetworkEvent $event): void

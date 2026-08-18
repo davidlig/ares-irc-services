@@ -88,6 +88,7 @@ identify:
   pending_deletion: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 està pendent d'eliminació i no pot ser utilitzat."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 El pseudònim ha estat migrat, a partir d'ara t'has d'identificar amb /NICK %nickname%:<LaTevaContrasenya>"
 status:
   syntax:           "STATUS <nickname>"
   short:            "Mostrar l'estat de registre d'un sobrenom."

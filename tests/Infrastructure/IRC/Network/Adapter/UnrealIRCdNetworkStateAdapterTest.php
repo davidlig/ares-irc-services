@@ -15,6 +15,7 @@ use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelPartReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserHostReceivedEvent;
+use App\Infrastructure\IRC\Network\Event\UserMetadataReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
@@ -531,10 +532,14 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleMdWithClientAccountLogsDebug(): void
+    public function handleMdWithClientAccountDispatchesUserMetadataReceivedEvent(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::never())->method('dispatch');
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserMetadataReceivedEvent
+                    && '001ABC' === $event->targetUid
+                    && 'account' === $event->key
+                    && 'TestAccount' === $event->value));
 
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('MD', null, ['client', '001ABC', 'account'], 'TestAccount'));
@@ -784,13 +789,13 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     }
 
     #[Test]
-    public function handleMdWithNonAccountKeyDispatchesNothing(): void
+    public function handleMdWithEmptyKeyDispatchesNothing(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher->expects(self::never())->method('dispatch');
 
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
-        $adapter->handleMessage(new IRCMessage('MD', null, ['client', '001ABC', 'certfp'], 'somevalue'));
+        $adapter->handleMessage(new IRCMessage('MD', null, ['client', '001ABC', ''], 'somevalue'));
     }
 
     #[Test]
@@ -934,7 +939,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     public function handleMdWithValueFromTrailing(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::never())->method('dispatch');
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserMetadataReceivedEvent
+                    && '001ABC' === $event->targetUid
+                    && 'account' === $event->key
+                    && 'AccountName' === $event->value));
 
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('MD', null, ['client', '001ABC', 'account'], 'AccountName'));
@@ -944,7 +953,11 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
     public function handleMdWithValueFromParams(): void
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $eventDispatcher->expects(self::never())->method('dispatch');
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserMetadataReceivedEvent
+                    && '001ABC' === $event->targetUid
+                    && 'account' === $event->key
+                    && 'AccountName' === $event->value));
 
         $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
         $adapter->handleMessage(new IRCMessage('MD', null, ['client', '001ABC', 'account', 'AccountName'], null));
@@ -1108,5 +1121,45 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         self::assertCount(1, $captured->members);
         self::assertSame('001ABC123', $captured->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::Owner, $captured->members[0]['role']);
+    }
+
+    #[Test]
+    public function handleSmodeDispatchesChannelMode(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof ChannelModeReceivedEvent
+                    && '#chan' === $event->channelName->value
+                    && '+o' === $event->modeStr
+                    && ['001ABC'] === $event->modeParams));
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SMODE', null, ['#chan', '+o', '001ABC'], null));
+    }
+
+    #[Test]
+    public function handleSvs2modeDispatchesUserModeReceivedEvent(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserModeReceivedEvent
+                    && '001ABC' === $event->sourceId
+                    && '+r' === $event->modeStr));
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SVS2MODE', '001', ['001ABC', '+r'], null));
+    }
+
+    #[Test]
+    public function handleSvsmodeDispatchesUserModeReceivedEvent(): void
+    {
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->with(self::callback(static fn ($event): bool => $event instanceof UserModeReceivedEvent
+                    && '001ABC' === $event->sourceId
+                    && '+r' === $event->modeStr));
+
+        $adapter = new UnrealIRCdNetworkStateAdapter($eventDispatcher);
+        $adapter->handleMessage(new IRCMessage('SVSMODE', '001', ['001ABC', '+r'], null));
     }
 }

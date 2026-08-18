@@ -88,6 +88,7 @@ identify:
   pending_deletion: "\x0304✗\x03 Porecla \x02%nickname%\x02 este în așteptare de ștergere și nu poate fi folosită."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 Pseudonimul a fost migrat, de acum incolo trebuie sa te identifici cu /NICK %nickname%:<ParolaTa>"
 status:
   syntax:           "STATUS <poreclă>"
   short:            "Afișați starea de înregistrare a unei porecle."

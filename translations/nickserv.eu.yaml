@@ -88,6 +88,7 @@ identify:
   pending_deletion: "\x0304✗\x03 \x02%nickname%\x02 ezizena ezabatzearen zain dago eta ezin da erabili."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 Ezizena migratu da, hemendik aurrera /NICK %nickname%:<ZurePasahitza> erabiliz identifikatu behar zara"
 status:
   syntax:           "STATUS <ezizena>"
   short:            "Erakutsi ezizen baten erregistro egoera."

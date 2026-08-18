@@ -88,6 +88,7 @@ identify:
   pending_deletion: "\x0304✗\x03 Bijnaam \x02%nickname%\x02 staat op het punt verwijderd te worden en kan niet worden gebruikt."
 
 # --- STATUS -----------------------------------------------------------------
+  udb_migrated:     "\x0307ℹ\x03 De bijnaam is gemigreerd, vanaf nu moet je je identificeren met /NICK %nickname%:<JouwWachtwoord>"
 status:
   syntax:           "STATUS <bijnaam>"
   short:            "Toon de registratiestatus van een bijnaam."
