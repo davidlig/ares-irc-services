@@ -10,16 +10,21 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
+use App\Application\NickServ\PendingNickProtectionRegistryInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\UserModeChangedEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
@@ -101,6 +106,7 @@ final class NickProtectionSubscriberTest extends TestCase
                 UserNickChangedEvent::class => ['onNickChanged', 0],
                 UserModeChangedEvent::class => ['onUserModeChanged', 0],
                 NetworkBurstCompleteEvent::class => ['onBurstComplete', -256],
+                IrcMessageProcessedEvent::class => ['onIrcMessageProcessed', -200],
             ],
             $events,
         );
@@ -355,6 +361,323 @@ final class NickProtectionSubscriberTest extends TestCase
         self::assertTrue(true, 'No exception when delegating onUserQuit');
     }
 
+    #[Test]
+    public function onNickChangedDefersProtectionCheckWhenProtocolPreservesIdentificationAndUserNotIdentified(): void
+    {
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $senderView = new SenderView(
+            uid: '001ABC',
+            nick: 'NewNick',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
+
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn($senderView);
+
+        $pendingRegistry = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingRegistry->expects(self::once())->method('schedule')->with('001ABC');
+
+        $module = $this->createStub(NickProtectionTestProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $this->burstState,
+            $this->networkUserLookup,
+            $pendingRegistry,
+            $connectionHolder,
+        );
+
+        $event = new UserNickChangedEvent(
+            new Uid('001ABC'),
+            new Nick('OldNick'),
+            new Nick('NewNick'),
+        );
+
+        $subscriber->onNickChanged($event);
+    }
+
+    #[Test]
+    public function onUserJoinedDefersProtectionCheckWhenProtocolPreservesIdentificationAndUserNotIdentified(): void
+    {
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $senderView = new SenderView(
+            uid: '001ABC',
+            nick: 'NewNick',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
+
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn($senderView);
+
+        $pendingRegistry = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingRegistry->expects(self::once())->method('schedule')->with('001ABC');
+
+        $module = $this->createStub(NickProtectionTestProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+
+        $burstState = new BurstState();
+        $burstState->markComplete();
+
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $burstState,
+            $this->networkUserLookup,
+            $pendingRegistry,
+            $connectionHolder,
+        );
+
+        $dto = $this->createUserJoinedDTO('001ABC');
+        $subscriber->onUserJoined(new UserJoinedNetworkAppEvent($dto));
+    }
+
+    #[Test]
+    public function onUserJoinedWhenIdentifiedDoesNotDeferProtectionCheck(): void
+    {
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $senderView = new SenderView(
+            uid: '001ABC',
+            nick: 'NewNick',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: true,
+            serverSid: '001',
+        );
+
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn($senderView);
+
+        $pendingRegistry = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingRegistry->expects(self::never())->method('schedule');
+
+        $burstState = new BurstState();
+        $burstState->markComplete();
+
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $burstState,
+            $this->networkUserLookup,
+            $pendingRegistry,
+        );
+
+        $dto = $this->createUserJoinedDTO('001ABC');
+        $subscriber->onUserJoined(new UserJoinedNetworkAppEvent($dto));
+    }
+
+    #[Test]
+    public function onNickChangedWhenIdentifiedDoesNotDeferProtectionCheck(): void
+    {
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $senderView = new SenderView(
+            uid: '001ABC',
+            nick: 'NewNick',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: true,
+            serverSid: '001',
+        );
+
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn($senderView);
+
+        $pendingRegistry = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingRegistry->expects(self::never())->method('schedule');
+
+        $burstState = new BurstState();
+        $burstState->markComplete();
+
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $burstState,
+            $this->networkUserLookup,
+            $pendingRegistry,
+        );
+
+        $event = new UserNickChangedEvent(
+            new Uid('001ABC'),
+            new Nick('OldNick'),
+            new Nick('NewNick'),
+        );
+
+        $subscriber->onNickChanged($event);
+    }
+
+    #[Test]
+    public function onUserModeChangedCancelsPendingProtectionCheck(): void
+    {
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $pendingRegistry = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingRegistry->expects(self::once())->method('cancel')->with('001ABC');
+
+        $this->networkUserLookup->expects(self::once())
+            ->method('findByUid')
+            ->with('001ABC')
+            ->willReturn(null);
+
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $this->burstState,
+            $this->networkUserLookup,
+            $pendingRegistry,
+        );
+
+        $event = new UserModeChangedEvent(new Uid('001ABC'), '+r');
+        $subscriber->onUserModeChanged($event);
+    }
+
+    #[Test]
+    public function onUserQuitCancelsPendingProtectionCheck(): void
+    {
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+        $pendingRegistry = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingRegistry->expects(self::once())->method('cancel')->with('001ABC');
+
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $this->burstState,
+            $this->networkUserLookup,
+            $pendingRegistry,
+        );
+
+        $event = new UserQuitNetworkEvent(
+            new Uid('001ABC'),
+            new Nick('User'),
+            'Quit reason',
+            'ident',
+            'display.host',
+        );
+
+        $subscriber->onUserQuit($event);
+    }
+
+    #[Test]
+    public function onIrcMessageProcessedEnforcesProtectionOnExpiredUids(): void
+    {
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $pendingRegistry = $this->createMock(PendingNickProtectionRegistryInterface::class);
+        $pendingRegistry->expects(self::once())->method('flushExpired')->willReturn(['001EXPIRED', '001NOTFOUND', '001IDENTIFIED']);
+
+        $expiredUser = new SenderView(
+            uid: '001EXPIRED',
+            nick: 'TargetNick',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
+
+        $identifiedUser = new SenderView(
+            uid: '001IDENTIFIED',
+            nick: 'TargetNick2',
+            ident: 'test',
+            hostname: 'host',
+            cloakedHost: 'cloak',
+            ipBase64: 'dGVzdA==',
+            isIdentified: true,
+            serverSid: '001',
+        );
+
+        $this->networkUserLookup->expects(self::exactly(3))
+            ->method('findByUid')
+            ->willReturnMap([
+                ['001EXPIRED', $expiredUser],
+                ['001NOTFOUND', null],
+                ['001IDENTIFIED', $identifiedUser],
+            ]);
+
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $this->burstState,
+            $this->networkUserLookup,
+            $pendingRegistry,
+        );
+
+        $subscriber->onIrcMessageProcessed(new IrcMessageProcessedEvent());
+    }
+
+    #[Test]
+    public function onIrcMessageProcessedDoesNothingWhenNoRegistry(): void
+    {
+        $this->notifier->expects(self::never())->method('setUserVhost');
+        $this->networkUserLookup->expects(self::never())->method('findByUid');
+
+        $subscriber = new NickProtectionSubscriber(
+            $this->createNickProtectionService(),
+            $this->createVhostSyncService(),
+            $this->burstState,
+            $this->networkUserLookup,
+        );
+
+        $subscriber->onIrcMessageProcessed(new IrcMessageProcessedEvent());
+        self::assertTrue(true);
+    }
+
+    private function createVhostSyncService(): IdentifiedUserVhostSyncService
+    {
+        return new IdentifiedUserVhostSyncService(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new VhostDisplayResolver(),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
+    }
+
+    private function createNickProtectionService(): NickProtectionService
+    {
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
+
+        return new NickProtectionService(
+            $nickRepository,
+            $userLookup,
+            $this->createStub(NickServNotifierInterface::class),
+            $this->burstState,
+            new IdentifiedSessionRegistry(),
+            new SessionLanguageRegistry(),
+            $pendingRegistry,
+            $translator,
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+        );
+    }
+
     private function createUserJoinedDTO(string $uid): UserJoinedNetworkDTO
     {
         return new UserJoinedNetworkDTO(
@@ -371,3 +694,5 @@ final class NickProtectionSubscriberTest extends TestCase
         );
     }
 }
+
+interface NickProtectionTestProtocolModule extends ProtocolModuleInterface, NickChangePreservesIdentificationInterface {}

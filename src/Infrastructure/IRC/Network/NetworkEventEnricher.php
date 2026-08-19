@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Network;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
 use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\ChannelTopicChangedEvent;
@@ -60,6 +62,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly SkipIdentifiedModeStripRegistryInterface $skipIdentifiedModeStripRegistry,
         private readonly ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        private readonly ?ActiveConnectionHolderInterface $connectionHolder = null,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -124,8 +127,12 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
 
         $oldNick = $user->getNick();
 
-        // Do not strip +r when services originated this nick change (e.g. restore).
-        if (!$this->skipIdentifiedModeStripRegistry->peek($user->uid->value)) {
+        // Do not strip +r when:
+        // 1. Services originated this nick change (e.g. restore from Guest nick).
+        // 2. The active protocol module handles authentication server-side (e.g. UDB),
+        //    so the IRCd itself manages +r on nick changes with nick:password.
+        if (!$this->skipIdentifiedModeStripRegistry->peek($user->uid->value)
+            && !$this->protocolPreservesIdentificationOnNickChange()) {
             $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '-r'));
         }
 
@@ -553,5 +560,16 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         $base .= $add;
 
         return '' === $base ? '' : '+' . $base;
+    }
+
+    private function protocolPreservesIdentificationOnNickChange(): bool
+    {
+        if (null === $this->connectionHolder) {
+            return false;
+        }
+
+        $module = $this->connectionHolder->getProtocolModule();
+
+        return $module instanceof NickChangePreservesIdentificationInterface;
     }
 }

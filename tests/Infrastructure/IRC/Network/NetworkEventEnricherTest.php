@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Network;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\ChannelModeSupportInterface;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Application\Port\ProtocolModuleInterface;
 use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Domain\IRC\Event\ChannelTopicChangedEvent;
@@ -285,6 +288,108 @@ final class NetworkEventEnricherTest extends TestCase
             $eventDispatcher,
             $skipRegistry,
             $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+        );
+
+        $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
+
+        self::assertInstanceOf(UserModeChangedEvent::class, $dispatched[0]);
+        self::assertSame('-r', $dispatched[0]->modeDelta);
+        self::assertInstanceOf(UserNickChangedEvent::class, $dispatched[1]);
+    }
+
+    #[Test]
+    public function onUserNickChangeReceivedDoesNotDispatchMinusRWhenProtocolPreservesIdentification(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABC123'),
+            new Nick('OldNick'),
+            new Ident('ident'),
+            'host.example',
+            'cloak.example',
+            'vhost.example',
+            '+i',
+            new DateTimeImmutable('2024-01-01'),
+            'Real',
+            '001',
+            '*',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+        $skipRegistry = $this->createStub(SkipIdentifiedModeStripRegistryInterface::class);
+        $skipRegistry->method('peek')->willReturn(false);
+
+        // Protocol module implements NickChangePreservesIdentificationInterface (e.g. UnrealUdbModule)
+        $module = $this->createStub(PreservesIdentificationTestProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+
+        $dispatched = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatched): object {
+                $dispatched[] = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $skipRegistry,
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $connectionHolder,
+        );
+
+        $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
+
+        // -r must NOT be dispatched; only UserNickChangedEvent
+        self::assertCount(1, $dispatched);
+        self::assertInstanceOf(UserNickChangedEvent::class, $dispatched[0]);
+    }
+
+    #[Test]
+    public function onUserNickChangeReceivedDispatchesMinusRWhenProtocolDoesNotPreserveIdentification(): void
+    {
+        $user = new NetworkUser(
+            new Uid('001ABC123'),
+            new Nick('OldNick'),
+            new Ident('ident'),
+            'host.example',
+            'cloak.example',
+            'vhost.example',
+            '+i',
+            new DateTimeImmutable('2024-01-01'),
+            'Real',
+            '001',
+            '*',
+        );
+        $userRepo = $this->createStub(NetworkUserRepositoryInterface::class);
+        $userRepo->method('findByUid')->willReturn($user);
+        $skipRegistry = $this->createStub(SkipIdentifiedModeStripRegistryInterface::class);
+        $skipRegistry->method('peek')->willReturn(false);
+
+        // Standard protocol module that does NOT implement NickChangePreservesIdentificationInterface
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+
+        $dispatched = [];
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$dispatched): object {
+                $dispatched[] = $event;
+
+                return $event;
+            });
+
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $userRepo,
+            $eventDispatcher,
+            $skipRegistry,
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $connectionHolder,
         );
 
         $enricher->onUserNickChangeReceived(new UserNickChangeReceivedEvent('001ABC123', 'NewNick'));
@@ -2365,3 +2470,5 @@ final class NetworkEventEnricherTest extends TestCase
         self::assertSame('+nt', $result);
     }
 }
+
+interface PreservesIdentificationTestProtocolModule extends ProtocolModuleInterface, NickChangePreservesIdentificationInterface {}

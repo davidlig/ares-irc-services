@@ -605,6 +605,12 @@ services:
     App\Application\NickServ\PendingNickRestoreRegistryInterface:
         alias: App\Infrastructure\NickServ\PendingNickRestoreRegistry
 
+    App\Infrastructure\NickServ\PendingNickProtectionRegistry:
+        class: App\Infrastructure\NickServ\PendingNickProtectionRegistry
+
+    App\Application\NickServ\PendingNickProtectionRegistryInterface:
+        alias: App\Infrastructure\NickServ\PendingNickProtectionRegistry
+
     App\Application\NickServ\BurstState:
         class: App\Application\NickServ\BurstState
 

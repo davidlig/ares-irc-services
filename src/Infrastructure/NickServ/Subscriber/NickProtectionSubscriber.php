@@ -8,7 +8,11 @@ use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
+use App\Application\NickServ\PendingNickProtectionRegistryInterface;
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Event\UserModeChangedEvent;
 use App\Domain\IRC\Event\UserNickChangedEvent;
@@ -30,6 +34,8 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private readonly IdentifiedUserVhostSyncService $identifiedUserVhostSync,
         private readonly BurstState $burstState,
         private readonly NetworkUserLookupPort $networkUserLookup,
+        private readonly ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
+        private readonly ?ActiveConnectionHolderInterface $connectionHolder = null,
     ) {}
 
     /**
@@ -45,6 +51,7 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             UserNickChangedEvent::class => ['onNickChanged', 0],
             UserModeChangedEvent::class => ['onUserModeChanged', 0],
             NetworkBurstCompleteEvent::class => ['onBurstComplete', -256],
+            IrcMessageProcessedEvent::class => ['onIrcMessageProcessed', -200],
         ];
     }
 
@@ -57,6 +64,19 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
         if (!$this->burstState->isComplete()) {
             $this->burstState->addPending($senderView);
+
+            return;
+        }
+
+        if ($senderView->isIdentified) {
+            $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+            $this->nickProtectionService->onUserJoined($senderView);
+
+            return;
+        }
+
+        if ($this->shouldDeferProtectionCheck() && null !== $this->pendingProtectionRegistry) {
+            $this->pendingProtectionRegistry->schedule($event->user->uid);
 
             return;
         }
@@ -78,13 +98,31 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     public function onNickChanged(UserNickChangedEvent $event): void
     {
+        $senderView = $this->networkUserLookup->findByUid($event->uid->value);
+
+        if (null !== $senderView && $senderView->isIdentified) {
+            $this->nickProtectionService->onNickChanged(
+                $event->uid->value,
+                $event->oldNick->value,
+                $event->newNick->value,
+            );
+            $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+
+            return;
+        }
+
+        if ($this->shouldDeferProtectionCheck() && null !== $this->pendingProtectionRegistry) {
+            $this->pendingProtectionRegistry->schedule($event->uid->value);
+
+            return;
+        }
+
         $this->nickProtectionService->onNickChanged(
             $event->uid->value,
             $event->oldNick->value,
             $event->newNick->value,
         );
 
-        $senderView = $this->networkUserLookup->findByUid($event->uid->value);
         if (null !== $senderView) {
             $this->identifiedUserVhostSync->syncVhostForUser($senderView);
         }
@@ -95,6 +133,8 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         if (!str_contains($event->modeDelta, 'r') || str_contains($event->modeDelta, '-r')) {
             return;
         }
+
+        $this->pendingProtectionRegistry?->cancel($event->uid->value);
 
         $senderView = $this->networkUserLookup->findByUid($event->uid->value);
         if (null === $senderView || !$senderView->isIdentified) {
@@ -107,6 +147,8 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     public function onUserQuit(UserQuitNetworkEvent $event): void
     {
+        $this->pendingProtectionRegistry?->cancel($event->uid->value);
+
         $this->nickProtectionService->onUserQuit(
             $event->uid->value,
             $event->nick->value,
@@ -116,5 +158,37 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
             $event->hostname,
             $event->ipBase64,
         );
+    }
+
+    public function onIrcMessageProcessed(IrcMessageProcessedEvent $event): void
+    {
+        if (null === $this->pendingProtectionRegistry) {
+            return;
+        }
+
+        $expiredUids = $this->pendingProtectionRegistry->flushExpired();
+        foreach ($expiredUids as $uid) {
+            $senderView = $this->networkUserLookup->findByUid($uid);
+            if (null === $senderView) {
+                continue;
+            }
+
+            if ($senderView->isIdentified) {
+                $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+            }
+
+            $this->nickProtectionService->enforceProtection($senderView);
+        }
+    }
+
+    private function shouldDeferProtectionCheck(): bool
+    {
+        if (null === $this->connectionHolder) {
+            return false;
+        }
+
+        $module = $this->connectionHolder->getProtocolModule();
+
+        return $module instanceof NickChangePreservesIdentificationInterface;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ChannelModeSupportInterface;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Application\Port\ServiceNickReservationInterface;
@@ -15,7 +16,7 @@ use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 /**
  * UnrealUdb protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.
  */
-final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface
+final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, NickChangePreservesIdentificationInterface
 {
     public const string PROTOCOL_NAME = 'unrealudb';
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
+use App\Application\Port\NickChangePreservesIdentificationInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbModule;
@@ -104,5 +105,13 @@ final class UnrealUdbModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(UnrealUdbUserModeSupport::class, $module->getUserModeSupport());
+    }
+
+    #[Test]
+    public function implementsNickChangePreservesIdentificationInterface(): void
+    {
+        $module = $this->createModule();
+
+        self::assertInstanceOf(NickChangePreservesIdentificationInterface::class, $module);
     }
 }
