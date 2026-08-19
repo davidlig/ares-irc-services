@@ -103,10 +103,12 @@ Ports are the ONLY way Services talk to Core (IRC). Services MUST NOT import `Do
 | Port | Method | Purpose |
 |------|--------|---------|
 | `NetworkUserLookupPort` | `findByUid(string)` | Resolve connected user → `SenderView` |
-| `SendNoticePort` | `sendNotice(string, string)` | Send NOTICE to user |
+| `SendNoticePort` | `sendNotice(...)`, `sendNoticeToChannel(...)` | Send NOTICE to user or channel |
 | `ChannelLookupPort` | `findByChannelName(string)` | Get channel info → `ChannelView` |
 | `ChannelServiceActionsPort` | Multiple | Set modes, join, topic |
-| `ProtocolModuleInterface` | `getHandler()` etc. | Active IRCd protocol module |
+| `ProtocolModuleInterface` | `getHandler()`, `getServiceActions()`, etc. | Active IRCd protocol module |
+| `ProtocolServiceActionsInterface` | Multiple | Wire-level actions (`introduceService`, `setUserVhost`, etc.) |
+| `LocalUserModeSyncInterface` | `syncLocalUserMode(...)` | Sync local user modes (+r/-r) |
 | `ServiceCommandListenerInterface` | `onCommand(string, string)` | Bot receives commands from Gateway |
 
 ### DTOs Crossing Boundaries

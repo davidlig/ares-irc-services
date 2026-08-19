@@ -40,10 +40,12 @@ Key ports:
 | Port | Purpose |
 |------|---------|
 | `NetworkUserLookupPort` | Resolve connected user → `SenderView` |
-| `SendNoticePort` | Send NOTICE to user |
+| `SendNoticePort` | Send NOTICE to user (`sendNotice`) or channel (`sendNoticeToChannel`) |
 | `ChannelLookupPort` | Get channel info → `ChannelView` |
 | `ChannelServiceActionsPort` | Set modes, join, topic for ChanServ |
-| `ProtocolModuleInterface` | Active IRCd protocol module |
+| `ProtocolModuleInterface` | Active IRCd protocol module (`getServiceActions()`, `getHandler()`, etc.) |
+| `ProtocolServiceActionsInterface` | Wire-level actions (`introduceService`, `setUserVhost`, `setUserAccount`, etc.) |
+| `LocalUserModeSyncInterface` | Synchronize local state user modes (`+r`/`-r`) |
 | `ServiceCommandListenerInterface` | Bot receives commands from Gateway |
 
 DTOs crossing the boundary must be `readonly`:

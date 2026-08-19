@@ -1,6 +1,6 @@
 # Protocol Modules & Multi-IRCd Support
 
-Use this skill when implementing protocol handlers, network state adapters, or adding support for a new IRCd.
+Use this skill when implementing protocol handlers, network state adapters, protocol service actions, or adding support for a new IRCd.
 
 ## One Module Per IRCd
 
@@ -14,14 +14,22 @@ src/Infrastructure/IRC/Protocol/
 │   ├── UnrealIRCdModule.php         (implements ProtocolModuleInterface)
 │   ├── UnrealIRCdProtocolHandler.php
 │   ├── UnrealIRCdNetworkStateAdapter.php
-│   ├── UnrealIRCdServiceIntroductionFormatter.php
 │   ├── UnrealIRCdProtocolServiceActions.php
-│   ├── UnrealIRCdChannelModeSupport.php
-│   └── UnrealIRCdVhostCommandBuilder.php
+│   └── UnrealIRCdChannelModeSupport.php
+├── UnrealUdb/
+│   ├── UnrealUdbModule.php
+│   ├── UnrealUdbProtocolHandler.php
+│   ├── UnrealUdbNetworkStateAdapter.php
+│   ├── UnrealUdbProtocolServiceActions.php
+│   ├── UnrealUdbChannelModeSupport.php
+│   └── Subscriber/
+│       └── UdbChannelSyncSubscriber.php
 ├── InspIRCd/
 │   ├── InspIRCdModule.php
 │   ├── InspIRCdProtocolHandler.php
-│   └── ...
+│   ├── InspIRCdNetworkStateAdapter.php
+│   ├── InspIRCdProtocolServiceActions.php
+│   └── InspIRCdChannelModeSupport.php
 └── NullChannelModeSupport.php
 ```
 
@@ -76,7 +84,24 @@ $rawLine = $module->getHandler()->formatMessage($message);
 $connection->writeLine($rawLine);
 ```
 
-**No hardcoded sprintf** with a specific IRCd's format in shared code. The protocol handler owns the wire format.
+**No hardcoded sprintf** with a specific IRCd's format in shared code. The protocol handler and protocol service actions own the wire format.
+
+## Protocol Service Actions (`ProtocolServiceActionsInterface`)
+
+All wire-level commands executed on the IRC network are encapsulated in `ProtocolServiceActionsInterface`:
+
+- `introduceService($serverSid, $nick, $ident, $host, $uid, $realname, $serviceKey)`: Introduces pseudo-client bots on burst.
+- `setUserVhost($serverSid, $targetUid, $vhost, $cloakedHost)`: Sets or clears user vhost (e.g. `CHGHOST`, `ENCAP CHGHOST`, `MODE +x`).
+- `setUserAccount($serverSid, $targetUid, $account)`: Sets/unsets account name (e.g. `SVS2MODE +d`, `ENCAP ACCOUNT`).
+- `setUserMode($serverSid, $targetUid, $modes)`: Applies mode changes to users.
+- `forceNick($serverSid, $targetUid, $newNick, $ts)`: Forces a nick change (`SVSNICK` / `SVSJOIN`).
+- `killUser($serverSid, $targetUid, $reason)`: Kills a user connection.
+- `setChannelModes($serverSid, $channelName, $modeString, $creationTs)`: Changes channel modes (`+r`, `+P`, etc.).
+- `setChannelMemberMode($serverSid, $channelName, $mode, $targetUid)`: Sets member status modes (`+o`, `+v`).
+- `joinChannelAsService($serverSid, $channelName, $serviceUid)`: Joins a service bot to a channel.
+- `partChannelAsService($serverSid, $channelName, $serviceUid)`: Parts a service bot from a channel.
+- `setChannelTopic($serverSid, $channelName, $topic, $setterUid, $creationTs)`: Changes channel topic.
+- `kickFromChannel($serverSid, $channelName, $targetUid, $reason, $kickerUid)`: Kicks a user from a channel.
 
 ## Documentation Reference
 
@@ -94,6 +119,7 @@ Use **only** the documented version (Unreal 6, InspIRCd 4). Do not rely on docs 
 ## Files Affected
 
 - `src/Application/Port/ProtocolModuleInterface.php`
+- `src/Application/Port/ProtocolServiceActionsInterface.php`
 - `src/Infrastructure/IRC/Protocol/ProtocolModuleRegistry.php`
 - `src/Infrastructure/IRC/Protocol/<IrcName>/`
 - `src/Infrastructure/IRC/Connection/ActiveConnectionHolder.php`
@@ -106,9 +132,8 @@ Use **only** the documented version (Unreal 6, InspIRCd 4). Do not rely on docs 
 $module = $this->connectionHolder->getProtocolModule();
 
 // Available from module
-$module->getHandler()                    // ProtocolHandler
-$module->getServiceActions()             // ProtocolServiceActions
-$module->getIntroductionFormatter()      // ServiceIntroductionFormatter
-$module->getVhostCommandBuilder()       // VhostCommandBuilder
-$module->getChannelModeSupport()        // ChannelModeSupportInterface
+$module->getHandler()                    // ProtocolHandlerInterface
+$module->getNetworkStateAdapter()        // NetworkStateAdapterInterface
+$module->getServiceActions()             // ProtocolServiceActionsInterface
+$module->getChannelModeSupport()         // ChannelModeSupportInterface
 ```

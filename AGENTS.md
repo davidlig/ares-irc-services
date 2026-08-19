@@ -157,6 +157,78 @@ When IRC or MariaDB MCP servers are available, use them for live smoke/integrati
 - Always create temporary resources for live tests, such as `NickTest<suffix>` or `#test-<suffix>`.
 - Use `OPENCODE_IRC_ROOT_NICK` only when root, IRCop, or founder privileges are required.
 
+---
+
+## 10. Implementation Playbooks (Best Practices)
+
+### 10.1 Playbook: Implementing a New Feature / Command
+
+Follow this deterministic step-by-step workflow:
+
+1. **Domain Layer (`src/Domain/{Service}/`)**:
+   - Create/modify Entities, Value Objects (`readonly class`), and Domain Events (`readonly class`).
+   - Define business methods on entities (never public setters).
+   - Define Repository interfaces (pure PHP, zero infrastructure imports).
+   - If referencing `nickId` or `channelId`, define Drop Cleanup behavior (subscribe to `NickDropEvent` / `ChannelDropEvent`).
+2. **Application Layer (`src/Application/{Service}/`)**:
+   - Create Command Handler implementing `{Service}CommandInterface`.
+   - Implement `getName()`, `getAliases()`, `getMinArgs()`, `getRequiredPermission()`, `execute()`.
+   - Access only Domain and `src/Application/Port/` (use `SenderView`, `SendNoticePort`, not Core entities).
+3. **Translations (ALL 14 Languages)**:
+   - Add keys to `translations/{service}.{lang}.yaml` (`ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`).
+   - Follow syntax bracket standard: `<>` required positional, `[]` optional, `{}` choices.
+4. **Infrastructure Layer (`src/Infrastructure/{Service}/`)**:
+   - Doctrine XML mapping in `config/doctrine/` (if persistent state).
+   - Repository implementation implementing Domain repository interface.
+   - Event Subscribers for domain events.
+5. **Dependency Injection (`config/services.yaml`)**:
+   - Register command handler tagged with `{service}.command`.
+   - Register repository, subscriber, and any service parameters.
+6. **Tests & Verification (100% Coverage)**:
+   - PHPUnit tests with `#[CoversClass(ClassName::class)]` for all layers.
+   - Use `createStub()` for unverified stubs, `createMock()` ONLY when asserting `expects()`.
+   - Run Pre-Commit chain: `lint:container`, `lint:yaml`, `php-cs-fixer`, `phpunit`, `check-coverage 100`.
+   - Live MCP validation against temporary resources (when MCP is available).
+
+### 10.2 Playbook: Implementing a New IRCd Protocol
+
+Follow this modular structure in `src/Infrastructure/IRC/Protocol/<Name>/`:
+
+1. **Research & Docs**: Document wire tokens, handshake, modes, and commands in `docs/<name>/`.
+2. **Protocol Module**: Implement `ProtocolModuleInterface`:
+   - `getProtocolName()`, `getHandler()`, `getNetworkStateAdapter()`, `getServiceActions()`, `getChannelModeSupport()`.
+3. **Protocol Handler**: Implement `parseRawLine()` (wire → `IRCMessage`) and `formatMessage()` (`IRCMessage` → wire).
+4. **Network State Adapter**: Implement `adapt()` converting wire `IRCMessage` to domain events (`UserConnectedEvent`, `ChannelJoinEvent`, etc.).
+5. **Protocol Service Actions**: Implement `ProtocolServiceActionsInterface`:
+   - `introduceService()`, `setUserVhost()`, `setUserAccount()`, `setUserMode()`, `forceNick()`, `killUser()`, `setChannelModes()`, `setChannelMemberMode()`, `joinChannelAsService()`, `partChannelAsService()`, `setChannelTopic()`, `kickFromChannel()`.
+6. **Channel Mode Support**: Implement `ChannelModeSupportInterface`.
+7. **DI Registration (`config/services.yaml`)**:
+   - Tag `<Name>Module` with `irc.protocol_module`.
+   - Add `<name>` adapter to `ProtocolNetworkStateRouter`.
+8. **100% Test Coverage**: Complete unit test suite for all protocol components.
+
+### 10.3 Playbook: Implementing a New Service / Bot
+
+1. **Domain Context (`src/Domain/{Service}/`)**:
+   - Entities, Value Objects, Domain Events, Repository Interfaces.
+2. **Application Context (`src/Application/{Service}/`)**:
+   - Dispatcher (`{Service}Service`), Context (`{Service}Context`), Command Interface & Registry (`!tagged_iterator {service}.command`), Notifier Interface (`{Service}NotifierInterface`).
+3. **Infrastructure Context (`src/Infrastructure/{Service}/`)**:
+   - Bot implementing `ServiceCommandListenerInterface`, `{Service}NotifierInterface`, and `EventSubscriberInterface`.
+   - On `NetworkBurstCompleteEvent`: call `$module->getServiceActions()->introduceService(...)`.
+   - On `onCommand(string $senderUid, string $text)`: resolve `SenderView` via `NetworkUserLookupPort` and delegate to `{Service}Service::dispatch()`. Zero business logic in Bot!
+   - Send notices via `SendNoticePort::sendNotice()`.
+4. **Translations & HELP**:
+   - 14 languages YAML with unified HELP format (`.agents/services/help-design.md`).
+5. **Configuration (`config/services.yaml` & `.env`)**:
+   - Service UID parameter, service nick, ident, realname.
+   - Tag Bot with `app.service_command_listener` and `kernel.event_subscriber`.
+   - Add service UID to `CtcpHandler::$serviceUidMap`.
+6. **Tests (100% Coverage)**:
+   - Full coverage for Domain, Application, and Bot (burst with/without module, onCommand, notifier).
+
+---
+
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph
 

@@ -113,9 +113,21 @@ final readonly class HostServBot implements
     ServiceCommandListenerInterface,
     EventSubscriberInterface
 {
+    public function __construct(
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private NetworkUserLookupPort $userLookup,
+        private SendNoticePort $sendNoticePort,
+        private ServiceUidGeneratorInterface $uidGenerator,
+        private string $servicesVhost,
+        private string $hostservNick,
+        private string $hostservIdent = 'HostServ',
+        private string $hostservRealname = 'Virtual Host Service',
+        private string $serviceKey = 'hostserv',
+    ) {}
+
     // ServiceCommandListenerInterface
-    public function getServiceName(): string { return 'HostServ'; }
-    public function getServiceUid(): ?string { return $this->hostservUid; }
+    public function getServiceName(): string { return $this->hostservNick; }
+    public function getServiceUid(): ?string { return $this->uidGenerator->generateUid($this->serviceKey); }
 
     public function onCommand(string $senderUid, string $text): void
     {
@@ -124,10 +136,36 @@ final readonly class HostServBot implements
         $this->service->dispatch($text, $sender);
     }
 
+    // HostServNotifierInterface
+    public function sendNotice(string $targetUid, string $message): void
+    {
+        $uid = $this->getServiceUid();
+        if (null !== $uid) {
+            $this->sendNoticePort->sendNotice($uid, $targetUid, $message);
+        }
+    }
+
     // EventSubscriberInterface (only for burst introduction)
     public static function getSubscribedEvents(): array
     {
-        return [NetworkBurstCompleteEvent::class => ['onBurstComplete', 98]];
+        return [NetworkBurstCompleteEvent::class => ['onBurstComplete', 90]];
+    }
+
+    public function onBurstComplete(NetworkBurstCompleteEvent $event): void
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+        $uid = $this->getServiceUid();
+        if (null !== $module && null !== $uid) {
+            $module->getServiceActions()->introduceService(
+                $event->serverSid,
+                $this->hostservNick,
+                $this->hostservIdent,
+                $this->servicesVhost,
+                $uid,
+                $this->hostservRealname,
+                $this->serviceKey,
+            );
+        }
     }
 }
 ```

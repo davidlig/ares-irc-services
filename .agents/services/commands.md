@@ -209,12 +209,22 @@ App\Application\NickServ\Command\Handler\RegisterCommand:
 
 When creating a new command, complete ALL these steps:
 
-1. **Command Handler class** — implement `{Service}CommandInterface`
-2. **Translations** — add keys to ALL 14 language files for the service
-3. **DI Registration** — add service with appropriate tag in `config/services.yaml`
-4. **Permissions** — configure `getRequiredPermission()` (see `.agents/services/commands-permissions.md`)
-5. **Tests** — 100% coverage (see `.agents/services/commands-testing.md`)
-6. **Live MCP validation** — when IRC/MariaDB MCPs are available, smoke-test the command against temporary resources only (see `.agents/services/live-mcp-testing.md`)
+1. **Domain Logic (if applicable)** — create or update Domain Entities, Value Objects, Domain Events, and Repository interfaces in `src/Domain/{Service}/`.
+2. **Command Handler class** — implement `{Service}CommandInterface` in `src/Application/{Service}/Command/Handler/`.
+3. **Translations in ALL 14 Languages** (`ca`, `de`, `el`, `en`, `es`, `eu`, `fr`, `gl`, `it`, `nl`, `pl`, `pt`, `ro`, `tr`):
+   - Files: `translations/{service}.{lang}.yaml`.
+   - Keys: `<command>.syntax`, `<command>.help`, `<command>.short`, plus any success/error response keys.
+   - **Syntax Bracket Rules**:
+     - Required positional arguments: `<arg>`
+     - Optional arguments: `[arg]`
+     - Selection/choice arguments: `{opt1|opt2}`
+     - General syntax shows optionality `[arg]` for subcommands that don't need it, whereas specific subcommand syntax uses `{}` or `<>`.
+4. **DI Registration** — add service with appropriate tag in `config/services.yaml` (`{service}.command`).
+5. **Permissions** — configure `getRequiredPermission()` (see `.agents/services/commands-permissions.md`).
+6. **Data Integrity / Drop Cleanup** — if storing `nickId` or `channelId`, subscribe to `NickDropEvent` or `ChannelDropEvent` (see `.agents/architecture/drop-cleanup.md`).
+7. **Tests (100% Coverage)** — test all branches, conditions, permissions, argument count checks with PHPUnit (see `.agents/services/commands-testing.md`).
+8. **Pre-Commit Chain** — run `lint:container`, `lint:yaml`, `php-cs-fixer`, `phpunit`, `check-coverage 100`.
+9. **Live MCP validation** — when IRC/MariaDB MCPs are available, smoke-test the command against temporary resources only (see `.agents/services/live-mcp-testing.md`).
 
 ## Context Reference
 
