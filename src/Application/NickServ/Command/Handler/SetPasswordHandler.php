@@ -8,6 +8,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\Port\EventBusInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickPasswordChangedEvent;
+use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 
@@ -35,6 +36,12 @@ final readonly class SetPasswordHandler implements SetOptionHandlerInterface
         $ip = $this->decodeIp($context->sender->ipBase64);
         $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
+
+        $this->eventDispatcher->dispatch(new NickPasswordProvidedEvent(
+            nickId: $account->getId(),
+            nickname: $account->getNickname(),
+            plaintextPassword: $value,
+        ));
 
         $this->eventDispatcher->dispatch(new NickPasswordChangedEvent(
             nickId: $account->getId(),

@@ -6,6 +6,7 @@ namespace App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\PasswordMigrationStateInterface;
+use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Event\UdbRecordReceivedEvent;
@@ -27,9 +28,19 @@ final readonly class UdbNickSyncSubscriber implements EventSubscriberInterface
     {
         return [
             NickPasswordProvidedEvent::class => 'onPasswordProvided',
+            NickDropEvent::class => 'onNickDrop',
             UdbSyncRequestedEvent::class => 'onSyncRequested',
             UdbRecordReceivedEvent::class => 'onRecordReceived',
         ];
+    }
+
+    public function onNickDrop(NickDropEvent $event): void
+    {
+        if (!$this->connectionHolder->isConnected()) {
+            return;
+        }
+
+        $this->connectionHolder->writeLine(sprintf('DB * DEL N::%s', $event->nickname));
     }
 
     public function onPasswordProvided(NickPasswordProvidedEvent $event): void

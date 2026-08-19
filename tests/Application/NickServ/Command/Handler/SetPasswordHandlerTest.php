@@ -17,6 +17,7 @@ use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickPasswordChangedEvent;
+use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -161,7 +162,7 @@ final class SetPasswordHandlerTest extends TestCase
 
         $dispatchedEvents = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())
+        $eventDispatcher->expects(self::exactly(2))
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
                 $dispatchedEvents[] = $event;
@@ -201,9 +202,11 @@ final class SetPasswordHandlerTest extends TestCase
 
         $handler->handle($context, $account, 'newpass', true);
 
-        self::assertCount(1, $dispatchedEvents);
-        self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[0]);
-        self::assertSame('*', $dispatchedEvents[0]->performedByIp);
+        self::assertCount(2, $dispatchedEvents);
+        self::assertInstanceOf(NickPasswordProvidedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('newpass', $dispatchedEvents[0]->plaintextPassword);
+        self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[1]);
+        self::assertSame('*', $dispatchedEvents[1]->performedByIp);
     }
 
     #[Test]
@@ -218,7 +221,7 @@ final class SetPasswordHandlerTest extends TestCase
 
         $dispatchedEvents = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())
+        $eventDispatcher->expects(self::exactly(2))
             ->method('dispatch')
             ->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
                 $dispatchedEvents[] = $event;
@@ -258,8 +261,10 @@ final class SetPasswordHandlerTest extends TestCase
 
         $handler->handle($context, $account, 'newpass', true);
 
-        self::assertCount(1, $dispatchedEvents);
-        self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[0]);
-        self::assertSame('invalid!base64', $dispatchedEvents[0]->performedByIp);
+        self::assertCount(2, $dispatchedEvents);
+        self::assertInstanceOf(NickPasswordProvidedEvent::class, $dispatchedEvents[0]);
+        self::assertSame('newpass', $dispatchedEvents[0]->plaintextPassword);
+        self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[1]);
+        self::assertSame('invalid!base64', $dispatchedEvents[1]->performedByIp);
     }
 }

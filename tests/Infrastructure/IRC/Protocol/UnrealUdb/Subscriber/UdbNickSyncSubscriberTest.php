@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\PasswordMigrationStateInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Event\UdbRecordReceivedEvent;
@@ -34,8 +35,29 @@ final class UdbNickSyncSubscriberTest extends TestCase
     {
         $events = UdbNickSyncSubscriber::getSubscribedEvents();
         $this->assertArrayHasKey(NickPasswordProvidedEvent::class, $events);
+        $this->assertArrayHasKey(NickDropEvent::class, $events);
         $this->assertArrayHasKey(UdbSyncRequestedEvent::class, $events);
         $this->assertArrayHasKey(UdbRecordReceivedEvent::class, $events);
+    }
+
+    public function testOnNickDropNotConnected(): void
+    {
+        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
+        $holder->expects($this->once())->method('isConnected')->willReturn(false);
+        $holder->expects($this->never())->method('writeLine');
+
+        $sub = $this->createSubscriber($holder, $this->createStub(RegisteredNickRepositoryInterface::class));
+        $sub->onNickDrop(new NickDropEvent(1, 'nick', 'User', '127.0.0.1'));
+    }
+
+    public function testOnNickDropConnected(): void
+    {
+        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
+        $holder->expects($this->once())->method('isConnected')->willReturn(true);
+        $holder->expects($this->once())->method('writeLine')->with('DB * DEL N::nick');
+
+        $sub = $this->createSubscriber($holder, $this->createStub(RegisteredNickRepositoryInterface::class));
+        $sub->onNickDrop(new NickDropEvent(1, 'nick', 'User', '127.0.0.1'));
     }
 
     public function testOnPasswordProvidedNotConnected(): void
