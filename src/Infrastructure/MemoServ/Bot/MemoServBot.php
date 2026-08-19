@@ -8,10 +8,9 @@ use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
+use App\Application\Port\SendNoticePort;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
-use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Message\MessageDirection;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -26,6 +25,7 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
 
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly SendNoticePort $sendNoticePort,
         private readonly ServiceUidGeneratorInterface $uidGenerator,
         private readonly string $servicesVhost,
         private readonly string $memoservNick = 'MemoServ',
@@ -54,7 +54,7 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
             return;
         }
 
-        $line = $module->getIntroductionFormatter()->formatIntroduction(
+        $module->getServiceActions()->introduceService(
             $serverSid,
             $this->memoservNick,
             $this->memoservIdent,
@@ -64,8 +64,6 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
             $this->getServiceKey(),
         );
 
-        $connection->writeLine($line);
-
         $this->logger->info('MemoServ introduced to network.', [
             'uid' => $this->uid,
             'nick' => $this->memoservNick,
@@ -74,35 +72,12 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
 
     public function sendNotice(string $targetUidOrNick, string $message): void
     {
-        $this->sendMessage($targetUidOrNick, $message, 'NOTICE');
+        $this->sendNoticePort->sendNotice($this->uid, $targetUidOrNick, $message);
     }
 
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
     {
-        if (!$this->connectionHolder->isConnected()) {
-            return;
-        }
-
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            return;
-        }
-
-        $command = 'PRIVMSG' === $messageType ? 'PRIVMSG' : 'NOTICE';
-        foreach (explode("\n", $message) as $line) {
-            if ('' === $line) {
-                continue;
-            }
-            $ircMessage = new IRCMessage(
-                command: $command,
-                prefix: $this->uid,
-                params: [$targetUidOrNick],
-                trailing: $line,
-                direction: MessageDirection::Outgoing,
-            );
-            $rawLine = $module->getHandler()->formatMessage($ircMessage);
-            $this->connectionHolder->writeLine($rawLine);
-        }
+        $this->sendNoticePort->sendMessage($this->uid, $targetUidOrNick, $message, $messageType);
     }
 
     public function getNick(): string

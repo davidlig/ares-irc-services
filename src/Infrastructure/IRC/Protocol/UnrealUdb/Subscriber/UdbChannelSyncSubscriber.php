@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -25,8 +26,18 @@ final readonly class UdbChannelSyncSubscriber implements EventSubscriberInterfac
     {
         return [
             ChannelRegisteredEvent::class => 'onChannelRegistered',
+            ChannelDropEvent::class => 'onChannelDrop',
             UdbSyncRequestedEvent::class => 'onSyncRequested',
         ];
+    }
+
+    public function onChannelDrop(ChannelDropEvent $event): void
+    {
+        if (!$this->connectionHolder->isConnected()) {
+            return;
+        }
+
+        $this->connectionHolder->writeLine(sprintf('DB * DEL C::%s', $event->channelName));
     }
 
     public function onChannelRegistered(ChannelRegisteredEvent $event): void

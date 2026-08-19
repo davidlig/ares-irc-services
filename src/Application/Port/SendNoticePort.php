@@ -17,4 +17,6 @@ interface SendNoticePort
      * @param 'NOTICE'|'PRIVMSG' $messageType
      */
     public function sendMessage(string $senderUid, string $targetUid, string $message, string $messageType): void;
+
+    public function sendNoticeToChannel(string $senderUid, string $channelName, string $message): void;
 }

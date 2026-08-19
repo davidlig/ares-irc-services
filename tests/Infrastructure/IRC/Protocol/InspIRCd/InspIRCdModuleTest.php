@@ -13,7 +13,6 @@ use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport;
-use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,9 +32,8 @@ final class InspIRCdModuleTest extends TestCase
     {
         $handler = new InspIRCdProtocolHandler('A0A');
         $connectionHolder = new ActiveConnectionHolder();
-        $serviceActions = new InspIRCdProtocolServiceActions($connectionHolder, new NullLogger());
+        $serviceActions = new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger());
         $formatter = new InspIRCdServiceIntroductionFormatter();
-        $vhostBuilder = new InspIRCdVhostCommandBuilder();
         $channelModeSupport = $this->modeSupportFactory->createDefault();
         $userModeSupport = new InspIRCdUserModeSupport();
         $nickReservation = new InspIRCdNickReservation($connectionHolder, new NullLogger());
@@ -44,7 +42,6 @@ final class InspIRCdModuleTest extends TestCase
             $handler,
             $serviceActions,
             $formatter,
-            $vhostBuilder,
             $channelModeSupport,
             $userModeSupport,
             $nickReservation,
@@ -67,9 +64,8 @@ final class InspIRCdModuleTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
         $module = new InspIRCdModule(
             $handler,
-            new InspIRCdProtocolServiceActions($connectionHolder, new NullLogger()),
+            new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger()),
             new InspIRCdServiceIntroductionFormatter(),
-            new InspIRCdVhostCommandBuilder(),
             $this->modeSupportFactory->createDefault(),
             new InspIRCdUserModeSupport(),
             new InspIRCdNickReservation($connectionHolder, new NullLogger()),
@@ -79,13 +75,12 @@ final class InspIRCdModuleTest extends TestCase
     }
 
     #[Test]
-    public function getServiceActionsGetIntroductionFormatterGetVhostCommandBuilderGetChannelModeSupport(): void
+    public function getServiceActionsGetIntroductionFormatterGetChannelModeSupport(): void
     {
         $module = $this->createModule();
 
         self::assertInstanceOf(InspIRCdProtocolServiceActions::class, $module->getServiceActions());
         self::assertInstanceOf(InspIRCdServiceIntroductionFormatter::class, $module->getIntroductionFormatter());
-        self::assertInstanceOf(InspIRCdVhostCommandBuilder::class, $module->getVhostCommandBuilder());
         self::assertInstanceOf(InspIRCdChannelModeSupport::class, $module->getChannelModeSupport());
     }
 

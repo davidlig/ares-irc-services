@@ -9,12 +9,11 @@ use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UserModeSupportInterface;
-use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 
 /**
- * InspIRCd protocol module: handler, service actions, introduction formatter, vhost builder, channel mode support, nick reservation.
+ * InspIRCd protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.
  *
  * The channelModeSupport property is mutable: it starts with the factory default
  * (full InspIRCd docs profile) and is updated once the remote CAPAB is parsed,
@@ -30,7 +29,6 @@ final class InspIRCdModule implements ProtocolRuntimeModuleInterface
         private readonly InspIRCdProtocolHandler $handler,
         private readonly InspIRCdProtocolServiceActions $serviceActions,
         private readonly InspIRCdServiceIntroductionFormatter $introductionFormatter,
-        private readonly InspIRCdVhostCommandBuilder $vhostCommandBuilder,
         InspIRCdChannelModeSupport $channelModeSupport,
         private readonly InspIRCdUserModeSupport $userModeSupport,
         private readonly InspIRCdNickReservation $nickReservation,
@@ -56,11 +54,6 @@ final class InspIRCdModule implements ProtocolRuntimeModuleInterface
     public function getIntroductionFormatter(): ServiceIntroductionFormatterInterface
     {
         return $this->introductionFormatter;
-    }
-
-    public function getVhostCommandBuilder(): VhostCommandBuilderInterface
-    {
-        return $this->vhostCommandBuilder;
     }
 
     public function getChannelModeSupport(): ChannelModeSupportInterface

@@ -13,7 +13,6 @@ use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
@@ -40,7 +39,6 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         private readonly OperIrcopRepositoryInterface $ircopRepository,
         private readonly EventBusInterface $eventDispatcher,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
-        private readonly PasswordMigrationStateInterface $migrationState,
         private readonly int $identifyMaxFailedAttempts,
         private readonly int $identifyFailedWindowSeconds,
         private readonly int $identifyLockoutSeconds,
@@ -184,7 +182,6 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             ]),
             $account->isForbidden() => $this->replyAndReturn($context, 'identify.forbidden', ['nickname' => $targetNick]),
             $account->isPendingDeletion() => $this->replyAndReturn($context, 'identify.pending_deletion', ['nickname' => $targetNick]),
-            $this->migrationState->isMigrated($targetNick) => $this->replyAndReturn($context, 'identify.udb_migrated', ['nickname' => $targetNick]),
             default => null,
         };
 

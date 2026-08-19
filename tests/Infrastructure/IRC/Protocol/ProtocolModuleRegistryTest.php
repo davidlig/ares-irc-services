@@ -7,7 +7,6 @@ namespace App\Tests\Infrastructure\IRC\Protocol;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
-use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
@@ -26,7 +25,6 @@ final class ProtocolModuleRegistryTest extends TestCase
         $m->method('getHandler')->willReturn($this->createStub(ProtocolHandlerInterface::class));
         $m->method('getServiceActions')->willReturn($this->createStub(ProtocolServiceActionsInterface::class));
         $m->method('getIntroductionFormatter')->willReturn($this->createStub(ServiceIntroductionFormatterInterface::class));
-        $m->method('getVhostCommandBuilder')->willReturn($this->createStub(VhostCommandBuilderInterface::class));
         $m->method('getChannelModeSupport')->willReturn($this->createStub(ChannelModeSupportInterface::class));
 
         return $m;

@@ -9,12 +9,11 @@ use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UserModeSupportInterface;
-use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 
 /**
- * UnrealUdb protocol module: handler, service actions, introduction formatter, vhost builder, channel mode support, nick reservation.
+ * UnrealUdb protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.
  */
 final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface
 {
@@ -24,7 +23,6 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface
         private readonly UnrealUdbProtocolHandler $handler,
         private readonly UnrealUdbProtocolServiceActions $serviceActions,
         private readonly UnrealUdbServiceIntroductionFormatter $introductionFormatter,
-        private readonly UnrealUdbVhostCommandBuilder $vhostCommandBuilder,
         private readonly UnrealUdbChannelModeSupport $channelModeSupport,
         private readonly UnrealUdbUserModeSupport $userModeSupport,
         private readonly UnrealUdbNickReservation $nickReservation,
@@ -48,11 +46,6 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface
     public function getIntroductionFormatter(): ServiceIntroductionFormatterInterface
     {
         return $this->introductionFormatter;
-    }
-
-    public function getVhostCommandBuilder(): VhostCommandBuilderInterface
-    {
-        return $this->vhostCommandBuilder;
     }
 
     public function getChannelModeSupport(): ChannelModeSupportInterface

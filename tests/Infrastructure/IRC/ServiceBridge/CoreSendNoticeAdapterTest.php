@@ -79,4 +79,56 @@ final class CoreSendNoticeAdapterTest extends TestCase
 
         self::assertSame(['NOTICE 001USER :Line1', 'NOTICE 001USER :Line2'], $lines);
     }
+
+    #[Test]
+    public function sendNoticeToChannelDoesNothingWhenNotConnected(): void
+    {
+        $this->adapter->sendNoticeToChannel('001CS', '#test', 'Channel notice');
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function sendNoticeToChannelDoesNothingWhenConnectedButNoProtocolModule(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::never())->method('writeLine');
+        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+
+        $this->adapter->sendNoticeToChannel('001CS', '#test', 'Channel notice');
+    }
+
+    #[Test]
+    public function sendNoticeToChannelFormatsAndWritesLineWhenConnected(): void
+    {
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('writeLine')->with('NOTICE #test :Channel notice');
+        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
+        $handler->method('formatMessage')->willReturn('NOTICE #test :Channel notice');
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
+        $module->method('getHandler')->willReturn($handler);
+        $this->connectionHolder->setProtocolModule($module);
+
+        $this->adapter->sendNoticeToChannel('001CS', '#test', 'Channel notice');
+    }
+
+    #[Test]
+    public function sendNoticeToChannelSplitsLinesAndSkipsEmpty(): void
+    {
+        $lines = [];
+        $connection = $this->createMock(ConnectionInterface::class);
+        $connection->expects(self::exactly(2))->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
+            $lines[] = $line;
+        });
+        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
+        $handler->method('formatMessage')->willReturnCallback(static fn ($msg) => 'NOTICE #test :' . $msg->trailing);
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
+        $module->method('getHandler')->willReturn($handler);
+        $this->connectionHolder->setProtocolModule($module);
+
+        $this->adapter->sendNoticeToChannel('001CS', '#test', "Line1\n\nLine2");
+
+        self::assertSame(['NOTICE #test :Line1', 'NOTICE #test :Line2'], $lines);
+    }
 }

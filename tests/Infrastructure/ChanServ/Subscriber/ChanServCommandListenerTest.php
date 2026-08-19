@@ -11,6 +11,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChanServDispatchPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
@@ -102,6 +103,7 @@ final class ChanServCommandListenerTest extends TestCase
         $channelLookup = $this->createStub(ChannelLookupPort::class);
         $applyOutgoingChannelModes = $this->createStub(ApplyOutgoingChannelModesPort::class);
         $channelRegistration = $this->createStub(ServiceChannelRegistrationPort::class);
+        $sendNoticePort = $this->createStub(SendNoticePort::class);
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $uidGenerator->method('generateUid')->willReturn(self::CHANSERV_UID);
 
@@ -110,6 +112,7 @@ final class ChanServCommandListenerTest extends TestCase
             $channelLookup,
             $applyOutgoingChannelModes,
             $channelRegistration,
+            $sendNoticePort,
             $uidGenerator,
             'services.example.com',
             self::CHANSERV_NICK,

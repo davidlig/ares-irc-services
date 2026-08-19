@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\NickServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -30,7 +29,6 @@ final readonly class IdentifiedUserVhostSyncService
         private readonly NickServNotifierInterface $notifier,
         private readonly VhostDisplayResolver $displayResolver,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly ?PasswordMigrationStateInterface $migrationState = null,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -43,8 +41,7 @@ final readonly class IdentifiedUserVhostSyncService
      */
     public function syncVhostForUser(SenderView $user): void
     {
-        $isMigrated = null !== $this->migrationState && $this->migrationState->isMigrated($user->nick);
-        if (!$user->isIdentified && !$isMigrated) {
+        if (!$user->isIdentified) {
             $this->notifier->setUserVhost($user->uid, '', $user->serverSid);
 
             return;

@@ -53,7 +53,7 @@ final class OperServBot implements OperServNotifierInterface, ServiceNicknamePro
             return;
         }
 
-        $line = $module->getIntroductionFormatter()->formatIntroduction(
+        $module->getServiceActions()->introduceService(
             $serverSid,
             $this->operservNick,
             $this->operservIdent,
@@ -62,8 +62,6 @@ final class OperServBot implements OperServNotifierInterface, ServiceNicknamePro
             $this->operservRealname,
             $this->getServiceKey(),
         );
-
-        $connection->writeLine($line);
 
         $this->logger->info('OperServ introduced to network.', [
             'uid' => $this->uid,

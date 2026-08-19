@@ -18,6 +18,7 @@ use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\SendNoticePort;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;
@@ -84,6 +85,7 @@ final class MemoServCommandListenerTest extends TestCase
 
         $this->memoServBot = new MemoServBot(
             new ActiveConnectionHolder(),
+            $this->createStub(SendNoticePort::class),
             $uidGenerator,
             'services.example.com',
         );

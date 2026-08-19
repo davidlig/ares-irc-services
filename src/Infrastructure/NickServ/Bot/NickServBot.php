@@ -62,7 +62,7 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
             return;
         }
 
-        $line = $module->getIntroductionFormatter()->formatIntroduction(
+        $module->getServiceActions()->introduceService(
             $serverSid,
             $this->nickservNick,
             $this->nickservIdent,
@@ -71,8 +71,6 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
             $this->nickservRealname,
             $this->getServiceKey(),
         );
-
-        $connection->writeLine($line);
 
         $this->logger->info('NickServ introduced to network.', [
             'uid' => $this->uid,
@@ -99,9 +97,8 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
         }
         $module->getServiceActions()->setUserAccount($this->getServerSid(), $targetUid, $accountName);
 
-        if ('0' !== $accountName) {
-            $this->localUserModeSync->apply(new Uid($targetUid), '+r');
-        }
+        $delta = ('0' === $accountName) ? '-r' : '+r';
+        $this->localUserModeSync->apply(new Uid($targetUid), $delta);
     }
 
     public function setUserMode(string $targetUid, string $modes): void
@@ -146,17 +143,8 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
             return;
         }
         $sid = $this->getServerSid();
-        $vhostBuilder = $module->getVhostCommandBuilder();
-
-        if ('' !== $vhost) {
-            $line = $vhostBuilder->getSetVhostLine($sid, $targetUid, $vhost);
-            $this->write($line);
-        } else {
-            $cloakedHost = $sender?->cloakedHost ?? '';
-            foreach ($vhostBuilder->getClearVhostLines($sid, $targetUid, $cloakedHost) as $line) {
-                $this->write($line);
-            }
-        }
+        $cloakedHost = $sender?->cloakedHost ?? '';
+        $module->getServiceActions()->setUserVhost($sid, $targetUid, $vhost, $cloakedHost);
 
         $this->userLookup->updateVhost($targetUid, '' === $vhost ? '*' : $vhost);
     }
@@ -164,28 +152,6 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
     private function getServerSid(): string
     {
         return $this->connectionHolder->getServerSid() ?? '';
-    }
-
-    private function write(string $line): void
-    {
-        if (!$this->writeToConnection($line)) {
-            $this->logger->warning('NickServBot: cannot write — no active connection.', ['line' => $line]);
-
-            return;
-        }
-
-        $this->logger->debug('> ' . $line);
-    }
-
-    private function writeToConnection(string $line): bool
-    {
-        if (!$this->connectionHolder->isConnected()) {
-            return false;
-        }
-
-        $this->connectionHolder->writeLine($line);
-
-        return true;
     }
 
     public function getNick(): string

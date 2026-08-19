@@ -20,7 +20,6 @@ use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport;
-use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -415,9 +414,8 @@ final class InspIRCdProtocolHandlerTest extends TestCase
     {
         return new InspIRCdModule(
             handler: $handler,
-            serviceActions: new InspIRCdProtocolServiceActions($connectionHolder, new NullLogger()),
+            serviceActions: new InspIRCdProtocolServiceActions($connectionHolder, new InspIRCdServiceIntroductionFormatter(), new NullLogger()),
             introductionFormatter: new InspIRCdServiceIntroductionFormatter(),
-            vhostCommandBuilder: new InspIRCdVhostCommandBuilder(),
             channelModeSupport: $modeSupport,
             userModeSupport: new InspIRCdUserModeSupport(),
             nickReservation: new InspIRCdNickReservation($connectionHolder, new NullLogger()),

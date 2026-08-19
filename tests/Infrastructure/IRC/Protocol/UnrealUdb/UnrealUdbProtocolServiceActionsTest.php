@@ -40,7 +40,10 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     {
         $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
         $actions->setUserAccount('001', '123', 'account');
-        $this->assertEmpty($this->written);
+
+        self::assertCount(2, $this->written);
+        self::assertSame(':001 SVSLOGIN * 123 account', $this->written[0]);
+        self::assertSame(':001 SVS2MODE 123 +r', $this->written[1]);
     }
 
     #[Test]
@@ -48,7 +51,10 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     {
         $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
         $actions->setUserAccount('001', '123', '0');
-        $this->assertEmpty($this->written);
+
+        self::assertCount(2, $this->written);
+        self::assertSame(':001 SVSLOGIN * 123 0', $this->written[0]);
+        self::assertSame(':001 SVS2MODE 123 -r', $this->written[1]);
     }
 
     #[Test]
@@ -300,5 +306,50 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         self::assertCount(1, $this->written);
         self::assertSame(':001CSRV PART #test', $this->written[0]);
+    }
+
+    #[Test]
+    public function setUserVhostSetsVhostUsingChghost(): void
+    {
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+
+        $actions->setUserVhost('001', '001ABCD', 'custom.vhost.net');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 CHGHOST 001ABCD custom.vhost.net', $this->written[0]);
+    }
+
+    #[Test]
+    public function setUserVhostWithSpacesUsesColon(): void
+    {
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+
+        $actions->setUserVhost('001', '001ABCD', 'custom vhost with spaces');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 CHGHOST 001ABCD :custom vhost with spaces', $this->written[0]);
+    }
+
+    #[Test]
+    public function setUserVhostClearsVhostUsingSvs2mode(): void
+    {
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+
+        $actions->setUserVhost('001', '001ABCD', '');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 SVS2MODE 001ABCD -t', $this->written[0]);
+    }
+
+    #[Test]
+    public function introduceServiceSendsFormattedServiceIntroduction(): void
+    {
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+
+        $actions->introduceService('001', 'NickServ', 'NickServ', 'services.host', '001AAAAAA', 'Nickname Services', 'nickserv');
+
+        self::assertCount(1, $this->written);
+        self::assertStringContainsString(':001 UID NickServ 1', $this->written[0]);
+        self::assertStringContainsString('001AAAAAA', $this->written[0]);
     }
 }

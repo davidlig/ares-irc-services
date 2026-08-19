@@ -18,7 +18,6 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -82,7 +81,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -120,7 +118,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -159,7 +156,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -205,7 +201,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -245,7 +240,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -287,7 +281,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -332,7 +325,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -376,7 +368,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -415,7 +406,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -461,7 +451,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -516,7 +505,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -577,7 +565,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -635,7 +622,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $eventDispatcher,
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -685,7 +671,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             $pendingRegistry,
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -708,7 +693,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -729,7 +713,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -750,7 +733,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -771,7 +753,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -792,7 +773,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -813,7 +793,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -834,7 +813,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -855,7 +833,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -876,7 +853,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -897,7 +873,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -918,7 +893,6 @@ final class IdentifyCommandTest extends TestCase
             $this->createStub(OperIrcopRepositoryInterface::class),
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -1027,7 +1001,6 @@ final class IdentifyCommandTest extends TestCase
             $ircopRepo,
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -1078,7 +1051,6 @@ final class IdentifyCommandTest extends TestCase
             $ircopRepo,
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -1126,7 +1098,6 @@ final class IdentifyCommandTest extends TestCase
             $ircopRepo,
             $this->createStub(EventBusInterface::class),
             new PendingNickRestoreRegistry(),
-            $this->createStub(PasswordMigrationStateInterface::class),
             5,
             300,
             900,
@@ -1134,47 +1105,5 @@ final class IdentifyCommandTest extends TestCase
 
         $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false, 'SID');
         $cmd->execute($this->createContext($sender, ['User', 'password'], $notifier, $translator));
-    }
-
-    #[Test]
-    public function identifyFailsWhenUserIsMigrated(): void
-    {
-        $messages = [];
-        $notifier = $this->createStub(NickServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
-
-        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
-        $migrationState->expects($this->once())->method('isMigrated')->with('User')->willReturn(true);
-
-        $account = $this->createStub(RegisteredNick::class);
-
-        $nickRepo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $nickRepo->expects($this->once())->method('findByNick')->with('User')->willReturn($account);
-
-        $cmd = new IdentifyCommand(
-            $nickRepo,
-            $this->createStub(NetworkUserLookupPort::class),
-            new IdentifiedSessionRegistry(),
-            new IdentifyFailedAttemptRegistry(),
-            new NickServClientKeyResolver(),
-            new VhostDisplayResolver(''),
-            $this->createStub(OperIrcopRepositoryInterface::class),
-            $this->createStub(EventBusInterface::class),
-            new PendingNickRestoreRegistry(),
-            $migrationState,
-            5,
-            300,
-            900,
-        );
-
-        $sender = new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip', false, false, 'SID');
-        $cmd->execute($this->createContext($sender, ['User', 'password'], $notifier, $translator));
-
-        self::assertSame(['identify.udb_migrated'], $messages);
     }
 }

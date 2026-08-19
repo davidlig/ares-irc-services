@@ -6,12 +6,11 @@ namespace App\Tests\Infrastructure\MemoServ\Bot;
 
 use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\Port\ProtocolModuleInterface;
-use App\Application\Port\ServiceIntroductionFormatterInterface;
+use App\Application\Port\ProtocolServiceActionsInterface;
+use App\Application\Port\SendNoticePort;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
-use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use App\Infrastructure\MemoServ\Bot\MemoServBot;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,6 +26,8 @@ final class MemoServBotTest extends TestCase
 
     private ActiveConnectionHolder $connectionHolder;
 
+    private SendNoticePort $sendNoticePort;
+
     private ServiceUidGeneratorInterface $uidGenerator;
 
     private MemoServBot $bot;
@@ -34,11 +35,13 @@ final class MemoServBotTest extends TestCase
     protected function setUp(): void
     {
         $this->connectionHolder = new ActiveConnectionHolder();
+        $this->sendNoticePort = $this->createStub(SendNoticePort::class);
         $this->uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $this->uidGenerator->method('generateUid')->willReturn(self::MEMOSERV_UID);
 
         $this->bot = new MemoServBot(
             $this->connectionHolder,
+            $this->sendNoticePort,
             $this->uidGenerator,
             self::HOSTNAME,
         );
@@ -59,12 +62,11 @@ final class MemoServBotTest extends TestCase
     }
 
     #[Test]
-    public function onBurstCompleteWritesIntroductionLineWhenModulePresent(): void
+    public function onBurstCompleteCallsIntroduceServiceWhenModulePresent(): void
     {
-        $introLine = ':001 UID MemoServ MemoServ 0 0 services.example.com 001MS 0 * Memo Service';
-        $connection = $this->createMock(ConnectionInterface::class);
-        $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
-        $formatter->expects(self::atLeastOnce())->method('formatIntroduction')->with(
+        $connection = $this->createStub(ConnectionInterface::class);
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('introduceService')->with(
             '001',
             'MemoServ',
             'MemoServ',
@@ -72,37 +74,58 @@ final class MemoServBotTest extends TestCase
             self::MEMOSERV_UID,
             'Memo Service',
             'memoserv',
-        )->willReturn($introLine);
-        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
-        $module->method('getIntroductionFormatter')->willReturn($formatter);
+        );
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getServiceActions')->willReturn($serviceActions);
 
         $this->connectionHolder->setProtocolModule($module);
-        $connection->expects(self::once())->method('writeLine')->with($introLine);
 
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->bot->onBurstComplete($event);
     }
 
     #[Test]
-    public function onBurstCompleteDoesNotWriteWhenModuleNull(): void
+    public function onBurstCompleteDoesNotCallIntroduceServiceWhenModuleNull(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::never())->method('writeLine');
-
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->bot->onBurstComplete($event);
+
+        self::assertNull($this->connectionHolder->getProtocolModule());
     }
 
     #[Test]
-    public function sendNoticeDelegatesToConnectionWhenConnectedWithModule(): void
+    public function sendNoticeDelegatesToSendNoticePort(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::atLeastOnce())->method('writeLine')->with(self::anything());
-        $event = new NetworkBurstCompleteEvent($connection, '001');
-        $this->connectionHolder->onBurstComplete($event);
-        $this->connectionHolder->setProtocolModule($this->createModuleWithHandlerThatReturnsLine('NOTICE 001USER :Hi'));
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::once())->method('sendNotice')->with(self::MEMOSERV_UID, '001USER', 'Hi');
 
-        $this->bot->sendNotice('001USER', 'Hi');
+        $bot = new MemoServBot(
+            $this->connectionHolder,
+            $sendNoticePort,
+            $this->uidGenerator,
+            self::HOSTNAME,
+        );
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent($this->createStub(ConnectionInterface::class), '001'));
+
+        $bot->sendNotice('001USER', 'Hi');
+    }
+
+    #[Test]
+    public function sendMessageDelegatesToSendNoticePort(): void
+    {
+        $sendNoticePort = $this->createMock(SendNoticePort::class);
+        $sendNoticePort->expects(self::once())->method('sendMessage')->with(self::MEMOSERV_UID, '001USER', 'Hi', 'PRIVMSG');
+
+        $bot = new MemoServBot(
+            $this->connectionHolder,
+            $sendNoticePort,
+            $this->uidGenerator,
+            self::HOSTNAME,
+        );
+        $bot->onBurstComplete(new NetworkBurstCompleteEvent($this->createStub(ConnectionInterface::class), '001'));
+
+        $bot->sendMessage('001USER', 'Hi', 'PRIVMSG');
     }
 
     #[Test]
@@ -113,89 +136,12 @@ final class MemoServBotTest extends TestCase
     }
 
     #[Test]
-    public function sendNoticeDoesNotWriteWhenNotConnected(): void
-    {
-        $this->bot->sendNotice('001USER', 'Hi');
-        self::assertFalse($this->connectionHolder->isConnected());
-    }
-
-    #[Test]
-    public function sendMessageDoesNotWriteWhenModuleNotSet(): void
-    {
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::never())->method('writeLine');
-        $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
-        $this->bot->sendMessage('001U', 'Line', 'NOTICE');
-    }
-
-    #[Test]
-    public function sendMessageWithPrivmsgFormatsAsPrivmsg(): void
-    {
-        $connection = $this->createStub(ConnectionInterface::class);
-        $lines = [];
-        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
-            $lines[] = $line;
-        });
-        $event = new NetworkBurstCompleteEvent($connection, '001');
-        $this->connectionHolder->onBurstComplete($event);
-        $handler = $this->createStub(ProtocolHandlerInterface::class);
-        $handler->method('formatMessage')->willReturn('PRIVMSG 001U :Hi');
-        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
-        $module->method('getHandler')->willReturn($handler);
-        $this->connectionHolder->setProtocolModule($module);
-        $this->bot->sendMessage('001U', 'Hi', 'PRIVMSG');
-        self::assertCount(1, $lines);
-        self::assertSame('PRIVMSG 001U :Hi', $lines[0]);
-    }
-
-    #[Test]
-    public function sendMessageSplitsLinesAndSkipsEmpty(): void
-    {
-        $connection = $this->createStub(ConnectionInterface::class);
-        $lines = [];
-        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
-            $lines[] = $line;
-        });
-        $event = new NetworkBurstCompleteEvent($connection, '001');
-        $this->connectionHolder->onBurstComplete($event);
-        $handler = $this->createStub(ProtocolHandlerInterface::class);
-        $handler->method('formatMessage')->willReturnCallback(static fn (): string => 'NOTICE 001U :x');
-        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
-        $module->method('getHandler')->willReturn($handler);
-        $this->connectionHolder->setProtocolModule($module);
-        $this->bot->sendMessage('001U', "First\n\nSecond", 'NOTICE');
-        self::assertCount(2, $lines);
-    }
-
-    #[Test]
-    public function sendMessageDefaultsUnknownMessageTypeToNotice(): void
-    {
-        $connection = $this->createStub(ConnectionInterface::class);
-        $lines = [];
-        $connection->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
-            $lines[] = $line;
-        });
-        $event = new NetworkBurstCompleteEvent($connection, '001');
-        $this->connectionHolder->onBurstComplete($event);
-        $handler = $this->createMock(ProtocolHandlerInterface::class);
-        $handler->expects(self::once())->method('formatMessage')
-            ->with(self::callback(static fn ($msg): bool => 'NOTICE' === $msg->command));
-        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
-        $module->method('getHandler')->willReturn($handler);
-        $this->connectionHolder->setProtocolModule($module);
-        $this->bot->sendMessage('001U', 'Test', 'UNKNOWN_TYPE');
-    }
-
-    #[Test]
     public function onBurstCompleteLogsIntroduction(): void
     {
-        $introLine = ':001 UID MemoServ MemoServ 0 0 services.example.com 001MS 0 * Memo Service';
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::once())->method('writeLine')->with($introLine);
-        $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
-        $formatter->expects(self::atLeastOnce())->method('formatIntroduction')->willReturn($introLine);
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('introduceService');
         $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getIntroductionFormatter')->willReturn($formatter);
+        $module->method('getServiceActions')->willReturn($serviceActions);
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info')
@@ -209,6 +155,7 @@ final class MemoServBotTest extends TestCase
 
         $bot = new MemoServBot(
             $this->connectionHolder,
+            $this->sendNoticePort,
             $uidGenerator,
             self::HOSTNAME,
             'MemoServ',
@@ -218,18 +165,8 @@ final class MemoServBotTest extends TestCase
         );
 
         $this->connectionHolder->setProtocolModule($module);
-        $event = new NetworkBurstCompleteEvent($connection, '001');
+        $event = new NetworkBurstCompleteEvent($this->createStub(ConnectionInterface::class), '001');
         $bot->onBurstComplete($event);
-    }
-
-    private function createModuleWithHandlerThatReturnsLine(string $line): ProtocolRuntimeModuleInterface
-    {
-        $handler = $this->createStub(ProtocolHandlerInterface::class);
-        $handler->method('formatMessage')->willReturn($line);
-        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
-        $module->method('getHandler')->willReturn($handler);
-
-        return $module;
     }
 
     #[Test]

@@ -463,4 +463,51 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
         self::assertCount(1, $this->written);
         self::assertSame(':001CSRV PART #test', $this->written[0]);
     }
+
+    #[Test]
+    public function setUserVhostSetsVhostUsingEncapChghost(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setUserVhost('001', '001ABCD', 'custom.vhost.net');
+
+        self::assertCount(1, $this->written);
+        self::assertSame(':001 ENCAP * CHGHOST 001ABCD custom.vhost.net', $this->written[0]);
+    }
+
+    #[Test]
+    public function setUserVhostClearsVhostWithCloakedHost(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setUserVhost('001', '001ABCD', '', 'cloaked.host.net');
+
+        self::assertCount(2, $this->written);
+        self::assertSame(':001 ENCAP * CHGHOST 001ABCD cloaked.host.net', $this->written[0]);
+        self::assertSame(':001 MODE 001ABCD +x', $this->written[1]);
+    }
+
+    #[Test]
+    public function setUserVhostClearsVhostWithoutCloakedHostFallbackToTargetUid(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setUserVhost('001', '001ABCD', '', '');
+
+        self::assertCount(2, $this->written);
+        self::assertSame(':001 ENCAP * CHGHOST 001ABCD 001ABCD', $this->written[0]);
+        self::assertSame(':001 MODE 001ABCD +x', $this->written[1]);
+    }
+
+    #[Test]
+    public function introduceServiceSendsFormattedServiceIntroduction(): void
+    {
+        $actions = new InspIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->introduceService('001', 'NickServ', 'NickServ', 'services.host', '001AAAAAA', 'Nickname Services', 'nickserv');
+
+        self::assertCount(1, $this->written);
+        self::assertStringContainsString(':001 UID 001AAAAAA', $this->written[0]);
+        self::assertStringContainsString('NickServ services.host', $this->written[0]);
+    }
 }

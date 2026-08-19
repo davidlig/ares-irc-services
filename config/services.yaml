@@ -253,20 +253,25 @@ services:
             $eventDispatcher:    '@event_dispatcher'
         tags: ['irc.protocol_handler']
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder: ~
-
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder: ~
-
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter: ~
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter: ~
 
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter: ~
+
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions:
         arguments:
+            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions:
+        arguments:
+            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions:
         arguments:
+            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation:
@@ -288,7 +293,6 @@ services:
             $handler: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler'
             $serviceActions: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions'
             $introductionFormatter: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
-            $vhostCommandBuilder: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdVhostCommandBuilder'
             $channelModeSupport: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport'
             $userModeSupport: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdUserModeSupport'
             $nickReservation: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation'
@@ -308,7 +312,6 @@ services:
             $handler: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler'
             $serviceActions: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions'
             $introductionFormatter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
-            $vhostCommandBuilder: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbVhostCommandBuilder'
             $channelModeSupport: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport'
             $userModeSupport: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbUserModeSupport'
             $nickReservation: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation'
@@ -326,7 +329,6 @@ services:
             $handler: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler'
             $serviceActions: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions'
             $introductionFormatter: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
-            $vhostCommandBuilder: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdVhostCommandBuilder'
             $channelModeSupport: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport'
             $userModeSupport: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport'
             $nickReservation: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation'

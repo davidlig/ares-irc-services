@@ -61,4 +61,38 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
             $this->connectionHolder->writeLine($rawLine);
         }
     }
+
+    public function sendNoticeToChannel(string $senderUid, string $channelName, string $message): void
+    {
+        if (!$this->connectionHolder->isConnected()) {
+            $this->logger->warning('CoreSendNoticeAdapter: cannot send channel notice — no active connection.', [
+                'sender' => $senderUid,
+                'channel' => $channelName,
+            ]);
+
+            return;
+        }
+
+        $module = $this->connectionHolder->getProtocolModule();
+        if (null === $module) {
+            $this->logger->warning('CoreSendNoticeAdapter: cannot send channel notice — no active protocol module.');
+
+            return;
+        }
+
+        foreach (explode("\n", $message) as $line) {
+            if ('' === $line) {
+                continue;
+            }
+            $ircMessage = new IRCMessage(
+                command: 'NOTICE',
+                prefix: $senderUid,
+                params: [$channelName],
+                trailing: $line,
+                direction: MessageDirection::Outgoing,
+            );
+            $rawLine = $module->getHandler()->formatMessage($ircMessage);
+            $this->connectionHolder->writeLine($rawLine);
+        }
+    }
 }

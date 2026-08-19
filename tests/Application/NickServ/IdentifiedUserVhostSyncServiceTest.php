@@ -7,7 +7,6 @@ namespace App\Tests\Application\NickServ;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\VhostDisplayResolver;
-use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -30,14 +29,12 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         ?VhostDisplayResolver $resolver = null,
         ?OperIrcopRepositoryInterface $ircopRepo = null,
         ?LoggerInterface $logger = null,
-        ?PasswordMigrationStateInterface $migrationState = null,
     ): IdentifiedUserVhostSyncService {
         return new IdentifiedUserVhostSyncService(
             $nickRepo,
             $notifier,
             $resolver ?? new VhostDisplayResolver(),
             $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
-            $migrationState ?? $this->createStub(PasswordMigrationStateInterface::class),
             $logger ?? $this->createStub(LoggerInterface::class),
         );
     }
@@ -273,24 +270,18 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
     }
 
     #[Test]
-    public function syncVhostForUserAppliesVhostWhenNotIdentifiedFlagButMigratedInUdb(): void
+    public function syncVhostForUserClearsVhostWhenNotIdentifiedEvenIfAccountHasVhost(): void
     {
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())
             ->method('setUserVhost')
-            ->with('UID1', 'personal.vhost', 'SID');
+            ->with('UID1', '', 'SID');
 
         $user = new SenderView('UID1', 'davidlig', 'i', 'h', 'c', 'ip', false, false, 'SID');
-        $account = $this->createAccountWithId('davidlig');
-        $account->changeVhost('personal.vhost');
 
-        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
-        $repo->expects(self::atLeastOnce())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
 
-        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
-        $migrationState->expects(self::once())->method('isMigrated')->with('davidlig')->willReturn(true);
-
-        $service = $this->createService($repo, $notifier, null, null, null, $migrationState);
+        $service = $this->createService($repo, $notifier);
         $service->syncVhostForUser($user);
     }
 }

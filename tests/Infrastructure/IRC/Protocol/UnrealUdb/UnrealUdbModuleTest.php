@@ -12,7 +12,6 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbUserModeSupport;
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbVhostCommandBuilder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,9 +24,8 @@ final class UnrealUdbModuleTest extends TestCase
     {
         $handler = new UnrealUdbProtocolHandler('001');
         $connectionHolder = new ActiveConnectionHolder();
-        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, new NullLogger());
+        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, new UnrealUdbServiceIntroductionFormatter(), new NullLogger());
         $formatter = new UnrealUdbServiceIntroductionFormatter();
-        $vhostBuilder = new UnrealUdbVhostCommandBuilder();
         $channelModeSupport = new UnrealUdbChannelModeSupport();
         $userModeSupport = new UnrealUdbUserModeSupport();
         $nickReservation = new UnrealUdbNickReservation($connectionHolder, new NullLogger());
@@ -36,7 +34,6 @@ final class UnrealUdbModuleTest extends TestCase
             $handler,
             $serviceActions,
             $formatter,
-            $vhostBuilder,
             $channelModeSupport,
             $userModeSupport,
             $nickReservation,
@@ -59,9 +56,8 @@ final class UnrealUdbModuleTest extends TestCase
         $connectionHolder = new ActiveConnectionHolder();
         $module = new UnrealUdbModule(
             $handler,
-            new UnrealUdbProtocolServiceActions($connectionHolder, new NullLogger()),
+            new UnrealUdbProtocolServiceActions($connectionHolder, new UnrealUdbServiceIntroductionFormatter(), new NullLogger()),
             new UnrealUdbServiceIntroductionFormatter(),
-            new UnrealUdbVhostCommandBuilder(),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
             new UnrealUdbNickReservation($connectionHolder, new NullLogger()),
@@ -84,14 +80,6 @@ final class UnrealUdbModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(UnrealUdbServiceIntroductionFormatter::class, $module->getIntroductionFormatter());
-    }
-
-    #[Test]
-    public function getVhostCommandBuilderReturnsInjectedBuilder(): void
-    {
-        $module = $this->createModule();
-
-        self::assertInstanceOf(UnrealUdbVhostCommandBuilder::class, $module->getVhostCommandBuilder());
     }
 
     #[Test]

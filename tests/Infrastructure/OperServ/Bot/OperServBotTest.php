@@ -8,8 +8,8 @@ use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
+use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
@@ -80,22 +80,21 @@ final class OperServBotTest extends TestCase
     #[Test]
     public function onBurstCompleteIntroducesBot(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $protocolModule = $this->createStub(ProtocolModuleInterface::class);
-        $introductionFormatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
 
         $serverSid = '001';
-        $expectedLine = ':001 UID OperServ OperServ services.example.com 123456789ABC * +o :Network Operations Services';
 
         $this->connectionHolder->setProtocolModule($protocolModule);
 
         $protocolModule
-            ->method('getIntroductionFormatter')
-            ->willReturn($introductionFormatter);
+            ->method('getServiceActions')
+            ->willReturn($serviceActions);
 
-        $introductionFormatter
+        $serviceActions
             ->expects(self::once())
-            ->method('formatIntroduction')
+            ->method('introduceService')
             ->with(
                 $serverSid,
                 $this->operservNick,
@@ -104,13 +103,7 @@ final class OperServBotTest extends TestCase
                 $this->operservUid,
                 $this->operservRealname,
                 'operserv',
-            )
-            ->willReturn($expectedLine);
-
-        $connection
-            ->expects(self::once())
-            ->method('writeLine')
-            ->with($expectedLine);
+            );
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::once())->method('info');

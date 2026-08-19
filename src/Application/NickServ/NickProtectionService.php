@@ -8,7 +8,6 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -40,7 +39,6 @@ final readonly class NickProtectionService
         private readonly TranslationInterface $translator,
         private readonly EventBusInterface $eventDispatcher,
         private readonly ForbiddenNickService $forbiddenService,
-        private readonly ?PasswordMigrationStateInterface $migrationState = null,
         private readonly string $guestPrefix = 'Guest-',
         private readonly string $defaultLanguage = 'en',
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -95,14 +93,14 @@ final readonly class NickProtectionService
             return null;
         }
 
-        if ($user->isIdentified || $this->isMigrated($newNick)) {
+        if ($user->isIdentified) {
             $identifiedNick = $this->identifiedRegistry->findNick($uid);
             $this->logger->info(sprintf(
                 'Nick change: %s [%s] → %s — identified (%s), enforcing protection',
                 $oldNick,
                 $uid,
                 $newNick,
-                $identifiedNick ?? ($this->isMigrated($newNick) ? 'udb_migrated' : 'none'),
+                $identifiedNick ?? 'none',
             ));
         } else {
             $this->logger->info(sprintf(
@@ -114,11 +112,6 @@ final readonly class NickProtectionService
         }
 
         return $user;
-    }
-
-    private function isMigrated(string $nick): bool
-    {
-        return null !== $this->migrationState && $this->migrationState->isMigrated($nick);
     }
 
     private function prepareProtectionCheck(string $uid, string $oldNick, string $newNick): ?SenderView
@@ -297,14 +290,14 @@ final readonly class NickProtectionService
         if (!$account->isRegistered()) {
             // Account is pending, suspended, or pending deletion.
             // If the user has +r, enforce guest rename to prevent channel mode abuse.
-            if ($user->isIdentified || $this->isMigrated($nick)) {
+            if ($user->isIdentified) {
                 $this->enforceGuestRename($account, $user, $nick);
             }
 
             return;
         }
 
-        if ($user->isIdentified || $this->isMigrated($nick)) {
+        if ($user->isIdentified) {
             $this->handleIdentifiedEnforcement($account, $user, $nick);
         } else {
             $this->enforceGuestRename($account, $user, $nick);
@@ -315,8 +308,8 @@ final readonly class NickProtectionService
     {
         $identifiedNick = $this->identifiedRegistry->findNick($user->uid);
 
-        // Reconstruct registry state after service restart or when authenticated via UDB:
-        // if the user has +r on IRCd or is migrated in UDB but the in-memory registry is empty,
+        // Reconstruct registry state after service restart or when authenticated via IRCd:
+        // if the user has +r on IRCd but the in-memory registry is empty,
         // trust the IRCd state when the nick matches the registered account.
         if (null === $identifiedNick && 0 === strcasecmp($user->nick, $account->getNickname())) {
             $this->identifiedRegistry->register($user->uid, $account->getNickname());
@@ -348,7 +341,7 @@ final readonly class NickProtectionService
         $this->identifiedRegistry->register($user->uid, $account->getNickname());
 
         $this->logger->info(sprintf(
-            'Nick protection: %s [%s] auto-identified (has +r or migrated)',
+            'Nick protection: %s [%s] auto-identified (has +r)',
             $user->nick,
             $user->uid,
         ));

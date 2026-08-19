@@ -25,18 +25,47 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly UnrealUdbServiceIntroductionFormatter $introductionFormatter = new UnrealUdbServiceIntroductionFormatter(),
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void
     {
-        // UDB natively handles the +r mode when it detects a matching password during identification on the IRCD.
-        // Therefore, we don't send SVSLOGIN or SVS2MODE here.
+        // Step 1: SVSLOGIN associates the user with the account (for +R channels, WHOIS "is logged in as").
+        // Step 2: SVS2MODE sets/unsets +r mode and notifies the user's client.
+        // Both commands are required: SVSLOGIN alone does NOT set +r mode.
+        $this->write(sprintf(':%s SVSLOGIN * %s %s', $serverSid, $targetUid, $accountName));
+        $modeDelta = ('0' === $accountName) ? '-r' : '+r';
+        $this->write(sprintf(':%s SVS2MODE %s %s', $serverSid, $targetUid, $modeDelta));
     }
 
     public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void
     {
         $this->write(sprintf(':%s SVSMODE %s %s', $serverSid, $targetUid, $modes));
+    }
+
+    public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void
+    {
+        if ('' !== $vhost) {
+            $trailing = (str_contains($vhost, ' ')) ? ' :' . $vhost : ' ' . $vhost;
+            $this->write(sprintf(':%s CHGHOST %s%s', $serverSid, $targetUid, $trailing));
+        } else {
+            $this->write(sprintf(':%s SVS2MODE %s -t', $serverSid, $targetUid));
+        }
+    }
+
+    public function introduceService(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname, string $serviceKey = ''): void
+    {
+        $line = $this->introductionFormatter->formatIntroduction(
+            $serverSid,
+            $nick,
+            $ident,
+            $vhost,
+            $uid,
+            $realname,
+            $serviceKey,
+        );
+        $this->write($line);
     }
 
     public function forceNick(string $serverSid, string $targetUid, string $newNick): void

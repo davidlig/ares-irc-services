@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -22,6 +23,33 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     {
         $events = UdbChannelSyncSubscriber::getSubscribedEvents();
         $this->assertArrayHasKey(ChannelRegisteredEvent::class, $events);
+        $this->assertArrayHasKey(ChannelDropEvent::class, $events);
+    }
+
+    public function testOnChannelDropNotConnected(): void
+    {
+        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
+        $chanRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $holder->expects($this->once())->method('isConnected')->willReturn(false);
+        $holder->expects($this->never())->method('writeLine');
+
+        $sub = new UdbChannelSyncSubscriber($holder, $chanRepo, $nickRepo);
+        $sub->onChannelDrop(new ChannelDropEvent(1, '#chan', '#chan', 'Dropped'));
+    }
+
+    public function testOnChannelDropSuccess(): void
+    {
+        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
+        $chanRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $holder->expects($this->once())->method('isConnected')->willReturn(true);
+        $holder->expects($this->once())->method('writeLine')->with('DB * DEL C::#chan');
+
+        $sub = new UdbChannelSyncSubscriber($holder, $chanRepo, $nickRepo);
+        $sub->onChannelDrop(new ChannelDropEvent(1, '#chan', '#chan', 'Dropped'));
     }
 
     public function testOnChannelRegisteredNotConnected(): void

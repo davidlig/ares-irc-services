@@ -16,7 +16,6 @@ use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserJoinedNetworkDTO;
@@ -57,7 +56,6 @@ final class NickProtectionSubscriberTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
         $pendingRegistry = $this->createStub(PendingNickRestoreRegistryInterface::class);
-        $migrationState = $this->createStub(PasswordMigrationStateInterface::class);
 
         $nickProtectionService = new NickProtectionService(
             $nickRepository,
@@ -70,7 +68,6 @@ final class NickProtectionSubscriberTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
-            $migrationState,
         );
 
         $ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
@@ -80,7 +77,6 @@ final class NickProtectionSubscriberTest extends TestCase
             $this->notifier,
             new VhostDisplayResolver(),
             $ircopRepository,
-            $migrationState,
         );
 
         $this->subscriber = new NickProtectionSubscriber(

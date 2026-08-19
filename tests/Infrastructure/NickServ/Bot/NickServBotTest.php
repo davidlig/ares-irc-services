@@ -11,8 +11,6 @@ use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceIntroductionFormatterInterface;
-use App\Application\Port\VhostCommandBuilderInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;
@@ -66,14 +64,13 @@ final class NickServBotTest extends TestCase
     }
 
     #[Test]
-    public function onBurstCompleteWritesIntroductionLineWhenModulePresent(): void
+    public function onBurstCompleteCallsIntroduceServiceWhenModulePresent(): void
     {
         $sendNoticePort = $this->createMock(SendNoticePort::class);
         $sendNoticePort->expects(self::never())->method('sendNotice');
-        $introLine = ':001 UID NickServ NickServ 0 0 services.example.com 001NS 0 * Nickname Registration Services';
-        $connection = $this->createMock(ConnectionInterface::class);
-        $formatter = $this->createMock(ServiceIntroductionFormatterInterface::class);
-        $formatter->expects(self::atLeastOnce())->method('formatIntroduction')->with(
+        $connection = $this->createStub(ConnectionInterface::class);
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('introduceService')->with(
             '001',
             'NickServ',
             'NickServ',
@@ -81,12 +78,11 @@ final class NickServBotTest extends TestCase
             self::NICKSERV_UID,
             'Nickname Registration Services',
             'nickserv',
-        )->willReturn($introLine);
+        );
         $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getIntroductionFormatter')->willReturn($formatter);
+        $module->method('getServiceActions')->willReturn($serviceActions);
 
         $this->connectionHolder->setProtocolModule($module);
-        $connection->expects(self::once())->method('writeLine')->with($introLine);
 
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
@@ -212,7 +208,7 @@ final class NickServBotTest extends TestCase
     }
 
     #[Test]
-    public function setUserAccountLogoutDoesNotApplyLocalMode(): void
+    public function setUserAccountLogoutAppliesMinusRMode(): void
     {
         $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
         $serviceActions->expects(self::once())->method('setUserAccount')
@@ -223,10 +219,9 @@ final class NickServBotTest extends TestCase
 
         $this->connectionHolder->setProtocolModule($module);
 
-        // On logout, local mode sync is NOT called because NetworkEventEnricher
-        // already dispatched UserModeChangedEvent('-r') on nick change.
         $localUserModeSync = $this->createMock(LocalUserModeSyncInterface::class);
-        $localUserModeSync->expects(self::never())->method('apply');
+        $localUserModeSync->expects(self::once())->method('apply')
+            ->with(self::callback(static fn ($u): bool => '001USER' === $u->value), '-r');
 
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
@@ -380,13 +375,12 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function setUserVhostSendsSetVhostWhenVhostProvided(): void
     {
-        $vhostBuilder = $this->createMock(VhostCommandBuilderInterface::class);
-        $vhostBuilder->expects(self::once())->method('getSetVhostLine')
-            ->with('001', '001USER', 'new.vhost')
-            ->willReturn(':001 SVSHOST 001USER new.vhost');
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('setUserVhost')
+            ->with('001', '001USER', 'new.vhost', 'old.vhost');
 
         $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getVhostCommandBuilder')->willReturn($vhostBuilder);
+        $module->method('getServiceActions')->willReturn($serviceActions);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $senderView = new SenderView('001USER', 'User', 'i', 'h', 'old.vhost', 'ip');
@@ -394,9 +388,7 @@ final class NickServBotTest extends TestCase
 
         $this->connectionHolder->setProtocolModule($module);
 
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::once())->method('writeLine')->with(':001 SVSHOST 001USER new.vhost');
-
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
 
@@ -419,13 +411,12 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function setUserVhostSendsClearVhostWhenVhostEmpty(): void
     {
-        $vhostBuilder = $this->createMock(VhostCommandBuilderInterface::class);
-        $vhostBuilder->expects(self::once())->method('getClearVhostLines')
-            ->with('001', '001USER', 'cloak.host')
-            ->willReturn([':001 SVSHOST 001USER', ':001 MODE 001USER +x']);
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('setUserVhost')
+            ->with('001', '001USER', '', 'cloak.host');
 
         $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getVhostCommandBuilder')->willReturn($vhostBuilder);
+        $module->method('getServiceActions')->willReturn($serviceActions);
 
         $sender = new SenderView(
             uid: '001USER',
@@ -446,9 +437,7 @@ final class NickServBotTest extends TestCase
 
         $this->connectionHolder->setProtocolModule($module);
 
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::exactly(2))->method('writeLine');
-
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
 
@@ -481,30 +470,13 @@ final class NickServBotTest extends TestCase
     }
 
     #[Test]
-    public function setUserVhostDoesNothingWhenNotConnected(): void
-    {
-        $vhostBuilder = $this->createStub(VhostCommandBuilderInterface::class);
-        $vhostBuilder->method('getSetVhostLine')->willReturn('FAKE SETHOST LINE');
-
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getVhostCommandBuilder')->willReturn($vhostBuilder);
-
-        $this->connectionHolder->setProtocolModule($module);
-        // Do NOT call onBurstComplete — holder has no connection, isConnected() is false.
-
-        $this->bot->setUserVhost('001USER', 'new.vhost', '001');
-        // write() is called but writeToConnection() returns false; no writeLine, no exception.
-        self::assertFalse($this->connectionHolder->isConnected());
-    }
-
-    #[Test]
     public function setUserVhostSkipsWhenVhostMatchesDisplayHost(): void
     {
-        $vhostBuilder = $this->createMock(VhostCommandBuilderInterface::class);
-        $vhostBuilder->expects(self::never())->method('getSetVhostLine');
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::never())->method('setUserVhost');
 
         $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getVhostCommandBuilder')->willReturn($vhostBuilder);
+        $module->method('getServiceActions')->willReturn($serviceActions);
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $senderView = new SenderView('001USER', 'User', 'i', 'h', 'cloaked.host', 'ip', false, false, '', 'same.vhost');
@@ -512,9 +484,7 @@ final class NickServBotTest extends TestCase
 
         $this->connectionHolder->setProtocolModule($module);
 
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::never())->method('writeLine');
-
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
 
@@ -537,13 +507,12 @@ final class NickServBotTest extends TestCase
     #[Test]
     public function setUserVhostClearUsesCloakedHostNotHostname(): void
     {
-        $vhostBuilder = $this->createMock(VhostCommandBuilderInterface::class);
-        $vhostBuilder->expects(self::once())->method('getClearVhostLines')
-            ->with('001', '001USER', 'safe.cloaked.host')
-            ->willReturn([':001 ENCAP 001 CHGHOST 001USER safe.cloaked.host', ':001 MODE 001USER +x']);
+        $serviceActions = $this->createMock(ProtocolServiceActionsInterface::class);
+        $serviceActions->expects(self::once())->method('setUserVhost')
+            ->with('001', '001USER', '', 'safe.cloaked.host');
 
         $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getVhostCommandBuilder')->willReturn($vhostBuilder);
+        $module->method('getServiceActions')->willReturn($serviceActions);
 
         $sender = new SenderView(
             uid: '001USER',
@@ -564,9 +533,7 @@ final class NickServBotTest extends TestCase
 
         $this->connectionHolder->setProtocolModule($module);
 
-        $connection = $this->createMock(ConnectionInterface::class);
-        $connection->expects(self::exactly(2))->method('writeLine');
-
+        $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
         $this->connectionHolder->onBurstComplete($event);
 

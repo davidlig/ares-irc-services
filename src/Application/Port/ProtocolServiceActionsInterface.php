@@ -16,9 +16,16 @@ interface ProtocolServiceActionsInterface
 
     public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void;
 
+    public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void;
+
     public function forceNick(string $serverSid, string $targetUid, string $newNick): void;
 
     public function killUser(string $serverSid, string $targetUid, string $reason): void;
+
+    /**
+     * Introduce a service pseudo-client (NickServ, ChanServ, etc.) to the network.
+     */
+    public function introduceService(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname, string $serviceKey = ''): void;
 
     /**
      * Set channel modes (e.g. +nt). Params for modes that require a value (e.g. +k key).

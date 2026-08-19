@@ -25,6 +25,7 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly UnrealIRCdServiceIntroductionFormatter $introductionFormatter = new UnrealIRCdServiceIntroductionFormatter(),
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -41,6 +42,30 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
     public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void
     {
         $this->write(sprintf(':%s SVSMODE %s %s', $serverSid, $targetUid, $modes));
+    }
+
+    public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void
+    {
+        if ('' !== $vhost) {
+            $trailing = (str_contains($vhost, ' ')) ? ' :' . $vhost : ' ' . $vhost;
+            $this->write(sprintf(':%s CHGHOST %s%s', $serverSid, $targetUid, $trailing));
+        } else {
+            $this->write(sprintf(':%s SVS2MODE %s -t', $serverSid, $targetUid));
+        }
+    }
+
+    public function introduceService(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname, string $serviceKey = ''): void
+    {
+        $line = $this->introductionFormatter->formatIntroduction(
+            $serverSid,
+            $nick,
+            $ident,
+            $vhost,
+            $uid,
+            $realname,
+            $serviceKey,
+        );
+        $this->write($line);
     }
 
     public function forceNick(string $serverSid, string $targetUid, string $newNick): void

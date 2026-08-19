@@ -30,6 +30,7 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
+        private readonly InspIRCdServiceIntroductionFormatter $introductionFormatter = new InspIRCdServiceIntroductionFormatter(),
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -54,6 +55,31 @@ final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceAc
     {
         $paramStr = [] === $params ? '' : ' ' . implode(' ', $params);
         $this->write(sprintf(':%s MODE %s %s%s', $serverSid, $targetUid, $modes, $paramStr));
+    }
+
+    public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void
+    {
+        if ('' !== $vhost) {
+            $this->write(sprintf(':%s ENCAP * CHGHOST %s %s', $serverSid, $targetUid, $vhost));
+        } else {
+            $host = '' !== $cloakedHost ? $cloakedHost : $targetUid;
+            $this->write(sprintf(':%s ENCAP * CHGHOST %s %s', $serverSid, $targetUid, $host));
+            $this->write(sprintf(':%s MODE %s +x', $serverSid, $targetUid));
+        }
+    }
+
+    public function introduceService(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname, string $serviceKey = ''): void
+    {
+        $line = $this->introductionFormatter->formatIntroduction(
+            $serverSid,
+            $nick,
+            $ident,
+            $vhost,
+            $uid,
+            $realname,
+            $serviceKey,
+        );
+        $this->write($line);
     }
 
     public function forceNick(string $serverSid, string $targetUid, string $newNick): void
