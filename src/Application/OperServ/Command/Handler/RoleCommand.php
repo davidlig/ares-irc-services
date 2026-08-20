@@ -16,6 +16,7 @@ use App\Application\Port\EventBusInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
+use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
@@ -584,6 +585,7 @@ final readonly class RoleCommand implements OperServCommandInterface
             $this->roleRepository->save($role);
 
             $this->vhostApplier->updateVhostForRole($role->getId(), null);
+            $this->eventDispatcher->dispatch(new OperRoleForcedVhostChangedEvent($role->getId(), null));
 
             $context->reply('role.vhost.set.cleared', ['%role%' => $role->getName()]);
 
@@ -606,6 +608,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         $this->roleRepository->save($role);
 
         $this->vhostApplier->updateVhostForRole($role->getId(), $normalized);
+        $this->eventDispatcher->dispatch(new OperRoleForcedVhostChangedEvent($role->getId(), $normalized));
 
         $context->reply('role.vhost.set.done', ['%role%' => $role->getName()]);
     }

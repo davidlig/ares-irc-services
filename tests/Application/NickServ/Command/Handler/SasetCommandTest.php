@@ -86,7 +86,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::never())->method('sendMessage');
         $translator = $this->createStub(TranslationInterface::class);
@@ -106,7 +106,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -133,7 +133,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -160,7 +160,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -189,7 +189,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -218,7 +218,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -247,7 +247,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -281,7 +281,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -314,7 +314,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -347,7 +347,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
 
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -378,7 +378,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $translator = $this->createStub(TranslationInterface::class);
 
@@ -409,7 +409,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $translator = $this->createStub(TranslationInterface::class);
 
@@ -437,7 +437,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -454,7 +454,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -471,7 +471,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -488,7 +488,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -505,7 +505,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -531,7 +531,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -548,7 +548,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -565,7 +565,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -582,7 +582,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -599,7 +599,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
@@ -616,7 +616,7 @@ final class SasetCommandTest extends TestCase
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
         $setTimezone = new SetTimezoneHandler($nickRepo);
-        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class));
+        $setVhost = new SetVhostHandler($nickRepo, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class));
         $targetValidator = $this->createStub(NickTargetValidator::class);
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);

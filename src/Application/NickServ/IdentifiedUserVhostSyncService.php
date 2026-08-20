@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Application\NickServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
+use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -29,6 +31,7 @@ final readonly class IdentifiedUserVhostSyncService
         private readonly NickServNotifierInterface $notifier,
         private readonly VhostDisplayResolver $displayResolver,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -42,7 +45,9 @@ final readonly class IdentifiedUserVhostSyncService
     public function syncVhostForUser(SenderView $user): void
     {
         if (!$user->isIdentified) {
-            $this->notifier->setUserVhost($user->uid, '', $user->serverSid);
+            if (!$this->protocolHandlesVhostServerSide()) {
+                $this->notifier->setUserVhost($user->uid, '', $user->serverSid);
+            }
 
             return;
         }
@@ -54,6 +59,13 @@ final readonly class IdentifiedUserVhostSyncService
         }
 
         $this->applyVhostForUser($user, $account);
+    }
+
+    private function protocolHandlesVhostServerSide(): bool
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+
+        return $module instanceof NickChangePreservesIdentificationInterface;
     }
 
     private function applyVhostForUser(SenderView $user, RegisteredNick $account): void

@@ -46,12 +46,8 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
 
     public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void
     {
-        if ('' !== $vhost) {
-            $trailing = (str_contains($vhost, ' ')) ? ' :' . $vhost : ' ' . $vhost;
-            $this->write(sprintf(':%s CHGHOST %s%s', $serverSid, $targetUid, $trailing));
-        } else {
-            $this->write(sprintf(':%s SVS2MODE %s -t', $serverSid, $targetUid));
-        }
+        // UnrealUDB manages vhosts natively via UDB records (DB * INS/DEL N::<nick>::vhost).
+        // Services must not send CHGHOST or SVS2MODE -t wire commands to the IRCd.
     }
 
     public function introduceService(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname, string $serviceKey = ''): void

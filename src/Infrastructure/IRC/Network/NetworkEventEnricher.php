@@ -62,7 +62,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly SkipIdentifiedModeStripRegistryInterface $skipIdentifiedModeStripRegistry,
         private readonly ActiveChannelModeSupportProviderInterface $modeSupportProvider,
-        private readonly ?ActiveConnectionHolderInterface $connectionHolder = null,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -564,10 +564,6 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
 
     private function protocolPreservesIdentificationOnNickChange(): bool
     {
-        if (null === $this->connectionHolder) {
-            return false;
-        }
-
         $module = $this->connectionHolder->getProtocolModule();
 
         return $module instanceof NickChangePreservesIdentificationInterface;

@@ -8,8 +8,10 @@ use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
+use App\Application\Port\EventBusInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Event\OperIrcopChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 
@@ -20,11 +22,12 @@ use function strtoupper;
 final readonly class IrcopCommand implements OperServCommandInterface
 {
     public function __construct(
-        private RegisteredNickRepositoryInterface $nickRepository,
-        private OperIrcopRepositoryInterface $ircopRepository,
-        private OperRoleRepositoryInterface $roleRepository,
-        private IrcopAccessHelper $accessHelper,
-        private IrcopModeApplier $modeApplier,
+        private readonly RegisteredNickRepositoryInterface $nickRepository,
+        private readonly OperIrcopRepositoryInterface $ircopRepository,
+        private readonly OperRoleRepositoryInterface $roleRepository,
+        private readonly IrcopAccessHelper $accessHelper,
+        private readonly IrcopModeApplier $modeApplier,
+        private readonly EventBusInterface $eventDispatcher,
     ) {}
 
     public function getName(): string
@@ -145,6 +148,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
 
             $this->modeApplier->removeModesForNick($nickname, $oldRole);
             $this->modeApplier->applyModesForNick($nickname, $role);
+            $this->eventDispatcher->dispatch(new OperIrcopChangedEvent($targetAccount->getId(), $nickname));
 
             $context->reply('ircop.role_changed', ['%nickname%' => $nickname, '%old%' => $oldRoleName, '%new%' => $roleName]);
 
@@ -161,6 +165,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
         $this->ircopRepository->save($ircop);
 
         $this->modeApplier->applyModesForNick($nickname, $role);
+        $this->eventDispatcher->dispatch(new OperIrcopChangedEvent($targetAccount->getId(), $nickname));
 
         $context->reply('ircop.add.done', ['%nickname%' => $nickname, '%role%' => $roleName]);
     }
@@ -222,6 +227,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
         $this->modeApplier->removeModesForNick($nickname, $role);
 
         $this->ircopRepository->remove($ircop);
+        $this->eventDispatcher->dispatch(new OperIrcopChangedEvent($targetAccount->getId(), $nickname));
         $context->reply('ircop.del.done', ['%nickname%' => $nickname]);
     }
 

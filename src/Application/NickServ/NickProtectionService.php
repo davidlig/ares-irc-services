@@ -6,8 +6,10 @@ namespace App\Application\NickServ;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -39,6 +41,7 @@ final readonly class NickProtectionService
         private readonly TranslationInterface $translator,
         private readonly EventBusInterface $eventDispatcher,
         private readonly ForbiddenNickService $forbiddenService,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly string $guestPrefix = 'Guest-',
         private readonly string $defaultLanguage = 'en',
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -120,9 +123,18 @@ final readonly class NickProtectionService
             return null;
         }
 
-        $this->handleDeidentifyOnNickChange($uid, $oldNick);
+        if (!$this->shouldPreserveIdentificationOnNickChange()) {
+            $this->handleDeidentifyOnNickChange($uid, $oldNick);
+        }
 
         return $this->findUserIfNickProtected($uid, $newNick);
+    }
+
+    private function shouldPreserveIdentificationOnNickChange(): bool
+    {
+        $module = $this->connectionHolder->getProtocolModule();
+
+        return $module instanceof NickChangePreservesIdentificationInterface;
     }
 
     private function findUserIfNickProtected(string $uid, string $newNick): ?SenderView

@@ -625,6 +625,7 @@ services:
             $displayResolver: '@App\Application\NickServ\VhostDisplayResolver'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $logger:          '@monolog.logger.irc'
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
 
     App\Application\NickServ\NickProtectionService:
         arguments:
@@ -635,6 +636,7 @@ services:
             $defaultLanguage: '%services.default_language%'
             $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $logger: '@monolog.logger.irc'
+            $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
 
     App\Application\NickServ\Service\NickForceService:
         arguments:
@@ -1367,6 +1369,8 @@ services:
             $identifiedUserVhostSync:   '@App\Application\NickServ\IdentifiedUserVhostSyncService'
             $burstState:                '@App\Application\NickServ\BurstState'
             $networkUserLookup:        '@App\Application\Port\NetworkUserLookupPort'
+            $pendingProtectionRegistry: '@App\Application\NickServ\PendingNickProtectionRegistryInterface'
+            $connectionHolder:          '@App\Application\Port\ActiveConnectionHolderInterface'
         tags: ['kernel.event_subscriber']
 
     App\Infrastructure\NickServ\Subscriber\ForbiddenNickEnforceSubscriber:

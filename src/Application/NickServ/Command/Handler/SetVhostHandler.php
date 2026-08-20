@@ -7,8 +7,10 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickVhostChangedEvent;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -27,6 +29,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         private readonly NetworkUserLookupPort $userLookup,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
         private readonly ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
+        private readonly EventBusInterface $eventDispatcher,
     ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
@@ -60,6 +63,7 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
             $account->changeVhost(null);
             $this->nickRepository->save($account);
             $this->applyClearVhost($context, $account, $isIrcopMode);
+            $this->eventDispatcher->dispatch(new NickVhostChangedEvent($account->getId(), $account->getNickname(), null));
             $context->reply('set.vhost.cleared');
 
             return '__cleared__';
@@ -113,6 +117,9 @@ final readonly class SetVhostHandler implements SetOptionHandlerInterface
         } elseif (null !== $context->sender && '' !== $displayVhost) {
             $context->getNotifier()->setUserVhost($context->sender->uid, $displayVhost, $context->sender->serverSid);
         }
+
+        $this->eventDispatcher->dispatch(new NickVhostChangedEvent($account->getId(), $account->getNickname(), $normalized));
+
         $context->reply('set.vhost.success', ['vhost' => $displayVhost]);
     }
 

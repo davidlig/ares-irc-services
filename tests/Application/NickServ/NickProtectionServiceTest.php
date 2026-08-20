@@ -11,8 +11,11 @@ use App\Application\NickServ\NickProtectionService;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\NickServ\SessionLanguageRegistry;
+use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -51,6 +54,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserJoined($user);
@@ -91,6 +95,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserJoined($user);
@@ -119,6 +124,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -153,6 +159,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $forbiddenService,
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -195,6 +202,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $eventDispatcher,
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -221,6 +229,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'host.example', 'real.host', 'AAA=');
@@ -247,6 +256,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserQuit('UID1', 'UnknownNick', 'Bye', 'ident', 'host', 'real.host', 'AAA=');
@@ -277,6 +287,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserQuit('UID1', 'SomeNick', 'Quit', 'id', 'host', 'real.host', 'AAA=');
@@ -311,6 +322,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -348,6 +360,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick');
@@ -377,6 +390,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'Guest-ABC123');
@@ -414,6 +428,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'Guest-XYZ', 'RegNick');
@@ -451,6 +466,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick');
@@ -489,6 +505,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick');
@@ -530,6 +547,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegNick');
@@ -567,6 +585,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -607,6 +626,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $eventDispatcher,
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -638,6 +658,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -692,6 +713,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $eventDispatcher,
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
@@ -727,6 +749,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', '', '', 'host.example', 'real.host', 'AAA=');
@@ -754,6 +777,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving now', 'myident', 'host.example', 'real.host', 'AAA=');
@@ -784,6 +808,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         // IPv4 base64 encoded: 192.168.1.100
@@ -818,6 +843,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         // User not identified (not in registry)
@@ -852,6 +878,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '');
@@ -884,6 +911,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', '*');
@@ -916,6 +944,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         // Invalid base64 (not decodable) - decodeIp returns '*', and updateLastConnection treats '*' as null
@@ -946,6 +975,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');
@@ -975,6 +1005,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');
@@ -1007,6 +1038,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');
@@ -1042,6 +1074,7 @@ final class NickProtectionServiceTest extends TestCase
             $this->createStub(TranslationInterface::class),
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'NewNick');
@@ -1087,6 +1120,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $eventDispatcher,
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -1123,6 +1157,7 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $this->createStub(EventBusInterface::class),
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->enforceProtection($user);
@@ -1171,10 +1206,126 @@ final class NickProtectionServiceTest extends TestCase
             $translator,
             $eventDispatcher,
             $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
         $service->onNickChanged('UID1', 'OldNick', 'RegisteredNick');
 
         self::assertNull($identifiedRegistry->findNick('UID1'));
     }
+
+    #[Test]
+    public function onNickChangedPreservesIdentificationWhenProtocolImplementsInterface(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'OldIdentified');
+
+        $oldAccount = RegisteredNick::createPending('OldIdentified', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $oldAccount->activate();
+        $this->setNickId($oldAccount, 1);
+        $account = RegisteredNick::createPending('RegNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+        $this->setNickId($account, 2);
+        $user = new SenderView('UID1', 'RegNick', 'i', 'h', 'c', 'ip', true, false, '001');
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturnCallback(static fn (string $nick) => match (strtolower($nick)) {
+            'oldidentified' => $oldAccount,
+            'regnick' => $account,
+            default => null,
+        });
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserAccount');
+        $notifier->expects(self::never())->method('setUserVhost');
+
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::never())->method('dispatch');
+
+        $module = $this->createStub(NickProtectionServiceTestProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+
+        $service = new NickProtectionService(
+            $repo,
+            $userLookup,
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $eventDispatcher,
+            $this->createStub(ForbiddenNickService::class),
+            $connectionHolder,
+        );
+
+        self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
+        $service->onNickChanged('UID1', 'OldIdentified', 'RegNick');
+        self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
+    }
+
+    #[Test]
+    public function onNickChangedDeidentifiesWhenProtocolDoesNotImplementInterface(): void
+    {
+        $burstState = new BurstState();
+        $burstState->markComplete();
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $identifiedRegistry->register('UID1', 'OldIdentified');
+
+        $oldAccount = RegisteredNick::createPending('OldIdentified', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $oldAccount->activate();
+        $this->setNickId($oldAccount, 1);
+        $account = RegisteredNick::createPending('RegNick', 'hash', 'u@e.com', 'en', new DateTimeImmutable('+1 hour'));
+        $account->activate();
+        $this->setNickId($account, 2);
+        $user = new SenderView('UID1', 'RegNick', 'i', 'h', 'c', 'ip', false, false, '001');
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findByNick')->willReturnCallback(static fn (string $nick) => match (strtolower($nick)) {
+            'oldidentified' => $oldAccount,
+            'regnick' => $account,
+            default => null,
+        });
+
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('findByUid')->willReturn($user);
+
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())->method('setUserAccount')->with('UID1', '0');
+        $notifier->expects(self::once())->method('setUserVhost')->with('UID1', '', '001');
+
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch');
+
+        $module = $this->createStub(NickProtectionServiceTestStandardProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+
+        $service = new NickProtectionService(
+            $repo,
+            $userLookup,
+            $notifier,
+            $burstState,
+            $identifiedRegistry,
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $eventDispatcher,
+            $this->createStub(ForbiddenNickService::class),
+            $connectionHolder,
+        );
+
+        self::assertSame('OldIdentified', $identifiedRegistry->findNick('UID1'));
+        $service->onNickChanged('UID1', 'OldIdentified', 'RegNick');
+        self::assertNull($identifiedRegistry->findNick('UID1'));
+    }
 }
+
+interface NickProtectionServiceTestProtocolModule extends ProtocolModuleInterface, NickChangePreservesIdentificationInterface {}
+interface NickProtectionServiceTestStandardProtocolModule extends ProtocolModuleInterface {}

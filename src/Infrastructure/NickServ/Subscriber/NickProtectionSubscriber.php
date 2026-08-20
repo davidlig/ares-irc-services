@@ -34,8 +34,8 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
         private readonly IdentifiedUserVhostSyncService $identifiedUserVhostSync,
         private readonly BurstState $burstState,
         private readonly NetworkUserLookupPort $networkUserLookup,
+        private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
-        private readonly ?ActiveConnectionHolderInterface $connectionHolder = null,
     ) {}
 
     /**
@@ -106,7 +106,9 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
                 $event->oldNick->value,
                 $event->newNick->value,
             );
-            $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+            if (!$this->shouldDeferProtectionCheck()) {
+                $this->identifiedUserVhostSync->syncVhostForUser($senderView);
+            }
 
             return;
         }
@@ -183,10 +185,6 @@ final readonly class NickProtectionSubscriber implements EventSubscriberInterfac
 
     private function shouldDeferProtectionCheck(): bool
     {
-        if (null === $this->connectionHolder) {
-            return false;
-        }
-
         $module = $this->connectionHolder->getProtocolModule();
 
         return $module instanceof NickChangePreservesIdentificationInterface;

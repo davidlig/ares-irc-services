@@ -309,36 +309,33 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
-    public function setUserVhostSetsVhostUsingChghost(): void
+    public function setUserVhostIsNoOpWhenSettingVhost(): void
     {
         $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
 
         $actions->setUserVhost('001', '001ABCD', 'custom.vhost.net');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 CHGHOST 001ABCD custom.vhost.net', $this->written[0]);
+        self::assertEmpty($this->written);
     }
 
     #[Test]
-    public function setUserVhostWithSpacesUsesColon(): void
+    public function setUserVhostIsNoOpWhenSettingVhostWithSpaces(): void
     {
         $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
 
         $actions->setUserVhost('001', '001ABCD', 'custom vhost with spaces');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 CHGHOST 001ABCD :custom vhost with spaces', $this->written[0]);
+        self::assertEmpty($this->written);
     }
 
     #[Test]
-    public function setUserVhostClearsVhostUsingSvs2mode(): void
+    public function setUserVhostIsNoOpWhenClearingVhost(): void
     {
         $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
 
         $actions->setUserVhost('001', '001ABCD', '');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 SVS2MODE 001ABCD -t', $this->written[0]);
+        self::assertEmpty($this->written);
     }
 
     #[Test]

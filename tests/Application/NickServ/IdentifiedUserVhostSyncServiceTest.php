@@ -7,6 +7,9 @@ namespace App\Tests\Application\NickServ;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\VhostDisplayResolver;
+use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -29,12 +32,14 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         ?VhostDisplayResolver $resolver = null,
         ?OperIrcopRepositoryInterface $ircopRepo = null,
         ?LoggerInterface $logger = null,
+        ?ActiveConnectionHolderInterface $connectionHolder = null,
     ): IdentifiedUserVhostSyncService {
         return new IdentifiedUserVhostSyncService(
             $nickRepo,
             $notifier,
             $resolver ?? new VhostDisplayResolver(),
             $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
+            $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class),
             $logger ?? $this->createStub(LoggerInterface::class),
         );
     }
@@ -284,4 +289,41 @@ final class IdentifiedUserVhostSyncServiceTest extends TestCase
         $service = $this->createService($repo, $notifier);
         $service->syncVhostForUser($user);
     }
+
+    #[Test]
+    public function syncVhostForUserDoesNotClearVhostWhenNotIdentifiedAndProtocolHandlesVhostServerSide(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::never())->method('setUserVhost');
+        $user = new SenderView('UID1', 'Nick', 'i', 'h', 'Cloak123', 'ip', false, false, 'SID', 'Vhost123');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $module = $this->createStub(IdentifiedUserVhostSyncTestProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+
+        $service = $this->createService($repo, $notifier, connectionHolder: $connectionHolder);
+        $service->syncVhostForUser($user);
+    }
+
+    #[Test]
+    public function syncVhostForUserClearsVhostWhenNotIdentifiedAndProtocolDoesNotHandleVhostServerSide(): void
+    {
+        $notifier = $this->createMock(NickServNotifierInterface::class);
+        $notifier->expects(self::once())
+            ->method('setUserVhost')
+            ->with('UID1', '', 'SID');
+        $user = new SenderView('UID1', 'Nick', 'i', 'h', 'Cloak123', 'ip', false, false, 'SID', 'Vhost123');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+
+        $module = $this->createStub(IdentifiedUserVhostSyncTestStandardProtocolModule::class);
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn($module);
+
+        $service = $this->createService($repo, $notifier, connectionHolder: $connectionHolder);
+        $service->syncVhostForUser($user);
+    }
 }
+
+interface IdentifiedUserVhostSyncTestProtocolModule extends ProtocolModuleInterface, NickChangePreservesIdentificationInterface {}
+interface IdentifiedUserVhostSyncTestStandardProtocolModule extends ProtocolModuleInterface {}

@@ -30,6 +30,7 @@ use App\Application\Security\PermissionRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
+use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -58,6 +59,7 @@ final class RoleCommandTest extends TestCase
         IrcopAccessHelper $accessHelper,
         PermissionRegistry $permissionRegistry,
         array $ircOpModes = ['o', 'a', 'N', 'O'],
+        ?EventBusInterface $eventDispatcher = null,
     ): RoleCommand {
         $userModeSupport = $this->createStub(UserModeSupportInterface::class);
         $userModeSupport->method('getIrcOpUserModes')->willReturn($ircOpModes);
@@ -102,7 +104,7 @@ final class RoleCommandTest extends TestCase
             $modeApplier,
             $vhostApplier,
             new VhostValidator('virtual'),
-            $this->createStub(EventBusInterface::class),
+            $eventDispatcher ?? $this->createStub(EventBusInterface::class),
         );
     }
 
@@ -1778,12 +1780,24 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+            $dispatchedEvents[] = $event;
+
+            return $event;
+        });
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]), eventDispatcher: $eventDispatcher);
         $cmd->execute($this->createContext($sender, ['VHOST', 'CUSTOM', 'SET', 'admin.ares'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.vhost.set.done', $messages);
         self::assertCount(1, $savedRoles);
         self::assertSame('admin.ares', $savedRoles[0]->getForcedVhostPattern());
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(OperRoleForcedVhostChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame(1, $dispatchedEvents[0]->roleId);
+        self::assertSame('admin.ares', $dispatchedEvents[0]->pattern);
     }
 
     #[Test]
@@ -1872,12 +1886,24 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+            $dispatchedEvents[] = $event;
+
+            return $event;
+        });
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]), eventDispatcher: $eventDispatcher);
         $cmd->execute($this->createContext($sender, ['VHOST', 'CUSTOM', 'SET', 'OFF'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.vhost.set.cleared', $messages);
         self::assertCount(1, $savedRoles);
         self::assertNull($savedRoles[0]->getForcedVhostPattern());
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(OperRoleForcedVhostChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame(1, $dispatchedEvents[0]->roleId);
+        self::assertNull($dispatchedEvents[0]->pattern);
     }
 
     #[Test]
@@ -1910,12 +1936,24 @@ final class RoleCommandTest extends TestCase
         $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]));
+        $dispatchedEvents = [];
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::once())->method('dispatch')->willReturnCallback(static function (object $event) use (&$dispatchedEvents): object {
+            $dispatchedEvents[] = $event;
+
+            return $event;
+        });
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]), eventDispatcher: $eventDispatcher);
         $cmd->execute($this->createContext($sender, ['VHOST', 'CUSTOM', 'SET'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('role.vhost.set.cleared', $messages);
         self::assertCount(1, $savedRoles);
         self::assertNull($savedRoles[0]->getForcedVhostPattern());
+        self::assertCount(1, $dispatchedEvents);
+        self::assertInstanceOf(OperRoleForcedVhostChangedEvent::class, $dispatchedEvents[0]);
+        self::assertSame(1, $dispatchedEvents[0]->roleId);
+        self::assertNull($dispatchedEvents[0]->pattern);
     }
 
     #[Test]
