@@ -264,8 +264,17 @@ services:
             $introductionFormatter: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter:
+        arguments:
+            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $logger: '@monolog.logger.irc'
+
+    App\Application\Port\UdbRecordWriterInterface:
+        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter
+
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions:
         arguments:
+            $recordWriter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter'
             $introductionFormatter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 
@@ -278,6 +287,15 @@ services:
         arguments:
             $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
             $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation:
+        arguments:
+            $recordWriter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter'
+            $nickservNick: '%nickserv.nick%'
+            $nickservIdent: '%nickserv.ident%'
+            $chanservNick: '%chanserv.nick%'
+            $chanservIdent: '%chanserv.ident%'
+            $servicesVhost: '%services.vhost%'
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation:
         arguments:

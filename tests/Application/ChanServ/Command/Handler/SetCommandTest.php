@@ -110,7 +110,7 @@ final class SetCommandTest extends TestCase
             new SetUrlHandler($channelRepo),
             new SetEmailHandler($channelRepo),
             new SetEntrymsgHandler($channelRepo),
-            new SetTopiclockHandler($channelRepo),
+            new SetTopiclockHandler($channelRepo, $eventDispatcher),
             new SetMlockHandler($channelRepo, $eventDispatcher, new MlockStateFromChannelResolver()),
             new SetSecureHandler($channelRepo, $eventDispatcher),
         );
@@ -472,7 +472,7 @@ final class SetCommandTest extends TestCase
             new SetUrlHandler($channelRepo),
             new SetEmailHandler($channelRepo),
             new SetEntrymsgHandler($channelRepo),
-            new SetTopiclockHandler($channelRepo, $this->createStub(EventBusInterface::class), new MlockStateFromChannelResolver()),
+            new SetTopiclockHandler($channelRepo, $this->createStub(EventBusInterface::class)),
             new SetMlockHandler($channelRepo, $this->createStub(EventBusInterface::class), new MlockStateFromChannelResolver()),
             new SetSecureHandler($channelRepo, $this->createStub(EventBusInterface::class)),
         );

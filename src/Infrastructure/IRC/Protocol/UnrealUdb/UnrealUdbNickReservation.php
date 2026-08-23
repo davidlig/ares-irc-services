@@ -5,71 +5,62 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ServiceNickReservationInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
+use App\Application\Port\UdbRecordWriterInterface;
 
 use function sprintf;
-use function time;
+use function strcasecmp;
 
 /**
- * UnrealUdb nick reservation via SQLINE/TKL commands.
+ * UnrealUdb nick reservation via UDB service identity settings in block S.
  *
- * SQLINE prevents regular users from using a nickname while allowing
- * U-lined servers (like services) to introduce it.
- *
- * Format: :serverSid SQLINE nick :reason
- * Example: :001 SQLINE NickServ :Reserved for network services
+ * UDB recognizes service bots through the S::nickserv / S::chanserv /
+ * S::ipserv masks (nick!ident@host form). Since NickServ handles both
+ * nicknames and vhosts, it maps to both S::nickserv and S::ipserv.
+ * ChanServ maps to S::chanserv.
  */
 final readonly class UnrealUdbNickReservation implements ServiceNickReservationInterface
 {
     public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly UdbRecordWriterInterface $recordWriter,
+        private readonly string $nickservNick = 'NickServ',
+        private readonly string $nickservIdent = 'NickServ',
+        private readonly string $chanservNick = 'ChanServ',
+        private readonly string $chanservIdent = 'ChanServ',
+        private readonly string $servicesVhost = 'services.davidlig.net',
     ) {}
 
     public function reserveNick(string $nick, string $reason): void
     {
-        $serverSid = $this->connectionHolder->getServerSid();
-        if (null === $serverSid) {
+        if (0 === strcasecmp($nick, $this->nickservNick)) {
+            $mask = sprintf('%s!%s@%s', $nick, $this->nickservIdent, $this->servicesVhost);
+            $this->recordWriter->insert('S', 'nickserv', $mask);
+            $this->recordWriter->insert('S', 'ipserv', $mask);
+
             return;
         }
 
-        $line = sprintf(':%s SQLINE %s :%s', $serverSid, $nick, $reason);
-
-        $this->connectionHolder->writeLine($line);
-        $this->logger->info('Reserved service nick via SQLINE', ['nick' => $nick, 'serverSid' => $serverSid]);
+        if (0 === strcasecmp($nick, $this->chanservNick)) {
+            $mask = sprintf('%s!%s@%s', $nick, $this->chanservIdent, $this->servicesVhost);
+            $this->recordWriter->insert('S', 'chanserv', $mask);
+        }
     }
 
     public function reserveNickWithDuration(string $nick, int $durationSeconds, string $reason): void
     {
-        $serverSid = $this->connectionHolder->getServerSid();
-        if (null === $serverSid) {
-            return;
-        }
-
-        $setAt = time();
-        $expiresAt = 0 === $durationSeconds ? 0 : $setAt + $durationSeconds;
-        $line = sprintf('TKL + Q * %s %s %d %d :%s', $nick, $serverSid, $expiresAt, $setAt, $reason);
-
-        $this->connectionHolder->writeLine($line);
-        $this->logger->info('Reserved service nick via TKL Q-line', [
-            'nick' => $nick,
-            'serverSid' => $serverSid,
-            'duration' => $durationSeconds,
-        ]);
+        // UDB service identities are permanent; there is no timed reservation.
     }
 
     public function releaseNick(string $nick): void
     {
-        $serverSid = $this->connectionHolder->getServerSid();
-        if (null === $serverSid) {
+        if (0 === strcasecmp($nick, $this->nickservNick)) {
+            $this->recordWriter->delete('S', 'nickserv');
+            $this->recordWriter->delete('S', 'ipserv');
+
             return;
         }
 
-        $line = sprintf(':%s UNSQLINE %s', $serverSid, $nick);
-
-        $this->connectionHolder->writeLine($line);
-        $this->logger->info('Released service nick via UNSQLINE', ['nick' => $nick, 'serverSid' => $serverSid]);
+        if (0 === strcasecmp($nick, $this->chanservNick)) {
+            $this->recordWriter->delete('S', 'chanserv');
+        }
     }
 }

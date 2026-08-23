@@ -234,6 +234,12 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             return;
         }
 
+        $support = $this->modeSupportProvider->getSupport();
+        $listLetters = $support->getListModeLetters();
+        $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
+        $unsetWithParam = $support->getChannelSettingModesUnsetWithParam();
+        $unsetWithoutParam = $support->getChannelSettingModesUnsetWithoutParam();
+
         $params = $event->modeParams;
         $paramIdx = 0;
         $adding = true;
@@ -250,50 +256,45 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
 
             $role = ChannelMemberRole::fromModeLetter($char);
             if (null !== $role) {
-                if ($paramIdx >= count($params)) {
-                    break;
-                }
-                $targetId = $params[$paramIdx];
-                ++$paramIdx;
-                $user = $this->resolveUser($targetId);
-                if (null !== $user) {
-                    $letter = $role->toModeLetter();
-                    if ('' !== $letter) {
-                        $channel->applyMemberPrefixChange($user->uid, $letter, $adding);
+                if ($paramIdx < count($params)) {
+                    $targetId = $params[$paramIdx];
+                    ++$paramIdx;
+                    $user = $this->resolveUser($targetId);
+                    if (null !== $user) {
+                        $letter = $role->toModeLetter();
+                        if ('' !== $letter) {
+                            $channel->applyMemberPrefixChange($user->uid, $letter, $adding);
+                        }
                     }
                 }
                 continue;
             }
 
-            if ('b' === $char || 'e' === $char || 'I' === $char) {
-                if ($paramIdx >= count($params)) {
-                    break;
-                }
-                $mask = $params[$paramIdx];
-                ++$paramIdx;
-                if ('b' === $char) {
-                    $adding ? $channel->addBan($mask) : $channel->removeBan($mask);
-                } elseif ('e' === $char) {
-                    $adding ? $channel->addExempt($mask) : $channel->removeExempt($mask);
-                } else {
-                    $adding ? $channel->addInviteException($mask) : $channel->removeInviteException($mask);
+            if (in_array($char, $listLetters, true)) {
+                if ($paramIdx < count($params)) {
+                    $mask = $params[$paramIdx];
+                    ++$paramIdx;
+                    if ('b' === $char) {
+                        $adding ? $channel->addBan($mask) : $channel->removeBan($mask);
+                    } elseif ('e' === $char) {
+                        $adding ? $channel->addExempt($mask) : $channel->removeExempt($mask);
+                    } elseif ('I' === $char) {
+                        $adding ? $channel->addInviteException($mask) : $channel->removeInviteException($mask);
+                    }
                 }
                 continue;
             }
 
-            $modesWithParamOnSet = $this->modeSupportProvider->getSupport()->getChannelSettingModesWithParamOnSet();
-            if (in_array($char, $modesWithParamOnSet, true)) {
-                if ($paramIdx >= count($params)) {
-                    break;
+            if ($adding) {
+                if (in_array($char, $withParamOnSet, true) && $paramIdx < count($params)) {
+                    $channel->applyModeParam($char, $params[$paramIdx]);
+                    ++$paramIdx;
                 }
-                $paramValue = $params[$paramIdx];
-                ++$paramIdx;
-                if ($adding) {
-                    $channel->applyModeParam($char, $paramValue);
-                } else {
-                    $channel->clearModeParam($char);
+            } else {
+                if (in_array($char, $unsetWithParam, true) && $paramIdx < count($params)) {
+                    ++$paramIdx;
                 }
-                continue;
+                $channel->clearModeParam($char);
             }
         }
 
@@ -375,7 +376,10 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         }
 
         $support = $this->modeSupportProvider->getSupport();
+        $listLetters = $support->getListModeLetters();
         $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
+        $unsetWithParam = $support->getChannelSettingModesUnsetWithParam();
+        $unsetWithoutParam = $support->getChannelSettingModesUnsetWithoutParam();
         $paramIdx = 0;
         $adding = true;
         foreach (str_split($modeStr) as $char) {
@@ -388,21 +392,26 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                 continue;
             }
             if (null !== ChannelMemberRole::fromModeLetter($char)) {
+                if ($paramIdx < count($params)) {
+                    ++$paramIdx;
+                }
                 continue;
             }
-            $listLetters = $support->getListModeLetters();
             if (in_array($char, $listLetters, true)) {
-                continue;
-            }
-            if (!in_array($char, $withParamOnSet, true)) {
+                if ($paramIdx < count($params)) {
+                    ++$paramIdx;
+                }
                 continue;
             }
             if ($adding) {
-                if ($paramIdx < count($params)) {
+                if (in_array($char, $withParamOnSet, true) && $paramIdx < count($params)) {
                     $channel->applyModeParam($char, $params[$paramIdx]);
                     ++$paramIdx;
                 }
             } else {
+                if (in_array($char, $unsetWithParam, true) && $paramIdx < count($params)) {
+                    ++$paramIdx;
+                }
                 $channel->clearModeParam($char);
             }
         }
@@ -533,9 +542,8 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         if ('' === $delta) {
             return $current;
         }
-        $base = str_replace(['+', '-'], '', $current);
-        $add = '';
-        $remove = '';
+
+        $chars = array_fill_keys(str_split(str_replace(['+', '-'], '', $current)), true);
         $adding = true;
         foreach (str_split($delta) as $c) {
             if ('+' === $c) {
@@ -547,19 +555,15 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                 continue;
             }
             if ($adding) {
-                $add .= $c;
-                $remove = str_replace($c, '', $remove);
+                $chars[$c] = true;
             } else {
-                $remove .= $c;
-                $add = str_replace($c, '', $add);
+                unset($chars[$c]);
             }
         }
-        foreach (str_split($remove) as $char) {
-            $base = str_replace($char, '', $base);
-        }
-        $base .= $add;
 
-        return '' === $base ? '' : '+' . $base;
+        $result = implode('', array_keys($chars));
+
+        return '' === $result ? '' : '+' . $result;
     }
 
     private function protocolPreservesIdentificationOnNickChange(): bool

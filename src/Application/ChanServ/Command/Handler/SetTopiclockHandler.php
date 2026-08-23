@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServContext;
+use App\Application\ChanServ\Event\ChannelTopiclockUpdatedEvent;
+use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
@@ -12,6 +14,7 @@ final readonly class SetTopiclockHandler implements SetOptionHandlerInterface
 {
     public function __construct(
         private RegisteredChannelRepositoryInterface $channelRepository,
+        private EventBusInterface $eventDispatcher,
     ) {}
 
     public function handle(ChanServContext $context, RegisteredChannel $channel, string $value): void
@@ -25,6 +28,7 @@ final readonly class SetTopiclockHandler implements SetOptionHandlerInterface
         $on = 'ON' === $normalized;
         $channel->configureTopicLock($on);
         $this->channelRepository->save($channel);
+        $this->eventDispatcher->dispatch(new ChannelTopiclockUpdatedEvent($channel->getName()));
         $context->reply($on ? 'set.topiclock.on' : 'set.topiclock.off');
 
         $nick = $context->sender?->nick ?? '';

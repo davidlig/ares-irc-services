@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,6 +18,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 {
     private ActiveConnectionHolder $connectionHolder;
 
+    /** @var list<string> */
     private array $written = [];
 
     protected function setUp(): void
@@ -33,183 +35,309 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $reflection = new ReflectionClass($this->connectionHolder);
         $property = $reflection->getProperty('connection');
         $property->setValue($this->connectionHolder, $connection);
+        $sidProperty = $reflection->getProperty('serverSid');
+        $sidProperty->setValue($this->connectionHolder, '001');
+    }
+
+    private function createActions(): UnrealUdbProtocolServiceActions
+    {
+        return new UnrealUdbProtocolServiceActions(
+            $this->connectionHolder,
+            new UnrealUdbRecordWriter($this->connectionHolder),
+        );
     }
 
     #[Test]
-    public function setUserAccountSendsSvsloginAndSvs2modeForLogin(): void
+    public function setUserAccountIsNoOp(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
         $actions->setUserAccount('001', '123', 'account');
 
-        self::assertCount(2, $this->written);
-        self::assertSame(':001 SVSLOGIN * 123 account', $this->written[0]);
-        self::assertSame(':001 SVS2MODE 123 +r', $this->written[1]);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
-    public function setUserAccountSendsSvsloginAndSvs2modeForLogout(): void
+    public function setUserModeIsNoOp(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
-        $actions->setUserAccount('001', '123', '0');
-
-        self::assertCount(2, $this->written);
-        self::assertSame(':001 SVSLOGIN * 123 0', $this->written[0]);
-        self::assertSame(':001 SVS2MODE 123 -r', $this->written[1]);
-    }
-
-    #[Test]
-    public function setUserModeSendsSvsmode(): void
-    {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
-
+        $actions = $this->createActions();
         $actions->setUserMode('001', '001ABCD', '+i');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 SVSMODE 001ABCD +i', $this->written[0]);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
-    public function forceNickSendsSvsnickWithTimestamp(): void
+    public function forceNickIsNoOp(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
-
+        $actions = $this->createActions();
         $actions->forceNick('001', '001ABCD', 'NewNick');
 
-        self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:001 SVSNICK 001ABCD NewNick \d+$/', $this->written[0]);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
     public function killUserSendsKillCommand(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->killUser('001', '001ABCD', 'Killed for abuse');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 KILL 001ABCD :Killed for abuse', $this->written[0]);
+        self::assertSame([':001 KILL 001ABCD :Killed for abuse'], $this->written);
     }
 
     #[Test]
-    public function setChannelModesSendsModeFromServer(): void
+    public function setChannelModesSendsNativeMode(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->setChannelModes('001', '#test', '+nt');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 MODE #test +nt', $this->written[0]);
+        self::assertSame([':001 MODE #test +nt'], $this->written);
     }
 
     #[Test]
-    public function setChannelModesSendsModeFromService(): void
+    public function setChannelModesWithParamSendsNativeModeWithParam(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+k', ['secret']);
+
+        self::assertSame([':001 MODE #test +k secret'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesNegativeModeSendsNativeMode(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '-nt');
+
+        self::assertSame([':001 MODE #test -nt'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesBanStillSendsMode(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+b', ['*!*@bad.host']);
+
+        self::assertSame([':001 MODE #test +b *!*@bad.host'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesPrefixModeStillSendsMode(): void
+    {
+        $actions = $this->createActions();
 
         $actions->setChannelModes('001', '#test', '+o', ['001ABCD'], '001CSRV');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV MODE #test +o 001ABCD', $this->written[0]);
+        self::assertSame([':001CSRV MODE #test +o 001ABCD'], $this->written);
     }
 
     #[Test]
-    public function setChannelMemberModeSendsModeFromServer(): void
+    public function setChannelModesOwnerRankIsSkipped(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+q', ['001ABCD'], '001CSRV');
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesOwnerRankRemovalIsSkipped(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '-q', ['001ABCD'], '001CSRV');
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesOwnerRankWithoutParamIsSkipped(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+q');
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesFiltersOwnerRankFromMixedBatch(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+qo', ['001ABCD', '001EFGH'], '001CSRV');
+
+        self::assertSame([':001CSRV MODE #test +o 001EFGH'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesFiltersOwnerRankRemovalFromMixedBatch(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '-qv', ['001ABCD', '001EFGH'], '001CSRV');
+
+        self::assertSame([':001CSRV MODE #test -v 001EFGH'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesRegisteredModeIsNoOp(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+r');
+        $actions->setChannelModes('001', '#test', '-r');
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesPermanentModeIsNoOp(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+P');
+        $actions->setChannelModes('001', '#test', '-P');
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function setChannelModesStripsRegisteredAndPermanentFromMixedBatch(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelModes('001', '#test', '+rPnt', [], '001CSRV');
+
+        self::assertSame([':001CSRV MODE #test +nt'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelMemberModeOwnerIsNoOp(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelMemberMode('001', '#test', '001ABCD', 'q', true);
+        $actions->setChannelMemberMode('001', '#test', '001ABCD', 'q', false);
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function setChannelMemberModeSendsMode(): void
+    {
+        $actions = $this->createActions();
 
         $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', true);
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 MODE #test +o 001ABCD', $this->written[0]);
+        self::assertSame([':001 MODE #test +o 001ABCD'], $this->written);
     }
 
     #[Test]
     public function setChannelMemberModeRemovesMode(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
-        $actions->setChannelMemberMode('001', '#test', '001ABCD', 'o', false);
+        $actions->setChannelMemberMode('001', '#test', '001ABCD', 'v', false);
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 MODE #test -o 001ABCD', $this->written[0]);
+        self::assertSame([':001 MODE #test -v 001ABCD'], $this->written);
     }
 
     #[Test]
     public function inviteUserToChannelSendsInvite(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->inviteUserToChannel('001', '#test', '001ABCD');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 INVITE 001ABCD #test', $this->written[0]);
+        self::assertSame([':001 INVITE 001ABCD #test'], $this->written);
     }
 
     #[Test]
-    public function joinChannelAsServiceSendsJoin(): void
+    public function joinChannelAsServiceSendsJoinWithNonOwnerPrefix(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
+
+        $actions->joinChannelAsService('001', '#test', '001CSRV', 'o');
+
+        self::assertSame([
+            ':001CSRV JOIN #test',
+            ':001CSRV MODE #test +o 001CSRV',
+        ], $this->written);
+    }
+
+    #[Test]
+    public function joinChannelAsServiceSkipsOwnerPrefix(): void
+    {
+        $actions = $this->createActions();
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', 'q');
 
-        self::assertCount(2, $this->written);
-        self::assertSame(':001CSRV JOIN #test', $this->written[0]);
-        self::assertSame(':001CSRV MODE #test +q 001CSRV', $this->written[1]);
+        self::assertSame([':001CSRV JOIN #test'], $this->written);
     }
 
     #[Test]
     public function joinChannelAsServiceSkipsPrefixWhenEmpty(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->joinChannelAsService('001', '#test', '001CSRV', '');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV JOIN #test', $this->written[0]);
+        self::assertSame([':001CSRV JOIN #test'], $this->written);
     }
 
     #[Test]
-    public function setChannelTopicSetsTopic(): void
+    public function setChannelTopicPersistsToUdb(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->setChannelTopic('001', '#test', 'New topic', '001CSRV');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV TOPIC #test :New topic', $this->written[0]);
+        self::assertSame([':001 DB * INS C::#test::topic :New topic'], $this->written);
     }
 
     #[Test]
     public function setChannelTopicClearsTopicWhenNull(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->setChannelTopic('001', '#test', null, '001CSRV');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV TOPIC #test', $this->written[0]);
+        self::assertSame([':001 DB * DEL C::#test::topic'], $this->written);
+    }
+
+    #[Test]
+    public function setChannelTopicClearsTopicWhenEmptyString(): void
+    {
+        $actions = $this->createActions();
+
+        $actions->setChannelTopic('001', '#test', '', '001CSRV');
+
+        self::assertSame([':001 DB * DEL C::#test::topic'], $this->written);
     }
 
     #[Test]
     public function kickFromChannelSendsKickCommand(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->kickFromChannel('001', '#test', '001ABCD', 'Kicked for abuse', '001CSRV');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV KICK #test 001ABCD :Kicked for abuse', $this->written[0]);
+        self::assertSame([':001CSRV KICK #test 001ABCD :Kicked for abuse'], $this->written);
     }
 
     #[Test]
     public function kickFromChannelUsesServerSidWhenServiceUidEmpty(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->kickFromChannel('001', '#test', '001ABCD', 'reason');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 KICK #test 001ABCD :reason', $this->written[0]);
+        self::assertSame([':001 KICK #test 001ABCD :reason'], $this->written);
     }
 
     #[Test]
@@ -217,7 +345,10 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     {
         $connectionHolder = new ActiveConnectionHolder();
 
-        $actions = new UnrealUdbProtocolServiceActions($connectionHolder);
+        $actions = new UnrealUdbProtocolServiceActions(
+            $connectionHolder,
+            new UnrealUdbRecordWriter($connectionHolder),
+        );
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');
         $actions->setUserMode('001', '001ABCD', '+i');
@@ -225,49 +356,60 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $actions->killUser('001', '001ABCD', 'reason');
         $actions->setChannelModes('001', '#test', '+nt');
 
-        self::assertEmpty($this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
-    public function addGlineSendsTklGlineCommand(): void
+    public function addGlineWritesPatternReasonAndDuration(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
+
         $actions->addGline('001', 'testuser', 'test.host', 3600, 'Test ban');
-        $this->assertCount(1, $this->written);
-        $this->assertSame('DB * INS K::G::testuser@test.host', $this->written[0]);
+
+        self::assertSame([
+            ':001 DB * INS K::G::testuser@test.host :Test ban',
+            ':001 DB * INS K::G::testuser@test.host::reason :Test ban',
+            ':001 DB * INS K::G::testuser@test.host::duration :*3600',
+        ], $this->written);
     }
 
     #[Test]
-    public function addGlinePermanentBan(): void
+    public function addGlinePermanentBanSkipsDuration(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
+
         $actions->addGline('001', '*', '192.168.*', 0, 'Permanent ban');
-        $this->assertCount(1, $this->written);
-        $this->assertSame('DB * INS K::G::*@192.168.*', $this->written[0]);
+
+        self::assertSame([
+            ':001 DB * INS K::G::*@192.168.* :Permanent ban',
+            ':001 DB * INS K::G::*@192.168.*::reason :Permanent ban',
+        ], $this->written);
     }
 
     #[Test]
-    public function removeGlineSendsTklRemoveCommand(): void
+    public function removeGlineDeletesPattern(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
+
         $actions->removeGline('001', 'testuser', 'test.host');
-        $this->assertCount(1, $this->written);
-        $this->assertSame('DB * DEL K::G::testuser@test.host', $this->written[0]);
+
+        self::assertSame([':001 DB * DEL K::G::testuser@test.host'], $this->written);
     }
 
     #[Test]
     public function removeGlineWithWildcards(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
+
         $actions->removeGline('001', '*', '192.168.*');
-        $this->assertCount(1, $this->written);
-        $this->assertSame('DB * DEL K::G::*@192.168.*', $this->written[0]);
+
+        self::assertSame([':001 DB * DEL K::G::*@192.168.*'], $this->written);
     }
 
     #[Test]
     public function introducePseudoClientSendsUidCommand(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->introducePseudoClient('001', 'GlobalBot', 'global', 'services.red', '001Z00001', 'Global Message Bot');
 
@@ -278,7 +420,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     #[Test]
     public function introducePseudoClientWithDifferentParams(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->introducePseudoClient('002', 'Announce', 'announce', 'irc.example.net', '002Z00005', 'Network Announcements');
 
@@ -289,59 +431,57 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     #[Test]
     public function quitPseudoClientSendsQuitCommand(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->quitPseudoClient('001', '001Z00001', 'Global message completed');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001Z00001 QUIT :Global message completed', $this->written[0]);
+        self::assertSame([':001Z00001 QUIT :Global message completed'], $this->written);
     }
 
     #[Test]
     public function partChannelAsServiceSendsPartCommand(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->partChannelAsService('001', '#test', '001CSRV');
 
-        self::assertCount(1, $this->written);
-        self::assertSame(':001CSRV PART #test', $this->written[0]);
+        self::assertSame([':001CSRV PART #test'], $this->written);
     }
 
     #[Test]
     public function setUserVhostIsNoOpWhenSettingVhost(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->setUserVhost('001', '001ABCD', 'custom.vhost.net');
 
-        self::assertEmpty($this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
     public function setUserVhostIsNoOpWhenSettingVhostWithSpaces(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->setUserVhost('001', '001ABCD', 'custom vhost with spaces');
 
-        self::assertEmpty($this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
     public function setUserVhostIsNoOpWhenClearingVhost(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->setUserVhost('001', '001ABCD', '');
 
-        self::assertEmpty($this->written);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
     public function introduceServiceSendsFormattedServiceIntroduction(): void
     {
-        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder);
+        $actions = $this->createActions();
 
         $actions->introduceService('001', 'NickServ', 'NickServ', 'services.host', '001AAAAAA', 'Nickname Services', 'nickserv');
 

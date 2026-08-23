@@ -10,7 +10,9 @@ use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Command\Handler\SetTopiclockHandler;
+use App\Application\ChanServ\Event\ChannelTopiclockUpdatedEvent;
 use App\Application\Port\ChannelLookupPort;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
@@ -52,6 +54,8 @@ final class SetTopiclockHandlerTest extends TestCase
     {
         $channel = $this->createStub(RegisteredChannel::class);
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $eventBus = $this->createMock(EventBusInterface::class);
+        $eventBus->expects(self::never())->method('dispatch');
         $messages = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -60,20 +64,24 @@ final class SetTopiclockHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetTopiclockHandler($channelRepo);
+        $handler = new SetTopiclockHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'maybe'), $channel, 'maybe');
 
         self::assertSame(['error.syntax'], $messages);
     }
 
     #[Test]
-    public function onEnablesTopicLockSavesAndRepliesAndSendsNotice(): void
+    public function onEnablesTopicLockSavesAndRepliesAndSendsNoticeAndDispatchesEvent(): void
     {
         $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::once())->method('configureTopicLock')->with(true);
         $channel->method('getName')->willReturn('#test');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('save')->with($channel);
+        $eventBus = $this->createMock(EventBusInterface::class);
+        $eventBus->expects(self::once())->method('dispatch')->with(self::callback(
+            static fn (object $event): bool => $event instanceof ChannelTopiclockUpdatedEvent && '#test' === $event->channelName,
+        ));
         $messages = [];
         $channelNotices = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -86,7 +94,7 @@ final class SetTopiclockHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetTopiclockHandler($channelRepo);
+        $handler = new SetTopiclockHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'on'), $channel, ' on ');
 
         self::assertSame(['set.topiclock.on'], $messages);
@@ -94,13 +102,17 @@ final class SetTopiclockHandlerTest extends TestCase
     }
 
     #[Test]
-    public function offDisablesTopicLockSavesAndReplies(): void
+    public function offDisablesTopicLockSavesAndRepliesAndDispatchesEvent(): void
     {
         $channel = $this->createMock(RegisteredChannel::class);
         $channel->expects(self::once())->method('configureTopicLock')->with(false);
         $channel->method('getName')->willReturn('#test');
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('save')->with($channel);
+        $eventBus = $this->createMock(EventBusInterface::class);
+        $eventBus->expects(self::once())->method('dispatch')->with(self::callback(
+            static fn (object $event): bool => $event instanceof ChannelTopiclockUpdatedEvent && '#test' === $event->channelName,
+        ));
         $messages = [];
         $channelNotices = [];
         $notifier = $this->createStub(ChanServNotifierInterface::class);
@@ -113,7 +125,7 @@ final class SetTopiclockHandlerTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
-        $handler = new SetTopiclockHandler($channelRepo);
+        $handler = new SetTopiclockHandler($channelRepo, $eventBus);
         $handler->handle($this->createContext($notifier, $translator, 'off'), $channel, 'OFF');
 
         self::assertSame(['set.topiclock.off'], $messages);

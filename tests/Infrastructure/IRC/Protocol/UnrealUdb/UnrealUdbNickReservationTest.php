@@ -7,6 +7,7 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -15,9 +16,10 @@ use ReflectionClass;
 #[CoversClass(UnrealUdbNickReservation::class)]
 final class UnrealUdbNickReservationTest extends TestCase
 {
+    /** @var list<string> */
     private array $written = [];
 
-    private ActiveConnectionHolder $connectionHolder;
+    private UnrealUdbNickReservation $reservation;
 
     protected function setUp(): void
     {
@@ -26,121 +28,108 @@ final class UnrealUdbNickReservationTest extends TestCase
         $connection->method('writeLine')->willReturnCallback(function (string $line): void {
             $this->written[] = $line;
         });
+        $connection->method('isConnected')->willReturn(true);
 
-        $this->connectionHolder = new ActiveConnectionHolder();
-
-        $reflection = new ReflectionClass($this->connectionHolder);
+        $holder = new ActiveConnectionHolder();
+        $reflection = new ReflectionClass($holder);
         $property = $reflection->getProperty('connection');
-        $property->setValue($this->connectionHolder, $connection);
-
+        $property->setValue($holder, $connection);
         $sidProperty = $reflection->getProperty('serverSid');
-        $sidProperty->setValue($this->connectionHolder, '001');
+        $sidProperty->setValue($holder, '001');
+
+        $this->reservation = new UnrealUdbNickReservation(new UnrealUdbRecordWriter($holder));
     }
 
     #[Test]
-    public function reserveNickSendsSqlineCommand(): void
+    public function reserveNickPublishesNickservAndIpservMasksForNickServ(): void
     {
-        $reservation = new UnrealUdbNickReservation($this->connectionHolder);
+        $this->reservation->reserveNick('NickServ', 'Reserved for network services');
 
-        $reservation->reserveNick('NickServ', 'Reserved for network services');
-
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 SQLINE NickServ :Reserved for network services', $this->written[0]);
+        self::assertSame([
+            ':001 DB * INS S::nickserv :NickServ!NickServ@services.davidlig.net',
+            ':001 DB * INS S::ipserv :NickServ!NickServ@services.davidlig.net',
+        ], $this->written);
     }
 
     #[Test]
-    public function reserveNickWorksForMultipleServices(): void
+    public function reserveNickPublishesChanservMaskForChanServ(): void
     {
-        $reservation = new UnrealUdbNickReservation($this->connectionHolder);
+        $this->reservation->reserveNick('ChanServ', 'Reserved for network services');
 
-        $reservation->reserveNick('NickServ', 'Reserved for network services');
-        $reservation->reserveNick('ChanServ', 'Reserved for network services');
-        $reservation->reserveNick('MemoServ', 'Reserved for network services');
-
-        self::assertCount(3, $this->written);
-        self::assertSame(':001 SQLINE NickServ :Reserved for network services', $this->written[0]);
-        self::assertSame(':001 SQLINE ChanServ :Reserved for network services', $this->written[1]);
-        self::assertSame(':001 SQLINE MemoServ :Reserved for network services', $this->written[2]);
+        self::assertSame([
+            ':001 DB * INS S::chanserv :ChanServ!ChanServ@services.davidlig.net',
+        ], $this->written);
     }
 
     #[Test]
-    public function reserveNickWithDurationSendsTimedQline(): void
+    public function reserveNickWithCustomConfig(): void
     {
-        $reservation = new UnrealUdbNickReservation($this->connectionHolder);
+        $holder = new ActiveConnectionHolder();
+        $reflection = new ReflectionClass($holder);
+        $property = $reflection->getProperty('connection');
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+        $connection->method('isConnected')->willReturn(true);
+        $property->setValue($holder, $connection);
+        $sidProperty = $reflection->getProperty('serverSid');
+        $sidProperty->setValue($holder, '001');
 
-        $reservation->reserveNickWithDuration('GlobalBot', 86400, 'Temporary pseudo-client');
+        $res = new UnrealUdbNickReservation(
+            new UnrealUdbRecordWriter($holder),
+            'CustomNickServ',
+            'CustomIdent',
+            'CustomChanServ',
+            'CustomChanIdent',
+            'irc.custom.org',
+        );
 
-        self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^TKL \+ Q \* GlobalBot 001 \d+ \d+ :Temporary pseudo-client$/', $this->written[0]);
+        $res->reserveNick('customnickserv', 'reason');
+        $res->reserveNick('customchanserv', 'reason');
+
+        self::assertSame([
+            ':001 DB * INS S::nickserv :customnickserv!CustomIdent@irc.custom.org',
+            ':001 DB * INS S::ipserv :customnickserv!CustomIdent@irc.custom.org',
+            ':001 DB * INS S::chanserv :customchanserv!CustomChanIdent@irc.custom.org',
+        ], $this->written);
     }
 
     #[Test]
-    public function reserveNickWithDurationZeroSendsPermanent(): void
+    public function reserveNickIsNoOpForServicesWithoutSetting(): void
     {
-        $reservation = new UnrealUdbNickReservation($this->connectionHolder);
+        $this->reservation->reserveNick('MemoServ', 'Reserved for network services');
+        $this->reservation->reserveNick('OperServ', 'Reserved for network services');
 
-        $reservation->reserveNickWithDuration('GlobalBot', 0, 'Permanent block');
-
-        self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^TKL \+ Q \* GlobalBot 001 0 \d+ :Permanent block$/', $this->written[0]);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
-    public function releaseNickSendsUnsqlineCommand(): void
+    public function reserveNickWithDurationIsNoOp(): void
     {
-        $reservation = new UnrealUdbNickReservation($this->connectionHolder);
+        $this->reservation->reserveNickWithDuration('GlobalBot', 86400, 'Temporary pseudo-client');
 
-        $reservation->releaseNick('NickServ');
-
-        self::assertCount(1, $this->written);
-        self::assertSame(':001 UNSQLINE NickServ', $this->written[0]);
+        self::assertSame([], $this->written);
     }
 
     #[Test]
-    public function releaseNickWorksForMultipleNicks(): void
+    public function releaseNickDeletesSettings(): void
     {
-        $reservation = new UnrealUdbNickReservation($this->connectionHolder);
+        $this->reservation->releaseNick('NickServ');
+        $this->reservation->releaseNick('ChanServ');
 
-        $reservation->releaseNick('NickServ');
-        $reservation->releaseNick('ChanServ');
-        $reservation->releaseNick('MemoServ');
-
-        self::assertCount(3, $this->written);
-        self::assertSame(':001 UNSQLINE NickServ', $this->written[0]);
-        self::assertSame(':001 UNSQLINE ChanServ', $this->written[1]);
-        self::assertSame(':001 UNSQLINE MemoServ', $this->written[2]);
+        self::assertSame([
+            ':001 DB * DEL S::nickserv',
+            ':001 DB * DEL S::ipserv',
+            ':001 DB * DEL S::chanserv',
+        ], $this->written);
     }
 
     #[Test]
-    public function reserveNickDoesNothingWhenNoServerSid(): void
+    public function releaseNickIsNoOpForServicesWithoutSetting(): void
     {
-        $connectionHolder = new ActiveConnectionHolder();
-        $reservation = new UnrealUdbNickReservation($connectionHolder);
+        $this->reservation->releaseNick('MemoServ');
 
-        $reservation->reserveNick('NickServ', 'Reserved for network services');
-
-        self::assertEmpty($this->written);
-    }
-
-    #[Test]
-    public function reserveNickWithDurationDoesNothingWhenNoServerSid(): void
-    {
-        $connectionHolder = new ActiveConnectionHolder();
-        $reservation = new UnrealUdbNickReservation($connectionHolder);
-
-        $reservation->reserveNickWithDuration('GlobalBot', 86400, 'Temporary pseudo-client');
-
-        self::assertEmpty($this->written);
-    }
-
-    #[Test]
-    public function releaseNickDoesNothingWhenNoServerSid(): void
-    {
-        $connectionHolder = new ActiveConnectionHolder();
-        $reservation = new UnrealUdbNickReservation($connectionHolder);
-
-        $reservation->releaseNick('NickServ');
-
-        self::assertEmpty($this->written);
+        self::assertSame([], $this->written);
     }
 }

@@ -11,12 +11,12 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbModule;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbUserModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 
 #[CoversClass(UnrealUdbModule::class)]
 final class UnrealUdbModuleTest extends TestCase
@@ -25,11 +25,12 @@ final class UnrealUdbModuleTest extends TestCase
     {
         $handler = new UnrealUdbProtocolHandler('001');
         $connectionHolder = new ActiveConnectionHolder();
-        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, new UnrealUdbServiceIntroductionFormatter(), new NullLogger());
+        $recordWriter = new UnrealUdbRecordWriter($connectionHolder);
+        $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter);
         $formatter = new UnrealUdbServiceIntroductionFormatter();
         $channelModeSupport = new UnrealUdbChannelModeSupport();
         $userModeSupport = new UnrealUdbUserModeSupport();
-        $nickReservation = new UnrealUdbNickReservation($connectionHolder, new NullLogger());
+        $nickReservation = new UnrealUdbNickReservation($recordWriter);
 
         return new UnrealUdbModule(
             $handler,
@@ -55,13 +56,14 @@ final class UnrealUdbModuleTest extends TestCase
     {
         $handler = new UnrealUdbProtocolHandler('001');
         $connectionHolder = new ActiveConnectionHolder();
+        $recordWriter = new UnrealUdbRecordWriter($connectionHolder);
         $module = new UnrealUdbModule(
             $handler,
-            new UnrealUdbProtocolServiceActions($connectionHolder, new UnrealUdbServiceIntroductionFormatter(), new NullLogger()),
+            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),
             new UnrealUdbServiceIntroductionFormatter(),
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
-            new UnrealUdbNickReservation($connectionHolder, new NullLogger()),
+            new UnrealUdbNickReservation($recordWriter),
         );
 
         self::assertSame($handler, $module->getHandler());

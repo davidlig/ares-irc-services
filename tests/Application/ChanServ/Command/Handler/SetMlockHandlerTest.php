@@ -164,7 +164,10 @@ final class SetMlockHandlerTest extends TestCase
         $channelRepo = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepo->expects(self::once())->method('save')->with($channel);
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::never())->method('dispatch');
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (object $e): bool => $e instanceof ChannelMlockUpdatedEvent && '#test' === $e->channelName))
+            ->willReturnArgument(0);
         $resolver = new MlockStateFromChannelResolver();
         $messages = [];
         $channelNotices = [];

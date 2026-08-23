@@ -2542,6 +2542,136 @@ final class NetworkEventEnricherTest extends TestCase
 
         self::assertSame('+nt', $result);
     }
+
+    #[Test]
+    public function mergeModeStringDeduplicatesModeLetters(): void
+    {
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
+        );
+
+        $ref = new ReflectionMethod($enricher, 'mergeModeString');
+        $result = $ref->invoke($enricher, '+nt', '+t+m');
+
+        self::assertSame('+ntm', $result);
+    }
+
+    #[Test]
+    public function onChannelModeReceivedHandlesUnsetWithoutParamWithoutBreakingLoop(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+ntl', new DateTimeImmutable('@0'));
+        $channel->applyModeParam('l', '50');
+
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k', 'l']);
+        $modeSupport->method('getChannelSettingModesUnsetWithParam')->willReturn(['k']);
+        $modeSupport->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['l', 'm', 'n', 't']);
+
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+            $this->createStub(ActiveConnectionHolderInterface::class),
+        );
+
+        // -l+k secret: -l has no param, +k has param 'secret'
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(
+            new ChannelName('#chan'),
+            '-l+k',
+            ['secret'],
+        ));
+
+        self::assertNull($channel->getModeParam('l'));
+        self::assertSame('secret', $channel->getModeParam('k'));
+        self::assertSame('+ntk', $channel->getModes());
+    }
+
+    #[Test]
+    public function onChannelModeReceivedHandlesUnsetWithParamConsumingParam(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+ntk', new DateTimeImmutable('@0'));
+        $channel->applyModeParam('k', 'oldsecret');
+
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k']);
+        $modeSupport->method('getChannelSettingModesUnsetWithParam')->willReturn(['k']);
+        $modeSupport->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['m', 'n', 't']);
+
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+            $this->createStub(ActiveConnectionHolderInterface::class),
+        );
+
+        $enricher->onChannelModeReceived(new ChannelModeReceivedEvent(
+            new ChannelName('#chan'),
+            '-k',
+            ['oldsecret'],
+        ));
+
+        self::assertNull($channel->getModeParam('k'));
+        self::assertSame('+nt', $channel->getModes());
+    }
+
+    #[Test]
+    public function applyOutgoingChannelModesHandlesUnsetWithParamConsumingParam(): void
+    {
+        $channel = new Channel(new ChannelName('#chan'), '+ntk', new DateTimeImmutable('@0'));
+        $channel->applyModeParam('k', 'oldsecret');
+
+        $channelRepo = $this->createMock(ChannelRepositoryInterface::class);
+        $channelRepo->method('findByName')->willReturn($channel);
+        $channelRepo->expects(self::once())->method('save');
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getListModeLetters')->willReturn(['b', 'e', 'I']);
+        $modeSupport->method('getChannelSettingModesWithParamOnSet')->willReturn(['k']);
+        $modeSupport->method('getChannelSettingModesUnsetWithParam')->willReturn(['k']);
+        $modeSupport->method('getChannelSettingModesUnsetWithoutParam')->willReturn(['m', 'n', 't']);
+
+        $modeProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeProvider->method('getSupport')->willReturn($modeSupport);
+
+        $enricher = new NetworkEventEnricher(
+            $channelRepo,
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $modeProvider,
+            $this->createStub(ActiveConnectionHolderInterface::class),
+        );
+
+        $enricher->applyOutgoingChannelModes('#chan', '-k', ['oldsecret'], []);
+
+        self::assertNull($channel->getModeParam('k'));
+        self::assertSame('+nt', $channel->getModes());
+    }
 }
 
 interface PreservesIdentificationTestProtocolModule extends ProtocolModuleInterface, NickChangePreservesIdentificationInterface {}

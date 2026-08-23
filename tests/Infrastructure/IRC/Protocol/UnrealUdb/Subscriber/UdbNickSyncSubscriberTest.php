@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\PasswordMigrationStateInterface;
+use App\Application\Port\ProtocolModuleInterface;
+use App\Application\Port\UdbRecordWriterInterface;
+use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
@@ -16,27 +18,61 @@ use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Event\OperIrcopChangedEvent;
 use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Event\UdbRecordReceivedEvent;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Event\UdbSyncCompleteEvent;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Event\UdbSyncRequestedEvent;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+
+use function sprintf;
 
 #[CoversClass(UdbNickSyncSubscriber::class)]
 final class UdbNickSyncSubscriberTest extends TestCase
 {
+    /** @var list<string> */
+    private array $written = [];
+
     private function createSubscriber(
-        ?ActiveConnectionHolderInterface $holder = null,
         ?RegisteredNickRepositoryInterface $repo = null,
         ?PasswordMigrationStateInterface $migrationState = null,
         ?OperIrcopRepositoryInterface $ircopRepo = null,
+        string $protocol = 'unrealudb',
     ): UdbNickSyncSubscriber {
+        $holder = $this->createConnectedHolder($protocol);
+
         return new UdbNickSyncSubscriber(
-            $holder ?? $this->createStub(ActiveConnectionHolderInterface::class),
+            $holder,
+            new UnrealUdbRecordWriter($holder),
             $repo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
             $migrationState ?? $this->createStub(PasswordMigrationStateInterface::class),
             $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
         );
+    }
+
+    private function createConnectedHolder(string $protocol): ActiveConnectionHolder
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+        $connection->method('isConnected')->willReturn(true);
+
+        $holder = new ActiveConnectionHolder();
+        $reflection = new ReflectionClass($holder);
+        $property = $reflection->getProperty('connection');
+        $property->setValue($holder, $connection);
+        $sidProperty = $reflection->getProperty('serverSid');
+        $sidProperty->setValue($holder, '001');
+
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getProtocolName')->willReturn($protocol);
+        $holder->setProtocolModule($module);
+
+        return $holder;
     }
 
     public function testGetSubscribedEvents(): void
@@ -46,91 +82,92 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $this->assertArrayHasKey(NickVhostChangedEvent::class, $events);
         $this->assertArrayHasKey(NickDropEvent::class, $events);
         $this->assertArrayHasKey(UdbSyncRequestedEvent::class, $events);
+        $this->assertArrayHasKey(UdbSyncCompleteEvent::class, $events);
         $this->assertArrayHasKey(UdbRecordReceivedEvent::class, $events);
         $this->assertArrayHasKey(OperRoleForcedVhostChangedEvent::class, $events);
         $this->assertArrayHasKey(OperIrcopChangedEvent::class, $events);
     }
 
-    public function testOnNickDropNotConnected(): void
+    public function testOnNickDropDoesNothingWhenNotConnected(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(false);
-        $holder->expects($this->never())->method('writeLine');
+        $sub = new UdbNickSyncSubscriber(
+            new ActiveConnectionHolder(),
+            $this->createStub(UdbRecordWriterInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
 
-        $sub = $this->createSubscriber($holder);
         $sub->onNickDrop(new NickDropEvent(1, 'nick', 'User', '127.0.0.1'));
+
+        self::assertSame([], $this->written);
     }
 
-    public function testOnNickDropConnected(): void
+    public function testOnNickDropDoesNothingWhenProtocolIsNotUdb(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * DEL N::nick');
+        $sub = $this->createSubscriber(protocol: 'unreal');
 
-        $sub = $this->createSubscriber($holder);
         $sub->onNickDrop(new NickDropEvent(1, 'nick', 'User', '127.0.0.1'));
+
+        self::assertSame([], $this->written);
     }
 
-    public function testOnPasswordProvidedNotConnected(): void
+    public function testOnNickDropSendsDelete(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(false);
+        $sub = $this->createSubscriber();
+        $sub->onNickDrop(new NickDropEvent(1, 'nick', 'User', '127.0.0.1'));
 
-        $sub = $this->createSubscriber($holder);
+        self::assertSame([':001 DB * DEL N::nick'], $this->written);
+    }
+
+    public function testOnPasswordProvidedDoesNothingWhenNotConnected(): void
+    {
+        $sub = new UdbNickSyncSubscriber(
+            new ActiveConnectionHolder(),
+            $this->createStub(UdbRecordWriterInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
+
         $sub->onPasswordProvided(new NickPasswordProvidedEvent(1, 'nick', 'pass'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnPasswordProvidedWithNullNickId(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
         $hash = hash('sha256', 'pass');
-        $holder->expects($this->once())->method('writeLine')
-            ->with("DB * INS N::nick::pass sha256:{$hash}");
+        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
+        $migrationState->expects($this->once())->method('markAsMigrated')->with('nick');
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->never())->method('findById');
 
-        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
-        $migrationState->expects($this->once())->method('markAsMigrated')->with('nick');
-
-        $sub = $this->createSubscriber($holder, $repo, $migrationState);
+        $sub = $this->createSubscriber($repo, $migrationState);
         $sub->onPasswordProvided(new NickPasswordProvidedEvent(null, 'nick', 'pass'));
+
+        self::assertSame([sprintf(':001 DB * INS N::nick::pass :sha256:%s', $hash)], $this->written);
     }
 
     public function testOnPasswordProvidedWithoutVhost(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
         $hash = hash('sha256', 'pass');
-        $holder->expects($this->once())->method('writeLine')
-            ->with("DB * INS N::nick::pass sha256:{$hash}");
+        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
+        $migrationState->expects($this->once())->method('markAsMigrated')->with('nick');
 
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findById')->willReturn(null);
 
-        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
-        $migrationState->expects($this->once())->method('markAsMigrated')->with('nick');
-
-        $sub = $this->createSubscriber($holder, $repo, $migrationState);
+        $sub = $this->createSubscriber($repo, $migrationState);
         $sub->onPasswordProvided(new NickPasswordProvidedEvent(1, 'nick', 'pass'));
+
+        self::assertSame([sprintf(':001 DB * INS N::nick::pass :sha256:%s', $hash)], $this->written);
     }
 
     public function testOnPasswordProvidedWithPersonalVhost(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
         $hash = hash('sha256', 'pass');
-        $holder->expects($this->exactly(2))->method('writeLine')->willReturnCallback(function (string $line) use ($hash): void {
-            static $call = 0;
-            ++$call;
-            if (1 === $call) {
-                $this->assertSame("DB * INS N::nick::pass sha256:{$hash}", $line);
-            } else {
-                $this->assertSame('DB * INS N::nick::vhost myvhost', $line);
-            }
-        });
-
         $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(1);
         $nick->method('getNickname')->willReturn('nick');
@@ -142,28 +179,18 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn(null);
 
-        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
-        $migrationState->expects($this->once())->method('markAsMigrated')->with('nick');
-
-        $sub = $this->createSubscriber($holder, $repo, $migrationState, $ircopRepo);
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
         $sub->onPasswordProvided(new NickPasswordProvidedEvent(1, 'nick', 'pass'));
+
+        self::assertSame([
+            sprintf(':001 DB * INS N::nick::pass :sha256:%s', $hash),
+            ':001 DB * INS N::nick::vhost :myvhost',
+        ], $this->written);
     }
 
     public function testOnPasswordProvidedWithOperForcedVhostPriorityOverPersonal(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
         $hash = hash('sha256', 'pass');
-        $holder->expects($this->exactly(2))->method('writeLine')->willReturnCallback(function (string $line) use ($hash): void {
-            static $call = 0;
-            ++$call;
-            if (1 === $call) {
-                $this->assertSame("DB * INS N::oper_nick::pass sha256:{$hash}", $line);
-            } else {
-                $this->assertSame('DB * INS N::oper_nick::vhost opernick.staff.example.net', $line);
-            }
-        });
-
         $nick = $this->createStub(RegisteredNick::class);
         $nick->method('getId')->willReturn(10);
         $nick->method('getNickname')->willReturn('oper_nick');
@@ -184,39 +211,43 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
         $migrationState->expects($this->once())->method('markAsMigrated')->with('oper_nick');
 
-        $sub = $this->createSubscriber($holder, $repo, $migrationState, $ircopRepo);
+        $sub = $this->createSubscriber($repo, $migrationState, $ircopRepo);
         $sub->onPasswordProvided(new NickPasswordProvidedEvent(10, 'oper_nick', 'pass'));
+
+        self::assertSame([
+            sprintf(':001 DB * INS N::oper_nick::pass :sha256:%s', $hash),
+            ':001 DB * INS N::oper_nick::vhost :opernick.staff.example.net',
+        ], $this->written);
     }
 
-    public function testOnVhostChangedNotConnected(): void
+    public function testOnVhostChangedDoesNothingWhenNotConnected(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(false);
-        $holder->expects($this->never())->method('writeLine');
+        $sub = new UdbNickSyncSubscriber(
+            new ActiveConnectionHolder(),
+            $this->createStub(UdbRecordWriterInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
 
-        $sub = $this->createSubscriber($holder);
         $sub->onVhostChanged(new NickVhostChangedEvent(1, 'nick', 'new.vhost'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnVhostChangedAccountNotFound(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->never())->method('writeLine');
-
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findById')->willReturn(null);
 
-        $sub = $this->createSubscriber($holder, $repo);
+        $sub = $this->createSubscriber($repo);
         $sub->onVhostChanged(new NickVhostChangedEvent(1, 'nick', 'new.vhost'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnVhostChangedWithPersonalVhost(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * INS N::nick::vhost personal.vhost.net');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('nick');
@@ -228,16 +259,14 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn(null);
 
-        $sub = $this->createSubscriber($holder, $repo, null, $ircopRepo);
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
         $sub->onVhostChanged(new NickVhostChangedEvent(1, 'nick', 'personal.vhost.net'));
+
+        self::assertSame([':001 DB * INS N::nick::vhost :personal.vhost.net'], $this->written);
     }
 
     public function testOnVhostChangedWithForcedOperVhost(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * INS N::admin::vhost admin.admin.net');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(5);
         $account->method('getNickname')->willReturn('admin');
@@ -255,16 +284,14 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
 
-        $sub = $this->createSubscriber($holder, $repo, null, $ircopRepo);
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
         $sub->onVhostChanged(new NickVhostChangedEvent(5, 'admin', null));
+
+        self::assertSame([':001 DB * INS N::admin::vhost :admin.admin.net'], $this->written);
     }
 
     public function testOnVhostChangedClearedSendsDel(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * DEL N::nick::vhost');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('nick');
@@ -276,126 +303,332 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn(null);
 
-        $sub = $this->createSubscriber($holder, $repo, null, $ircopRepo);
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
         $sub->onVhostChanged(new NickVhostChangedEvent(1, 'nick', null));
+
+        self::assertSame([':001 DB * DEL N::nick::vhost'], $this->written);
     }
 
-    public function testOnSyncRequestedNotConnected(): void
+    public function testOnSyncRequestedDoesNothingWhenNotConnected(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(false);
+        $sub = new UdbNickSyncSubscriber(
+            new ActiveConnectionHolder(),
+            $this->createStub(UdbRecordWriterInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
 
-        $sub = $this->createSubscriber($holder);
         $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnSyncRequestedWrongBlock(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->never())->method('writeLine');
-
-        $sub = $this->createSubscriber($holder);
+        $sub = $this->createSubscriber();
         $sub->onSyncRequested(new UdbSyncRequestedEvent('C', '001'));
+
+        self::assertSame([], $this->written);
     }
 
-    public function testOnSyncRequestedCorrectBlock(): void
+    public function testOnSyncRequestedCorrectBlockSendsUnicastRes(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * REQ N');
+        $sub = $this->createSubscriber();
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', 'ABC'));
 
-        $sub = $this->createSubscriber($holder);
+        self::assertSame([':001 DB ABC RES N'], $this->written);
+    }
+
+    public function testOnSyncCompleteDoesNothingWhenNotConnected(): void
+    {
+        $sub = new UdbNickSyncSubscriber(
+            new ActiveConnectionHolder(),
+            $this->createStub(UdbRecordWriterInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
+
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([], $this->written);
+    }
+
+    public function testOnSyncCompleteWrongBlock(): void
+    {
+        $sub = $this->createSubscriber();
         $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('C', '001'));
+
+        self::assertSame([':001 DB 001 RES N'], $this->written);
     }
 
-    public function testOnRecordReceivedNotConnected(): void
+    public function testOnSyncCompleteWithoutSyncRequest(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(false);
+        $sub = $this->createSubscriber();
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
 
-        $sub = $this->createSubscriber($holder);
+        self::assertSame([], $this->written);
+    }
+
+    public function testOnSyncCompleteRepopulatesAllNicks(): void
+    {
+        $nick1 = $this->createStub(RegisteredNick::class);
+        $nick1->method('getId')->willReturn(1);
+        $nick1->method('getNickname')->willReturn('alice');
+        $nick1->method('getPasswordHash')->willReturn('$2y$hash1');
+        $nick1->method('getVhost')->willReturn('alice.vhost.net');
+
+        $nick2 = $this->createStub(RegisteredNick::class);
+        $nick2->method('getId')->willReturn(2);
+        $nick2->method('getNickname')->willReturn('argon');
+        $nick2->method('getPasswordHash')->willReturn('argon2id:$argon2id$valid');
+        $nick2->method('getVhost')->willReturn(null);
+
+        $nick3 = $this->createStub(RegisteredNick::class);
+        $nick3->method('getId')->willReturn(3);
+        $nick3->method('getNickname')->willReturn('crypt');
+        $nick3->method('getPasswordHash')->willReturn('crypt:$6$valid');
+        $nick3->method('getVhost')->willReturn(null);
+
+        $nick4 = $this->createStub(RegisteredNick::class);
+        $nick4->method('getId')->willReturn(4);
+        $nick4->method('getNickname')->willReturn('sha');
+        $nick4->method('getPasswordHash')->willReturn(sprintf('sha256:%s', str_repeat('a', 64)));
+        $nick4->method('getVhost')->willReturn(null);
+
+        $nick5 = $this->createStub(RegisteredNick::class);
+        $nick5->method('getId')->willReturn(5);
+        $nick5->method('getNickname')->willReturn('empty-crypt');
+        $nick5->method('getPasswordHash')->willReturn('crypt:');
+        $nick5->method('getVhost')->willReturn(null);
+
+        $nick6 = $this->createStub(RegisteredNick::class);
+        $nick6->method('getId')->willReturn(6);
+        $nick6->method('getNickname')->willReturn('invalid-sha');
+        $nick6->method('getPasswordHash')->willReturn('sha256:not-a-hash');
+        $nick6->method('getVhost')->willReturn(null);
+
+        $nick7 = $this->createStub(RegisteredNick::class);
+        $nick7->method('getId')->willReturn(7);
+        $nick7->method('getNickname')->willReturn('no-password');
+        $nick7->method('getPasswordHash')->willReturn(null);
+        $nick7->method('getVhost')->willReturn(null);
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('all')->willReturn([$nick1, $nick2, $nick3, $nick4, $nick5, $nick6, $nick7]);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn(null);
+
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([
+            ':001 DB 001 RES N',
+            ':001 DB * INS N::alice::vhost :alice.vhost.net',
+            ':001 DB * INS N::argon::pass :argon2id:$argon2id$valid',
+            ':001 DB * INS N::crypt::pass :crypt:$6$valid',
+            sprintf(':001 DB * INS N::sha::pass :sha256:%s', str_repeat('a', 64)),
+        ], $this->written);
+    }
+
+    public function testOnSyncCompleteWithOperForcedVhost(): void
+    {
+        $nick = $this->createStub(RegisteredNick::class);
+        $nick->method('getId')->willReturn(10);
+        $nick->method('getNickname')->willReturn('oper_nick');
+        $nick->method('getPasswordHash')->willReturn('$2y$hashoper');
+        $nick->method('getVhost')->willReturn('personal.vhost');
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('all')->willReturn([$nick]);
+
+        $role = $this->createStub(OperRole::class);
+        $role->method('getForcedVhostPattern')->willReturn('staff.example.net');
+
+        $ircop = $this->createStub(OperIrcop::class);
+        $ircop->method('getRole')->willReturn($role);
+
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn($ircop);
+
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([
+            ':001 DB 001 RES N',
+            ':001 DB * INS N::oper_nick::vhost :opernick.staff.example.net',
+        ], $this->written);
+    }
+
+    public function testOnSyncCompleteDoesNotReinsertMatchingUdbRecords(): void
+    {
+        $nick = $this->createStub(RegisteredNick::class);
+        $nick->method('getId')->willReturn(1);
+        $nick->method('getNickname')->willReturn('alice');
+        $nick->method('getPasswordHash')->willReturn(sprintf('sha256:%s', str_repeat('a', 64)));
+        $nick->method('getVhost')->willReturn(null);
+
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('all')->willReturn([$nick]);
+        $repo->method('findByNick')->willReturn($nick);
+
+        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
+        $migrationState->expects($this->once())->method('markAsMigrated')->with('alice');
+
+        $sub = $this->createSubscriber($repo, $migrationState);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onRecordReceived(new UdbRecordReceivedEvent('N::alice::pass', sprintf('sha256:%s', str_repeat('a', 64))));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N'], $this->written);
+    }
+
+    public function testOnRecordReceivedDoesNothingWhenNotConnected(): void
+    {
+        $sub = new UdbNickSyncSubscriber(
+            new ActiveConnectionHolder(),
+            $this->createStub(UdbRecordWriterInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
+
         $sub->onRecordReceived(new UdbRecordReceivedEvent('N::nick::pass', 'hash'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnRecordReceivedWrongBlockOrMalformed(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->exactly(2))->method('isConnected')->willReturn(true);
-        $holder->expects($this->never())->method('writeLine');
-
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->never())->method('findByNick');
 
-        $sub = $this->createSubscriber($holder, $repo);
+        $sub = $this->createSubscriber($repo);
         $sub->onRecordReceived(new UdbRecordReceivedEvent('C::chan::founder', 'nick'));
         $sub->onRecordReceived(new UdbRecordReceivedEvent('N::malformed', 'val'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnRecordReceivedNickNotFoundSendsDel(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * DEL N::ghostnick');
-
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->once())->method('findByNick')->with('ghostnick')->willReturn(null);
+        $repo->method('all')->willReturn([]);
 
         $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
         $migrationState->expects($this->never())->method('markAsMigrated');
 
-        $sub = $this->createSubscriber($holder, $repo, $migrationState);
+        $sub = $this->createSubscriber($repo, $migrationState);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
         $sub->onRecordReceived(new UdbRecordReceivedEvent('N::ghostnick::pass', 'hash'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N', ':001 DB * DEL N::ghostnick'], $this->written);
     }
 
-    public function testOnRecordReceivedPassRecordWithEffectiveVhost(): void
+    public function testOnRecordReceivedPassRecordWithMatchingServicePassword(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * INS N::davidlig::vhost davidlig.vhost.net');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('davidlig');
         $account->method('getVhost')->willReturn('davidlig.vhost.net');
+        $account->method('getPasswordHash')->willReturn(sprintf('sha256:%s', str_repeat('a', 64)));
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
 
         $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
         $migrationState->expects($this->once())->method('markAsMigrated')->with('davidlig');
 
-        $sub = $this->createSubscriber($holder, $repo, $migrationState);
-        $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::pass', 'sha256:abc'));
+        $sub = $this->createSubscriber($repo, $migrationState);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::pass', sprintf('sha256:%s', str_repeat('a', 64))));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N'], $this->written);
     }
 
-    public function testOnRecordReceivedPassRecordWithoutEffectiveVhost(): void
+    public function testOnRecordReceivedPassRecordWithoutServicePasswordDeletesIt(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->never())->method('writeLine');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('davidlig');
-        $account->method('getVhost')->willReturn(null);
+        $account->method('getPasswordHash')->willReturn(null);
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
 
         $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
         $migrationState->expects($this->once())->method('markAsMigrated')->with('davidlig');
 
-        $sub = $this->createSubscriber($holder, $repo, $migrationState);
+        $sub = $this->createSubscriber($repo, $migrationState);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
         $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::pass', 'sha256:abc'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N', ':001 DB * DEL N::davidlig::pass'], $this->written);
+    }
+
+    public function testOnRecordReceivedPassRecordWithDifferentServicePasswordReplacesIt(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->method('getNickname')->willReturn('davidlig');
+        $account->method('getPasswordHash')->willReturn(sprintf('sha256:%s', str_repeat('a', 64)));
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
+
+        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
+        $migrationState->expects($this->once())->method('markAsMigrated')->with('davidlig');
+
+        $sub = $this->createSubscriber($repo, $migrationState);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::pass', sprintf('sha256:%s', str_repeat('b', 64))));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([
+            ':001 DB 001 RES N',
+            sprintf(':001 DB * INS N::davidlig::pass :sha256:%s', str_repeat('a', 64)),
+        ], $this->written);
+    }
+
+    public function testOnRecordReceivedBcryptPasswordPreservesValidUdbPassword(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->method('getNickname')->willReturn('davidlig');
+        $account->method('getPasswordHash')->willReturn('$2y$12$local-bcrypt-hash');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
+
+        $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
+        $migrationState->expects($this->once())->method('markAsMigrated')->with('davidlig');
+
+        $sub = $this->createSubscriber($repo, $migrationState);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onRecordReceived(new UdbRecordReceivedEvent(
+            'N::davidlig::pass',
+            sprintf('sha256:%s', str_repeat('a', 64)),
+        ));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N'], $this->written);
     }
 
     public function testOnRecordReceivedVhostRecordWhenNoEffectiveVhostSendsDel(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * DEL N::davidlig::vhost');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('davidlig');
@@ -403,17 +636,18 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
 
-        $sub = $this->createSubscriber($holder, $repo);
+        $sub = $this->createSubscriber($repo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
         $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::vhost', 'old.vhost.net'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N', ':001 DB * DEL N::davidlig::vhost'], $this->written);
     }
 
     public function testOnRecordReceivedVhostRecordWhenMatchesEffectiveVhostDoesNothing(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->never())->method('writeLine');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('davidlig');
@@ -421,17 +655,18 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
 
-        $sub = $this->createSubscriber($holder, $repo);
+        $sub = $this->createSubscriber($repo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
         $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::vhost', 'exact.vhost.net'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N'], $this->written);
     }
 
     public function testOnRecordReceivedVhostRecordWhenDiffersFromEffectiveVhostSendsIns(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * INS N::davidlig::vhost expected.vhost.net');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('davidlig');
@@ -439,17 +674,18 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
 
-        $sub = $this->createSubscriber($holder, $repo);
+        $sub = $this->createSubscriber($repo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
         $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::vhost', 'outdated.vhost.net'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N', ':001 DB * INS N::davidlig::vhost :expected.vhost.net'], $this->written);
     }
 
-    public function testOnRecordReceivedUnknownPropertyDoesNothing(): void
+    public function testOnRecordReceivedOperWhenNotIrcopSendsDel(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->never())->method('writeLine');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('davidlig');
@@ -457,18 +693,128 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
         $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
 
-        $sub = $this->createSubscriber($holder, $repo);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn(null);
+        $repo->method('all')->willReturn([]);
+
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::oper', '*2'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N', ':001 DB * DEL N::davidlig::oper'], $this->written);
+    }
+
+    public function testOnRecordReceivedOperWhenIsIrcopDoesNothing(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->method('getNickname')->willReturn('davidlig');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+
+        $ircop = $this->createStub(OperIrcop::class);
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn($ircop);
+        $repo->method('all')->willReturn([]);
+
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::oper', '*2'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N'], $this->written);
+    }
+
+    public function testOnRecordReceivedSwhoisSendsDel(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->method('getNickname')->willReturn('davidlig');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
+
+        $sub = $this->createSubscriber($repo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::swhois', 'Some whois line'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N', ':001 DB * DEL N::davidlig::swhois'], $this->written);
+    }
+
+    public function testOnRecordReceivedUnknownPropertySendsDel(): void
+    {
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+        $account->method('getNickname')->willReturn('davidlig');
+
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects($this->once())->method('findByNick')->with('davidlig')->willReturn($account);
+        $repo->method('all')->willReturn([]);
+
+        $sub = $this->createSubscriber($repo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
         $sub->onRecordReceived(new UdbRecordReceivedEvent('N::davidlig::email', 'david@example.com'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N', ':001 DB * DEL N::davidlig::email'], $this->written);
+    }
+
+    public function testOnRecordReceivedOutsideSyncDoesNothing(): void
+    {
+        $repo = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $repo->expects($this->never())->method('findByNick');
+
+        $sub = $this->createSubscriber($repo);
+        $sub->onRecordReceived(new UdbRecordReceivedEvent('N::ghostnick::pass', 'hash'));
+
+        self::assertSame([], $this->written);
+    }
+
+    public function testOnNickDropDuringSyncIsBufferedUntilComplete(): void
+    {
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('all')->willReturn([]);
+
+        $sub = $this->createSubscriber($repo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onNickDrop(new NickDropEvent(1, 'nick', 'User', '127.0.0.1'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        self::assertSame([':001 DB 001 RES N', ':001 DB * DEL N::nick'], $this->written);
+    }
+
+    public function testOnPasswordProvidedDuringSyncIsBufferedUntilComplete(): void
+    {
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findById')->willReturn(null);
+
+        $sub = $this->createSubscriber($repo);
+        $sub->onSyncRequested(new UdbSyncRequestedEvent('N', '001'));
+        $sub->onPasswordProvided(new NickPasswordProvidedEvent(1, 'nick', 'pass'));
+        $sub->onSyncComplete(new UdbSyncCompleteEvent('N', '001'));
+
+        $hash = hash('sha256', 'pass');
+        self::assertSame([
+            ':001 DB 001 RES N',
+            sprintf(':001 DB * INS N::nick::pass :sha256:%s', $hash),
+        ], $this->written);
     }
 
     public function testResolveEffectiveVhostFallbacks(): void
     {
-        // 1. Role with null pattern falls back to personal vhost
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(1);
         $account->method('getNickname')->willReturn('test');
         $account->method('getVhost')->willReturn('personal.net');
 
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findById')->willReturn($account);
+
+        // 1. Role with null pattern falls back to personal vhost
         $role1 = $this->createStub(OperRole::class);
         $role1->method('getForcedVhostPattern')->willReturn(null);
         $ircop1 = $this->createStub(OperIrcop::class);
@@ -477,15 +823,10 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop1);
 
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * INS N::test::vhost personal.net');
-
-        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
-        $repo->method('findById')->willReturn($account);
-
-        $sub = $this->createSubscriber($holder, $repo, null, $ircopRepo);
+        $this->written = [];
+        $sub = $this->createSubscriber($repo, null, $ircopRepo);
         $sub->onVhostChanged(new NickVhostChangedEvent(1, 'test', 'personal.net'));
+        self::assertSame([':001 DB * INS N::test::vhost :personal.net'], $this->written);
 
         // 2. Role with invalid pattern falls back to personal vhost
         $role2 = $this->createStub(OperRole::class);
@@ -496,12 +837,10 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $ircopRepo2 = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo2->method('findByNickId')->willReturn($ircop2);
 
-        $holder2 = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder2->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder2->expects($this->once())->method('writeLine')->with('DB * INS N::test::vhost personal.net');
-
-        $sub2 = $this->createSubscriber($holder2, $repo, null, $ircopRepo2);
+        $this->written = [];
+        $sub2 = $this->createSubscriber($repo, null, $ircopRepo2);
         $sub2->onVhostChanged(new NickVhostChangedEvent(1, 'test', 'personal.net'));
+        self::assertSame([':001 DB * INS N::test::vhost :personal.net'], $this->written);
 
         // 3. Personal vhost with only spaces is treated as null -> DB * DEL
         $account3 = $this->createStub(RegisteredNick::class);
@@ -512,37 +851,32 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $repo3 = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo3->method('findById')->willReturn($account3);
 
-        $holder3 = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder3->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder3->expects($this->once())->method('writeLine')->with('DB * DEL N::test3::vhost');
-
         $ircopRepo3 = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo3->method('findByNickId')->willReturn(null);
 
-        $sub3 = $this->createSubscriber($holder3, $repo3, null, $ircopRepo3);
+        $this->written = [];
+        $sub3 = $this->createSubscriber($repo3, null, $ircopRepo3);
         $sub3->onVhostChanged(new NickVhostChangedEvent(3, 'test3', '   '));
+        self::assertSame([':001 DB * DEL N::test3::vhost'], $this->written);
     }
 
-    public function testOnOperRoleForcedVhostChangedNotConnected(): void
+    public function testOnOperRoleForcedVhostChangedDoesNothingWhenNotConnected(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(false);
-        $holder->expects($this->never())->method('writeLine');
+        $sub = new UdbNickSyncSubscriber(
+            new ActiveConnectionHolder(),
+            $this->createStub(UdbRecordWriterInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
 
-        $sub = $this->createSubscriber($holder);
         $sub->onOperRoleForcedVhostChanged(new OperRoleForcedVhostChangedEvent(1, 'staff.example.net'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnOperRoleForcedVhostChangedWithMultipleIrcops(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-
-        $writtenLines = [];
-        $holder->expects($this->exactly(2))->method('writeLine')->willReturnCallback(static function (string $line) use (&$writtenLines): void {
-            $writtenLines[] = $line;
-        });
-
         $role = $this->createStub(OperRole::class);
         $role->method('getForcedVhostPattern')->willReturn('staff.example.net');
 
@@ -595,44 +929,43 @@ final class UdbNickSyncSubscriberTest extends TestCase
             return null;
         });
 
-        $sub = $this->createSubscriber($holder, $nickRepo, null, $ircopRepo);
+        $sub = $this->createSubscriber($nickRepo, null, $ircopRepo);
         $sub->onOperRoleForcedVhostChanged(new OperRoleForcedVhostChangedEvent(1, 'staff.example.net'));
 
-        $this->assertSame([
-            'DB * INS N::oper1::vhost oper1.staff.example.net',
-            'DB * DEL N::oper3::vhost',
-        ], $writtenLines);
+        self::assertSame([
+            ':001 DB * INS N::oper1::vhost :oper1.staff.example.net',
+            ':001 DB * DEL N::oper3::vhost',
+        ], $this->written);
     }
 
-    public function testOnOperIrcopChangedNotConnected(): void
+    public function testOnOperIrcopChangedDoesNothingWhenNotConnected(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(false);
-        $holder->expects($this->never())->method('writeLine');
+        $sub = new UdbNickSyncSubscriber(
+            new ActiveConnectionHolder(),
+            $this->createStub(UdbRecordWriterInterface::class),
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $this->createStub(OperIrcopRepositoryInterface::class),
+        );
 
-        $sub = $this->createSubscriber($holder);
         $sub->onOperIrcopChanged(new OperIrcopChangedEvent(1, 'testnick'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnOperIrcopChangedAccountNotFound(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->never())->method('writeLine');
-
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepo->method('findById')->willReturn(null);
 
-        $sub = $this->createSubscriber($holder, $nickRepo);
+        $sub = $this->createSubscriber($nickRepo);
         $sub->onOperIrcopChanged(new OperIrcopChangedEvent(1, 'testnick'));
+
+        self::assertSame([], $this->written);
     }
 
     public function testOnOperIrcopChangedWithEffectiveVhost(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * INS N::admin::vhost admin.admin.net');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(5);
         $account->method('getNickname')->willReturn('admin');
@@ -650,16 +983,14 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn($ircop);
 
-        $sub = $this->createSubscriber($holder, $nickRepo, null, $ircopRepo);
+        $sub = $this->createSubscriber($nickRepo, null, $ircopRepo);
         $sub->onOperIrcopChanged(new OperIrcopChangedEvent(5, 'admin'));
+
+        self::assertSame([':001 DB * INS N::admin::vhost :admin.admin.net'], $this->written);
     }
 
     public function testOnOperIrcopChangedWithoutEffectiveVhostSendsDel(): void
     {
-        $holder = $this->createMock(ActiveConnectionHolderInterface::class);
-        $holder->expects($this->once())->method('isConnected')->willReturn(true);
-        $holder->expects($this->once())->method('writeLine')->with('DB * DEL N::former_oper::vhost');
-
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getId')->willReturn(7);
         $account->method('getNickname')->willReturn('former_oper');
@@ -671,7 +1002,9 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn(null);
 
-        $sub = $this->createSubscriber($holder, $nickRepo, null, $ircopRepo);
+        $sub = $this->createSubscriber($nickRepo, null, $ircopRepo);
         $sub->onOperIrcopChanged(new OperIrcopChangedEvent(7, 'former_oper'));
+
+        self::assertSame([':001 DB * DEL N::former_oper::vhost'], $this->written);
     }
 }

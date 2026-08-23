@@ -34,9 +34,7 @@ final readonly class SetMlockHandler implements SetOptionHandlerInterface
             $channel->configureMlock(false, '', []);
         }
         $this->channelRepository->save($channel);
-        if ($on) {
-            $this->eventDispatcher->dispatch(new ChannelMlockUpdatedEvent($channel->getName()));
-        }
+        $this->eventDispatcher->dispatch(new ChannelMlockUpdatedEvent($channel->getName()));
         $modesDisplay = '';
         if ($on) {
             $modesDisplay = $channel->getMlock();
