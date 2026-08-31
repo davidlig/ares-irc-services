@@ -254,6 +254,15 @@ raw:
   too_long:         "\x0304✗\x03 Linia jest za długa. Maksymalnie 510 znaków."
   not_connected:    "\x0304✗\x03 Brak połączenia z IRCd."
   done:             "\x0303✓\x03 Surowa linia wysłana."
+  udb:
+    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
+    done:          "\x0303✓\x03 Zmiana UDB zastosowana: zapisana autorytatywnie i ustawiona w kolejce do propagacji."
+    target:        "\x0304✗\x03 Zmiany UDB muszą być kierowane do wszystkich serwerów (DB * ...), nie do %target%."
+    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT nie jest obsługiwane przez RAW."
+    invalid_block: "\x0304✗\x03 Nieznany blok UDB: %block%."
+    invalid_path:  "\x0304✗\x03 Nieprawidłowa ścieżka rekordu UDB: %path%."
+    invalid_value: "\x0304✗\x03 Nieprawidłowa wartość rekordu UDB dla: %path%."
+    error:         "\x0304✗\x03 Zapis do magazynu UDB nie powiódł się; zmiana nie została rozpropagowana."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

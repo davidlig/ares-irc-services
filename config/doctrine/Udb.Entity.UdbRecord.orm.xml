@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\Udb\Entity\UdbRecord" table="udb_records">
+        <unique-constraints>
+            <unique-constraint name="uniq_udb_record_block_identity" columns="block,identity_path"/>
+        </unique-constraints>
+        <indexes>
+            <index name="idx_udb_record_block" columns="block"/>
+        </indexes>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="block" type="string" length="1" column="block"/>
+        <field name="path" type="string" length="8192" column="path"/>
+        <field name="identityPath" type="string" length="8192" column="identity_path"/>
+        <field name="value" type="text" column="value"/>
+        <field name="updatedAt" type="datetimetz_immutable" column="updated_at"/>
+    </entity>
+</doctrine-mapping>

@@ -254,6 +254,15 @@ raw:
   too_long:         "\x0304✗\x03 Satır çok uzun. Maksimum 510 karakter."
   not_connected:    "\x0304✗\x03 IRCd'ye bağlı değil."
   done:             "\x0303✓\x03 Ham satır gönderildi."
+  udb:
+    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
+    done:          "\x0303✓\x03 UDB değişikliği uygulandı: yetkili olarak saklandı ve yayım için kuyruğa alındı."
+    target:        "\x0304✗\x03 UDB değişiklikleri tüm sunuculara yöneltilmelidir (DB * ...), %target% değil."
+    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT RAW üzerinden desteklenmiyor."
+    invalid_block: "\x0304✗\x03 Bilinmeyen UDB bloğu: %block%."
+    invalid_path:  "\x0304✗\x03 Geçersiz UDB kayıt yolu: %path%."
+    invalid_value: "\x0304✗\x03 Geçersiz UDB kayıt değeri: %path%."
+    error:         "\x0304✗\x03 UDB deposuna yazma başarısız; değişiklik yayılmadı."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

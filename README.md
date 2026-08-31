@@ -43,6 +43,8 @@ A modular, protocol-agnostic IRC services daemon built with **PHP 8.5**, **Symfo
 
 The port you configure in `.env.local` (`IRC_IRCD_PORT`) must match whatever you set in your IRCd's `link` / `<link>` block.
 
+With the `unrealudb` driver, services are the **sole UDB authority**: all six blocks (`N/C/I/S/L/K`) live in the authoritative services store and are served to the IRCd. See [docs/unrealudb/takeover.md](docs/unrealudb/takeover.md) for the authority model, the OperServ RAW UDB mutations and the supported wire grammar.
+
 ---
 
 ## Test Server

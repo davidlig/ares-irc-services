@@ -1,0 +1,393 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol;
+
+use App\Domain\IRC\Message\IRCMessage;
+
+use function array_slice;
+use function count;
+use function implode;
+use function sprintf;
+use function strpbrk;
+use function strpos;
+use function strtoupper;
+use function substr;
+
+/**
+ * Wire codec for the current UDB 4 DB command grammar.
+ *
+ * Outbound builders and an exact inbound parser for:
+ *   DB <target> HEL 4 <propagator|ACK>
+ *   DB <target> INF   <round> <block> <crc32> <modified-at>
+ *   DB <target> RES   <round> <block>
+ *   DB <target> BEGIN <round> <block> <txid> <crc32>
+ *   DB <target> PUT   <round> <block> <txid> <encoded-path> <value>
+ *   DB <target> END   <round> <block> <txid> <crc32>
+ *   DB <target> ACK   <round> <block> <txid> <crc32>
+ *   DB <target> ERR   <subcmd> <code> <round-or-correlation> <block>
+ *   DB * INS <block>::<encoded-path> <value>
+ *   DB * DEL <block>::<encoded-path>
+ *
+ * Values with spaces are always sent as an IRC trailing parameter (" :value");
+ * the receiver's parser folds the trailing into the last parameter, matching
+ * the C implementation's parv layout.
+ */
+final class UdbWireCodec
+{
+    public static function hel(string $sid, string $targetSid, string $propagator): string
+    {
+        return sprintf(':%s DB %s HEL 4 %s', $sid, $targetSid, $propagator);
+    }
+
+    public static function helAck(string $sid, string $targetSid): string
+    {
+        return sprintf(':%s DB %s HEL 4 ACK', $sid, $targetSid);
+    }
+
+    public static function inf(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $checksum, int $modifiedAt): string
+    {
+        return sprintf(':%s DB %s INF %d %s %s %d', $sid, $targetSid, $roundId, $block->letter(), self::checksumOrEmpty($checksum), $modifiedAt);
+    }
+
+    public static function res(string $sid, string $targetSid, int $roundId, UdbBlock $block): string
+    {
+        return sprintf(':%s DB %s RES %d %s', $sid, $targetSid, $roundId, $block->letter());
+    }
+
+    public static function begin(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $txid, string $checksum): string
+    {
+        return sprintf(':%s DB %s BEGIN %d %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
+    }
+
+    public static function put(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $txid, string $encodedPath, string $value): string
+    {
+        return sprintf(':%s DB %s PUT %d %s %s %s :%s', $sid, $targetSid, $roundId, $block->letter(), $txid, $encodedPath, $value);
+    }
+
+    public static function end(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $txid, string $checksum): string
+    {
+        return sprintf(':%s DB %s END %d %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
+    }
+
+    public static function ack(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $txid, string $checksum): string
+    {
+        return sprintf(':%s DB %s ACK %d %s %s %s', $sid, $targetSid, $roundId, $block->letter(), $txid, self::checksumOrEmpty($checksum));
+    }
+
+    public static function err(string $sid, string $targetSid, string $subcommand, int $errorCode, int $roundId, ?UdbBlock $block): string
+    {
+        return sprintf(':%s DB %s ERR %s %d %d %s', $sid, $targetSid, $subcommand, $errorCode, $roundId, null !== $block ? $block->letter() : '0');
+    }
+
+    public static function ins(string $sid, string $blockLetter, string $encodedPath, string $value): string
+    {
+        return sprintf(':%s DB * INS %s::%s :%s', $sid, $blockLetter, $encodedPath, $value);
+    }
+
+    public static function del(string $sid, string $blockLetter, string $encodedPath): string
+    {
+        return sprintf(':%s DB * DEL %s::%s', $sid, $blockLetter, $encodedPath);
+    }
+
+    /**
+     * Parses an inbound DB message into a typed frame. Returns null for any
+     * frame that does not match the current grammar exactly; callers must
+     * ignore (and log) null results instead of guessing.
+     */
+    public static function parse(IRCMessage $message): ?UdbFrame
+    {
+        if ('DB' !== strtoupper($message->command) || null === $message->prefix || count($message->params) < 2) {
+            return null;
+        }
+
+        $sourceSid = $message->prefix;
+        $target = $message->params[0];
+        $subcommand = strtoupper($message->params[1]);
+
+        return match ($subcommand) {
+            'HEL' => self::parseHel($sourceSid, $target, $message),
+            'INF' => self::parseInf($sourceSid, $target, $message),
+            'RES' => self::parseRes($sourceSid, $target, $message),
+            'BEGIN' => self::parseBegin($sourceSid, $target, $message),
+            'PUT' => self::parsePut($sourceSid, $target, $message),
+            'END' => self::parseEnd('END', UdbFrameKind::End, $sourceSid, $target, $message),
+            'ACK' => self::parseEnd('ACK', UdbFrameKind::Ack, $sourceSid, $target, $message),
+            'ERR' => self::parseErr($sourceSid, $target, $message),
+            'INS' => self::parseIns($sourceSid, $target, $message),
+            'DEL' => self::parseDel($sourceSid, $target, $message),
+            'DRP' => self::parseDrp($sourceSid, $target, $message),
+            'OPT' => self::parseOpt($sourceSid, $target, $message),
+            default => null,
+        };
+    }
+
+    private static function parseHel(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        // HEL 4 ACK or HEL 4 <propagator>
+        if (4 !== count($message->params) || '4' !== $message->params[2]) {
+            return null;
+        }
+
+        $argument = $message->params[3] ?? null;
+        if (null === $argument || '' === $argument) {
+            return null;
+        }
+
+        if ('ACK' === strtoupper($argument)) {
+            return new UdbFrame(UdbFrameKind::HelAck, $sourceSid, $target);
+        }
+
+        return new UdbFrame(UdbFrameKind::Hel, $sourceSid, $target, propagator: $argument);
+    }
+
+    private static function parseInf(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        if (6 !== count($message->params)) {
+            return null;
+        }
+
+        $roundId = UdbPathCodec::parseUnsigned($message->params[2]);
+        $block = UdbBlock::fromLetter(strtoupper($message->params[3]));
+        $checksum = UdbChecksum::parse($message->params[4]);
+        $timestamp = UdbPathCodec::parseUnsigned($message->params[5]);
+        if (null === $roundId || 0 === $roundId || null === $checksum || null === $timestamp || null === $block) {
+            return null;
+        }
+
+        return new UdbFrame(UdbFrameKind::Inf, $sourceSid, $target, roundId: $roundId, block: $block, checksum: $checksum, timestamp: $timestamp);
+    }
+
+    private static function parseRes(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        if (4 !== count($message->params)) {
+            return null;
+        }
+
+        $roundId = UdbPathCodec::parseUnsigned($message->params[2]);
+        if (null === $roundId || 0 === $roundId) {
+            return null;
+        }
+
+        $block = UdbBlock::fromLetter(strtoupper($message->params[3]));
+        if (null === $block) {
+            return null;
+        }
+
+        return new UdbFrame(UdbFrameKind::Res, $sourceSid, $target, roundId: $roundId, block: $block);
+    }
+
+    private static function parseBegin(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        if (6 !== count($message->params)) {
+            return null;
+        }
+
+        $frame = self::parseStagedHeader(UdbFrameKind::Begin, $sourceSid, $target, $message);
+        if (null === $frame) {
+            return null;
+        }
+
+        $checksum = UdbChecksum::parse($message->params[5]);
+        if (null === $checksum) {
+            return null;
+        }
+
+        return new UdbFrame(
+            UdbFrameKind::Begin,
+            $sourceSid,
+            $target,
+            roundId: $frame->roundId,
+            block: $frame->block,
+            txid: $frame->txid,
+            checksum: $checksum,
+        );
+    }
+
+    private static function parsePut(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        // PUT round block txid path :value | PUT round block txid path *num
+        if (count($message->params) < 6 || count($message->params) > 7) {
+            return null;
+        }
+
+        $frame = self::parseStagedHeader(UdbFrameKind::Put, $sourceSid, $target, $message);
+        if (null === $frame) {
+            return null;
+        }
+
+        $path = $message->params[5];
+        if ('' === $path || !UdbPathCodec::isCanonicalPath($path)) {
+            return null;
+        }
+
+        $value = $message->trailing ?? ($message->params[6] ?? null);
+        if (null === $value || '' === $value || strpbrk($value, "\r\n")) {
+            return null;
+        }
+
+        return new UdbFrame(
+            UdbFrameKind::Put,
+            $sourceSid,
+            $target,
+            roundId: $frame->roundId,
+            block: $frame->block,
+            txid: $frame->txid,
+            path: $path,
+            value: $value,
+        );
+    }
+
+    private static function parseEnd(string $subcommand, UdbFrameKind $kind, string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        if (6 !== count($message->params) && 5 !== count($message->params)) {
+            return null;
+        }
+
+        $frame = self::parseStagedHeader($kind, $sourceSid, $target, $message);
+        if (null === $frame) {
+            return null;
+        }
+
+        $checksum = UdbChecksum::parse($message->params[5] ?? $message->trailing ?? '');
+        if (null === $checksum) {
+            return null;
+        }
+
+        return new UdbFrame(
+            $kind,
+            $sourceSid,
+            $target,
+            roundId: $frame->roundId,
+            block: $frame->block,
+            txid: $frame->txid,
+            checksum: $checksum,
+            subcommand: $subcommand,
+        );
+    }
+
+    private static function parseStagedHeader(UdbFrameKind $kind, string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        $roundId = UdbPathCodec::parseUnsigned($message->params[2] ?? '');
+        $block = UdbBlock::fromLetter(strtoupper($message->params[3] ?? ''));
+        $txid = $message->params[4] ?? '';
+        if (null === $roundId || 0 === $roundId || null === $block || !UdbPathCodec::isValidTxid($txid)) {
+            return null;
+        }
+
+        return new UdbFrame($kind, $sourceSid, $target, roundId: $roundId, block: $block, txid: $txid);
+    }
+
+    private static function parseErr(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        // ERR <subcmd> <code 0-255> <round-or-correlation> <block-letter|0>
+        if (6 !== count($message->params)) {
+            return null;
+        }
+
+        $errorCode = UdbPathCodec::parseUnsigned($message->params[3]);
+        $roundId = UdbPathCodec::parseUnsigned($message->params[4]);
+        if (null === $errorCode || $errorCode > 255 || null === $roundId || 0 === $roundId) {
+            return null;
+        }
+
+        $blockLetter = $message->params[5];
+        $block = '0' === $blockLetter ? null : UdbBlock::fromLetter(strtoupper($blockLetter));
+        if (null !== $block || '0' === $blockLetter) {
+            return new UdbFrame(
+                UdbFrameKind::Err,
+                $sourceSid,
+                $target,
+                roundId: $roundId,
+                block: $block,
+                subcommand: strtoupper($message->params[2]),
+                errorCode: $errorCode,
+            );
+        }
+
+        return null;
+    }
+
+    private static function parseIns(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        if (count($message->params) < 3) {
+            return null;
+        }
+
+        $path = $message->params[2];
+        if ('' === $path || !self::isValidMutationPath($path)) {
+            return null;
+        }
+
+        $value = $message->trailing ?? implode(' ', array_slice($message->params, 3));
+        if ('' === $value || strpbrk($value, "\r\n")) {
+            return null;
+        }
+
+        return new UdbFrame(UdbFrameKind::Ins, $sourceSid, $target, path: $path, value: $value);
+    }
+
+    private static function parseDel(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        if (3 !== count($message->params)) {
+            return null;
+        }
+
+        $path = $message->params[2];
+        if ('' === $path || !self::isValidMutationPath($path)) {
+            return null;
+        }
+
+        return new UdbFrame(UdbFrameKind::Del, $sourceSid, $target, path: $path);
+    }
+
+    private static function parseDrp(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        if (3 !== count($message->params)) {
+            return null;
+        }
+
+        $block = UdbBlock::fromLetter(strtoupper($message->params[2]));
+        if (null === $block) {
+            return null;
+        }
+
+        return new UdbFrame(UdbFrameKind::Drp, $sourceSid, $target, block: $block);
+    }
+
+    private static function parseOpt(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        if (count($message->params) < 3 || count($message->params) > 4) {
+            return null;
+        }
+
+        $block = UdbBlock::fromLetter(strtoupper($message->params[2]));
+        if (null === $block) {
+            return null;
+        }
+
+        $timestamp = isset($message->params[3]) ? UdbPathCodec::parseUnsigned($message->params[3]) : null;
+
+        return new UdbFrame(UdbFrameKind::Opt, $sourceSid, $target, block: $block, timestamp: $timestamp);
+    }
+
+    /** Mutation paths must be "<block>::<canonical encoded remainder>". */
+    private static function isValidMutationPath(string $path): bool
+    {
+        $separator = strpos($path, '::');
+        if (1 !== $separator) {
+            return false;
+        }
+
+        $block = UdbBlock::fromLetter(strtoupper($path[0]));
+        $remainder = substr($path, 3);
+
+        return null !== $block && '' !== $remainder && UdbPathCodec::isCanonicalPath($remainder);
+    }
+
+    private static function checksumOrEmpty(string $checksum): string
+    {
+        return UdbChecksum::parse($checksum) ?? UdbChecksum::EMPTY;
+    }
+}

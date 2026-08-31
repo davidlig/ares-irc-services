@@ -254,6 +254,15 @@ raw:
   too_long:         "\x0304✗\x03 La línea es demasiado larga. Máximo 510 caracteres."
   not_connected:    "\x0304✗\x03 No conectado al IRCd."
   done:             "\x0303✓\x03 Línea cruda enviada."
+  udb:
+    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
+    done:          "\x0303✓\x03 Mutación UDB aplicada: almacenada de forma autoritativa y en cola para propagar."
+    target:        "\x0304✗\x03 Las mutaciones UDB deben dirigirse a todos los servidores (DB * ...), no a %target%."
+    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT no está disponible vía RAW."
+    invalid_block: "\x0304✗\x03 Bloque UDB desconocido: %block%."
+    invalid_path:  "\x0304✗\x03 Ruta de registro UDB no válida: %path%."
+    invalid_value: "\x0304✗\x03 Valor de registro UDB no válido para: %path%."
+    error:         "\x0304✗\x03 Error al escribir en el almacén UDB; la mutación no se ha propagado."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Application\OperServ\Maintenance;
 
 use App\Application\OperServ\Maintenance\PurgeExpiredGlinesTask;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\OperServ\Entity\Gline;
+use App\Domain\OperServ\Event\GlineRemovedEvent;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,7 +25,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     {
         $glineRepo = $this->createStub(GlineRepositoryInterface::class);
         $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
-        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $this->createStub(EventBusInterface::class), new NullLogger(), self::SERVER_NAME, 3600);
 
         self::assertSame('operserv.purge_expired_glines', $task->getName());
     }
@@ -33,7 +35,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     {
         $glineRepo = $this->createStub(GlineRepositoryInterface::class);
         $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
-        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 7200);
+        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $this->createStub(EventBusInterface::class), new NullLogger(), self::SERVER_NAME, 7200);
 
         self::assertSame(7200, $task->getIntervalSeconds());
     }
@@ -43,7 +45,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
     {
         $glineRepo = $this->createStub(GlineRepositoryInterface::class);
         $debugNotifier = $this->createStub(ServiceDebugNotifierInterface::class);
-        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $this->createStub(EventBusInterface::class), new NullLogger(), self::SERVER_NAME, 3600);
 
         self::assertSame(360, $task->getOrder());
     }
@@ -71,7 +73,13 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
                 self::assertSame('expired', $reason);
             });
 
-        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $eventDispatcher = $this->createMock(EventBusInterface::class);
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch')
+            ->willReturnCallback(static function (object $event): void {
+                self::assertInstanceOf(GlineRemovedEvent::class, $event);
+            });
+
+        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600);
         $task->run();
     }
 
@@ -85,7 +93,7 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
         $debugNotifier = $this->createMock(ServiceDebugNotifierInterface::class);
         $debugNotifier->expects(self::never())->method('log');
 
-        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $this->createStub(EventBusInterface::class), new NullLogger(), self::SERVER_NAME, 3600);
         $task->run();
     }
 
@@ -114,9 +122,21 @@ final class PurgeExpiredGlinesTaskTest extends TestCase
             'expired',
         );
 
-        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, new NullLogger(), self::SERVER_NAME, 3600);
+        $events = [];
+        $eventDispatcher = $this->createStub(EventBusInterface::class);
+        $eventDispatcher->method('dispatch')
+            ->willReturnCallback(static function (object $event) use (&$events): void {
+                $events[] = $event;
+            });
+
+        $task = new PurgeExpiredGlinesTask($glineRepo, $debugNotifier, $eventDispatcher, new NullLogger(), self::SERVER_NAME, 3600);
         $task->run();
 
         self::assertCount(1, $removed);
+        self::assertCount(1, $events);
+        self::assertInstanceOf(GlineRemovedEvent::class, $events[0]);
+        self::assertSame(999, $events[0]->glineId);
+        self::assertSame('*@isp.com', $events[0]->mask);
+        self::assertSame('expired', $events[0]->cause);
     }
 }

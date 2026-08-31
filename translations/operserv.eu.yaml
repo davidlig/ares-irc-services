@@ -254,6 +254,15 @@ raw:
   too_long:         "\x0304✗\x03 Lerroa luzeegia da. Gehienez 510 karaktere."
   not_connected:    "\x0304✗\x03 Ez dago IRCd-ra konektatuta."
   done:             "\x0303✓\x03 Lerro gordina bidali da."
+  udb:
+    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
+    done:          "\x0303✓\x03 UDB aldaketa aplikatu da: modu autoritarioan gorde eta hedatzeko ilaran dago."
+    target:        "\x0304✗\x03 UDB aldaketak zerbitzari guztiei zuzendu behar zaizkie (DB * ...), ez %target%(r)i."
+    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT ez dago erabilgarri RAW bidez."
+    invalid_block: "\x0304✗\x03 UDB bloke ezezaguna: %block%."
+    invalid_path:  "\x0304✗\x03 UDB erregistro-bide baliogabea: %path%."
+    invalid_value: "\x0304✗\x03 UDB erregistro-balio baliogabea: %path%."
+    error:         "\x0304✗\x03 Errorea UDB biltegian idazten; aldaketa ez da hedatu."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

@@ -6,36 +6,32 @@ namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Message\IRCMessage;
+use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use App\Infrastructure\IRC\Protocol\UnrealFamily\UnrealFamilyHandshakeTrait;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-use function array_slice;
-use function count;
-use function implode;
-use function sprintf;
+use function str_starts_with;
+use function substr;
 
 /**
- * Implements the UnrealUdb 4.x / 5.x / 6.x server-to-server link protocol.
+ * UnrealIRCd UDB 4 server-to-server link protocol.
  *
- * The base handshake (PASS/PROTOCTL/SERVER, NETINFO, EOS, capabilities) is
- * shared with the Unreal module via UnrealFamilyHandshakeTrait. This module
- * additionally negotiates the UDB HEL 4 capability and speaks the DB command
- * (INF/INS/DEL/DRP/OPT/FDR and the staged BEGIN/PUT/END/ACK transaction).
+ * The base handshake (PASS/PROTOCTL/SERVER, NETINFO, EOS) is shared with the
+ * Unreal module via UnrealFamilyHandshakeTrait. Everything UDB-specific —
+ * HEL 4 negotiation, reconciliation rounds, staged snapshots, mutations —
+ * is delegated to UdbSessionCoordinator; this class only parses wire lines
+ * and forwards them.
  *
- * HEL handshake (per doc/udb_technical_en.md):
- *   1. The IRCd sends ":<sid> DB <peer> HEL 4 <selected-propagator>".
- *   2. We reply ":<sid> DB <peer> HEL 4 ACK" and send our own HEL announcing the
- *      IRCd's server name (captured from its SERVER introduction line) as the
- *      selected propagator, so the IRCd authorizes outbound snapshots
- *      (authorizes_us). Announcing our own name would leave authorizes_us
- *      false and every RES would be rejected with UDB_ERR_FORBIDDEN.
- *   3. Only after ACK does UDB send INF and accept our RES/INS/DEL requests.
- *   Our HEL is deferred until the remote server name is known.
+ * HEL semantics (current UDB 4 source of truth): services always announce
+ * themselves as the propagator ("HEL 4 <services FQDN>"); when the IRCd's
+ * HEL selects the services FQDN (or asks with "?"), services offer the
+ * authoritative six-block snapshot and serve divergent blocks.
  */
-class UnrealUdbProtocolHandler extends AbstractProtocolHandler
+final class UnrealUdbProtocolHandler extends AbstractProtocolHandler
 {
     use UnrealFamilyHandshakeTrait;
 
@@ -45,13 +41,9 @@ class UnrealUdbProtocolHandler extends AbstractProtocolHandler
 
     private ?string $remoteSid = null;
 
-    private bool $helSent = false;
-
-    /** @var array<string, string> */
-    private array $stagedTxids = [];
-
     public function __construct(
-        private readonly string $sid = '001',
+        private readonly string $sid,
+        private readonly UdbSessionCoordinator $coordinator,
         LoggerInterface $logger = new NullLogger(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ) {
@@ -63,170 +55,56 @@ class UnrealUdbProtocolHandler extends AbstractProtocolHandler
         return self::PROTOCOL_NAME;
     }
 
-    /**
-     * Handles UnrealUdb-specific incoming commands on top of the base PING/PONG.
-     *
-     * EOS (End of Sync): the IRCd sends EOS when it finishes its burst. We must
-     * respond with our own EOS so UnrealUdb knows we are ready. Failing to send
-     * EOS causes an immediate clean disconnect ("Success" error code).
-     */
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
     {
         parent::handleIncoming($message, $connection);
+        $this->coordinator->tick($connection);
 
         match ($message->command) {
-            'EOS' => $this->handleEos($connection),
+            'EOS' => $this->handleEosThenReady($connection),
             'NETINFO' => $this->handleNetinfo($message, $connection),
-            'SERVER' => $this->handleRemoteServer($message, $connection),
+            'PROTOCTL' => $this->handleProtoServerSid($message),
+            'SERVER' => $this->handleRemoteServer($message),
             'DB' => $this->handleDb($message, $connection),
             default => null,
         };
     }
 
-    private function handleDb(IRCMessage $message, ConnectionInterface $connection): void
+    /** Captures the services FQDN announced in our own SERVER line. */
+    protected function onLinkEstablished(ServerLink $link): void
     {
-        if (count($message->params) < 2) {
-            return;
-        }
+        $this->coordinator->setOwnName((string) $link->serverName);
+    }
 
-        $operation = $message->params[1];
-        $sourceSid = $message->prefix ?? '';
-
-        if ('' !== $sourceSid) {
-            $this->remoteSid = $sourceSid;
-        }
-
-        if ('HEL' === $operation) {
-            $this->handleHel($message, $connection);
-
-            return;
-        }
-
-        if ('ERR' === $operation) {
-            $this->logger->warning('UDB reported an error.', [
-                'subcommand' => $message->params[2] ?? '?',
-                'code' => $message->params[3] ?? '?',
-                'extra' => $message->params[4] ?? $message->trailing ?? '',
-                'source' => $sourceSid,
-            ]);
-
-            return;
-        }
-
-        if ('BEGIN' === $operation) {
-            $this->handleBegin($message);
-
-            return;
-        }
-
-        if ('PUT' === $operation) {
-            $this->handlePut($message);
-
-            return;
-        }
-
-        if ('END' === $operation) {
-            $this->handleEnd($message, $connection);
-
-            return;
-        }
-
-        if ('ACK' === $operation) {
-            $this->logger->info(sprintf('UDB staged sync acknowledged for block %s', $message->params[2] ?? '?'));
-
-            return;
-        }
-
-        if ('RES' === $operation) {
-            // UDB asks us to serve a snapshot; we hold no UDB records of our own.
-            $this->logger->debug(sprintf('UDB requested block %s from us; ignoring (no local UDB data).', $message->params[2] ?? '?'));
-
-            return;
-        }
-
-        if ('INF' === $operation) {
-            $block = $message->params[2] ?? '';
-            if (null !== $this->eventDispatcher) {
-                $this->eventDispatcher->dispatch(new Event\UdbSyncRequestedEvent($block, $sourceSid));
-            }
-
-            return;
-        }
-
-        if ('INS' === $operation) {
-            $key = $message->params[2] ?? '';
-            // Fix: multi-word values (e.g. swhois, topic, forbid) are NOT prefixed with ':'
-            // so they arrive as extra params instead of trailing. Use trailing when available,
-            // otherwise join all remaining params (index 3+) into a single space-separated string.
-            $value = $message->trailing ?? implode(' ', array_slice($message->params, 3));
-            if (null !== $this->eventDispatcher) {
-                $this->eventDispatcher->dispatch(new Event\UdbRecordReceivedEvent($key, $value));
-            }
-
-            return;
-        }
-
-        if ('DEL' === $operation) {
-            $key = $message->params[2] ?? '';
-            if (null !== $this->eventDispatcher) {
-                $this->eventDispatcher->dispatch(new Event\UdbRecordDeletedEvent($key));
-            }
-
-            return;
-        }
-
-        if ('FDR' === $operation) {
-            $block = $message->params[2] ?? '';
-            $this->logger->info(sprintf('UDB sync completed (FDR) for block %s', $block));
-            if (null !== $this->eventDispatcher) {
-                $this->eventDispatcher->dispatch(new Event\UdbSyncCompleteEvent($block, $sourceSid));
-            }
-        }
+    /** Trait EOS handling (burst complete + our EOS), then HEL negotiation starts. */
+    private function handleEosThenReady(ConnectionInterface $connection): void
+    {
+        $this->handleEos($connection);
+        $this->coordinator->onLinkReady($connection);
     }
 
     /**
-     * HEL 4 capability negotiation: ACK the peer's HEL and send our own HEL so
-     * the peer confirms UDB capability on its side and authorizes us to request
-     * block snapshots (RES). Our HEL is deferred until the remote server name
-     * is known; announcing our own name would leave authorizes_us false.
+     * Captures the remote SID from PROTOCTL (the direct SERVER introduction
+     * line carries no prefix, so PROTOCTL SID= is the only source on links
+     * where the SERVER line arrives before any prefixed frame).
      */
-    private function handleHel(IRCMessage $message, ConnectionInterface $connection): void
+    private function handleProtoServerSid(IRCMessage $message): void
     {
-        $sourceSid = $message->prefix ?? '';
-        if ('' === $sourceSid) {
-            $this->logger->warning('UDB HEL received without a source SID; ignoring.');
+        foreach ($message->params as $param) {
+            if (str_starts_with($param, 'SID=')) {
+                $sid = substr($param, 4);
+                if ('' !== $sid) {
+                    $this->remoteSid = $sid;
+                }
 
-            return;
+                break;
+            }
         }
 
-        if (count($message->params) >= 4 && 'ACK' === $message->params[3]) {
-            $this->logger->info('UDB HEL 4 capability confirmed by peer.', ['peer' => $sourceSid]);
-
-            return;
-        }
-
-        $this->logger->info('UDB HEL 4 received from peer; acknowledging.', ['peer' => $sourceSid]);
-
-        $ack = sprintf(':%s DB %s HEL 4 ACK', $this->sid, $sourceSid);
-        $connection->writeLine($ack);
-        $this->logger->debug('> ' . $ack);
-
-        if (null === $this->remoteServerName) {
-            $this->logger->debug('Remote server name not yet known; deferring our HEL until the SERVER line arrives.');
-
-            return;
-        }
-
-        $this->sendHel($connection, $sourceSid);
+        $this->notifyRemoteIdentity();
     }
 
-    /**
-     * Captures the remote server's name from its SERVER introduction line
-     * (e.g. "SERVER irc.davidlig.net 1 :U6-..."). The IRCd sends this right
-     * after accepting our own SERVER line. If a HEL exchange already happened,
-     * the deferred HEL is sent now that the name is known.
-     */
-    private function handleRemoteServer(IRCMessage $message, ConnectionInterface $connection): void
+    private function handleRemoteServer(IRCMessage $message): void
     {
         $remoteName = $message->params[0] ?? '';
         if ('' === $remoteName) {
@@ -234,83 +112,40 @@ class UnrealUdbProtocolHandler extends AbstractProtocolHandler
         }
 
         $this->remoteServerName = $remoteName;
-        $this->logger->debug('Captured remote server name from SERVER line.', ['remote' => $remoteName]);
 
-        if (!$this->helSent && null !== $this->remoteSid) {
-            $this->sendHel($connection, $this->remoteSid);
-        }
+        // Direct peer introductions are unprefixed; fall back to the SID
+        // already captured from PROTOCTL SID=.
+        $this->remoteSid ??= $message->prefix ?? '';
+
+        $this->notifyRemoteIdentity();
     }
 
-    /**
-     * Sends our own HEL 4 request selecting the peer as propagator, so the peer
-     * authorizes outbound snapshots (staged BEGIN/PUT/END) for our RES requests.
-     * Only sent once the remote server name is known; announcing a wrong name
-     * (e.g. our own) leaves authorizes_us false and RES gets UDB_ERR_FORBIDDEN.
-     */
-    private function sendHel(ConnectionInterface $connection, ?string $peerSid): void
+    /** Forwards the captured identity to the coordinator once both parts are known. */
+    private function notifyRemoteIdentity(): void
     {
-        if ($this->helSent || null === $peerSid || '' === $peerSid || null === $this->remoteServerName) {
+        if (null === $this->remoteSid || null === $this->remoteServerName || '' === $this->remoteSid || '' === $this->remoteServerName) {
             return;
         }
 
-        $hel = sprintf(':%s DB %s HEL 4 %s', $this->sid, $peerSid, $this->remoteServerName);
-        $connection->writeLine($hel);
-        $this->logger->debug('> ' . $hel);
-        $this->helSent = true;
+        $this->coordinator->onRemoteServer($this->remoteSid, $this->remoteServerName);
+        $this->logger->debug('Captured remote server identity.', [
+            'remote' => $this->remoteServerName,
+            'sid' => $this->remoteSid,
+        ]);
     }
 
-    private function handleBegin(IRCMessage $message): void
+    private function handleDb(IRCMessage $message, ConnectionInterface $connection): void
     {
-        $block = $message->params[2] ?? '';
-        $txid = $message->params[3] ?? '';
+        $frame = UdbWireCodec::parse($message);
+        if (null === $frame) {
+            $this->logger->debug('Ignored malformed or unsupported UDB DB frame.', [
+                'prefix' => $message->prefix,
+                'params' => $message->params,
+            ]);
 
-        if ('' === $block || '' === $txid) {
             return;
         }
 
-        $this->stagedTxids[$block] = $txid;
-        $this->logger->info(sprintf('UDB staged sync started for block %s (txid %s)', $block, $txid));
-    }
-
-    private function handlePut(IRCMessage $message): void
-    {
-        $block = $message->params[2] ?? '';
-        $txid = $message->params[3] ?? '';
-        $path = $message->params[4] ?? '';
-
-        if (($this->stagedTxids[$block] ?? null) !== $txid || '' === $path) {
-            return;
-        }
-
-        $value = $message->trailing ?? implode(' ', array_slice($message->params, 5));
-        if (null !== $this->eventDispatcher) {
-            // PUT paths omit the block prefix; the block is an explicit parameter.
-            $this->eventDispatcher->dispatch(new Event\UdbRecordReceivedEvent(sprintf('%s::%s', $block, $path), $value));
-        }
-    }
-
-    private function handleEnd(IRCMessage $message, ConnectionInterface $connection): void
-    {
-        $block = $message->params[2] ?? '';
-        $txid = $message->params[3] ?? '';
-        $digest = $message->params[4] ?? $message->trailing ?? '';
-
-        if (($this->stagedTxids[$block] ?? null) !== $txid) {
-            return;
-        }
-
-        unset($this->stagedTxids[$block]);
-        $this->logger->info(sprintf('UDB staged sync completed for block %s', $block));
-
-        $sourceSid = $message->prefix ?? '';
-        if ('' !== $sourceSid && '' !== $digest) {
-            $ack = sprintf(':%s DB %s ACK %s %s %s', $this->sid, $sourceSid, $block, $txid, $digest);
-            $connection->writeLine($ack);
-            $this->logger->debug('> ' . $ack);
-        }
-
-        if (null !== $this->eventDispatcher) {
-            $this->eventDispatcher->dispatch(new Event\UdbSyncCompleteEvent($block, $sourceSid));
-        }
+        $this->coordinator->handleFrame($frame, $connection);
     }
 }

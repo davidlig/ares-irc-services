@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
+use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbModule;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation;
@@ -21,11 +25,18 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(UnrealUdbModule::class)]
 final class UnrealUdbModuleTest extends TestCase
 {
+    use CreatesUdbRecordWriter;
+
     private function createModule(): UnrealUdbModule
     {
-        $handler = new UnrealUdbProtocolHandler('001');
         $connectionHolder = new ActiveConnectionHolder();
-        $recordWriter = new UnrealUdbRecordWriter($connectionHolder);
+        $recordWriter = new UnrealUdbRecordWriter(
+            $connectionHolder,
+            $this->createReadySessionState(),
+            $this->createStub(UdbRecordRepositoryInterface::class),
+            '001',
+        );
+        $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
         $serviceActions = new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter);
         $formatter = new UnrealUdbServiceIntroductionFormatter();
         $channelModeSupport = new UnrealUdbChannelModeSupport();
@@ -42,6 +53,15 @@ final class UnrealUdbModuleTest extends TestCase
         );
     }
 
+    private function createCoordinator(): UdbSessionCoordinator
+    {
+        return new UdbSessionCoordinator(
+            '001',
+            $this->createStub(UdbBlockStateRepositoryInterface::class),
+            $this->createStub(UdbSnapshotProviderInterface::class),
+        );
+    }
+
     #[Test]
     public function getProtocolNameReturnsUnreal(): void
     {
@@ -54,9 +74,14 @@ final class UnrealUdbModuleTest extends TestCase
     #[Test]
     public function getHandlerReturnsInjectedHandler(): void
     {
-        $handler = new UnrealUdbProtocolHandler('001');
         $connectionHolder = new ActiveConnectionHolder();
-        $recordWriter = new UnrealUdbRecordWriter($connectionHolder);
+        $recordWriter = new UnrealUdbRecordWriter(
+            $connectionHolder,
+            $this->createReadySessionState(),
+            $this->createStub(UdbRecordRepositoryInterface::class),
+            '001',
+        );
+        $handler = new UnrealUdbProtocolHandler('001', $this->createCoordinator());
         $module = new UnrealUdbModule(
             $handler,
             new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),

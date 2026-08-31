@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                          https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+    <entity name="App\Domain\Udb\Entity\UdbBlockState" table="udb_block_states">
+        <unique-constraints>
+            <unique-constraint name="uniq_udb_block_state_block" columns="block"/>
+        </unique-constraints>
+        <id name="id" type="integer" column="id">
+            <generator strategy="IDENTITY"/>
+        </id>
+        <field name="block" type="string" length="1" column="block"/>
+        <field name="checksum" type="string" length="8" column="checksum"/>
+        <field name="syncedAt" type="datetimetz_immutable" column="synced_at"/>
+    </entity>
+</doctrine-mapping>

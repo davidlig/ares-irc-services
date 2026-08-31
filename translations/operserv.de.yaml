@@ -254,6 +254,15 @@ raw:
   too_long:         "\x0304✗\x03 Zeile ist zu lang. Maximal 510 Zeichen."
   not_connected:    "\x0304✗\x03 Nicht mit IRCd verbunden."
   done:             "\x0303✓\x03 Rohe Zeile gesendet."
+  udb:
+    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
+    done:          "\x0303✓\x03 UDB-Änderung angewendet: maßgeblich gespeichert und zur Weiterleitung eingereiht."
+    target:        "\x0304✗\x03 UDB-Änderungen müssen an alle Server gerichtet sein (DB * ...), nicht an %target%."
+    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT wird über RAW nicht unterstützt."
+    invalid_block: "\x0304✗\x03 Unbekannter UDB-Block: %block%."
+    invalid_path:  "\x0304✗\x03 Ungültiger UDB-Datensatzpfad: %path%."
+    invalid_value: "\x0304✗\x03 Ungültiger UDB-Datensatzwert für: %path%."
+    error:         "\x0304✗\x03 Schreiben in den UDB-Speicher fehlgeschlagen; die Änderung wurde nicht weitergeleitet."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

@@ -254,6 +254,15 @@ raw:
   too_long:         "\x0304✗\x03 Regel is te lang. Maximum 510 tekens."
   not_connected:    "\x0304✗\x03 Niet verbonden met IRCd."
   done:             "\x0303✓\x03 Rauwe regel verzonden."
+  udb:
+    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
+    done:          "\x0303✓\x03 UDB-mutatie toegepast: autoritatief opgeslagen en in de wachtrij voor verspreiding."
+    target:        "\x0304✗\x03 UDB-mutaties moeten aan alle servers gericht zijn (DB * ...), niet aan %target%."
+    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT wordt niet ondersteund via RAW."
+    invalid_block: "\x0304✗\x03 Onbekende UDB-blok: %block%."
+    invalid_path:  "\x0304✗\x03 Ongeldig UDB-recordpad: %path%."
+    invalid_value: "\x0304✗\x03 Ongeldige UDB-recordwaarde voor: %path%."
+    error:         "\x0304✗\x03 Schrijven naar de UDB-opslag mislukt; de mutatie is niet verspreid."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:

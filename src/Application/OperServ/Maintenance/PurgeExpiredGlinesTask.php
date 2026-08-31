@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Application\OperServ\Maintenance;
 
 use App\Application\Maintenance\MaintenanceTaskInterface;
+use App\Application\Port\EventBusInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Domain\OperServ\Event\GlineRemovedEvent;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
@@ -16,6 +18,7 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
     public function __construct(
         private GlineRepositoryInterface $glineRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
+        private EventBusInterface $eventDispatcher,
         private LoggerInterface $logger,
         private readonly string $serverName,
         private readonly int $intervalSeconds,
@@ -45,6 +48,13 @@ final readonly class PurgeExpiredGlinesTask implements MaintenanceTaskInterface
             $glineId = $gline->getId();
 
             $this->glineRepository->remove($gline);
+
+            $this->eventDispatcher->dispatch(new GlineRemovedEvent(
+                glineId: $glineId,
+                mask: $mask,
+                removedBy: $this->serverName,
+                cause: 'expired',
+            ));
 
             $this->debugNotifier->log(
                 operator: $this->serverName,

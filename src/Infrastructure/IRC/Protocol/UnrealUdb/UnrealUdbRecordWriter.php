@@ -5,62 +5,169 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\UdbMutation;
 use App\Application\Port\UdbRecordWriterInterface;
+use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbSchema;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Throwable;
 
-use function sprintf;
+use function explode;
 
 /**
- * Writes UDB records to the wire in the UnrealUdb DB command format.
+ * Writes UDB record mutations: validates against the full UDB 4 schema,
+ * persists to the authoritative services store FIRST and only then
+ * propagates to the wire.
  *
- * Format: :<sid> DB <target> <subcommand> <parameters>
- * - Real-time inserts use target "*" (broadcast) and a trailing value so
- *   multi-word values (topic, forbid, swhois, reason) survive IRC parsing.
- * - Numeric values are prefixed with "*" per the UDB storage format.
- * - The source SID is only prefixed when the active connection knows it.
+ * - Paths arrive as raw components ("davidlig::vhost") and are canonically
+ *   percent-encoded here.
+ * - A failed store write never reaches the wire (the store is the authority:
+ *   the snapshot must always match what was announced).
+ * - While the session coordinator is not authority-ready the wire mutation
+ *   is queued in order and flushed on the next ready barrier.
  */
 final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
 {
     public function __construct(
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private UdbSessionStateInterface $sessionState,
+        private UdbRecordRepositoryInterface $records,
+        private string $sid,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
-    public function insert(string $block, string $path, string $value): void
+    public function insert(string $block, string $path, string $value): bool
     {
-        if ('' === $value) {
+        $blockEnum = UdbBlock::tryFrom($block);
+        if (null === $blockEnum || '' === $path) {
+            $this->logger->warning('Rejected UDB mutation with invalid block or empty path.', [
+                'block' => $block,
+                'path' => $path,
+            ]);
+
+            return false;
+        }
+
+        $components = explode('::', $path);
+        if (!UdbSchema::validate($blockEnum, $components, $value)) {
+            $this->logger->warning('Rejected UDB mutation failing schema validation.', [
+                'block' => $blockEnum->letter(),
+                'path' => $path,
+            ]);
+
+            return false;
+        }
+
+        // The schema guarantees bounded, encodable components, so the
+        // canonical encoding cannot fail here.
+        $encodedPath = UdbPathCodec::encodePath($components);
+
+        if (!$this->persistInsert($blockEnum->letter(), $encodedPath, $value)) {
+            return false;
+        }
+
+        $this->dispatch(new UdbMutation($blockEnum->letter(), $encodedPath, $value));
+
+        return true;
+    }
+
+    public function delete(string $block, string $path): bool
+    {
+        $blockEnum = UdbBlock::tryFrom($block);
+        if (null === $blockEnum || '' === $path) {
+            $this->logger->warning('Rejected UDB deletion with invalid block or empty path.', [
+                'block' => $block,
+                'path' => $path,
+            ]);
+
+            return false;
+        }
+
+        $encodedPath = UdbPathCodec::encodePath(explode('::', $path));
+        if (null === $encodedPath) {
+            $this->logger->warning('Rejected UDB deletion with unencodable path.', [
+                'block' => $blockEnum->letter(),
+                'path' => $path,
+            ]);
+
+            return false;
+        }
+
+        if (!$this->persistDelete($blockEnum->letter(), $encodedPath)) {
+            return false;
+        }
+
+        $this->dispatch(new UdbMutation($blockEnum->letter(), $encodedPath, null));
+
+        return true;
+    }
+
+    /**
+     * Sends the mutation when authority-ready; otherwise queues it for the
+     * next ready flush (the store already holds the change).
+     */
+    private function dispatch(UdbMutation $mutation): void
+    {
+        if (!$this->sessionState->isAuthorityReady()) {
+            $this->sessionState->enqueueMutation($mutation);
+
             return;
         }
 
-        $this->write(sprintf('DB * INS %s::%s :%s', $block, $path, $value));
+        $this->send($mutation);
     }
 
-    public function delete(string $block, string $path): void
-    {
-        $this->write(sprintf('DB * DEL %s::%s', $block, $path));
-    }
-
-    public function requestSync(string $block, string $sourceSid): void
-    {
-        $this->write(sprintf('DB %s RES %s', $sourceSid, $block));
-    }
-
-    public function dropBlock(string $block): void
-    {
-        $this->write(sprintf('DB * DRP %s', $block));
-    }
-
-    private function write(string $line): void
+    private function send(UdbMutation $mutation): void
     {
         if (!$this->connectionHolder->isConnected()) {
+            $this->sessionState->enqueueMutation($mutation);
+
             return;
         }
 
-        $sid = $this->connectionHolder->getServerSid();
-        $prefixed = null === $sid ? $line : sprintf(':%s %s', $sid, $line);
+        $line = null === $mutation->value
+            ? UdbWireCodec::del($this->sid, $mutation->block, $mutation->encodedPath)
+            : UdbWireCodec::ins($this->sid, $mutation->block, $mutation->encodedPath, $mutation->value);
 
-        $this->connectionHolder->writeLine($prefixed);
-        $this->logger->debug('> ' . $prefixed);
+        $this->connectionHolder->writeLine($line);
+        $this->logger->debug('> ' . $line);
+    }
+
+    private function persistInsert(string $block, string $encodedPath, string $value): bool
+    {
+        try {
+            $this->records->upsert($block, $encodedPath, $value);
+
+            return true;
+        } catch (Throwable $exception) {
+            $this->logger->error('UDB store insert failed; mutation not propagated.', [
+                'block' => $block,
+                'path' => $encodedPath,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    private function persistDelete(string $block, string $encodedPath): bool
+    {
+        try {
+            $this->records->deleteCascade($block, $encodedPath);
+
+            return true;
+        } catch (Throwable $exception) {
+            $this->logger->error('UDB store delete failed; mutation not propagated.', [
+                'block' => $block,
+                'path' => $encodedPath,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }

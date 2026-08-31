@@ -240,6 +240,7 @@ services:
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler:
         arguments:
             $sid:             '%irc.server_sid%'
+            $coordinator:     '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator'
             $logger:          '@monolog.logger.irc'
             $eventDispatcher: '@event_dispatcher'
         tags: ['irc.protocol_handler']
@@ -267,10 +268,40 @@ services:
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter:
         arguments:
             $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
-            $logger: '@monolog.logger.irc'
+            $sessionState:     '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface'
+            $records:          '@App\Domain\Udb\Repository\UdbRecordRepositoryInterface'
+            $sid:              '%irc.server_sid%'
+            $logger:           '@monolog.logger.irc'
 
     App\Application\Port\UdbRecordWriterInterface:
         alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator:
+        arguments:
+            $sid:              '%irc.server_sid%'
+            $blockStates:      '@App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface'
+            $snapshots:        '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface'
+            $logger:           '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface:
+        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProvider:
+        arguments:
+            $records: '@App\Domain\Udb\Repository\UdbRecordRepositoryInterface'
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface:
+        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProvider
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbStoreInitializer: ~
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRawCommandHandler:
+        arguments:
+            $recordWriter: '@App\Application\Port\UdbRecordWriterInterface'
+            $logger:       '@monolog.logger.ircops'
+
+    App\Application\Port\UdbRawCommandHandlerInterface:
+        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRawCommandHandler
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions:
         arguments:
@@ -614,6 +645,15 @@ services:
 
     App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface:
         class: App\Infrastructure\MemoServ\Doctrine\MemoSettingsDoctrineRepository
+
+    # --- UnrealUdb authoritative store (all six blocks) --------------------------
+
+    App\Domain\Udb\Repository\UdbRecordRepositoryInterface:
+        class: App\Infrastructure\Udb\Doctrine\UdbRecordDoctrineRepository
+
+    App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface:
+        class: App\Infrastructure\Udb\Doctrine\UdbBlockStateDoctrineRepository
+
 
     # --- NickServ Bot pseudo-client ---------------------------------------------
 
@@ -1735,6 +1775,7 @@ services:
         arguments:
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $logger: '@monolog.logger.ircops'
+            $udbCommands: '@App\Application\Port\UdbRawCommandHandlerInterface'
         tags: ['operserv.command']
 
     App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
@@ -1748,6 +1789,7 @@ services:
         arguments:
             $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
             $debugNotifier: '@App\Infrastructure\OperServ\Service\OperServDebugNotifier'
+            $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $serverName: '%irc.server_name%'
             $logger: '@monolog.logger.maintenance'
             $intervalSeconds: '%maintenance.purge_expired_glines_interval%'

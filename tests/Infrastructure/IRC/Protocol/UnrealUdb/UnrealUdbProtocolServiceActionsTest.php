@@ -7,7 +7,6 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +15,8 @@ use ReflectionClass;
 #[CoversClass(UnrealUdbProtocolServiceActions::class)]
 final class UnrealUdbProtocolServiceActionsTest extends TestCase
 {
+    use CreatesUdbRecordWriter;
+
     private ActiveConnectionHolder $connectionHolder;
 
     /** @var list<string> */
@@ -43,7 +44,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     {
         return new UnrealUdbProtocolServiceActions(
             $this->connectionHolder,
-            new UnrealUdbRecordWriter($this->connectionHolder),
+            $this->createUdbRecordWriter($this->connectionHolder),
         );
     }
 
@@ -347,7 +348,7 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
 
         $actions = new UnrealUdbProtocolServiceActions(
             $connectionHolder,
-            new UnrealUdbRecordWriter($connectionHolder),
+            $this->createUdbRecordWriter($connectionHolder),
         );
 
         $actions->setUserAccount('001', '001ABCD', 'TestAccount');

@@ -7,7 +7,6 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation;
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +15,8 @@ use ReflectionClass;
 #[CoversClass(UnrealUdbNickReservation::class)]
 final class UnrealUdbNickReservationTest extends TestCase
 {
+    use CreatesUdbRecordWriter;
+
     /** @var list<string> */
     private array $written = [];
 
@@ -37,7 +38,7 @@ final class UnrealUdbNickReservationTest extends TestCase
         $sidProperty = $reflection->getProperty('serverSid');
         $sidProperty->setValue($holder, '001');
 
-        $this->reservation = new UnrealUdbNickReservation(new UnrealUdbRecordWriter($holder));
+        $this->reservation = new UnrealUdbNickReservation($this->createUdbRecordWriter($holder));
     }
 
     #[Test]
@@ -77,7 +78,7 @@ final class UnrealUdbNickReservationTest extends TestCase
         $sidProperty->setValue($holder, '001');
 
         $res = new UnrealUdbNickReservation(
-            new UnrealUdbRecordWriter($holder),
+            $this->createUdbRecordWriter($holder),
             'CustomNickServ',
             'CustomIdent',
             'CustomChanServ',

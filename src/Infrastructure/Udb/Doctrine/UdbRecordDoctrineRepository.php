@@ -1,0 +1,138 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\Udb\Doctrine;
+
+use App\Domain\Udb\Entity\UdbRecord;
+use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
+use Doctrine\ORM\EntityManagerInterface;
+
+final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryInterface
+{
+    public function __construct(
+        private EntityManagerInterface $em,
+    ) {}
+
+    public function recordsByBlock(string $block): array
+    {
+        $rows = $this->em
+            ->createQuery('SELECT r.path, r.value FROM App\Domain\Udb\Entity\UdbRecord r WHERE r.block = :block')
+            ->setParameter('block', $block)
+            ->getArrayResult();
+
+        $records = [];
+        foreach ($rows as $row) {
+            $records[$row['path']] = $row['value'];
+        }
+
+        return $records;
+    }
+
+    public function upsert(string $block, string $path, string $value): void
+    {
+        $existing = $this->findRecord($block, $path);
+
+        if ($existing instanceof UdbRecord) {
+            $existing->updateValue($value);
+        } else {
+            $this->em->persist(new UdbRecord($block, $path, $value));
+        }
+
+        $this->em->flush();
+        $this->em->clear();
+    }
+
+    public function deleteCascade(string $block, string $path): void
+    {
+        $identity = UdbRecord::identity($path);
+        $ids = $this->descendantIds($block, $identity);
+
+        if ([] === $ids) {
+            return;
+        }
+
+        $this->em
+            ->createQuery('DELETE FROM App\Domain\Udb\Entity\UdbRecord r WHERE r.id IN (:ids)')
+            ->setParameter('ids', $ids)
+            ->execute();
+
+        $this->em->clear();
+    }
+
+    public function seedBlock(string $block, array $records): void
+    {
+        $this->em->wrapInTransaction(function () use ($block, $records): void {
+            $existing = [];
+            foreach ($this->blockIdentities($block) as $identity => $id) {
+                $existing[$identity] = $id;
+            }
+
+            foreach ($records as $path => $value) {
+                $identity = UdbRecord::identity($path);
+                $id = $existing[$identity] ?? null;
+
+                if (null !== $id) {
+                    $record = $this->em->find(UdbRecord::class, $id);
+                    if ($record instanceof UdbRecord) {
+                        $record->updateValue($value);
+                    }
+                } else {
+                    $this->em->persist(new UdbRecord($block, $path, $value));
+                }
+            }
+
+            $this->em->flush();
+        });
+
+        $this->em->clear();
+    }
+
+    private function findRecord(string $block, string $path): ?UdbRecord
+    {
+        $record = $this->em
+            ->createQuery('SELECT r FROM App\Domain\Udb\Entity\UdbRecord r WHERE r.block = :block AND r.identityPath = :identity')
+            ->setParameter('block', $block)
+            ->setParameter('identity', UdbRecord::identity($path))
+            ->getOneOrNullResult();
+
+        return $record instanceof UdbRecord ? $record : null;
+    }
+
+    /**
+     * IDs of the record at the identity and every descendant identity
+     * ("identity::..."), matched case-insensitively in PHP so the behavior
+     * is identical on MariaDB and SQLite.
+     *
+     * @return list<int>
+     */
+    private function descendantIds(string $block, string $identity): array
+    {
+        $ids = [];
+        $prefix = $identity . '::';
+
+        foreach ($this->blockIdentities($block) as $candidate => $id) {
+            if ($candidate === $identity || str_starts_with($candidate, $prefix)) {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
+    }
+
+    /** @return array<string, int> identity path => record id */
+    private function blockIdentities(string $block): array
+    {
+        $rows = $this->em
+            ->createQuery('SELECT r.id, r.identityPath FROM App\Domain\Udb\Entity\UdbRecord r WHERE r.block = :block')
+            ->setParameter('block', $block)
+            ->getArrayResult();
+
+        $identities = [];
+        foreach ($rows as $row) {
+            $identities[$row['identityPath']] = $row['id'];
+        }
+
+        return $identities;
+    }
+}

@@ -14,8 +14,11 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Application\Port\UdbRawCommandHandlerInterface;
+use App\Application\Port\UdbRawCommandResult;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -76,14 +79,40 @@ final class RawCommandTest extends TestCase
         return new ServiceNicknameRegistry([$provider]);
     }
 
+    private function createConnectionHolder(
+        string $protocol = 'unrealudb',
+        bool $connected = true,
+    ): ActiveConnectionHolderInterface {
+        $holder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $module = $this->createStub(ProtocolModuleInterface::class);
+        $module->method('getProtocolName')->willReturn($protocol);
+        $holder->method('getProtocolModule')->willReturn($module);
+        $holder->method('isConnected')->willReturn($connected);
+        $holder->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        return $holder;
+    }
+
     private function createCommand(
         ?ActiveConnectionHolderInterface $connectionHolder = null,
+        ?UdbRawCommandHandlerInterface $udbCommands = null,
     ): RawCommand {
         return new RawCommand(
             $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class),
             new NullLogger(),
+            $udbCommands,
         );
     }
+
+    private function createSender(): SenderView
+    {
+        return new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+    }
+
+    /** @var list<string> */
+    private array $written = [];
 
     #[Test]
     public function getNameReturnsRaw(): void
@@ -160,18 +189,12 @@ final class RawCommandTest extends TestCase
     #[Test]
     public function emptyLineRepliesEmpty(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
         $messages = [];
-        $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
 
         $cmd = $this->createCommand();
-        $cmd->execute($this->createContext($sender, ['   '], $notifier, $translator));
+        $cmd->execute($this->createContext($this->createSender(), ['   '], $notifier, $translator));
 
         self::assertStringContainsString('raw.empty', $messages[0]);
     }
@@ -179,20 +202,14 @@ final class RawCommandTest extends TestCase
     #[Test]
     public function lineTooLongRepliesTooLong(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
         $messages = [];
-        $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
 
         $cmd = $this->createCommand($connectionHolder);
-        $cmd->execute($this->createContext($sender, [str_repeat('x', 511)], $notifier, $translator));
+        $cmd->execute($this->createContext($this->createSender(), [str_repeat('x', 511)], $notifier, $translator));
 
         self::assertStringContainsString('raw.too_long', $messages[0]);
     }
@@ -200,21 +217,15 @@ final class RawCommandTest extends TestCase
     #[Test]
     public function notConnectedRepliesNotConnected(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
         $messages = [];
-        $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
 
         $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('isConnected')->willReturn(false);
 
         $cmd = $this->createCommand($connectionHolder);
-        $cmd->execute($this->createContext($sender, [':0A0BBBBBB MODE #opers +q 994AAAAAA'], $notifier, $translator));
+        $cmd->execute($this->createContext($this->createSender(), [':0A0BBBBBB', 'MODE', '#opers', '+q', '994AAAAAA'], $notifier, $translator));
 
         self::assertStringContainsString('raw.not_connected', $messages[0]);
     }
@@ -222,15 +233,10 @@ final class RawCommandTest extends TestCase
     #[Test]
     public function successWritesLineAndSetsAuditData(): void
     {
-        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
         $messages = [];
-        $notifier = $this->createStub(OperServNotifierInterface::class);
-        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
-            $messages[] = $m;
-        });
-        $notifier->method('getNick')->willReturn('OperServ');
-        $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+        $sender = $this->createSender();
 
         $connectionHolder = $this->createMock(ActiveConnectionHolderInterface::class);
         $connectionHolder->method('isConnected')->willReturn(true);
@@ -245,5 +251,277 @@ final class RawCommandTest extends TestCase
         self::assertNotNull($auditData);
         self::assertSame(':0A0BBBBBB MODE #opers +q 994AAAAAA', $auditData->target);
         self::assertSame('Executed by TestUser', $auditData->reason);
+    }
+
+    // ---------- UDB interception ----------
+
+    #[Test]
+    public function udbInsIsInterceptedInsteadOfWrittenRaw(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $results = [
+            UdbRawCommandResult::success('DB * INS S::propagator "hub2.davidlig.net"'),
+        ];
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::once())->method('ins')->with('S::propagator', 'hub2.davidlig.net')
+            ->willReturn(array_shift($results));
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'S::propagator', '"hub2.davidlig.net"'], $notifier, $translator));
+
+        self::assertSame([], $this->written);
+        self::assertStringContainsString('raw.udb.done', $messages[0]);
+    }
+
+    #[Test]
+    public function udbInsAcceptsTrailingColonAndMultiWordValues(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::once())->method('ins')->with('K::G::*@bad.host::reason', 'spam bots here')
+            ->willReturn(UdbRawCommandResult::success('DB * INS K::G::*@bad.host::reason spam bots here'));
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'K::G::*@bad.host::reason', ':spam', 'bots', 'here'], $notifier, $translator));
+
+        self::assertStringContainsString('raw.udb.done', $messages[0]);
+    }
+
+    #[Test]
+    public function udbDelIsIntercepted(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::once())->method('del')->with('N::badnick')
+            ->willReturn(UdbRawCommandResult::success('DB * DEL N::badnick'));
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'DEL', 'N::badnick'], $notifier, $translator));
+
+        self::assertSame([], $this->written);
+        self::assertStringContainsString('raw.udb.done', $messages[0]);
+    }
+
+    #[Test]
+    public function udbInsWithoutValueRepliesSyntax(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::never())->method('ins');
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'S::propagator'], $notifier, $translator));
+
+        self::assertStringContainsString('raw.udb.syntax', $messages[0]);
+    }
+
+    #[Test]
+    public function udbDelWithValueRepliesSyntax(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::never())->method('del');
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'DEL', 'N::badnick', 'extra'], $notifier, $translator));
+
+        self::assertStringContainsString('raw.udb.syntax', $messages[0]);
+    }
+
+    #[Test]
+    public function udbNonBroadcastTargetIsRejected(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::never())->method('ins');
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '001', 'INS', 'S::propagator', 'x'], $notifier, $translator));
+
+        self::assertStringContainsString('raw.udb.target', $messages[0]);
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function udbDropAndOptAreUnsupported(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::never())->method('ins');
+        $udb->expects(self::never())->method('del');
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'DRP', 'S'], $notifier, $translator));
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'OPT', 'S'], $notifier, $translator));
+
+        self::assertStringContainsString('raw.udb.unsupported', $messages[0]);
+        self::assertStringContainsString('raw.udb.unsupported', $messages[1]);
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function udbHandlerErrorsAreRepliedWithTheErrorKey(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::once())->method('ins')->with('S::propagator', 'x')
+            ->willReturn(UdbRawCommandResult::error('raw.udb.invalid_value', ['%path%' => 'S::propagator']));
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'S::propagator', 'x'], $notifier, $translator));
+
+        self::assertStringContainsString('raw.udb.invalid_value', $messages[0]);
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function udbSuccessfulMutationStoresRedactedAuditData(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+        $sender = $this->createSender();
+
+        $udb = $this->createStub(UdbRawCommandHandlerInterface::class);
+        $udb->method('ins')->willReturn(UdbRawCommandResult::success('DB * INS N::nick::pass <redacted>'));
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($sender, ['DB', '*', 'INS', 'N::nick::pass', 'secret'], $notifier, $translator));
+
+        $auditData = $cmd->getAuditData($this->createContext($sender, [], $notifier, $translator));
+        self::assertNotNull($auditData);
+        self::assertSame('DB * INS N::nick::pass <redacted>', $auditData->target);
+        self::assertSame('Executed by TestUser', $auditData->reason);
+    }
+
+    #[Test]
+    public function otherDbFramesKeepTheClassicRawBehavior(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::never())->method('ins');
+        $udb->expects(self::never())->method('del');
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '001', 'HEL', '4', 'x'], $notifier, $translator));
+
+        self::assertSame(['DB 001 HEL 4 x'], $this->written);
+    }
+
+    #[Test]
+    public function nonDbLinesPassThroughEvenWithUdbHandler(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::never())->method('ins');
+        $udb->expects(self::never())->method('del');
+
+        $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['NOTICE', '$*', ':hi'], $notifier, $translator));
+
+        self::assertSame(['NOTICE $* :hi'], $this->written);
+    }
+
+    #[Test]
+    public function nonUdbProtocolsKeepTheClassicRawBehavior(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $udb->expects(self::never())->method('ins');
+        $udb->expects(self::never())->method('del');
+
+        $cmd = $this->createCommand($this->createConnectionHolder('unreal'), $udb);
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'S::propagator', 'x'], $notifier, $translator));
+
+        self::assertSame(['DB * INS S::propagator x'], $this->written);
+        self::assertStringContainsString('raw.done', $messages[0]);
+    }
+
+    #[Test]
+    public function missingUdbHandlerKeepsTheClassicRawBehavior(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $cmd = $this->createCommand($this->createConnectionHolder());
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'S::propagator', 'x'], $notifier, $translator));
+
+        self::assertSame(['DB * INS S::propagator x'], $this->written);
+        self::assertStringContainsString('raw.done', $messages[0]);
+    }
+
+    #[Test]
+    public function withoutProtocolModuleTheClassicRawBehaviorApplies(): void
+    {
+        $messages = [];
+        $notifier = $this->stubNotifier($messages);
+        $translator = $this->stubTranslator();
+
+        $holder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $holder->method('isConnected')->willReturn(true);
+        $holder->method('getProtocolModule')->willReturn(null);
+        $holder->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        $cmd = $this->createCommand($holder, $this->createStub(UdbRawCommandHandlerInterface::class));
+        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'S::propagator', 'x'], $notifier, $translator));
+
+        self::assertSame(['DB * INS S::propagator x'], $this->written);
+    }
+
+    // ---------- Helpers ----------
+
+    private function stubNotifier(array &$messages): OperServNotifierInterface
+    {
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
+            $messages[] = $m;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+
+        return $notifier;
+    }
+
+    private function stubTranslator(): TranslationInterface
+    {
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return $translator;
     }
 }

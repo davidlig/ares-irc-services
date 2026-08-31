@@ -254,6 +254,15 @@ raw:
   too_long:         "\x0304✗\x03 Linia este prea lungă. Maxim 510 caractere."
   not_connected:    "\x0304✗\x03 Neconectat la IRCd."
   done:             "\x0303✓\x03 Linie brută trimisă."
+  udb:
+    syntax:        "RAW DB * {INS|DEL} <block>::<path> [value]"
+    done:          "\x0303✓\x03 Mutarea UDB a fost aplicată: stocată autoritativ și în așteptarea propagării."
+    target:        "\x0304✗\x03 Mutările UDB trebuie să vizeze toate serverele (DB * ...), nu %target%."
+    unsupported:   "\x0304✗\x03 UDB DB DRP/OPT nu este disponibil prin RAW."
+    invalid_block: "\x0304✗\x03 Bloc UDB necunoscut: %block%."
+    invalid_path:  "\x0304✗\x03 Cale de înregistrare UDB invalidă: %path%."
+    invalid_value: "\x0304✗\x03 Valoare de înregistrare UDB invalidă pentru: %path%."
+    error:         "\x0304✗\x03 Eroare la scrierea în stocarea UDB; mutarea nu a fost propagată."
 
 # --- DEBUG -------------------------------------------------------------------
 debug:
