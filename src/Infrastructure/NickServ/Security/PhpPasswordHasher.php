@@ -7,18 +7,20 @@ namespace App\Infrastructure\NickServ\Security;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use RuntimeException;
 
-use const PASSWORD_DEFAULT;
+use const PASSWORD_BCRYPT;
 
 final readonly class PhpPasswordHasher implements PasswordHasherInterface
 {
+    private const int BCRYPT_COST = 12;
+
     public function hash(string $plainPassword): string
     {
-        $hash = password_hash($plainPassword, PASSWORD_DEFAULT);
+        $hash = password_hash($plainPassword, PASSWORD_BCRYPT, ['cost' => self::BCRYPT_COST]);
 
         // @codeCoverageIgnoreStart
         // Cannot test password_hash failure in unit tests.
         // Returns false only on memory exhaustion or invalid algo constant.
-        // PASSWORD_DEFAULT is always valid, and memory exhaustion would kill the process.
+        // PASSWORD_BCRYPT is always valid, and memory exhaustion would kill the process.
         if (false === $hash) {
             throw new RuntimeException('Password hashing failed.');
         }

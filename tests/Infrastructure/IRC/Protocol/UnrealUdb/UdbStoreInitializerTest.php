@@ -28,6 +28,8 @@ use ReflectionMethod;
 
 final class UdbStoreInitializerTest extends TestCase
 {
+    private const string BCRYPT_HASH = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
+
     private FakeUdbRecords $records;
 
     private FakeBlockStates $states;
@@ -45,7 +47,7 @@ final class UdbStoreInitializerTest extends TestCase
     {
         $nick = RegisteredNick::createPending(
             'david',
-            'sha256:' . str_repeat('a', 64),
+            self::BCRYPT_HASH,
             'david@example.com',
             'en',
             new DateTimeImmutable('+1 hour'),
@@ -98,7 +100,7 @@ final class UdbStoreInitializerTest extends TestCase
 
         self::assertTrue($initializer->ensureInitialized());
         self::assertSame(
-            ['david::pass' => 'sha256:' . str_repeat('a', 64), 'david::vhost' => 'david.example.net'],
+            ['david::pass' => 'crypt:' . self::BCRYPT_HASH, 'david::vhost' => 'david.example.net'],
             $this->records->blocks['N'],
         );
         self::assertSame(['#chan::founder' => 'david', '#chan::options' => '*8'], $this->records->recordsByBlock('C'));

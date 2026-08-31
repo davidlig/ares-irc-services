@@ -109,15 +109,35 @@ final class UdbNickSyncSubscriberTest extends TestCase
     #[Test]
     public function onPasswordProvidedMarksMigrationAndWritesUdbCompatibleHash(): void
     {
-        $hash = hash('sha256', 'pass');
+        $bcryptHash = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
         $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
         $migrationState->expects($this->once())->method('markAsMigrated')->with('nick');
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::pass', 'sha256:' . $hash);
+        $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::pass', 'crypt:' . $bcryptHash);
 
         $sub = $this->createSubscriber(migrationState: $migrationState, writer: $writer);
-        $sub->onPasswordProvided(new NickPasswordProvidedEvent(null, 'nick', 'pass'));
+        $sub->onPasswordProvided(new NickPasswordProvidedEvent(null, 'nick', 'pass', $bcryptHash));
+    }
+
+    #[Test]
+    public function onPasswordProvidedSkipsTheRecordWhenTheHashIsNotProjectable(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects($this->never())->method('insert');
+
+        $sub = $this->createSubscriber(writer: $writer);
+        $sub->onPasswordProvided(new NickPasswordProvidedEvent(null, 'nick', 'pass', 'md5:deadbeef'));
+    }
+
+    #[Test]
+    public function onPasswordProvidedSkipsTheRecordWhenTheHashIsNull(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects($this->never())->method('insert');
+
+        $sub = $this->createSubscriber(writer: $writer);
+        $sub->onPasswordProvided(new NickPasswordProvidedEvent(null, 'nick', 'pass', null));
     }
 
     #[Test]
@@ -137,11 +157,11 @@ final class UdbNickSyncSubscriberTest extends TestCase
         );
 
         $sub = $this->createSubscriber(repo: $repo, writer: $writer);
-        $sub->onPasswordProvided(new NickPasswordProvidedEvent(7, 'nick', 'pass'));
+        $sub->onPasswordProvided(new NickPasswordProvidedEvent(7, 'nick', 'pass', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe'));
 
         self::assertSame('N', $inserts[0][0]);
         self::assertSame('nick::pass', $inserts[0][1]);
-        self::assertStringStartsWith('sha256:', $inserts[0][2]);
+        self::assertStringStartsWith('crypt:$2y$', $inserts[0][2]);
         self::assertSame(['N', 'nick::vhost', 'nick.tld'], $inserts[1]);
     }
 
@@ -152,10 +172,10 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $repo->method('findById')->willReturn(null);
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::pass', $this->stringStartsWith('sha256:'));
+        $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::pass', $this->stringStartsWith('crypt:$2y$'));
 
         $sub = $this->createSubscriber(repo: $repo, writer: $writer);
-        $sub->onPasswordProvided(new NickPasswordProvidedEvent(999, 'nick', 'pass'));
+        $sub->onPasswordProvided(new NickPasswordProvidedEvent(999, 'nick', 'pass', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe'));
     }
 
     #[Test]

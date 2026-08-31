@@ -9,7 +9,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-use const PASSWORD_DEFAULT;
+use function strlen;
+
+use const PASSWORD_BCRYPT;
 
 #[CoversClass(PhpPasswordHasher::class)]
 final class PhpPasswordHasherTest extends TestCase
@@ -22,12 +24,25 @@ final class PhpPasswordHasherTest extends TestCase
     }
 
     #[Test]
-    public function hashProducesValidDefaultAlgorithmHash(): void
+    public function hashProducesFixedBcryptHash(): void
     {
         $hash = $this->hasher->hash('myPlainPassword');
 
         $info = password_get_info($hash);
-        self::assertSame(PASSWORD_DEFAULT, $info['algo']);
+        self::assertSame(PASSWORD_BCRYPT, $info['algo']);
+        self::assertSame(12, $info['options']['cost']);
+        self::assertSame(60, strlen($hash));
+        self::assertStringStartsWith('$2y$12$', $hash);
+    }
+
+    #[Test]
+    public function hashIsStableAcrossPhpDefaultChanges(): void
+    {
+        // The UDB projection depends on the stored format: bcrypt must stay
+        // bcrypt even if PHP changes PASSWORD_DEFAULT in the future.
+        $hash = $this->hasher->hash('myPlainPassword');
+
+        self::assertStringStartsWith('$2y$', $hash);
     }
 
     #[Test]
@@ -75,7 +90,7 @@ final class PhpPasswordHasherTest extends TestCase
         $hash = $this->hasher->hash('');
 
         $info = password_get_info($hash);
-        self::assertSame(PASSWORD_DEFAULT, $info['algo']);
+        self::assertSame(PASSWORD_BCRYPT, $info['algo']);
         self::assertTrue($this->hasher->verify('', $hash));
     }
 

@@ -220,6 +220,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
             null,
             $nick,
             $password,
+            $hash,
         ));
 
         try {

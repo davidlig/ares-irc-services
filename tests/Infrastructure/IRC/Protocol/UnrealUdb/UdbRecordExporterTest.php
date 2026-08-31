@@ -62,21 +62,22 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
-    public function compatiblePasswordHashesAreRecognized(): void
+    public function bcryptSqlHashesAreRelabeledAsCryptForUdb(): void
     {
-        self::assertTrue($this->exporter->isCompatiblePasswordHash('argon2id:$argon2id$v=19$m=65536,t=4,p=1$c2FsdA$hash'));
-        self::assertTrue($this->exporter->isCompatiblePasswordHash('crypt:$6$rounds=656000$salt$hash'));
-        self::assertTrue($this->exporter->isCompatiblePasswordHash('sha256:' . str_repeat('a', 64)));
-        self::assertTrue($this->exporter->isCompatiblePasswordHash('sha256:' . str_repeat('A', 64)));
+        $hash = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
+
+        self::assertSame('crypt:' . $hash, $this->exporter->toUdbPasswordHash($hash));
     }
 
     #[Test]
-    public function incompatiblePasswordHashesAreRejected(): void
+    public function nullAndNonBcryptHashesAreNotProjected(): void
     {
-        self::assertFalse($this->exporter->isCompatiblePasswordHash('$2y$10$bcryptjunk'));
-        self::assertFalse($this->exporter->isCompatiblePasswordHash('crypt:'));
-        self::assertFalse($this->exporter->isCompatiblePasswordHash('sha256:notahash'));
-        self::assertFalse($this->exporter->isCompatiblePasswordHash('md5:deadbeef'));
+        self::assertNull($this->exporter->toUdbPasswordHash(null));
+        self::assertNull($this->exporter->toUdbPasswordHash(''));
+        self::assertNull($this->exporter->toUdbPasswordHash('$2y$10$bcryptjunk'));
+        self::assertNull($this->exporter->toUdbPasswordHash('sha256:' . str_repeat('a', 64)));
+        self::assertNull($this->exporter->toUdbPasswordHash('argon2id:$argon2id$hash'));
+        self::assertNull($this->exporter->toUdbPasswordHash('md5:deadbeef'));
     }
 
     #[Test]
@@ -109,16 +110,17 @@ final class UdbRecordExporterTest extends TestCase
     }
 
     #[Test]
-    public function nickRecordsIncludeCompatiblePassVhostAndOper(): void
+    public function nickRecordsIncludeProjectedPassVhostAndOper(): void
     {
-        $nick = $this->createNick('davidlig', vhost: 'david.tld', passwordHash: 'sha256:' . str_repeat('a', 64));
+        $bcryptHash = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
+        $nick = $this->createNick('davidlig', vhost: 'david.tld', passwordHash: $bcryptHash);
         $role = OperRole::create('netadmin');
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create($nick->getId(), $role));
         $exporter = $this->createExporterWithIrcopRepo($ircopRepo);
 
         self::assertSame([
-            'davidlig::pass' => 'sha256:' . str_repeat('a', 64),
+            'davidlig::pass' => 'crypt:' . $bcryptHash,
             'davidlig::vhost' => 'david.tld',
             'davidlig::oper' => 'NETADMIN',
         ], $exporter->nickRecords($nick));
@@ -130,6 +132,15 @@ final class UdbRecordExporterTest extends TestCase
         $nick = $this->createNick('plainnick', passwordHash: '$2y$10$bcrypt');
 
         self::assertSame([], $this->exporter->nickRecords($nick));
+    }
+
+    #[Test]
+    public function nickRecordsProjectBcryptSqlHashesIntoUdbForm(): void
+    {
+        $hash = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
+        $nick = $this->createNick('plainnick', passwordHash: $hash);
+
+        self::assertSame(['plainnick::pass' => 'crypt:' . $hash], $this->exporter->nickRecords($nick));
     }
 
     #[Test]

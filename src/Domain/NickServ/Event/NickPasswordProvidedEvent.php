@@ -10,5 +10,6 @@ final readonly class NickPasswordProvidedEvent
         public ?int $nickId,
         public string $nickname,
         public string $plaintextPassword,
+        public ?string $passwordHash,
     ) {}
 }

@@ -15,9 +15,20 @@ final class NickPasswordProvidedEventTest extends TestCase
     #[Test]
     public function properties(): void
     {
-        $event = new NickPasswordProvidedEvent(1, 'nick', 'pass');
+        $event = new NickPasswordProvidedEvent(1, 'nick', 'pass', '$2y$12$hash');
+
         $this->assertSame(1, $event->nickId);
         $this->assertSame('nick', $event->nickname);
         $this->assertSame('pass', $event->plaintextPassword);
+        $this->assertSame('$2y$12$hash', $event->passwordHash);
+    }
+
+    #[Test]
+    public function passwordHashIsNullable(): void
+    {
+        $event = new NickPasswordProvidedEvent(null, 'nick', 'pass', null);
+
+        $this->assertNull($event->nickId);
+        $this->assertNull($event->passwordHash);
     }
 }

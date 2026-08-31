@@ -19,7 +19,6 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use function hash;
 use function sprintf;
 
 /**
@@ -63,11 +62,12 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
     {
         $this->migrationState->markAsMigrated($event->nickname);
 
-        // UDB validates hash forms itself; the SQL hash may be a PHP-only
-        // algorithm (e.g. bcrypt), so the accepted form is derived from the
-        // provided plaintext with the UDB-compatible sha256 scheme.
-        $hash = hash('sha256', $event->plaintextPassword);
-        $this->recordWriter->insert(self::BLOCK, sprintf('%s::pass', $event->nickname), sprintf('sha256:%s', $hash));
+        // Re-project the SQL hash (the event carries it) instead of deriving a
+        // second hash: both stores must verify the same password.
+        $udbHash = $this->exporter->toUdbPasswordHash($event->passwordHash);
+        if (null !== $udbHash) {
+            $this->recordWriter->insert(self::BLOCK, sprintf('%s::pass', $event->nickname), $udbHash);
+        }
 
         if (null === $event->nickId) {
             return;

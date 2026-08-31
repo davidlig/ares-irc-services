@@ -41,6 +41,7 @@ final readonly class SetPasswordHandler implements SetOptionHandlerInterface
             nickId: $account->getId(),
             nickname: $account->getNickname(),
             plaintextPassword: $value,
+            passwordHash: $account->getPasswordHash(),
         ));
 
         $this->eventDispatcher->dispatch(new NickPasswordChangedEvent(

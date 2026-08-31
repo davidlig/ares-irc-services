@@ -243,6 +243,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
             nickId: $account->getId(),
             nickname: $targetNick,
             plaintextPassword: $newPassword,
+            passwordHash: $account->getPasswordHash(),
         ));
 
         $this->eventDispatcher->dispatch(new NickPasswordChangedEvent(

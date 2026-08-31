@@ -223,6 +223,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
             $account->getId(),
             $account->getNickname(),
             $password,
+            $account->getPasswordHash(),
         ));
     }
 

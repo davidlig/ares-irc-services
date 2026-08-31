@@ -19,8 +19,6 @@ use App\Domain\OperServ\ValueObject\ForcedVhost;
 
 use function preg_match;
 use function sprintf;
-use function str_starts_with;
-use function strlen;
 use function trim;
 
 /**
@@ -44,18 +42,22 @@ final readonly class UdbRecordExporter
         private UdbChannelModesFormatter $modesFormatter = new UdbChannelModesFormatter(),
     ) {}
 
-    /** UDB-compatible password hash forms (argon2id, crypt:, sha256:hex64). */
-    public function isCompatiblePasswordHash(string $passwordHash): bool
+    /**
+     * Projects the SQL bcrypt hash into its UDB form.
+     *
+     * SQL stores bcrypt ($2y$, produced by PhpPasswordHasher) and UDB verifies
+     * it through crypt() (AUTHTYPE_UNIXCRYPT), so the stored hash is only
+     * re-labeled with the `crypt:` scheme prefix — never re-computed. Both
+     * stores therefore verify the same password. Returns null when there is
+     * no hash or it is not a well-formed bcrypt hash.
+     */
+    public function toUdbPasswordHash(?string $passwordHash): ?string
     {
-        if (str_starts_with($passwordHash, 'argon2id:$argon2id$')) {
-            return true;
+        if (null === $passwordHash || 1 !== preg_match('/\A\$2y\$[0-9]{2}\$[A-Za-z0-9.\/]{53}\z/', $passwordHash)) {
+            return null;
         }
 
-        if (str_starts_with($passwordHash, 'crypt:')) {
-            return 6 < strlen($passwordHash);
-        }
-
-        return 1 === preg_match('/\Asha256:[0-9a-fA-F]{64}\z/', $passwordHash);
+        return 'crypt:' . $passwordHash;
     }
 
     /** vhost as seen by the network: role-forced pattern wins over personal vhost. */
@@ -131,9 +133,9 @@ final readonly class UdbRecordExporter
     {
         $records = [];
 
-        $passwordHash = $nick->getPasswordHash();
-        if (null !== $passwordHash && $this->isCompatiblePasswordHash($passwordHash)) {
-            $records[sprintf('%s::pass', $nick->getNickname())] = $passwordHash;
+        $udbHash = $this->toUdbPasswordHash($nick->getPasswordHash());
+        if (null !== $udbHash) {
+            $records[sprintf('%s::pass', $nick->getNickname())] = $udbHash;
         }
 
         $vhost = $this->effectiveVhost($nick);
