@@ -190,6 +190,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         $this->activeRoundId = null;
         $this->errReofferCount = 0;
         $this->outstanding = [];
+        $this->approved = null;
         $this->oclgView->reset();
         $this->wireTakeover?->reset();
         $this->connection = null;
@@ -498,6 +499,8 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         if (null === $this->wireTakeover || null === $this->authority) {
             return false;
         }
+
+        $this->approved ??= $this->authority->isApproved();
 
         // Bootstrap is active only while the store has never been approved.
         return !$this->approved;

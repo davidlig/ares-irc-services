@@ -1010,6 +1010,100 @@ final class UdbSessionCoordinatorTest extends TestCase
         self::assertSame([':002 DB 001 ERR BEGIN 6 1 I'], $this->written);
     }
 
+    #[Test]
+    public function approvedAuthorityAdvertisesOwnNameInsteadOfQuestionMark(): void
+    {
+        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(true);
+
+        $takeover = $this->createWireTakeover();
+        $coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            new NullLogger(),
+            new UdbOclgView(),
+            $takeover,
+            $authority,
+        );
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        // 1. Initial HEL announces own name FQDN, never '?'
+        $coordinator->onLinkReady($connection);
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        $this->written = [];
+
+        // 2. Peer sends HEL with '-': does not authorize us when store is approved
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: '-'), $connection);
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        $this->written = [];
+
+        // 3. Peer sends HEL selecting our FQDN: authorizes us, HEL ACK announces our FQDN
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: self::OWN_NAME), $connection);
+        self::assertCount(1, $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        $this->written = [];
+
+        // Seed store so reconciliation can proceed
+        foreach (UdbBlock::all() as $block) {
+            $this->blockStates->upsert($block->letter(), '00000000');
+        }
+
+        // 4. Peer ACKs our HEL: reconciliation round starts, TCP barrier HEL announces our FQDN (never '?')
+        $coordinator->handleFrame(new UdbFrame(UdbFrameKind::HelAck, '001', '002'), $connection);
+        $lines = implode("\n", $this->written);
+        self::assertStringContainsString(':002 DB 001 INF', $lines);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/m', $lines);
+        self::assertStringNotContainsString('HEL 4 ?', $lines);
+        self::assertStringNotContainsString('HEL 4 ACK ?', $lines);
+    }
+
+    #[Test]
+    public function resetClearsApprovedCacheSoReconnectionReevaluatesAuthority(): void
+    {
+        $authority = $this->createMock(UdbAuthorityStateRepositoryInterface::class);
+        $authority->expects(self::exactly(2))->method('isApproved')->willReturnOnConsecutiveCalls(false, true);
+
+        $takeover = $this->createWireTakeover();
+        $coordinator = new UdbSessionCoordinator(
+            '002',
+            $this->blockStates,
+            $this->snapshots,
+            new NullLogger(),
+            new UdbOclgView(),
+            $takeover,
+            $authority,
+        );
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('writeLine')->willReturnCallback(function (string $line): void {
+            $this->written[] = $line;
+        });
+
+        // First link: not approved yet -> announces '?'
+        $coordinator->onLinkReady($connection);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 \? [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+
+        $this->written = [];
+        $coordinator->reset();
+        $coordinator->setOwnName(self::OWN_NAME);
+        $coordinator->onRemoteServer('001', 'ircd.example.net');
+
+        // Second link: reset cleared cache, authority now returns true -> announces FQDN
+        $coordinator->onLinkReady($connection);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+    }
+
     private function bootstrapCoordinator(UdbWireTakeover $takeover, ?LoggerInterface $logger = null): UdbSessionCoordinator
     {
         $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
