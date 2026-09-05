@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\UI\CLI;
 
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface;
+use App\Application\Port\UdbOfflineTakeoverInterface;
 use App\UI\CLI\UdbTakeoverCommand;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

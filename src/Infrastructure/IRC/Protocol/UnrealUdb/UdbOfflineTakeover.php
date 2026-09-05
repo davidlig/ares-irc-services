@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
+use App\Application\Port\UdbOfflineTakeoverInterface;
 use App\Domain\Udb\Entity\UdbAuthorityState;
 use App\Domain\Udb\Entity\UdbBlockState;
 use App\Domain\Udb\Entity\UdbRecord;

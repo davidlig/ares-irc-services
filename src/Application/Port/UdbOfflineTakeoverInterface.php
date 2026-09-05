@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
+namespace App\Application\Port;
 
 interface UdbOfflineTakeoverInterface
 {

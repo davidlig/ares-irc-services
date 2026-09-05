@@ -6,10 +6,9 @@ namespace App\UI\CLI;
 
 use App\Application\IRC\Connect\ConnectToServerCommand;
 use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
+use App\Application\IRC\Connect\ProtocolConnectionPreflightInterface;
 use App\Application\IRC\IrcSessionInterface;
-use App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface;
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface;
-use App\Infrastructure\Messenger\ConsumerProcessManagerInterface;
+use App\Application\Port\ConsumerProcessManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -32,12 +31,10 @@ use const SIGTERM;
 )]
 class ConnectCommand extends Command
 {
-    /** Deterministic marker (sha256 of 'ares-fresh-seed') for the fresh SQL-seeded bootstrap. */
-    private const string FRESH_SEED_FINGERPRINT = '43566f5c8bf11593153f78572a667c7ba7705b6b33bf0c3159273fc3661f73b3';
-
     public function __construct(
         private readonly ConnectToServerHandlerInterface $handler,
         private readonly ConsumerProcessManagerInterface $consumerManager,
+        private readonly ProtocolConnectionPreflightInterface $connectionPreflight,
         private readonly string $defaultServerName,
         private readonly string $defaultHost,
         private readonly int $defaultPort,
@@ -45,10 +42,6 @@ class ConnectCommand extends Command
         private readonly string $defaultDescription,
         private readonly string $defaultProtocol,
         private readonly bool $defaultUseTls,
-        private readonly UdbAuthorityStateRepositoryInterface $udbAuthority,
-        private readonly UdbOfflineTakeoverInterface $udbTakeover,
-        private readonly string $udbDirectory,
-        private readonly bool $udbBootstrapFromPeer = false,
     ) {
         parent::__construct();
     }
@@ -113,12 +106,16 @@ class ConnectCommand extends Command
         $protocol = (string) ($input->getOption('protocol') ?? $this->defaultProtocol);
         $useTls = $input->getOption('tls') ? true : $this->defaultUseTls;
 
-        if ('unrealudb' === $protocol && !$this->udbAuthority->isApproved()) {
-            if ($this->udbBootstrapFromPeer) {
-                $io->text('UDB bootstrap from peer enabled: the dataset will be collected from the IRCd during the first session.');
-            } elseif (!$this->runUdbBootstrap($io)) {
-                return Command::FAILURE;
+        $preflight = $this->connectionPreflight->prepare($protocol);
+        if (null !== $preflight->message) {
+            if ($preflight->ready) {
+                $io->success($preflight->message);
+            } else {
+                $io->error($preflight->message);
             }
+        }
+        if (!$preflight->ready) {
+            return Command::FAILURE;
         }
 
         $io->title('Ares IRC Services');
@@ -164,48 +161,6 @@ class ConnectCommand extends Command
         }
 
         return Command::SUCCESS;
-    }
-
-    /**
-     * Bootstrap gate for UnrealUdb.
-     *
-     * Two modes: when IRC_UDB_DIRECTORY points at an offline UDB dataset the
-     * startup runs the offline takeover (adoption of an existing store; the
-     * operator must transfer remote datasets to a local path). Without a
-     * directory Ares starts as a FRESH authority: the store seeds from SQL
-     * on the first link (UdbStoreInitializer) and the IRCd adopts it over
-     * the wire — no local dataset is required. An already approved dataset
-     * is never re-imported (that would regress the live store to an older
-     * snapshot); explicit `udb:takeover` remains available for manual
-     * re-validation.
-     */
-    private function runUdbBootstrap(SymfonyStyle $io): bool
-    {
-        if ('' === $this->udbDirectory) {
-            try {
-                $this->udbAuthority->approve(self::FRESH_SEED_FINGERPRINT);
-            } catch (Throwable $e) {
-                $io->error(sprintf('UDB fresh bootstrap failed: %s', $e->getMessage()));
-
-                return false;
-            }
-
-            $io->success('UDB fresh bootstrap approved: blocks seed from SQL on the first link (no offline dataset configured).');
-
-            return true;
-        }
-
-        try {
-            $fingerprint = $this->udbTakeover->takeover($this->udbDirectory);
-        } catch (Throwable $e) {
-            $io->error(sprintf('Automatic udb:takeover failed: %s', $e->getMessage()));
-
-            return false;
-        }
-
-        $io->success(sprintf('Automatic udb:takeover approved the dataset (fingerprint %s).', $fingerprint));
-
-        return true;
     }
 
     private function registerSignalHandlers(IrcSessionInterface $client): void

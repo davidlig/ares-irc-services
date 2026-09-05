@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\UI\CLI;
 
-use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface;
+use App\Application\Port\UdbOfflineTakeoverInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;

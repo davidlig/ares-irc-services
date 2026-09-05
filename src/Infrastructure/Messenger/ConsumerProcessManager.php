@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Messenger;
 
+use App\Application\Port\ConsumerProcessManagerInterface;
 use RuntimeException;
 
 use function is_resource;

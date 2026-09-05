@@ -206,7 +206,7 @@ services:
 
     # --- Messenger consumer process (started/stopped with irc:connect) ---
 
-    App\Infrastructure\Messenger\ConsumerProcessManagerInterface: '@App\Infrastructure\Messenger\ConsumerProcessManager'
+    App\Application\Port\ConsumerProcessManagerInterface: '@App\Infrastructure\Messenger\ConsumerProcessManager'
 
     App\Infrastructure\Messenger\ConsumerProcessManager:
         arguments:
@@ -220,6 +220,7 @@ services:
     App\UI\CLI\ConnectCommand:
         arguments:
             $consumerManager:   '@App\Infrastructure\Messenger\ConsumerProcessManager'
+            $connectionPreflight: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight'
             $defaultServerName:  '%irc.server_name%'
             $defaultHost:        '%irc.ircd_host%'
             $defaultPort:        '%irc.ircd_port%'
@@ -227,10 +228,11 @@ services:
             $defaultDescription: '%irc.description%'
             $defaultProtocol:    '%irc.protocol%'
             $defaultUseTls:      '%irc.use_tls%'
-            $udbAuthority:       '@App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface'
-            $udbTakeover:        '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface'
-            $udbDirectory:       '%env(string:default::IRC_UDB_DIRECTORY)%'
-            $udbBootstrapFromPeer: '%env(bool:IRC_UDB_BOOTSTRAP_FROM_PEER)%'
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight:
+        arguments:
+            $directory: '%env(string:default::IRC_UDB_DIRECTORY)%'
+            $bootstrapFromPeer: '%env(bool:IRC_UDB_BOOTSTRAP_FROM_PEER)%'
 
     # --- Protocol modules (one per IRCd type: Unreal, InspIRCd, etc.) ---
 
@@ -688,7 +690,7 @@ services:
     App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface:
         class: App\Infrastructure\Udb\Doctrine\UdbAuthorityStateDoctrineRepository
 
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface:
+    App\Application\Port\UdbOfflineTakeoverInterface:
         alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeover
 
 

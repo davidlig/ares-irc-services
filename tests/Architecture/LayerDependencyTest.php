@@ -37,14 +37,6 @@ final class LayerDependencyTest extends TestCase
 {
     private const string ROOT = __DIR__ . '/../..';
 
-    /** @var list<string> */
-    private const array UI_LAYER_DEBT = [
-        'src/UI/CLI/ConnectCommand.php:App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface',
-        'src/UI/CLI/ConnectCommand.php:App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface',
-        'src/UI/CLI/ConnectCommand.php:App\Infrastructure\Messenger\ConsumerProcessManagerInterface',
-        'src/UI/CLI/UdbTakeoverCommand.php:App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface',
-    ];
-
     #[Test]
     public function applicationDoesNotImportInfrastructureOrFrameworks(): void
     {
@@ -89,10 +81,7 @@ final class LayerDependencyTest extends TestCase
                 continue;
             }
 
-            $violation = $import['file'] . ':' . $import['name'];
-            if (!in_array($violation, self::UI_LAYER_DEBT, true)) {
-                $violations[] = self::describe($import);
-            }
+            $violations[] = self::describe($import);
         }
 
         self::assertSame([], $violations, "UI has new Domain or Infrastructure dependencies:\n" . implode("\n", $violations));
