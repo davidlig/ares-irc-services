@@ -1324,15 +1324,6 @@ final class GlineCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $context = $this->createContext($this->createSender(), ['LIST'], $this->createStub(OperServNotifierInterface::class), $this->createStub(TranslationInterface::class), new OperServCommandRegistry([]), $this->createAccessHelper(false));
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterAdd(): void
     {
         $sender = $this->createSender();
@@ -1359,9 +1350,9 @@ final class GlineCommandTest extends TestCase
 
         $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['ADD', '*@host1234.com', '1d', 'Test reason'], $notifier, $translator, $registry, $accessHelper);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('*@host1234.com', $auditData->target);
         self::assertSame('Test reason', $auditData->reason);
@@ -1395,9 +1386,9 @@ final class GlineCommandTest extends TestCase
 
         $cmd = $this->createCommandWithRepo($glineRepo, 1000, $connectionHolder);
         $context = $this->createContext($sender, ['DEL', '*@host1234.com'], $notifier, $translator, $registry, $accessHelper);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('*@host1234.com', $auditData->target);
         self::assertNull($auditData->reason);

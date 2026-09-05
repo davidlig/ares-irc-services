@@ -8,7 +8,8 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\ChanServ\Service\ChannelHistoryService;
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -22,7 +23,7 @@ use function strtolower;
 use function strtoupper;
 use function trim;
 
-final class HistoryCommand implements ChanServCommandInterface, AuditableCommandInterface
+final class HistoryCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
     private const string ACTION_ADD = 'ADD';
 
@@ -31,8 +32,6 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
     private const string ACTION_VIEW = 'VIEW';
 
     private const string ACTION_CLEAR = 'CLEAR';
-
-    private ?IrcopAuditData $auditData = null;
 
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
@@ -112,10 +111,10 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         return false;
     }
 
-    public function execute(ChanServContext $context): void
+    public function execute(ChanServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $channelName = $context->getChannelNameArg(0);
@@ -123,7 +122,7 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         if (null === $channelName) {
             $context->reply('error.invalid_channel');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $action = strtoupper($context->args[1] ?? '');
@@ -133,24 +132,31 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         if (null === $channel) {
             $context->reply('history.not_registered', ['%channel%' => $channelName]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        match ($action) {
+        return match ($action) {
             self::ACTION_ADD => $this->handleAdd($context, $channel->getId(), $channelName),
             self::ACTION_DEL => $this->handleDel($context, $channel->getId(), $channelName),
             self::ACTION_VIEW => $this->handleView($context, $channel->getId(), $channelName),
             self::ACTION_CLEAR => $this->handleClear($context, $channel->getId(), $channelName),
-            default => $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]),
+            default => $this->rejectInvalidAction($context),
         };
     }
 
-    private function handleAdd(ChanServContext $context, int $channelId, string $channelName): void
+    private function rejectInvalidAction(ChanServContext $context): CommandOutcome
+    {
+        $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function handleAdd(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
     {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $messageParts = array_slice($context->args, 2);
@@ -159,7 +165,7 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         if ('' === $message) {
             $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $ip = $this->decodeIp($context->sender->ipBase64);
@@ -176,20 +182,22 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
             message: $message,
         );
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $channelName,
             reason: $message,
         );
 
         $context->reply('history.add.success', ['%channel%' => $channelName]);
+
+        return CommandOutcome::success($auditData);
     }
 
-    private function handleDel(ChanServContext $context, int $channelId, string $channelName): void
+    private function handleDel(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
     {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['syntax' => $context->trans('history.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $entryId = (int) $context->args[2];
@@ -197,7 +205,7 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         if ($entryId <= 0) {
             $context->reply('history.del.invalid_id', ['%id%' => $context->args[2]]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $history = $this->historyRepository->findById($entryId);
@@ -205,20 +213,22 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         if (null === $history || $history->getChannelId() !== $channelId) {
             $context->reply('history.del.not_found', ['%id%' => $entryId]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $this->historyRepository->deleteById($entryId);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $channelName,
             extra: ['entry_id' => $entryId],
         );
 
         $context->reply('history.del.success', ['%id%' => $entryId]);
+
+        return CommandOutcome::success($auditData);
     }
 
-    private function handleView(ChanServContext $context, int $channelId, string $channelName): void
+    private function handleView(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
     {
         $page = 1;
         $showAll = false;
@@ -242,7 +252,7 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         if (0 === $total) {
             $context->reply('history.view.no_entries', ['%channel%' => $channelName]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $limit = $showAll ? null : $this->historyViewLimit;
@@ -292,13 +302,15 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
                 '%next_page%' => $page + 1,
             ]);
         }
+
+        return CommandOutcome::rejected();
     }
 
-    private function handleClear(ChanServContext $context, int $channelId, string $channelName): void
+    private function handleClear(ChanServContext $context, int $channelId, string $channelName): CommandOutcome
     {
         $count = $this->historyRepository->deleteByChannelId($channelId);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $channelName,
             extra: ['count' => $count],
         );
@@ -307,6 +319,8 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
             '%count%' => $count,
             '%channel%' => $channelName,
         ]);
+
+        return CommandOutcome::success($auditData);
     }
 
     private function formatOperator(?int $performedByNickId, string $performedBy, ChanServContext $context): string
@@ -427,10 +441,5 @@ final class HistoryCommand implements ChanServCommandInterface, AuditableCommand
         $ip = inet_ntop($binary);
 
         return false !== $ip ? $ip : $ipBase64;
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 }

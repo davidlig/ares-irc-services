@@ -162,14 +162,6 @@ final class MotdCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $command = new MotdCommand($this->createStub(MotdRepositoryInterface::class));
-
-        self::assertNull($command->getAuditData($this->createContext([])));
-    }
-
-    #[Test]
     public function executeWithUnknownSubcommandRepliesError(): void
     {
         $notifier = $this->createMock(OperServNotifierInterface::class);
@@ -195,11 +187,13 @@ final class MotdCommandTest extends TestCase
                 && null !== $m->getExpiresAt()));
 
         $command = new MotdCommand($motdRepository);
-        $command->execute($this->createContext(['ADD', 'NickServ', 'PRIVMSG', '7d', 'Hello', 'World!']));
+        $outcome = $command->execute($this->createContext(['ADD', 'NickServ', 'PRIVMSG', '7d', 'Hello', 'World!']));
 
-        $auditData = $command->getAuditData($this->createContext(['ADD', 'NickServ', 'PRIVMSG', '7d', 'Hello', 'World!']));
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('NickServ', $auditData->target);
+
+        self::assertFalse($command->execute($this->createContext(['UNKNOWN']))->success);
     }
 
     #[Test]
@@ -283,9 +277,9 @@ final class MotdCommandTest extends TestCase
             ->with($motd);
 
         $command = new MotdCommand($motdRepository);
-        $command->execute($this->createContext(['DEL', '1']));
+        $outcome = $command->execute($this->createContext(['DEL', '1']));
 
-        $auditData = $command->getAuditData($this->createContext(['DEL', '1']));
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('NickServ', $auditData->target);
     }
@@ -478,9 +472,9 @@ final class MotdCommandTest extends TestCase
             ->with(self::logicalOr($expired1, $expired2));
 
         $command = new MotdCommand($motdRepository);
-        $command->execute($this->createContext(['CLEAN']));
+        $outcome = $command->execute($this->createContext(['CLEAN']));
 
-        $auditData = $command->getAuditData($this->createContext(['CLEAN']));
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
     }
 

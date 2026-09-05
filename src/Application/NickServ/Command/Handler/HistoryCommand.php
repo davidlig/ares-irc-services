@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -20,7 +21,7 @@ use function sprintf;
 use function strtoupper;
 use function trim;
 
-final class HistoryCommand implements NickServCommandInterface, AuditableCommandInterface
+final class HistoryCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
     private const string ACTION_ADD = 'ADD';
 
@@ -29,8 +30,6 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
     private const string ACTION_VIEW = 'VIEW';
 
     private const string ACTION_CLEAR = 'CLEAR';
-
-    private ?IrcopAuditData $auditData = null;
 
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
@@ -99,10 +98,10 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $targetNick = $context->args[0];
@@ -113,24 +112,31 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
         if (null === $account) {
             $context->reply('history.not_registered', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        match ($action) {
+        return match ($action) {
             self::ACTION_ADD => $this->handleAdd($context, $account->getId(), $targetNick),
             self::ACTION_DEL => $this->handleDel($context, $account->getId(), $targetNick),
             self::ACTION_VIEW => $this->handleView($context, $account->getId(), $targetNick),
             self::ACTION_CLEAR => $this->handleClear($context, $account->getId(), $targetNick),
-            default => $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]),
+            default => $this->rejectInvalidAction($context),
         };
     }
 
-    private function handleAdd(NickServContext $context, int $nickId, string $targetNick): void
+    private function rejectInvalidAction(NickServContext $context): CommandOutcome
+    {
+        $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function handleAdd(NickServContext $context, int $nickId, string $targetNick): CommandOutcome
     {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $messageParts = array_slice($context->args, 2);
@@ -139,7 +145,7 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
         if ('' === $message) {
             $context->reply('error.syntax', ['syntax' => $context->trans('history.add.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $ip = $this->decodeIp($context->sender->ipBase64);
@@ -156,20 +162,22 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
             message: $message,
         );
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $targetNick,
             reason: $message,
         );
 
         $context->reply('history.add.success', ['%nickname%' => $targetNick]);
+
+        return CommandOutcome::success($auditData);
     }
 
-    private function handleDel(NickServContext $context, int $nickId, string $targetNick): void
+    private function handleDel(NickServContext $context, int $nickId, string $targetNick): CommandOutcome
     {
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['syntax' => $context->trans('history.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $entryId = (int) $context->args[2];
@@ -177,7 +185,7 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
         if ($entryId <= 0) {
             $context->reply('history.del.invalid_id', ['%id%' => $context->args[2]]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $history = $this->historyRepository->findById($entryId);
@@ -185,20 +193,22 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
         if (null === $history || $history->getNickId() !== $nickId) {
             $context->reply('history.del.not_found', ['%id%' => $entryId]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $this->historyRepository->deleteById($entryId);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $targetNick,
             extra: ['entry_id' => $entryId],
         );
 
         $context->reply('history.del.success', ['%id%' => $entryId]);
+
+        return CommandOutcome::success($auditData);
     }
 
-    private function handleView(NickServContext $context, int $nickId, string $targetNick): void
+    private function handleView(NickServContext $context, int $nickId, string $targetNick): CommandOutcome
     {
         $page = 1;
         $showAll = false;
@@ -222,7 +232,7 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
         if (0 === $total) {
             $context->reply('history.view.no_entries', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $limit = $showAll ? null : $this->historyViewLimit;
@@ -272,13 +282,15 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
                 '%next_page%' => $page + 1,
             ]);
         }
+
+        return CommandOutcome::rejected();
     }
 
-    private function handleClear(NickServContext $context, int $nickId, string $targetNick): void
+    private function handleClear(NickServContext $context, int $nickId, string $targetNick): CommandOutcome
     {
         $count = $this->historyRepository->deleteByNickId($nickId);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $targetNick,
             extra: ['count' => $count],
         );
@@ -287,6 +299,8 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
             '%count%' => $count,
             '%nickname%' => $targetNick,
         ]);
+
+        return CommandOutcome::success($auditData);
     }
 
     private function formatOperator(?int $performedByNickId, string $performedBy, NickServContext $context): string
@@ -371,10 +385,5 @@ final class HistoryCommand implements NickServCommandInterface, AuditableCommand
         $ip = inet_ntop($binary);
 
         return false !== $ip ? $ip : $ipBase64;
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 }

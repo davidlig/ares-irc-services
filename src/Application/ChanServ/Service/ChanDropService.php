@@ -7,7 +7,9 @@ namespace App\Application\ChanServ\Service;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\TransactionManagerInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -30,6 +32,7 @@ readonly class ChanDropService
         private ServiceDebugNotifierInterface $debug,
         private LoggerInterface $logger,
         private ChannelServiceActionsPort $channelActions,
+        private TransactionManagerInterface $transactionManager,
     ) {}
 
     /**
@@ -108,14 +111,25 @@ readonly class ChanDropService
         $channelName = $channel->getName();
         $channelNameLower = $channel->getNameLower();
 
+        $cleanupEvent = new ChannelDropCleanupEvent(
+            $channelId,
+            $channelName,
+            $channelNameLower,
+            $reason,
+        );
+
+        $this->transactionManager->transactional(function () use ($cleanupEvent, $channel): void {
+            $this->eventDispatcher->dispatch($cleanupEvent);
+            $this->channelRepository->delete($channel);
+        });
+
         $this->eventDispatcher->dispatch(new ChannelDropEvent(
             $channelId,
             $channelName,
             $channelNameLower,
             $reason,
+            $cleanupEvent->occurredAt,
         ));
-
-        $this->channelRepository->delete($channel);
 
         $this->debug->log(
             operator: $operatorNick ?? '*',

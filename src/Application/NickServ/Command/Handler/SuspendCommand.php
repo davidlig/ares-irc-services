@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -24,10 +25,8 @@ use function array_slice;
 use function sprintf;
 use function strtolower;
 
-final class SuspendCommand implements NickServCommandInterface, AuditableCommandInterface
+final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickTargetValidator $targetValidator,
@@ -90,7 +89,7 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         $reasonParts = array_slice($context->args, 2);
         $reason = trim(implode(' ', $reasonParts));
@@ -98,13 +97,13 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         if ('' === $reason) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->doSuspend($context, $reason);
+        return $this->doSuspend($context, $reason);
     }
 
-    private function doSuspend(NickServContext $context, string $reason): void
+    private function doSuspend(NickServContext $context, string $reason): CommandOutcome
     {
         $targetNick = $context->args[0];
         $durationStr = $context->args[1];
@@ -114,22 +113,22 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         if (null === $account) {
             $context->reply('suspend.not_registered', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if ($account->isForbidden()) {
             $context->reply('suspend.forbidden', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if ($account->isSuspended()) {
             $context->reply('suspend.already_suspended', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->validateAndSuspend($context, $account, $targetNick, $durationStr, $reason);
+        return $this->validateAndSuspend($context, $account, $targetNick, $durationStr, $reason);
     }
 
     private function validateAndSuspend(
@@ -138,13 +137,13 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         string $targetNick,
         string $durationStr,
         string $reason,
-    ): void {
+    ): CommandOutcome {
         $protectability = $this->targetValidator->validate($targetNick);
 
         if (!$protectability->isAllowed()) {
             $this->replyProtectabilityError($context, $protectability);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $expiresAt = RelativeExpiryParser::parse($durationStr);
@@ -152,10 +151,10 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         if (null === $expiresAt && !RelativeExpiryParser::isPermanent($durationStr)) {
             $context->reply('suspend.invalid_duration');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->finalizeSuspend($context, $account, $targetNick, $durationStr, $reason, $expiresAt);
+        return $this->finalizeSuspend($context, $account, $targetNick, $durationStr, $reason, $expiresAt);
     }
 
     private function finalizeSuspend(
@@ -165,7 +164,7 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
         string $durationStr,
         string $reason,
         ?DateTimeImmutable $expiresAt,
-    ): void {
+    ): CommandOutcome {
         $account->suspend($reason, $expiresAt);
         $this->nickRepository->save($account);
 
@@ -191,7 +190,7 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
             ? $context->trans('suspend.permanent')
             : $context->formatDate($expiresAt);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $targetNick,
             reason: $reason,
             extra: ['duration' => $durationStr],
@@ -201,6 +200,8 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
             '%nickname%' => $targetNick,
             '%duration%' => $durationDisplay,
         ]);
+
+        return CommandOutcome::success($auditData);
     }
 
     private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
@@ -212,11 +213,6 @@ final class SuspendCommand implements NickServCommandInterface, AuditableCommand
             NickProtectabilityStatus::IsIrcop => $context->reply('suspend.cannot_suspend_oper', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsService => $context->reply('suspend.cannot_suspend_service', ['%nickname%' => $nickname]),
         };
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 
     private function decodeIp(string $ipBase64): string

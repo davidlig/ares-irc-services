@@ -7,7 +7,7 @@ namespace App\Tests\Infrastructure\MemoServ\Subscriber;
 use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Infrastructure\MemoServ\Subscriber\MemoServNickDropCleanupSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -45,7 +45,7 @@ final class MemoServNickDropCleanupSubscriberTest extends TestCase
         $this->memoIgnoreRepository->expects(self::never())->method('deleteAllForNick');
         $this->memoSettingsRepository->expects(self::never())->method('deleteAllForNick');
         self::assertSame(
-            [NickDropEvent::class => ['onNickDrop', 0]],
+            [NickDropCleanupEvent::class => ['onNickDrop', 0]],
             MemoServNickDropCleanupSubscriber::getSubscribedEvents(),
         );
     }
@@ -53,7 +53,7 @@ final class MemoServNickDropCleanupSubscriberTest extends TestCase
     #[Test]
     public function deletesAllMemoDataForDroppedNick(): void
     {
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 12345,
             nickname: 'TestUser',
             nicknameLower: 'testuser',

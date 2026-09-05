@@ -9,6 +9,8 @@ use App\Application\Port\NickChangePreservesIdentificationInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Application\Port\ServiceNickReservationInterface;
+use App\Application\Port\UdbRawCommandHandlerInterface;
+use App\Application\Port\UdbRawCommandResult;
 use App\Application\Port\UserModeSupportInterface;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
@@ -16,7 +18,7 @@ use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 /**
  * UnrealUdb protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.
  */
-final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, NickChangePreservesIdentificationInterface
+final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, NickChangePreservesIdentificationInterface, UdbRawCommandHandlerInterface
 {
     public const string PROTOCOL_NAME = 'unrealudb';
 
@@ -27,6 +29,7 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
         private readonly UnrealUdbChannelModeSupport $channelModeSupport,
         private readonly UnrealUdbUserModeSupport $userModeSupport,
         private readonly UnrealUdbNickReservation $nickReservation,
+        private readonly UdbRawCommandHandlerInterface $rawCommandHandler,
     ) {}
 
     public function getProtocolName(): string
@@ -62,5 +65,15 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
     public function getUserModeSupport(): UserModeSupportInterface
     {
         return $this->userModeSupport;
+    }
+
+    public function ins(string $blockPath, string $value): UdbRawCommandResult
+    {
+        return $this->rawCommandHandler->ins($blockPath, $value);
+    }
+
+    public function del(string $blockPath): UdbRawCommandResult
+    {
+        return $this->rawCommandHandler->del($blockPath);
     }
 }

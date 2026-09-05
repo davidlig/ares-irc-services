@@ -480,22 +480,6 @@ final class KillCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $context = $this->createContext(
-            null,
-            ['BadUser', 'Flooding'],
-            $this->createStub(OperServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-            new OperServCommandRegistry([]),
-            $this->createAccessHelper(false),
-        );
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterKill(): void
     {
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
@@ -534,9 +518,9 @@ final class KillCommandTest extends TestCase
         );
 
         $registry = new OperServCommandRegistry([]);
-        $cmd->execute($this->createContext($sender, ['BadUser', 'Flooding', 'channels'], $notifier, $translator, $registry, $accessHelper));
+        $outcome = $cmd->execute($this->createContext($sender, ['BadUser', 'Flooding', 'channels'], $notifier, $translator, $registry, $accessHelper));
 
-        $auditData = $cmd->getAuditData($this->createContext($sender, ['BadUser', 'Flooding'], $notifier, $translator, $registry, $accessHelper));
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('BadUser', $auditData->target);
         self::assertSame('myident@myhost.com', $auditData->targetHost);

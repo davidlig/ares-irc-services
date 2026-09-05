@@ -351,14 +351,6 @@ final class UseripCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterSuccessfulExecute(): void
     {
         $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
@@ -377,9 +369,9 @@ final class UseripCommandTest extends TestCase
         $cmd = new UseripCommand($userLookup);
         $context = $this->createContext($sender, ['TargetUser'], $notifier, $translator, $registry);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('TargetUser', $auditData->target);
         self::assertSame('hostname.example.com', $auditData->targetHost);
@@ -400,9 +392,9 @@ final class UseripCommandTest extends TestCase
         $cmd = new UseripCommand($userLookup);
         $context = $this->createContext($sender, ['UnknownUser'], $notifier, $translator, $registry);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]

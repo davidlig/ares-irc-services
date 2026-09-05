@@ -236,15 +236,6 @@ final class UnsuspendCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $messages = [];
-
-        self::assertNull($cmd->getAuditData($this->createContext(null, null, [], $messages)));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterExecute(): void
     {
         $sender = $this->createSender();
@@ -265,9 +256,9 @@ final class UnsuspendCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
     }

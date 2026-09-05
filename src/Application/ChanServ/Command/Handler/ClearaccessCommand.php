@@ -7,17 +7,16 @@ namespace App\Application\ChanServ\Command\Handler;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Security\ChanServPermission;
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
 use function strtolower;
 
-final class ClearaccessCommand implements ChanServCommandInterface, AuditableCommandInterface
+final class ClearaccessCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChannelAccessRepositoryInterface $accessRepository,
@@ -88,21 +87,21 @@ final class ClearaccessCommand implements ChanServCommandInterface, AuditableCom
         return false;
     }
 
-    public function execute(ChanServContext $context): void
+    public function execute(ChanServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $validation = $this->validateClearaccess($context);
         if (null === $validation) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         [$channelName, $channel, $count] = $validation;
         $this->accessRepository->deleteByChannelId($channel->getId());
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $channelName,
             extra: ['count' => $count],
         );
@@ -111,6 +110,8 @@ final class ClearaccessCommand implements ChanServCommandInterface, AuditableCom
             '%channel%' => $channelName,
             '%count%' => $count,
         ]);
+
+        return CommandOutcome::success($auditData);
     }
 
     /** @return array{string, object, int}|null */
@@ -147,10 +148,5 @@ final class ClearaccessCommand implements ChanServCommandInterface, AuditableCom
         }
 
         return [$channelName, $channel, $count];
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 }

@@ -144,17 +144,6 @@ final class HistoryCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        $messages = [];
-        $context = $this->createContext(['#test', 'VIEW'], $messages);
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function executeDoesNothingWhenSenderNull(): void
     {
         $historyRepo = $this->createMock(ChannelHistoryRepositoryInterface::class);
@@ -170,7 +159,7 @@ final class HistoryCommandTest extends TestCase
             new ChannelHistoryService($historyRepo),
             $this->createStub(RegisteredNickRepositoryInterface::class),
         );
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
     }
 
     #[Test]
@@ -274,7 +263,7 @@ final class HistoryCommandTest extends TestCase
             $historyService,
             $this->createStub(RegisteredNickRepositoryInterface::class),
         );
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.add.success', $messages);
         self::assertNotNull($savedHistory);
@@ -285,7 +274,7 @@ final class HistoryCommandTest extends TestCase
         self::assertSame('127.0.0.1', $savedHistory->getExtraData()['ip']);
         self::assertSame('i@h', $savedHistory->getExtraData()['host']);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertSame('Manual note', $auditData->reason);
@@ -304,7 +293,7 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['#test', 'DEL'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('error.syntax', $messages);
     }
@@ -397,11 +386,11 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['#test', 'DEL', '5'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.del.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertSame(['entry_id' => 5], $auditData->extra);
@@ -421,7 +410,7 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['#test', 'VIEW'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.view.no_entries', $messages);
     }
@@ -700,11 +689,11 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['#test', 'CLEAR'], $messages, channelRepo: $channelRepo, historyRepo: $historyRepo);
 
         $cmd = $this->createCommandWithRepos($channelRepo, $historyRepo);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.clear.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertSame(['count' => 5], $auditData->extra);

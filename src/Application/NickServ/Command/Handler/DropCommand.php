@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -21,10 +22,8 @@ use Psr\Log\LoggerInterface;
 use function strcasecmp;
 use function strtolower;
 
-final class DropCommand implements NickServCommandInterface, AuditableCommandInterface
+final class DropCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickTargetValidator $targetValidator,
@@ -88,23 +87,37 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         $resolved = $this->resolveDropAction($context);
         $action = $resolved['action'];
 
-        match ($action) {
-            'silent' => null,
-            'self' => $context->reply('drop.cannot_drop_self'),
-            'not_found' => $context->reply('drop.not_registered', ['%nickname%' => $resolved['nickname']]),
-            'pending' => $context->reply('drop.pending_deletion', ['%nickname%' => $resolved['nickname']]),
-            'pending_force_noperm', 'force_noperm' => $context->reply('error.permission_denied'),
+        return match ($action) {
+            'silent' => CommandOutcome::rejected(),
+            'self' => $this->reject($context, 'drop.cannot_drop_self'),
+            'not_found' => $this->reject($context, 'drop.not_registered', ['%nickname%' => $resolved['nickname']]),
+            'pending' => $this->reject($context, 'drop.pending_deletion', ['%nickname%' => $resolved['nickname']]),
+            'pending_force_noperm', 'force_noperm' => $this->reject($context, 'error.permission_denied'),
             'pending_force_ok', 'force_ok' => $this->executeHardDrop($context, $resolved),
-            'suspended' => $context->reply('drop.suspended', ['%nickname%' => $resolved['nickname']]),
-            'forbidden' => $context->reply('drop.forbidden', ['%nickname%' => $resolved['nickname']]),
-            'protected' => $this->replyProtectabilityError($context, $resolved['result']),
+            'suspended' => $this->reject($context, 'drop.suspended', ['%nickname%' => $resolved['nickname']]),
+            'forbidden' => $this->reject($context, 'drop.forbidden', ['%nickname%' => $resolved['nickname']]),
+            'protected' => $this->rejectProtected($context, $resolved['result']),
             'soft' => $this->executeSoftDrop($context, $resolved),
         };
+    }
+
+    private function reject(NickServContext $context, string $key, array $params = []): CommandOutcome
+    {
+        $context->reply($key, $params);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function rejectProtected(NickServContext $context, NickProtectabilityResult $result): CommandOutcome
+    {
+        $this->replyProtectabilityError($context, $result);
+
+        return CommandOutcome::rejected();
     }
 
     private function resolveDropAction(NickServContext $context): array
@@ -167,18 +180,20 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
             : 'force_ok';
     }
 
-    private function executeHardDrop(NickServContext $context, array $resolved): void
+    private function executeHardDrop(NickServContext $context, array $resolved): CommandOutcome
     {
         $this->dropService->hardDropNick($resolved['account'], 'manual-force', $context->sender->nick);
-        $this->auditData = new IrcopAuditData(target: $resolved['nickname'], extra: ['force' => true]);
         $context->reply('drop.force_success', ['%nickname%' => $resolved['nickname']]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $resolved['nickname'], extra: ['force' => true]));
     }
 
-    private function executeSoftDrop(NickServContext $context, array $resolved): void
+    private function executeSoftDrop(NickServContext $context, array $resolved): CommandOutcome
     {
         $this->dropService->softDropNick($resolved['account'], $context->sender->nick);
-        $this->auditData = new IrcopAuditData(target: $resolved['nickname']);
         $context->reply('drop.success', ['%nickname%' => $resolved['nickname']]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $resolved['nickname']));
     }
 
     private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
@@ -190,10 +205,5 @@ final class DropCommand implements NickServCommandInterface, AuditableCommandInt
             NickProtectabilityStatus::IsIrcop => $context->reply('drop.cannot_drop_oper', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsService => $context->reply('drop.cannot_drop_service', ['%nickname%' => $nickname]),
         };
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 }

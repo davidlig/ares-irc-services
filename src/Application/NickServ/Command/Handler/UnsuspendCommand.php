@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -15,10 +16,8 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 use function sprintf;
 
-final class UnsuspendCommand implements NickServCommandInterface, AuditableCommandInterface
+final class UnsuspendCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly EventBusInterface $eventDispatcher,
@@ -79,7 +78,7 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         $targetNick = $context->args[0];
 
@@ -88,13 +87,13 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
         if (null === $account) {
             $context->reply('unsuspend.not_registered', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if (!$account->isSuspended()) {
             $context->reply('unsuspend.not_suspended', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $account->unsuspend();
@@ -113,16 +112,9 @@ final class UnsuspendCommand implements NickServCommandInterface, AuditableComma
             performedByHost: $host,
         ));
 
-        $this->auditData = new IrcopAuditData(
-            target: $targetNick,
-        );
-
         $context->reply('unsuspend.success', ['%nickname%' => $targetNick]);
-    }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
+        return CommandOutcome::success(new IrcopAuditData(target: $targetNick));
     }
 
     private function decodeIp(string $ipBase64): string

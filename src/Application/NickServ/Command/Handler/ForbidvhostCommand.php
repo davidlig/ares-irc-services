@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -19,10 +20,8 @@ use function sprintf;
 use function strtoupper;
 use function trim;
 
-final class ForbidvhostCommand implements NickServCommandInterface, AuditableCommandInterface
+final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
         private readonly ForbiddenVhostService $forbiddenVhostService,
@@ -89,30 +88,30 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $sub = strtoupper($context->args[0] ?? '');
 
-        switch ($sub) {
-            case 'ADD':
-                $this->doAdd($context);
-                break;
-            case 'DEL':
-                $this->doDel($context);
-                break;
-            case 'LIST':
-                $this->doList($context);
-                break;
-            default:
-                $context->reply('forbidvhost.unknown_sub', ['%sub%' => $sub]);
-        }
+        return match ($sub) {
+            'ADD' => $this->doAdd($context),
+            'DEL' => $this->doDel($context),
+            'LIST' => $this->doList($context),
+            default => $this->rejectUnknownSubcommand($context, $sub),
+        };
     }
 
-    private function doAdd(NickServContext $context): void
+    private function rejectUnknownSubcommand(NickServContext $context, string $sub): CommandOutcome
+    {
+        $context->reply('forbidvhost.unknown_sub', ['%sub%' => $sub]);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function doAdd(NickServContext $context): CommandOutcome
     {
         $syntaxKey = 'forbidvhost.add.syntax';
         $pattern = count($context->args) >= 2 ? trim($context->args[1]) : '';
@@ -120,17 +119,17 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
         if (count($context->args) < 2 || '' === $pattern) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans($syntaxKey)]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $errorKey = $this->validateAddPattern($pattern);
         if (null !== $errorKey) {
             $context->reply($errorKey, ['%pattern%' => $pattern]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->executeAdd($context, $pattern);
+        return $this->executeAdd($context, $pattern);
     }
 
     private function validateAddPattern(string $pattern): ?string
@@ -144,32 +143,33 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
         return $result;
     }
 
-    private function executeAdd(NickServContext $context, string $pattern): void
+    private function executeAdd(NickServContext $context, string $pattern): CommandOutcome
     {
         $creatorNickId = $context->senderAccount?->getId();
         $this->forbiddenVhostService->forbid($pattern, $creatorNickId);
 
-        $this->auditData = new IrcopAuditData(target: $pattern);
         $this->logger->info('Vhost pattern forbidden via FORBIDVHOST ADD', [
             'operator' => $context->sender->nick,
             'pattern' => $pattern,
         ]);
         $context->reply('forbidvhost.add.done', ['%pattern%' => $pattern]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $pattern));
     }
 
-    private function doDel(NickServContext $context): void
+    private function doDel(NickServContext $context): CommandOutcome
     {
         if (count($context->args) < 2) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('forbidvhost.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $pattern = trim($context->args[1]);
         if ('' === $pattern) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('forbidvhost.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $removed = $this->forbiddenVhostService->unforbid($pattern);
@@ -177,12 +177,8 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
         if (!$removed) {
             $context->reply('forbidvhost.del.not_found', ['%pattern%' => $pattern]);
 
-            return;
+            return CommandOutcome::rejected();
         }
-
-        $this->auditData = new IrcopAuditData(
-            target: $pattern,
-        );
 
         $this->logger->info('Vhost pattern unforbidden via FORBIDVHOST DEL', [
             'operator' => $context->sender->nick,
@@ -190,16 +186,18 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
         ]);
 
         $context->reply('forbidvhost.del.done', ['%pattern%' => $pattern]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $pattern));
     }
 
-    private function doList(NickServContext $context): void
+    private function doList(NickServContext $context): CommandOutcome
     {
         $forbiddenList = $this->forbiddenVhostService->getAll();
 
         if ([] === $forbiddenList) {
             $context->reply('forbidvhost.list.empty');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $context->reply('forbidvhost.list.header', ['%count%' => (string) count($forbiddenList)]);
@@ -217,6 +215,8 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
             ]);
             ++$num;
         }
+
+        return CommandOutcome::rejected();
     }
 
     private function resolveCreatorName(?int $creatorNickId, NickServContext $context): string
@@ -230,10 +230,5 @@ final class ForbidvhostCommand implements NickServCommandInterface, AuditableCom
             : null;
 
         return null !== $creator ? $creator->getNickname() : $context->trans('forbidvhost.list.unknown_creator');
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 }

@@ -565,20 +565,6 @@ final class GlobalCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $context = $this->createContext(
-            new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', ''),
-            ['TestBot!bot@test.com', 'PRIVMSG', 'Hello'],
-            $this->createStub(OperServNotifierInterface::class),
-            $this->createStub(TranslationInterface::class),
-        );
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterBroadcast(): void
     {
         $sender = new SenderView('UID1', 'Operator', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
@@ -626,9 +612,9 @@ final class GlobalCommandTest extends TestCase
         );
 
         $context = $this->createContext($sender, ['TestBot!bot@test.com', 'PRIVMSG', 'Hello World'], $notifier, $translator);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('TestBot', $auditData->target);
         self::assertSame('Hello World', $auditData->reason);

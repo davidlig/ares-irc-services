@@ -8,7 +8,9 @@ use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\TransactionManagerInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,6 +18,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionProperty;
+
+use function in_array;
 
 #[CoversClass(ChanDropService::class)]
 final class ChanDropServiceTest extends TestCase
@@ -28,10 +32,35 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository = $this->createMock(RegisteredChannelRepositoryInterface::class);
         $channelRepository->expects(self::once())->method('delete')->with($channel);
 
+        $calls = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (ChannelDropEvent $event): bool => 42 === $event->channelId
-                && '#test' === $event->channelName
-                && 'manual' === $event->reason));
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
+            static function (object $event) use (&$calls): void {
+                $calls[] = match ($event::class) {
+                    ChannelDropCleanupEvent::class => 'cleanup',
+                    ChannelDropEvent::class => 'post-commit',
+                };
+
+                self::assertSame(42, $event->channelId);
+                self::assertSame('#test', $event->channelName);
+                self::assertSame('manual', $event->reason);
+            },
+        );
+
+        $channelRepository->method('delete')->willReturnCallback(static function () use (&$calls): void {
+            $calls[] = 'delete';
+        });
+
+        $transactionManager = $this->createMock(TransactionManagerInterface::class);
+        $transactionManager->expects(self::once())->method('transactional')->willReturnCallback(
+            static function (callable $operation) use (&$calls): mixed {
+                $calls[] = 'transaction-start';
+                $result = $operation();
+                $calls[] = 'commit';
+
+                return $result;
+            },
+        );
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
@@ -52,9 +81,12 @@ final class ChanDropServiceTest extends TestCase
             $debug,
             $logger,
             $this->createStub(ChannelServiceActionsPort::class),
+            $transactionManager,
         );
 
         $service->dropChannel($channel, 'manual', 'OperUser');
+
+        self::assertSame(['transaction-start', 'cleanup', 'delete', 'commit', 'post-commit'], $calls);
     }
 
     #[Test]
@@ -66,7 +98,8 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('delete');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (ChannelDropEvent $event): bool => 'inactivity' === $event->reason));
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->with(self::callback(static fn (object $event): bool => 'inactivity' === $event->reason
+                && in_array($event::class, [ChannelDropCleanupEvent::class, ChannelDropEvent::class], true)));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
@@ -87,6 +120,7 @@ final class ChanDropServiceTest extends TestCase
             $debug,
             $logger,
             $this->createStub(ChannelServiceActionsPort::class),
+            $this->immediateTransactionManager(),
         );
 
         $service->dropChannel($channel, 'inactivity', null);
@@ -101,7 +135,7 @@ final class ChanDropServiceTest extends TestCase
         $channelRepository->expects(self::once())->method('delete');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch');
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
@@ -122,6 +156,7 @@ final class ChanDropServiceTest extends TestCase
             $debug,
             $logger,
             $this->createStub(ChannelServiceActionsPort::class),
+            $this->immediateTransactionManager(),
         );
 
         $service->dropChannel($channel, 'manual', null);
@@ -151,6 +186,7 @@ final class ChanDropServiceTest extends TestCase
             $debug,
             $this->createStub(LoggerInterface::class),
             $channelActions,
+            $this->immediateTransactionManager(),
         );
 
         $service->softDropChannel($channel, 'OperUser');
@@ -179,6 +215,7 @@ final class ChanDropServiceTest extends TestCase
             $debug,
             $this->createStub(LoggerInterface::class),
             $channelActions,
+            $this->immediateTransactionManager(),
         );
 
         $service->restoreChannel($channel, 'OperUser');
@@ -213,6 +250,7 @@ final class ChanDropServiceTest extends TestCase
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
             $channelActions,
+            $this->immediateTransactionManager(),
         );
 
         $service->softDropChannel($channel);
@@ -246,6 +284,7 @@ final class ChanDropServiceTest extends TestCase
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
             $channelActions,
+            $this->immediateTransactionManager(),
         );
 
         $service->restoreChannel($channel);
@@ -259,5 +298,15 @@ final class ChanDropServiceTest extends TestCase
         $ref->setValue($channel, $id);
 
         return $channel;
+    }
+
+    private function immediateTransactionManager(): TransactionManagerInterface
+    {
+        $transactionManager = $this->createStub(TransactionManagerInterface::class);
+        $transactionManager->method('transactional')->willReturnCallback(
+            static fn (callable $operation): mixed => $operation(),
+        );
+
+        return $transactionManager;
     }
 }

@@ -135,17 +135,6 @@ final class ClearaccessCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        $messages = [];
-        $context = $this->createContext(['#test'], $messages);
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function executeDoesNothingWhenSenderNull(): void
     {
         $accessRepo = $this->createMock(ChannelAccessRepositoryInterface::class);
@@ -158,9 +147,9 @@ final class ClearaccessCommandTest extends TestCase
             $this->createStub(RegisteredChannelRepositoryInterface::class),
             $accessRepo,
         );
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -205,10 +194,10 @@ final class ClearaccessCommandTest extends TestCase
         $context = $this->createContext(['#test'], $messages, channelRepo: $channelRepo, accessRepo: $accessRepo);
 
         $cmd = new ClearaccessCommand($channelRepo, $accessRepo);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('clearaccess.empty', $messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -226,11 +215,11 @@ final class ClearaccessCommandTest extends TestCase
         $context = $this->createContext(['#test'], $messages, channelRepo: $channelRepo, accessRepo: $accessRepo);
 
         $cmd = new ClearaccessCommand($channelRepo, $accessRepo);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('clearaccess.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertSame(['count' => 5], $auditData->extra);

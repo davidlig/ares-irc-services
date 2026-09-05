@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -20,7 +20,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
     public function subscribesToNickDropEvent(): void
     {
         self::assertSame(
-            [NickDropEvent::class => ['onNickDrop', 0]],
+            [NickDropCleanupEvent::class => ['onNickDrop', 0]],
             OperServNickDropCleanupSubscriber::getSubscribedEvents(),
         );
     }
@@ -28,7 +28,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
     #[Test]
     public function deletesIrcopEntryForDroppedNick(): void
     {
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 12345,
             nickname: 'TestUser',
             nicknameLower: 'testuser',
@@ -61,7 +61,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
     #[Test]
     public function deletesIrcopEntryForDroppedNickFromInactivity(): void
     {
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 999,
             nickname: 'OldUser',
             nicknameLower: 'olduser',
@@ -94,7 +94,7 @@ final class OperServNickDropCleanupSubscriberTest extends TestCase
     #[Test]
     public function clearsGlineCreatorNickId(): void
     {
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 42,
             nickname: 'GlineCreator',
             nicknameLower: 'glinecreator',

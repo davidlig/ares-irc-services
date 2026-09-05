@@ -109,16 +109,6 @@ final class NoexpireCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $messages = [];
-        $context = $this->createContext($this->createSender(), null, ['#test', 'ON'], $messages);
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getHelpParamsReturnsEmptyArray(): void
     {
         $cmd = $this->createCommand();
@@ -161,10 +151,10 @@ final class NoexpireCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(null, null, ['#test', 'ON'], $messages, channelRepository: $channelRepository);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertEmpty($messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -178,10 +168,10 @@ final class NoexpireCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($this->createSender(), null, ['notachannel', 'ON'], $messages, channelRepository: $channelRepository);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('error.invalid_channel', $messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -193,10 +183,10 @@ final class NoexpireCommandTest extends TestCase
         $context = $this->createContext($this->createSender(), null, ['#test', 'INVALID'], $messages, channelRepository: $channelRepository);
 
         $cmd = new NoexpireCommand($channelRepository);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('error.syntax', $messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -209,10 +199,10 @@ final class NoexpireCommandTest extends TestCase
         $context = $this->createContext($this->createSender(), null, ['#test', 'ON'], $messages, channelRepository: $channelRepository);
 
         $cmd = new NoexpireCommand($channelRepository);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('noexpire.not_registered', $messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -227,10 +217,10 @@ final class NoexpireCommandTest extends TestCase
         $context = $this->createContext($this->createSender(), null, ['#forbidden', 'ON'], $messages, channelRepository: $channelRepository);
 
         $cmd = new NoexpireCommand($channelRepository);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('noexpire.forbidden', $messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -246,10 +236,10 @@ final class NoexpireCommandTest extends TestCase
         $context = $this->createContext($this->createSender(), null, ['#test', 'ON'], $messages, channelRepository: $channelRepository);
 
         $cmd = new NoexpireCommand($channelRepository);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('noexpire.suspended', $messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -267,12 +257,12 @@ final class NoexpireCommandTest extends TestCase
         $context = $this->createContext($this->createSender(), null, ['#test', 'ON'], $messages, channelRepository: $channelRepository);
 
         $cmd = new NoexpireCommand($channelRepository);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertTrue($channel->isNoExpire(), 'noExpire should be true after ON');
         self::assertContains('noexpire.success_on', $messages);
 
-        $audit = $cmd->getAuditData($context);
+        $audit = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $audit);
         self::assertSame('#test', $audit->target);
         self::assertSame(['option' => 'ON'], $audit->extra);
@@ -294,12 +284,12 @@ final class NoexpireCommandTest extends TestCase
         $context = $this->createContext($this->createSender(), null, ['#test', 'OFF'], $messages, channelRepository: $channelRepository);
 
         $cmd = new NoexpireCommand($channelRepository);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertFalse($channel->isNoExpire(), 'noExpire should be false after OFF');
         self::assertContains('noexpire.success_off', $messages);
 
-        $audit = $cmd->getAuditData($context);
+        $audit = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $audit);
         self::assertSame('#test', $audit->target);
         self::assertSame(['option' => 'OFF'], $audit->extra);

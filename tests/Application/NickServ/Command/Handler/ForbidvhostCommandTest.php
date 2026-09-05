@@ -397,17 +397,6 @@ final class ForbidvhostCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullInitially(): void
-    {
-        $cmd = $this->createCommand();
-
-        $messages = [];
-        $context = $this->createContext(['ADD'], $messages);
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterSuccessfulAdd(): void
     {
         $repo = $this->createMock(ForbiddenVhostRepositoryInterface::class);
@@ -420,9 +409,9 @@ final class ForbidvhostCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['ADD', 'pirated.com'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('pirated.com', $auditData->target);
     }
@@ -442,9 +431,9 @@ final class ForbidvhostCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(['DEL', 'pirated.com'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('pirated.com', $auditData->target);
     }

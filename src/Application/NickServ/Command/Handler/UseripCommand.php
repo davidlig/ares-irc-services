@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -14,10 +15,8 @@ use App\Application\Port\NetworkUserLookupPort;
 use function sprintf;
 use function strlen;
 
-final class UseripCommand implements NickServCommandInterface, AuditableCommandInterface
+final class UseripCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly NetworkUserLookupPort $userLookup,
     ) {}
@@ -77,10 +76,10 @@ final class UseripCommand implements NickServCommandInterface, AuditableCommandI
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $targetNick = $context->args[0];
@@ -89,13 +88,13 @@ final class UseripCommand implements NickServCommandInterface, AuditableCommandI
         if (null === $target) {
             $context->reply('userip.not_online', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $ip = $this->decodeIp($target->ipBase64);
         $host = $target->hostname;
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $targetNick,
             targetHost: $host,
             targetIp: $ip,
@@ -106,11 +105,8 @@ final class UseripCommand implements NickServCommandInterface, AuditableCommandI
             '%ip%' => $ip,
             '%host%' => $host,
         ]);
-    }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
+        return CommandOutcome::success($auditData);
     }
 
     private function decodeIp(string $ipBase64): string

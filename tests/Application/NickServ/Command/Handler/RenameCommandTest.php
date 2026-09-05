@@ -123,14 +123,6 @@ final class RenameCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
-    }
-
-    #[Test]
     public function executeWithNullSenderReturnsEarly(): void
     {
         $messages = [];
@@ -144,10 +136,10 @@ final class RenameCommandTest extends TestCase
             $this->createStub(LoggerInterface::class),
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertEmpty($messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -311,9 +303,9 @@ final class RenameCommandTest extends TestCase
             $this->createStub(LoggerInterface::class),
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('BadUser', $auditData->target);
         self::assertSame('ident@host.example.com', $auditData->targetHost);

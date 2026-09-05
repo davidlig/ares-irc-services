@@ -56,5 +56,5 @@ interface ChanServCommandInterface
      */
     public function usesLevelFounder(): bool;
 
-    public function execute(ChanServContext $context): void;
+    public function execute(ChanServContext $context);
 }

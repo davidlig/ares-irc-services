@@ -8,7 +8,9 @@ use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\TransactionManagerInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
@@ -36,6 +38,7 @@ readonly class NickDropService
         private ServiceDebugNotifierInterface $debug,
         private LoggerInterface $logger,
         private IdentifiedSessionRegistry $sessionRegistry,
+        private TransactionManagerInterface $transactionManager,
         private string $guestPrefix = 'Guest-',
     ) {}
 
@@ -115,8 +118,19 @@ readonly class NickDropService
         $nickname = $account->getNickname();
         $nicknameLower = $account->getNicknameLower();
 
-        $onlineUser = $this->userLookup->findByNick($nickname);
+        $cleanupEvent = new NickDropCleanupEvent(
+            $nickId,
+            $nickname,
+            $nicknameLower,
+            $reason,
+        );
 
+        $this->transactionManager->transactional(function () use ($cleanupEvent, $account): void {
+            $this->eventDispatcher->dispatch($cleanupEvent);
+            $this->nickRepository->delete($account);
+        });
+
+        $onlineUser = $this->userLookup->findByNick($nickname);
         if (null !== $onlineUser) {
             $this->forceService->forceGuestNick($onlineUser->uid, null, 'nick-drop');
         }
@@ -126,9 +140,8 @@ readonly class NickDropService
             $nickname,
             $nicknameLower,
             $reason,
+            $cleanupEvent->occurredAt,
         ));
-
-        $this->nickRepository->delete($account);
 
         $this->debug->log(
             operator: $operatorNick ?? '*',

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
@@ -31,10 +32,8 @@ use function strtolower;
 use function strtoupper;
 use function trim;
 
-final class GlineCommand implements OperServCommandInterface, AuditableCommandInterface
+final class GlineCommand implements OperServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly GlineRepositoryInterface $glineRepository,
         private readonly NetworkUserLookupPort $userLookup,
@@ -101,41 +100,37 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         return OperServPermission::GLINE;
     }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
-    }
-
-    public function execute(OperServContext $context): void
+    public function execute(OperServContext $context): CommandOutcome
     {
         $sender = $context->getSender();
         if (null === $sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $sub = strtoupper($context->args[0] ?? '');
-        switch ($sub) {
-            case 'ADD':
-                $this->doAdd($context);
-                break;
-            case 'DEL':
-                $this->doDel($context);
-                break;
-            case 'LIST':
-                $this->doList($context);
-                break;
-            default:
-                $context->reply('gline.unknown_sub', ['%sub%' => $sub]);
-        }
+
+        return match ($sub) {
+            'ADD' => $this->doAdd($context),
+            'DEL' => $this->doDel($context),
+            'LIST' => $this->doList($context),
+            default => $this->rejectUnknownSubcommand($context, $sub),
+        };
     }
 
-    private function doAdd(OperServContext $context): void
+    private function rejectUnknownSubcommand(OperServContext $context, string $sub): CommandOutcome
     {
-        (function () use ($context): void {
+        $context->reply('gline.unknown_sub', ['%sub%' => $sub]);
+
+        return CommandOutcome::rejected();
+    }
+
+    private function doAdd(OperServContext $context): CommandOutcome
+    {
+        return (function () use ($context): CommandOutcome {
             if (count($context->args) < 4) {
                 $context->reply('error.syntax', ['%syntax%' => $context->trans('gline.add.syntax')]);
 
-                return;
+                return CommandOutcome::rejected();
             }
 
             $mask = trim($context->args[1]);
@@ -144,27 +139,27 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
 
             $errorKey = $this->validateGlineAddBasics($context, $mask, $reason);
             if (null !== $errorKey) {
-                return;
+                return CommandOutcome::rejected();
             }
 
             $resolvedMask = Gline::isNicknameMask($mask) ? $this->resolveNicknameToMask($mask, $context) : $mask;
             if (null === $resolvedMask) {
-                return;
+                return CommandOutcome::rejected();
             }
 
             $errorKey = $this->validateGlineMaskSafety($context, $resolvedMask);
             if (null !== $errorKey) {
-                return;
+                return CommandOutcome::rejected();
             }
 
             $expiresAt = RelativeExpiryParser::isPermanent($expiryStr) ? null : RelativeExpiryParser::parse($expiryStr);
             if (null === $expiresAt && !RelativeExpiryParser::isPermanent($expiryStr)) {
                 $context->reply('gline.invalid_expiry');
 
-                return;
+                return CommandOutcome::rejected();
             }
 
-            $this->doAddGline($context, $resolvedMask, $expiresAt, $expiryStr, $reason);
+            return $this->doAddGline($context, $resolvedMask, $expiresAt, $expiryStr, $reason);
         })();
     }
 
@@ -209,7 +204,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         return $errorKey;
     }
 
-    private function doAddGline(OperServContext $context, string $resolvedMask, ?DateTimeImmutable $expiresAt, string $expiryStr, string $reason): void
+    private function doAddGline(OperServContext $context, string $resolvedMask, ?DateTimeImmutable $expiresAt, string $expiryStr, string $reason): CommandOutcome
     {
         $existing = $this->glineRepository->findByMask($resolvedMask);
         if (null !== $existing) {
@@ -218,7 +213,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
             } else {
                 $context->reply('gline.already_exists', ['%mask%' => $resolvedMask]);
 
-                return;
+                return CommandOutcome::rejected();
             }
         }
 
@@ -226,7 +221,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         if ($count >= $this->maxGlines) {
             $context->reply('gline.max_entries', ['%max%' => (string) $this->maxGlines]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $creatorNickId = $context->senderAccount?->getId();
@@ -239,7 +234,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
             ? $context->trans('gline.permanent')
             : $expiryStr;
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $resolvedMask,
             reason: $reason,
             extra: ['duration' => $duration],
@@ -250,21 +245,23 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
             '%duration%' => $duration,
             '%reason%' => $reason,
         ]);
+
+        return CommandOutcome::success($auditData);
     }
 
-    private function doDel(OperServContext $context): void
+    private function doDel(OperServContext $context): CommandOutcome
     {
         if (count($context->args) < 2) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('gline.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $item = trim($context->args[1]);
         if ('' === $item) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('gline.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $gline = $this->findGlineByItem($item);
@@ -272,7 +269,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         if (null === $gline) {
             $context->reply('gline.not_found', ['%mask%' => $item]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $mask = $gline->getMask();
@@ -280,14 +277,12 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
 
         $this->removeGlineFromIrcd($mask);
 
-        $this->auditData = new IrcopAuditData(
-            target: $mask,
-        );
-
         $context->reply('gline.del.done', ['%mask%' => $mask]);
+
+        return CommandOutcome::success(new IrcopAuditData(target: $mask));
     }
 
-    private function doList(OperServContext $context): void
+    private function doList(OperServContext $context): CommandOutcome
     {
         $pattern = count($context->args) >= 2 ? trim($context->args[1]) : null;
 
@@ -298,7 +293,7 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
         if ([] === $glines) {
             $context->reply('gline.list.empty');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $context->reply('gline.list.header', ['%count%' => (string) count($glines)]);
@@ -319,6 +314,8 @@ final class GlineCommand implements OperServCommandInterface, AuditableCommandIn
             ]);
             ++$num;
         }
+
+        return CommandOutcome::rejected();
     }
 
     private function resolveNicknameToMask(string $nickname, OperServContext $context): ?string

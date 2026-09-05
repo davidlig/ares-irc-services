@@ -111,15 +111,6 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $messages = [];
-
-        self::assertNull($cmd->getAuditData($this->createContext(null, null, [], $messages)));
-    }
-
-    #[Test]
     public function getHelpParamsReturnsEmptyArray(): void
     {
         $cmd = $this->createCommand();
@@ -138,7 +129,7 @@ final class DropCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(null, null, ['#test'], $messages, channelRepository: $channelRepository);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertEmpty($messages);
     }
@@ -194,11 +185,11 @@ final class DropCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, null, ['#test'], $messages, channelRepository: $channelRepository);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('drop.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
     }
@@ -255,10 +246,10 @@ final class DropCommandTest extends TestCase
         $messages = [];
         $cmd = new DropCommand($repo, $dropService, $authorization);
         $context = $this->createContext($sender, null, ['#test', 'force'], $messages, channelRepository: $repo);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('drop.force_success', $messages);
-        self::assertTrue($cmd->getAuditData($context)?->extra['force']);
+        self::assertTrue($outcome->auditData?->extra['force']);
     }
 
     #[Test]

@@ -113,14 +113,6 @@ final class DropCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
-    }
-
-    #[Test]
     public function getHelpParamsReturnsEmptyArray(): void
     {
         $cmd = $this->createCommand();
@@ -144,7 +136,7 @@ final class DropCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(null, ['TestNick'], $messages, nickRepository: $nickRepository);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertEmpty($messages);
     }
@@ -324,11 +316,11 @@ final class DropCommandTest extends TestCase
             $this->createStub(LoggerInterface::class),
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('drop.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TargetNick', $auditData->target);
     }
@@ -393,10 +385,10 @@ final class DropCommandTest extends TestCase
         $messages = [];
         $cmd = new DropCommand($repo, $validator, $dropService, $this->createStub(LoggerInterface::class), $authorization);
         $context = $this->createContext($sender, ['TargetNick', 'force'], $messages, nickRepository: $repo);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('drop.force_success', $messages);
-        self::assertTrue($cmd->getAuditData($context)?->extra['force']);
+        self::assertTrue($outcome->auditData?->extra['force']);
     }
 
     #[Test]

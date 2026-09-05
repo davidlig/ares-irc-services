@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Subscriber;
 
+use App\Application\Port\TransactionManagerInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -29,17 +31,18 @@ final readonly class ChanServNickDropCleanupSubscriber implements EventSubscribe
         private ChannelAkickRepositoryInterface $channelAkickRepository,
         private RegisteredChannelRepositoryInterface $channelRepository,
         private EventDispatcherInterface $eventDispatcher,
+        private TransactionManagerInterface $transactionManager,
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public static function getSubscribedEvents(): array
     {
         return [
-            NickDropEvent::class => ['onNickDrop', 0],
+            NickDropCleanupEvent::class => ['onNickDrop', 0],
         ];
     }
 
-    public function onNickDrop(NickDropEvent $event): void
+    public function onNickDrop(NickDropCleanupEvent $event): void
     {
         $nickId = $event->nickId;
 
@@ -77,13 +80,25 @@ final readonly class ChanServNickDropCleanupSubscriber implements EventSubscribe
         }
 
         // No successor → DROP channel
-        $this->eventDispatcher->dispatch(new ChannelDropEvent(
+        $cleanupEvent = new ChannelDropCleanupEvent(
             $channel->getId(),
             $channel->getName(),
             $channel->getNameLower(),
             'founder_dropped',
-        ));
+        );
+
+        $this->eventDispatcher->dispatch($cleanupEvent);
         $this->channelRepository->delete($channel);
+
+        $this->transactionManager->afterCommit(function () use ($cleanupEvent): void {
+            $this->eventDispatcher->dispatch(new ChannelDropEvent(
+                $cleanupEvent->channelId,
+                $cleanupEvent->channelName,
+                $cleanupEvent->channelNameLower,
+                $cleanupEvent->reason,
+                $cleanupEvent->occurredAt,
+            ));
+        });
         $this->logger->notice('Channel dropped due to founder nick drop with no successor', [
             'channelId' => $channel->getId(),
             'channelName' => $channel->getName(),

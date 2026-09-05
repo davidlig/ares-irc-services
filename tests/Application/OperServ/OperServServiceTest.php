@@ -6,9 +6,10 @@ namespace App\Tests\Application\OperServ;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
-use App\Application\Event\IrcopCommandExecutedEvent;
+use App\Application\Event\CommandExecutedEvent;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\SessionLanguageRegistry;
@@ -881,16 +882,14 @@ final class OperServServiceTest extends TestCase
     }
 
     #[Test]
-    public function dispatchesIrcopCommandExecutedEventWhenHandlerIsAuditableAndHasPermission(): void
+    public function dispatchesCommandExecutedEventWithSuccessfulOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, true, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        $auditableHandler = new class($contextHolder) implements OperServCommandInterface, AuditableCommandInterface {
+        $auditableHandler = new class($contextHolder) implements OperServCommandInterface, IrcopAuditableCommandInterface {
             public function __construct(private readonly stdClass $holder) {}
-
-            private ?IrcopAuditData $auditData = null;
 
             public function getName(): string
             {
@@ -942,9 +941,9 @@ final class OperServServiceTest extends TestCase
                 return 'OPERSERV_ADMIN';
             }
 
-            public function execute(OperServContext $context): void
+            public function execute(OperServContext $context): CommandOutcome
             {
-                $this->auditData = new IrcopAuditData(
+                $auditData = new IrcopAuditData(
                     target: 'TargetNick',
                     targetHost: 'user@host',
                     targetIp: '127.0.0.1',
@@ -952,11 +951,8 @@ final class OperServServiceTest extends TestCase
                     extra: ['key' => 'value'],
                 );
                 $this->holder->context = $context;
-            }
 
-            public function getAuditData(object $context): ?IrcopAuditData
-            {
-                return $this->auditData;
+                return CommandOutcome::success($auditData);
             }
         };
 
@@ -969,15 +965,13 @@ final class OperServServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'operserv' === $event->serviceName
+            ->with(self::callback(static fn (CommandExecutedEvent $event): bool => $auditableHandler === $event->command
+                && 'operserv' === $event->serviceName
                 && 'Nick' === $event->operatorNick
                 && 'AUDITCMD' === $event->commandName
                 && 'OPERSERV_ADMIN' === $event->permission
-                && 'TargetNick' === $event->target
-                && 'user@host' === $event->targetHost
-                && '127.0.0.1' === $event->targetIp
-                && 'test reason' === $event->reason
-                && ['key' => 'value'] === $event->extra));
+                && true === $event->outcome?->success
+                && 'TargetNick' === $event->outcome->auditData?->target));
 
         $registry = new OperServCommandRegistry([$auditableHandler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -1009,16 +1003,13 @@ final class OperServServiceTest extends TestCase
     }
 
     #[Test]
-    public function doesNotDispatchIrcopCommandEventWhenAuditDataIsNull(): void
+    public function dispatchesCommandExecutedEventWithRejectedOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        // Handler implements AuditableCommandInterface but getAuditData returns null (command failed)
-        $auditableHandler = new class($contextHolder) implements OperServCommandInterface, AuditableCommandInterface {
-            private ?IrcopAuditData $auditData = null;
-
+        $auditableHandler = new class($contextHolder) implements OperServCommandInterface, IrcopAuditableCommandInterface {
             public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
@@ -1071,14 +1062,11 @@ final class OperServServiceTest extends TestCase
                 return 'OPERSERV_ADMIN';
             }
 
-            public function execute(OperServContext $context): void
+            public function execute(OperServContext $context): CommandOutcome
             {
                 $this->holder->context = $context;
-            }
 
-            public function getAuditData(object $context): ?IrcopAuditData
-            {
-                return null; // Command failed, no audit data
+                return CommandOutcome::rejected();
             }
         };
 
@@ -1088,10 +1076,10 @@ final class OperServServiceTest extends TestCase
             ->with('OPERSERV_ADMIN', self::anything())
             ->willReturn(true);
 
-        // Event should NOT be dispatched when auditData is null
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::never())
-            ->method('dispatch');
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (CommandExecutedEvent $event): bool => false === $event->outcome?->success));
 
         $registry = new OperServCommandRegistry([$auditableHandler]);
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);

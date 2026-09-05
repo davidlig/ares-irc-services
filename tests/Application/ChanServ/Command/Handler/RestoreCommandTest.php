@@ -22,7 +22,6 @@ use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 #[CoversClass(RestoreCommand::class)]
 final class RestoreCommandTest extends TestCase
@@ -45,7 +44,6 @@ final class RestoreCommandTest extends TestCase
         self::assertTrue($command->allowsSuspendedChannel());
         self::assertTrue($command->allowsForbiddenChannel());
         self::assertFalse($command->usesLevelFounder());
-        self::assertNull($command->getAuditData(new stdClass()));
     }
 
     #[Test]
@@ -64,12 +62,14 @@ final class RestoreCommandTest extends TestCase
         $context = $this->createContext(['#test'], $messages);
         $command = new RestoreCommand($repo, $dropService);
 
-        $command->execute($context);
+        $outcome = $command->execute($context);
 
         self::assertContains('restore.success', $messages);
-        $auditData = $command->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
+
+        self::assertFalse($command->execute($this->createContextWithoutSender(['#test'], $messages))->success);
     }
 
     #[Test]

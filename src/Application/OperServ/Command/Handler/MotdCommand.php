@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
@@ -21,10 +22,8 @@ use function implode;
 use function sprintf;
 use function strtoupper;
 
-final class MotdCommand implements OperServCommandInterface, AuditableCommandInterface
+final class MotdCommand implements OperServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly MotdRepositoryInterface $motdRepository,
         private readonly ?ServiceDebugNotifierInterface $debugNotifier = null,
@@ -105,31 +104,33 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
         return OperServPermission::MOTD;
     }
 
-    public function execute(OperServContext $context): void
+    public function execute(OperServContext $context): CommandOutcome
     {
         $sub = strtoupper($context->args[0] ?? '');
 
-        match ($sub) {
+        return match ($sub) {
             'ADD' => $this->doAdd($context),
             'DEL' => $this->doDel($context),
             'LIST' => $this->doList($context),
             'CLEAN' => $this->doClean($context),
-            default => $context->reply('motd.unknown_sub'),
+            default => $this->rejectUnknownSubcommand($context),
         };
     }
 
-    public function getAuditData(object $context): ?IrcopAuditData
+    private function rejectUnknownSubcommand(OperServContext $context): CommandOutcome
     {
-        return $this->auditData;
+        $context->reply('motd.unknown_sub');
+
+        return CommandOutcome::rejected();
     }
 
-    private function doAdd(OperServContext $context): void
+    private function doAdd(OperServContext $context): CommandOutcome
     {
         $args = $context->args;
 
         $errorKey = $this->validateMotdAdd($context, $args);
         if (null !== $errorKey) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $botNickname = $args[1];
@@ -152,10 +153,10 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
             '%id%' => $motd->getId(),
         ]);
 
-        $this->auditData = new IrcopAuditData(
+        return CommandOutcome::success(new IrcopAuditData(
             target: $botNickname,
             reason: sprintf('MOTD ADD #%d: %s', $motd->getId(), $text),
-        );
+        ));
     }
 
     private function validateMotdAdd(OperServContext $context, array $args): ?string
@@ -193,12 +194,12 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
         })();
     }
 
-    private function doDel(OperServContext $context): void
+    private function doDel(OperServContext $context): CommandOutcome
     {
         if (count($context->args) < 2) {
             $context->reply('motd.del.syntax_hint', ['%syntax%' => $context->trans('motd.del.syntax')]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $idArg = $context->args[1];
@@ -206,7 +207,7 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
         if (!ctype_digit($idArg)) {
             $context->reply('motd.del.not_found');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $id = (int) $idArg;
@@ -215,7 +216,7 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
         if (null === $motd) {
             $context->reply('motd.del.not_found');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $this->notifyFinalized($context, $motd);
@@ -225,20 +226,20 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
             '%id%' => $id,
         ]);
 
-        $this->auditData = new IrcopAuditData(
+        return CommandOutcome::success(new IrcopAuditData(
             target: $motd->getBotNickname(),
             reason: sprintf('MOTD DEL #%d: %s', $id, $motd->getText()),
-        );
+        ));
     }
 
-    private function doList(OperServContext $context): void
+    private function doList(OperServContext $context): CommandOutcome
     {
         $entries = $this->motdRepository->findAll();
 
         if ([] === $entries) {
             $context->reply('motd.list.empty');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $context->reply('motd.list.header');
@@ -266,16 +267,18 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
                 $context->trans('motd.list.shown_count', ['%count%' => (string) $motd->getShownCount()]),
             ));
         }
+
+        return CommandOutcome::rejected();
     }
 
-    private function doClean(OperServContext $context): void
+    private function doClean(OperServContext $context): CommandOutcome
     {
         $expired = $this->motdRepository->findExpired();
 
         if ([] === $expired) {
             $context->reply('motd.clean.none');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $count = 0;
@@ -289,10 +292,10 @@ final class MotdCommand implements OperServCommandInterface, AuditableCommandInt
             '%count%' => $count,
         ]);
 
-        $this->auditData = new IrcopAuditData(
+        return CommandOutcome::success(new IrcopAuditData(
             target: '',
             reason: sprintf('MOTD CLEAN: removed %d expired entries.', $count),
-        );
+        ));
     }
 
     private function isDuration(string $raw): bool

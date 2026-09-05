@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\MemoServ\Subscriber;
 
-use App\Domain\ChanServ\Event\ChannelDropEvent;
+use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
 use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
@@ -45,7 +45,7 @@ final class MemoServChannelDropCleanupSubscriberTest extends TestCase
         $this->memoIgnoreRepository->expects(self::never())->method('deleteAllForChannel');
         $this->memoSettingsRepository->expects(self::never())->method('deleteAllForChannel');
         self::assertSame(
-            [ChannelDropEvent::class => ['onChannelDrop', 0]],
+            [ChannelDropCleanupEvent::class => ['onChannelDrop', 0]],
             MemoServChannelDropCleanupSubscriber::getSubscribedEvents(),
         );
     }
@@ -53,7 +53,7 @@ final class MemoServChannelDropCleanupSubscriberTest extends TestCase
     #[Test]
     public function deletesAllMemoDataForDroppedChannel(): void
     {
-        $event = new ChannelDropEvent(
+        $event = new ChannelDropCleanupEvent(
             channelId: 12345,
             channelName: '#Test',
             channelNameLower: '#test',

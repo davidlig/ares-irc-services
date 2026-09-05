@@ -110,14 +110,6 @@ final class UnsuspendCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
-    }
-
-    #[Test]
     public function executeWithNonexistentNickRepliesNotRegistered(): void
     {
         $sender = $this->createSender();
@@ -231,9 +223,9 @@ final class UnsuspendCommandTest extends TestCase
 
         $cmd = new UnsuspendCommand($nickRepository, $eventDispatcher);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TestNick', $auditData->target);
         self::assertNull($auditData->reason);

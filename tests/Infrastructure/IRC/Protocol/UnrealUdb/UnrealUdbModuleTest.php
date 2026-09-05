@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Application\Port\UdbRawCommandHandlerInterface;
+use App\Application\Port\UdbRawCommandResult;
 use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
 use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
@@ -50,6 +52,7 @@ final class UnrealUdbModuleTest extends TestCase
             $channelModeSupport,
             $userModeSupport,
             $nickReservation,
+            $this->createStub(UdbRawCommandHandlerInterface::class),
         );
     }
 
@@ -89,6 +92,7 @@ final class UnrealUdbModuleTest extends TestCase
             new UnrealUdbChannelModeSupport(),
             new UnrealUdbUserModeSupport(),
             new UnrealUdbNickReservation($recordWriter),
+            $this->createStub(UdbRawCommandHandlerInterface::class),
         );
 
         self::assertSame($handler, $module->getHandler());
@@ -140,5 +144,35 @@ final class UnrealUdbModuleTest extends TestCase
         $module = $this->createModule();
 
         self::assertInstanceOf(NickChangePreservesIdentificationInterface::class, $module);
+    }
+
+    #[Test]
+    public function delegatesRawCommandsToInjectedCapability(): void
+    {
+        $rawCommands = $this->createMock(UdbRawCommandHandlerInterface::class);
+        $rawCommands->expects(self::once())->method('ins')->with('S::propagator', 'hub.example')
+            ->willReturn(UdbRawCommandResult::success('inserted'));
+        $rawCommands->expects(self::once())->method('del')->with('N::nick')
+            ->willReturn(UdbRawCommandResult::success('deleted'));
+
+        $connectionHolder = new ActiveConnectionHolder();
+        $recordWriter = new UnrealUdbRecordWriter(
+            $connectionHolder,
+            $this->createReadySessionState(),
+            $this->createStub(UdbRecordRepositoryInterface::class),
+            '001',
+        );
+        $module = new UnrealUdbModule(
+            new UnrealUdbProtocolHandler('001', $this->createCoordinator()),
+            new UnrealUdbProtocolServiceActions($connectionHolder, $recordWriter),
+            new UnrealUdbServiceIntroductionFormatter(),
+            new UnrealUdbChannelModeSupport(),
+            new UnrealUdbUserModeSupport(),
+            new UnrealUdbNickReservation($recordWriter),
+            $rawCommands,
+        );
+
+        self::assertSame('inserted', $module->ins('S::propagator', 'hub.example')->auditLine);
+        self::assertSame('deleted', $module->del('N::nick')->auditLine);
     }
 }

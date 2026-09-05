@@ -6,9 +6,10 @@ namespace App\Tests\Application\NickServ;
 
 use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
-use App\Application\Event\IrcopCommandExecutedEvent;
+use App\Application\Event\CommandExecutedEvent;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
@@ -693,16 +694,14 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
-    public function dispatchesIrcopCommandExecutedEventWhenHandlerIsAuditableAndHasPermission(): void
+    public function dispatchesCommandExecutedEventWithSuccessfulOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        $auditableHandler = new class($contextHolder) implements NickServCommandInterface, AuditableCommandInterface {
+        $auditableHandler = new class($contextHolder) implements NickServCommandInterface, IrcopAuditableCommandInterface {
             public function __construct(private readonly stdClass $holder) {}
-
-            private ?IrcopAuditData $auditData = null;
 
             public function getName(): string
             {
@@ -759,9 +758,9 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): CommandOutcome
             {
-                $this->auditData = new IrcopAuditData(
+                $auditData = new IrcopAuditData(
                     target: 'TargetNick',
                     targetHost: 'user@host',
                     targetIp: '127.0.0.1',
@@ -769,11 +768,8 @@ final class NickServServiceTest extends TestCase
                     extra: ['key' => 'value'],
                 );
                 $this->holder->context = $context;
-            }
 
-            public function getAuditData(object $context): ?IrcopAuditData
-            {
-                return $this->auditData;
+                return CommandOutcome::success($auditData);
             }
         };
 
@@ -786,15 +782,13 @@ final class NickServServiceTest extends TestCase
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::once())
             ->method('dispatch')
-            ->with(self::callback(static fn (IrcopCommandExecutedEvent $event): bool => 'nickserv' === $event->serviceName
+            ->with(self::callback(static fn (CommandExecutedEvent $event): bool => $auditableHandler === $event->command
+                && 'nickserv' === $event->serviceName
                 && 'Nick' === $event->operatorNick
                 && 'AUDITCMD' === $event->commandName
                 && 'NICKSERV_ADMIN' === $event->permission
-                && 'TargetNick' === $event->target
-                && 'user@host' === $event->targetHost
-                && '127.0.0.1' === $event->targetIp
-                && 'test reason' === $event->reason
-                && ['key' => 'value'] === $event->extra));
+                && true === $event->outcome?->success
+                && 'TargetNick' === $event->outcome->auditData?->target));
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('en');
@@ -832,7 +826,7 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
-    public function doesNotDispatchIrcopCommandEventWhenHandlerIsNotAuditable(): void
+    public function dispatchesCommandExecutedEventForNonAuditableHandler(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
         $contextHolder = new stdClass();
@@ -909,8 +903,9 @@ final class NickServServiceTest extends TestCase
             ->willReturn(true);
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::never())
-            ->method('dispatch');
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (CommandExecutedEvent $event): bool => $nonAuditableHandler === $event->command && null === $event->outcome));
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('en');
@@ -944,14 +939,13 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
-    public function doesNotDispatchIrcopCommandEventWhenAuditDataIsNull(): void
+    public function dispatchesCommandExecutedEventWithRejectedOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
         $contextHolder = new stdClass();
         $contextHolder->context = null;
 
-        // Handler implements AuditableCommandInterface but getAuditData returns null (command failed)
-        $auditableHandler = new class($contextHolder) implements NickServCommandInterface, AuditableCommandInterface {
+        $auditableHandler = new class($contextHolder) implements NickServCommandInterface, IrcopAuditableCommandInterface {
             public function __construct(private readonly stdClass $holder) {}
 
             public function getName(): string
@@ -1009,14 +1003,11 @@ final class NickServServiceTest extends TestCase
                 return [];
             }
 
-            public function execute(NickServContext $context): void
+            public function execute(NickServContext $context): CommandOutcome
             {
                 $this->holder->context = $context;
-            }
 
-            public function getAuditData(object $context): ?IrcopAuditData
-            {
-                return null; // Command failed, no audit data
+                return CommandOutcome::rejected();
             }
         };
 
@@ -1026,10 +1017,10 @@ final class NickServServiceTest extends TestCase
             ->with('NICKSERV_ADMIN', self::anything())
             ->willReturn(true);
 
-        // Event should NOT be dispatched when auditData is null
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::never())
-            ->method('dispatch');
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->with(self::callback(static fn (CommandExecutedEvent $event): bool => false === $event->outcome?->success));
 
         $account = $this->createStub(RegisteredNick::class);
         $account->method('getLanguage')->willReturn('en');

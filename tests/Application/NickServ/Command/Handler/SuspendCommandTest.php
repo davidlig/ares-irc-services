@@ -113,14 +113,6 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
-    }
-
-    #[Test]
     public function executeWithEmptyIpStoresAsteriskInEvent(): void
     {
         $nick = $this->createNickWithId('TestNick', 1);
@@ -157,7 +149,7 @@ final class SuspendCommandTest extends TestCase
             $eventDispatcher,
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('suspend.success', $messages);
         self::assertCount(1, $dispatchedEvents);
@@ -202,7 +194,7 @@ final class SuspendCommandTest extends TestCase
             $eventDispatcher,
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('suspend.success', $messages);
         self::assertCount(1, $dispatchedEvents);
@@ -448,12 +440,12 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(EventBusInterface::class),
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('suspend.success', $messages);
         self::assertTrue($nick->isSuspended());
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TestNick', $auditData->target);
         self::assertSame('Permanent', $auditData->reason);

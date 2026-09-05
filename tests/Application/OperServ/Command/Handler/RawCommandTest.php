@@ -14,10 +14,10 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UdbRawCommandHandlerInterface;
+use App\Application\Port\UdbRawCommandHandlerProviderInterface;
 use App\Application\Port\UdbRawCommandResult;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
@@ -79,15 +79,10 @@ final class RawCommandTest extends TestCase
         return new ServiceNicknameRegistry([$provider]);
     }
 
-    private function createConnectionHolder(
-        string $protocol = 'unrealudb',
-        bool $connected = true,
-    ): ActiveConnectionHolderInterface {
+    private function createConnectionHolder(): ActiveConnectionHolderInterface
+    {
         $holder = $this->createStub(ActiveConnectionHolderInterface::class);
-        $module = $this->createStub(ProtocolModuleInterface::class);
-        $module->method('getProtocolName')->willReturn($protocol);
-        $holder->method('getProtocolModule')->willReturn($module);
-        $holder->method('isConnected')->willReturn($connected);
+        $holder->method('isConnected')->willReturn(true);
         $holder->method('writeLine')->willReturnCallback(function (string $line): void {
             $this->written[] = $line;
         });
@@ -99,10 +94,13 @@ final class RawCommandTest extends TestCase
         ?ActiveConnectionHolderInterface $connectionHolder = null,
         ?UdbRawCommandHandlerInterface $udbCommands = null,
     ): RawCommand {
+        $provider = $this->createStub(UdbRawCommandHandlerProviderInterface::class);
+        $provider->method('getActiveHandler')->willReturn($udbCommands);
+
         return new RawCommand(
             $connectionHolder ?? $this->createStub(ActiveConnectionHolderInterface::class),
             new NullLogger(),
-            $udbCommands,
+            $provider,
         );
     }
 
@@ -243,11 +241,11 @@ final class RawCommandTest extends TestCase
         $connectionHolder->expects(self::once())->method('writeLine')->with(':0A0BBBBBB MODE #opers +q 994AAAAAA');
 
         $cmd = $this->createCommand($connectionHolder);
-        $cmd->execute($this->createContext($sender, [':0A0BBBBBB', 'MODE', '#opers', '+q', '994AAAAAA'], $notifier, $translator));
+        $outcome = $cmd->execute($this->createContext($sender, [':0A0BBBBBB', 'MODE', '#opers', '+q', '994AAAAAA'], $notifier, $translator));
 
         self::assertStringContainsString('raw.done', $messages[0]);
 
-        $auditData = $cmd->getAuditData($this->createContext($sender, [], $notifier, $translator));
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame(':0A0BBBBBB MODE #opers +q 994AAAAAA', $auditData->target);
         self::assertSame('Executed by TestUser', $auditData->reason);
@@ -410,9 +408,9 @@ final class RawCommandTest extends TestCase
         $udb->method('ins')->willReturn(UdbRawCommandResult::success('DB * INS N::nick::pass <redacted>'));
 
         $cmd = $this->createCommand($this->createConnectionHolder(), $udb);
-        $cmd->execute($this->createContext($sender, ['DB', '*', 'INS', 'N::nick::pass', 'secret'], $notifier, $translator));
+        $outcome = $cmd->execute($this->createContext($sender, ['DB', '*', 'INS', 'N::nick::pass', 'secret'], $notifier, $translator));
 
-        $auditData = $cmd->getAuditData($this->createContext($sender, [], $notifier, $translator));
+        $auditData = $outcome->auditData;
         self::assertNotNull($auditData);
         self::assertSame('DB * INS N::nick::pass <redacted>', $auditData->target);
         self::assertSame('Executed by TestUser', $auditData->reason);
@@ -453,25 +451,7 @@ final class RawCommandTest extends TestCase
     }
 
     #[Test]
-    public function nonUdbProtocolsKeepTheClassicRawBehavior(): void
-    {
-        $messages = [];
-        $notifier = $this->stubNotifier($messages);
-        $translator = $this->stubTranslator();
-
-        $udb = $this->createMock(UdbRawCommandHandlerInterface::class);
-        $udb->expects(self::never())->method('ins');
-        $udb->expects(self::never())->method('del');
-
-        $cmd = $this->createCommand($this->createConnectionHolder('unreal'), $udb);
-        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'S::propagator', 'x'], $notifier, $translator));
-
-        self::assertSame(['DB * INS S::propagator x'], $this->written);
-        self::assertStringContainsString('raw.done', $messages[0]);
-    }
-
-    #[Test]
-    public function missingUdbHandlerKeepsTheClassicRawBehavior(): void
+    public function nonUdbProtocolWithoutCapabilityKeepsTheClassicRawBehavior(): void
     {
         $messages = [];
         $notifier = $this->stubNotifier($messages);
@@ -482,26 +462,6 @@ final class RawCommandTest extends TestCase
 
         self::assertSame(['DB * INS S::propagator x'], $this->written);
         self::assertStringContainsString('raw.done', $messages[0]);
-    }
-
-    #[Test]
-    public function withoutProtocolModuleTheClassicRawBehaviorApplies(): void
-    {
-        $messages = [];
-        $notifier = $this->stubNotifier($messages);
-        $translator = $this->stubTranslator();
-
-        $holder = $this->createStub(ActiveConnectionHolderInterface::class);
-        $holder->method('isConnected')->willReturn(true);
-        $holder->method('getProtocolModule')->willReturn(null);
-        $holder->method('writeLine')->willReturnCallback(function (string $line): void {
-            $this->written[] = $line;
-        });
-
-        $cmd = $this->createCommand($holder, $this->createStub(UdbRawCommandHandlerInterface::class));
-        $cmd->execute($this->createContext($this->createSender(), ['DB', '*', 'INS', 'S::propagator', 'x'], $notifier, $translator));
-
-        self::assertSame(['DB * INS S::propagator x'], $this->written);
     }
 
     // ---------- Helpers ----------

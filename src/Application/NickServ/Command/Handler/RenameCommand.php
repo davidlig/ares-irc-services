@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -16,10 +17,8 @@ use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\Port\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 
-final class RenameCommand implements NickServCommandInterface, AuditableCommandInterface
+final class RenameCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly NetworkUserLookupPort $userLookup,
         private readonly NickForceService $forceService,
@@ -83,10 +82,10 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
         return ['%prefix%' => $this->guestPrefix];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $targetNick = $context->args[0];
@@ -96,7 +95,7 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
         if (null === $onlineUser) {
             $context->reply('rename.not_online', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $protectability = $this->targetValidator->validate($targetNick);
@@ -104,12 +103,12 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
         if (!$protectability->isAllowed()) {
             $this->replyProtectabilityError($context, $protectability);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $this->forceService->forceGuestNick($onlineUser->uid, null, 'ircop-rename');
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $targetNick,
             targetHost: $onlineUser->ident . '@' . $onlineUser->hostname,
             targetIp: $onlineUser->ipBase64,
@@ -125,6 +124,8 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
             '%nickname%' => $targetNick,
             '%new_nick%' => $this->guestPrefix . 'XXXXXXX',
         ]);
+
+        return CommandOutcome::success($auditData);
     }
 
     private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
@@ -136,10 +137,5 @@ final class RenameCommand implements NickServCommandInterface, AuditableCommandI
             NickProtectabilityStatus::IsIrcop => $context->reply('rename.cannot_rename_oper', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsService => $context->reply('rename.cannot_rename_service', ['%nickname%' => $nickname]),
         };
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 }

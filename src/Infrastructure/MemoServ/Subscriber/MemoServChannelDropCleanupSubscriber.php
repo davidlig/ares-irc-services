@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\MemoServ\Subscriber;
 
-use App\Domain\ChanServ\Event\ChannelDropEvent;
+use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
 use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
@@ -24,11 +24,11 @@ final readonly class MemoServChannelDropCleanupSubscriber implements EventSubscr
     public static function getSubscribedEvents(): array
     {
         return [
-            ChannelDropEvent::class => ['onChannelDrop', 0],
+            ChannelDropCleanupEvent::class => ['onChannelDrop', 0],
         ];
     }
 
-    public function onChannelDrop(ChannelDropEvent $event): void
+    public function onChannelDrop(ChannelDropCleanupEvent $event): void
     {
         $this->memoRepository->deleteAllForChannel($event->channelId);
         $this->memoIgnoreRepository->deleteAllForChannel($event->channelId);

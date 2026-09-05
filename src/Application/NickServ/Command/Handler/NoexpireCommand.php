@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -14,10 +15,8 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use function in_array;
 use function strtoupper;
 
-final class NoexpireCommand implements NickServCommandInterface, AuditableCommandInterface
+final class NoexpireCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
     ) {}
@@ -77,23 +76,23 @@ final class NoexpireCommand implements NickServCommandInterface, AuditableComman
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         $action = strtoupper($context->args[1]);
         if (!in_array($action, ['ON', 'OFF'], true)) {
             $context->reply('error.syntax', ['syntax' => $context->trans($this->getSyntaxKey())]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $errorKey = $this->validateNoexpireTarget($context);
         if (null !== $errorKey) {
             $context->reply($errorKey, ['%nickname%' => $context->args[0]]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->executeNoexpire($context, 'ON' === $action);
+        return $this->executeNoexpire($context, 'ON' === $action);
     }
 
     private function validateNoexpireTarget(NickServContext $context): ?string
@@ -110,7 +109,7 @@ final class NoexpireCommand implements NickServCommandInterface, AuditableComman
         return $result;
     }
 
-    private function executeNoexpire(NickServContext $context, bool $newValue): void
+    private function executeNoexpire(NickServContext $context, bool $newValue): CommandOutcome
     {
         $targetNick = $context->args[0];
         $action = strtoupper($context->args[1]);
@@ -119,15 +118,11 @@ final class NoexpireCommand implements NickServCommandInterface, AuditableComman
         $account->changeNoExpire($newValue);
         $this->nickRepository->save($account);
 
-        $this->auditData = new IrcopAuditData(target: $targetNick, extra: ['option' => $action]);
         $context->reply(
             $newValue ? 'noexpire.success_on' : 'noexpire.success_off',
             ['%nickname%' => $targetNick],
         );
-    }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
+        return CommandOutcome::success(new IrcopAuditData(target: $targetNick, extra: ['option' => $action]));
     }
 }

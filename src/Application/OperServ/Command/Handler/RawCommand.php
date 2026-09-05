@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\UdbRawCommandHandlerInterface;
+use App\Application\Port\UdbRawCommandHandlerProviderInterface;
 use App\Application\Port\UdbRawCommandResult;
 use Psr\Log\LoggerInterface;
 
@@ -26,14 +28,12 @@ use function strtoupper;
 use function substr;
 use function trim;
 
-final class RawCommand implements OperServCommandInterface, AuditableCommandInterface
+final class RawCommand implements OperServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly LoggerInterface $logger,
-        private readonly ?UdbRawCommandHandlerInterface $udbCommands = null,
+        private readonly UdbRawCommandHandlerProviderInterface $udbCommands,
     ) {}
 
     public function getName(): string
@@ -86,27 +86,23 @@ final class RawCommand implements OperServCommandInterface, AuditableCommandInte
         return OperServPermission::RAW;
     }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
-    }
-
-    public function execute(OperServContext $context): void
+    public function execute(OperServContext $context): CommandOutcome
     {
         $sender = $context->getSender();
         if (null === $sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $rawLine = implode(' ', $context->args);
 
         $errorKey = $this->validateRawLine($context, $rawLine);
         if (null !== $errorKey) {
-            return;
+            return CommandOutcome::rejected();
         }
 
-        if ($this->interceptUdbMutation($context)) {
-            return;
+        $udbOutcome = $this->interceptUdbMutation($context);
+        if (null !== $udbOutcome) {
+            return $udbOutcome;
         }
 
         $this->connectionHolder->writeLine($rawLine);
@@ -116,102 +112,94 @@ final class RawCommand implements OperServCommandInterface, AuditableCommandInte
             'line' => $rawLine,
         ]);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $rawLine,
             reason: sprintf('Executed by %s', $sender->nick),
         );
 
         $context->reply('raw.done');
+
+        return CommandOutcome::success($auditData);
     }
 
     /**
-     * When the active protocol is UDB-capable (unrealudb), intercepted DB
-     * mutations are validated and applied against the authoritative services
-     * store instead of being written blindly to the socket. Returns true when
-     * the line was handled (including rejected with a reply).
+     * When the UDB capability is available, intercepted DB mutations are
+     * validated and applied instead of being written blindly to the socket.
      */
-    private function interceptUdbMutation(OperServContext $context): bool
+    private function interceptUdbMutation(OperServContext $context): ?CommandOutcome
     {
-        if (null === $this->udbCommands) {
-            return false;
-        }
-
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module || 'unrealudb' !== $module->getProtocolName()) {
-            return false;
+        $handler = $this->udbCommands->getActiveHandler();
+        if (null === $handler) {
+            return null;
         }
 
         $args = $context->args;
         if (count($args) < 3 || 'DB' !== strtoupper($args[0])) {
-            return false;
+            return null;
         }
 
         $subcommand = strtoupper($args[2]);
 
         // Other DB frames keep the classic (dangerous) raw behavior.
         if (!in_array($subcommand, ['INS', 'DEL', 'DRP', 'OPT'], true)) {
-            return false;
+            return null;
         }
 
         if ('*' !== $args[1]) {
             $context->reply('raw.udb.target', ['%target%' => $args[1]]);
 
-            return true;
+            return CommandOutcome::rejected();
         }
 
         if ('INS' === $subcommand) {
-            $this->handleIns($context, $args);
-
-            return true;
+            return $this->handleIns($context, $args, $handler);
         }
 
         if ('DEL' === $subcommand) {
-            $this->handleDel($context, $args);
-
-            return true;
+            return $this->handleDel($context, $args, $handler);
         }
 
         $context->reply('raw.udb.unsupported');
 
-        return true;
+        return CommandOutcome::rejected();
     }
 
     /**
      * @param list<string> $args
      */
-    private function handleIns(OperServContext $context, array $args): void
+    private function handleIns(OperServContext $context, array $args, UdbRawCommandHandlerInterface $handler): CommandOutcome
     {
         if (count($args) < 5 || '' === trim($args[3] ?? '')) {
             $context->reply('raw.udb.syntax');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $value = $this->decodeValue(implode(' ', array_slice($args, 4)));
 
-        $this->applyUdbResult($context, $this->udbCommands->ins($args[3], $value));
+        return $this->applyUdbResult($context, $handler->ins($args[3], $value));
     }
 
     /**
      * @param list<string> $args
      */
-    private function handleDel(OperServContext $context, array $args): void
+    private function handleDel(OperServContext $context, array $args, UdbRawCommandHandlerInterface $handler): CommandOutcome
     {
         if (4 !== count($args) || '' === trim($args[3] ?? '')) {
             $context->reply('raw.udb.syntax');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->applyUdbResult($context, $this->udbCommands->del($args[3]));
+        return $this->applyUdbResult($context, $handler->del($args[3]));
     }
 
-    private function applyUdbResult(OperServContext $context, UdbRawCommandResult $result): void
+    private function applyUdbResult(OperServContext $context, UdbRawCommandResult $result): CommandOutcome
     {
         if (!$result->success) {
             $context->reply($result->errorKey ?? 'raw.udb.error', $result->errorParams);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $sender = $context->getSender();
@@ -222,12 +210,14 @@ final class RawCommand implements OperServCommandInterface, AuditableCommandInte
             'line' => $auditLine,
         ]);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $auditLine,
             reason: sprintf('Executed by %s', $sender?->nick ?? 'unknown'),
         );
 
         $context->reply('raw.udb.done');
+
+        return CommandOutcome::success($auditData);
     }
 
     /** Strips an optional IRC trailing colon and optional surrounding double quotes. */

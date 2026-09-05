@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\NickServ\Subscriber;
 
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use App\Infrastructure\NickServ\Subscriber\ForbiddenVhostCleanupSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -19,8 +19,10 @@ final class ForbiddenVhostCleanupSubscriberTest extends TestCase
     {
         $events = ForbiddenVhostCleanupSubscriber::getSubscribedEvents();
 
-        self::assertArrayHasKey(NickDropEvent::class, $events);
-        self::assertSame(['onNickDrop', 0], $events[NickDropEvent::class]);
+        self::assertSame(
+            [NickDropCleanupEvent::class => ['onNickDrop', 0]],
+            $events,
+        );
     }
 
     #[Test]
@@ -29,7 +31,7 @@ final class ForbiddenVhostCleanupSubscriberTest extends TestCase
         $repository = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $subscriber = new ForbiddenVhostCleanupSubscriber($repository);
 
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 123,
             nickname: 'TestNick',
             nicknameLower: 'testnick',
@@ -50,7 +52,7 @@ final class ForbiddenVhostCleanupSubscriberTest extends TestCase
         $repository = $this->createMock(ForbiddenVhostRepositoryInterface::class);
         $subscriber = new ForbiddenVhostCleanupSubscriber($repository);
 
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 456,
             nickname: 'OtherNick',
             nicknameLower: 'othernick',

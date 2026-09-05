@@ -402,17 +402,6 @@ final class ClearusersCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $messages = [];
-
-        $context = $this->createContext($this->createSender(), ['#test'], $messages);
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterExecute(): void
     {
         $sender = $this->createSender();
@@ -454,9 +443,9 @@ final class ClearusersCommandTest extends TestCase
         );
 
         $cmd = new ClearusersCommand($channelRepository, $notifier);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertSame('spam', $auditData->reason);
@@ -504,9 +493,9 @@ final class ClearusersCommandTest extends TestCase
         );
 
         $cmd = new ClearusersCommand($channelRepository, $notifier);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertNull($auditData->reason);
         self::assertSame(['kicked_count' => 1], $auditData->extra);

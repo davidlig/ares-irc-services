@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Subscriber;
 
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -26,11 +26,11 @@ final readonly class OperServNickDropCleanupSubscriber implements EventSubscribe
     public static function getSubscribedEvents(): array
     {
         return [
-            NickDropEvent::class => ['onNickDrop', 0],
+            NickDropCleanupEvent::class => ['onNickDrop', 0],
         ];
     }
 
-    public function onNickDrop(NickDropEvent $event): void
+    public function onNickDrop(NickDropCleanupEvent $event): void
     {
         $this->operIrcopRepository->deleteByNickId($event->nickId);
 

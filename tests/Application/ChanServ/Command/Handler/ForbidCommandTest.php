@@ -280,17 +280,6 @@ final class ForbidCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $messages = [];
-
-        $context = $this->createContext($this->createSender(), ['#test', 'abuse'], $messages);
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterSuccessfulForbid(): void
     {
         $sender = $this->createSender();
@@ -309,9 +298,9 @@ final class ForbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, ['#test', 'abuse'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertSame('abuse', $auditData->reason);
@@ -336,9 +325,9 @@ final class ForbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, ['#test', 'new', 'reason'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertSame('new reason', $auditData->reason);
@@ -357,9 +346,9 @@ final class ForbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, ['notachannel', 'abuse'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -375,9 +364,9 @@ final class ForbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, ['#test', ''], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     private function createCommand(): ForbidCommand

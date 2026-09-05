@@ -11,7 +11,9 @@ use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\TransactionManagerInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
@@ -20,6 +22,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
+
+use function in_array;
 
 #[CoversClass(NickDropService::class)]
 final class NickDropServiceTest extends TestCase
@@ -38,10 +42,35 @@ final class NickDropServiceTest extends TestCase
         $forceService = $this->createMock(NickForceService::class);
         $forceService->expects(self::never())->method('forceGuestNick');
 
+        $calls = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (NickDropEvent $event): bool => 42 === $event->nickId
-                && 'TestNick' === $event->nickname
-                && 'manual' === $event->reason));
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
+            static function (object $event) use (&$calls): void {
+                $calls[] = match ($event::class) {
+                    NickDropCleanupEvent::class => 'cleanup',
+                    NickDropEvent::class => 'post-commit',
+                };
+
+                self::assertSame(42, $event->nickId);
+                self::assertSame('TestNick', $event->nickname);
+                self::assertSame('manual', $event->reason);
+            },
+        );
+
+        $nickRepository->method('delete')->willReturnCallback(static function () use (&$calls): void {
+            $calls[] = 'delete';
+        });
+
+        $transactionManager = $this->createMock(TransactionManagerInterface::class);
+        $transactionManager->expects(self::once())->method('transactional')->willReturnCallback(
+            static function (callable $operation) use (&$calls): mixed {
+                $calls[] = 'transaction-start';
+                $result = $operation();
+                $calls[] = 'commit';
+
+                return $result;
+            },
+        );
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
@@ -64,10 +93,13 @@ final class NickDropServiceTest extends TestCase
             $debug,
             $logger,
             new IdentifiedSessionRegistry(),
+            $transactionManager,
             'Guest-',
         );
 
         $service->dropNick($nick, 'manual', 'OperUser');
+
+        self::assertSame(['transaction-start', 'cleanup', 'delete', 'commit', 'post-commit'], $calls);
     }
 
     #[Test]
@@ -87,7 +119,7 @@ final class NickDropServiceTest extends TestCase
         $forceService->expects(self::once())->method('forceGuestNick')->with('UID123', null, 'nick-drop');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch');
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log');
@@ -103,6 +135,7 @@ final class NickDropServiceTest extends TestCase
             $debug,
             $logger,
             new IdentifiedSessionRegistry(),
+            $this->immediateTransactionManager(),
             'Guest-',
         );
 
@@ -124,7 +157,8 @@ final class NickDropServiceTest extends TestCase
         $forceService->expects(self::never())->method('forceGuestNick');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch')->with(self::callback(static fn (NickDropEvent $event): bool => 'inactivity' === $event->reason));
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->with(self::callback(static fn (object $event): bool => 'inactivity' === $event->reason
+                && in_array($event::class, [NickDropCleanupEvent::class, NickDropEvent::class], true)));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
@@ -148,6 +182,7 @@ final class NickDropServiceTest extends TestCase
             $debug,
             $logger,
             new IdentifiedSessionRegistry(),
+            $this->immediateTransactionManager(),
             'Guest-',
         );
 
@@ -169,7 +204,7 @@ final class NickDropServiceTest extends TestCase
         $forceService->expects(self::never())->method('forceGuestNick');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::once())->method('dispatch');
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch');
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
@@ -193,6 +228,7 @@ final class NickDropServiceTest extends TestCase
             $debug,
             $logger,
             new IdentifiedSessionRegistry(),
+            $this->immediateTransactionManager(),
             'Guest-',
         );
 
@@ -228,6 +264,7 @@ final class NickDropServiceTest extends TestCase
             $debug,
             $this->createStub(LoggerInterface::class),
             $sessionRegistry,
+            $this->immediateTransactionManager(),
             'Guest-',
         );
 
@@ -259,6 +296,7 @@ final class NickDropServiceTest extends TestCase
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
             $sessionRegistry,
+            $this->immediateTransactionManager(),
             'Guest-',
         );
 
@@ -289,6 +327,7 @@ final class NickDropServiceTest extends TestCase
             $this->createStub(ServiceDebugNotifierInterface::class),
             $this->createStub(LoggerInterface::class),
             $sessionRegistry,
+            $this->immediateTransactionManager(),
             'Guest-',
         );
 
@@ -317,6 +356,7 @@ final class NickDropServiceTest extends TestCase
             $debug,
             $this->createStub(LoggerInterface::class),
             new IdentifiedSessionRegistry(),
+            $this->immediateTransactionManager(),
             'Guest-',
         );
 
@@ -335,5 +375,15 @@ final class NickDropServiceTest extends TestCase
         $idProp->setValue($nick, $id);
 
         return $nick;
+    }
+
+    private function immediateTransactionManager(): TransactionManagerInterface
+    {
+        $transactionManager = $this->createStub(TransactionManagerInterface::class);
+        $transactionManager->method('transactional')->willReturnCallback(
+            static fn (callable $operation): mixed => $operation(),
+        );
+
+        return $transactionManager;
     }
 }

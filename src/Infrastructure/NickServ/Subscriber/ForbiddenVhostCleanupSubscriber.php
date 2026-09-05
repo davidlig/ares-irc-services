@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Subscriber;
 
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -20,11 +20,11 @@ final readonly class ForbiddenVhostCleanupSubscriber implements EventSubscriberI
     public static function getSubscribedEvents(): array
     {
         return [
-            NickDropEvent::class => ['onNickDrop', 0],
+            NickDropCleanupEvent::class => ['onNickDrop', 0],
         ];
     }
 
-    public function onNickDrop(NickDropEvent $event): void
+    public function onNickDrop(NickDropCleanupEvent $event): void
     {
         $this->forbiddenVhostRepository->clearCreatedByNickId($event->nickId);
     }

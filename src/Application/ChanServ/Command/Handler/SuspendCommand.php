@@ -8,7 +8,8 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\ChanServ\Service\ChannelSuspensionService;
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\Port\EventBusInterface;
 use App\Application\Shared\Time\RelativeExpiryParser;
@@ -20,10 +21,8 @@ use function array_slice;
 use function sprintf;
 use function strtolower;
 
-final class SuspendCommand implements ChanServCommandInterface, AuditableCommandInterface
+final class SuspendCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChannelSuspensionService $suspensionService,
@@ -96,18 +95,18 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
         return false;
     }
 
-    public function execute(ChanServContext $context): void
+    public function execute(ChanServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $validation = $this->validateSuspend($context);
         if (null === $validation) {
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->performSuspend($context, ...$validation);
+        return $this->performSuspend($context, ...$validation);
     }
 
     /** @return array{string, object, string, string, ?DateTimeImmutable}|null */
@@ -168,7 +167,7 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
         return [$channelName, $channel, $durationStr, $reason, $expiresAt];
     }
 
-    private function performSuspend(ChanServContext $context, string $channelName, object $channel, string $durationStr, string $reason, ?DateTimeImmutable $expiresAt): void
+    private function performSuspend(ChanServContext $context, string $channelName, object $channel, string $durationStr, string $reason, ?DateTimeImmutable $expiresAt): CommandOutcome
     {
         $channel->suspend($reason, $expiresAt);
         $this->channelRepository->save($channel);
@@ -196,7 +195,7 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
             ? $context->trans('suspend.permanent')
             : $context->formatDate($expiresAt);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $channelName,
             reason: $reason,
             extra: ['duration' => $durationStr],
@@ -206,11 +205,8 @@ final class SuspendCommand implements ChanServCommandInterface, AuditableCommand
             '%channel%' => $channelName,
             '%duration%' => $durationDisplay,
         ]);
-    }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
+        return CommandOutcome::success($auditData);
     }
 
     private function decodeIp(string $ipBase64): string

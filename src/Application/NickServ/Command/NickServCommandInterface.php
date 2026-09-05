@@ -88,5 +88,5 @@ interface NickServCommandInterface
     public function getHelpParams(): array;
 
     /** Execute the command. All communication is done via $context->reply(). */
-    public function execute(NickServContext $context): void;
+    public function execute(NickServContext $context);
 }

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -27,7 +28,7 @@ use function strtoupper;
  * Requires 'nickserv.saset' permission.
  * Target cannot be Root, IRCop, or Service nickname.
  */
-final class SasetCommand implements NickServCommandInterface, AuditableCommandInterface
+final class SasetCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
     private const array SUPPORTED_OPTIONS = ['PASSWORD', 'EMAIL', 'LANGUAGE', 'TIMEZONE', 'PRIVATE', 'MSG', 'VHOST'];
 
@@ -35,8 +36,6 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
 
     /** @var array<string, SetOptionHandlerInterface> */
     private array $handlers;
-
-    private ?IrcopAuditData $auditData = null;
 
     public function __construct(
         SetPasswordHandler $setPasswordHandler,
@@ -158,10 +157,10 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         if (count($context->args) < 3) {
@@ -169,13 +168,13 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
                 'syntax' => $context->trans($this->getSyntaxKey()),
             ]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->routeSaset($context);
+        return $this->routeSaset($context);
     }
 
-    private function routeSaset(NickServContext $context): void
+    private function routeSaset(NickServContext $context): CommandOutcome
     {
         $targetNick = $context->args[0];
         $option = strtoupper($context->args[1]);
@@ -187,7 +186,7 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
                 'options' => implode(', ', self::SUPPORTED_OPTIONS),
             ]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $protectability = $this->targetValidator->validate($targetNick);
@@ -195,17 +194,17 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
         if (!$protectability->isAllowed()) {
             $this->replyProtectabilityError($context, $protectability);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $targetAccount = $protectability->account;
         if (null === $targetAccount) {
             $context->reply('saset.not_registered', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
-        $this->dispatchSaset($context, $targetNick, $option, $value, $targetAccount);
+        return $this->dispatchSaset($context, $targetNick, $option, $value, $targetAccount);
     }
 
     private function dispatchSaset(
@@ -214,7 +213,7 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
         string $option,
         string $value,
         RegisteredNick $targetAccount,
-    ): void {
+    ): CommandOutcome {
         $handler = $this->handlers[$option] ?? null;
         // @codeCoverageIgnoreStart
         if (null === $handler) {
@@ -223,17 +222,18 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
                 'options' => implode(', ', self::SUPPORTED_OPTIONS),
             ]);
 
-            return;
+            return CommandOutcome::rejected();
         }
         // @codeCoverageIgnoreEnd
 
         $handler->handle($context, $targetAccount, $value, true);
 
         $auditValue = self::PASSWORD_OPTION === $option ? null : $value;
-        $this->auditData = new IrcopAuditData(
+
+        return CommandOutcome::success(new IrcopAuditData(
             target: $targetNick,
             extra: ['option' => $option, 'value' => $auditValue],
-        );
+        ));
     }
 
     private function replyProtectabilityError(NickServContext $context, NickProtectabilityResult $result): void
@@ -246,10 +246,5 @@ final class SasetCommand implements NickServCommandInterface, AuditableCommandIn
             NickProtectabilityStatus::Allowed => null,
             // @codeCoverageIgnoreEnd
         };
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 }

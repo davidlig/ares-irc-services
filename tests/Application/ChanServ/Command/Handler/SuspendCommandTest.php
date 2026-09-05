@@ -311,17 +311,6 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $messages = [];
-
-        $context = $this->createContext($this->createSender(), ['#test', '0', 'abuse'], $messages);
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterExecute(): void
     {
         $sender = $this->createSender();
@@ -343,9 +332,9 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(EventBusInterface::class),
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertSame('abuse', $auditData->reason);

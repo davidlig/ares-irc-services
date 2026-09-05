@@ -106,14 +106,6 @@ final class UnforbidCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
-    }
-
-    #[Test]
     public function getHelpParamsReturnsEmptyArray(): void
     {
         $cmd = $this->createCommand();
@@ -135,7 +127,7 @@ final class UnforbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(null, ['TestNick'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertEmpty($messages);
     }
@@ -156,10 +148,10 @@ final class UnforbidCommandTest extends TestCase
             $this->createStub(LoggerInterface::class),
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('unforbid.not_forbidden', $messages);
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -178,11 +170,11 @@ final class UnforbidCommandTest extends TestCase
             $this->createStub(LoggerInterface::class),
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('unforbid.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('BadNick', $auditData->target);
     }

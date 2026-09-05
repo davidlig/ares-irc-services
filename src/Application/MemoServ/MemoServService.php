@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Application\MemoServ;
 
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
-use App\Application\Command\AuditableCommandInterface;
-use App\Application\Event\IrcopCommandExecutedEvent;
+use App\Application\Command\CommandOutcome;
+use App\Application\Event\CommandExecutedEvent;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
@@ -124,27 +124,15 @@ final readonly class MemoServService
                 count($context->args),
             ));
 
-            $handler->execute($context);
-
-            if (null !== $requiredPermission) {
-                $auditData = $handler instanceof AuditableCommandInterface
-                    ? $handler->getAuditData($context)
-                    : null;
-
-                if (null !== $auditData) {
-                    $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
-                        serviceName: $this->notifier->getServiceKey(),
-                        operatorNick: $sender->nick,
-                        commandName: $cmdName,
-                        permission: $requiredPermission,
-                        target: $auditData->target,
-                        targetHost: $auditData->targetHost,
-                        targetIp: $auditData->targetIp,
-                        reason: $auditData->reason,
-                        extra: $auditData->extra,
-                    ));
-                }
-            }
+            $result = $handler->execute($context);
+            $this->eventDispatcher->dispatch(new CommandExecutedEvent(
+                command: $handler,
+                serviceName: $this->notifier->getServiceKey(),
+                operatorNick: $sender->nick,
+                commandName: $cmdName,
+                permission: $requiredPermission,
+                outcome: $result instanceof CommandOutcome ? $result : null,
+            ));
         } catch (MemoDisabledException $e) {
             $context->reply('send.service_disabled_for_target', ['target' => $e->target]);
         } catch (Throwable $e) {

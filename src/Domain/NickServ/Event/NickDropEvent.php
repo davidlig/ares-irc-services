@@ -8,8 +8,7 @@ use DateTimeImmutable;
 
 /**
  * Dispatched when a registered nickname is dropped (e.g. due to inactivity or manual DROP).
- * Other services (ChanServ, MemoServ) may subscribe to clean up channels, memos, etc.
- * Dispatched before the nick is removed from persistence; subscribers must use event payload only.
+ * Post-commit notification for external projections and effects after a nickname is dropped.
  */
 final readonly class NickDropEvent
 {

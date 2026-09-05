@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -12,10 +13,8 @@ use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use Psr\Log\LoggerInterface;
 
-final class UnforbidCommand implements NickServCommandInterface, AuditableCommandInterface
+final class UnforbidCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly ForbiddenNickService $forbiddenService,
         private readonly LoggerInterface $logger,
@@ -76,10 +75,10 @@ final class UnforbidCommand implements NickServCommandInterface, AuditableComman
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $targetNick = $context->args[0];
@@ -89,12 +88,8 @@ final class UnforbidCommand implements NickServCommandInterface, AuditableComman
         if (!$success) {
             $context->reply('unforbid.not_forbidden', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
-
-        $this->auditData = new IrcopAuditData(
-            target: $targetNick,
-        );
 
         $this->logger->info('Nickname unforbidden via UNFORBID command', [
             'operator' => $context->sender->nick,
@@ -102,10 +97,7 @@ final class UnforbidCommand implements NickServCommandInterface, AuditableComman
         ]);
 
         $context->reply('unforbid.success', ['%nickname%' => $targetNick]);
-    }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
+        return CommandOutcome::success(new IrcopAuditData(target: $targetNick));
     }
 }

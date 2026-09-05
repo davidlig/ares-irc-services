@@ -125,14 +125,6 @@ final class HistoryCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
-    }
-
-    #[Test]
     public function executeWithNonexistentNickRepliesNotRegistered(): void
     {
         $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -142,7 +134,7 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['TestNick', 'VIEW'], $messages, nickRepo: $nickRepo);
 
         $cmd = $this->createCommand();
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.not_registered', $messages);
     }
@@ -206,7 +198,7 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['TestNick', 'ADD', 'Manual', 'note'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
 
         $cmd = new HistoryCommand($nickRepo, $historyRepo, $historyService);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.add.success', $messages);
         self::assertNotNull($savedHistory);
@@ -215,7 +207,7 @@ final class HistoryCommandTest extends TestCase
         self::assertSame('OperUser', $savedHistory->getPerformedBy());
         self::assertSame('Manual note', $savedHistory->getMessage());
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TestNick', $auditData->target);
         self::assertSame('Manual note', $auditData->reason);
@@ -234,7 +226,7 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['TestNick', 'DEL'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
 
         $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo));
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('error.syntax', $messages);
     }
@@ -327,11 +319,11 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['TestNick', 'DEL', '5'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
 
         $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo));
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.del.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TestNick', $auditData->target);
         self::assertSame(['entry_id' => 5], $auditData->extra);
@@ -351,7 +343,7 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['TestNick', 'VIEW'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
 
         $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo));
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.view.no_entries', $messages);
     }
@@ -566,11 +558,11 @@ final class HistoryCommandTest extends TestCase
         $context = $this->createContext(['TestNick', 'CLEAR'], $messages, nickRepo: $nickRepo, historyRepo: $historyRepo);
 
         $cmd = new HistoryCommand($nickRepo, $historyRepo, $this->createNickHistoryService($historyRepo));
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('history.clear.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TestNick', $auditData->target);
         self::assertSame(['count' => 5], $auditData->extra);

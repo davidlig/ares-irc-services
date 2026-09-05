@@ -7,7 +7,7 @@ namespace App\Infrastructure\MemoServ\Subscriber;
 use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -24,11 +24,11 @@ final readonly class MemoServNickDropCleanupSubscriber implements EventSubscribe
     public static function getSubscribedEvents(): array
     {
         return [
-            NickDropEvent::class => ['onNickDrop', 0],
+            NickDropCleanupEvent::class => ['onNickDrop', 0],
         ];
     }
 
-    public function onNickDrop(NickDropEvent $event): void
+    public function onNickDrop(NickDropCleanupEvent $event): void
     {
         $this->memoRepository->deleteAllForNick($event->nickId);
         $this->memoIgnoreRepository->deleteAllForNick($event->nickId);

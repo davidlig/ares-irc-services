@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
@@ -23,10 +24,8 @@ use function implode;
 use function sprintf;
 use function strtolower;
 
-final class KillCommand implements OperServCommandInterface, AuditableCommandInterface
+final class KillCommand implements OperServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly NetworkUserLookupPort $userLookup,
         private readonly RootUserRegistry $rootRegistry,
@@ -87,16 +86,11 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         return OperServPermission::KILL;
     }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
-    }
-
-    public function execute(OperServContext $context): void
+    public function execute(OperServContext $context): CommandOutcome
     {
         $sender = $context->getSender();
         if (null === $sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $targetNick = $context->args[0];
@@ -104,7 +98,7 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
         $targetError = $this->validateTarget($context, $target, $targetNick);
 
         if (null !== $targetError || null === $target) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $reason = implode(' ', array_slice($context->args, 1));
@@ -119,12 +113,12 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
                 'target' => $targetNick,
             ]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $module->getServiceActions()->killUser($serverSid, $target->uid, $killReason);
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $targetNick,
             targetHost: $target->ident . '@' . $target->hostname,
             targetIp: $target->ipBase64,
@@ -135,6 +129,8 @@ final class KillCommand implements OperServCommandInterface, AuditableCommandInt
             '%nickname%' => $targetNick,
             '%reason%' => $reason,
         ]);
+
+        return CommandOutcome::success($auditData);
     }
 
     private function validateTarget(OperServContext $context, ?SenderView $target, string $targetNick): ?string

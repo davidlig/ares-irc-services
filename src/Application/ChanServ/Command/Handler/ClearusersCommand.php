@@ -8,7 +8,8 @@ use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Security\ChanServPermission;
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 
@@ -17,10 +18,8 @@ use function count;
 use function strtolower;
 use function trim;
 
-final class ClearusersCommand implements ChanServCommandInterface, AuditableCommandInterface
+final class ClearusersCommand implements ChanServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly RegisteredChannelRepositoryInterface $channelRepository,
         private readonly ChanServNotifierInterface $notifier,
@@ -91,15 +90,15 @@ final class ClearusersCommand implements ChanServCommandInterface, AuditableComm
         return false;
     }
 
-    public function execute(ChanServContext $context): void
+    public function execute(ChanServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $validation = $this->validateClearusers($context);
         if (null === $validation) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         [$channelName, $view, $reason] = $validation;
@@ -115,7 +114,7 @@ final class ClearusersCommand implements ChanServCommandInterface, AuditableComm
             );
         }
 
-        $this->auditData = new IrcopAuditData(
+        $auditData = new IrcopAuditData(
             target: $channelName,
             reason: '' !== $reason ? $reason : null,
             extra: ['kicked_count' => $count],
@@ -125,6 +124,8 @@ final class ClearusersCommand implements ChanServCommandInterface, AuditableComm
             '%channel%' => $channelName,
             '%count%' => (string) $count,
         ]);
+
+        return CommandOutcome::success($auditData);
     }
 
     /** @return array{string, object, string}|null */
@@ -170,10 +171,5 @@ final class ClearusersCommand implements ChanServCommandInterface, AuditableComm
         }
 
         return [$channelName, $view, $reason];
-    }
-
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
     }
 }

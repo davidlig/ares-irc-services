@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Subscriber;
 
-use App\Domain\ChanServ\Event\ChannelDropEvent;
+use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
 use App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -17,11 +17,11 @@ final readonly class ChanServHistoryChannelDropSubscriber implements EventSubscr
     public static function getSubscribedEvents(): array
     {
         return [
-            ChannelDropEvent::class => ['onChannelDrop', 0],
+            ChannelDropCleanupEvent::class => ['onChannelDrop', 0],
         ];
     }
 
-    public function onChannelDrop(ChannelDropEvent $event): void
+    public function onChannelDrop(ChannelDropCleanupEvent $event): void
     {
         $this->historyRepository->deleteByChannelId($event->channelId);
     }

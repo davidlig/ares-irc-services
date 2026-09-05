@@ -36,5 +36,5 @@ interface MemoServCommandInterface
     /** Null = no permission; 'IDENTIFIED' = sender must have a registered nick (senderAccount). */
     public function getRequiredPermission(): ?string;
 
-    public function execute(MemoServContext $context): void;
+    public function execute(MemoServContext $context);
 }

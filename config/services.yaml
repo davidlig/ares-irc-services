@@ -394,6 +394,7 @@ services:
             $channelModeSupport: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport'
             $userModeSupport: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbUserModeSupport'
             $nickReservation: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation'
+            $rawCommandHandler: '@App\Application\Port\UdbRawCommandHandlerInterface'
         tags: ['irc.protocol_module']
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory: ~
@@ -1605,6 +1606,9 @@ services:
     App\Application\Port\EventBusInterface:
         alias: App\Infrastructure\Event\SymfonyEventBus
 
+    App\Application\Port\TransactionManagerInterface:
+        alias: App\Infrastructure\Persistence\DoctrineTransactionManager
+
     App\Application\Port\AsyncMessageDispatcherInterface:
         alias: App\Infrastructure\Messenger\SymfonyAsyncMessageDispatcher
 
@@ -1811,8 +1815,11 @@ services:
         arguments:
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $logger: '@monolog.logger.ircops'
-            $udbCommands: '@App\Application\Port\UdbRawCommandHandlerInterface'
+            $udbCommands: '@App\Application\Port\UdbRawCommandHandlerProviderInterface'
         tags: ['operserv.command']
+
+    App\Application\Port\UdbRawCommandHandlerProviderInterface:
+        alias: App\Infrastructure\IRC\Connection\ActiveUdbRawCommandHandlerProvider
 
     App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
         arguments:

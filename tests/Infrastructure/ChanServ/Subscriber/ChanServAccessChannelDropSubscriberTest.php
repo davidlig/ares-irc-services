@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
-use App\Domain\ChanServ\Event\ChannelDropEvent;
+use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Infrastructure\ChanServ\Subscriber\ChanServAccessChannelDropSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -34,7 +34,7 @@ final class ChanServAccessChannelDropSubscriberTest extends TestCase
         $this->accessRepository->expects(self::never())->method('deleteByChannelId');
 
         self::assertSame(
-            [ChannelDropEvent::class => ['onChannelDrop', 0]],
+            [ChannelDropCleanupEvent::class => ['onChannelDrop', 0]],
             ChanServAccessChannelDropSubscriber::getSubscribedEvents(),
         );
     }
@@ -42,7 +42,7 @@ final class ChanServAccessChannelDropSubscriberTest extends TestCase
     #[Test]
     public function deletesAccessForDroppedChannel(): void
     {
-        $event = new ChannelDropEvent(
+        $event = new ChannelDropCleanupEvent(
             channelId: 12345,
             channelName: '#test',
             channelNameLower: '#test',
@@ -60,7 +60,7 @@ final class ChanServAccessChannelDropSubscriberTest extends TestCase
     #[Test]
     public function deletesAccessForDifferentChannelIds(): void
     {
-        $event = new ChannelDropEvent(
+        $event = new ChannelDropCleanupEvent(
             channelId: 999,
             channelName: '#other',
             channelNameLower: '#other',

@@ -7,6 +7,7 @@ namespace App\Tests\Application\NickServ\Service;
 use App\Application\NickServ\Service\ForbiddenVhostService;
 use App\Domain\NickServ\Entity\ForbiddenVhost;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

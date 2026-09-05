@@ -387,9 +387,9 @@ final class SasetCommandTest extends TestCase
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
         $context = $this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), null, ['TargetUser', 'LANGUAGE', 'en'], $notifier, $translator);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TargetUser', $auditData->target);
         self::assertSame('LANGUAGE', $auditData->extra['option']);
@@ -418,9 +418,9 @@ final class SasetCommandTest extends TestCase
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
         $context = $this->createContext(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip'), null, ['TargetUser', 'PASSWORD', 'newpass'], $notifier, $translator);
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('TargetUser', $auditData->target);
         self::assertSame('PASSWORD', $auditData->extra['option']);

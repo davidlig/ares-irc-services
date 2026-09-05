@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\NickServ\Subscriber;
 
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Domain\NickServ\Repository\NickHistoryRepositoryInterface;
 use App\Infrastructure\NickServ\Subscriber\NickHistoryNickDropSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -34,7 +34,7 @@ final class NickHistoryNickDropSubscriberTest extends TestCase
         $this->historyRepository->expects(self::never())->method('deleteByNickId');
 
         self::assertSame(
-            [NickDropEvent::class => ['onNickDrop', 0]],
+            [NickDropCleanupEvent::class => ['onNickDrop', 0]],
             NickHistoryNickDropSubscriber::getSubscribedEvents(),
         );
     }
@@ -42,7 +42,7 @@ final class NickHistoryNickDropSubscriberTest extends TestCase
     #[Test]
     public function deletesHistoryForDroppedNick(): void
     {
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 12345,
             nickname: 'TestUser',
             nicknameLower: 'testuser',
@@ -60,7 +60,7 @@ final class NickHistoryNickDropSubscriberTest extends TestCase
     #[Test]
     public function deletesHistoryForDifferentNickIds(): void
     {
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 999,
             nickname: 'AnotherUser',
             nicknameLower: 'anotheruser',

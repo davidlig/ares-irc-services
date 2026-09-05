@@ -191,17 +191,6 @@ final class UnforbidCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-        $messages = [];
-
-        $context = $this->createContext($this->createSender(), ['#test'], $messages);
-
-        self::assertNull($cmd->getAuditData($context));
-    }
-
-    #[Test]
     public function getAuditDataReturnsDataAfterSuccessfulUnforbid(): void
     {
         $sender = $this->createSender();
@@ -214,9 +203,9 @@ final class UnforbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, ['#test'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('#test', $auditData->target);
         self::assertNull($auditData->reason);
@@ -235,9 +224,9 @@ final class UnforbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, ['#test'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -250,9 +239,9 @@ final class UnforbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext($sender, ['notachannel'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     #[Test]
@@ -263,9 +252,9 @@ final class UnforbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(null, ['#test'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
-        self::assertNull($cmd->getAuditData($context));
+        self::assertFalse($outcome->success);
     }
 
     private function createCommand(): UnforbidCommand

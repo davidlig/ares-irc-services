@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Application\OperServ\Command\Handler;
 
 use App\Application\ApplicationPort\ServiceUidRegistry;
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
@@ -25,15 +26,13 @@ use function sprintf;
 use function strtolower;
 use function strtoupper;
 
-final class GlobalCommand implements OperServCommandInterface, AuditableCommandInterface
+final class GlobalCommand implements OperServCommandInterface, IrcopAuditableCommandInterface
 {
     private const int DURATION_SECONDS = 86400;
 
     private const string PRIVMSG = 'PRIVMSG';
 
     private const string NOTICE = 'NOTICE';
-
-    private ?IrcopAuditData $auditData = null;
 
     public function __construct(
         private readonly NetworkUserLookupPort $userLookup,
@@ -95,16 +94,11 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
         return OperServPermission::GLOBAL;
     }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
-    }
-
-    public function execute(OperServContext $context): void
+    public function execute(OperServContext $context): CommandOutcome
     {
         $sender = $context->getSender();
         if (null === $sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $maskArg = $context->args[0];
@@ -114,7 +108,7 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
         if (self::PRIVMSG !== $typeArg && self::NOTICE !== $typeArg) {
             $context->reply('global.type_invalid');
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         // Check if this is a service nickname (just nickname, no mask)
@@ -122,14 +116,14 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
 
         if (null !== $serviceUid) {
             // Service nickname - use existing service UID
-            $this->sendFromService($context, $maskArg, $serviceUid, $typeArg, $message);
-        } else {
-            // Not a service - must provide full mask nick!ident@vhost
-            $this->sendFromPseudoClient($context, $maskArg, $typeArg, $message);
+            return $this->sendFromService($context, $maskArg, $serviceUid, $typeArg, $message);
         }
+
+        // Not a service - must provide full mask nick!ident@vhost
+        return $this->sendFromPseudoClient($context, $maskArg, $typeArg, $message);
     }
 
-    private function sendFromService(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message): void
+    private function sendFromService(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message): CommandOutcome
     {
         $sender = $context->getSender();
 
@@ -140,10 +134,10 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
             'type' => $typeArg,
         ]);
 
-        $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, false);
+        return $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, false);
     }
 
-    private function sendFromPseudoClient(OperServContext $context, string $maskArg, string $typeArg, string $message): void
+    private function sendFromPseudoClient(OperServContext $context, string $maskArg, string $typeArg, string $message): CommandOutcome
     {
         $sender = $context->getSender();
 
@@ -152,18 +146,19 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
         } catch (ValueError $e) {
             $context->reply('global.mask_invalid', ['%error%' => $e->getMessage()]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $nickname = $mask->nickname;
 
-        if ($this->trySendViaService($context, $nickname, $typeArg, $message)) {
-            return;
+        $serviceOutcome = $this->trySendViaService($context, $nickname, $typeArg, $message);
+        if (null !== $serviceOutcome) {
+            return $serviceOutcome;
         }
 
         $errorKey = $this->validatePseudoClientNickname($context, $nickname);
         if (null !== $errorKey) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $module = $this->connectionHolder->getProtocolModule();
@@ -182,22 +177,21 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
                 'type' => $typeArg,
             ]);
 
-            $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, true);
-        } else {
-            $this->logger->error('GLOBAL: no active protocol module');
+            return $this->broadcastAndReply($context, $nickname, $uid, $typeArg, $message, true);
         }
+        $this->logger->error('GLOBAL: no active protocol module');
+
+        return CommandOutcome::rejected();
     }
 
-    private function trySendViaService(OperServContext $context, string $nickname, string $typeArg, string $message): bool
+    private function trySendViaService(OperServContext $context, string $nickname, string $typeArg, string $message): ?CommandOutcome
     {
         $serviceUid = $this->serviceUidRegistry->getUidByNickname($nickname);
         if (null !== $serviceUid) {
-            $this->sendFromService($context, $nickname, $serviceUid, $typeArg, $message);
-
-            return true;
+            return $this->sendFromService($context, $nickname, $serviceUid, $typeArg, $message);
         }
 
-        return false;
+        return null;
     }
 
     private function validatePseudoClientNickname(OperServContext $context, string $nickname): ?string
@@ -219,7 +213,7 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
         return null;
     }
 
-    private function broadcastAndReply(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message, bool $isPseudoClient): void
+    private function broadcastAndReply(OperServContext $context, string $nickname, string $uid, string $typeArg, string $message, bool $isPseudoClient): CommandOutcome
     {
         $uids = $this->userLookup->listConnectedUids();
         $count = 0;
@@ -248,10 +242,10 @@ final class GlobalCommand implements OperServCommandInterface, AuditableCommandI
             'sender' => $sender?->nick ?? 'unknown',
         ]);
 
-        $this->auditData = new IrcopAuditData(
+        return CommandOutcome::success(new IrcopAuditData(
             target: $nickname,
             reason: $message,
             extra: ['type' => $typeArg, 'count' => (string) $count, 'reasonType' => 'message'],
-        );
+        ));
     }
 }

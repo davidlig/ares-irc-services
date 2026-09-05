@@ -9,7 +9,8 @@ use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\ChanServ\Security\ChanServPermission;
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Event\CommandExecutedEvent;
 use App\Application\Event\IrcopCommandExecutedEvent;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
@@ -163,9 +164,18 @@ final readonly class ChanServService implements ChanServDispatchPort
                 count($args),
             ));
 
-            $handler->execute($context);
+            $result = $handler->execute($context);
 
-            $this->dispatchAuditEvents($handler, $context, $sender, $cmdName, $args, $requiredPermission, $isLevelFounder, $account);
+            $this->eventDispatcher->dispatch(new CommandExecutedEvent(
+                command: $handler,
+                serviceName: $this->notifier->getServiceKey(),
+                operatorNick: $sender->nick,
+                commandName: $cmdName,
+                permission: $requiredPermission,
+                outcome: $result instanceof CommandOutcome ? $result : null,
+            ));
+
+            $this->dispatchFounderAuditEvent($handler, $context, $sender, $cmdName, $args, $isLevelFounder, $account);
         } catch (ChannelAlreadyRegisteredException|ChannelNotRegisteredException|InsufficientAccessException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -260,28 +270,8 @@ final readonly class ChanServService implements ChanServDispatchPort
         return null;
     }
 
-    private function dispatchAuditEvents(object $handler, ChanServContext $context, SenderView $sender, string $cmdName, array $args, ?string $requiredPermission, bool $isLevelFounder, $account): void
+    private function dispatchFounderAuditEvent(object $handler, ChanServContext $context, SenderView $sender, string $cmdName, array $args, bool $isLevelFounder, $account): void
     {
-        if (null !== $requiredPermission) {
-            $auditData = $handler instanceof AuditableCommandInterface
-                ? $handler->getAuditData($context)
-                : null;
-
-            if (null !== $auditData) {
-                $this->eventDispatcher->dispatch(new IrcopCommandExecutedEvent(
-                    serviceName: $this->notifier->getServiceKey(),
-                    operatorNick: $sender->nick,
-                    commandName: $cmdName,
-                    permission: $requiredPermission,
-                    target: $auditData->target,
-                    targetHost: $auditData->targetHost,
-                    targetIp: $auditData->targetIp,
-                    reason: $auditData->reason,
-                    extra: $auditData->extra,
-                ));
-            }
-        }
-
         if ($isLevelFounder && null !== $account && $handler->usesLevelFounder()) {
             $auditChannelName = $context->getChannelNameArg(0);
             if (null !== $auditChannelName) {

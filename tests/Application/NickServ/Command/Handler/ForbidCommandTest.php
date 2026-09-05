@@ -113,14 +113,6 @@ final class ForbidCommandTest extends TestCase
     }
 
     #[Test]
-    public function getAuditDataReturnsNullBeforeExecute(): void
-    {
-        $cmd = $this->createCommand();
-
-        self::assertNull($cmd->getAuditData($this->createStub(NickServContext::class)));
-    }
-
-    #[Test]
     public function getHelpParamsReturnsEmptyArray(): void
     {
         $cmd = $this->createCommand();
@@ -145,7 +137,7 @@ final class ForbidCommandTest extends TestCase
         $messages = [];
         $context = $this->createContext(null, ['TestNick', 'Test reason'], $messages);
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertEmpty($messages);
     }
@@ -299,11 +291,11 @@ final class ForbidCommandTest extends TestCase
             $this->createStub(LoggerInterface::class),
         );
 
-        $cmd->execute($context);
+        $outcome = $cmd->execute($context);
 
         self::assertContains('forbid.success', $messages);
 
-        $auditData = $cmd->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('BadNick', $auditData->target);
         self::assertSame('Test reason', $auditData->reason);

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command\Handler;
 
-use App\Application\Command\AuditableCommandInterface;
+use App\Application\Command\CommandOutcome;
+use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
@@ -12,10 +13,8 @@ use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickDropService;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
-final class RestoreCommand implements NickServCommandInterface, AuditableCommandInterface
+final class RestoreCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
 {
-    private ?IrcopAuditData $auditData = null;
-
     public function __construct(
         private readonly RegisteredNickRepositoryInterface $nickRepository,
         private readonly NickDropService $dropService,
@@ -76,10 +75,10 @@ final class RestoreCommand implements NickServCommandInterface, AuditableCommand
         return [];
     }
 
-    public function execute(NickServContext $context): void
+    public function execute(NickServContext $context): CommandOutcome
     {
         if (null === $context->sender) {
-            return;
+            return CommandOutcome::rejected();
         }
 
         $targetNick = $context->args[0];
@@ -88,23 +87,18 @@ final class RestoreCommand implements NickServCommandInterface, AuditableCommand
         if (null === $account) {
             $context->reply('restore.not_registered', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         if (!$account->isPendingDeletion()) {
             $context->reply('restore.not_pending_deletion', ['%nickname%' => $targetNick]);
 
-            return;
+            return CommandOutcome::rejected();
         }
 
         $this->dropService->restoreNick($account, $context->sender->nick);
-        $this->auditData = new IrcopAuditData(target: $targetNick);
-
         $context->reply('restore.success', ['%nickname%' => $targetNick]);
-    }
 
-    public function getAuditData(object $context): ?IrcopAuditData
-    {
-        return $this->auditData;
+        return CommandOutcome::success(new IrcopAuditData(target: $targetNick));
     }
 }

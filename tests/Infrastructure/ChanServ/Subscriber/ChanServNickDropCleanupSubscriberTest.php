@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
+use App\Application\Port\TransactionManagerInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Domain\ChanServ\Event\ChannelDropCleanupEvent;
 use App\Domain\ChanServ\Event\ChannelDropEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Event\NickDropEvent;
+use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,7 +25,7 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
     public function subscribesToNickDropEvent(): void
     {
         self::assertSame(
-            [NickDropEvent::class => ['onNickDrop', 0]],
+            [NickDropCleanupEvent::class => ['onNickDrop', 0]],
             ChanServNickDropCleanupSubscriber::getSubscribedEvents(),
         );
     }
@@ -41,9 +43,10 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             $channelAkickRepository,
             $channelRepository,
             $eventDispatcher,
+            $this->immediateTransactionManager(),
         );
 
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 100,
             nickname: 'TestUser',
             nicknameLower: 'testuser',
@@ -87,9 +90,10 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             $channelAkickRepository,
             $channelRepository,
             $eventDispatcher,
+            $this->immediateTransactionManager(),
         );
 
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 200,
             nickname: 'Founder',
             nicknameLower: 'founder',
@@ -149,9 +153,10 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             $channelAkickRepository,
             $channelRepository,
             $eventDispatcher,
+            $this->immediateTransactionManager(),
         );
 
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 400,
             nickname: 'FounderNoSucc',
             nicknameLower: 'foundernosucc',
@@ -193,12 +198,23 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             ->expects(self::never())
             ->method('save');
 
+        $matcher = self::exactly(2);
         $eventDispatcher
-            ->expects(self::once())
+            ->expects($matcher)
             ->method('dispatch')
-            ->with(self::callback(static fn (ChannelDropEvent $dropEvent): bool => 99 === $dropEvent->channelId
-                    && '#orphan' === $dropEvent->channelName
-                    && 'founder_dropped' === $dropEvent->reason));
+            ->willReturnCallback(static function (object $dropEvent) use ($matcher): object {
+                match ($matcher->numberOfInvocations()) {
+                    1 => self::assertInstanceOf(ChannelDropCleanupEvent::class, $dropEvent),
+                    2 => self::assertInstanceOf(ChannelDropEvent::class, $dropEvent),
+                    default => self::fail('Unexpected dispatch'),
+                };
+
+                self::assertSame(99, $dropEvent->channelId);
+                self::assertSame('#orphan', $dropEvent->channelName);
+                self::assertSame('founder_dropped', $dropEvent->reason);
+
+                return $dropEvent;
+            });
 
         $channelRepository
             ->expects(self::once())
@@ -221,9 +237,10 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             $channelAkickRepository,
             $channelRepository,
             $eventDispatcher,
+            $this->immediateTransactionManager(),
         );
 
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 500,
             nickname: 'MultiFounder',
             nicknameLower: 'multifounder',
@@ -273,10 +290,22 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             ->method('save')
             ->with($channelWithSuccessor);
 
+        $matcher = self::exactly(2);
         $eventDispatcher
-            ->expects(self::once())
+            ->expects($matcher)
             ->method('dispatch')
-            ->with(self::callback(static fn (ChannelDropEvent $dropEvent): bool => 11 === $dropEvent->channelId && 'founder_dropped' === $dropEvent->reason));
+            ->willReturnCallback(static function (object $dropEvent) use ($matcher): object {
+                match ($matcher->numberOfInvocations()) {
+                    1 => self::assertInstanceOf(ChannelDropCleanupEvent::class, $dropEvent),
+                    2 => self::assertInstanceOf(ChannelDropEvent::class, $dropEvent),
+                    default => self::fail('Unexpected dispatch'),
+                };
+
+                self::assertSame(11, $dropEvent->channelId);
+                self::assertSame('founder_dropped', $dropEvent->reason);
+
+                return $dropEvent;
+            });
 
         $channelRepository
             ->expects(self::once())
@@ -299,9 +328,10 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             $channelAkickRepository,
             $channelRepository,
             $eventDispatcher,
+            $this->immediateTransactionManager(),
         );
 
-        $event = new NickDropEvent(
+        $event = new NickDropCleanupEvent(
             nickId: 777,
             nickname: 'CleanupTest',
             nicknameLower: 'cleanuptest',
@@ -330,5 +360,17 @@ final class ChanServNickDropCleanupSubscriberTest extends TestCase
             ->willReturn([]);
 
         $subscriber->onNickDrop($event);
+    }
+
+    private function immediateTransactionManager(): TransactionManagerInterface
+    {
+        $transactionManager = $this->createStub(TransactionManagerInterface::class);
+        $transactionManager->method('afterCommit')->willReturnCallback(
+            static function (callable $operation): void {
+                $operation();
+            },
+        );
+
+        return $transactionManager;
     }
 }

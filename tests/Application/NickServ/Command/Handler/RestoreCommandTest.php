@@ -22,7 +22,6 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 #[CoversClass(RestoreCommand::class)]
 final class RestoreCommandTest extends TestCase
@@ -43,7 +42,6 @@ final class RestoreCommandTest extends TestCase
         self::assertFalse($command->isOperOnly());
         self::assertSame(NickServPermission::RESTORE, $command->getRequiredPermission());
         self::assertSame([], $command->getHelpParams());
-        self::assertNull($command->getAuditData(new stdClass()));
     }
 
     #[Test]
@@ -63,12 +61,14 @@ final class RestoreCommandTest extends TestCase
         $context = $this->createContext(['Target'], $messages);
         $command = new RestoreCommand($repo, $dropService);
 
-        $command->execute($context);
+        $outcome = $command->execute($context);
 
         self::assertContains('restore.success', $messages);
-        $auditData = $command->getAuditData($context);
+        $auditData = $outcome->auditData;
         self::assertInstanceOf(IrcopAuditData::class, $auditData);
         self::assertSame('Target', $auditData->target);
+
+        self::assertFalse($command->execute($this->createContextWithoutSender(['Target'], $messages))->success);
     }
 
     #[Test]

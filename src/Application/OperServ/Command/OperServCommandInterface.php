@@ -28,5 +28,5 @@ interface OperServCommandInterface
 
     public function getRequiredPermission(): ?string;
 
-    public function execute(OperServContext $context): void;
+    public function execute(OperServContext $context);
 }
