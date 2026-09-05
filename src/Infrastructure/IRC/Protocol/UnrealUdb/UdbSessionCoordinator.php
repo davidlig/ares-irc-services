@@ -14,6 +14,9 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbFrame;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbFrameKind;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
+use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
+use App\Infrastructure\IRC\Runtime\RevoltLoopScheduler;
+use App\Infrastructure\IRC\Runtime\SessionEventPump;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
@@ -115,9 +118,24 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         UdbOclgView $oclgView = new UdbOclgView(),
         private readonly ?UdbWireTakeover $wireTakeover = null,
         private readonly ?UdbAuthorityStateRepositoryInterface $authority = null,
+        private readonly LoopSchedulerInterface $scheduler = new RevoltLoopScheduler(),
     ) {
         $this->epoch = bin2hex(random_bytes(8));
         $this->oclgView = $oclgView;
+    }
+
+    private ?SessionEventPump $eventPump = null;
+
+    private ?string $deadlineWatcherId = null;
+
+    public function setEventPump(?SessionEventPump $eventPump): void
+    {
+        $this->eventPump = $eventPump;
+    }
+
+    public function getDeadlineWatcherId(): ?string
+    {
+        return $this->deadlineWatcherId;
     }
 
     public function setOwnName(string $ownName): void
@@ -136,6 +154,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
     {
         $this->connection = $connection;
         $this->sendHel();
+        $this->scheduleNextDeadlineTimer();
     }
 
     /** Called once the authoritative store finished (re)initializing. */
@@ -145,10 +164,16 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         $this->maybeOfferReconciliation();
     }
 
-    /** Cheap deadline sweep invoked on every handled line. */
-    public function tick(ConnectionInterface $connection): void
+    /** Cheap deadline sweep invoked on every handled line or timer callback. */
+    public function tick(?ConnectionInterface $connection = null): void
     {
-        $this->connection = $connection;
+        if (null !== $connection) {
+            $this->connection = $connection;
+        }
+
+        if (null === $this->connection) {
+            return;
+        }
 
         $now = time();
         foreach ($this->outstanding as $letter => $info) {
@@ -158,6 +183,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
                     'round' => $info['roundId'],
                 ]);
                 $this->reofferWithinBudget();
+                $this->scheduleNextDeadlineTimer();
 
                 return;
             }
@@ -169,16 +195,19 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         ) {
             $this->logger->warning('UDB reconciliation barrier ACK timed out; re-offering.');
             $this->reofferWithinBudget();
+            $this->scheduleNextDeadlineTimer();
 
             return;
         }
 
         $this->flushMutations();
+        $this->scheduleNextDeadlineTimer();
     }
 
     /** Drops all volatile state. Called on connection loss. */
     public function reset(): void
     {
+        $this->cancelDeadlineTimer();
         $this->remoteServerName = null;
         $this->remoteSid = null;
         $this->ownHelAcked = false;
@@ -196,6 +225,52 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         $this->connection = null;
         // $this->mutationQueue is preserved: the store already holds every
         // queued change and the next reconciliation round recovers delivery.
+    }
+
+    public function scheduleNextDeadlineTimer(): void
+    {
+        $this->cancelDeadlineTimer();
+
+        if (null === $this->connection) {
+            return;
+        }
+
+        $earliestDeadline = null;
+        if (null !== $this->barrierDeadline && $this->helSentCount > $this->helAcksReceived) {
+            $earliestDeadline = (float) $this->barrierDeadline;
+        }
+
+        foreach ($this->outstanding as $info) {
+            $d = (float) $info['deadline'];
+            if (null === $earliestDeadline || $d < $earliestDeadline) {
+                $earliestDeadline = $d;
+            }
+        }
+
+        if (null === $earliestDeadline) {
+            return;
+        }
+
+        $delaySeconds = max(0.01, $earliestDeadline - time());
+
+        $this->deadlineWatcherId = $this->scheduler->delay($delaySeconds, function (): void {
+            $this->deadlineWatcherId = null;
+            if (null !== $this->eventPump) {
+                $this->eventPump->enqueue(function (): void {
+                    $this->tick();
+                });
+            } else {
+                $this->tick();
+            }
+        });
+    }
+
+    private function cancelDeadlineTimer(): void
+    {
+        if (null !== $this->deadlineWatcherId) {
+            $this->scheduler->cancel($this->deadlineWatcherId);
+            $this->deadlineWatcherId = null;
+        }
     }
 
     public function handleFrame(UdbFrame $frame, ConnectionInterface $connection): void
@@ -243,6 +318,12 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         }
 
         $this->mutationQueue[] = $mutation;
+
+        if ($this->isAuthorityReady() && null !== $this->eventPump) {
+            $this->eventPump->enqueue(function (): void {
+                $this->flushMutations();
+            });
+        }
     }
 
     /** True only for classes in the last complete READY OCLG projection. */
@@ -268,6 +349,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         ++$this->helAcksReceived;
         $this->ownHelAcked = true;
         $this->barrierDeadline = null;
+        $this->scheduleNextDeadlineTimer();
         $this->logger->debug('UDB HEL 4 confirmed by peer.', [
             'acks' => $this->helAcksReceived,
             'sent' => $this->helSentCount,
@@ -364,6 +446,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         // RES responses for divergent blocks are already inbound.
         $this->sendHel(force: true);
         $this->barrierDeadline = time() + self::ROUND_INACTIVITY_TIMEOUT;
+        $this->scheduleNextDeadlineTimer();
 
         $this->logger->info('Offered UDB reconciliation round to peer.', ['round' => $roundId]);
     }
@@ -422,6 +505,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
             'digest' => $digest,
             'deadline' => time() + self::TRANSFER_TIMEOUT,
         ];
+        $this->scheduleNextDeadlineTimer();
     }
 
     /** Staged snapshots are downstream traffic — except during the wire bootstrap. */
@@ -529,6 +613,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         }
 
         unset($this->outstanding[$letter]);
+        $this->scheduleNextDeadlineTimer();
         $this->errReofferCount = 0;
         $this->logger->debug('Staged transfer acknowledged by peer.', ['block' => $letter]);
     }

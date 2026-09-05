@@ -24,6 +24,7 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbWireTakeover;
+use App\Infrastructure\IRC\Runtime\SessionEventPump;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -1233,5 +1234,167 @@ final class UdbSessionCoordinatorTest extends TestCase
         self::assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $epoch);
 
         return $epoch;
+    }
+
+    #[Test]
+    public function udbBarrierDeadlineExpiresAndReoffersWithoutIncomingTraffic(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->handle(new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: self::OWN_NAME));
+        $this->handle(new UdbFrame(UdbFrameKind::HelAck, '001', '002'));
+
+        $this->setPrivate('barrierDeadline', time() - 1);
+        $this->written = [];
+
+        $this->coordinator->scheduleNextDeadlineTimer();
+        self::assertNotNull($this->coordinator->getDeadlineWatcherId());
+
+        \Amp\delay(0.03);
+
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
+    }
+
+    #[Test]
+    public function udbStagedAckDeadlineExpiresWithoutIncomingTraffic(): void
+    {
+        $this->makeReady();
+        $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 20, block: UdbBlock::Ips));
+
+        $this->expireOutstanding();
+        $this->written = [];
+
+        $this->coordinator->scheduleNextDeadlineTimer();
+        self::assertNotNull($this->coordinator->getDeadlineWatcherId());
+
+        \Amp\delay(0.03);
+
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
+        self::assertFalse($this->coordinator->isAuthorityReady());
+    }
+
+    #[Test]
+    public function enqueueMutationWithEventPumpFlushesImmediatelyWhenAuthorityReady(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->makeReady();
+
+        $pump = new SessionEventPump();
+        $this->coordinator->setEventPump($pump);
+
+        $this->written = [];
+        $this->coordinator->enqueueMutation(new UdbMutation('S', 'nickserv', 'NickServ!NickServ@services'));
+
+        $pump->enqueue(static function () use ($pump): void {
+            $pump->stop();
+        });
+        $pump->drain();
+
+        self::assertContains(':002 DB * INS S::nickserv :NickServ!NickServ@services', $this->written);
+    }
+
+    #[Test]
+    public function simultaneousDeadlineAndIncomingFrameEvaluatesDeadlineFirst(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->handle(new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: self::OWN_NAME));
+        $this->handle(new UdbFrame(UdbFrameKind::HelAck, '001', '002'));
+
+        $this->setPrivate('barrierDeadline', time() - 1);
+        $this->written = [];
+
+        $this->coordinator->tick($this->connection);
+        $this->handle(new UdbFrame(UdbFrameKind::HelAck, '001', '002'));
+
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
+    }
+
+    #[Test]
+    public function udbSequenceAtomicityUnderBackpressure(): void
+    {
+        $this->makeReady();
+        $pump = new SessionEventPump();
+        $this->coordinator->setEventPump($pump);
+
+        $executionOrder = [];
+        $suspendingConnection = $this->createStub(ConnectionInterface::class);
+        $suspendingConnection->method('isConnected')->willReturn(true);
+        $suspendingConnection->method('writeLine')->willReturnCallback(static function (string $line) use (&$executionOrder, $pump): void {
+            $executionOrder[] = $line;
+            if (str_contains($line, 'PUT')) {
+                $pump->enqueue(static function () use (&$executionOrder, $pump): void {
+                    $executionOrder[] = 'TIMER_OR_MUTATION_EXECUTED';
+                    $pump->stop();
+                });
+                \Amp\delay(0.02);
+            }
+        });
+
+        $this->connection = $suspendingConnection;
+        $this->setPrivate('connection', $suspendingConnection);
+
+        $pump->enqueue(function (): void {
+            $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 20, block: UdbBlock::Ips));
+        });
+
+        $pump->drain();
+
+        $putIndex = -1;
+        $endIndex = -1;
+        $timerIndex = -1;
+        foreach ($executionOrder as $idx => $item) {
+            if (str_contains($item, 'PUT')) {
+                $putIndex = $idx;
+            }
+            if (str_contains($item, 'END')) {
+                $endIndex = $idx;
+            }
+            if ('TIMER_OR_MUTATION_EXECUTED' === $item) {
+                $timerIndex = $idx;
+            }
+        }
+
+        self::assertNotSame(-1, $putIndex);
+        self::assertNotSame(-1, $endIndex);
+        self::assertNotSame(-1, $timerIndex);
+        self::assertGreaterThan($endIndex, $timerIndex);
+    }
+
+    #[Test]
+    public function tickAndScheduleNextDeadlineTimerNoOpWhenConnectionNull(): void
+    {
+        $this->setPrivate('connection', null);
+        $this->coordinator->tick();
+        $this->coordinator->scheduleNextDeadlineTimer();
+        self::assertNull($this->coordinator->getDeadlineWatcherId());
+    }
+
+    #[Test]
+    public function deadlineWatcherWithEventPumpEnqueuesTickOnPump(): void
+    {
+        $this->seedStore();
+        $this->prepareLink();
+        $this->handle(new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: self::OWN_NAME));
+        $this->handle(new UdbFrame(UdbFrameKind::HelAck, '001', '002'));
+
+        $this->setPrivate('barrierDeadline', time() - 1);
+        $this->written = [];
+
+        $pump = new SessionEventPump();
+        $this->coordinator->setEventPump($pump);
+
+        $this->coordinator->scheduleNextDeadlineTimer();
+        self::assertNotNull($this->coordinator->getDeadlineWatcherId());
+
+        \Amp\delay(0.03);
+
+        $pump->enqueue(static function () use ($pump): void {
+            $pump->stop();
+        });
+        $pump->drain();
+
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
     }
 }

@@ -13,6 +13,8 @@
         "ext-mbstring": "*",
         "ext-pdo_mysql": "*",
         "ext-pdo_sqlite": "*",
+        "amphp/amp": "^3.1",
+        "amphp/socket": "^2.4",
         "doctrine/doctrine-bundle": "3.2.*",
         "doctrine/doctrine-migrations-bundle": "4.0.*",
         "doctrine/orm": "3.6.*",
@@ -88,6 +90,7 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.95.24",
+        "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^13.3.2"
     }
 }

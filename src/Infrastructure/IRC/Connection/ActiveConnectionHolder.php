@@ -7,6 +7,7 @@ namespace App\Infrastructure\IRC\Connection;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
@@ -31,6 +32,7 @@ final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, E
     {
         return [
             NetworkBurstCompleteEvent::class => ['onBurstComplete', 250],
+            ConnectionLostEvent::class => ['onConnectionLost', 0],
         ];
     }
 
@@ -38,6 +40,13 @@ final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, E
     {
         $this->connection = $event->connection;
         $this->serverSid = $event->serverSid;
+    }
+
+    public function onConnectionLost(ConnectionLostEvent $event): void
+    {
+        $this->connection = null;
+        $this->serverSid = null;
+        $this->remoteServerSid = null;
     }
 
     public function getConnection(): ?ConnectionInterface
@@ -62,7 +71,7 @@ final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, E
 
     public function isConnected(): bool
     {
-        return null !== $this->connection;
+        return null !== $this->connection && $this->connection->isConnected();
     }
 
     public function setProtocolModule(ProtocolModuleInterface $module): void

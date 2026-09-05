@@ -38,6 +38,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     public function sendMessageDoesNothingWhenConnectedButNoProtocolModule(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::never())->method('writeLine');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         // Do not set protocol module so getProtocolModule() returns null
@@ -49,6 +50,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     public function sendNoticeFormatsAndWritesLineWhenConnectedWithModule(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::once())->method('writeLine')->with('NOTICE 001USER :Hi');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
@@ -65,6 +67,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     {
         $lines = [];
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::exactly(2))->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
             $lines[] = $line;
         });
@@ -91,6 +94,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     public function sendNoticeToChannelDoesNothingWhenConnectedButNoProtocolModule(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::never())->method('writeLine');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
 
@@ -101,6 +105,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     public function sendNoticeToChannelFormatsAndWritesLineWhenConnected(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::once())->method('writeLine')->with('NOTICE #test :Channel notice');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
@@ -117,6 +122,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
     {
         $lines = [];
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::exactly(2))->method('writeLine')->willReturnCallback(static function (string $line) use (&$lines): void {
             $lines[] = $line;
         });

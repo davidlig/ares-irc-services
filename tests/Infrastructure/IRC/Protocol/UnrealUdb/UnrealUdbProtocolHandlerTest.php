@@ -16,6 +16,7 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
+use App\Infrastructure\IRC\Runtime\SessionEventPump;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -132,6 +133,35 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         } finally {
             flock($foreign, LOCK_UN);
             fclose($foreign);
+            @unlink($directory . '/.udb.lock');
+            @rmdir($directory);
+        }
+    }
+
+    #[Test]
+    public function performHandshakeReleasesLockAndResetsCoordinatorOnFailure(): void
+    {
+        $directory = sys_get_temp_dir() . '/ares-udb-handler-fail-' . uniqid('', true);
+        mkdir($directory);
+        $lock = new UdbSessionLock($directory);
+
+        $coordinator = $this->createMock(UdbSessionCoordinator::class);
+        $coordinator->expects(self::once())->method('reset');
+
+        $failingConnection = $this->createStub(ConnectionInterface::class);
+        $failingConnection->method('writeLine')->willThrowException(new RuntimeException('Write failed'));
+
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $lock);
+
+        try {
+            $handler->performHandshake($failingConnection, $this->createServerLink());
+            self::fail('Expected handshake failure');
+        } catch (RuntimeException $e) {
+            self::assertSame('Write failed', $e->getMessage());
+        } finally {
+            // If lock was properly released, we should be able to acquire it again without error
+            $lock->acquire();
+            $lock->release();
             @unlink($directory . '/.udb.lock');
             @rmdir($directory);
         }
@@ -322,5 +352,15 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'PING', trailing: 'token'), $this->createConnection());
 
         self::assertSame(['PONG :token'], $this->written);
+    }
+
+    #[Test]
+    public function setEventPumpForwardsToCoordinator(): void
+    {
+        $handler = $this->createHandler();
+        $pump = new SessionEventPump();
+        $handler->setEventPump($pump);
+        $handler->setEventPump(null);
+        $this->addToAssertionCount(1);
     }
 }

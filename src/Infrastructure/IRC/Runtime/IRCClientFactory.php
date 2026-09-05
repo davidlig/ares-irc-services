@@ -29,6 +29,7 @@ final readonly class IRCClientFactory implements IRCClientFactoryInterface
         private BurstCompleteRegistry $burstCompleteRegistry,
         private int $maintenanceDispatchIntervalSeconds,
         private LoggerInterface $logger = new NullLogger(),
+        private LoopSchedulerInterface $loopScheduler = new RevoltLoopScheduler(),
     ) {}
 
     public function create(string $protocolName, ServerLink $link): IRCClient
@@ -45,6 +46,7 @@ final readonly class IRCClientFactory implements IRCClientFactoryInterface
             $this->burstCompleteRegistry,
             $this->maintenanceDispatchIntervalSeconds,
             $this->logger,
+            $this->loopScheduler,
         );
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Runtime;
 
+use Amp\Future;
 use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\IRC\IrcSessionInterface;
 use App\Application\Maintenance\Message\RunMaintenanceCycle;
@@ -18,6 +19,11 @@ use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Throwable;
+
+use function Amp\async;
+use function gc_collect_cycles;
+use function max;
 
 /**
  * Orchestrates the lifecycle of an IRC server-to-server link:
@@ -27,7 +33,15 @@ class IRCClient implements IrcSessionInterface
 {
     private ?ServerLink $activeLink = null;
 
-    private float $lastMaintenanceDispatch = 0.0;
+    private readonly SessionEventPump $eventPump;
+
+    private ?string $maintenanceWatcherId = null;
+
+    private bool $maintenanceScheduled = false;
+
+    private bool $finalized = false;
+
+    private ?string $firstCloseReason = null;
 
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -37,7 +51,14 @@ class IRCClient implements IrcSessionInterface
         private readonly BurstCompleteRegistry $burstCompleteRegistry,
         private readonly int $maintenanceDispatchIntervalSeconds,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {}
+        private readonly LoopSchedulerInterface $loopScheduler = new RevoltLoopScheduler(),
+        ?SessionEventPump $eventPump = null,
+    ) {
+        $this->eventPump = $eventPump ?? new SessionEventPump();
+        if ($this->protocol instanceof SessionEventPumpAwareInterface) {
+            $this->protocol->setEventPump($this->eventPump);
+        }
+    }
 
     public function connect(ServerLink $link): void
     {
@@ -49,16 +70,30 @@ class IRCClient implements IrcSessionInterface
             'tls' => $link->useTls,
         ]);
 
+        if ($this->protocol instanceof SessionEventPumpAwareInterface) {
+            $this->protocol->setEventPump($this->eventPump);
+        }
+
         $this->connection->connect();
-        $this->protocol->performHandshake($this->connection, $link);
+        try {
+            $this->protocol->performHandshake($this->connection, $link);
+        } catch (Throwable $e) {
+            $this->connection->disconnect();
+            if ($this->protocol instanceof SessionEventPumpAwareInterface) {
+                $this->protocol->setEventPump(null);
+            }
+            throw $e;
+        }
+
         $this->activeLink = $link;
 
         $this->eventDispatcher->dispatch(new ConnectionEstablishedEvent($link));
     }
 
     /**
-     * Blocking read loop. Reads lines from the IRCD and dispatches
-     * a MessageReceivedEvent for each one. Exits when the connection drops.
+     * Runs the non-blocking read loop using Amp and the serialized SessionEventPump.
+     * Reads lines from the IRCD and processes them in strict FIFO order.
+     * Exits when the connection drops, EOF is encountered, or disconnect is requested.
      */
     public function run(): void
     {
@@ -66,56 +101,163 @@ class IRCClient implements IrcSessionInterface
             'protocol' => $this->protocol->getProtocolName(),
         ]);
 
-        while ($this->connection->isConnected()) {
-            $now = hrtime(true) / 1_000_000_000.0;
-            if ($this->burstCompleteRegistry->isBurstComplete()
-                && ($now - $this->lastMaintenanceDispatch) >= (float) $this->maintenanceDispatchIntervalSeconds
-            ) {
-                gc_collect_cycles();
-                $this->messageBus->dispatch(new RunMaintenanceCycle());
-                $this->lastMaintenanceDispatch = $now;
-            }
+        if (!$this->connection->isConnected()) {
+            $this->logger->warning('Read loop cannot start: connection is not connected.');
 
-            $rawLine = $this->connection->readLine();
-
-            if (null === $rawLine) {
-                usleep(10_000);
-                continue;
-            }
-
-            if ('' === $rawLine) {
-                continue;
-            }
-
-            $message = $this->protocol->parseRawLine($rawLine);
-
-            $this->protocol->handleIncoming($message, $this->connection);
-
-            $this->eventDispatcher->dispatch(new MessageReceivedEvent($message));
-            $this->eventDispatcher->dispatch(new IrcMessageProcessedEvent());
-
-            unset($rawLine, $message);
+            return;
         }
 
-        $this->logger->warning('Read loop terminated: connection closed by remote host.');
+        $this->finalized = false;
+        $this->firstCloseReason = null;
+        $this->maintenanceScheduled = false;
+
+        $this->checkBurstCompleteAndScheduleMaintenance();
+
+        /** @var Future<void> $readerFuture */
+        $readerFuture = async(function (): void {
+            try {
+                while (!$this->finalized && $this->connection->isConnected()) {
+                    $rawLine = $this->connection->readLine();
+
+                    if (null === $rawLine) {
+                        break;
+                    }
+
+                    if ('' === $rawLine) {
+                        continue;
+                    }
+
+                    if ($this->finalized) {
+                        break;
+                    }
+
+                    $this->eventPump->enqueue(function () use ($rawLine): void {
+                        $this->processIncomingLine($rawLine);
+                    });
+                }
+            } catch (Throwable $e) {
+                if (!$this->finalized) {
+                    $this->eventPump->enqueue(static function () use ($e): void {
+                        throw $e;
+                    });
+
+                    return;
+                }
+            }
+
+            if (!$this->finalized) {
+                $this->eventPump->enqueue(function (): void {
+                    $this->finalizeSession('Remote host closed connection');
+                });
+            }
+        });
+
+        try {
+            $this->eventPump->drain();
+        } catch (Throwable $e) {
+            $this->firstCloseReason ??= $e->getMessage();
+            throw $e;
+        } finally {
+            $this->finalizeSession($this->firstCloseReason ?? 'Session terminated');
+            $this->logger->warning('Read loop terminated.');
+        }
     }
 
     public function disconnect(?string $reason = null): void
     {
-        $this->logger->info('Disconnecting.', ['reason' => $reason ?? 'none']);
+        $effectiveReason = $reason ?? 'Disconnect requested';
+        $this->logger->info('Disconnecting.', ['reason' => $effectiveReason]);
+        $this->firstCloseReason ??= $effectiveReason;
 
-        if (null !== $this->activeLink) {
-            $this->eventDispatcher->dispatch(
-                new ConnectionLostEvent($this->activeLink, $reason)
-            );
-        }
-
-        $this->connection->disconnect();
-        $this->activeLink = null;
+        $this->finalizeSession($effectiveReason);
     }
 
     public function getProtocolName(): string
     {
         return $this->protocol->getProtocolName();
+    }
+
+    public function getEventPump(): SessionEventPump
+    {
+        return $this->eventPump;
+    }
+
+    private function processIncomingLine(string $rawLine): void
+    {
+        $message = $this->protocol->parseRawLine($rawLine);
+
+        $this->protocol->handleIncoming($message, $this->connection);
+
+        $this->eventDispatcher->dispatch(new MessageReceivedEvent($message));
+        $this->eventDispatcher->dispatch(new IrcMessageProcessedEvent());
+
+        $this->checkBurstCompleteAndScheduleMaintenance();
+    }
+
+    private function checkBurstCompleteAndScheduleMaintenance(): void
+    {
+        if ($this->maintenanceScheduled || !$this->burstCompleteRegistry->isBurstComplete()) {
+            return;
+        }
+
+        $this->maintenanceScheduled = true;
+
+        // First maintenance cycle runs immediately after burst complete without waiting
+        $this->eventPump->enqueue(function (): void {
+            $this->executeMaintenance();
+        });
+
+        // Subsequent maintenance runs periodically
+        $interval = max(1, $this->maintenanceDispatchIntervalSeconds);
+        $this->maintenanceWatcherId = $this->loopScheduler->repeat(
+            (float) $interval,
+            function (): void {
+                $this->eventPump->enqueue(function (): void {
+                    $this->executeMaintenance();
+                });
+            },
+        );
+    }
+
+    private function executeMaintenance(): void
+    {
+        gc_collect_cycles();
+        $this->messageBus->dispatch(new RunMaintenanceCycle());
+    }
+
+    /**
+     * Single authority for finalizing the IRC session.
+     * Idempotent: safe to call multiple times, cancels timers, stops event pump,
+     * dispatches ConnectionLostEvent exactly once, and disconnects transport.
+     */
+    private function finalizeSession(string $reason, ?Throwable $exception = null): void
+    {
+        if ($this->finalized) {
+            return;
+        }
+
+        $this->finalized = true;
+
+        if (null !== $this->maintenanceWatcherId) {
+            $this->loopScheduler->cancel($this->maintenanceWatcherId);
+            $this->maintenanceWatcherId = null;
+        }
+        $this->maintenanceScheduled = false;
+
+        $this->eventPump->stop();
+
+        if (null !== $this->activeLink) {
+            $effectiveReason = $this->firstCloseReason ?? $reason;
+            $this->eventDispatcher->dispatch(
+                new ConnectionLostEvent($this->activeLink, $effectiveReason)
+            );
+            $this->activeLink = null;
+        }
+
+        if ($this->protocol instanceof SessionEventPumpAwareInterface) {
+            $this->protocol->setEventPump(null);
+        }
+
+        $this->connection->disconnect();
     }
 }

@@ -199,6 +199,10 @@ services:
 
     # --- Application services — inject the irc Monolog channel ---------------
 
+    App\Infrastructure\IRC\Runtime\RevoltLoopScheduler: ~
+
+    App\Infrastructure\IRC\Runtime\LoopSchedulerInterface: '@App\Infrastructure\IRC\Runtime\RevoltLoopScheduler'
+
     App\Infrastructure\IRC\Runtime\IRCClientFactoryInterface: '@App\Infrastructure\IRC\Runtime\IRCClientFactory'
 
     App\Infrastructure\IRC\Runtime\IRCClientFactory:

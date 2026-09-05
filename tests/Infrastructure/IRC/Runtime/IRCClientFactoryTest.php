@@ -18,6 +18,7 @@ use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Runtime\IRCClient;
 use App\Infrastructure\IRC\Runtime\IRCClientFactory;
+use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleRegistryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -81,5 +82,35 @@ final class IRCClientFactoryTest extends TestCase
         self::assertInstanceOf(IRCClient::class, $client);
         self::assertSame('unreal', $client->getProtocolName());
         self::assertSame($module, $this->connectionHolder->getProtocolModule());
+    }
+
+    #[Test]
+    public function createWithCustomLoopScheduler(): void
+    {
+        $scheduler = $this->createStub(LoopSchedulerInterface::class);
+        $factory = new IRCClientFactory(
+            $this->moduleRegistry,
+            $this->connectionFactory,
+            $this->connectionHolder,
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            new BurstCompleteRegistry(),
+            60,
+            loopScheduler: $scheduler,
+        );
+
+        $connection = $this->createStub(ConnectionInterface::class);
+        $handler = $this->createStub(ProtocolHandlerInterface::class);
+        $handler->method('getProtocolName')->willReturn('unreal');
+        $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
+        $module->method('getHandler')->willReturn($handler);
+
+        $this->moduleRegistry->expects(self::once())->method('get')->with('unreal')->willReturn($module);
+        $this->connectionFactory->expects(self::once())->method('create')->with($this->link)->willReturn($connection);
+
+        $client = $factory->create('unreal', $this->link);
+
+        self::assertInstanceOf(IRCClient::class, $client);
+        self::assertSame('unreal', $client->getProtocolName());
     }
 }

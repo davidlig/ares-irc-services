@@ -5,8 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Connection;
 
 use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
+use App\Domain\IRC\Server\ServerLink;
+use App\Domain\IRC\ValueObject\Hostname;
+use App\Domain\IRC\ValueObject\LinkPassword;
+use App\Domain\IRC\ValueObject\Port;
+use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -24,10 +30,13 @@ final class ActiveConnectionHolderTest extends TestCase
     }
 
     #[Test]
-    public function getSubscribedEventsReturnsBurstCompleteWithPriority250(): void
+    public function getSubscribedEventsReturnsBurstCompleteAndConnectionLost(): void
     {
         self::assertSame(
-            [NetworkBurstCompleteEvent::class => ['onBurstComplete', 250]],
+            [
+                NetworkBurstCompleteEvent::class => ['onBurstComplete', 250],
+                ConnectionLostEvent::class => ['onConnectionLost', 0],
+            ],
             ActiveConnectionHolder::getSubscribedEvents(),
         );
     }
@@ -44,6 +53,7 @@ final class ActiveConnectionHolderTest extends TestCase
     public function onBurstCompleteSetsConnectionAndServerSid(): void
     {
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
         $this->holder->onBurstComplete($event);
@@ -51,6 +61,45 @@ final class ActiveConnectionHolderTest extends TestCase
         self::assertSame($connection, $this->holder->getConnection());
         self::assertSame('001', $this->holder->getServerSid());
         self::assertTrue($this->holder->isConnected());
+    }
+
+    #[Test]
+    public function isConnectedReturnsFalseWhenConnectionIsNotConnected(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(false);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+
+        $this->holder->onBurstComplete($event);
+
+        self::assertFalse($this->holder->isConnected());
+    }
+
+    #[Test]
+    public function onConnectionLostClearsConnectionAndServerSid(): void
+    {
+        $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
+        $event = new NetworkBurstCompleteEvent($connection, '001');
+
+        $this->holder->onBurstComplete($event);
+        $this->holder->setRemoteServerSid('002');
+        self::assertTrue($this->holder->isConnected());
+
+        $this->holder->onConnectionLost(new ConnectionLostEvent(
+            new ServerLink(
+                new ServerName('srv.local'),
+                new Hostname('127.0.0.1'),
+                new Port(6667),
+                new LinkPassword('pwd'),
+                'desc',
+            ),
+            'remote closed',
+        ));
+
+        self::assertNull($this->holder->getConnection());
+        self::assertNull($this->holder->getServerSid());
+        self::assertFalse($this->holder->isConnected());
     }
 
     #[Test]

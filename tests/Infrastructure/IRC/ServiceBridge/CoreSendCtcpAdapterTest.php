@@ -39,6 +39,7 @@ final class CoreSendCtcpAdapterTest extends TestCase
     public function sendCtcpReplyDoesNothingWhenConnectedButNoProtocolModule(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::never())->method('writeLine');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
 
@@ -49,6 +50,7 @@ final class CoreSendCtcpAdapterTest extends TestCase
     public function sendCtcpReplyFormatsAndWritesLine(): void
     {
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::once())->method('writeLine')->with("NOTICE 001USER :\x01VERSION Test Response\x01");
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
@@ -65,6 +67,7 @@ final class CoreSendCtcpAdapterTest extends TestCase
     {
         $capturedMessage = new stdClass();
         $connection = $this->createMock(ConnectionInterface::class);
+        $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::once())->method('writeLine');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);

@@ -1,0 +1,152 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Infrastructure\IRC\Runtime;
+
+use App\Infrastructure\IRC\Runtime\SessionEventPump;
+use LogicException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(SessionEventPump::class)]
+final class SessionEventPumpTest extends TestCase
+{
+    private SessionEventPump $pump;
+
+    protected function setUp(): void
+    {
+        $this->pump = new SessionEventPump();
+    }
+
+    #[Test]
+    public function initialState(): void
+    {
+        self::assertFalse($this->pump->isRunning());
+        self::assertFalse($this->pump->isStopped());
+        self::assertSame(0, $this->pump->getQueueSize());
+    }
+
+    #[Test]
+    public function tasksExecuteStrictlyInFifoOrder(): void
+    {
+        $log = [];
+
+        $this->pump->enqueue(static function () use (&$log): void {
+            $log[] = 'task 1';
+        });
+        $this->pump->enqueue(static function () use (&$log): void {
+            $log[] = 'task 2';
+        });
+        $this->pump->enqueue(function () use (&$log): void {
+            $log[] = 'task 3';
+            $this->pump->stop();
+        });
+
+        self::assertSame(3, $this->pump->getQueueSize());
+
+        $this->pump->drain();
+
+        self::assertSame(['task 1', 'task 2', 'task 3'], $log);
+        self::assertTrue($this->pump->isStopped());
+        self::assertFalse($this->pump->isRunning());
+    }
+
+    #[Test]
+    public function taskSuspensionPreventsReentrantExecutionOfLaterTasks(): void
+    {
+        $log = [];
+
+        // Task 1 suspends (simulating backpressure during socket write)
+        $this->pump->enqueue(static function () use (&$log): void {
+            $log[] = 'task 1 start';
+            \Amp\delay(0.04);
+            $log[] = 'task 1 end';
+        });
+
+        // Enqueue Task 2 while Task 1 is about to run or running
+        \Amp\async(function () use (&$log): void {
+            \Amp\delay(0.01); // while task 1 is in progress
+            $log[] = 'producer: enqueue task 2';
+            $this->pump->enqueue(function () use (&$log): void {
+                $log[] = 'task 2 executed';
+                $this->pump->stop();
+            });
+        });
+
+        $this->pump->drain();
+
+        self::assertSame([
+            'task 1 start',
+            'producer: enqueue task 2',
+            'task 1 end',
+            'task 2 executed',
+        ], $log);
+    }
+
+    #[Test]
+    public function drainThrowsIfAlreadyRunning(): void
+    {
+        $caught = false;
+        $this->pump->enqueue(function () use (&$caught): void {
+            try {
+                $this->pump->drain();
+            } catch (LogicException $e) {
+                $caught = true;
+                self::assertSame('SessionEventPump is already running.', $e->getMessage());
+            } finally {
+                $this->pump->stop();
+            }
+        });
+
+        $this->pump->drain();
+
+        self::assertTrue($caught);
+    }
+
+    #[Test]
+    public function enqueueIgnoredWhenStopped(): void
+    {
+        $this->pump->stop();
+        self::assertTrue($this->pump->isStopped());
+
+        $this->pump->enqueue(static function (): void {
+            self::fail('Should not be executed');
+        });
+
+        self::assertSame(0, $this->pump->getQueueSize());
+    }
+
+    #[Test]
+    public function drainAwaitsWhenQueueEmptyAndResumesOnEnqueue(): void
+    {
+        $executed = false;
+
+        \Amp\async(function () use (&$executed): void {
+            \Amp\delay(0.01);
+            $this->pump->enqueue(function () use (&$executed): void {
+                $executed = true;
+                $this->pump->stop();
+            });
+        });
+
+        $this->pump->drain();
+
+        self::assertTrue($executed);
+    }
+
+    #[Test]
+    public function drainAwaitsWhenQueueEmptyAndStopsCleanlyOnStop(): void
+    {
+        \Amp\async(function (): void {
+            \Amp\delay(0.01);
+            $this->pump->stop();
+        });
+
+        $this->pump->drain();
+
+        self::assertTrue($this->pump->isStopped());
+        self::assertFalse($this->pump->isRunning());
+    }
+}

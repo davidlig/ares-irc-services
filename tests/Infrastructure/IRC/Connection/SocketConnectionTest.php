@@ -4,28 +4,24 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Connection;
 
+use Amp\ByteStream\StreamException;
+use Amp\Socket\Socket;
 use App\Domain\IRC\Connection\ConnectionStatus;
 use App\Infrastructure\IRC\Connection\SocketConnection;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 use RuntimeException;
 
+use function Amp\async;
+use function Amp\delay;
+use function Amp\Socket\listen;
+use function count;
+
 #[CoversClass(SocketConnection::class)]
 final class SocketConnectionTest extends TestCase
 {
-    private function waitForSocketData(SocketConnection $conn): void
-    {
-        $ref = new ReflectionProperty($conn, 'socket');
-        $sock = $ref->getValue($conn);
-        $read = [$sock];
-        $write = null;
-        $except = null;
-        stream_select($read, $write, $except, 0, 100000);
-    }
-
     #[Test]
     public function getStatusReturnsDisconnectedBeforeConnect(): void
     {
@@ -57,55 +53,45 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
-    public function writeLineMarksConnectionAsErroredWhenTheSocketWriteFails(): void
-    {
-        $socket = fopen('php://memory', 'r');
-        self::assertNotFalse($socket);
-
-        $conn = new SocketConnection('127.0.0.1', 7000);
-        $property = new ReflectionProperty($conn, 'socket');
-        $property->setValue($conn, $socket);
-
-        try {
-            $conn->writeLine('PING');
-            self::fail('Expected the read-only stream to reject the write.');
-        } catch (RuntimeException $exception) {
-            self::assertSame('Failed to write to the IRC connection.', $exception->getMessage());
-            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
-        } finally {
-            fclose($socket);
-        }
-    }
-
-    #[Test]
     public function connectThrowsWhenConnectionFails(): void
     {
         $conn = new SocketConnection('127.0.0.1', 59999, false, 1);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to connect to');
 
-        // Intentional connection to closed port; suppress expected PHP warning (Connection refused)
-        @$conn->connect();
+        try {
+            $conn->connect();
+            self::fail('Expected connection failure exception');
+        } catch (RuntimeException $e) {
+            self::assertStringContainsString('Failed to connect to 127.0.0.1:59999', $e->getMessage());
+            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+        }
     }
 
     #[Test]
     public function connectWithTlsAndVerifyPeerThrowsWhenConnectionFails(): void
     {
         $conn = new SocketConnection('127.0.0.1', 59999, useTls: true, timeoutSeconds: 1, tlsVerifyPeer: true);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to connect to');
 
-        @$conn->connect();
+        try {
+            $conn->connect();
+            self::fail('Expected connection failure exception');
+        } catch (RuntimeException $e) {
+            self::assertStringContainsString('Failed to connect to 127.0.0.1:59999', $e->getMessage());
+            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+        }
     }
 
     #[Test]
     public function connectWithTlsWithoutVerifyPeerThrowsWhenConnectionFails(): void
     {
         $conn = new SocketConnection('127.0.0.1', 59999, useTls: true, timeoutSeconds: 1, tlsVerifyPeer: false);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Failed to connect to');
 
-        @$conn->connect();
+        try {
+            $conn->connect();
+            self::fail('Expected connection failure exception');
+        } catch (RuntimeException $e) {
+            self::assertStringContainsString('Failed to connect to 127.0.0.1:59999', $e->getMessage());
+            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+        }
     }
 
     #[Test]
@@ -116,110 +102,297 @@ final class SocketConnectionTest extends TestCase
         self::assertSame(ConnectionStatus::Disconnected, $conn->getStatus());
     }
 
-    /**
-     * When connected but no data available, readLine returns null (fgets returns false).
-     */
     #[Test]
-    #[Group('integration')]
-    public function readLineReturnsNullWhenConnectedButNoDataAvailable(): void
+    public function disconnectIsIdempotent(): void
     {
-        $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
-        self::assertNotFalse($server, "Failed to create server: $errstr ($errno)");
-        $addr = stream_socket_get_name($server, false);
-        self::assertNotFalse($addr);
-        [$host, $port] = explode(':', $addr);
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
 
-        $conn = new SocketConnection($host, (int) $port, false, 2);
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
-        self::assertTrue($conn->isConnected());
 
-        // Server accepts but does not send; readLine returns null when fgets gets no data
-        $client = stream_socket_accept($server, 2.0);
-        self::assertNotFalse($client);
-        $line = $conn->readLine();
-        self::assertNull($line);
-
-        fclose($client);
         $conn->disconnect();
-        fclose($server);
+        self::assertSame(ConnectionStatus::Disconnected, $conn->getStatus());
+        self::assertFalse($conn->isConnected());
+
+        // Repeated disconnect does nothing and does not throw
+        $conn->disconnect();
+        self::assertSame(ConnectionStatus::Disconnected, $conn->getStatus());
     }
 
-    /**
-     * Connects to a local TCP server, writes a line, reads it back, disconnects.
-     * Requires no external network; server runs in-process.
-     */
     #[Test]
-    #[Group('integration')]
     public function connectWriteLineReadLineDisconnectWithLocalServer(): void
     {
-        $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
-        self::assertNotFalse($server, "Failed to create server: $errstr ($errno)");
-        $addr = stream_socket_get_name($server, false);
-        self::assertNotFalse($addr);
-        [$host, $port] = explode(':', $addr);
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
 
-        $conn = new SocketConnection($host, (int) $port, false, 2);
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            $line = '';
+            while (!str_contains($line, "\n")) {
+                $chunk = $client->read();
+                if (null === $chunk) {
+                    break;
+                }
+                $line .= $chunk;
+            }
+            $client->write("PONG 123\r\n");
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
         self::assertTrue($conn->isConnected());
         self::assertSame(ConnectionStatus::Connected, $conn->getStatus());
 
-        $client = stream_socket_accept($server, 2.0);
-        self::assertNotFalse($client);
         $conn->writeLine('PING 123');
-        $received = fgets($client);
-        self::assertSame("PING 123\r\n", $received);
-
-        fwrite($client, "PONG 123\r\n");
-        $this->waitForSocketData($conn);
-        $line = $conn->readLine();
-        self::assertSame('PONG 123', $line);
-
-        fclose($client);
+        $received = $conn->readLine();
+        self::assertSame('PONG 123', $received);
 
         $conn->disconnect();
         self::assertFalse($conn->isConnected());
         self::assertSame(ConnectionStatus::Disconnected, $conn->getStatus());
         self::assertNull($conn->readLine());
-
-        fclose($server);
     }
 
-    /**
-     * When data arrives without a newline, readLine returns null and
-     * accumulates in the buffer. The next readLine call with a newline
-     * returns the full accumulated line.
-     */
     #[Test]
-    #[Group('integration')]
-    public function readLineBuffersPartialDataUntilNewlineArrives(): void
+    public function readLineReturnsNullOnEof(): void
     {
-        $server = stream_socket_server('tcp://127.0.0.1:0', $errno, $errstr);
-        self::assertNotFalse($server, "Failed to create server: $errstr ($errno)");
-        $addr = stream_socket_get_name($server, false);
-        self::assertNotFalse($addr);
-        [$host, $port] = explode(':', $addr);
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
 
-        $conn = new SocketConnection($host, (int) $port, false, 2);
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            // Close immediately without writing
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
         $conn->connect();
 
-        $client = stream_socket_accept($server, 2.0);
-        self::assertNotFalse($client);
-        stream_set_blocking($client, false);
+        self::assertTrue($conn->isConnected());
 
-        // Send partial data without newline — readLine should return null
-        fwrite($client, 'PARTIAL');
-        $this->waitForSocketData($conn);
-        self::assertNull($conn->readLine());
+        $line = $conn->readLine();
+        self::assertNull($line);
+        self::assertFalse($conn->isConnected());
 
-        // Send the rest with newline — readLine should return the full line
-        fwrite($client, " DATA\r\n");
-        $this->waitForSocketData($conn);
+        $conn->disconnect();
+    }
+
+    #[Test]
+    public function readLineSuspendsUntilDataArrives(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
+
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            delay(0.04);
+            $client->write("DELAYED DATA\r\n");
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
+        $conn->connect();
+
+        $line = $conn->readLine();
+        self::assertSame('DELAYED DATA', $line);
+
+        $conn->disconnect();
+    }
+
+    #[Test]
+    public function readLineHandlesFragmentationAcrossChunks(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
+
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            $client->write('PART');
+            delay(0.01);
+            $client->write('IAL ');
+            delay(0.01);
+            $client->write("DATA\r\n");
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
+        $conn->connect();
+
         $line = $conn->readLine();
         self::assertSame('PARTIAL DATA', $line);
 
-        fclose($client);
         $conn->disconnect();
-        fclose($server);
+    }
+
+    #[Test]
+    public function readLineHandlesCrLfSplitAcrossChunks(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
+
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            $client->write("SPLIT\r");
+            delay(0.01);
+            $client->write("\n");
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
+        $conn->connect();
+
+        $line = $conn->readLine();
+        self::assertSame('SPLIT', $line);
+
+        $conn->disconnect();
+    }
+
+    #[Test]
+    public function readLineHandlesMultipleLinesInSingleChunk(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
+
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            $client->write("LINE 1\r\nLINE 2\r\nLINE 3\r\n");
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
+        $conn->connect();
+
+        self::assertSame('LINE 1', $conn->readLine());
+        self::assertSame('LINE 2', $conn->readLine());
+        self::assertSame('LINE 3', $conn->readLine());
+        self::assertNull($conn->readLine());
+
+        $conn->disconnect();
+    }
+
+    #[Test]
+    public function readLineReturnsTrailingDataAtEofWithoutNewline(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
+
+        async(static function () use ($server): void {
+            $client = $server->accept();
+            $client->write('TRAILING DATA');
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
+        $conn->connect();
+
+        self::assertSame('TRAILING DATA', $conn->readLine());
+        self::assertNull($conn->readLine());
+
+        $conn->disconnect();
+    }
+
+    #[Test]
+    public function writeLinePreservesOrderForMultipleWrites(): void
+    {
+        $server = listen('127.0.0.1:0');
+        $port = $server->getAddress()->getPort();
+
+        $receivedLines = [];
+        async(static function () use ($server, &$receivedLines): void {
+            $client = $server->accept();
+            $buf = '';
+            while (count($receivedLines) < 3) {
+                $chunk = $client->read();
+                if (null === $chunk) {
+                    break;
+                }
+                $buf .= $chunk;
+                while (false !== ($pos = strpos($buf, "\n"))) {
+                    $receivedLines[] = rtrim(substr($buf, 0, $pos), "\r");
+                    $buf = substr($buf, $pos + 1);
+                }
+            }
+            $client->close();
+            $server->close();
+        });
+
+        $conn = new SocketConnection('127.0.0.1', $port, false, 2);
+        $conn->connect();
+
+        $conn->writeLine('FIRST');
+        $conn->writeLine('SECOND');
+        $conn->writeLine('THIRD');
+
+        delay(0.05);
+
+        self::assertSame(['FIRST', 'SECOND', 'THIRD'], $receivedLines);
+
+        $conn->disconnect();
+    }
+
+    #[Test]
+    public function writeLineMarksConnectionAsErroredWhenWriteFails(): void
+    {
+        $stubSocket = $this->createStub(Socket::class);
+        $stubSocket->method('isClosed')->willReturn(false);
+        $stubSocket->method('isReadable')->willReturn(true);
+        $stubSocket->method('write')->willThrowException(new StreamException('Simulated write failure'));
+
+        $conn = new SocketConnection('127.0.0.1', 7000);
+
+        $statusProp = new ReflectionProperty(SocketConnection::class, 'status');
+        $statusProp->setValue($conn, ConnectionStatus::Connected);
+
+        $socketProp = new ReflectionProperty(SocketConnection::class, 'socket');
+        $socketProp->setValue($conn, $stubSocket);
+
+        try {
+            $conn->writeLine('PING');
+            self::fail('Expected write exception');
+        } catch (RuntimeException $e) {
+            self::assertSame('Failed to write to the IRC connection.', $e->getMessage());
+            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+        }
+    }
+
+    #[Test]
+    public function readLineMarksConnectionAsErroredWhenReadFails(): void
+    {
+        $stubSocket = $this->createStub(Socket::class);
+        $stubSocket->method('isClosed')->willReturn(false);
+        $stubSocket->method('isReadable')->willReturn(true);
+        $stubSocket->method('read')->willThrowException(new StreamException('Simulated read failure'));
+
+        $conn = new SocketConnection('127.0.0.1', 7000);
+
+        $statusProp = new ReflectionProperty(SocketConnection::class, 'status');
+        $statusProp->setValue($conn, ConnectionStatus::Connected);
+
+        $socketProp = new ReflectionProperty(SocketConnection::class, 'socket');
+        $socketProp->setValue($conn, $stubSocket);
+
+        try {
+            $conn->readLine();
+            self::fail('Expected read exception');
+        } catch (RuntimeException $e) {
+            self::assertStringContainsString('Error reading from IRC connection: Simulated read failure', $e->getMessage());
+            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+        }
     }
 }

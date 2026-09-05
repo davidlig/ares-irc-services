@@ -4,23 +4,29 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Connection;
 
+use Amp\Socket\ClientTlsContext;
+use Amp\Socket\ConnectContext;
+use Amp\Socket\Socket;
+use Amp\TimeoutCancellation;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Connection\ConnectionStatus;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use Throwable;
 
+use function Amp\Socket\connect;
+use function Amp\Socket\connectTls;
+use function rtrim;
 use function sprintf;
-use function strlen;
-
-use const STREAM_CLIENT_CONNECT;
+use function strpos;
+use function substr;
 
 class SocketConnection implements ConnectionInterface
 {
     private ConnectionStatus $status = ConnectionStatus::Disconnected;
 
-    /** @var resource|null */
-    private mixed $socket = null;
+    private ?Socket $socket = null;
 
     private string $recvBuffer = '';
 
@@ -35,62 +41,58 @@ class SocketConnection implements ConnectionInterface
 
     public function connect(): void
     {
-        $scheme = $this->useTls ? 'tls' : 'tcp';
-        $address = sprintf('%s://%s:%d', $scheme, $this->host, $this->port);
+        $uri = sprintf('%s:%d', $this->host, $this->port);
 
         $this->logger->info('Opening TCP connection.', [
-            'address' => $address,
+            'address' => $uri,
             'timeout' => $this->timeoutSeconds,
+            'tls' => $this->useTls,
         ]);
 
         $this->status = ConnectionStatus::Connecting;
 
-        $errorCode = 0;
-        $errorMessage = '';
+        $connectContext = new ConnectContext()
+            ->withConnectTimeout((float) $this->timeoutSeconds);
 
-        $contextOptions = [];
         if ($this->useTls) {
-            $contextOptions['ssl'] = [
-                'verify_peer' => $this->tlsVerifyPeer,
-                'verify_peer_name' => $this->tlsVerifyPeer,
-                'allow_self_signed' => !$this->tlsVerifyPeer,
-            ];
+            $tlsContext = new ClientTlsContext($this->host);
+            if (!$this->tlsVerifyPeer) {
+                $tlsContext = $tlsContext->withoutPeerVerification();
+                $this->logger->warning('TLS peer verification is disabled for IRC connection.', [
+                    'host' => $this->host,
+                ]);
+            }
+
+            $connectContext = $connectContext->withTlsContext($tlsContext);
         }
 
-        $socket = stream_socket_client(
-            address: $address,
-            error_code: $errorCode,
-            error_message: $errorMessage,
-            timeout: $this->timeoutSeconds,
-            flags: STREAM_CLIENT_CONNECT,
-            context: stream_context_create($contextOptions),
-        );
+        $cancellation = new TimeoutCancellation((float) $this->timeoutSeconds);
 
-        if (false === $socket) {
+        try {
+            $this->socket = $this->useTls
+                ? connectTls($uri, $connectContext, $cancellation)
+                : connect($uri, $connectContext, $cancellation);
+
+            $this->status = ConnectionStatus::Connected;
+            $this->recvBuffer = '';
+
+            $this->logger->info('TCP connection established.', ['address' => $uri]);
+        } catch (Throwable $e) {
             $this->status = ConnectionStatus::Error;
 
             $this->logger->error('TCP connection failed.', [
-                'address' => $address,
-                'code' => $errorCode,
-                'error' => $errorMessage,
+                'address' => $uri,
+                'error' => $e->getMessage(),
             ]);
 
-            throw new RuntimeException(sprintf('Failed to connect to %s: [%d] %s', $address, $errorCode, $errorMessage));
+            throw new RuntimeException(sprintf('Failed to connect to %s: %s', $uri, $e->getMessage()), 0, $e);
         }
-
-        stream_set_blocking($socket, false);
-
-        $this->socket = $socket;
-        $this->status = ConnectionStatus::Connected;
-        $this->recvBuffer = '';
-
-        $this->logger->info('TCP connection established.', ['address' => $address]);
     }
 
     public function disconnect(): void
     {
         if (null !== $this->socket) {
-            fclose($this->socket);
+            $this->socket->close();
             $this->socket = null;
         }
 
@@ -109,24 +111,17 @@ class SocketConnection implements ConnectionInterface
         }
 
         $payload = $data . "\r\n";
-        $offset = 0;
-
-        stream_set_blocking($this->socket, true);
-        stream_set_timeout($this->socket, $this->timeoutSeconds);
 
         try {
-            while ($offset < strlen($payload)) {
-                $written = @fwrite($this->socket, substr($payload, $offset));
-                if (false === $written || 0 === $written) {
-                    $this->status = ConnectionStatus::Error;
+            $this->socket?->write($payload);
+        } catch (Throwable $e) {
+            $this->status = ConnectionStatus::Error;
 
-                    throw new RuntimeException('Failed to write to the IRC connection.');
-                }
+            $this->logger->error('Failed to write to the IRC connection.', [
+                'error' => $e->getMessage(),
+            ]);
 
-                $offset += $written;
-            }
-        } finally {
-            stream_set_blocking($this->socket, false);
+            throw new RuntimeException('Failed to write to the IRC connection.', 0, $e);
         }
     }
 
@@ -138,28 +133,53 @@ class SocketConnection implements ConnectionInterface
 
         $newlinePos = strpos($this->recvBuffer, "\n");
 
-        if (false === $newlinePos) {
-            $chunk = @fread($this->socket, 8192);
+        while (false === $newlinePos) {
+            try {
+                $chunk = $this->socket?->read();
+            } catch (Throwable $e) {
+                $this->status = ConnectionStatus::Error;
 
-            if (false !== $chunk && '' !== $chunk) {
-                $this->recvBuffer .= $chunk;
-                $newlinePos = strpos($this->recvBuffer, "\n");
+                $this->logger->error('Error reading from IRC connection.', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                throw new RuntimeException(sprintf('Error reading from IRC connection: %s', $e->getMessage()), 0, $e);
             }
+
+            if (null === $chunk) {
+                break;
+            }
+
+            $this->recvBuffer .= $chunk;
+            $newlinePos = strpos($this->recvBuffer, "\n");
         }
 
-        if (false === $newlinePos) {
-            return null;
+        if (false !== $newlinePos) {
+            $line = substr($this->recvBuffer, 0, $newlinePos);
+            $this->recvBuffer = substr($this->recvBuffer, $newlinePos + 1);
+
+            return rtrim($line, "\r");
         }
 
-        $line = substr($this->recvBuffer, 0, $newlinePos);
-        $this->recvBuffer = substr($this->recvBuffer, $newlinePos + 1);
+        if ('' !== $this->recvBuffer) {
+            $line = $this->recvBuffer;
+            $this->recvBuffer = '';
 
-        return rtrim($line, "\r");
+            return rtrim($line, "\r");
+        }
+
+        $this->status = ConnectionStatus::Disconnected;
+
+        return null;
     }
 
     public function isConnected(): bool
     {
-        return null !== $this->socket && !feof($this->socket);
+        if (ConnectionStatus::Connected !== $this->status || null === $this->socket || $this->socket->isClosed()) {
+            return false;
+        }
+
+        return $this->socket->isReadable() || '' !== $this->recvBuffer;
     }
 
     public function getStatus(): ConnectionStatus

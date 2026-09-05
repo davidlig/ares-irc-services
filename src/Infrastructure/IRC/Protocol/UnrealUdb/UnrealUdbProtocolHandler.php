@@ -10,9 +10,12 @@ use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use App\Infrastructure\IRC\Protocol\UnrealFamily\UnrealFamilyHandshakeTrait;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
+use App\Infrastructure\IRC\Runtime\SessionEventPump;
+use App\Infrastructure\IRC\Runtime\SessionEventPumpAwareInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use Throwable;
 
 use function str_starts_with;
 use function substr;
@@ -31,7 +34,7 @@ use function substr;
  * HEL selects the services FQDN (or asks with "?"), services offer the
  * authoritative six-block snapshot and serve divergent blocks.
  */
-final class UnrealUdbProtocolHandler extends AbstractProtocolHandler
+final class UnrealUdbProtocolHandler extends AbstractProtocolHandler implements SessionEventPumpAwareInterface
 {
     use UnrealFamilyHandshakeTrait {
         performHandshake as unrealFamilyHandshake;
@@ -58,11 +61,22 @@ final class UnrealUdbProtocolHandler extends AbstractProtocolHandler
         return self::PROTOCOL_NAME;
     }
 
+    public function setEventPump(?SessionEventPump $eventPump): void
+    {
+        $this->coordinator->setEventPump($eventPump);
+    }
+
     /** The daemon holds the UDB directory lock for the whole link lifetime. */
     public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
     {
         $this->lock->acquire();
-        $this->unrealFamilyHandshake($connection, $link);
+        try {
+            $this->unrealFamilyHandshake($connection, $link);
+        } catch (Throwable $e) {
+            $this->lock->release();
+            $this->coordinator->reset();
+            throw $e;
+        }
     }
 
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void
