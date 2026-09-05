@@ -9,6 +9,8 @@ parameters:
     irc.description:   '%env(IRC_DESCRIPTION)%'
     irc.protocol:      '%env(IRC_PROTOCOL)%'
     irc.use_tls:       '%env(bool:IRC_USE_TLS)%'
+    irc.tls_verify_peer_default: true
+    irc.tls_verify_peer: '%env(bool:default:irc.tls_verify_peer_default:IRC_TLS_VERIFY_PEER)%'
     irc.server_sid:    '%env(IRC_SERVER_SID)%'
 
     # Services global settings
@@ -228,6 +230,7 @@ services:
             $defaultDescription: '%irc.description%'
             $defaultProtocol:    '%irc.protocol%'
             $defaultUseTls:      '%irc.use_tls%'
+            $defaultTlsVerifyPeer: '%irc.tls_verify_peer%'
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight:
         arguments:

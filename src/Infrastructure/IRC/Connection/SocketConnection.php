@@ -29,6 +29,7 @@ class SocketConnection implements ConnectionInterface
         private readonly int $port,
         private readonly bool $useTls = false,
         private readonly int $timeoutSeconds = 30,
+        private readonly bool $tlsVerifyPeer = true,
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
@@ -47,13 +48,22 @@ class SocketConnection implements ConnectionInterface
         $errorCode = 0;
         $errorMessage = '';
 
+        $contextOptions = [];
+        if ($this->useTls) {
+            $contextOptions['ssl'] = [
+                'verify_peer' => $this->tlsVerifyPeer,
+                'verify_peer_name' => $this->tlsVerifyPeer,
+                'allow_self_signed' => !$this->tlsVerifyPeer,
+            ];
+        }
+
         $socket = stream_socket_client(
             address: $address,
             error_code: $errorCode,
             error_message: $errorMessage,
             timeout: $this->timeoutSeconds,
             flags: STREAM_CLIENT_CONNECT,
-            context: stream_context_create(),
+            context: stream_context_create($contextOptions),
         );
 
         if (false === $socket) {

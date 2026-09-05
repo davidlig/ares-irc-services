@@ -32,6 +32,7 @@ final class ConnectToServerCommandTest extends TestCase
         self::assertSame('Ares IRC Services', $cmd->description);
         self::assertSame('unreal', $cmd->protocol);
         self::assertTrue($cmd->useTls);
+        self::assertTrue($cmd->tlsVerifyPeer);
     }
 
     #[Test]
@@ -47,5 +48,24 @@ final class ConnectToServerCommandTest extends TestCase
         );
 
         self::assertFalse($cmd->useTls);
+        self::assertTrue($cmd->tlsVerifyPeer);
+    }
+
+    #[Test]
+    public function tlsVerifyPeerCanBeSetToFalse(): void
+    {
+        $cmd = new ConnectToServerCommand(
+            serverName: 's.example.com',
+            host: '127.0.0.1',
+            port: 7029,
+            password: 'p',
+            description: 'Desc',
+            protocol: 'unreal',
+            useTls: true,
+            tlsVerifyPeer: false,
+        );
+
+        self::assertTrue($cmd->useTls);
+        self::assertFalse($cmd->tlsVerifyPeer);
     }
 }

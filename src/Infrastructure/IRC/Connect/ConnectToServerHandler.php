@@ -29,6 +29,7 @@ final readonly class ConnectToServerHandler implements ConnectToServerHandlerInt
             password: new LinkPassword($command->password),
             description: $command->description,
             useTls: $command->useTls,
+            tlsVerifyPeer: $command->tlsVerifyPeer,
         );
 
         $client = $this->clientFactory->create($command->protocol, $serverLink);

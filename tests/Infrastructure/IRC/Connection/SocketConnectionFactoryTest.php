@@ -14,6 +14,7 @@ use App\Infrastructure\IRC\Connection\SocketConnectionFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 #[CoversClass(SocketConnectionFactory::class)]
 final class SocketConnectionFactoryTest extends TestCase
@@ -40,5 +41,33 @@ final class SocketConnectionFactoryTest extends TestCase
         $connection = $this->factory->create($link);
 
         self::assertInstanceOf(SocketConnection::class, $connection);
+
+        $refTls = new ReflectionProperty(SocketConnection::class, 'useTls');
+        $refVerify = new ReflectionProperty(SocketConnection::class, 'tlsVerifyPeer');
+        self::assertFalse($refTls->getValue($connection));
+        self::assertTrue($refVerify->getValue($connection));
+    }
+
+    #[Test]
+    public function createPassesTlsAndVerifyPeerOptions(): void
+    {
+        $link = new ServerLink(
+            new ServerName('irc.test.local'),
+            new Hostname('127.0.0.1'),
+            new Port(7000),
+            new LinkPassword('secret'),
+            'Test',
+            true,
+            false,
+        );
+
+        $connection = $this->factory->create($link);
+
+        self::assertInstanceOf(SocketConnection::class, $connection);
+
+        $refTls = new ReflectionProperty(SocketConnection::class, 'useTls');
+        $refVerify = new ReflectionProperty(SocketConnection::class, 'tlsVerifyPeer');
+        self::assertTrue($refTls->getValue($connection));
+        self::assertFalse($refVerify->getValue($connection));
     }
 }

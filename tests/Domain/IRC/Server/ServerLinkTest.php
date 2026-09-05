@@ -34,6 +34,7 @@ final class ServerLinkTest extends TestCase
         self::assertSame('secret', $link->password->value);
         self::assertSame('Ares IRC Services', $link->description);
         self::assertTrue($link->useTls);
+        self::assertTrue($link->tlsVerifyPeer);
     }
 
     #[Test]
@@ -48,5 +49,23 @@ final class ServerLinkTest extends TestCase
         );
 
         self::assertFalse($link->useTls);
+        self::assertTrue($link->tlsVerifyPeer);
+    }
+
+    #[Test]
+    public function tlsVerifyPeerCanBeSetToFalse(): void
+    {
+        $link = new ServerLink(
+            serverName: new ServerName('s.example.com'),
+            host: new Hostname('127.0.0.1'),
+            port: new Port(7029),
+            password: new LinkPassword('p'),
+            description: 'Desc',
+            useTls: true,
+            tlsVerifyPeer: false,
+        );
+
+        self::assertTrue($link->useTls);
+        self::assertFalse($link->tlsVerifyPeer);
     }
 }

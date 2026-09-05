@@ -23,6 +23,7 @@ class SocketConnectionFactory implements ConnectionFactoryInterface
             host: (string) $link->host,
             port: $link->port->value,
             useTls: $link->useTls,
+            tlsVerifyPeer: $link->tlsVerifyPeer,
             timeoutSeconds: $this->timeoutSeconds,
             logger: $this->logger,
         );

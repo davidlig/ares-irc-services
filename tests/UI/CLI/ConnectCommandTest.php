@@ -30,6 +30,7 @@ final class ConnectCommandTest extends TestCase
         'description' => 'Ares Test',
         'protocol' => 'unreal',
         'useTls' => false,
+        'tlsVerifyPeer' => true,
     ];
 
     private function createCommand(
@@ -56,6 +57,7 @@ final class ConnectCommandTest extends TestCase
             defaultDescription: $m['description'],
             defaultProtocol: $m['protocol'],
             defaultUseTls: $m['useTls'],
+            defaultTlsVerifyPeer: $m['tlsVerifyPeer'],
         );
     }
 
@@ -96,6 +98,7 @@ final class ConnectCommandTest extends TestCase
         self::assertSame('Ares Test', $handler->capturedCommand->description);
         self::assertSame('unreal', $handler->capturedCommand->protocol);
         self::assertFalse($handler->capturedCommand->useTls);
+        self::assertTrue($handler->capturedCommand->tlsVerifyPeer);
 
         $display = $tester->getDisplay();
         self::assertStringContainsString('Connecting...', $display);
@@ -116,7 +119,55 @@ final class ConnectCommandTest extends TestCase
         self::assertTrue($command->getDefinition()->hasArgument('description'));
         self::assertTrue($command->getDefinition()->hasOption('protocol'));
         self::assertTrue($command->getDefinition()->hasOption('tls'));
+        self::assertTrue($command->getDefinition()->hasOption('insecure'));
         self::assertTrue($command->getDefinition()->hasOption('no-consumer'));
+    }
+
+    #[Test]
+    public function executeWithInsecureOptionDisablesTlsVerifyPeer(): void
+    {
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $command = $this->createCommand($handler, null, ['useTls' => true]);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--insecure' => true, '--no-consumer' => true]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+        self::assertInstanceOf(ConnectToServerCommand::class, $handler->capturedCommand);
+        self::assertTrue($handler->capturedCommand->useTls);
+        self::assertFalse($handler->capturedCommand->tlsVerifyPeer);
+        self::assertStringContainsString('yes (insecure)', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function executeWithDefaultTlsVerifyPeerFalseUsesInsecure(): void
+    {
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $command = $this->createCommand($handler, null, ['useTls' => true, 'tlsVerifyPeer' => false]);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--no-consumer' => true]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+        self::assertInstanceOf(ConnectToServerCommand::class, $handler->capturedCommand);
+        self::assertTrue($handler->capturedCommand->useTls);
+        self::assertFalse($handler->capturedCommand->tlsVerifyPeer);
+    }
+
+    #[Test]
+    public function executeWithTlsOptionEnablesTls(): void
+    {
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $command = $this->createCommand($handler, null, ['useTls' => false]);
+        $tester = new CommandTester($command);
+
+        $exitCode = $tester->execute(['--tls' => true, '--no-consumer' => true]);
+
+        self::assertSame(Command::SUCCESS, $exitCode);
+        self::assertInstanceOf(ConnectToServerCommand::class, $handler->capturedCommand);
+        self::assertTrue($handler->capturedCommand->useTls);
+        self::assertTrue($handler->capturedCommand->tlsVerifyPeer);
+        self::assertStringContainsString('yes', $tester->getDisplay());
     }
 
     #[Test]

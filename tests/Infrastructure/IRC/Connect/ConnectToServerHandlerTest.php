@@ -57,6 +57,43 @@ final class ConnectToServerHandlerTest extends TestCase
         self::assertSame('link-secret', $link->password->value);
         self::assertSame('Ares Test', $link->description);
         self::assertTrue($link->useTls);
+        self::assertTrue($link->tlsVerifyPeer);
+    }
+
+    #[Test]
+    public function handleBuildsServerLinkWithTlsVerifyPeerDisabled(): void
+    {
+        $command = new ConnectToServerCommand(
+            serverName: 'services.test.local',
+            host: '127.0.0.1',
+            port: 7029,
+            password: 'link-secret',
+            description: 'Ares Test',
+            protocol: 'unreal',
+            useTls: true,
+            tlsVerifyPeer: false,
+        );
+
+        $capturedLink = null;
+        $client = $this->createMock(IRCClient::class);
+        $client->expects(self::once())->method('connect')->willReturnCallback(static function (ServerLink $link) use (&$capturedLink): void {
+            $capturedLink = $link;
+        });
+
+        $factory = $this->createMock(IRCClientFactoryInterface::class);
+        $factory->expects(self::once())->method('create')->with('unreal', self::callback(static function (ServerLink $link) use (&$capturedLink): bool {
+            $capturedLink = $link;
+
+            return true;
+        }))->willReturn($client);
+
+        $handler = new ConnectToServerHandler($factory);
+        $result = $handler->handle($command);
+
+        self::assertSame($client, $result);
+        self::assertInstanceOf(ServerLink::class, $capturedLink);
+        self::assertTrue($capturedLink->useTls);
+        self::assertFalse($capturedLink->tlsVerifyPeer);
     }
 
     #[Test]

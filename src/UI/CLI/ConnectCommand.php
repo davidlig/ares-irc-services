@@ -42,6 +42,7 @@ class ConnectCommand extends Command
         private readonly string $defaultDescription,
         private readonly string $defaultProtocol,
         private readonly bool $defaultUseTls,
+        private readonly bool $defaultTlsVerifyPeer = true,
     ) {
         parent::__construct();
     }
@@ -87,6 +88,12 @@ class ConnectCommand extends Command
                 'Wrap the connection in TLS. Defaults to IRC_USE_TLS.',
             )
             ->addOption(
+                'insecure',
+                null,
+                InputOption::VALUE_NONE,
+                'Disable TLS peer certificate verification. Defaults to IRC_TLS_VERIFY_PEER.',
+            )
+            ->addOption(
                 'no-consumer',
                 null,
                 InputOption::VALUE_NONE,
@@ -105,6 +112,7 @@ class ConnectCommand extends Command
         $description = (string) ($input->getArgument('description') ?? $this->defaultDescription);
         $protocol = (string) ($input->getOption('protocol') ?? $this->defaultProtocol);
         $useTls = $input->getOption('tls') ? true : $this->defaultUseTls;
+        $tlsVerifyPeer = $input->getOption('insecure') ? false : $this->defaultTlsVerifyPeer;
 
         $preflight = $this->connectionPreflight->prepare($protocol);
         if (null !== $preflight->message) {
@@ -123,7 +131,7 @@ class ConnectCommand extends Command
             ['Server name' => $serverName],
             ['Host' => sprintf('%s:%d', $host, $port)],
             ['Protocol' => $protocol],
-            ['TLS' => $useTls ? 'yes' : 'no'],
+            ['TLS' => $useTls ? ($tlsVerifyPeer ? 'yes' : 'yes (insecure)') : 'no'],
         );
 
         try {
@@ -137,6 +145,7 @@ class ConnectCommand extends Command
                 description: $description,
                 protocol: $protocol,
                 useTls: $useTls,
+                tlsVerifyPeer: $tlsVerifyPeer,
             ));
 
             $this->registerSignalHandlers($client);

@@ -22,5 +22,6 @@ readonly class ServerLink
         public LinkPassword $password,
         public string $description,
         public bool $useTls = false,
+        public bool $tlsVerifyPeer = true,
     ) {}
 }

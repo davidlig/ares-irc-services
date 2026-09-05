@@ -89,6 +89,26 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
+    public function connectWithTlsAndVerifyPeerThrowsWhenConnectionFails(): void
+    {
+        $conn = new SocketConnection('127.0.0.1', 59999, useTls: true, timeoutSeconds: 1, tlsVerifyPeer: true);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to connect to');
+
+        @$conn->connect();
+    }
+
+    #[Test]
+    public function connectWithTlsWithoutVerifyPeerThrowsWhenConnectionFails(): void
+    {
+        $conn = new SocketConnection('127.0.0.1', 59999, useTls: true, timeoutSeconds: 1, tlsVerifyPeer: false);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Failed to connect to');
+
+        @$conn->connect();
+    }
+
+    #[Test]
     public function disconnectWhenNotConnectedDoesNotThrow(): void
     {
         $conn = new SocketConnection('127.0.0.1', 7000);
