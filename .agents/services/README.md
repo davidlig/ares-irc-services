@@ -43,7 +43,8 @@ Key ports:
 | `SendNoticePort` | Send NOTICE to user (`sendNotice`) or channel (`sendNoticeToChannel`) |
 | `ChannelLookupPort` | Get channel info → `ChannelView` |
 | `ChannelServiceActionsPort` | Set modes, join, topic for ChanServ |
-| `ProtocolModuleInterface` | Active IRCd protocol module (`getServiceActions()`, `getHandler()`, etc.) |
+| `ProtocolModuleInterface` | Shared active IRCd module capabilities (`getServiceActions()`, supports, formatters) |
+| `ProtocolRuntimeModuleInterface` | Infrastructure-only extension that exposes `getHandler()` |
 | `ProtocolServiceActionsInterface` | Wire-level actions (`introduceService`, `setUserVhost`, `setUserAccount`, etc.) |
 | `LocalUserModeSyncInterface` | Synchronize local state user modes (`+r`/`-r`) |
 | `ServiceCommandListenerInterface` | Bot receives commands from Gateway |

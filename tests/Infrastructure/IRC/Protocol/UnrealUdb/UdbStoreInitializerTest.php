@@ -21,11 +21,13 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbStoreInitializer;
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
 
+#[CoversClass(UdbStoreInitializer::class)]
 final class UdbStoreInitializerTest extends TestCase
 {
     private const string BCRYPT_HASH = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';

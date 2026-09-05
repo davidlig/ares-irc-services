@@ -6,11 +6,16 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\UdbRawCommandResult;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\ParsedUdbPath;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRawCommandHandler;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(UnrealUdbRawCommandHandler::class)]
+#[CoversClass(UdbRawCommandResult::class)]
+#[CoversClass(ParsedUdbPath::class)]
 final class UnrealUdbRawCommandHandlerTest extends TestCase
 {
     private FakeUdbRecords $records;

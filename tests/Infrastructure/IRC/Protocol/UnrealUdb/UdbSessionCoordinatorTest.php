@@ -25,6 +25,7 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbWireTakeover;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -36,6 +37,7 @@ use RuntimeException;
 use function array_slice;
 use function count;
 
+#[CoversClass(UdbSessionCoordinator::class)]
 final class UdbSessionCoordinatorTest extends TestCase
 {
     private const string OWN_NAME = 'services.example.net';

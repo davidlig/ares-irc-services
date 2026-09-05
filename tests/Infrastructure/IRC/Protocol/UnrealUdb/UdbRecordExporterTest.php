@@ -40,6 +40,8 @@ final class UdbRecordExporterTest extends TestCase
 
     private OperIrcopRepositoryInterface $ircopRepository;
 
+    private GlineRepositoryInterface $glineRepository;
+
     private ChannelLookupPort $channelLookup;
 
     private UdbRecordExporter $exporter;
@@ -50,6 +52,7 @@ final class UdbRecordExporterTest extends TestCase
         $this->channelRepository = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $this->accessRepository = $this->createStub(ChannelAccessRepositoryInterface::class);
         $this->ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $this->glineRepository = $this->createStub(GlineRepositoryInterface::class);
         $this->channelLookup = $this->createStub(ChannelLookupPort::class);
 
         $this->exporter = new UdbRecordExporter(
@@ -57,7 +60,7 @@ final class UdbRecordExporterTest extends TestCase
             $this->channelRepository,
             $this->accessRepository,
             $this->ircopRepository,
-            $this->createStub(GlineRepositoryInterface::class),
+            $this->glineRepository,
             $this->channelLookup,
             $this->createModeSupportProvider(),
         );
@@ -320,6 +323,48 @@ final class UdbRecordExporterTest extends TestCase
 
         self::assertNotNull($encoded);
         self::assertSame([$encoded => 'david.tld'], $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
+    }
+
+    #[Test]
+    public function encodedBlockRecordsAggregatesAllChannels(): void
+    {
+        $this->channelRepository->method('listAll')->willReturn([
+            $this->createChannel('#first'),
+            $this->createChannel('#second', status: ChannelStatus::Suspended),
+        ]);
+        $firstOptions = UdbPathCodec::encodePath(['#first', 'options']);
+        $secondSuspended = UdbPathCodec::encodePath(['#second', 'suspended']);
+
+        self::assertNotNull($firstOptions);
+        self::assertNotNull($secondSuspended);
+        self::assertSame([
+            $firstOptions => '*8',
+            $secondSuspended => '1',
+        ], $this->exporter->encodedBlockRecords(UdbBlock::Channels));
+    }
+
+    #[Test]
+    public function encodedBlockRecordsAggregatesAllActiveGlines(): void
+    {
+        $this->glineRepository->method('findActive')->willReturn([
+            Gline::create('*@first.example', null, 'first reason'),
+            Gline::create('*@second.example', null, 'second reason'),
+        ]);
+        $firstRoot = UdbPathCodec::encodePath(['G', '*@first.example']);
+        $firstReason = UdbPathCodec::encodePath(['G', '*@first.example', 'reason']);
+        $secondRoot = UdbPathCodec::encodePath(['G', '*@second.example']);
+        $secondReason = UdbPathCodec::encodePath(['G', '*@second.example', 'reason']);
+
+        self::assertNotNull($firstRoot);
+        self::assertNotNull($firstReason);
+        self::assertNotNull($secondRoot);
+        self::assertNotNull($secondReason);
+        self::assertSame([
+            $firstRoot => 'first reason',
+            $firstReason => 'first reason',
+            $secondRoot => 'second reason',
+            $secondReason => 'second reason',
+        ], $this->exporter->encodedBlockRecords(UdbBlock::Lines));
     }
 
     #[Test]

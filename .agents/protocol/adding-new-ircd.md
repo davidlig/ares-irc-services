@@ -18,41 +18,52 @@ Store documentation in `docs/<ircdname>/` for reference.
 
 ```
 src/Infrastructure/IRC/Protocol/<Name>/
-├── <Name>Module.php                    (implements ProtocolModuleInterface)
-├── <Name>ProtocolHandler.php           (implements ProtocolHandlerInterface / extends AbstractProtocolHandler)
-├── <Name>NetworkStateAdapter.php       (implements NetworkStateAdapterInterface)
+├── <Name>Module.php                    (implements ProtocolRuntimeModuleInterface)
+├── <Name>ProtocolHandler.php           (implements ProtocolHandlerInterface)
 ├── <Name>ProtocolServiceActions.php    (implements ProtocolServiceActionsInterface)
-└── <Name>ChannelModeSupport.php        (implements ChannelModeSupportInterface)
+├── <Name>ServiceIntroductionFormatter.php
+├── <Name>ChannelModeSupport.php
+├── <Name>UserModeSupport.php
+└── <Name>NickReservation.php
+
+src/Infrastructure/IRC/Network/Adapter/
+└── <Name>NetworkStateAdapter.php       (implements NetworkStateAdapterInterface)
 ```
 
-## 3. Implement ProtocolModuleInterface
+## 3. Implement ProtocolRuntimeModuleInterface
 
 Create the module class that bundles all components:
 
 ```php
-final readonly class <Name>Module implements ProtocolModuleInterface
+final readonly class <Name>Module implements ProtocolRuntimeModuleInterface
 {
     public function __construct(
         private <Name>ProtocolHandler $handler,
-        private <Name>NetworkStateAdapter $adapter,
         private <Name>ProtocolServiceActions $serviceActions,
-        private <Name>ChannelModeSupport $modeSupport,
+        private <Name>ServiceIntroductionFormatter $introductionFormatter,
+        private <Name>ChannelModeSupport $channelModeSupport,
+        private <Name>UserModeSupport $userModeSupport,
+        private <Name>NickReservation $nickReservation,
     ) {}
 
     public function getProtocolName(): string { return '<name>'; }
     public function getHandler(): ProtocolHandlerInterface { return $this->handler; }
-    public function getNetworkStateAdapter(): NetworkStateAdapterInterface { return $this->adapter; }
     public function getServiceActions(): ProtocolServiceActionsInterface { return $this->serviceActions; }
-    public function getChannelModeSupport(): ChannelModeSupportInterface { return $this->modeSupport; }
+    public function getIntroductionFormatter(): ServiceIntroductionFormatterInterface { return $this->introductionFormatter; }
+    public function getChannelModeSupport(): ChannelModeSupportInterface { return $this->channelModeSupport; }
+    public function getUserModeSupport(): UserModeSupportInterface { return $this->userModeSupport; }
+    public function getNickReservation(): ?ServiceNickReservationInterface { return $this->nickReservation; }
 }
 ```
 
+`ProtocolModuleInterface` intentionally excludes `getHandler()`. Infrastructure runtime code uses `ProtocolRuntimeModuleInterface` for that method. The network-state adapter is registered separately and is not exposed by either module interface.
+
 ## 4. Protocol Handler
 
-Implement `parseRawLine()` and `formatMessage()`:
+Implement the complete `ProtocolHandlerInterface`: `performHandshake()`, `handleIncoming()`, `parseRawLine()`, `formatMessage()`, `getProtocolName()`, and `getSupportedCapabilities()`.
 
 ```php
-protected function parseRawLine(string $rawLine): ?IRCMessage
+public function parseRawLine(string $rawLine): IRCMessage
 {
     // Parse wire format into canonical IRCMessage
     // Handle protocol-specific quirks (P10 tokens, special prefixes, etc.)
@@ -64,20 +75,21 @@ public function formatMessage(IRCMessage $message): string
 }
 ```
 
-Reference: `AbstractProtocolHandler` for handshake and common parsing.
+Extending `AbstractProtocolHandler` is optional; use it only when its shared behavior matches the IRCd.
 
 ## 5. Network State Adapter
 
 Convert wire messages to domain events:
 
 ```php
-public function adapt(IRCMessage $message, string $direction): array // DomainEvent[]
+public function getSupportedProtocol(): string
 {
-    // Return appropriate domain events:
-    // - UserConnectedEvent, UserQuitEvent, UserNickChangeEvent
-    // - ChannelJoinEvent, ChannelPartEvent, ChannelModeChangeEvent
-    // - ServerConnectedEvent, ServerDelinkedEvent
-    // etc.
+    return '<name>';
+}
+
+public function handleMessage(IRCMessage $message): void
+{
+    // Dispatch the appropriate domain/infrastructure events.
 }
 ```
 
@@ -85,25 +97,38 @@ public function adapt(IRCMessage $message, string $direction): array // DomainEv
 
 Implement all methods of `ProtocolServiceActionsInterface` to execute network-level actions:
 
-- `introduceService(string $serverSid, string $nick, string $ident, string $host, string $uid, string $realname, string $serviceKey): void`
-- `setUserVhost(string $serverSid, string $targetUid, ?string $vhost, string $cloakedHost = ''): void`
-- `setUserAccount(string $serverSid, string $targetUid, ?string $account): void`
-- `setUserMode(string $serverSid, string $targetUid, string $modes): void`
-- `forceNick(string $serverSid, string $targetUid, string $newNick, int $ts): void`
+- `introduceService(string $serverSid, string $nick, string $ident, string $vhost, string $uid, string $realname, string $serviceKey = ''): void`
+- `setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void`
+- `setUserAccount(string $serverSid, string $targetUid, string $accountName): void`
+- `setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void`
+- `forceNick(string $serverSid, string $targetUid, string $newNick): void`
 - `killUser(string $serverSid, string $targetUid, string $reason): void`
-- `setChannelModes(string $serverSid, string $channelName, string $modeString, ?int $creationTs = null): void`
-- `setChannelMemberMode(string $serverSid, string $channelName, string $mode, string $targetUid): void`
-- `joinChannelAsService(string $serverSid, string $channelName, string $serviceUid): void`
+- `setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = '', ?int $channelTimestamp = null): void`
+- `setChannelMemberMode(string $serverSid, string $channelName, string $targetUid, string $modeLetter, bool $add, string $serviceUid = '', ?int $channelTimestamp = null): void`
+- `inviteUserToChannel(string $serverSid, string $channelName, string $targetUid, string $serviceUid = '', ?int $channelTimestamp = null): void`
+- `joinChannelAsService(string $serverSid, string $channelName, string $serviceUid, string $maxPrefixLetter, ?int $channelTimestamp = null): void`
 - `partChannelAsService(string $serverSid, string $channelName, string $serviceUid): void`
-- `setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $setterUid, ?int $creationTs = null): void`
-- `kickFromChannel(string $serverSid, string $channelName, string $targetUid, string $reason, string $kickerUid): void`
+- `setChannelTopic(string $serverSid, string $channelName, ?string $topic, string $serviceUid = '', ?int $channelCreationTs = null): void`
+- `kickFromChannel(string $serverSid, string $channelName, string $targetUid, string $reason, string $serviceUid = ''): void`
+- `addGline(...)`, `removeGline(...)`, `introducePseudoClient(...)`, `quitPseudoClient(...)`
 
 ## 7. Channel Mode Support
 
 ```php
-public function getSupportedPrefixModes(): array; // ['q', 'a', 'o', 'h', 'v'] etc.
-public function getPrefixForLevel(int $level): string;
-public function parseModeString(string $modeStr, array $params): ModeChangeCollection;
+public function hasVoice(): bool;
+public function hasHalfOp(): bool;
+public function hasOp(): bool;
+public function hasAdmin(): bool;
+public function hasOwner(): bool;
+public function getSupportedPrefixModes(): array;
+public function getListModeLetters(): array;
+public function getChannelSettingModesUnsetWithoutParam(): array;
+public function getChannelSettingModesUnsetWithParam(): array;
+public function getChannelSettingModesWithParamOnSet(): array;
+public function hasChannelRegisteredMode(): bool;
+public function getChannelRegisteredModeLetter(): ?string;
+public function hasPermanentChannelMode(): bool;
+public function getPermanentChannelModeLetter(): ?string;
 ```
 
 ## 8. DI Configuration
@@ -123,9 +148,11 @@ App\Infrastructure\IRC\Protocol\<Name>\<Name>ProtocolServiceActions:
 App\Infrastructure\IRC\Protocol\<Name>\<Name>Module:
     arguments:
         $handler: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>ProtocolHandler'
-        $adapter: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>NetworkStateAdapter'
         $serviceActions: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>ProtocolServiceActions'
-        $modeSupport: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>ChannelModeSupport'
+        $introductionFormatter: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>ServiceIntroductionFormatter'
+        $channelModeSupport: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>ChannelModeSupport'
+        $userModeSupport: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>UserModeSupport'
+        $nickReservation: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>NickReservation'
     tags:
         - { name: irc.protocol_module }
 
@@ -133,10 +160,10 @@ App\Infrastructure\IRC\Protocol\<Name>\<Name>Module:
 App\Infrastructure\IRC\Protocol\ProtocolNetworkStateRouter:
     arguments:
         $adapters:
-            unreal: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNetworkStateAdapter'
-            unrealudb: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNetworkStateAdapter'
-            inspircd: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNetworkStateAdapter'
-            <name>: '@App\Infrastructure\IRC\Protocol\<Name>\<Name>NetworkStateAdapter'
+            unreal: '@App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter'
+            unrealudb: '@App\Infrastructure\IRC\Network\Adapter\UnrealUdbNetworkStateAdapter'
+            inspircd: '@App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter'
+            <name>: '@App\Infrastructure\IRC\Network\Adapter\<Name>NetworkStateAdapter'
 ```
 
 ## 9. Tests (100% Coverage Mandatory)

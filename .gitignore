@@ -24,7 +24,7 @@
 /.phpunit.cache/
 ###< phpunit/phpunit ###
 
-# Skill registry cache
+# Local agent and code intelligence caches
 .atl/
 /specs/
 /.codegraph/

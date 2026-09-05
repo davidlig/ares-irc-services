@@ -30,7 +30,7 @@ for arg in "$@"; do
     fi
 done
 
-./vendor/bin/phpunit --coverage-clover="$CLOVER" --coverage-filter=src --do-not-cache-result "${EXTRA_ARGS[@]}"
+./vendor/bin/phpunit --coverage-clover="$CLOVER" --coverage-filter=src --do-not-record-test-run-history "${EXTRA_ARGS[@]}"
 
 if [[ ! -f "$CLOVER" ]]; then
     echo "Coverage report not found. Run PHPUnit with coverage (PCOV or Xdebug)." >&2

@@ -24,8 +24,10 @@ Any feature that stores a `nickId` or `channelId` reference MUST define cleanup 
 
 | Entity Dropped | Event | Event Class |
 |---------------|-------|-------------|
-| Nickname | `NickDropEvent` | `App\Domain\NickServ\Event\NickDropEvent` |
-| Channel | `ChannelDropEvent` | `App\Domain\ChanServ\Event\ChannelDropEvent` |
+| Nickname SQL cleanup | `NickDropCleanupEvent` | `App\Domain\NickServ\Event\NickDropCleanupEvent` |
+| Nickname post-commit effects | `NickDropEvent` | `App\Domain\NickServ\Event\NickDropEvent` |
+| Channel SQL cleanup | `ChannelDropCleanupEvent` | `App\Domain\ChanServ\Event\ChannelDropCleanupEvent` |
+| Channel post-commit effects | `ChannelDropEvent` | `App\Domain\ChanServ\Event\ChannelDropEvent` |
 
 ### NickDropEvent
 
@@ -174,6 +176,13 @@ $this->eventDispatcher->dispatch(new ChannelDropEvent(
 ```
 
 Services MUST NOT delete entities directly without emitting the corresponding DropEvent.
+
+Persistent cleanup subscribers listen to `NickDropCleanupEvent` or `ChannelDropCleanupEvent`.
+The cleanup event and primary delete run in one `TransactionManagerInterface` transaction.
+`NickDropEvent` and `ChannelDropEvent` are dispatched only after commit for IRC, UDB, and
+logging projections. This deliberately provides atomic SQL state rather than atomic delivery
+to IRC: a post-commit external failure is not rolled back and must be recovered by replay or
+the projection's normal reconciliation path.
 
 ---
 

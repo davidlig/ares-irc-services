@@ -62,7 +62,7 @@ If any step fails, fix it and re-run from the failed step — never skip ahead.
 - Every branch/condition MUST be tested
 - Run focused PHPUnit commands for new/modified test files while developing; run `./scripts/check-coverage.sh 100 --issues` only once after the complete implementation, before claiming completion
 - Use `createStub()` for unverified dependencies, `createMock()` ONLY with `expects()`
-- Zero warnings, zero skipped, zero deprecated, zero incomplete
+- PHPUnit configuration MUST fail warnings, skipped, incomplete, risky, and deprecated tests, and require coverage metadata (`#[CoversClass]` or equivalent).
 
 ---
 
@@ -224,16 +224,16 @@ Follow this deterministic step-by-step workflow:
 Follow this modular structure in `src/Infrastructure/IRC/Protocol/<Name>/`:
 
 1. **Research & Docs**: Document wire tokens, handshake, modes, and commands in `docs/<name>/`.
-2. **Protocol Module**: Implement `ProtocolModuleInterface`:
-   - `getProtocolName()`, `getHandler()`, `getNetworkStateAdapter()`, `getServiceActions()`, `getChannelModeSupport()`.
-3. **Protocol Handler**: Implement `parseRawLine()` (wire → `IRCMessage`) and `formatMessage()` (`IRCMessage` → wire).
-4. **Network State Adapter**: Implement `adapt()` converting wire `IRCMessage` to domain events (`UserConnectedEvent`, `ChannelJoinEvent`, etc.).
-5. **Protocol Service Actions**: Implement `ProtocolServiceActionsInterface`:
-   - `introduceService()`, `setUserVhost()`, `setUserAccount()`, `setUserMode()`, `forceNick()`, `killUser()`, `setChannelModes()`, `setChannelMemberMode()`, `joinChannelAsService()`, `partChannelAsService()`, `setChannelTopic()`, `kickFromChannel()`.
-6. **Channel Mode Support**: Implement `ChannelModeSupportInterface`.
+2. **Protocol Module**: Implement `ProtocolRuntimeModuleInterface` (the runtime-only extension that adds `getHandler()`):
+   - Shared module contract: `getProtocolName()`, `getServiceActions()`, `getIntroductionFormatter()`, `getChannelModeSupport()`, `getUserModeSupport()`, `getNickReservation()`.
+   - Runtime contract: `getHandler()`. Network state adapters are registered separately and are not exposed by the module.
+3. **Protocol Handler**: Implement every `ProtocolHandlerInterface` method: handshake, incoming-message handling, parse/format, protocol name, and supported capabilities.
+4. **Network State Adapter**: Create it under `src/Infrastructure/IRC/Network/Adapter/`; implement `getSupportedProtocol()` and `handleMessage()` from `NetworkStateAdapterInterface`.
+5. **Protocol Service Actions**: Implement the complete current `ProtocolServiceActionsInterface`, including invitations, G-lines, and temporary pseudo-client lifecycle in addition to user/channel/service actions.
+6. **Protocol Supports/Formatters**: Implement `ServiceIntroductionFormatterInterface`, `ChannelModeSupportInterface`, `UserModeSupportInterface`, and a nullable/real `ServiceNickReservationInterface` implementation as required by the module contract.
 7. **DI Registration (`config/services.yaml`)**:
    - Tag `<Name>Module` with `irc.protocol_module`.
-   - Add `<name>` adapter to `ProtocolNetworkStateRouter`.
+   - Add the separately registered `<name>` adapter to `ProtocolNetworkStateRouter::$adapters`.
 8. **100% Test Coverage**: Complete unit test suite for all protocol components.
 
 ### 10.3 Playbook: Implementing a New Service / Bot

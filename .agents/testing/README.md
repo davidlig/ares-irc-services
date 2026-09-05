@@ -6,7 +6,7 @@ Use this skill when working on tests, coverage, or test prioritisation.
 
 ### Zero Tolerance for Test Issues
 
-Tests MUST be PRISTINE. It is NON-NEGOTIABLE that test executions result in ZERO warnings, ZERO skipped tests, ZERO incomplete tests, and ZERO deprecations. Always run with `--display-all-issues`.
+Tests MUST be PRISTINE. It is NON-NEGOTIABLE that test executions result in ZERO warnings, ZERO skipped tests, ZERO incomplete tests, ZERO risky tests, and ZERO deprecations. `phpunit.dist.xml` enforces these outcomes and requires coverage metadata; always run with `--display-all-issues`.
 
 ### Test Doubles: Stub vs Mock
 
@@ -43,7 +43,7 @@ $repo->expects(self::once())->method('save')->with($entity);
 
 ## Test Conventions
 
-- **PHPUnit 13 attributes**: `#[CoversClass(ClassUnderTest::class)]`, `#[Test]`
+- **PHPUnit 13 attributes**: `#[CoversClass(ClassUnderTest::class)]`, `#[Test]`; every test must declare coverage metadata because `requireCoverageMetadata="true"` is enabled
 - Layout: `tests/` mirrors `src/` (Domain, Application, Infrastructure, UI, Integration)
 - **final** classes cannot be mocked — use interfaces or test subclasses
 - **void** methods: use `willReturnCallback(static function (): void {})` not `willReturn(null)`

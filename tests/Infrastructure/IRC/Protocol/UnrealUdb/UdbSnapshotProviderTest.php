@@ -8,9 +8,11 @@ use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbChecksum;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(UdbSnapshotProvider::class)]
 final class UdbSnapshotProviderTest extends TestCase
 {
     #[Test]

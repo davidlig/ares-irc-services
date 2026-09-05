@@ -6,9 +6,11 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+#[CoversClass(UnrealUdbRecordWriter::class)]
 final class UnrealUdbRecordWriterTest extends TestCase
 {
     private FakeUdbRecords $records;

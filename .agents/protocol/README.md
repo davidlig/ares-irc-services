@@ -4,33 +4,36 @@ Use this skill when implementing protocol handlers, network state adapters, prot
 
 ## One Module Per IRCd
 
-Each supported IRCd has a **single protocol module** that bundles all protocol-specific implementations:
+Each supported IRCd has a **single runtime protocol module** for outbound/runtime capabilities. Incoming network-state adapters are separate router dependencies:
 
 ```
-src/Infrastructure/IRC/Protocol/
-├── ProtocolModuleInterface.php      (in Application/Port)
-├── ProtocolModuleRegistry.php
-├── Unreal/
-│   ├── UnrealIRCdModule.php         (implements ProtocolModuleInterface)
-│   ├── UnrealIRCdProtocolHandler.php
+src/
+├── Application/Port/ProtocolModuleInterface.php
+├── Infrastructure/IRC/Runtime/ProtocolRuntimeModuleInterface.php
+├── Infrastructure/IRC/Network/Adapter/
 │   ├── UnrealIRCdNetworkStateAdapter.php
-│   ├── UnrealIRCdProtocolServiceActions.php
-│   └── UnrealIRCdChannelModeSupport.php
-├── UnrealUdb/
-│   ├── UnrealUdbModule.php
-│   ├── UnrealUdbProtocolHandler.php
 │   ├── UnrealUdbNetworkStateAdapter.php
-│   ├── UnrealUdbProtocolServiceActions.php
-│   ├── UnrealUdbChannelModeSupport.php
-│   └── Subscriber/
-│       └── UdbChannelSyncSubscriber.php
-├── InspIRCd/
-│   ├── InspIRCdModule.php
-│   ├── InspIRCdProtocolHandler.php
-│   ├── InspIRCdNetworkStateAdapter.php
-│   ├── InspIRCdProtocolServiceActions.php
-│   └── InspIRCdChannelModeSupport.php
-└── NullChannelModeSupport.php
+│   └── InspIRCdNetworkStateAdapter.php
+└── Infrastructure/IRC/Protocol/
+    ├── ProtocolModuleRegistry.php
+    ├── Unreal/
+    │   ├── UnrealIRCdModule.php         (implements ProtocolRuntimeModuleInterface)
+    │   ├── UnrealIRCdProtocolHandler.php
+    │   ├── UnrealIRCdProtocolServiceActions.php
+    │   └── UnrealIRCdChannelModeSupport.php
+    ├── UnrealUdb/
+    │   ├── UnrealUdbModule.php
+    │   ├── UnrealUdbProtocolHandler.php
+    │   ├── UnrealUdbProtocolServiceActions.php
+    │   ├── UnrealUdbChannelModeSupport.php
+    │   └── Subscriber/
+    │       └── UdbChannelSyncSubscriber.php
+    ├── InspIRCd/
+    │   ├── InspIRCdModule.php
+    │   ├── InspIRCdProtocolHandler.php
+    │   ├── InspIRCdProtocolServiceActions.php
+    │   └── InspIRCdChannelModeSupport.php
+    └── NullChannelModeSupport.php
 ```
 
 ## No Generic Delegators
@@ -94,14 +97,17 @@ All wire-level commands executed on the IRC network are encapsulated in `Protoco
 - `setUserVhost($serverSid, $targetUid, $vhost, $cloakedHost)`: Sets or clears user vhost (e.g. `CHGHOST`, `ENCAP CHGHOST`, `MODE +x`).
 - `setUserAccount($serverSid, $targetUid, $account)`: Sets/unsets account name (e.g. `SVS2MODE +d`, `ENCAP ACCOUNT`).
 - `setUserMode($serverSid, $targetUid, $modes)`: Applies mode changes to users.
-- `forceNick($serverSid, $targetUid, $newNick, $ts)`: Forces a nick change (`SVSNICK` / `SVSJOIN`).
+- `forceNick($serverSid, $targetUid, $newNick)`: Forces a nick change.
 - `killUser($serverSid, $targetUid, $reason)`: Kills a user connection.
-- `setChannelModes($serverSid, $channelName, $modeString, $creationTs)`: Changes channel modes (`+r`, `+P`, etc.).
-- `setChannelMemberMode($serverSid, $channelName, $mode, $targetUid)`: Sets member status modes (`+o`, `+v`).
-- `joinChannelAsService($serverSid, $channelName, $serviceUid)`: Joins a service bot to a channel.
+- `setChannelModes($serverSid, $channelName, $modeString, $params, $serviceUid, $channelTimestamp)`: Changes channel modes (`+r`, `+P`, etc.).
+- `setChannelMemberMode($serverSid, $channelName, $targetUid, $modeLetter, $add, $serviceUid, $channelTimestamp)`: Adds or removes member status modes.
+- `inviteUserToChannel($serverSid, $channelName, $targetUid, $serviceUid, $channelTimestamp)`: Invites a user with protocol timestamp support.
+- `joinChannelAsService($serverSid, $channelName, $serviceUid, $maxPrefixLetter, $channelTimestamp)`: Joins a service bot to a channel.
 - `partChannelAsService($serverSid, $channelName, $serviceUid)`: Parts a service bot from a channel.
-- `setChannelTopic($serverSid, $channelName, $topic, $setterUid, $creationTs)`: Changes channel topic.
-- `kickFromChannel($serverSid, $channelName, $targetUid, $reason, $kickerUid)`: Kicks a user from a channel.
+- `setChannelTopic($serverSid, $channelName, $topic, $serviceUid, $channelCreationTs)`: Changes channel topic.
+- `kickFromChannel($serverSid, $channelName, $targetUid, $reason, $serviceUid)`: Kicks a user from a channel.
+- `addGline()` / `removeGline()`: Manages network-wide bans.
+- `introducePseudoClient()` / `quitPseudoClient()`: Manages temporary pseudo-clients.
 
 ## Protocol-Specific Capabilities — Optional Ports (NON-NEGOTIABLE)
 
@@ -133,6 +139,7 @@ Use **only** the documented version (Unreal 6, InspIRCd 4). Do not rely on docs 
 - `src/Application/Port/<Capability>ServiceActionsInterface.php` — optional capability ports (new files)
 - `src/Infrastructure/IRC/Protocol/ProtocolModuleRegistry.php`
 - `src/Infrastructure/IRC/Protocol/<IrcName>/`
+- `src/Infrastructure/IRC/Network/Adapter/<IrcName>NetworkStateAdapter.php`
 - `src/Infrastructure/IRC/Connection/ActiveConnectionHolder.php`
 - `config/services.yaml` (tag `irc.protocol_module`)
 
@@ -142,9 +149,15 @@ Use **only** the documented version (Unreal 6, InspIRCd 4). Do not rely on docs 
 // Get active protocol module
 $module = $this->connectionHolder->getProtocolModule();
 
-// Available from module
-$module->getHandler()                    // ProtocolHandlerInterface
-$module->getNetworkStateAdapter()        // NetworkStateAdapterInterface
+// Shared module capabilities
 $module->getServiceActions()             // ProtocolServiceActionsInterface
+$module->getIntroductionFormatter()      // ServiceIntroductionFormatterInterface
 $module->getChannelModeSupport()         // ChannelModeSupportInterface
+$module->getUserModeSupport()            // UserModeSupportInterface
+$module->getNickReservation()            // ?ServiceNickReservationInterface
+
+// Runtime code narrows the module to ProtocolRuntimeModuleInterface
+$module->getHandler()                    // ProtocolHandlerInterface
+
+// Incoming state is routed separately through NetworkStateAdapterInterface::handleMessage()
 ```

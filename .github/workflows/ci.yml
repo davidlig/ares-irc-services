@@ -50,11 +50,8 @@ jobs:
       - name: Check coding standards
         run: ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff
 
-      - name: Run tests with coverage
-        run: ./vendor/bin/phpunit --coverage-clover=var/coverage/clover.xml
-
-      - name: Check coverage threshold
-        run: ./scripts/check-coverage.sh 100
+      - name: Run tests and check coverage
+        run: ./scripts/check-coverage.sh 100 --issues
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v6

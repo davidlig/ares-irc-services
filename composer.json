@@ -10,7 +10,9 @@
         "php": ">=8.5",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-mbstring": "*",
         "ext-pdo_mysql": "*",
+        "ext-pdo_sqlite": "*",
         "doctrine/doctrine-bundle": "3.2.*",
         "doctrine/doctrine-migrations-bundle": "4.0.*",
         "doctrine/orm": "3.6.*",
@@ -35,6 +37,9 @@
             "symfony/runtime": true
         },
         "bump-after-update": true,
+        "platform": {
+            "php": "8.5.0"
+        },
         "sort-packages": true
     },
     "autoload": {
@@ -69,8 +74,7 @@
             "@auto-scripts"
         ],
         "cs-check": "php-cs-fixer fix --dry-run --diff",
-        "cs-fix": "php-cs-fixer fix",
-        "check-returns": "php scripts/check-returns.php"
+        "cs-fix": "php-cs-fixer fix"
     },
     "conflict": {
         "symfony/symfony": "*"

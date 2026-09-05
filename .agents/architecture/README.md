@@ -106,7 +106,8 @@ Ports are the ONLY way Services talk to Core (IRC). Services MUST NOT import `Do
 | `SendNoticePort` | `sendNotice(...)`, `sendNoticeToChannel(...)` | Send NOTICE to user or channel |
 | `ChannelLookupPort` | `findByChannelName(string)` | Get channel info → `ChannelView` |
 | `ChannelServiceActionsPort` | Multiple | Set modes, join, topic |
-| `ProtocolModuleInterface` | `getHandler()`, `getServiceActions()`, etc. | Active IRCd protocol module |
+| `ProtocolModuleInterface` | `getServiceActions()`, supports and formatters | Shared active IRCd module contract |
+| `ProtocolRuntimeModuleInterface` | `getHandler()` plus `ProtocolModuleInterface` | Infrastructure runtime module |
 | `ProtocolServiceActionsInterface` | Multiple | Wire-level actions (`introduceService`, `setUserVhost`, etc.) |
 | `LocalUserModeSyncInterface` | `syncLocalUserMode(...)` | Sync local user modes (+r/-r) |
 | `ServiceCommandListenerInterface` | `onCommand(string, string)` | Bot receives commands from Gateway |
@@ -159,6 +160,16 @@ Every new or modified design must pass this checklist. A failing item is a desig
 2. Does any new class hold two unrelated state machines/data? → extract collaborator.
 3. Does Application import Infrastructure? → move the port.
 4. Do new classes have `#[CoversClass]` tests and full branch coverage?
+
+### Executable architecture checks
+
+`tests/Architecture/LayerDependencyTest.php` enforces the layer boundaries with native PHP tokenization; it adds no architecture-test dependency. Run it with:
+
+```bash
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Architecture/LayerDependencyTest.php
+```
+
+The test inventories only exact, existing debt. `OperRole` temporarily allows its two Doctrine Collections imports, while UI allows the listed `ConnectCommand` and `UdbTakeoverCommand` Domain/Infrastructure imports. Removed debt need not remain in the inventory, but any new exception fails the suite. Shared surfaces also reject executable literals matching protocol adapter names; protocol-specific names belong only in their adapters.
 
 ---
 
