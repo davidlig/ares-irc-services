@@ -56,6 +56,11 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
         $this->write(sprintf(':%s SVSO %s %s %s - - - -', $serverSid, $targetUid, $targetUid, $operclass));
     }
 
+    public function getAvailableOperclasses(): ?array
+    {
+        return null;
+    }
+
     public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void
     {
         if ('' !== $vhost) {

@@ -29,4 +29,11 @@ interface UdbSessionStateInterface
 
     /** True only when the latest complete OCLG projection contains the operclass. */
     public function isOperclassGloballyAvailable(string $operclass): bool;
+
+    /**
+     * Globally available operclasses from the latest complete READY OCLG projection.
+     *
+     * @return list<string>
+     */
+    public function getAvailableOperclasses(): array;
 }

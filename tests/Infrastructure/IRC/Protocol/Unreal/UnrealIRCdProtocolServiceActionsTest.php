@@ -85,6 +85,13 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
+    public function getAvailableOperclassesReturnsNull(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+        self::assertNull($actions->getAvailableOperclasses());
+    }
+
+    #[Test]
     public function forceNickSendsSvsnickWithTimestamp(): void
     {
         $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);

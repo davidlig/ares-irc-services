@@ -16,4 +16,12 @@ interface OperclassServiceActionsInterface
 {
     /** Assign an operclass to an online user, or remove IRC operator status when null. */
     public function setUserOperclass(string $serverSid, string $targetUid, string $targetNickname, ?string $operclass): void;
+
+    /**
+     * Return globally available operclasses known to the protocol,
+     * or null when the protocol does not maintain an availability projection.
+     *
+     * @return list<string>|null
+     */
+    public function getAvailableOperclasses(): ?array;
 }

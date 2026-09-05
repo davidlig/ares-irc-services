@@ -63,7 +63,23 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  operclass: { syntax: "ROLE OPERCLASS <rolle> {VIEW|SET} [operclass]", short: "Verwaltet die Unreal-Operclass einer Rolle.", help: "VIEW zeigt die Operclass. SET weist sie beim Identifizieren zu. OFF entfernt sie.", unknown_action: "Unbekannte Aktion %action%.", view: { empty: "Die Rolle %role% hat keine Operclass.", line: "  Operclass: %operclass%" }, set: { done: "Operclass fur %role% gesetzt.", cleared: "Operclass von %role% entfernt." } }
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<rolle>} [{VIEW|SET}] [operclass]"
+    short: "Verwaltet die Unreal-Operclass einer Rolle."
+    help: "LIST zeigt die im Netzwerk verfugbaren Operclasses an.\nVIEW zeigt die Operclass der Rolle und verfugbare Operclasses.\nSET weist sie beim Identifizieren zu (OFF zum Entfernen).\nNur fur UnrealIRCd-Protokolle verfugbar."
+    unknown_action: "\x0304✗\x03 Unbekannte Aktion \x02%action%\x02. Verwenden Sie LIST, VIEW oder SET."
+    list:
+      header: "\x0307---\x03 \x02Verfugbare Operclasses im Netzwerk\x02 \x0307---\x03"
+      empty: "Keine Operclasses im Netzwerk verfugbar."
+      not_supported: "\x0304✗\x03 Das aktuelle Protokoll unterstutzt das Auflisten verfugbarer Operclasses nicht."
+    view:
+      empty: "Die Rolle %role% hat keine Operclass."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Verfugbare Operclasses: \x0310%available%\x03"
+    set:
+      done: "Operclass fur %role% gesetzt."
+      cleared: "Operclass von %role% entfernt."
+      not_available: "\x0304✗\x03 Die Operclass \x02%operclass%\x02 ist im Netzwerk nicht verfugbar. Verfugbare Operclasses: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <Name> ..."
   short:            "Operator-Rollen verwalten."
   help:             "Verwaltet Operator-Rollen. ADD erstellt eine neue Rolle, DEL löscht sie,\nLIST zeigt alle Rollen, PERMS verwaltet Berechtigungen einer Rolle, MODES verwaltet IRCOP-Modes,\nVHOST verwaltet das erzwungene VHost-Muster einer Rolle.\nGeschützte Rollen (ADMIN, OPER, PREOPER) können nicht gelöscht werden.\nDieser Befehl ist Root-Benutzern vorbehalten."

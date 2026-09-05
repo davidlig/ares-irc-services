@@ -16,9 +16,17 @@ final class RecordingOperclassActions implements ProtocolServiceActionsInterface
     /** @var list<array{0: string, 1: string, 2: string, 3: ?string}> */
     public array $operclassCalls = [];
 
+    /** @var list<string>|null */
+    public ?array $availableOperclasses = null;
+
     public function setUserOperclass(string $serverSid, string $targetUid, string $targetNickname, ?string $operclass): void
     {
         $this->operclassCalls[] = [$serverSid, $targetUid, $targetNickname, $operclass];
+    }
+
+    public function getAvailableOperclasses(): ?array
+    {
+        return $this->availableOperclasses;
     }
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void {}

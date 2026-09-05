@@ -63,7 +63,23 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  operclass: { syntax: "ROLE OPERCLASS <rola> {VIEW|SET} [operclass]", short: "Unreal operclass kudeatzen du.", help: "VIEW-k operclass erakusten du. SET-ek identifikatzean ezartzen du. OFF-ek kentzen du.", unknown_action: "Ekintza ezezaguna %action%.", view: { empty: "%role% rolak ez du operclass-ik.", line: "  Operclass: %operclass%" }, set: { done: "Operclass ezarri da %role% rolari.", cleared: "Operclass kendu da %role% rolatik." } }
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<rola>} [{VIEW|SET}] [operclass]"
+    short: "Unreal operclass kudeatzen du."
+    help: "LISTek sarean erabilgarri dauden operclass-ak erakusten ditu.\nVIEW-k rolaren operclass-a eta erabilgarri daudenak erakusten ditu.\nSET-ek identifikatzean ezartzen du (OFF kentzeko).\nUnrealIRCd protokoloetan bakarrik erabilgarri."
+    unknown_action: "\x0304✗\x03 Ekintza ezezaguna \x02%action%\x02. Erabili LIST, VIEW edo SET."
+    list:
+      header: "\x0307---\x03 \x02Sarean Erabilgarri Dauden Operclass-ak\x02 \x0307---\x03"
+      empty: "Ez dago operclass-ik erabilgarri sarean."
+      not_supported: "\x0304✗\x03 Uneko protokoloak ez du onartzen erabilgarri dauden operclass-ak zerrendatzea."
+    view:
+      empty: "%role% rolak ez du operclass-ik."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Erabilgarri dauden operclass-ak: \x0310%available%\x03"
+    set:
+      done: "Operclass ezarri da %role% rolari."
+      cleared: "Operclass kendu da %role% rolatik."
+      not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass ez dago erabilgarri sarean. Erabilgarri daudenak: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <izena> ..."
   short:            "Kudeatu operadore rolak."
   help:             "Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen du,\nLISTek rol guztiak erakusten ditu, PERMSek rol baten baimenak kudeatzen ditu, MODESek IRCOP moduak kudeatzen ditu,\nVHOSTek rol baten behartutako vhost eredua kudeatzen du.\nBabestutako rolak (ADMIN, OPER, PREOPER) ezin dira ezabatu.\nKomando hau Root erabiltzaileentzat mugatuta dago."

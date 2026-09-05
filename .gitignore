@@ -27,3 +27,4 @@
 # Skill registry cache
 .atl/
 /specs/
+/.codegraph/

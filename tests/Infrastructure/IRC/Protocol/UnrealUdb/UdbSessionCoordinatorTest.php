@@ -501,6 +501,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: '0123456789abcdef'));
 
         self::assertTrue($this->coordinator->isOperclassGloballyAvailable('netadmin'));
+        self::assertSame(['netadmin'], $this->coordinator->getAvailableOperclasses());
     }
 
     #[Test]
@@ -512,15 +513,18 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 7, epoch: '0123456789abcdef', path: 'netadmin', checksum: $entries['netadmin']));
         $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 7, epoch: '0123456789abcdef'));
         self::assertTrue($this->coordinator->isOperclassGloballyAvailable('netadmin'));
+        self::assertSame(['netadmin'], $this->coordinator->getAvailableOperclasses());
 
         $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 8, epoch: '0123456789abcdef', status: 'INCOMPLETE', count: 0, checksum: UdbOclgViewDigest::fromEntries(false, [])));
         $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 8, epoch: '0123456789abcdef'));
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
+        self::assertSame([], $this->coordinator->getAvailableOperclasses());
 
         $this->handle(new UdbFrame(UdbFrameKind::OclgBegin, '001', '002', roundId: 9, epoch: '0123456789abcdef', status: 'READY', count: 1, checksum: str_repeat('b', 64)));
         $this->handle(new UdbFrame(UdbFrameKind::OclgItem, '001', '002', roundId: 9, epoch: '0123456789abcdef', path: 'netadmin', checksum: $entries['netadmin']));
         $this->handle(new UdbFrame(UdbFrameKind::OclgEnd, '001', '002', roundId: 9, epoch: '0123456789abcdef'));
         self::assertFalse($this->coordinator->isOperclassGloballyAvailable('netadmin'));
+        self::assertSame([], $this->coordinator->getAvailableOperclasses());
     }
 
     #[Test]

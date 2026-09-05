@@ -96,6 +96,19 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
+    public function getAvailableOperclassesDelegatesToSessionStateOrReturnsEmptyWhenNull(): void
+    {
+        $writer = $this->createStub(UdbRecordWriterInterface::class);
+        $actionsWithoutState = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, null);
+        self::assertSame([], $actionsWithoutState->getAvailableOperclasses());
+
+        $state = $this->createStub(UdbSessionStateInterface::class);
+        $state->method('getAvailableOperclasses')->willReturn(['locop', 'netadmin']);
+        $actionsWithState = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state);
+        self::assertSame(['locop', 'netadmin'], $actionsWithState->getAvailableOperclasses());
+    }
+
+    #[Test]
     public function forceNickIsNoOp(): void
     {
         $actions = $this->createActions();

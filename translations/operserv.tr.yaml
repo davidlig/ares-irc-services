@@ -63,7 +63,23 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  operclass: { syntax: "ROLE OPERCLASS <rol> {VIEW|SET} [operclass]", short: "Rolun Unreal operclass degerini yonetir.", help: "VIEW operclass degerini gosterir. SET kimlik dogrulamada atar. OFF temizler.", unknown_action: "Bilinmeyen eylem %action%.", view: { empty: "%role% rolunun operclass degeri yok.", line: "  Operclass: %operclass%" }, set: { done: "%role% icin operclass ayarlandi.", cleared: "%role% icin operclass kaldirildi." } }
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
+    short: "Rolun Unreal operclass degerini yonetir."
+    help: "LIST agdaki kullanilabilir operclass'lari gosterir.\nVIEW rolun operclass'ini ve kullanilabilir olanlari gosterir.\nSET kimlik dogrulamada atar (OFF kaldirmak icin).\nYalnizca UnrealIRCd protokollerinde kullanilabilir."
+    unknown_action: "\x0304✗\x03 Bilinmeyen eylem \x02%action%\x02. LIST, VIEW veya SET kullanin."
+    list:
+      header: "\x0307---\x03 \x02Agdaki Kullanilabilir Operclass'lar\x02 \x0307---\x03"
+      empty: "Agda kullanilabilir operclass yok."
+      not_supported: "\x0304✗\x03 Gecerli protokol kullanilabilir operclass'lari listelemeyi desteklemiyor."
+    view:
+      empty: "%role% rolunun operclass degeri yok."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Kullanilabilir operclass'lar: \x0310%available%\x03"
+    set:
+      done: "%role% icin operclass ayarlandi."
+      cleared: "%role% icin operclass kaldirildi."
+      not_available: "\x0304✗\x03 \x02%operclass%\x02 operclass'i agda mevcut degil. Mevcut operclass'lar: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <ad> ..."
   short:            "Operatör rollerini yönetin."
   help:             "Operatör rollerini yönetin. ADD yeni bir rol oluşturur, DEL siler,\nLIST tüm rolleri gösterir, PERMS bir rolün izinlerini yönetir, MODES IRCOP modlarını yönetir,\nVHOST bir rol için zorunlu vhost kalıbını yönetir.\nKorumalı roller (ADMIN, OPER, PREOPER) silinemez.\nBu komut yalnızca Root kullanıcıları içindir."

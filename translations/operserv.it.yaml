@@ -63,7 +63,23 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  operclass: { syntax: "ROLE OPERCLASS <ruolo> {VIEW|SET} [operclass]", short: "Gestisce la operclass Unreal del ruolo.", help: "VIEW mostra la operclass. SET la assegna all'identificazione. OFF la rimuove.", unknown_action: "Azione sconosciuta %action%.", view: { empty: "Il ruolo %role% non ha operclass.", line: "  Operclass: %operclass%" }, set: { done: "Operclass impostata per %role%.", cleared: "Operclass rimossa da %role%." } }
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<ruolo>} [{VIEW|SET}] [operclass]"
+    short: "Gestisce la operclass Unreal del ruolo."
+    help: "LIST mostra le operclass disponibili nella rete.\nVIEW mostra la operclass del ruolo e quelle disponibili.\nSET la assegna all'identificazione (OFF per rimuovere).\nDisponibile solo sui protocolli UnrealIRCd."
+    unknown_action: "\x0304✗\x03 Azione sconosciuta \x02%action%\x02. Usa LIST, VIEW o SET."
+    list:
+      header: "\x0307---\x03 \x02Operclass Disponibili nella Rete\x02 \x0307---\x03"
+      empty: "Nessuna operclass disponibile nella rete."
+      not_supported: "\x0304✗\x03 Il protocollo attuale non supporta l'elenco delle operclass disponibili."
+    view:
+      empty: "Il ruolo %role% non ha operclass."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Operclass disponibili: \x0310%available%\x03"
+    set:
+      done: "Operclass impostata per %role%."
+      cleared: "Operclass rimossa da %role%."
+      not_available: "\x0304✗\x03 L'operclass \x02%operclass%\x02 non e disponibile nella rete. Operclass disponibili: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nome> ..."
   short:            "Gestisce i ruoli operatore."
   help:             "Gestisce i ruoli operatore. ADD crea un nuovo ruolo, DEL lo rimuove,\nLIST mostra tutti i ruoli, PERMS gestisce i permessi per un ruolo, MODES gestisce i modi IRCOP,\nVHOST gestisce il pattern vhost forzato per un ruolo.\nI ruoli protetti (ADMIN, OPER, PREOPER) non possono essere eliminati.\nQuesto comando è riservato agli utenti Root."

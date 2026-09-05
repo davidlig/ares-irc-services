@@ -63,7 +63,23 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  operclass: { syntax: "ROLE OPERCLASS <rol> {VIEW|SET} [operclass]", short: "Beheert de Unreal-operclass van een rol.", help: "VIEW toont de operclass. SET wijst deze toe bij identificatie. OFF wist deze.", unknown_action: "Onbekende actie %action%.", view: { empty: "Rol %role% heeft geen operclass.", line: "  Operclass: %operclass%" }, set: { done: "Operclass ingesteld voor %role%.", cleared: "Operclass verwijderd van %role%." } }
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
+    short: "Beheert de Unreal-operclass van een rol."
+    help: "LIST toont de beschikbare operclasses in het netwerk.\nVIEW toont de operclass van de rol en beschikbare operclasses.\nSET wijst deze toe bij identificatie (OFF om te wissen).\nAlleen beschikbaar op UnrealIRCd-protocollen."
+    unknown_action: "\x0304✗\x03 Onbekende actie \x02%action%\x02. Gebruik LIST, VIEW of SET."
+    list:
+      header: "\x0307---\x03 \x02Beschikbare Operclasses in het Netwerk\x02 \x0307---\x03"
+      empty: "Geen operclasses beschikbaar in het netwerk."
+      not_supported: "\x0304✗\x03 Het huidige protocol ondersteunt het weergeven van beschikbare operclasses niet."
+    view:
+      empty: "Rol %role% heeft geen operclass."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Beschikbare operclasses: \x0310%available%\x03"
+    set:
+      done: "Operclass ingesteld voor %role%."
+      cleared: "Operclass verwijderd van %role%."
+      not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 is niet beschikbaar in het netwerk. Beschikbare operclasses: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <naam> ..."
   short:            "Beheer operatorrollen."
   help:             "Beheer operatorrollen. ADD maakt een nieuwe rol aan, DEL verwijdert deze,\nLIST toont alle rollen, PERMS beheert permissies voor een rol, MODES beheert IRCOP-modi,\nVHOST beheert het geforceerde vhost-patroon voor een rol.\nBeschermde rollen (ADMIN, OPER, PREOPER) kunnen niet worden verwijderd.\nDit commando is voorbehouden aan Root-gebruikers."

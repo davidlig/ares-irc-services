@@ -63,7 +63,23 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  operclass: { syntax: "ROLE OPERCLASS <role> {VIEW|SET} [operclass]", short: "Manage Unreal operclass.", help: "VIEW shows it. SET assigns it on identify. OFF clears it.", unknown_action: "Unknown action %action%.", view: { empty: "Role %role% has no operclass.", line: "  Operclass: %operclass%" }, set: { done: "Operclass set for %role%.", cleared: "Operclass cleared for %role%." } }
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<role>} [{VIEW|SET}] [operclass]"
+    short: "Manage Unreal operclass."
+    help: "LIST εμφανίζει τις διαθέσιμες operclasses στο δίκτυο.\nVIEW εμφανίζει την operclass του ρόλου και τις διαθέσιμες.\nSET την αναθέτει κατά την ταυτοποίηση (OFF για αφαίρεση).\nΔιαθέσιμο μόνο σε πρωτόκολλα UnrealIRCd."
+    unknown_action: "\x0304✗\x03 Άγνωστη ενέργεια \x02%action%\x02. Χρησιμοποιήστε LIST, VIEW ή SET."
+    list:
+      header: "\x0307---\x03 \x02Διαθέσιμες Operclasses στο Δίκτυο\x02 \x0307---\x03"
+      empty: "Δεν υπάρχουν διαθέσιμες operclasses στο δίκτυο."
+      not_supported: "\x0304✗\x03 Το τρέχον πρωτόκολλο δεν υποστηρίζει εμφάνιση διαθέσιμων operclasses."
+    view:
+      empty: "Ο ρόλος %role% δεν έχει operclass."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Διαθέσιμες operclasses: \x0310%available%\x03"
+    set:
+      done: "Η operclass ορίστηκε για τον ρόλο %role%."
+      cleared: "Η operclass αφαιρέθηκε από τον ρόλο %role%."
+      not_available: "\x0304✗\x03 Η operclass \x02%operclass%\x02 δεν είναι διαθέσιμη στο δίκτυο. Διαθέσιμες operclasses: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
   short:            "Διαχείριση ρόλων operator."
   help:             "Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,\nLIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,\nMODES διαχειρίζεται λειτουργίες IRCOP, VHOST διαχειρίζεται μοτίβο\nαναγκαστικού vhost για έναν ρόλο.\nΟι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."

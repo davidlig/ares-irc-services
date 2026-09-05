@@ -64,16 +64,22 @@ ircop:
 # --- ROLE --------------------------------------------------------------------
 role:
   operclass:
-    syntax:         "ROLE OPERCLASS <role> {VIEW|SET} [operclass]"
+    syntax:         "ROLE OPERCLASS {LIST|<role>} [{VIEW|SET}] [operclass]"
     short:          "Manage the Unreal operclass for a role."
-    help:           "VIEW shows the Unreal operclass assigned to a role. SET assigns it to IRCOPs on identify. Use OFF or omit the operclass to clear it. Available only on UnrealIRCd protocols."
-    unknown_action: "\x0304✗\x03 Unknown action \x02%action%\x02. Use VIEW or SET."
+    help:           "LIST shows available operclasses on the network.\nVIEW shows the operclass assigned to a role and available operclasses.\nSET assigns the operclass to IRCOPs on identify (OFF to clear).\nAvailable only on UnrealIRCd protocols."
+    unknown_action: "\x0304✗\x03 Unknown action \x02%action%\x02. Use LIST, VIEW, or SET."
+    list:
+      header:       "\x0307---\x03 \x02Available Operclasses on the Network\x02 \x0307---\x03"
+      empty:        "There are no operclasses available on the network."
+      not_supported: "\x0304✗\x03 The current protocol does not support listing available operclasses."
     view:
       empty:        "The role \x02%role%\x02 has no operclass assigned."
       line:         "  Operclass: \x0303%operclass%\x03"
+      available:    "  Available operclasses: \x0310%available%\x03"
     set:
       done:         "\x0303✓\x03 Set operclass for role \x02%role%\x02."
       cleared:      "\x0303✓\x03 Removed operclass from role \x02%role%\x02."
+      not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 is not available on the network. Available operclasses: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
   short:            "Manage operator roles."
   help:             "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role, MODES manages IRCOP modes,\nVHOST manages forced vhost pattern for a role.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."

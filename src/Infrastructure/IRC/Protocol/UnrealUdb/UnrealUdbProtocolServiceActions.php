@@ -70,6 +70,11 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
         $this->recordWriter->insert('N', $path, $operclass);
     }
 
+    public function getAvailableOperclasses(): ?array
+    {
+        return $this->sessionState?->getAvailableOperclasses() ?? [];
+    }
+
     public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void
     {
         // UDB applies vhosts natively via N::<nick>::vhost.

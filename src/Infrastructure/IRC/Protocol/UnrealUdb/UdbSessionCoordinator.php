@@ -250,6 +250,11 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         return $this->oclgView->isOperclassGloballyAvailable($operclass);
     }
 
+    public function getAvailableOperclasses(): array
+    {
+        return $this->oclgView->getAvailableOperclasses();
+    }
+
     private function handleHelAck(UdbFrame $frame): void
     {
         if (!$this->isDirectPeerFrame($frame)) {

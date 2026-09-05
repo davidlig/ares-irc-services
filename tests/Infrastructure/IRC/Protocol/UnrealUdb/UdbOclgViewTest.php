@@ -181,6 +181,49 @@ final class UdbOclgViewTest extends TestCase
         self::assertFalse($this->view->isOperclassGloballyAvailable('netadmin'));
     }
 
+    #[Test]
+    public function getAvailableOperclassesReturnsEmptyBeforeEndAndSortedListAfterReadyEnd(): void
+    {
+        $entries = [
+            'services' => str_repeat('a', 64),
+            'locop' => str_repeat('b', 64),
+            'netadmin' => str_repeat('c', 64),
+        ];
+
+        self::assertSame([], $this->view->getAvailableOperclasses());
+
+        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'READY', count: 3, checksum: UdbOclgViewDigest::fromEntries(true, $entries)));
+        self::assertSame([], $this->view->getAvailableOperclasses());
+
+        foreach ($entries as $name => $checksum) {
+            $this->view->item($this->frame(UdbFrameKind::OclgItem, path: $name, checksum: $checksum));
+        }
+        self::assertSame([], $this->view->getAvailableOperclasses());
+
+        $this->view->end($this->frame(UdbFrameKind::OclgEnd));
+        self::assertSame(['locop', 'netadmin', 'services'], $this->view->getAvailableOperclasses());
+    }
+
+    #[Test]
+    public function getAvailableOperclassesReturnsEmptyAfterReset(): void
+    {
+        $entries = ['netadmin' => str_repeat('a', 64)];
+        $this->commitReady($entries);
+        self::assertSame(['netadmin'], $this->view->getAvailableOperclasses());
+
+        $this->view->reset();
+        self::assertSame([], $this->view->getAvailableOperclasses());
+    }
+
+    #[Test]
+    public function getAvailableOperclassesReturnsEmptyOnIncompleteSnapshot(): void
+    {
+        $this->view->begin($this->frame(UdbFrameKind::OclgBegin, status: 'INCOMPLETE', count: 0, checksum: UdbOclgViewDigest::fromEntries(false, [])));
+        $this->view->end($this->frame(UdbFrameKind::OclgEnd));
+
+        self::assertSame([], $this->view->getAvailableOperclasses());
+    }
+
     private function frame(
         UdbFrameKind $kind,
         ?string $status = null,

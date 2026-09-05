@@ -64,12 +64,22 @@ ircop:
 # --- ROLE --------------------------------------------------------------------
 role:
   operclass:
-    syntax: "ROLE OPERCLASS <rol> {VIEW|SET} [operclass]"
+    syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
     short: "Gestiona la operclass Unreal de un rol."
-    help: "VIEW muestra la operclass Unreal del rol. SET la asigna a los IRCOP al identificarse. Use OFF u omita la operclass para eliminarla. Disponible solo en protocolos UnrealIRCd."
-    unknown_action: "Accion desconocida %action%. Use VIEW o SET."
-    view: { empty: "El rol %role% no tiene operclass asignada.", line: "  Operclass: %operclass%" }
-    set: { done: "Operclass configurada para el rol %role%.", cleared: "Operclass eliminada del rol %role%." }
+    help: "LIST muestra las operclasses disponibles en la red.\nVIEW muestra la operclass del rol y las disponibles.\nSET asigna la operclass a los IRCOP al identificarse (OFF para eliminar).\nDisponible solo en protocolos UnrealIRCd."
+    unknown_action: "\x0304✗\x03 Acción desconocida \x02%action%\x02. Usa LIST, VIEW o SET."
+    list:
+      header: "\x0307---\x03 \x02Operclasses Disponibles en la Red\x02 \x0307---\x03"
+      empty: "No hay operclasses disponibles en la red."
+      not_supported: "\x0304✗\x03 El protocolo actual no soporta listar operclasses disponibles."
+    view:
+      empty: "El rol %role% no tiene operclass asignada."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Operclasses disponibles: \x0310%available%\x03"
+    set:
+      done: "\x0303✓\x03 Operclass configurada para el rol %role%."
+      cleared: "\x0303✓\x03 Operclass eliminada del rol %role%."
+      not_available: "\x0304✗\x03 La operclass \x02%operclass%\x02 no está disponible en la red. Operclasses disponibles: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nombre> ..."
   short:            "Gestiona roles de operadores."
   help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP,\nVHOST gestiona el patrón de vhost forzado de un rol.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."

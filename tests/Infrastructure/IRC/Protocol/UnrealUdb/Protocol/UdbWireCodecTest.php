@@ -123,7 +123,21 @@ final class UdbWireCodecTest extends TestCase
     #[Test]
     public function oclgViewDigestMatchesTheUdbBinaryEncoding(): void
     {
-        self::assertSame('db0993b14d12cd5761fe4a4540ac6088909756a64b4c0eefd8ff886df241d2be', UdbOclgViewDigest::fromEntries(true, ['netadmin' => str_repeat('a', 64)]));
+        self::assertSame('95d9b200b13758900b688f6197420a6b12bcf7fcdfe7218e783dad0f8017164c', UdbOclgViewDigest::fromEntries(true, ['netadmin' => str_repeat('a', 64)]));
+        self::assertSame(
+            'c434656abd1d23f99fd609235eccd31e3b55f8637e17188095578632800ea68a',
+            UdbOclgViewDigest::fromEntries(true, [
+                'admin' => '863629b21b7030c7ac64b5efa87ffdff4fb0f034c3ef2e6fe66f9ebf9e28bc01',
+                'admin-with-override' => 'f1be89317d9ba42023689cc23467b17604c57876b2025da6d2cef09aa39915e9',
+                'globop' => 'dbc66c42b1ed0f3c876e749221f887f3249b814b17ef46b26d22a553ff81129e',
+                'globop-with-override' => '7fd2a14f823030a9f7eda0a7f18922f789afa7eb5841cf7732c7fe7f22e79223',
+                'locop' => '881fd8dd85c448fc344749c479a92841839f0c0c8d6b02304b789204d4e3fec2',
+                'netadmin' => '4f7b74230fa9367d54bdd84ff0502ddd179c3e84859bce2c386b1a392a08ef84',
+                'netadmin-with-override' => '362dfcb4b18bf9a6a048e85fcdefe910f5b9ab5ea9104a2b05444f077338c405',
+                'services-admin' => '01ccbd8bb8fee1ec15ef1eca2ba27c3102603242a83856e51b30281129c41813',
+                'services-admin-with-override' => 'ad4593fb6ff658db0bf7a18e4533f47b714557025c77ce1d3dc19bf334e69230',
+            ]),
+        );
         self::assertTrue(UdbOclgViewDigest::isValid(str_repeat('a', 64)));
         self::assertFalse(UdbOclgViewDigest::isValid('A'));
     }

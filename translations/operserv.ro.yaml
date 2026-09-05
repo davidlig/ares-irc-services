@@ -63,7 +63,23 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  operclass: { syntax: "ROLE OPERCLASS <rol> {VIEW|SET} [operclass]", short: "Gestioneaza operclass Unreal a rolului.", help: "VIEW arata operclass. SET o atribuie la identificare. OFF o elimina.", unknown_action: "Actiune necunoscuta %action%.", view: { empty: "Rolul %role% nu are operclass.", line: "  Operclass: %operclass%" }, set: { done: "Operclass setata pentru %role%.", cleared: "Operclass eliminata din %role%." } }
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<rol>} [{VIEW|SET}] [operclass]"
+    short: "Gestioneaza operclass Unreal a rolului."
+    help: "LIST arata operclasses disponibile in retea.\nVIEW arata operclass a rolului si cele disponibile.\nSET o atribuie la identificare (OFF pentru a o elimina).\nDisponibil doar pe protocoalele UnrealIRCd."
+    unknown_action: "\x0304✗\x03 Actiune necunoscuta \x02%action%\x02. Folositi LIST, VIEW sau SET."
+    list:
+      header: "\x0307---\x03 \x02Operclasses Disponibile in Retea\x02 \x0307---\x03"
+      empty: "Nu exista operclasses disponibile in retea."
+      not_supported: "\x0304✗\x03 Protocolul curent nu suporta listarea operclasses disponibile."
+    view:
+      empty: "Rolul %role% nu are operclass."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Operclasses disponibile: \x0310%available%\x03"
+    set:
+      done: "Operclass setata pentru %role%."
+      cleared: "Operclass eliminata din %role%."
+      not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 nu este disponibila in retea. Operclasses disponibile: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nume> ..."
   short:            "Gestionați rolurile de operator."
   help:             "Gestionează rolurile de operator. ADD creează un nou rol, DEL îl șterge,\nLIST afișează toate rolurile, PERMS gestionează permisiunile unui rol, MODES gestionează modurile IRCOP,\nVHOST gestionează modelul de vhost forțat al unui rol.\nRolurile protejate (ADMIN, OPER, PREOPER) nu pot fi șterse.\nAceastă comandă este rezervată utilizatorilor Root."

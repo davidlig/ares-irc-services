@@ -23,7 +23,7 @@ final class UdbOclgViewDigest
         ksort($entries, SORT_STRING);
         $payload = "UDB-OCLG-VIEW-v1\0" . pack('N2', $ready ? 1 : 0, count($entries));
         foreach ($entries as $name => $digest) {
-            $payload .= pack('N', strlen($name)) . $name . pack('H*', $digest) . "\0";
+            $payload .= pack('N', strlen($name)) . $name . $digest . "\0";
         }
 
         return hash('sha256', $payload);

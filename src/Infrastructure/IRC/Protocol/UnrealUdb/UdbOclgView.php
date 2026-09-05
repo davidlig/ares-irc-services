@@ -9,7 +9,9 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbOclgViewDigest;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function array_keys;
 use function count;
+use function sort;
 
 /**
  * Consumer state for the UDB 4 OCLG global operclass projection.
@@ -36,6 +38,17 @@ final class UdbOclgView
     public function isOperclassGloballyAvailable(string $operclass): bool
     {
         return isset($this->available[$operclass]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getAvailableOperclasses(): array
+    {
+        $keys = array_keys($this->available);
+        sort($keys);
+
+        return $keys;
     }
 
     public function begin(UdbFrame $frame): void

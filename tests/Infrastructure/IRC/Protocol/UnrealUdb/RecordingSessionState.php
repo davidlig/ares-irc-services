@@ -31,4 +31,9 @@ final class RecordingSessionState implements UdbSessionStateInterface
     {
         return false;
     }
+
+    public function getAvailableOperclasses(): array
+    {
+        return [];
+    }
 }

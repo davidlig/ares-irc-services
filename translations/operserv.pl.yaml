@@ -63,7 +63,23 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  operclass: { syntax: "ROLE OPERCLASS <rola> {VIEW|SET} [operclass]", short: "Zarzadza klasa Unreal roli.", help: "VIEW pokazuje klase. SET przypisuje ja przy identyfikacji. OFF usuwa.", unknown_action: "Nieznana akcja %action%.", view: { empty: "Rola %role% nie ma operclass.", line: "  Operclass: %operclass%" }, set: { done: "Operclass ustawiona dla %role%.", cleared: "Operclass usunieta z %role%." } }
+  operclass:
+    syntax: "ROLE OPERCLASS {LIST|<rola>} [{VIEW|SET}] [operclass]"
+    short: "Zarzadza klasa Unreal roli."
+    help: "LIST pokazuje dostepne klasy operclass w sieci.\nVIEW pokazuje klase roli oraz dostepne klasy.\nSET przypisuje ja przy identyfikacji (OFF aby usunac).\nDostepne tylko w protokolach UnrealIRCd."
+    unknown_action: "\x0304✗\x03 Nieznana akcja \x02%action%\x02. Uzyj LIST, VIEW lub SET."
+    list:
+      header: "\x0307---\x03 \x02Dostepne Operclasses w Sieci\x02 \x0307---\x03"
+      empty: "Brak dostepnych operclass w sieci."
+      not_supported: "\x0304✗\x03 Aktualny protokol nie obsluguje listowania dostepnych operclasses."
+    view:
+      empty: "Rola %role% nie ma operclass."
+      line: "  Operclass: \x0303%operclass%\x03"
+      available: "  Dostepne operclasses: \x0310%available%\x03"
+    set:
+      done: "Operclass ustawiona dla %role%."
+      cleared: "Operclass usunieta z %role%."
+      not_available: "\x0304✗\x03 Operclass \x02%operclass%\x02 nie jest dostepna w sieci. Dostepne operclasses: %available%."
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nazwa> ..."
   short:            "Zarządzaj rolami operatorów."
   help:             "Zarządzaj rolami operatorów. ADD tworzy nową rolę, DEL usuwa ją,\nLIST pokazuje wszystkie role, PERMS zarządza uprawnieniami dla roli, MODES zarządza trybami IRCOP,\nVHOST zarządza wymuszonym wzorcem vhost dla roli.\nChronione role (ADMIN, OPER, PREOPER) nie mogą być usunięte.\nTa komenda jest dostępna tylko dla użytkowników Root."

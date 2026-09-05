@@ -28,6 +28,7 @@ use function count;
 use function implode;
 use function in_array;
 use function sprintf;
+use function strcasecmp;
 use function strtoupper;
 use function trim;
 
@@ -572,6 +573,18 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     private function doOperclass(OperServContext $context): void
     {
+        if (count($context->args) < 2) {
+            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.operclass.syntax')]);
+
+            return;
+        }
+
+        if ('LIST' === strtoupper($context->args[1])) {
+            $this->listOperclasses($context);
+
+            return;
+        }
+
         if (count($context->args) < 3) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('role.operclass.syntax')]);
 
@@ -586,27 +599,89 @@ final readonly class RoleCommand implements OperServCommandInterface
         }
 
         $action = strtoupper($context->args[2]);
-        if ('VIEW' === $action) {
-            $operclass = $role->getOperclass();
-            if (null === $operclass || '' === $operclass) {
-                $context->reply('role.operclass.view.empty', ['%role%' => $role->getName()]);
+        if ('VIEW' === $action || 'LIST' === $action) {
+            $this->viewOperclass($context, $role);
 
-                return;
-            }
+            return;
+        }
 
+        if ('SET' === $action) {
+            $this->setOperclass($context, $role);
+
+            return;
+        }
+
+        $context->reply('role.operclass.unknown_action', ['%action%' => $action]);
+    }
+
+    private function listOperclasses(OperServContext $context): void
+    {
+        $actions = $this->connectionHolder->getProtocolModule()?->getServiceActions();
+        $available = $actions instanceof OperclassServiceActionsInterface ? $actions->getAvailableOperclasses() : null;
+        if (null === $available) {
+            $context->reply('role.operclass.list.not_supported');
+
+            return;
+        }
+
+        if ([] === $available) {
+            $context->reply('role.operclass.list.empty');
+
+            return;
+        }
+
+        $context->reply('role.operclass.list.header');
+        foreach ($available as $operclass) {
+            $context->replyRaw(sprintf('  %s', $operclass));
+        }
+    }
+
+    private function viewOperclass(OperServContext $context, OperRole $role): void
+    {
+        $operclass = $role->getOperclass();
+        if (null === $operclass || '' === $operclass) {
+            $context->reply('role.operclass.view.empty', ['%role%' => $role->getName()]);
+        } else {
             $context->reply('role.operclass.view.line', ['%operclass%' => $operclass]);
-
-            return;
         }
 
-        if ('SET' !== $action) {
-            $context->reply('role.operclass.unknown_action', ['%action%' => $action]);
+        $actions = $this->connectionHolder->getProtocolModule()?->getServiceActions();
+        $available = $actions instanceof OperclassServiceActionsInterface ? $actions->getAvailableOperclasses() : null;
+        if (null !== $available && [] !== $available) {
+            $context->reply('role.operclass.view.available', ['%available%' => implode(', ', $available)]);
+        }
+    }
 
-            return;
+    private function setOperclass(OperServContext $context, OperRole $role): void
+    {
+        $operclassArg = trim($context->args[3] ?? '');
+        $operclass = '' === $operclassArg || 'OFF' === strtoupper($operclassArg) ? null : $operclassArg;
+
+        if (null !== $operclass) {
+            $actions = $this->connectionHolder->getProtocolModule()?->getServiceActions();
+            $available = $actions instanceof OperclassServiceActionsInterface ? $actions->getAvailableOperclasses() : null;
+            if (null !== $available && [] !== $available) {
+                $matched = null;
+                foreach ($available as $candidate) {
+                    if (0 === strcasecmp($candidate, $operclass)) {
+                        $matched = $candidate;
+                        break;
+                    }
+                }
+
+                if (null === $matched) {
+                    $context->reply('role.operclass.set.not_available', [
+                        '%operclass%' => $operclass,
+                        '%available%' => implode(', ', $available),
+                    ]);
+
+                    return;
+                }
+
+                $operclass = $matched;
+            }
         }
 
-        $operclass = trim($context->args[3] ?? '');
-        $operclass = '' === $operclass || 'OFF' === strtoupper($operclass) ? null : $operclass;
         $role->changeOperclass($operclass);
         $this->roleRepository->save($role);
         $this->operclassApplier->updateForRole($role->getId(), $operclass);

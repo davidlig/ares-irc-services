@@ -30,6 +30,11 @@ trait CreatesUdbRecordWriter
             {
                 return true;
             }
+
+            public function getAvailableOperclasses(): array
+            {
+                return [];
+            }
         };
     }
 
