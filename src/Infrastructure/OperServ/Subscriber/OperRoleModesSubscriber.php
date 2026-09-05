@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Application\OperServ\IrcopModeApplier;
+use App\Application\OperServ\IrcopOperclassApplier;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -17,6 +18,7 @@ final readonly class OperRoleModesSubscriber implements EventSubscriberInterface
     public function __construct(
         private OperIrcopRepositoryInterface $ircopRepository,
         private IrcopModeApplier $modeApplier,
+        private IrcopOperclassApplier $operclassApplier,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -34,10 +36,10 @@ final readonly class OperRoleModesSubscriber implements EventSubscriberInterface
         }
 
         $role = $ircop->getRole();
-        if (empty($role->getUserModes())) {
-            return;
+        if (!empty($role->getUserModes())) {
+            $this->modeApplier->applyModesForNick($event->nickname, $role);
         }
 
-        $this->modeApplier->applyModesForNick($event->nickname, $role);
+        $this->operclassApplier->applyForNick($event->nickname, $role);
     }
 }

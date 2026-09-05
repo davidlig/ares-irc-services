@@ -63,11 +63,22 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
-  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
+  operclass:
+    syntax:         "ROLE OPERCLASS <role> {VIEW|SET} [operclass]"
+    short:          "Manage the Unreal operclass for a role."
+    help:           "VIEW shows the Unreal operclass assigned to a role. SET assigns it to IRCOPs on identify. Use OFF or omit the operclass to clear it. Available only on UnrealIRCd protocols."
+    unknown_action: "\x0304✗\x03 Unknown action \x02%action%\x02. Use VIEW or SET."
+    view:
+      empty:        "The role \x02%role%\x02 has no operclass assigned."
+      line:         "  Operclass: \x0303%operclass%\x03"
+    set:
+      done:         "\x0303✓\x03 Set operclass for role \x02%role%\x02."
+      cleared:      "\x0303✓\x03 Removed operclass from role \x02%role%\x02."
+  syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <name> ..."
   short:            "Manage operator roles."
   help:             "Manage operator roles. ADD creates a new role, DEL removes it,\nLIST shows all roles, PERMS manages permissions for a role, MODES manages IRCOP modes,\nVHOST manages forced vhost pattern for a role.\nProtected roles (ADMIN, OPER, PREOPER) cannot be deleted.\nThis command is restricted to Root users."
 
-  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, PERMS, MODES, or VHOST."
+  unknown_sub:      "\x0304✗\x03 Unknown subcommand \x02%sub%\x02. Use ADD, DEL, LIST, PERMS, MODES, VHOST, or OPERCLASS."
   not_found:        "\x0304✗\x03 Role \x02%role%\x02 does not exist."
   already_exists:   "\x0304✗\x03 Role \x02%role%\x02 already exists."
   protected:        "\x0304✗\x03 Role \x02%role%\x02 is protected and cannot be deleted."

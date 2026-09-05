@@ -340,4 +340,21 @@ final class OperRoleTest extends TestCase
 
         self::assertSame('', $role->getForcedVhostPattern());
     }
+
+    #[Test]
+    public function getOperclassReturnsNullInitially(): void
+    {
+        self::assertNull(OperRole::create('Test')->getOperclass());
+    }
+
+    #[Test]
+    public function changeOperclassSetsAndClearsValue(): void
+    {
+        $role = OperRole::create('Test');
+        $role->changeOperclass('services:netadmin');
+        self::assertSame('services:netadmin', $role->getOperclass());
+
+        $role->changeOperclass(null);
+        self::assertNull($role->getOperclass());
+    }
 }

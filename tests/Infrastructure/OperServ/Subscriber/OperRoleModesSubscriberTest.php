@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\IrcopModeApplier;
+use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
@@ -52,6 +53,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
             $modeApplier,
+            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveConnectionHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(RegisteredNickRepositoryInterface::class)),
         );
 
         $subscriber->onNickIdentified($event);
@@ -80,6 +82,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
             $modeApplier,
+            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveConnectionHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(RegisteredNickRepositoryInterface::class)),
         );
 
         $subscriber->onNickIdentified($event);
@@ -154,6 +157,7 @@ final class OperRoleModesSubscriberTest extends TestCase
         $subscriber = new OperRoleModesSubscriber(
             $ircopRepository,
             $modeApplier,
+            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $this->createStub(ActiveConnectionHolderInterface::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(RegisteredNickRepositoryInterface::class)),
         );
 
         $subscriber->onNickIdentified($event);

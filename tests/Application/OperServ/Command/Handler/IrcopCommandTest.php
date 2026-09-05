@@ -13,6 +13,7 @@ use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
+use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
@@ -58,6 +59,15 @@ final class IrcopCommandTest extends TestCase
         return new IrcopModeApplier($identifiedRegistry, $connectionHolder, $ircopRepo, $nickRepo, $userLookup, new NullLogger());
     }
 
+    private function createOperclassApplier(): IrcopOperclassApplier
+    {
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $connectionHolder = $this->createStub(ActiveConnectionHolderInterface::class);
+        $connectionHolder->method('getProtocolModule')->willReturn(null);
+
+        return new IrcopOperclassApplier($identifiedRegistry, $connectionHolder, $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(RegisteredNickRepositoryInterface::class));
+    }
+
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -100,7 +110,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.root_only', $messages);
@@ -124,7 +134,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick', 'INVALID'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.unknown_sub', $messages);
@@ -148,7 +158,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -172,7 +182,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick', 'ADD'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -199,7 +209,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.nick_not_registered', $messages);
@@ -225,7 +235,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.list.empty', $messages);
@@ -239,7 +249,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         self::assertSame('IRCOP', $cmd->getName());
     }
 
@@ -251,7 +261,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         self::assertSame(1, $cmd->getMinArgs());
     }
 
@@ -263,7 +273,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         self::assertTrue($cmd->isOperOnly());
     }
 
@@ -275,7 +285,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $subs = $cmd->getSubCommandHelp();
 
         self::assertCount(3, $subs);
@@ -292,7 +302,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
 
         self::assertSame('ircop.syntax', $cmd->getSyntaxKey());
     }
@@ -305,7 +315,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
 
         self::assertSame('ircop.help', $cmd->getHelpKey());
     }
@@ -318,7 +328,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
 
         self::assertSame(1, $cmd->getOrder());
     }
@@ -331,7 +341,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
 
         self::assertSame('ircop.short', $cmd->getShortDescKey());
     }
@@ -344,7 +354,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
 
         self::assertNull($cmd->getRequiredPermission());
     }
@@ -357,7 +367,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $accessHelper = $this->createAccessHelper(true);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
 
         self::assertSame([], $cmd->getAliases());
     }
@@ -406,7 +416,7 @@ final class IrcopCommandTest extends TestCase
             return $event;
         });
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $eventDispatcher);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $eventDispatcher);
         $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.add.done', $messages);
@@ -442,7 +452,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.nick_not_active', $messages);
@@ -476,7 +486,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo->method('findByName')->willReturn(null);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'UNKNOWN_ROLE'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.unknown_role', $messages);
@@ -519,7 +529,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo->method('findByName')->willReturn($role);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.already_admin', $messages);
@@ -576,7 +586,7 @@ final class IrcopCommandTest extends TestCase
             return $event;
         });
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $eventDispatcher);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $eventDispatcher);
         $cmd->execute($this->createContext($sender, ['TestNick', 'ADD', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.role_changed', $messages);
@@ -627,7 +637,7 @@ final class IrcopCommandTest extends TestCase
             return $event;
         });
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $eventDispatcher);
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $eventDispatcher);
         $cmd->execute($this->createContext($sender, ['TestNick', 'DEL'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.del.done', $messages);
@@ -656,7 +666,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['DEL'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.syntax', $messages);
@@ -683,7 +693,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick', 'DEL'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('error.nick_not_registered', $messages);
@@ -718,7 +728,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['TestNick', 'DEL'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.not_admin', $messages);
@@ -763,7 +773,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.list.header', $messages);
@@ -800,7 +810,7 @@ final class IrcopCommandTest extends TestCase
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
         $registry = new OperServCommandRegistry([]);
 
-        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createStub(EventBusInterface::class));
+        $cmd = new IrcopCommand($nickRepo, $ircopRepo, $roleRepo, $accessHelper, $this->createModeApplier(), $this->createOperclassApplier(), $this->createStub(EventBusInterface::class));
         $cmd->execute($this->createContext($sender, ['LIST'], $notifier, $translator, $registry, $accessHelper));
 
         self::assertContains('ircop.list.header', $messages);

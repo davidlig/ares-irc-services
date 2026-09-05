@@ -71,6 +71,20 @@ final class UnrealIRCdProtocolServiceActionsTest extends TestCase
     }
 
     #[Test]
+    public function setUserOperclassSendsCompleteSvsoCommandAndCanClearIt(): void
+    {
+        $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);
+
+        $actions->setUserOperclass('001', '001ABCD', 'TestNick', 'services:netadmin');
+        $actions->setUserOperclass('001', '001ABCD', 'TestNick', null);
+
+        self::assertSame([
+            ':001 SVSO 001ABCD 001ABCD services:netadmin - - - -',
+            ':001 SVSMODE 001ABCD -o',
+        ], $this->written);
+    }
+
+    #[Test]
     public function forceNickSendsSvsnickWithTimestamp(): void
     {
         $actions = new UnrealIRCdProtocolServiceActions($this->connectionHolder);

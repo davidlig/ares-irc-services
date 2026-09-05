@@ -63,6 +63,7 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
+  operclass: { syntax: "ROLE OPERCLASS <rol> {VIEW|SET} [operclass]", short: "Rolun Unreal operclass degerini yonetir.", help: "VIEW operclass degerini gosterir. SET kimlik dogrulamada atar. OFF temizler.", unknown_action: "Bilinmeyen eylem %action%.", view: { empty: "%role% rolunun operclass degeri yok.", line: "  Operclass: %operclass%" }, set: { done: "%role% icin operclass ayarlandi.", cleared: "%role% icin operclass kaldirildi." } }
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <ad> ..."
   short:            "Operatör rollerini yönetin."
   help:             "Operatör rollerini yönetin. ADD yeni bir rol oluşturur, DEL siler,\nLIST tüm rolleri gösterir, PERMS bir rolün izinlerini yönetir, MODES IRCOP modlarını yönetir,\nVHOST bir rol için zorunlu vhost kalıbını yönetir.\nKorumalı roller (ADMIN, OPER, PREOPER) silinemez.\nBu komut yalnızca Root kullanıcıları içindir."

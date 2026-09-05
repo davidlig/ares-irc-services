@@ -63,6 +63,7 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
+  operclass: { syntax: "ROLE OPERCLASS <funcao> {VIEW|SET} [operclass]", short: "Gere a operclass Unreal da funcao.", help: "VIEW mostra a operclass. SET atribui-a ao identificar. OFF remove-a.", unknown_action: "Acao desconhecida %action%.", view: { empty: "A funcao %role% nao tem operclass.", line: "  Operclass: %operclass%" }, set: { done: "Operclass definida para %role%.", cleared: "Operclass removida de %role%." } }
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nome> ..."
   short:            "Gerir cargos de operador."
   help:             "Gere cargos de operador. ADD cria um novo cargo, DEL remove-o,\nLIST mostra todos os cargos, PERMS gere permissões para um cargo, MODES gere modos IRCOP,\nVHOST gere o padrão de vhost forçado para um cargo.\nCargos protegidos (ADMIN, OPER, PREOPER) não podem ser eliminados.\nEste comando é restrito a utilizadores Root."

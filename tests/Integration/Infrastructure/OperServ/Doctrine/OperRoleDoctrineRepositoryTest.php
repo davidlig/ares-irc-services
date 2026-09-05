@@ -144,6 +144,17 @@ final class OperRoleDoctrineRepositoryTest extends DoctrineIntegrationTestCase
     }
 
     #[Test]
+    public function savePersistsOptionalOperclass(): void
+    {
+        $role = $this->createRole('NetAdmin');
+        $role->changeOperclass('services:netadmin');
+        $this->repository->save($role);
+        $this->flushAndClear();
+
+        self::assertSame('services:netadmin', $this->repository->find($role->getId())?->getOperclass());
+    }
+
+    #[Test]
     public function removeRemovesAndFlushes(): void
     {
         $role = $this->createRole('ToDelete', 'Will be deleted');

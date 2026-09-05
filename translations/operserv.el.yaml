@@ -63,6 +63,7 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
+  operclass: { syntax: "ROLE OPERCLASS <role> {VIEW|SET} [operclass]", short: "Manage Unreal operclass.", help: "VIEW shows it. SET assigns it on identify. OFF clears it.", unknown_action: "Unknown action %action%.", view: { empty: "Role %role% has no operclass.", line: "  Operclass: %operclass%" }, set: { done: "Operclass set for %role%.", cleared: "Operclass cleared for %role%." } }
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
   short:            "Διαχείριση ρόλων operator."
   help:             "Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,\nLIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,\nMODES διαχειρίζεται λειτουργίες IRCOP, VHOST διαχειρίζεται μοτίβο\nαναγκαστικού vhost για έναν ρόλο.\nΟι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."

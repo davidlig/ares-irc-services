@@ -331,6 +331,7 @@ services:
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions:
         arguments:
             $recordWriter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter'
+            $sessionState: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface'
             $introductionFormatter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 

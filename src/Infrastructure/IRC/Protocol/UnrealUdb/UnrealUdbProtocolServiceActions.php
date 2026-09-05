@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
+use App\Application\Port\OperclassServiceActionsInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\UdbRecordWriterInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
@@ -31,11 +32,12 @@ use function str_split;
  * Commands that UDB cannot perform (KILL, INVITE, JOIN/PART, KICK, UID/QUIT)
  * are kept unchanged.
  */
-final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceActionsInterface
+final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceActionsInterface, OperclassServiceActionsInterface
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
         private readonly UdbRecordWriterInterface $recordWriter,
+        private readonly ?UdbSessionStateInterface $sessionState = null,
         private readonly UnrealUdbServiceIntroductionFormatter $introductionFormatter = new UnrealUdbServiceIntroductionFormatter(),
         private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
@@ -48,6 +50,24 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
     public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void
     {
         // UDB applies oper/modes natively via N::<nick>::oper and N::<nick>::modes.
+    }
+
+    public function setUserOperclass(string $serverSid, string $targetUid, string $targetNickname, ?string $operclass): void
+    {
+        $path = $targetNickname . '::oper';
+        if (null === $operclass || '' === $operclass) {
+            $this->recordWriter->delete('N', $path);
+
+            return;
+        }
+
+        if (null === $this->sessionState || !$this->sessionState->isOperclassGloballyAvailable($operclass)) {
+            $this->logger->warning('Refusing UDB operclass assignment not present in the READY OCLG view.', ['operclass' => $operclass]);
+
+            return;
+        }
+
+        $this->recordWriter->insert('N', $path, $operclass);
     }
 
     public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void

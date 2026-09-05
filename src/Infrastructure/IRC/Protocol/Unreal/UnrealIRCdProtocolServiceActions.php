@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\Unreal;
 
+use App\Application\Port\OperclassServiceActionsInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
@@ -21,7 +22,7 @@ use function sprintf;
  * Service join: send JOIN with UID as source (RFC 2813 / client-style join on S2S link).
  * Then set member mode (+q/+o etc) so the bot gets the desired privilege.
  */
-final readonly class UnrealIRCdProtocolServiceActions implements ProtocolServiceActionsInterface
+final readonly class UnrealIRCdProtocolServiceActions implements ProtocolServiceActionsInterface, OperclassServiceActionsInterface
 {
     public function __construct(
         private readonly ActiveConnectionHolder $connectionHolder,
@@ -42,6 +43,17 @@ final readonly class UnrealIRCdProtocolServiceActions implements ProtocolService
     public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void
     {
         $this->write(sprintf(':%s SVSMODE %s %s', $serverSid, $targetUid, $modes));
+    }
+
+    public function setUserOperclass(string $serverSid, string $targetUid, string $targetNickname, ?string $operclass): void
+    {
+        if (null === $operclass || '' === $operclass) {
+            $this->write(sprintf(':%s SVSMODE %s -o', $serverSid, $targetUid));
+
+            return;
+        }
+
+        $this->write(sprintf(':%s SVSO %s %s %s - - - -', $serverSid, $targetUid, $targetUid, $operclass));
     }
 
     public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void

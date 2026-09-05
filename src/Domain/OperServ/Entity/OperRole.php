@@ -26,6 +26,8 @@ class OperRole
 
     private ?string $forcedVhostPattern = null;
 
+    private ?string $operclass = null;
+
     public function __construct()
     {
         $this->permissions = new ArrayCollection();
@@ -125,5 +127,15 @@ class OperRole
     public function changeForcedVhostPattern(?string $pattern): void
     {
         $this->forcedVhostPattern = $pattern;
+    }
+
+    public function getOperclass(): ?string
+    {
+        return $this->operclass;
+    }
+
+    public function changeOperclass(?string $operclass): void
+    {
+        $this->operclass = $operclass;
     }
 }

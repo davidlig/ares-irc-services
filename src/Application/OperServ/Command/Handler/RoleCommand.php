@@ -11,8 +11,10 @@ use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
+use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
+use App\Application\Port\OperclassServiceActionsInterface;
 use App\Application\Security\PermissionRegistry;
 use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
@@ -39,6 +41,7 @@ final readonly class RoleCommand implements OperServCommandInterface
         private ActiveConnectionHolderInterface $connectionHolder,
         private IdentifiedSessionRegistry $identifiedRegistry,
         private IrcopModeApplier $modeApplier,
+        private IrcopOperclassApplier $operclassApplier,
         private ForcedVhostApplier $vhostApplier,
         private VhostValidator $vhostValidator,
         private EventBusInterface $eventDispatcher,
@@ -88,6 +91,7 @@ final readonly class RoleCommand implements OperServCommandInterface
             ['name' => 'PERMS', 'desc_key' => 'role.perms.short', 'help_key' => 'role.perms.help', 'syntax_key' => 'role.perms.syntax'],
             ['name' => 'MODES', 'desc_key' => 'role.modes.short', 'help_key' => 'role.modes.help', 'syntax_key' => 'role.modes.syntax'],
             ['name' => 'VHOST', 'desc_key' => 'role.vhost.short', 'help_key' => 'role.vhost.help', 'syntax_key' => 'role.vhost.syntax'],
+            ...($this->supportsOperclass() ? [['name' => 'OPERCLASS', 'desc_key' => 'role.operclass.short', 'help_key' => 'role.operclass.help', 'syntax_key' => 'role.operclass.syntax']] : []),
         ];
     }
 
@@ -129,6 +133,14 @@ final readonly class RoleCommand implements OperServCommandInterface
                 break;
             case 'VHOST':
                 $this->doVhost($context);
+                break;
+            case 'OPERCLASS':
+                if (!$this->supportsOperclass()) {
+                    $context->reply('role.unknown_sub', ['%sub%' => $sub]);
+
+                    break;
+                }
+                $this->doOperclass($context);
                 break;
             default:
                 $context->reply('role.unknown_sub', ['%sub%' => $sub]);
@@ -556,6 +568,55 @@ final readonly class RoleCommand implements OperServCommandInterface
             default:
                 $context->reply('role.vhost.unknown_action', ['%action%' => $action]);
         }
+    }
+
+    private function doOperclass(OperServContext $context): void
+    {
+        if (count($context->args) < 3) {
+            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.operclass.syntax')]);
+
+            return;
+        }
+
+        $role = $this->roleRepository->findByName(strtoupper($context->args[1]));
+        if (null === $role) {
+            $context->reply('role.not_found', ['%role%' => strtoupper($context->args[1])]);
+
+            return;
+        }
+
+        $action = strtoupper($context->args[2]);
+        if ('VIEW' === $action) {
+            $operclass = $role->getOperclass();
+            if (null === $operclass || '' === $operclass) {
+                $context->reply('role.operclass.view.empty', ['%role%' => $role->getName()]);
+
+                return;
+            }
+
+            $context->reply('role.operclass.view.line', ['%operclass%' => $operclass]);
+
+            return;
+        }
+
+        if ('SET' !== $action) {
+            $context->reply('role.operclass.unknown_action', ['%action%' => $action]);
+
+            return;
+        }
+
+        $operclass = trim($context->args[3] ?? '');
+        $operclass = '' === $operclass || 'OFF' === strtoupper($operclass) ? null : $operclass;
+        $role->changeOperclass($operclass);
+        $this->roleRepository->save($role);
+        $this->operclassApplier->updateForRole($role->getId(), $operclass);
+
+        $context->reply(null === $operclass ? 'role.operclass.set.cleared' : 'role.operclass.set.done', ['%role%' => $role->getName()]);
+    }
+
+    private function supportsOperclass(): bool
+    {
+        return $this->connectionHolder->getProtocolModule()?->getServiceActions() instanceof OperclassServiceActionsInterface;
     }
 
     private function viewVhost(OperServContext $context, OperRole $role): void

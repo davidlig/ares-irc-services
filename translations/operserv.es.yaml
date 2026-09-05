@@ -63,6 +63,13 @@ ircop:
 
 # --- ROLE --------------------------------------------------------------------
 role:
+  operclass:
+    syntax: "ROLE OPERCLASS <rol> {VIEW|SET} [operclass]"
+    short: "Gestiona la operclass Unreal de un rol."
+    help: "VIEW muestra la operclass Unreal del rol. SET la asigna a los IRCOP al identificarse. Use OFF u omita la operclass para eliminarla. Disponible solo en protocolos UnrealIRCd."
+    unknown_action: "Accion desconocida %action%. Use VIEW o SET."
+    view: { empty: "El rol %role% no tiene operclass asignada.", line: "  Operclass: %operclass%" }
+    set: { done: "Operclass configurada para el rol %role%.", cleared: "Operclass eliminada del rol %role%." }
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nombre> ..."
   short:            "Gestiona roles de operadores."
   help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP,\nVHOST gestiona el patrón de vhost forzado de un rol.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
