@@ -57,6 +57,27 @@ final class SocketConnectionTest extends TestCase
     }
 
     #[Test]
+    public function writeLineMarksConnectionAsErroredWhenTheSocketWriteFails(): void
+    {
+        $socket = fopen('php://memory', 'r');
+        self::assertNotFalse($socket);
+
+        $conn = new SocketConnection('127.0.0.1', 7000);
+        $property = new ReflectionProperty($conn, 'socket');
+        $property->setValue($conn, $socket);
+
+        try {
+            $conn->writeLine('PING');
+            self::fail('Expected the read-only stream to reject the write.');
+        } catch (RuntimeException $exception) {
+            self::assertSame('Failed to write to the IRC connection.', $exception->getMessage());
+            self::assertSame(ConnectionStatus::Error, $conn->getStatus());
+        } finally {
+            fclose($socket);
+        }
+    }
+
+    #[Test]
     public function connectThrowsWhenConnectionFails(): void
     {
         $conn = new SocketConnection('127.0.0.1', 59999, false, 1);

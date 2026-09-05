@@ -11,6 +11,7 @@ use Psr\Log\NullLogger;
 use RuntimeException;
 
 use function sprintf;
+use function strlen;
 
 use const STREAM_CLIENT_CONNECT;
 
@@ -52,13 +53,7 @@ class SocketConnection implements ConnectionInterface
             error_message: $errorMessage,
             timeout: $this->timeoutSeconds,
             flags: STREAM_CLIENT_CONNECT,
-            context: stream_context_create([
-                'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false,
-                    'allow_self_signed' => true,
-                ],
-            ]),
+            context: stream_context_create(),
         );
 
         if (false === $socket) {
@@ -103,7 +98,26 @@ class SocketConnection implements ConnectionInterface
             throw new RuntimeException('Cannot write: connection is not open.');
         }
 
-        @fwrite($this->socket, $data . "\r\n");
+        $payload = $data . "\r\n";
+        $offset = 0;
+
+        stream_set_blocking($this->socket, true);
+        stream_set_timeout($this->socket, $this->timeoutSeconds);
+
+        try {
+            while ($offset < strlen($payload)) {
+                $written = @fwrite($this->socket, substr($payload, $offset));
+                if (false === $written || 0 === $written) {
+                    $this->status = ConnectionStatus::Error;
+
+                    throw new RuntimeException('Failed to write to the IRC connection.');
+                }
+
+                $offset += $written;
+            }
+        } finally {
+            stream_set_blocking($this->socket, false);
+        }
     }
 
     public function readLine(): ?string
