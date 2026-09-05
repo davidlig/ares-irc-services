@@ -6,7 +6,12 @@ services:
       args:
         UID: ${UID:-1000}
     container_name: ares-irc-services
-    restart: unless-stopped
+    restart: on-failure:10
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 15s
+        max_attempts: 10
 
     # Bind mounts for persistence
     volumes:
@@ -21,9 +26,4 @@ services:
     environment:
       - APP_ENV=prod
 
-    healthcheck:
-      test: ["CMD", "pgrep", "-f", "php bin/console irc:connect"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
+    # Healthcheck is deferred until an application-level command (e.g. irc:health) is implemented.

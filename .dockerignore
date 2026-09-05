@@ -10,8 +10,10 @@
 # Docker (keep docker/ directory for entrypoint.sh)
 .docker/
 Dockerfile
-docker-compose.yml
-docker-compose.override.yml
+docker-compose*.yml
+docker-compose*.yaml
+compose*.yml
+compose*.yaml
 
 # Tests
 tests/
@@ -39,3 +41,7 @@ vendor/
 # Backups
 backups/
 specs/
+
+# Development and Agent metadata
+.codegraph/
+.agents/

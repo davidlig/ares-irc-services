@@ -14,10 +14,10 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## Build Docker image
-	UID=$(UID) $(DOCKER_COMPOSE) -f docker/docker-compose.yml build
+	UID=$(UID) $(DOCKER_COMPOSE) -f docker/compose.yaml build
 
 build-no-cache: ## Build without cache
-	UID=$(UID) $(DOCKER_COMPOSE) -f docker/docker-compose.yml build --no-cache
+	UID=$(UID) $(DOCKER_COMPOSE) -f docker/compose.yaml build --no-cache
 
 config: ## Create .env.local from .env template
 	@./scripts/init-env.sh
@@ -28,35 +28,35 @@ up: ## Start services in background (always rebuilds image)
 		exit 1; \
 	fi
 	@mkdir -p var/data var/log
-	UID=$(UID) $(DOCKER_COMPOSE) -f docker/docker-compose.yml up -d --build
+	UID=$(UID) $(DOCKER_COMPOSE) -f docker/compose.yaml up -d --build
 
 down: ## Stop services
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml down
+	$(DOCKER_COMPOSE) -f docker/compose.yaml down
 
 logs: ## Follow logs in real-time
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml logs -f ares
+	$(DOCKER_COMPOSE) -f docker/compose.yaml logs -f ares
 
 logs-tail: ## Show last 100 lines of logs
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml logs --tail=100 ares
+	$(DOCKER_COMPOSE) -f docker/compose.yaml logs --tail=100 ares
 
 ps: ## Show container status
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml ps
+	$(DOCKER_COMPOSE) -f docker/compose.yaml ps
 
 shell: ## Open shell inside container
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml exec ares /bin/sh
+	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares /bin/sh
 
 clean: ## Remove containers, volumes, and images
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml down -v --rmi local
+	$(DOCKER_COMPOSE) -f docker/compose.yaml down -v --rmi local
 	rm -rf var/cache/* var/log/*
 
 restart: down up ## Restart services
 
 # Database operations
 db-shell: ## Open SQLite shell
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml exec ares php bin/console dbal:run-sql
+	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares php bin/console dbal:run-sql
 
 db-migrate: ## Run migrations manually
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml exec ares php bin/console doctrine:migrations:migrate -n
+	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares php bin/console doctrine:migrations:migrate -n
 
 db-backup: ## Backup database to backups/ directory
 	@mkdir -p $(BACKUP_DIR)
@@ -72,16 +72,16 @@ db-restore: ## Restore database from backups/ (usage: make db-restore FILE=backu
 		echo "❌ File not found: $(FILE)"; \
 		exit 1; \
 	fi
-	@$(DOCKER_COMPOSE) -f docker/docker-compose.yml down
+	@$(DOCKER_COMPOSE) -f docker/compose.yaml down
 	@cp $(FILE) var/data/ares.db
-	@$(DOCKER_COMPOSE) -f docker/docker-compose.yml up -d
+	@$(DOCKER_COMPOSE) -f docker/compose.yaml up -d
 	@echo "✅ Database restored from: $(FILE)"
 
 config-show: ## Show current configuration
-	$(DOCKER_COMPOSE) -f docker/docker-compose.yml exec ares php bin/console debug:dotenv
+	$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares php bin/console debug:dotenv
 
 health: ## Check container health
-	@$(DOCKER_COMPOSE) -f docker/docker-compose.yml exec ares pgrep -f "php bin/console irc:connect" > /dev/null 2>&1 && echo "✅ Healthy" || echo "❌ Unhealthy"
+	@$(DOCKER_COMPOSE) -f docker/compose.yaml exec ares pgrep -f "php bin/console irc:connect" > /dev/null 2>&1 && echo "✅ Healthy" || echo "❌ Unhealthy"
 
 # Multi-arch build
 build-multiarch: ## Build multi-arch image (amd64 + arm64)

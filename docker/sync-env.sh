@@ -77,7 +77,7 @@ sync_block() {
                         *)
                             # It's a regular comment (description) - add to buffer
                             if [ -n "$COMMENT_BUFFER" ]; then
-                                COMMENT_BUFFER="${COMMENT_BUFFER}"$'\n'"${line}"
+                                COMMENT_BUFFER=$(printf '%s\n%s' "$COMMENT_BUFFER" "$line")
                             else
                                 COMMENT_BUFFER="${line}"
                             fi
