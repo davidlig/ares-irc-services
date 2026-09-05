@@ -103,6 +103,16 @@ All wire-level commands executed on the IRC network are encapsulated in `Protoco
 - `setChannelTopic($serverSid, $channelName, $topic, $setterUid, $creationTs)`: Changes channel topic.
 - `kickFromChannel($serverSid, $channelName, $targetUid, $reason, $kickerUid)`: Kicks a user from a channel.
 
+## Protocol-Specific Capabilities — Optional Ports (NON-NEGOTIABLE)
+
+The shared surface above is frozen for cross-protocol behavior. A capability that only one IRCd supports MUST NOT be added to it. Pattern:
+
+1. Create a **new optional port** in `src/Application/Port/` (e.g. `OperclassServiceActionsInterface` — Unreal `SVSO`, UnrealUdb `N::oper`; InspIRCd does not implement it).
+2. Only the protocol modules that support the capability implement it (they may implement the mandatory interface plus the optional one).
+3. Consumers feature-detect with `instanceof` on `$module->getServiceActions()` — never add capability methods to `ProtocolModuleInterface`/`ProtocolServiceActionsInterface`/`ProtocolHandlerInterface`.
+4. Protocol-specific behavior (session tick, deadlines, wire workarounds) lives **inside the protocol's own namespace** and is driven from its own handler — never from `IRCClient`, `AbstractProtocolHandler`, or the frozen `UnrealFamily` traits.
+5. If a change forces edits outside the protocol's own namespace and its own tests, it is a design violation: redesign with a new port, tag, or domain event instead.
+
 ## Documentation Reference
 
 **BEFORE** implementing or modifying protocol behaviour, read the relevant docs:
@@ -118,8 +128,9 @@ Use **only** the documented version (Unreal 6, InspIRCd 4). Do not rely on docs 
 
 ## Files Affected
 
-- `src/Application/Port/ProtocolModuleInterface.php`
-- `src/Application/Port/ProtocolServiceActionsInterface.php`
+- `src/Application/Port/ProtocolModuleInterface.php` — FROZEN for cross-protocol capabilities
+- `src/Application/Port/ProtocolServiceActionsInterface.php` — FROZEN for cross-protocol capabilities
+- `src/Application/Port/<Capability>ServiceActionsInterface.php` — optional capability ports (new files)
 - `src/Infrastructure/IRC/Protocol/ProtocolModuleRegistry.php`
 - `src/Infrastructure/IRC/Protocol/<IrcName>/`
 - `src/Infrastructure/IRC/Connection/ActiveConnectionHolder.php`

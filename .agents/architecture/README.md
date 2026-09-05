@@ -129,6 +129,39 @@ function dispatch(SenderView $sender)  // YES
 
 ---
 
+## SOLID & Hexagonal Review Rules (MANDATORY before declaring work done)
+
+Every new or modified design must pass this checklist. A failing item is a design violation: refactor before finishing, or justify explicitly in the reply why the shape is the correct tradeoff.
+
+### Single Responsibility (SRP)
+- One class = one reason to change. If a class name says X but it also does Y (e.g. a mode applier applying operclasses, a session coordinator owning a separate projection state machine), extract the second responsibility into its own collaborator.
+- State machines for separate concerns (e.g. HEL/reconciliation vs OCLG view) live in separate classes; the orchestrator delegates.
+
+### Open/Closed & Interface Segregation (OCP/ISP)
+- Extend behavior by adding NEW optional ports (see `.agents/protocol/README.md`), never by growing shared interfaces. Consumers feature-detect with `instanceof`.
+- No class may be forced to implement methods it cannot perform (no no-op implementations of protocol capabilities).
+
+### Liskov Substitution (LSP)
+- No protocol implementation may change the meaning of a shared contract; absent capability = the optional port is not implemented, not an empty stub.
+
+### Dependency Inversion (DIP)
+- Application depends on `Application/Port/` + Domain ONLY. Application code MUST NOT import `Infrastructure\*` namespaces.
+- Infrastructure may implement ports and depend on external libraries (symfony/lock, Doctrine), but never leak concrete classes into Application or Domain.
+- UI (CLI/Bots) may hold Infrastructure interface references only when an Application-layer port does not exist (established pattern: `ConsumerProcessManagerInterface`); prefer ports for anything new.
+
+### Hexagonal (Ports & Adapters)
+- Each protocol (`src/Infrastructure/IRC/Protocol/<Name>/`) is an adapter: wire types (`UdbFrame`, raw lines, protocol enums) MUST NOT cross the Port boundary into Application/Domain.
+- Adapter-internal collaborators (e.g. `UdbOclgView`, `UdbSessionLock`) stay inside the adapter namespace; they are implementation details, not ports.
+- Domain events are the inbound direction (adapter → services); ports are the outbound direction (services → network). Never route Application → adapter internals directly.
+
+### Self-check (run before replying "done")
+1. Did I add a method/property to a shared contract? → revert; new port instead.
+2. Does any new class hold two unrelated state machines/data? → extract collaborator.
+3. Does Application import Infrastructure? → move the port.
+4. Do new classes have `#[CoversClass]` tests and full branch coverage?
+
+---
+
 ## Forbidden Patterns
 
 ### NEVER in Application Layer
