@@ -64,12 +64,12 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     public function getSyntaxKey(): string
     {
-        return 'role.syntax';
+        return $this->supportsOperclass() ? 'role.syntax_operclass' : 'role.syntax';
     }
 
     public function getHelpKey(): string
     {
-        return 'role.help';
+        return $this->supportsOperclass() ? 'role.help_operclass' : 'role.help';
     }
 
     public function getOrder(): int
@@ -143,7 +143,7 @@ final readonly class RoleCommand implements OperServCommandInterface
                 $this->doOperclass($context);
                 break;
             default:
-                $context->reply('role.unknown_sub', ['%sub%' => $sub]);
+                $context->reply($this->supportsOperclass() ? 'role.unknown_sub_operclass' : 'role.unknown_sub', ['%sub%' => $sub]);
         }
     }
 

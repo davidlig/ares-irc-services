@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [role]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [role]"
   short:            "Διαχείριση IRC operators του δικτύου."
   help:             "Διαχείριση IRC operators του δικτύου. ADD προσθέτει ένα καταχωρημένο\nψευδώνυμο ως operator με τον καθορισμένο ρόλο.\nDEL αφαιρεί έναν operator. LIST εμφανίζει όλους τους operators.\nΧρησιμοποιήστε ROLE LIST για να δείτε τους διαθέσιμους ρόλους.\nΑυτή η εντολή περιορίζεται σε Root χρήστες που έχουν διαμορφωθεί στις υπηρεσίες."
 
@@ -42,14 +42,14 @@ ircop:
   role_changed:     "\x0303✓\x03 Άλλαξε ο ρόλος για \x02%nickname%\x02 από %old% σε %new%."
 
   add:
-    syntax:         "IRCOP <nickname> ADD <role>"
+    syntax:         "IRCOP ADD <nickname> <role>"
     short:          "Προσθήκη IRC operator δικτύου."
     help:           "Προσθέτει ένα καταχωρημένο ψευδώνυμο ως IRC operator δικτύου.\nΧρησιμοποιήστε ROLE LIST για να δείτε τους διαθέσιμους ρόλους.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
     done:           "\x0303✓\x03 Προστέθηκε ο/η \x02%nickname%\x02 ως \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 Το ψευδώνυμο \x02%nickname%\x02 δεν είναι ενεργό καταχωρημένο ψευδώνυμο."
 
   del:
-    syntax:         "IRCOP <nickname> DEL"
+    syntax:         "IRCOP DEL <nickname>"
     short:          "Αφαίρεση IRC operator δικτύου."
     help:            "Αφαιρεί έναν IRC operator δικτύου από τη λίστα.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
     done:           "\x0303✓\x03 Αφαιρέθηκε ο/η \x02%nickname%\x02 από τους IRC operators."
@@ -67,8 +67,11 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
   short:            "Διαχείριση ρόλων operator."
   help:             "Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,\nLIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,\nMODES διαχειρίζεται λειτουργίες IRCOP, VHOST διαχειρίζεται μοτίβο\nαναγκαστικού vhost για έναν ρόλο.\nΟι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <name> ..."
+  help_operclass:   "Διαχείριση ρόλων operator. ADD δημιουργεί νέο ρόλο, DEL τον αφαιρεί,\nLIST εμφανίζει όλους τους ρόλους, PERMS διαχειρίζεται άδειες για έναν ρόλο,\nMODES διαχειρίζεται λειτουργίες IRCOP, VHOST διαχειρίζεται μοτίβο αναγκαστικού vhost,\nOPERCLASS διαχειρίζεται την Unreal operclass ενός ρόλου.\nΟι προστατευμένοι ρόλοι (ADMIN, OPER, PREOPER) δεν μπορούν να διαγραφούν.\nΑυτή η εντολή περιορίζεται σε Root χρήστες."
 
   unknown_sub:      "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL, LIST, PERMS, MODES, ή VHOST."
+  unknown_sub_operclass: "\x0304✗\x03 Άγνωστη υπο-εντολή \x02%sub%\x02. Χρησιμοποιήστε ADD, DEL, LIST, PERMS, MODES, VHOST ή OPERCLASS."
   not_found:        "\x0304✗\x03 Ο ρόλος \x02%role%\x02 δεν υπάρχει."
   already_exists:   "\x0304✗\x03 Ο ρόλος \x02%role%\x02 υπάρχει ήδη."
   protected:        "\x0304✗\x03 Ο ρόλος \x02%role%\x02 είναι προστατευμένος και δεν μπορεί να διαγραφεί."

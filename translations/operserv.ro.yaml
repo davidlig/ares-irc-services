@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <poreclă> {ADD|DEL|LIST} [rol]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [poreclă] [rol]"
   short:            "Gestionați operatorii IRC ai rețelei."
   help:             "Gestionează operatorii IRC ai rețelei. ADD adaugă o poreclă înregistrată\nca operator cu rolul specificat.\nDEL elimină un operator. LIST afișează toți operatorii.\nFolosiți ROLE LIST pentru a vedea rolurile disponibile.\nAceastă comandă este rezervată utilizatorilor Root configurați în servicii."
 
@@ -42,14 +42,14 @@ ircop:
   role_changed:     "\x0303✓\x03 Rol schimbat pentru \x02%nickname%\x02 din %old% în %new%."
 
   add:
-    syntax:         "IRCOP <poreclă> ADD <rol>"
+    syntax:         "IRCOP ADD <poreclă> <rol>"
     short:          "Adăugați un operator IRC al rețelei."
     help:           "Adaugă o poreclă înregistrată ca operator IRC al rețelei.\nFolosiți ROLE LIST pentru a vedea rolurile disponibile.\nAceastă comandă este rezervată utilizatorilor Root."
     done:           "\x0303✓\x03 Adăugat \x02%nickname%\x02 ca \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 Porecla \x02%nickname%\x02 nu este o poreclă înregistrată activă."
 
   del:
-    syntax:         "IRCOP <poreclă> DEL"
+    syntax:         "IRCOP DEL <poreclă>"
     short:          "Eliminați un operator IRC al rețelei."
     help:            "Elimină un operator IRC al rețelei din listă.\nAceastă comandă este rezervată utilizatorilor Root."
     done:           "\x0303✓\x03 Eliminat \x02%nickname%\x02 din operatorii IRC."
@@ -67,8 +67,11 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nume> ..."
   short:            "Gestionați rolurile de operator."
   help:             "Gestionează rolurile de operator. ADD creează un nou rol, DEL îl șterge,\nLIST afișează toate rolurile, PERMS gestionează permisiunile unui rol, MODES gestionează modurile IRCOP,\nVHOST gestionează modelul de vhost forțat al unui rol.\nRolurile protejate (ADMIN, OPER, PREOPER) nu pot fi șterse.\nAceastă comandă este rezervată utilizatorilor Root."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <nume> ..."
+  help_operclass:   "Gestionează rolurile de operator. ADD creează un nou rol, DEL îl șterge,\nLIST afișează toate rolurile, PERMS gestionează permisiunile unui rol, MODES gestionează modurile IRCOP,\nVHOST gestionează modelul de vhost forțat al unui rol, OPERCLASS gestionează operclass Unreal.\nRolurile protejate (ADMIN, OPER, PREOPER) nu pot fi șterse.\nAceastă comandă este rezervată utilizatorilor Root."
 
   unknown_sub:      "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL, LIST, PERMS, MODES sau VHOST."
+  unknown_sub_operclass: "\x0304✗\x03 Subcomandă necunoscută \x02%sub%\x02. Folosiți ADD, DEL, LIST, PERMS, MODES, VHOST sau OPERCLASS."
   not_found:        "\x0304✗\x03 Rolul \x02%role%\x02 nu există."
   already_exists:   "\x0304✗\x03 Rolul \x02%role%\x02 există deja."
   protected:        "\x0304✗\x03 Rolul \x02%role%\x02 este protejat și nu poate fi șters."

@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <apodo> {ADD|DEL|LIST} [rol]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [apodo] [rol]"
   short:            "Gestiona operadores de red."
   help:             "Gestiona operadores de red. ADD añade un apodo registrado\ncomo operador con el rol especificado.\nDEL elimina un operador. LIST muestra todos los operadores.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root configurados en los servicios."
 
@@ -42,14 +42,14 @@ ircop:
   role_changed:    "\x0303✓\x03 Cambiado el rol de \x02%nickname%\x02 de %old% a %new%."
 
   add:
-    syntax:         "IRCOP <apodo> ADD <rol>"
+    syntax:         "IRCOP ADD <apodo> <rol>"
     short:          "Añade un operador de red."
     help:            "Añade un apodo registrado como operador de red.\nUsa ROLE LIST para ver los roles disponibles.\nEste comando está restringido a usuarios Root."
     done:           "\x0303✓\x03 Añadido \x02%nickname%\x02 como \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 El apodo \x02%nickname%\x02 no es un apodo registrado activo."
 
   del:
-    syntax:         "IRCOP <apodo> DEL"
+    syntax:         "IRCOP DEL <apodo>"
     short:          "Elimina un operador de red."
     help:            "Elimina un operador de red de la lista.\nEste comando está restringido a usuarios Root."
     done:           "\x0303✓\x03 Eliminado \x02%nickname%\x02 de operadores."
@@ -73,8 +73,11 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nombre> ..."
   short:            "Gestiona roles de operadores."
   help:             "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP,\nVHOST gestiona el patrón de vhost forzado de un rol.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <nombre> ..."
+  help_operclass:   "Gestiona roles de operadores. ADD crea un nuevo rol, DEL lo elimina,\nLIST muestra todos los roles, PERMS gestiona permisos de un rol, MODES gestiona modos IRCOP,\nVHOST gestiona el patrón de vhost forzado de un rol, OPERCLASS gestiona la operclass Unreal.\nRoles protegidos (ADMIN, OPER, PREOPER) no pueden eliminarse.\nEste comando está restringido a usuarios Root."
 
   unknown_sub:      "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST, PERMS, MODES o VHOST."
+  unknown_sub_operclass: "\x0304✗\x03 Subcomando desconocido \x02%sub%\x02. Usa ADD, DEL, LIST, PERMS, MODES, VHOST u OPERCLASS."
   not_found:        "\x0304✗\x03 El rol \x02%role%\x02 no existe."
   already_exists:   "\x0304✗\x03 El rol \x02%role%\x02 ya existe."
   protected:        "\x0304✗\x03 El rol \x02%role%\x02 está protegido y no puede eliminarse."

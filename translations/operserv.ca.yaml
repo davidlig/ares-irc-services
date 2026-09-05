@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [role]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [role]"
   short:            "Gestionar els operadors d'IRC de la xarxa."
   help:             "Gestiona els operadors d'IRC de la xarxa. ADD afegeix un sobrenom registrat\ncom a operador amb el rol especificat.\nDEL treu un operador. LIST mostra tots els operadors.\nUtilitzeu ROLE LIST per veure els rols disponibles.\nAquesta ordre està restringida als usuaris Root configurats als serveis."
 
@@ -42,14 +42,14 @@ ircop:
   role_changed:     "\x0303✓\x03 Rol canviat de \x02%nickname%\x02 de %old% a %new%."
 
   add:
-    syntax:         "IRCOP <nickname> ADD <role>"
+    syntax:         "IRCOP ADD <nickname> <role>"
     short:          "Afegir un operador d'IRC de xarxa."
     help:           "Afegeix un sobrenom registrat com a operador d'IRC de xarxa.\nUtilitzeu ROLE LIST per veure els rols disponibles.\nAquesta ordre està restringida als usuaris Root."
     done:           "\x0303✓\x03 Afegit \x02%nickname%\x02 com a \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 El sobrenom \x02%nickname%\x02 no és un sobrenom registrat actiu."
 
   del:
-    syntax:         "IRCOP <nickname> DEL"
+    syntax:         "IRCOP DEL <nickname>"
     short:          "Treure un operador d'IRC de xarxa."
     help:            "Treu un operador d'IRC de xarxa de la llista.\nAquesta ordre està restringida als usuaris Root."
     done:           "\x0303✓\x03 Tret \x02%nickname%\x02 dels operadors d'IRC."
@@ -67,8 +67,11 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <name> ..."
   short:            "Gestionar els rols d'operador."
   help:             "Gestiona els rols d'operador. ADD crea un nou rol, DEL l'elimina,\nLIST mostra tots els rols, PERMS gestiona els permisos d'un rol, MODES gestiona els modes IRCOP,\nVHOST gestiona el patró de vhost forçat per a un rol.\nEls rols protegits (ADMIN, OPER, PREOPER) no es poden esborrar.\nAquesta ordre està restringida als usuaris Root."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <name> ..."
+  help_operclass:   "Gestiona els rols d'operador. ADD crea un nou rol, DEL l'elimina,\nLIST mostra tots els rols, PERMS gestiona els permisos d'un rol, MODES gestiona els modes IRCOP,\nVHOST gestiona el patró de vhost forçat per a un rol, OPERCLASS gestiona l'operclass Unreal.\nEls rols protegits (ADMIN, OPER, PREOPER) no es poden esborrar.\nAquesta ordre està restringida als usuaris Root."
 
   unknown_sub:      "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, PERMS, MODES, o VHOST."
+  unknown_sub_operclass: "\x0304✗\x03 Subordre desconeguda \x02%sub%\x02. Utilitzeu ADD, DEL, LIST, PERMS, MODES, VHOST o OPERCLASS."
   not_found:        "\x0304✗\x03 El rol \x02%role%\x02 no existeix."
   already_exists:   "\x0304✗\x03 El rol \x02%role%\x02 ja existeix."
   protected:        "\x0304✗\x03 El rol \x02%role%\x02 està protegit i no es pot esborrar."

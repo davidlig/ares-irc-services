@@ -216,6 +216,68 @@ final class IrcopCommandTest extends TestCase
     }
 
     #[Test]
+    public function canonicalAddWithUnregisteredNickGetsNickNotRegisteredError(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn(null);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = new IrcopCommand(
+            $nickRepo,
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class),
+            $accessHelper,
+            $this->createModeApplier(),
+            $this->createOperclassApplier(),
+            $this->createStub(EventBusInterface::class),
+        );
+        $cmd->execute($this->createContext($sender, ['ADD', 'TestNick', 'ADMIN'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('error.nick_not_registered', $messages);
+    }
+
+    #[Test]
+    public function canonicalDelWithUnregisteredNickGetsNickNotRegisteredError(): void
+    {
+        $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);
+        $messages = [];
+        $notifier = $this->createStub(OperServNotifierInterface::class);
+        $notifier->method('sendMessage')->willReturnCallback(static function (string $target, string $message) use (&$messages): void {
+            $messages[] = $message;
+        });
+        $notifier->method('getNick')->willReturn('OperServ');
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+        $accessHelper = $this->createAccessHelper(true);
+        $nickRepo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepo->method('findByNick')->willReturn(null);
+        $registry = new OperServCommandRegistry([]);
+
+        $cmd = new IrcopCommand(
+            $nickRepo,
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class),
+            $accessHelper,
+            $this->createModeApplier(),
+            $this->createOperclassApplier(),
+            $this->createStub(EventBusInterface::class),
+        );
+        $cmd->execute($this->createContext($sender, ['DEL', 'TestNick'], $notifier, $translator, $registry, $accessHelper));
+
+        self::assertContains('error.nick_not_registered', $messages);
+    }
+
+    #[Test]
     public function listWithNoAdminsGetsEmptyMessage(): void
     {
         $sender = new SenderView('UID1', 'TestUser', 'i', 'h', 'c', 'ip', isIdentified: true, isOper: true);

@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <ezizena> {ADD|DEL|LIST} [rola]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [ezizena] [rola]"
   short:            "Kudeatu sareko IRC operadoreak."
   help:             "Sareko IRC operadoreak kudeatzen ditu. ADDk ezizen erregistratu bat gehitzen du\nzehaztutako rolarekin operadore gisa.\nDELek operadore bat kentzen du. LISTek operadore guztiak erakusten ditu.\nErabili ROLE LIST rolak ikusteko.\nKomando hau zerbitzuetan konfiguratutako Root erabiltzaileentzat mugatuta dago."
 
@@ -42,14 +42,14 @@ ircop:
   role_changed:     "\x0303✓\x03 \x02%nickname%\x02(r)en rola aldatu da: %old% → %new%."
 
   add:
-    syntax:         "IRCOP <ezizena> ADD <rola>"
+    syntax:         "IRCOP ADD <ezizena> <rola>"
     short:          "Gehitu sareko IRC operadore bat."
     help:           "Ezizen erregistratu bat sareko IRC operadore gisa gehitzen du.\nErabili ROLE LIST rolak ikusteko.\nKomando hau Root erabiltzaileentzat mugatuta dago."
     done:           "\x0303✓\x03 \x02%nickname%\x02 \x02%role%\x02 gisa gehitu da."
     nick_not_active: "\x0304✗\x03 \x02%nickname%\x02 ezizena ez da ezizen erregistratu aktibo bat."
 
   del:
-    syntax:         "IRCOP <ezizena> DEL"
+    syntax:         "IRCOP DEL <ezizena>"
     short:          "Kendu sareko IRC operadore bat."
     help:            "Sareko IRC operadore bat zerrendatik kentzen du.\nKomando hau Root erabiltzaileentzat mugatuta dago."
     done:           "\x0303✓\x03 \x02%nickname%\x02 IRC operadoreetatik kendu da."
@@ -67,8 +67,11 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <izena> ..."
   short:            "Kudeatu operadore rolak."
   help:             "Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen du,\nLISTek rol guztiak erakusten ditu, PERMSek rol baten baimenak kudeatzen ditu, MODESek IRCOP moduak kudeatzen ditu,\nVHOSTek rol baten behartutako vhost eredua kudeatzen du.\nBabestutako rolak (ADMIN, OPER, PREOPER) ezin dira ezabatu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <izena> ..."
+  help_operclass:   "Operadore rolak kudeatzen ditu. ADDek rol berri bat sortzen du, DELek kentzen du,\nLISTek rol guztiak erakusten ditu, PERMSek rol baten baimenak kudeatzen ditu, MODESek IRCOP moduak kudeatzen ditu,\nVHOSTek rol baten behartutako vhost eredua kudeatzen du, OPERCLASSek Unreal operclass kudeatzen du.\nBabestutako rolak (ADMIN, OPER, PREOPER) ezin dira ezabatu.\nKomando hau Root erabiltzaileentzat mugatuta dago."
 
   unknown_sub:      "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST, PERMS, MODES edo VHOST."
+  unknown_sub_operclass: "\x0304✗\x03 Azpikomando ezezaguna \x02%sub%\x02. Erabili ADD, DEL, LIST, PERMS, MODES, VHOST edo OPERCLASS."
   not_found:        "\x0304✗\x03 \x02%role%\x02 rola ez da existitzen."
   already_exists:   "\x0304✗\x03 \x02%role%\x02 rola jada existitzen da."
   protected:        "\x0304✗\x03 \x02%role%\x02 rola babestuta dago eta ezin da ezabatu."

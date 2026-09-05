@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <alcume> {ADD|DEL|LIST} [rol]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [alcume] [rol]"
   short:            "Xestionar os operadores de IRC da rede."
   help:             "Xestiona os operadores de IRC da rede. ADD engade un alcume rexistrado\ncomo operador co rol especificado.\nDEL elimina un operador. LIST mostra todos os operadores.\nUse ROLE LIST para ver os roles dispoñibles.\nEste comando está restrinxido aos usuarios Root configurados nos servizos."
 
@@ -42,14 +42,14 @@ ircop:
   role_changed:     "\x0303✓\x03 Rol cambiado para \x02%nickname%\x02 de %old% a %new%."
 
   add:
-    syntax:         "IRCOP <alcume> ADD <rol>"
+    syntax:         "IRCOP ADD <alcume> <rol>"
     short:          "Engadir un operador de IRC da rede."
     help:           "Engade un alcume rexistrado como operador de IRC da rede.\nUse ROLE LIST para ver os roles dispoñibles.\nEste comando está restrinxido aos usuarios Root."
     done:           "\x0303✓\x03 Engadido \x02%nickname%\x02 como \x02%role%\x02."
     nick_not_active: "\x0304✗\x03 O alcume \x02%nickname%\x02 non é un alcume rexistrado activo."
 
   del:
-    syntax:         "IRCOP <alcume> DEL"
+    syntax:         "IRCOP DEL <alcume>"
     short:          "Eliminar un operador de IRC da rede."
     help:            "Elimina un operador de IRC da rede da lista.\nEste comando está restrinxido aos usuarios Root."
     done:           "\x0303✓\x03 Eliminado \x02%nickname%\x02 dos operadores de IRC."
@@ -67,8 +67,11 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <nome> ..."
   short:            "Xestionar os roles de operador."
   help:             "Xestiona os roles de operador. ADD crea un novo rol, DEL elimínao,\nLIST mostra todos os roles, PERMS xestiona os permisos dun rol, MODES xestiona os modos IRCOP,\nVHOST xestiona o patrón de vhost forzado para un rol.\nOs roles protexidos (ADMIN, OPER, PREOPER) non se poden eliminar.\nEste comando está restrinxido aos usuarios Root."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <nome> ..."
+  help_operclass:   "Xestiona os roles de operador. ADD crea un novo rol, DEL elimínao,\nLIST mostra todos os roles, PERMS xestiona os permisos dun rol, MODES xestiona os modos IRCOP,\nVHOST xestiona o patrón de vhost forzado para un rol, OPERCLASS xestiona a operclass Unreal.\nOs roles protexidos (ADMIN, OPER, PREOPER) non se poden eliminar.\nEste comando está restrinxido aos usuarios Root."
 
   unknown_sub:      "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use ADD, DEL, LIST, PERMS, MODES ou VHOST."
+  unknown_sub_operclass: "\x0304✗\x03 Subcomando descoñecido \x02%sub%\x02. Use ADD, DEL, LIST, PERMS, MODES, VHOST ou OPERCLASS."
   not_found:        "\x0304✗\x03 O rol \x02%role%\x02 non existe."
   already_exists:   "\x0304✗\x03 O rol \x02%role%\x02 xa existe."
   protected:        "\x0304✗\x03 O rol \x02%role%\x02 está protexido e non se pode eliminar."

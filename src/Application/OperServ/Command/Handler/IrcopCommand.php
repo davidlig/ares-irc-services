@@ -17,6 +17,7 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 
 use function count;
+use function in_array;
 use function sprintf;
 use function strtoupper;
 
@@ -94,7 +95,7 @@ final readonly class IrcopCommand implements OperServCommandInterface
             return;
         }
 
-        $firstArg = strtoupper($context->args[0]);
+        $firstArg = strtoupper($context->args[0] ?? '');
 
         if ('LIST' === $firstArg) {
             $this->doList($context);
@@ -102,14 +103,28 @@ final readonly class IrcopCommand implements OperServCommandInterface
             return;
         }
 
-        if (count($context->args) < 2) {
+        $sub = $firstArg;
+        $nickname = $context->args[1] ?? '';
+
+        if (!in_array($firstArg, ['ADD', 'DEL'], true)) {
+            $legacySub = strtoupper($context->args[1] ?? '');
+            if (in_array($legacySub, ['ADD', 'DEL'], true)) {
+                $nickname = $context->args[0];
+                $sub = $legacySub;
+            } elseif (count($context->args) < 2) {
+                $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.syntax')]);
+
+                return;
+            } else {
+                $sub = $legacySub;
+            }
+        }
+
+        if ('' === $nickname) {
             $context->reply('error.syntax', ['%syntax%' => $context->trans('ircop.syntax')]);
 
             return;
         }
-
-        $nickname = $context->args[0];
-        $sub = strtoupper($context->args[1]);
 
         switch ($sub) {
             case 'ADD':

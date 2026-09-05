@@ -437,6 +437,20 @@ final class RoleCommandTest extends TestCase
     }
 
     #[Test]
+    public function supportedProtocolUsesOperclassHelpKeys(): void
+    {
+        $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);
+        $permRepo = $this->createStub(OperPermissionRepositoryInterface::class);
+        $accessHelper = $this->createAccessHelper(true);
+
+        $cmd = $this->createCmd($roleRepo, $permRepo, $accessHelper, new PermissionRegistry([]), supportsOperclass: true);
+
+        self::assertSame('role.syntax_operclass', $cmd->getSyntaxKey());
+        self::assertSame('role.help_operclass', $cmd->getHelpKey());
+        self::assertCount(7, $cmd->getSubCommandHelp());
+    }
+
+    #[Test]
     public function getOrderReturnsTwo(): void
     {
         $roleRepo = $this->createStub(OperRoleRepositoryInterface::class);

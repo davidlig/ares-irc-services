@@ -31,7 +31,7 @@ help:
 
 # --- IRCOP --------------------------------------------------------------------
 ircop:
-  syntax:           "IRCOP <nickname> {ADD|DEL|LIST} [rol]"
+  syntax:           "IRCOP {ADD|DEL|LIST} [nickname] [rol]"
   short:            "Ağ IRC operatörlerini yönetin."
   help:             "Ağ IRC operatörlerini yönetin. ADD, kayıtlı bir rumuzu\nbelirtilen rolle operatör olarak ekler.\nDEL bir operatörü kaldırır. LIST tüm operatörleri gösterir.\nMevcut rolleri görmek için ROLE LIST kullanın.\nBu komut yalnızca hizmetlerde yapılandırılmış Root kullanıcıları içindir."
 
@@ -42,14 +42,14 @@ ircop:
   role_changed:     "\x0303✓\x03 \x02%nickname%\x02 için rol %old% yerine %new% olarak değiştirildi."
 
   add:
-    syntax:         "IRCOP <nickname> ADD <rol>"
+    syntax:         "IRCOP ADD <nickname> <rol>"
     short:          "Bir ağ IRC operatörü ekleyin."
     help:           "Kayıtlı bir rumuzu ağ IRC operatörü olarak ekler.\nMevcut rolleri görmek için ROLE LIST kullanın.\nBu komut yalnızca Root kullanıcıları içindir."
     done:           "\x0303✓\x03 \x02%nickname%\x02, \x02%role%\x02 olarak eklendi."
     nick_not_active: "\x0304✗\x03 \x02%nickname%\x02 rumuzu etkin bir kayıtlı rumuz değil."
 
   del:
-    syntax:         "IRCOP <nickname> DEL"
+    syntax:         "IRCOP DEL <nickname>"
     short:          "Bir ağ IRC operatörünü kaldırın."
     help:            "Listeden bir ağ IRC operatörünü kaldırır.\nBu komut yalnızca Root kullanıcıları içindir."
     done:           "\x0303✓\x03 \x02%nickname%\x02 IRC operatörlerinden kaldırıldı."
@@ -67,8 +67,11 @@ role:
   syntax:           "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST} <ad> ..."
   short:            "Operatör rollerini yönetin."
   help:             "Operatör rollerini yönetin. ADD yeni bir rol oluşturur, DEL siler,\nLIST tüm rolleri gösterir, PERMS bir rolün izinlerini yönetir, MODES IRCOP modlarını yönetir,\nVHOST bir rol için zorunlu vhost kalıbını yönetir.\nKorumalı roller (ADMIN, OPER, PREOPER) silinemez.\nBu komut yalnızca Root kullanıcıları içindir."
+  syntax_operclass: "ROLE {ADD|DEL|LIST|PERMS|MODES|VHOST|OPERCLASS} <ad> ..."
+  help_operclass:   "Operatör rollerini yönetin. ADD yeni bir rol oluşturur, DEL siler,\nLIST tüm rolleri gösterir, PERMS bir rolün izinlerini yönetir, MODES IRCOP modlarını yönetir,\nVHOST bir rol için zorunlu vhost kalıbını yönetir, OPERCLASS Unreal operclass değerini yönetir.\nKorumalı roller (ADMIN, OPER, PREOPER) silinemez.\nBu komut yalnızca Root kullanıcıları içindir."
 
   unknown_sub:      "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL, LIST, PERMS, MODES veya VHOST kullanın."
+  unknown_sub_operclass: "\x0304✗\x03 Bilinmeyen alt komut \x02%sub%\x02. ADD, DEL, LIST, PERMS, MODES, VHOST veya OPERCLASS kullanın."
   not_found:        "\x0304✗\x03 \x02%role%\x02 rolü mevcut değil."
   already_exists:   "\x0304✗\x03 \x02%role%\x02 rolü zaten mevcut."
   protected:        "\x0304✗\x03 \x02%role%\x02 rolü korumalıdır ve silinemez."

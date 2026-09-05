@@ -425,6 +425,7 @@ Ensure the `spanningtree` module is loaded.
 | `ROLE PERMS` | `<role> {LIST\|ADD\|DEL\|CLEAR} [permission\|ALL]` | Manage role permissions |
 | `ROLE MODES` | `<role> {VIEW\|SET} [modes]` | Manage IRCOP user modes for a role |
 | `ROLE VHOST` | `<role> {VIEW\|SET} [pattern]` | Manage forced vhost pattern for a role |
+| `ROLE OPERCLASS` | `<role> {VIEW\|SET} [operclass]` | Manage the Unreal operclass for a role |
 | `GLINE` | `ADD\|DEL\|LIST <mask> [duration] [reason]` | Manage G-lines |
 | `MOTD ADD` | `<bot> <type> <message> [expiry]` | Add a MOTD message |
 | `MOTD DEL` | `<bot> <id>` | Delete a MOTD message |
