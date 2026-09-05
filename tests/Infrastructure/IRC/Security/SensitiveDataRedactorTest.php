@@ -18,7 +18,7 @@ final class SensitiveDataRedactorTest extends TestCase
     {
         $result = SensitiveDataRedactor::redactNickServCommand('REGISTER mypassword user@example.com');
 
-        self::assertSame('REGISTER ****** user@example.com', $result);
+        self::assertSame('REGISTER ****** ******', $result);
     }
 
     #[Test]
@@ -50,7 +50,7 @@ final class SensitiveDataRedactorTest extends TestCase
     {
         $result = SensitiveDataRedactor::redactNickServCommand('SET EMAIL user@example.com');
 
-        self::assertSame('SET EMAIL user@example.com', $result);
+        self::assertSame('SET EMAIL ******', $result);
     }
 
     #[Test]
@@ -58,7 +58,7 @@ final class SensitiveDataRedactorTest extends TestCase
     {
         $result = SensitiveDataRedactor::redactNickServCommand('register secretpass test@test.com');
 
-        self::assertSame('register ****** test@test.com', $result);
+        self::assertSame('register ****** ******', $result);
     }
 
     #[Test]
@@ -114,7 +114,7 @@ final class SensitiveDataRedactorTest extends TestCase
     {
         yield 'REGISTER with password and email' => [
             'REGISTER password email@test.com',
-            'REGISTER ****** email@test.com',
+            'REGISTER ****** ******',
         ];
 
         yield 'IDENTIFY with one arg' => [
@@ -132,9 +132,9 @@ final class SensitiveDataRedactorTest extends TestCase
             'SET PASSWORD ******',
         ];
 
-        yield 'SET EMAIL (no masking)' => [
+        yield 'SET EMAIL' => [
             'SET EMAIL test@test.com',
-            'SET EMAIL test@test.com',
+            'SET EMAIL ******',
         ];
 
         yield 'INFO (no masking)' => [
@@ -149,12 +149,42 @@ final class SensitiveDataRedactorTest extends TestCase
 
         yield 'REGISTER extra args' => [
             'REGISTER password email@test.com extra',
-            'REGISTER ****** email@test.com extra',
+            'REGISTER ****** ****** extra',
         ];
 
         yield 'mixed case SET PASSWORD' => [
             'Set Password SecretPass',
             'Set Password ******',
+        ];
+
+        yield 'VERIFY token' => [
+            'VERIFY verification-token',
+            'VERIFY ******',
+        ];
+
+        yield 'RECOVER token' => [
+            'RECOVER TestNick recovery-token',
+            'RECOVER TestNick ******',
+        ];
+
+        yield 'RECOVER request without token' => [
+            'RECOVER TestNick',
+            'RECOVER TestNick',
+        ];
+
+        yield 'SET EMAIL confirmation token' => [
+            'SET EMAIL user@example.com confirmation-token',
+            'SET EMAIL ****** ******',
+        ];
+
+        yield 'SASET PASSWORD' => [
+            'SASET TestNick PASSWORD new-password',
+            'SASET TestNick PASSWORD ******',
+        ];
+
+        yield 'SASET EMAIL' => [
+            'SASET TestNick EMAIL user@example.com',
+            'SASET TestNick EMAIL ******',
         ];
     }
 }

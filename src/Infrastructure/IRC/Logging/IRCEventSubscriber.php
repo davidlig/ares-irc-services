@@ -12,6 +12,8 @@ use DateTimeInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function in_array;
+
 /**
  * Logs all IRC domain events to the dedicated 'irc' Monolog channel.
  *
@@ -66,7 +68,7 @@ final readonly class IRCEventSubscriber implements EventSubscriberInterface
         $trailing = $message->trailing;
         $raw = $message->toRawLine();
 
-        if ('PRIVMSG' === $message->command && null !== $trailing) {
+        if (in_array($message->command, ['PRIVMSG', 'SQUERY'], true) && null !== $trailing) {
             $redacted = SensitiveDataRedactor::redactNickServCommand($trailing);
             if ($redacted !== $trailing) {
                 $trailing = $redacted;

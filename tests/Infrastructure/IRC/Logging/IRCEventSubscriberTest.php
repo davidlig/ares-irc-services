@@ -152,6 +152,31 @@ final class IRCEventSubscriberTest extends TestCase
         $this->subscriber->onMessageReceived($event);
     }
 
+    #[Test]
+    public function onMessageReceivedRedactsSensitiveSqueryCommands(): void
+    {
+        $this->logger = $this->createMock(LoggerInterface::class);
+        $this->subscriber = new IRCEventSubscriber($this->logger);
+        $message = new IRCMessage(
+            prefix: 'nick!user@host',
+            command: 'SQUERY',
+            params: ['NickServ'],
+            trailing: 'VERIFY verification-token',
+        );
+        $event = new MessageReceivedEvent($message);
+
+        $this->logger->expects(self::once())
+            ->method('debug')
+            ->with(
+                '< SQUERY',
+                self::callback(static fn (array $context): bool => 'VERIFY ******' === $context['trailing']
+                        && str_contains($context['raw'], 'VERIFY ******')
+                        && !str_contains($context['raw'], 'verification-token')),
+            );
+
+        $this->subscriber->onMessageReceived($event);
+    }
+
     private function createServerLink(): ServerLink
     {
         return new ServerLink(
