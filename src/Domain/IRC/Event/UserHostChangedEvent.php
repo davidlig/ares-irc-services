@@ -14,7 +14,7 @@ use App\Domain\IRC\ValueObject\Uid;
 final readonly class UserHostChangedEvent
 {
     public function __construct(
-        public readonly Uid $uid,
-        public readonly string $newHost,
+        public Uid $uid,
+        public string $newHost,
     ) {}
 }

@@ -21,10 +21,10 @@ use function sprintf;
 final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NickDropService $dropService,
-        private readonly int $intervalSeconds,
-        private readonly int $inactivityExpiryDays,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private NickDropService $dropService,
+        private int $intervalSeconds,
+        private int $inactivityExpiryDays,
     ) {}
 
     public function getName(): string

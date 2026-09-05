@@ -20,9 +20,9 @@ final readonly class PruneMemoryRegistriesTask implements MaintenanceTaskInterfa
      * @param iterable<InMemoryPrunableInterface> $prunables
      */
     public function __construct(
-        private readonly iterable $prunables,
-        private readonly LoggerInterface $logger,
-        private readonly int $intervalSeconds,
+        private iterable $prunables,
+        private LoggerInterface $logger,
+        private int $intervalSeconds,
     ) {}
 
     public function getName(): string

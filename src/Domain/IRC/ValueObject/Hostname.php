@@ -14,7 +14,7 @@ use const FILTER_VALIDATE_IP;
 
 readonly class Hostname
 {
-    public function __construct(public readonly string $value)
+    public function __construct(public string $value)
     {
         if ('' === $value) {
             throw new InvalidArgumentException('Hostname cannot be empty.');

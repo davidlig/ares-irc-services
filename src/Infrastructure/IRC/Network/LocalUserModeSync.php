@@ -17,7 +17,7 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final readonly class LocalUserModeSync implements LocalUserModeSyncInterface
 {
     public function __construct(
-        private readonly EventDispatcherInterface $eventDispatcher,
+        private EventDispatcherInterface $eventDispatcher,
     ) {}
 
     public function apply(Uid $uid, string $modeDelta): void

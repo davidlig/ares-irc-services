@@ -9,7 +9,7 @@ use App\Application\Mail\MailerInterface;
 final readonly class SendEmailHandler
 {
     public function __construct(
-        private readonly MailerInterface $mailer,
+        private MailerInterface $mailer,
     ) {}
 
     public function __invoke(SendEmail $message): void

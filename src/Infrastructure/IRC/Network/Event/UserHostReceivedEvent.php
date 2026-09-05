@@ -7,7 +7,7 @@ namespace App\Infrastructure\IRC\Network\Event;
 final readonly class UserHostReceivedEvent
 {
     public function __construct(
-        public readonly string $sourceId,
-        public readonly string $newHost,
+        public string $sourceId,
+        public string $newHost,
     ) {}
 }

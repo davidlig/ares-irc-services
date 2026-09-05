@@ -70,6 +70,7 @@ return (new PhpCsFixer\Config())
 
         // Cleaner code
         'single_line_empty_body' => true,
+        'no_redundant_readonly_property' => true,
         'no_superfluous_phpdoc_tags' => [
             'remove_inheritdoc' => false,
         ],

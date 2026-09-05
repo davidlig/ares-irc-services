@@ -25,9 +25,9 @@ final readonly class ServerDelinkedSubscriber implements EventSubscriberInterfac
     private const string DEFAULT_REASON = '*.net *.split';
 
     public function __construct(
-        private readonly NetworkUserRepositoryInterface $userRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private NetworkUserRepositoryInterface $userRepository,
+        private EventDispatcherInterface $eventDispatcher,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public static function getSubscribedEvents(): array

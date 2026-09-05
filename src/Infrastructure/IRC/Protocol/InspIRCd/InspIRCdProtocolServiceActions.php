@@ -29,9 +29,9 @@ use function sprintf;
 final readonly class InspIRCdProtocolServiceActions implements ProtocolServiceActionsInterface
 {
     public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly InspIRCdServiceIntroductionFormatter $introductionFormatter = new InspIRCdServiceIntroductionFormatter(),
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private ActiveConnectionHolder $connectionHolder,
+        private InspIRCdServiceIntroductionFormatter $introductionFormatter = new InspIRCdServiceIntroductionFormatter(),
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void

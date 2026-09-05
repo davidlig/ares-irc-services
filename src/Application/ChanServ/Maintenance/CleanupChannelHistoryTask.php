@@ -16,8 +16,8 @@ final readonly class CleanupChannelHistoryTask implements MaintenanceTaskInterfa
     public function __construct(
         private ChannelHistoryRepositoryInterface $historyRepository,
         private LoggerInterface $logger,
-        private readonly int $intervalSeconds,
-        private readonly int $retentionDays,
+        private int $intervalSeconds,
+        private int $retentionDays,
     ) {}
 
     public function getName(): string

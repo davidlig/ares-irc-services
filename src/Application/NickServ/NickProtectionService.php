@@ -31,20 +31,20 @@ use function strcasecmp;
 final readonly class NickProtectionService
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly NickServNotifierInterface $notifier,
-        private readonly BurstState $burstState,
-        private readonly IdentifiedSessionRegistry $identifiedRegistry,
-        private readonly SessionLanguageRegistry $sessionLanguageRegistry,
-        private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
-        private readonly TranslationInterface $translator,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly ForbiddenNickService $forbiddenService,
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
-        private readonly string $guestPrefix = 'Guest-',
-        private readonly string $defaultLanguage = 'en',
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private NetworkUserLookupPort $userLookup,
+        private NickServNotifierInterface $notifier,
+        private BurstState $burstState,
+        private IdentifiedSessionRegistry $identifiedRegistry,
+        private SessionLanguageRegistry $sessionLanguageRegistry,
+        private PendingNickRestoreRegistryInterface $pendingRegistry,
+        private TranslationInterface $translator,
+        private EventBusInterface $eventDispatcher,
+        private ForbiddenNickService $forbiddenService,
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private string $guestPrefix = 'Guest-',
+        private string $defaultLanguage = 'en',
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function onUserJoined(SenderView $user): void

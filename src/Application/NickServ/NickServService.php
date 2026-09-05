@@ -35,21 +35,21 @@ use const PREG_SPLIT_NO_EMPTY;
 final readonly class NickServService
 {
     public function __construct(
-        private readonly AuthorizationContextInterface $authorizationContext,
-        private readonly AuthorizationCheckerInterface $authorizationChecker,
-        private readonly NickServCommandRegistry $commandRegistry,
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly UserLanguageResolverInterface $languageResolver,
-        private readonly NickServNotifierInterface $notifier,
-        private readonly UserMessageTypeResolverInterface $messageTypeResolver,
-        private readonly TranslationInterface $translator,
-        private readonly PendingVerificationRegistry $pendingVerificationRegistry,
-        private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
-        private readonly ServiceNicknameRegistry $serviceNicks,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly string $defaultLanguage = 'en',
-        private readonly string $defaultTimezone = 'UTC',
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private AuthorizationContextInterface $authorizationContext,
+        private AuthorizationCheckerInterface $authorizationChecker,
+        private NickServCommandRegistry $commandRegistry,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private UserLanguageResolverInterface $languageResolver,
+        private NickServNotifierInterface $notifier,
+        private UserMessageTypeResolverInterface $messageTypeResolver,
+        private TranslationInterface $translator,
+        private PendingVerificationRegistry $pendingVerificationRegistry,
+        private RecoveryTokenRegistry $recoveryTokenRegistry,
+        private ServiceNicknameRegistry $serviceNicks,
+        private EventBusInterface $eventDispatcher,
+        private string $defaultLanguage = 'en',
+        private string $defaultTimezone = 'UTC',
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     /**

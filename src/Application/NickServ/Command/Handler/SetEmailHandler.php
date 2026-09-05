@@ -24,12 +24,12 @@ use const FILTER_VALIDATE_EMAIL;
 final readonly class SetEmailHandler implements SetOptionHandlerInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly PendingEmailChangeRegistry $pendingEmailChangeRegistry,
-        private readonly AsyncMessageDispatcherInterface $messageBus,
-        private readonly TranslationInterface $translator,
-        private readonly LoggerInterface $logger,
-        private readonly EventBusInterface $eventDispatcher,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private PendingEmailChangeRegistry $pendingEmailChangeRegistry,
+        private AsyncMessageDispatcherInterface $messageBus,
+        private TranslationInterface $translator,
+        private LoggerInterface $logger,
+        private EventBusInterface $eventDispatcher,
     ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void

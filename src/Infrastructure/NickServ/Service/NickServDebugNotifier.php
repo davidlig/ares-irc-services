@@ -25,16 +25,16 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
     private const string PASSWORD_OPTION = 'PASSWORD';
 
     public function __construct(
-        private readonly NickServNotifierInterface $notifier,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly IdentifiedSessionRegistry $identifiedRegistry,
-        private readonly OperIrcopRepositoryInterface $ircopRepo,
-        private readonly RootUserRegistry $rootRegistry,
-        private readonly RegisteredNickRepositoryInterface $nickRepo,
-        private readonly TranslatorInterface $translator,
-        private readonly string $defaultLanguage,
-        private readonly ?string $debugChannel,
-        private readonly LoggerInterface $logger,
+        private NickServNotifierInterface $notifier,
+        private NetworkUserLookupPort $userLookup,
+        private IdentifiedSessionRegistry $identifiedRegistry,
+        private OperIrcopRepositoryInterface $ircopRepo,
+        private RootUserRegistry $rootRegistry,
+        private RegisteredNickRepositoryInterface $nickRepo,
+        private TranslatorInterface $translator,
+        private string $defaultLanguage,
+        private ?string $debugChannel,
+        private LoggerInterface $logger,
     ) {}
 
     public function getServiceName(): string

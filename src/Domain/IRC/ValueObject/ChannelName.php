@@ -14,7 +14,7 @@ use function strlen;
  */
 readonly class ChannelName
 {
-    public function __construct(public readonly string $value)
+    public function __construct(public string $value)
     {
         if (!str_starts_with($value, '#')) {
             throw new InvalidArgumentException(sprintf('Channel name "%s" must start with #.', $value));

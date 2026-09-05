@@ -15,7 +15,7 @@ use function sprintf;
  */
 readonly class Nick
 {
-    public function __construct(public readonly string $value)
+    public function __construct(public string $value)
     {
         if ('' === $value) {
             throw new InvalidArgumentException('Nick cannot be empty.');

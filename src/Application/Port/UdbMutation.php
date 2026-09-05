@@ -13,8 +13,8 @@ namespace App\Application\Port;
 final readonly class UdbMutation
 {
     public function __construct(
-        public readonly string $block,
-        public readonly string $encodedPath,
-        public readonly ?string $value,
+        public string $block,
+        public string $encodedPath,
+        public ?string $value,
     ) {}
 }

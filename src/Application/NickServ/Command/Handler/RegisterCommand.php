@@ -40,16 +40,16 @@ final readonly class RegisterCommand implements NickServCommandInterface
     private const int TOKEN_TTL_SECONDS = 3600;
 
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly PasswordHasherInterface $passwordHasher,
-        private readonly RegisterThrottleRegistry $throttleRegistry,
-        private readonly NickServClientKeyResolver $clientKeyResolver,
-        private readonly AsyncMessageDispatcherInterface $messageBus,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly TranslationInterface $translator,
-        private readonly LoggerInterface $logger,
-        private readonly int $registerMinIntervalSeconds,
-        private readonly string $guestPrefix = 'Guest-',
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private PasswordHasherInterface $passwordHasher,
+        private RegisterThrottleRegistry $throttleRegistry,
+        private NickServClientKeyResolver $clientKeyResolver,
+        private AsyncMessageDispatcherInterface $messageBus,
+        private EventBusInterface $eventDispatcher,
+        private TranslationInterface $translator,
+        private LoggerInterface $logger,
+        private int $registerMinIntervalSeconds,
+        private string $guestPrefix = 'Guest-',
     ) {}
 
     public function getName(): string

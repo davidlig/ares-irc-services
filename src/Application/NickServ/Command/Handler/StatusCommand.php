@@ -25,8 +25,8 @@ use DateTimeImmutable;
 final readonly class StatusCommand implements NickServCommandInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NetworkUserLookupPort $userLookup,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private NetworkUserLookupPort $userLookup,
     ) {}
 
     public function getName(): string

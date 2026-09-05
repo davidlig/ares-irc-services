@@ -27,12 +27,12 @@ use function sprintf;
 final readonly class IdentifiedUserVhostSyncService
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NickServNotifierInterface $notifier,
-        private readonly VhostDisplayResolver $displayResolver,
-        private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private NickServNotifierInterface $notifier,
+        private VhostDisplayResolver $displayResolver,
+        private OperIrcopRepositoryInterface $ircopRepository,
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     /**

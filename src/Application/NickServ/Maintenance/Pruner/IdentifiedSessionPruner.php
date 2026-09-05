@@ -11,8 +11,8 @@ use App\Application\Port\NetworkUserLookupPort;
 final readonly class IdentifiedSessionPruner implements InMemoryPrunableInterface
 {
     public function __construct(
-        private readonly IdentifiedSessionRegistry $registry,
-        private readonly NetworkUserLookupPort $userLookup,
+        private IdentifiedSessionRegistry $registry,
+        private NetworkUserLookupPort $userLookup,
     ) {}
 
     public function prune(): int

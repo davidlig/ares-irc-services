@@ -35,11 +35,11 @@ use function str_split;
 final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceActionsInterface, OperclassServiceActionsInterface
 {
     public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly UdbRecordWriterInterface $recordWriter,
-        private readonly ?UdbSessionStateInterface $sessionState = null,
-        private readonly UnrealUdbServiceIntroductionFormatter $introductionFormatter = new UnrealUdbServiceIntroductionFormatter(),
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private ActiveConnectionHolder $connectionHolder,
+        private UdbRecordWriterInterface $recordWriter,
+        private ?UdbSessionStateInterface $sessionState = null,
+        private UnrealUdbServiceIntroductionFormatter $introductionFormatter = new UnrealUdbServiceIntroductionFormatter(),
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void

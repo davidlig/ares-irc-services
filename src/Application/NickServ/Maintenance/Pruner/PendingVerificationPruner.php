@@ -10,8 +10,8 @@ use App\Application\NickServ\PendingVerificationRegistry;
 final readonly class PendingVerificationPruner implements InMemoryPrunableInterface
 {
     public function __construct(
-        private readonly PendingVerificationRegistry $registry,
-        private readonly int $maxAgeSecondsForResend = 86400,
+        private PendingVerificationRegistry $registry,
+        private int $maxAgeSecondsForResend = 86400,
     ) {}
 
     public function prune(): int

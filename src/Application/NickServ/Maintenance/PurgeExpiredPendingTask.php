@@ -19,9 +19,9 @@ use function sprintf;
 final readonly class PurgeExpiredPendingTask implements MaintenanceTaskInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly LoggerInterface $logger,
-        private readonly int $intervalSeconds,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private LoggerInterface $logger,
+        private int $intervalSeconds,
     ) {}
 
     public function getName(): string

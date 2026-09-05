@@ -23,13 +23,13 @@ use function trim;
 final readonly class SetVhostHandler implements SetOptionHandlerInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly VhostValidator $vhostValidator,
-        private readonly VhostDisplayResolver $displayResolver,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
-        private readonly EventBusInterface $eventDispatcher,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private VhostValidator $vhostValidator,
+        private VhostDisplayResolver $displayResolver,
+        private NetworkUserLookupPort $userLookup,
+        private OperIrcopRepositoryInterface $ircopRepository,
+        private ForbiddenVhostRepositoryInterface $forbiddenVhostRepository,
+        private EventBusInterface $eventDispatcher,
     ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void

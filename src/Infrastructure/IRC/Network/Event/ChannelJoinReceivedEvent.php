@@ -21,11 +21,11 @@ final readonly class ChannelJoinReceivedEvent
      * @param list<string>                                                                       $modeParams
      */
     public function __construct(
-        public readonly ChannelName $channelName,
-        public readonly int $timestamp,
-        public readonly string $modeStr,
-        public readonly array $members,
-        public readonly array $listModes = [],
-        public readonly array $modeParams = [],
+        public ChannelName $channelName,
+        public int $timestamp,
+        public string $modeStr,
+        public array $members,
+        public array $listModes = [],
+        public array $modeParams = [],
     ) {}
 }

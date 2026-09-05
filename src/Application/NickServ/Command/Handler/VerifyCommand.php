@@ -19,8 +19,8 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 final readonly class VerifyCommand implements NickServCommandInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly IdentifiedSessionRegistry $identifiedRegistry,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private IdentifiedSessionRegistry $identifiedRegistry,
     ) {}
 
     public function getName(): string

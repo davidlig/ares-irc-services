@@ -18,7 +18,7 @@ use App\Domain\IRC\Network\Channel;
 final readonly class ChannelSyncedEvent
 {
     public function __construct(
-        public readonly Channel $channel,
-        public readonly bool $channelSetupApplicable = true,
+        public Channel $channel,
+        public bool $channelSetupApplicable = true,
     ) {}
 }

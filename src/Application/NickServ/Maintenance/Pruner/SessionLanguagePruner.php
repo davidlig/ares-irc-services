@@ -11,8 +11,8 @@ use App\Application\Port\NetworkUserLookupPort;
 final readonly class SessionLanguagePruner implements InMemoryPrunableInterface
 {
     public function __construct(
-        private readonly SessionLanguageRegistry $registry,
-        private readonly NetworkUserLookupPort $userLookup,
+        private SessionLanguageRegistry $registry,
+        private NetworkUserLookupPort $userLookup,
     ) {}
 
     public function prune(): int

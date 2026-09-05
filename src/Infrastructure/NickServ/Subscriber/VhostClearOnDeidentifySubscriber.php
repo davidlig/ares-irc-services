@@ -18,8 +18,8 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final readonly class VhostClearOnDeidentifySubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly NickServNotifierInterface $notifier,
+        private NetworkUserLookupPort $userLookup,
+        private NickServNotifierInterface $notifier,
     ) {}
 
     public static function getSubscribedEvents(): array

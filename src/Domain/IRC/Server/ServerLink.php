@@ -16,11 +16,11 @@ use App\Domain\IRC\ValueObject\ServerName;
 readonly class ServerLink
 {
     public function __construct(
-        public readonly ServerName $serverName,
-        public readonly Hostname $host,
-        public readonly Port $port,
-        public readonly LinkPassword $password,
-        public readonly string $description,
-        public readonly bool $useTls = false,
+        public ServerName $serverName,
+        public Hostname $host,
+        public Port $port,
+        public LinkPassword $password,
+        public string $description,
+        public bool $useTls = false,
     ) {}
 }

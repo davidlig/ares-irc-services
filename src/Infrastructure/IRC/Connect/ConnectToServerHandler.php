@@ -17,7 +17,7 @@ use App\Infrastructure\IRC\Runtime\IRCClientFactoryInterface;
 final readonly class ConnectToServerHandler implements ConnectToServerHandlerInterface
 {
     public function __construct(
-        private readonly IRCClientFactoryInterface $clientFactory,
+        private IRCClientFactoryInterface $clientFactory,
     ) {}
 
     public function handle(ConnectToServerCommand $command): IrcSessionInterface

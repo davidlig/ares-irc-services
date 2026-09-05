@@ -14,8 +14,8 @@ use App\Domain\IRC\ValueObject\Uid;
 final readonly class UserJoinedChannelEvent
 {
     public function __construct(
-        public readonly Uid $uid,
-        public readonly ChannelName $channel,
-        public readonly ChannelMemberRole $role,
+        public Uid $uid,
+        public ChannelName $channel,
+        public ChannelMemberRole $role,
     ) {}
 }

@@ -7,7 +7,7 @@ namespace App\Infrastructure\IRC\Network\Event;
 final readonly class UserQuitReceivedEvent
 {
     public function __construct(
-        public readonly string $sourceId,
-        public readonly string $reason,
+        public string $sourceId,
+        public string $reason,
     ) {}
 }

@@ -10,8 +10,8 @@ use DateTimeImmutable;
 final readonly class ConnectionLostEvent
 {
     public function __construct(
-        public readonly ServerLink $serverLink,
-        public readonly ?string $reason,
-        public readonly DateTimeImmutable $occurredAt = new DateTimeImmutable(),
+        public ServerLink $serverLink,
+        public ?string $reason,
+        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
     ) {}
 }

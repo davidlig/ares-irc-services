@@ -21,14 +21,14 @@ use Psr\Log\NullLogger;
 final readonly class IRCClientFactory implements IRCClientFactoryInterface
 {
     public function __construct(
-        private readonly ProtocolRuntimeModuleRegistryInterface $moduleRegistry,
-        private readonly ConnectionFactoryInterface $connectionFactory,
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly AsyncMessageDispatcherInterface $messageBus,
-        private readonly BurstCompleteRegistry $burstCompleteRegistry,
-        private readonly int $maintenanceDispatchIntervalSeconds,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private ProtocolRuntimeModuleRegistryInterface $moduleRegistry,
+        private ConnectionFactoryInterface $connectionFactory,
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private EventBusInterface $eventDispatcher,
+        private AsyncMessageDispatcherInterface $messageBus,
+        private BurstCompleteRegistry $burstCompleteRegistry,
+        private int $maintenanceDispatchIntervalSeconds,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function create(string $protocolName, ServerLink $link): IRCClient

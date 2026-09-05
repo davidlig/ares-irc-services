@@ -23,11 +23,11 @@ use function sprintf;
 final readonly class PurgeInactiveChannelsTask implements MaintenanceTaskInterface
 {
     public function __construct(
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly LoggerInterface $logger,
-        private readonly int $intervalSeconds,
-        private readonly int $inactivityExpiryDays,
+        private RegisteredChannelRepositoryInterface $channelRepository,
+        private EventBusInterface $eventDispatcher,
+        private LoggerInterface $logger,
+        private int $intervalSeconds,
+        private int $inactivityExpiryDays,
     ) {}
 
     public function getName(): string

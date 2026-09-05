@@ -24,13 +24,13 @@ use function strtoupper;
 final readonly class IrcopCommand implements OperServCommandInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly OperRoleRepositoryInterface $roleRepository,
-        private readonly IrcopAccessHelper $accessHelper,
-        private readonly IrcopModeApplier $modeApplier,
-        private readonly IrcopOperclassApplier $operclassApplier,
-        private readonly EventBusInterface $eventDispatcher,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private OperIrcopRepositoryInterface $ircopRepository,
+        private OperRoleRepositoryInterface $roleRepository,
+        private IrcopAccessHelper $accessHelper,
+        private IrcopModeApplier $modeApplier,
+        private IrcopOperclassApplier $operclassApplier,
+        private EventBusInterface $eventDispatcher,
     ) {}
 
     public function getName(): string

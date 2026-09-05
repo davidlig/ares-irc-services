@@ -17,19 +17,19 @@ use DateTimeZone;
 final readonly class OperServContext implements IrcopContextInterface
 {
     public function __construct(
-        public readonly ?SenderView $sender,
-        public readonly ?RegisteredNick $senderAccount,
-        public readonly string $command,
+        public ?SenderView $sender,
+        public ?RegisteredNick $senderAccount,
+        public string $command,
         /** @var string[] */
-        public readonly array $args,
-        private readonly OperServNotifierInterface $notifier,
-        private readonly TranslationInterface $translator,
-        private readonly string $language,
-        private readonly string $timezone,
-        private readonly string $messageType,
-        private readonly OperServCommandRegistry $registry,
-        private readonly IrcopAccessHelper $accessHelper,
-        private readonly ServiceNicknameRegistry $serviceNicks,
+        public array $args,
+        private OperServNotifierInterface $notifier,
+        private TranslationInterface $translator,
+        private string $language,
+        private string $timezone,
+        private string $messageType,
+        private OperServCommandRegistry $registry,
+        private IrcopAccessHelper $accessHelper,
+        private ServiceNicknameRegistry $serviceNicks,
     ) {}
 
     public function getSender(): ?SenderView

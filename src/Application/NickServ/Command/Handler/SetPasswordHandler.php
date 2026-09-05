@@ -17,9 +17,9 @@ use function sprintf;
 final readonly class SetPasswordHandler implements SetOptionHandlerInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly PasswordHasherInterface $passwordHasher,
-        private readonly EventBusInterface $eventDispatcher,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private PasswordHasherInterface $passwordHasher,
+        private EventBusInterface $eventDispatcher,
     ) {}
 
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void

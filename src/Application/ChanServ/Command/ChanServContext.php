@@ -20,22 +20,22 @@ use DateTimeZone;
 final readonly class ChanServContext implements IrcopContextInterface
 {
     public function __construct(
-        public readonly ?SenderView $sender,
-        public readonly ?RegisteredNick $senderAccount,
-        public readonly string $command,
+        public ?SenderView $sender,
+        public ?RegisteredNick $senderAccount,
+        public string $command,
         /** @var string[] */
-        public readonly array $args,
-        private readonly ChanServNotifierInterface $notifier,
-        private readonly TranslationInterface $translator,
-        private readonly string $language,
-        private readonly string $timezone,
-        private readonly string $messageType,
-        private readonly ChanServCommandRegistry $registry,
-        private readonly ChannelLookupPort $channelLookup,
-        private readonly ChannelModeSupportInterface $channelModeSupport,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly ServiceNicknameRegistry $serviceNicks,
-        public readonly bool $isLevelFounder = false,
+        public array $args,
+        private ChanServNotifierInterface $notifier,
+        private TranslationInterface $translator,
+        private string $language,
+        private string $timezone,
+        private string $messageType,
+        private ChanServCommandRegistry $registry,
+        private ChannelLookupPort $channelLookup,
+        private ChannelModeSupportInterface $channelModeSupport,
+        private NetworkUserLookupPort $userLookup,
+        private ServiceNicknameRegistry $serviceNicks,
+        public bool $isLevelFounder = false,
     ) {}
 
     public function getSender(): ?SenderView

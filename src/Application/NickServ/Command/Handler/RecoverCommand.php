@@ -33,14 +33,14 @@ use function sprintf;
 final readonly class RecoverCommand implements NickServCommandInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly AsyncMessageDispatcherInterface $messageBus,
-        private readonly TranslationInterface $translator,
-        private readonly PasswordHasherInterface $passwordHasher,
-        private readonly LoggerInterface $logger,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly int $recoverTokenTtlSeconds,
-        private readonly int $recoverMinIntervalSeconds,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private AsyncMessageDispatcherInterface $messageBus,
+        private TranslationInterface $translator,
+        private PasswordHasherInterface $passwordHasher,
+        private LoggerInterface $logger,
+        private EventBusInterface $eventDispatcher,
+        private int $recoverTokenTtlSeconds,
+        private int $recoverMinIntervalSeconds,
     ) {}
 
     public function getName(): string

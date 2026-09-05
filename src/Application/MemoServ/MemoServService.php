@@ -34,19 +34,19 @@ use const PREG_SPLIT_NO_EMPTY;
 final readonly class MemoServService
 {
     public function __construct(
-        private readonly MemoServCommandRegistry $commandRegistry,
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly UserLanguageResolverInterface $languageResolver,
-        private readonly MemoServNotifierInterface $notifier,
-        private readonly UserMessageTypeResolverInterface $messageTypeResolver,
-        private readonly TranslationInterface $translator,
-        private readonly ServiceNicknameRegistry $serviceNicks,
-        private readonly AuthorizationContextInterface $authorizationContext,
-        private readonly AuthorizationCheckerInterface $authorizationChecker,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly string $defaultLanguage = 'en',
-        private readonly string $defaultTimezone = 'UTC',
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private MemoServCommandRegistry $commandRegistry,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private UserLanguageResolverInterface $languageResolver,
+        private MemoServNotifierInterface $notifier,
+        private UserMessageTypeResolverInterface $messageTypeResolver,
+        private TranslationInterface $translator,
+        private ServiceNicknameRegistry $serviceNicks,
+        private AuthorizationContextInterface $authorizationContext,
+        private AuthorizationCheckerInterface $authorizationChecker,
+        private EventBusInterface $eventDispatcher,
+        private string $defaultLanguage = 'en',
+        private string $defaultTimezone = 'UTC',
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     /**

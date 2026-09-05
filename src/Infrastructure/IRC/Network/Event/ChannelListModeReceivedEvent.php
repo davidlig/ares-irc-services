@@ -15,8 +15,8 @@ final readonly class ChannelListModeReceivedEvent
      * @param string[] $params
      */
     public function __construct(
-        public readonly ChannelName $channelName,
-        public readonly string $modeChar,
-        public readonly array $params,
+        public ChannelName $channelName,
+        public string $modeChar,
+        public array $params,
     ) {}
 }

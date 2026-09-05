@@ -21,12 +21,12 @@ use function strcasecmp;
 final readonly class UnrealUdbNickReservation implements ServiceNickReservationInterface
 {
     public function __construct(
-        private readonly UdbRecordWriterInterface $recordWriter,
-        private readonly string $nickservNick = 'NickServ',
-        private readonly string $nickservIdent = 'NickServ',
-        private readonly string $chanservNick = 'ChanServ',
-        private readonly string $chanservIdent = 'ChanServ',
-        private readonly string $servicesVhost = 'services.davidlig.net',
+        private UdbRecordWriterInterface $recordWriter,
+        private string $nickservNick = 'NickServ',
+        private string $nickservIdent = 'NickServ',
+        private string $chanservNick = 'ChanServ',
+        private string $chanservIdent = 'ChanServ',
+        private string $servicesVhost = 'services.davidlig.net',
     ) {}
 
     public function reserveNick(string $nick, string $reason): void

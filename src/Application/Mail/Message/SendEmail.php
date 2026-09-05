@@ -10,8 +10,8 @@ namespace App\Application\Mail\Message;
 final readonly class SendEmail
 {
     public function __construct(
-        public readonly string $to,
-        public readonly string $subject,
-        public readonly string $body,
+        public string $to,
+        public string $subject,
+        public string $body,
     ) {}
 }

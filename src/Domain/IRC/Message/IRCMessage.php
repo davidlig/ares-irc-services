@@ -14,11 +14,11 @@ readonly class IRCMessage
      * @param string[] $params
      */
     public function __construct(
-        public readonly string $command,
-        public readonly ?string $prefix = null,
-        public readonly array $params = [],
-        public readonly ?string $trailing = null,
-        public readonly MessageDirection $direction = MessageDirection::Incoming,
+        public string $command,
+        public ?string $prefix = null,
+        public array $params = [],
+        public ?string $trailing = null,
+        public MessageDirection $direction = MessageDirection::Incoming,
     ) {}
 
     public function toRawLine(): string

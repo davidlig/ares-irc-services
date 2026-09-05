@@ -23,8 +23,8 @@ use function sprintf;
 final readonly class InspIRCdNickReservation implements ServiceNickReservationInterface
 {
     public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private ActiveConnectionHolder $connectionHolder,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function reserveNick(string $nick, string $reason): void

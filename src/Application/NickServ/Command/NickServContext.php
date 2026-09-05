@@ -27,22 +27,22 @@ use DateTimeZone;
 readonly class NickServContext implements IrcopContextInterface
 {
     public function __construct(
-        public readonly ?SenderView $sender,
-        public readonly ?RegisteredNick $senderAccount,
-        public readonly string $command,
+        public ?SenderView $sender,
+        public ?RegisteredNick $senderAccount,
+        public string $command,
         /** @var string[] */
-        public readonly array $args,
-        private readonly NickServNotifierInterface $notifier,
-        private readonly TranslationInterface $translator,
-        private readonly string $language,
+        public array $args,
+        private NickServNotifierInterface $notifier,
+        private TranslationInterface $translator,
+        private string $language,
         /** PHP timezone identifier (e.g. UTC, Europe/Madrid) used when displaying dates. */
-        private readonly string $timezone,
+        private string $timezone,
         /** 'NOTICE'|'PRIVMSG' — how to send replies to the user. */
-        private readonly string $messageType,
-        private readonly NickServCommandRegistry $registry,
-        private readonly PendingVerificationRegistry $pendingVerificationRegistry,
-        private readonly RecoveryTokenRegistry $recoveryTokenRegistry,
-        private readonly ServiceNicknameRegistry $serviceNicks,
+        private string $messageType,
+        private NickServCommandRegistry $registry,
+        private PendingVerificationRegistry $pendingVerificationRegistry,
+        private RecoveryTokenRegistry $recoveryTokenRegistry,
+        private ServiceNicknameRegistry $serviceNicks,
     ) {}
 
     public function getSender(): ?SenderView

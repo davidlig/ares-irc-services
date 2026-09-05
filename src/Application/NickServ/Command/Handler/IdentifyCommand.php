@@ -30,18 +30,18 @@ use App\Domain\OperServ\ValueObject\ForcedVhost;
 final readonly class IdentifyCommand implements NickServCommandInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly IdentifiedSessionRegistry $identifiedRegistry,
-        private readonly IdentifyFailedAttemptRegistry $failedAttemptRegistry,
-        private readonly NickServClientKeyResolver $clientKeyResolver,
-        private readonly VhostDisplayResolver $vhostDisplayResolver,
-        private readonly OperIrcopRepositoryInterface $ircopRepository,
-        private readonly EventBusInterface $eventDispatcher,
-        private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
-        private readonly int $identifyMaxFailedAttempts,
-        private readonly int $identifyFailedWindowSeconds,
-        private readonly int $identifyLockoutSeconds,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private NetworkUserLookupPort $userLookup,
+        private IdentifiedSessionRegistry $identifiedRegistry,
+        private IdentifyFailedAttemptRegistry $failedAttemptRegistry,
+        private NickServClientKeyResolver $clientKeyResolver,
+        private VhostDisplayResolver $vhostDisplayResolver,
+        private OperIrcopRepositoryInterface $ircopRepository,
+        private EventBusInterface $eventDispatcher,
+        private PendingNickRestoreRegistryInterface $pendingRegistry,
+        private int $identifyMaxFailedAttempts,
+        private int $identifyFailedWindowSeconds,
+        private int $identifyLockoutSeconds,
     ) {}
 
     public function getName(): string

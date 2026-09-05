@@ -69,6 +69,7 @@ If any step fails, fix it and re-run from the failed step — never skip ahead.
 ## 4. Immutability & Readonly
 
 - **Value Objects**, **DTOs**, **Commands**, **Domain Events**: MUST be `readonly class`
+- In a `readonly class`, **NEVER** repeat `readonly` on properties or constructor promotions (redundant in PHP 8.2+; enforced by `no_redundant_readonly_property`).
 - **Entities**: Use `readonly` properties for IDs and immutable fields. Do NOT make the full class `readonly` if state changes.
 - **NEVER** use public setters (`setId`, `setName`). Use business methods (`rename()`, `suspend()`).
 - **NEVER** modify a DTO or Command after creation.

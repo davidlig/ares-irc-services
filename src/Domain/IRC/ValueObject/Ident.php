@@ -11,7 +11,7 @@ use InvalidArgumentException;
  */
 readonly class Ident
 {
-    public function __construct(public readonly string $value)
+    public function __construct(public string $value)
     {
         if ('' === $value) {
             throw new InvalidArgumentException('Ident cannot be empty.');

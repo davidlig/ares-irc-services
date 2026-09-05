@@ -10,8 +10,8 @@ use App\Application\NickServ\RegisterThrottleRegistry;
 final readonly class RegisterThrottlePruner implements InMemoryPrunableInterface
 {
     public function __construct(
-        private readonly RegisterThrottleRegistry $registry,
-        private readonly int $minIntervalSeconds,
+        private RegisterThrottleRegistry $registry,
+        private int $minIntervalSeconds,
     ) {}
 
     public function prune(): int

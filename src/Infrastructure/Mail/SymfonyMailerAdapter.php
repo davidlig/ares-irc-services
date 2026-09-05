@@ -16,9 +16,9 @@ use Symfony\Component\Mime\Email;
 final readonly class SymfonyMailerAdapter implements MailerInterface
 {
     public function __construct(
-        private readonly SymfonyMailerInterface $mailer,
-        private readonly string $from,
-        private readonly string $senderName,
+        private SymfonyMailerInterface $mailer,
+        private string $from,
+        private string $senderName,
     ) {}
 
     public function send(string $to, string $subject, string $body): void

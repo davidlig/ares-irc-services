@@ -13,8 +13,8 @@ final readonly class ServerDelinkedEvent
 {
     public function __construct(
         /** SID of the server that was delinked (e.g. "002"). */
-        public readonly string $serverSid,
+        public string $serverSid,
         /** Optional reason from the SQUIT message. */
-        public readonly string $reason = '',
+        public string $reason = '',
     ) {}
 }

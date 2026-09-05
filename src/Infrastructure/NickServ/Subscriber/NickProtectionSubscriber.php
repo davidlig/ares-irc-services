@@ -30,12 +30,12 @@ use function str_contains;
 final readonly class NickProtectionSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly NickProtectionService $nickProtectionService,
-        private readonly IdentifiedUserVhostSyncService $identifiedUserVhostSync,
-        private readonly BurstState $burstState,
-        private readonly NetworkUserLookupPort $networkUserLookup,
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
-        private readonly ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
+        private NickProtectionService $nickProtectionService,
+        private IdentifiedUserVhostSyncService $identifiedUserVhostSync,
+        private BurstState $burstState,
+        private NetworkUserLookupPort $networkUserLookup,
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private ?PendingNickProtectionRegistryInterface $pendingProtectionRegistry = null,
     ) {}
 
     /**

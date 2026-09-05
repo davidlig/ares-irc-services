@@ -10,7 +10,7 @@ use App\Application\NickServ\PendingEmailChangeRegistry;
 final readonly class PendingEmailChangePruner implements InMemoryPrunableInterface
 {
     public function __construct(
-        private readonly PendingEmailChangeRegistry $registry,
+        private PendingEmailChangeRegistry $registry,
     ) {}
 
     public function prune(): int

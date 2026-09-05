@@ -14,10 +14,10 @@ use App\Domain\IRC\ValueObject\Uid;
 final readonly class UserLeftChannelEvent
 {
     public function __construct(
-        public readonly Uid $uid,
-        public readonly Nick $nick,
-        public readonly ChannelName $channel,
-        public readonly string $reason,
-        public readonly bool $wasKicked,
+        public Uid $uid,
+        public Nick $nick,
+        public ChannelName $channel,
+        public string $reason,
+        public bool $wasKicked,
     ) {}
 }

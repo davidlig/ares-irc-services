@@ -29,11 +29,11 @@ final readonly class ResendCommand implements NickServCommandInterface
     private const int TOKEN_TTL_SECONDS = 3600;
 
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly AsyncMessageDispatcherInterface $messageBus,
-        private readonly TranslationInterface $translator,
-        private readonly LoggerInterface $logger,
-        private readonly int $resendMinIntervalSeconds,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private AsyncMessageDispatcherInterface $messageBus,
+        private TranslationInterface $translator,
+        private LoggerInterface $logger,
+        private int $resendMinIntervalSeconds,
     ) {}
 
     public function getName(): string

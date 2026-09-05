@@ -17,16 +17,16 @@ use App\Domain\IRC\ValueObject\Uid;
 final readonly class UserQuitNetworkEvent
 {
     public function __construct(
-        public readonly Uid $uid,
-        public readonly Nick $nick,
-        public readonly string $reason,
+        public Uid $uid,
+        public Nick $nick,
+        public string $reason,
         /** IRC ident (username) of the user, e.g. "david" */
-        public readonly string $ident = '',
+        public string $ident = '',
         /** Best available hostname (vhost > cloaked host), e.g. "Clk-1C178BB8" */
-        public readonly string $displayHost = '',
+        public string $displayHost = '',
         /** Real hostname from IRCd, e.g. "user.isp.com" */
-        public readonly string $hostname = '',
+        public string $hostname = '',
         /** IP address in base64 format from IRCd */
-        public readonly string $ipBase64 = '',
+        public string $ipBase64 = '',
     ) {}
 }

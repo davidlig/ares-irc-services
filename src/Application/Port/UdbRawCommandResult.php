@@ -13,10 +13,10 @@ namespace App\Application\Port;
 final readonly class UdbRawCommandResult
 {
     public function __construct(
-        public readonly bool $success,
-        public readonly ?string $errorKey = null,
-        public readonly array $errorParams = [],
-        public readonly ?string $auditLine = null,
+        public bool $success,
+        public ?string $errorKey = null,
+        public array $errorParams = [],
+        public ?string $auditLine = null,
     ) {}
 
     public static function success(string $auditLine): self

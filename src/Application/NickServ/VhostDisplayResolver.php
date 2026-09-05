@@ -11,7 +11,7 @@ namespace App\Application\NickServ;
 final readonly class VhostDisplayResolver
 {
     public function __construct(
-        private readonly string $vhostSuffix = '',
+        private string $vhostSuffix = '',
     ) {}
 
     /**

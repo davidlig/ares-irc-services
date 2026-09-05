@@ -41,11 +41,11 @@ final readonly class UdbPasswordRepairSubscriber implements EventSubscriberInter
     private const string BLOCK = 'N';
 
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly UdbRecordRepositoryInterface $records,
-        private readonly UdbRecordWriterInterface $recordWriter,
-        private readonly UdbRecordExporter $exporter,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private UdbRecordRepositoryInterface $records,
+        private UdbRecordWriterInterface $recordWriter,
+        private UdbRecordExporter $exporter,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public static function getSubscribedEvents(): array

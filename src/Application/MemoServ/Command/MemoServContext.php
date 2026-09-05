@@ -16,18 +16,18 @@ use DateTimeZone;
 final readonly class MemoServContext implements IrcopContextInterface
 {
     public function __construct(
-        public readonly ?SenderView $sender,
-        public readonly ?RegisteredNick $senderAccount,
-        public readonly string $command,
+        public ?SenderView $sender,
+        public ?RegisteredNick $senderAccount,
+        public string $command,
         /** @var string[] */
-        public readonly array $args,
-        private readonly MemoServNotifierInterface $notifier,
-        private readonly TranslationInterface $translator,
-        private readonly string $language,
-        private readonly string $timezone,
-        private readonly string $messageType,
-        private readonly MemoServCommandRegistry $registry,
-        private readonly ServiceNicknameRegistry $serviceNicks,
+        public array $args,
+        private MemoServNotifierInterface $notifier,
+        private TranslationInterface $translator,
+        private string $language,
+        private string $timezone,
+        private string $messageType,
+        private MemoServCommandRegistry $registry,
+        private ServiceNicknameRegistry $serviceNicks,
     ) {}
 
     public function getSender(): ?SenderView

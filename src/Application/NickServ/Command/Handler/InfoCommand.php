@@ -25,12 +25,12 @@ use App\Domain\NickServ\ValueObject\NickStatus;
 final readonly class InfoCommand implements NickServCommandInterface
 {
     public function __construct(
-        private readonly RegisteredNickRepositoryInterface $nickRepository,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly VhostDisplayResolver $vhostDisplayResolver,
-        private readonly ChannelAccessRepositoryInterface $accessRepository,
-        private readonly RegisteredChannelRepositoryInterface $channelRepository,
-        private readonly int $dropGraceDays = 7,
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private NetworkUserLookupPort $userLookup,
+        private VhostDisplayResolver $vhostDisplayResolver,
+        private ChannelAccessRepositoryInterface $accessRepository,
+        private RegisteredChannelRepositoryInterface $channelRepository,
+        private int $dropGraceDays = 7,
     ) {}
 
     public function getName(): string

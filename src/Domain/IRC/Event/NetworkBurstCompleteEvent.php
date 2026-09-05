@@ -16,7 +16,7 @@ use App\Domain\IRC\Connection\ConnectionInterface;
 final readonly class NetworkBurstCompleteEvent
 {
     public function __construct(
-        public readonly ConnectionInterface $connection,
-        public readonly string $serverSid,
+        public ConnectionInterface $connection,
+        public string $serverSid,
     ) {}
 }

@@ -10,8 +10,8 @@ use App\Application\NickServ\IdentifyFailedAttemptRegistry;
 final readonly class IdentifyFailedAttemptPruner implements InMemoryPrunableInterface
 {
     public function __construct(
-        private readonly IdentifyFailedAttemptRegistry $registry,
-        private readonly int $windowSeconds,
+        private IdentifyFailedAttemptRegistry $registry,
+        private int $windowSeconds,
     ) {}
 
     public function prune(): int

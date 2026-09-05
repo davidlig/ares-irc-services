@@ -9,8 +9,8 @@ use App\Domain\IRC\ValueObject\ChannelName;
 final readonly class ChannelKickReceivedEvent
 {
     public function __construct(
-        public readonly ChannelName $channelName,
-        public readonly string $targetId,
-        public readonly string $reason,
+        public ChannelName $channelName,
+        public string $targetId,
+        public string $reason,
     ) {}
 }

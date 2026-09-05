@@ -32,9 +32,9 @@ use function sprintf;
 final readonly class NetworkStateSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly NetworkUserRepositoryInterface $userRepository,
-        private readonly ChannelRepositoryInterface $channelRepository,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private NetworkUserRepositoryInterface $userRepository,
+        private ChannelRepositoryInterface $channelRepository,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     /**

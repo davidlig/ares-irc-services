@@ -14,11 +14,11 @@ use App\Domain\IRC\ValueObject\Uid;
 readonly class ChannelMember
 {
     /** @var list<string> */
-    public readonly array $prefixLetters;
+    public array $prefixLetters;
 
     public function __construct(
-        public readonly Uid $uid,
-        public readonly ChannelMemberRole $role,
+        public Uid $uid,
+        public ChannelMemberRole $role,
         ?array $prefixLetters = null,
     ) {
         if (null !== $prefixLetters) {

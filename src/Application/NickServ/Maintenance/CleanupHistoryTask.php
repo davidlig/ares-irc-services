@@ -21,8 +21,8 @@ final readonly class CleanupHistoryTask implements MaintenanceTaskInterface
     public function __construct(
         private NickHistoryRepositoryInterface $historyRepository,
         private LoggerInterface $logger,
-        private readonly int $intervalSeconds,
-        private readonly int $retentionDays,
+        private int $intervalSeconds,
+        private int $retentionDays,
     ) {}
 
     public function getName(): string

@@ -30,7 +30,7 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
 
     public function __construct(
         iterable $listeners,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private LoggerInterface $logger = new NullLogger(),
     ) {
         $all = [];
         $byNick = [];

@@ -17,8 +17,8 @@ final readonly class ParsedUdbPath
      * @param list<string> $components Decoded path components without the block letter
      */
     public function __construct(
-        public readonly UdbBlock $block,
-        public readonly string $blockPath,
-        public readonly array $components,
+        public UdbBlock $block,
+        public string $blockPath,
+        public array $components,
     ) {}
 }

@@ -25,9 +25,9 @@ use function sprintf;
 final readonly class UnrealIRCdProtocolServiceActions implements ProtocolServiceActionsInterface, OperclassServiceActionsInterface
 {
     public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly UnrealIRCdServiceIntroductionFormatter $introductionFormatter = new UnrealIRCdServiceIntroductionFormatter(),
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private ActiveConnectionHolder $connectionHolder,
+        private UnrealIRCdServiceIntroductionFormatter $introductionFormatter = new UnrealIRCdServiceIntroductionFormatter(),
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void

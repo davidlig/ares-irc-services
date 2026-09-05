@@ -97,8 +97,8 @@ use App\Application\NickServ\Command\NickServContext;
 final readonly class MyCommand implements NickServCommandInterface
 {
     public function __construct(
-        private readonly SomeRepositoryInterface $repository,
-        private readonly int $someConfigurableParam,
+        private SomeRepositoryInterface $repository,
+        private int $someConfigurableParam,
     ) {}
 
     public function getName(): string { return 'MYCOMMAND'; }

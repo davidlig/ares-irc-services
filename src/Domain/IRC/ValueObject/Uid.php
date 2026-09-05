@@ -21,7 +21,7 @@ readonly class Uid
 {
     private const int MAX_LENGTH = 128;
 
-    public function __construct(public readonly string $value)
+    public function __construct(public string $value)
     {
         if ('' === $value) {
             throw new InvalidArgumentException('UID cannot be empty.');

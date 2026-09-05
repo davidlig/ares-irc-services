@@ -53,14 +53,14 @@ use function preg_match;
 final readonly class NetworkEventEnricher implements EventSubscriberInterface, ApplyOutgoingChannelModesApplicatorInterface
 {
     public function __construct(
-        private readonly ChannelRepositoryInterface $channelRepository,
-        private readonly NetworkUserRepositoryInterface $userRepository,
-        private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly SkipIdentifiedModeStripRegistryInterface $skipIdentifiedModeStripRegistry,
-        private readonly ActiveChannelModeSupportProviderInterface $modeSupportProvider,
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
-        private readonly LoggerInterface $logger = new NullLogger(),
-        private readonly ChannelModeStateSynchronizer $channelModeStateSynchronizer = new ChannelModeStateSynchronizer(),
+        private ChannelRepositoryInterface $channelRepository,
+        private NetworkUserRepositoryInterface $userRepository,
+        private EventDispatcherInterface $eventDispatcher,
+        private SkipIdentifiedModeStripRegistryInterface $skipIdentifiedModeStripRegistry,
+        private ActiveChannelModeSupportProviderInterface $modeSupportProvider,
+        private ActiveConnectionHolderInterface $connectionHolder,
+        private LoggerInterface $logger = new NullLogger(),
+        private ChannelModeStateSynchronizer $channelModeStateSynchronizer = new ChannelModeStateSynchronizer(),
     ) {}
 
     public static function getSubscribedEvents(): array

@@ -23,8 +23,8 @@ final readonly class PurgeExpiredAkickTask implements MaintenanceTaskInterface
         private ChannelAkickRepositoryInterface $akickRepository,
         private ServiceDebugNotifierInterface $debugNotifier,
         private LoggerInterface $logger,
-        private readonly string $serverName,
-        private readonly int $intervalSeconds,
+        private string $serverName,
+        private int $intervalSeconds,
     ) {}
 
     public function getName(): string

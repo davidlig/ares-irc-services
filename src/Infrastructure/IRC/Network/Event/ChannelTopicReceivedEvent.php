@@ -9,9 +9,9 @@ use App\Domain\IRC\ValueObject\ChannelName;
 final readonly class ChannelTopicReceivedEvent
 {
     public function __construct(
-        public readonly ChannelName $channelName,
-        public readonly ?string $topic,
-        public readonly ?string $setterNick = null,
-        public readonly ?string $sourceUid = null,
+        public ChannelName $channelName,
+        public ?string $topic,
+        public ?string $setterNick = null,
+        public ?string $sourceUid = null,
     ) {}
 }

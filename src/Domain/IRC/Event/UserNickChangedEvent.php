@@ -13,8 +13,8 @@ use App\Domain\IRC\ValueObject\Uid;
 final readonly class UserNickChangedEvent
 {
     public function __construct(
-        public readonly Uid $uid,
-        public readonly Nick $oldNick,
-        public readonly Nick $newNick,
+        public Uid $uid,
+        public Nick $oldNick,
+        public Nick $newNick,
     ) {}
 }

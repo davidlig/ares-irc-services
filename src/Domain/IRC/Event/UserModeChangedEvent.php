@@ -13,8 +13,8 @@ use App\Domain\IRC\ValueObject\Uid;
 final readonly class UserModeChangedEvent
 {
     public function __construct(
-        public readonly Uid $uid,
+        public Uid $uid,
         /** Mode delta string, e.g. "+r" or "-r" */
-        public readonly string $modeDelta,
+        public string $modeDelta,
     ) {}
 }

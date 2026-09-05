@@ -20,12 +20,12 @@ final readonly class UnrealIRCdModule implements ProtocolRuntimeModuleInterface
     public const string PROTOCOL_NAME = 'unreal';
 
     public function __construct(
-        private readonly UnrealIRCdProtocolHandler $handler,
-        private readonly UnrealIRCdProtocolServiceActions $serviceActions,
-        private readonly UnrealIRCdServiceIntroductionFormatter $introductionFormatter,
-        private readonly UnrealIRCdChannelModeSupport $channelModeSupport,
-        private readonly UnrealIRCdUserModeSupport $userModeSupport,
-        private readonly UnrealIRCdNickReservation $nickReservation,
+        private UnrealIRCdProtocolHandler $handler,
+        private UnrealIRCdProtocolServiceActions $serviceActions,
+        private UnrealIRCdServiceIntroductionFormatter $introductionFormatter,
+        private UnrealIRCdChannelModeSupport $channelModeSupport,
+        private UnrealIRCdUserModeSupport $userModeSupport,
+        private UnrealIRCdNickReservation $nickReservation,
     ) {}
 
     public function getProtocolName(): string

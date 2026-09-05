@@ -7,12 +7,12 @@ namespace App\Application\IRC\Connect;
 final readonly class ConnectToServerCommand
 {
     public function __construct(
-        public readonly string $serverName,
-        public readonly string $host,
-        public readonly int $port,
-        public readonly string $password,
-        public readonly string $description,
-        public readonly string $protocol,
-        public readonly bool $useTls = false,
+        public string $serverName,
+        public string $host,
+        public int $port,
+        public string $password,
+        public string $description,
+        public string $protocol,
+        public bool $useTls = false,
     ) {}
 }

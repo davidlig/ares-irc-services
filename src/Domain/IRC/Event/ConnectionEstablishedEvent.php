@@ -10,7 +10,7 @@ use DateTimeImmutable;
 final readonly class ConnectionEstablishedEvent
 {
     public function __construct(
-        public readonly ServerLink $serverLink,
-        public readonly DateTimeImmutable $occurredAt = new DateTimeImmutable(),
+        public ServerLink $serverLink,
+        public DateTimeImmutable $occurredAt = new DateTimeImmutable(),
     ) {}
 }

@@ -25,7 +25,7 @@ use function in_array;
 final readonly class IRCEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {}
 
     /**

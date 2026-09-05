@@ -13,7 +13,7 @@ use function sprintf;
  */
 readonly class ServerName
 {
-    public function __construct(public readonly string $value)
+    public function __construct(public string $value)
     {
         if ('' === $value) {
             throw new InvalidArgumentException('Server name cannot be empty.');

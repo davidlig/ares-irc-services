@@ -68,7 +68,7 @@ Each service implements `ServiceDebugNotifierInterface`:
 
 ```php
 public function __construct(
-    private readonly ServiceDebugNotifierInterface $debugNotifier,
+    private ServiceDebugNotifierInterface $debugNotifier,
     // ... other dependencies
 ) {}
 ```

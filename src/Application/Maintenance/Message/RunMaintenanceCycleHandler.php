@@ -9,7 +9,7 @@ use App\Application\Maintenance\MaintenanceScheduler;
 final readonly class RunMaintenanceCycleHandler
 {
     public function __construct(
-        private readonly MaintenanceScheduler $maintenanceScheduler,
+        private MaintenanceScheduler $maintenanceScheduler,
     ) {}
 
     public function __invoke(RunMaintenanceCycle $message): void

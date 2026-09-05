@@ -32,12 +32,12 @@ final readonly class HelpCommand implements NickServCommandInterface
     private const int TIMEZONE_LIST_MAX_LINE_LEN = 100;
 
     public function __construct(
-        private readonly UnifiedHelpFormatter $formatter,
-        private readonly TimezoneHelpProvider $timezoneHelpProvider,
-        private readonly IrcopAccessHelper $accessHelper,
-        private readonly RootUserRegistry $rootRegistry,
-        private readonly PermissionRegistry $permissionRegistry,
-        private readonly int $inactivityExpiryDays = 0,
+        private UnifiedHelpFormatter $formatter,
+        private TimezoneHelpProvider $timezoneHelpProvider,
+        private IrcopAccessHelper $accessHelper,
+        private RootUserRegistry $rootRegistry,
+        private PermissionRegistry $permissionRegistry,
+        private int $inactivityExpiryDays = 0,
     ) {}
 
     public function getName(): string

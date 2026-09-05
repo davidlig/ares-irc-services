@@ -32,10 +32,10 @@ final readonly class ServiceNickReservationSubscriber implements EventSubscriber
      * @param iterable<ServiceCommandListenerInterface> $serviceListeners
      */
     public function __construct(
-        private readonly ActiveConnectionHolder $connectionHolder,
-        private readonly NetworkUserLookupPort $userLookup,
-        private readonly iterable $serviceListeners,
-        private readonly LoggerInterface $logger = new NullLogger(),
+        private ActiveConnectionHolder $connectionHolder,
+        private NetworkUserLookupPort $userLookup,
+        private iterable $serviceListeners,
+        private LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public static function getSubscribedEvents(): array

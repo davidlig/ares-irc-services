@@ -14,7 +14,7 @@ use function sprintf;
  */
 readonly class UserMask
 {
-    private function __construct(public readonly string $value)
+    private function __construct(public string $value)
     {
         if ('' === $value) {
             throw new InvalidArgumentException('UserMask cannot be empty.');

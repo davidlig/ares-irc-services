@@ -23,13 +23,13 @@ final readonly class UnrealUdbModule implements ProtocolRuntimeModuleInterface, 
     public const string PROTOCOL_NAME = 'unrealudb';
 
     public function __construct(
-        private readonly UnrealUdbProtocolHandler $handler,
-        private readonly UnrealUdbProtocolServiceActions $serviceActions,
-        private readonly UnrealUdbServiceIntroductionFormatter $introductionFormatter,
-        private readonly UnrealUdbChannelModeSupport $channelModeSupport,
-        private readonly UnrealUdbUserModeSupport $userModeSupport,
-        private readonly UnrealUdbNickReservation $nickReservation,
-        private readonly UdbRawCommandHandlerInterface $rawCommandHandler,
+        private UnrealUdbProtocolHandler $handler,
+        private UnrealUdbProtocolServiceActions $serviceActions,
+        private UnrealUdbServiceIntroductionFormatter $introductionFormatter,
+        private UnrealUdbChannelModeSupport $channelModeSupport,
+        private UnrealUdbUserModeSupport $userModeSupport,
+        private UnrealUdbNickReservation $nickReservation,
+        private UdbRawCommandHandlerInterface $rawCommandHandler,
     ) {}
 
     public function getProtocolName(): string
