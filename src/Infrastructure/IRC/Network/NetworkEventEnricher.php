@@ -43,11 +43,7 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use function count;
-use function in_array;
 use function preg_match;
-use function str_replace;
-use function str_split;
 
 /**
  * Listens to raw protocol events, resolves entities via repos, and dispatches domain events.
@@ -64,6 +60,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         private readonly ActiveChannelModeSupportProviderInterface $modeSupportProvider,
         private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly LoggerInterface $logger = new NullLogger(),
+        private readonly ChannelModeStateSynchronizer $channelModeStateSynchronizer = new ChannelModeStateSynchronizer(),
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -191,7 +188,12 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             }
         }
 
-        $this->applyModeParamsFromFjoin($channel, $event->modeStr, $event->modeParams);
+        $this->channelModeStateSynchronizer->applyInitialParams(
+            $channel,
+            $event->modeStr,
+            $event->modeParams,
+            $this->modeSupportProvider->getSupport(),
+        );
 
         foreach ($event->listModes['b'] ?? [] as $mask) {
             $channel->addBan($mask);
@@ -234,75 +236,13 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             return;
         }
 
-        $support = $this->modeSupportProvider->getSupport();
-        $listLetters = $support->getListModeLetters();
-        $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
-        $unsetWithParam = $support->getChannelSettingModesUnsetWithParam();
-        $unsetWithoutParam = $support->getChannelSettingModesUnsetWithoutParam();
-
-        $params = $event->modeParams;
-        $paramIdx = 0;
-        $adding = true;
-
-        foreach (str_split($event->modeStr) as $char) {
-            if ('+' === $char) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $char) {
-                $adding = false;
-                continue;
-            }
-
-            $role = ChannelMemberRole::fromModeLetter($char);
-            if (null !== $role) {
-                if ($paramIdx < count($params)) {
-                    $targetId = $params[$paramIdx];
-                    ++$paramIdx;
-                    $user = $this->resolveUser($targetId);
-                    if (null !== $user) {
-                        $letter = $role->toModeLetter();
-                        if ('' !== $letter) {
-                            $channel->applyMemberPrefixChange($user->uid, $letter, $adding);
-                        }
-                    }
-                }
-                continue;
-            }
-
-            if (in_array($char, $listLetters, true)) {
-                if ($paramIdx < count($params)) {
-                    $mask = $params[$paramIdx];
-                    ++$paramIdx;
-                    if ('b' === $char) {
-                        $adding ? $channel->addBan($mask) : $channel->removeBan($mask);
-                    } elseif ('e' === $char) {
-                        $adding ? $channel->addExempt($mask) : $channel->removeExempt($mask);
-                    } elseif ('I' === $char) {
-                        $adding ? $channel->addInviteException($mask) : $channel->removeInviteException($mask);
-                    }
-                }
-                continue;
-            }
-
-            if ($adding) {
-                if (in_array($char, $withParamOnSet, true) && $paramIdx < count($params)) {
-                    $channel->applyModeParam($char, $params[$paramIdx]);
-                    ++$paramIdx;
-                }
-            } else {
-                if (in_array($char, $unsetWithParam, true) && $paramIdx < count($params)) {
-                    ++$paramIdx;
-                }
-                $channel->clearModeParam($char);
-            }
-        }
-
-        $channelModeDelta = $this->extractChannelModeDelta($event->modeStr);
-        if ('' !== $channelModeDelta) {
-            $current = $channel->getModes();
-            $channel->updateModes($this->mergeModeString($current, $channelModeDelta));
-        }
+        $this->channelModeStateSynchronizer->applyReceived(
+            $channel,
+            $event->modeStr,
+            $event->modeParams,
+            $this->modeSupportProvider->getSupport(),
+            $this->resolveUser(...),
+        );
 
         $this->channelRepository->save($channel);
         $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
@@ -315,20 +255,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             return;
         }
 
-        $params = $event->params;
-        for ($i = 0; $i < count($params); $i += 3) {
-            $mask = $params[$i] ?? '';
-            if ('' === $mask) {
-                break;
-            }
-            if ('b' === $event->modeChar) {
-                $channel->addBan($mask);
-            } elseif ('e' === $event->modeChar) {
-                $channel->addExempt($mask);
-            } elseif ('I' === $event->modeChar) {
-                $channel->addInviteException($mask);
-            }
-        }
+        $this->channelModeStateSynchronizer->applyListSnapshot($channel, $event->modeChar, $event->params);
 
         $this->channelRepository->save($channel);
         $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));
@@ -369,52 +296,12 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             return;
         }
 
-        $delta = $this->extractChannelModeDelta($modeStr);
-        if ('' !== $delta) {
-            $merged = $this->mergeModeString($channel->getModes(), $delta);
-            $channel->updateModes($merged);
-        }
-
-        $support = $this->modeSupportProvider->getSupport();
-        $listLetters = $support->getListModeLetters();
-        $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
-        $unsetWithParam = $support->getChannelSettingModesUnsetWithParam();
-        $unsetWithoutParam = $support->getChannelSettingModesUnsetWithoutParam();
-        $paramIdx = 0;
-        $adding = true;
-        foreach (str_split($modeStr) as $char) {
-            if ('+' === $char) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $char) {
-                $adding = false;
-                continue;
-            }
-            if (null !== ChannelMemberRole::fromModeLetter($char)) {
-                if ($paramIdx < count($params)) {
-                    ++$paramIdx;
-                }
-                continue;
-            }
-            if (in_array($char, $listLetters, true)) {
-                if ($paramIdx < count($params)) {
-                    ++$paramIdx;
-                }
-                continue;
-            }
-            if ($adding) {
-                if (in_array($char, $withParamOnSet, true) && $paramIdx < count($params)) {
-                    $channel->applyModeParam($char, $params[$paramIdx]);
-                    ++$paramIdx;
-                }
-            } else {
-                if (in_array($char, $unsetWithParam, true) && $paramIdx < count($params)) {
-                    ++$paramIdx;
-                }
-                $channel->clearModeParam($char);
-            }
-        }
+        $this->channelModeStateSynchronizer->applyOutgoing(
+            $channel,
+            $modeStr,
+            $params,
+            $this->modeSupportProvider->getSupport(),
+        );
 
         $this->channelRepository->save($channel);
     }
@@ -433,37 +320,6 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
                 $this->eventDispatcher->dispatch(new UserModeChangedEvent($user->uid, '+r'));
             }
         }
-    }
-
-    /**
-     * Extracts from a MODE string only channel setting mode letters (not prefix
-     * v,h,o,a,q and not list modes per active IRCd).
-     */
-    private function extractChannelModeDelta(string $modeStr): string
-    {
-        $listLetters = $this->modeSupportProvider->getSupport()->getListModeLetters();
-        $delta = '';
-        $adding = true;
-        foreach (str_split($modeStr) as $char) {
-            if ('+' === $char) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $char) {
-                $adding = false;
-                continue;
-            }
-            if (null !== ChannelMemberRole::fromModeLetter($char)) {
-                continue;
-            }
-            // List modes: exact case (e.g. I = invite exception, i = invite-only channel setting)
-            if (in_array($char, $listLetters, true)) {
-                continue;
-            }
-            $delta .= ($adding ? '+' : '-') . $char;
-        }
-
-        return $delta;
     }
 
     public function onUserModeReceived(UserModeReceivedEvent $event): void
@@ -486,43 +342,6 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         $this->eventDispatcher->dispatch(new UserHostChangedEvent($user->uid, $event->newHost));
     }
 
-    /**
-     * Applies mode params from SJOIN so MLOCK can send -k/-L with value.
-     * Unreal: "modes and parameters, eg: +lk 666 key" — params follow the order of mode letters
-     * that take a param (left to right in the mode string). We consume in that order.
-     *
-     * @see https://www.unrealircd.org/docs/Server_protocol:SJOIN_command
-     */
-    private function applyModeParamsFromFjoin(Channel $channel, string $modeStr, array $modeParams): void
-    {
-        if ([] === $modeParams) {
-            return;
-        }
-        $support = $this->modeSupportProvider->getSupport();
-        $withParamOnSet = $support->getChannelSettingModesWithParamOnSet();
-        $paramIdx = 0;
-        $adding = true;
-        foreach (str_split($modeStr) as $char) {
-            if ('+' === $char) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $char) {
-                $adding = false;
-                continue;
-            }
-            if (!$adding || !in_array($char, $withParamOnSet, true)) {
-                continue;
-            }
-            if ($paramIdx >= count($modeParams)) {
-                break;
-            }
-            $paramValue = $modeParams[$paramIdx];
-            ++$paramIdx;
-            $channel->applyModeParam($char, $paramValue);
-        }
-    }
-
     private function resolveUser(string $sourceId): ?NetworkUser
     {
         if (preg_match('/^[0-9][0-9A-Z]{8}$/', $sourceId)) {
@@ -535,35 +354,6 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         }
 
         return null;
-    }
-
-    private function mergeModeString(string $current, string $delta): string
-    {
-        if ('' === $delta) {
-            return $current;
-        }
-
-        $chars = array_fill_keys(str_split(str_replace(['+', '-'], '', $current)), true);
-        $adding = true;
-        foreach (str_split($delta) as $c) {
-            if ('+' === $c) {
-                $adding = true;
-                continue;
-            }
-            if ('-' === $c) {
-                $adding = false;
-                continue;
-            }
-            if ($adding) {
-                $chars[$c] = true;
-            } else {
-                unset($chars[$c]);
-            }
-        }
-
-        $result = implode('', array_keys($chars));
-
-        return '' === $result ? '' : '+' . $result;
     }
 
     private function protocolPreservesIdentificationOnNickChange(): bool

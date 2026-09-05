@@ -28,6 +28,7 @@ use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use App\Infrastructure\IRC\Network\ChannelModeStateSynchronizer;
 use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelListModeReceivedEvent;
@@ -48,6 +49,7 @@ use ReflectionMethod;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[CoversClass(NetworkEventEnricher::class)]
+#[CoversClass(ChannelModeStateSynchronizer::class)]
 final class NetworkEventEnricherTest extends TestCase
 {
     #[Test]
@@ -2528,17 +2530,10 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function mergeModeStringReturnsCurrentWhenDeltaIsEmpty(): void
     {
-        $enricher = new NetworkEventEnricher(
-            $this->createStub(ChannelRepositoryInterface::class),
-            $this->createStub(NetworkUserRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
-            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
-        );
+        $synchronizer = new ChannelModeStateSynchronizer();
 
-        $ref = new ReflectionMethod($enricher, 'mergeModeString');
-        $result = $ref->invoke($enricher, '+nt', '');
+        $ref = new ReflectionMethod($synchronizer, 'mergeModeString');
+        $result = $ref->invoke($synchronizer, '+nt', '');
 
         self::assertSame('+nt', $result);
     }
@@ -2546,17 +2541,10 @@ final class NetworkEventEnricherTest extends TestCase
     #[Test]
     public function mergeModeStringDeduplicatesModeLetters(): void
     {
-        $enricher = new NetworkEventEnricher(
-            $this->createStub(ChannelRepositoryInterface::class),
-            $this->createStub(NetworkUserRepositoryInterface::class),
-            $this->createStub(EventDispatcherInterface::class),
-            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
-            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
-            $this->createStub(ActiveConnectionHolderInterface::class),
-        );
+        $synchronizer = new ChannelModeStateSynchronizer();
 
-        $ref = new ReflectionMethod($enricher, 'mergeModeString');
-        $result = $ref->invoke($enricher, '+nt', '+t+m');
+        $ref = new ReflectionMethod($synchronizer, 'mergeModeString');
+        $result = $ref->invoke($synchronizer, '+nt', '+t+m');
 
         self::assertSame('+ntm', $result);
     }
