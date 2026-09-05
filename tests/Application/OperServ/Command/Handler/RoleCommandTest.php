@@ -11,6 +11,7 @@ use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
 use App\Application\OperServ\Command\Handler\RoleCommand;
+use App\Application\OperServ\Command\Handler\RoleOperclassHandler;
 use App\Application\OperServ\Command\Handler\RolePermissionsHandler;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -45,6 +46,7 @@ use Psr\Log\NullLogger;
 use ReflectionClass;
 
 #[CoversClass(RoleCommand::class)]
+#[CoversClass(RoleOperclassHandler::class)]
 #[CoversClass(RolePermissionsHandler::class)]
 final class RoleCommandTest extends TestCase
 {
@@ -111,11 +113,14 @@ final class RoleCommandTest extends TestCase
         return new RoleCommand(
             $roleRepo,
             new RolePermissionsHandler($roleRepo, $permRepo, $permissionRegistry),
+            new RoleOperclassHandler(
+                $roleRepo,
+                $connectionHolder,
+                new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $connectionHolder, $ircopRepo, $nickRepo),
+            ),
             $accessHelper,
             $connectionHolder,
-            new IdentifiedSessionRegistry(),
             $modeApplier,
-            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $connectionHolder, $ircopRepo, $nickRepo),
             $vhostApplier,
             new VhostValidator('virtual'),
             $eventDispatcher ?? $this->createStub(EventBusInterface::class),
@@ -2055,11 +2060,14 @@ final class RoleCommandTest extends TestCase
         $cmd = new RoleCommand(
             $roleRepo,
             new RolePermissionsHandler($roleRepo, $permRepo, new PermissionRegistry([])),
+            new RoleOperclassHandler(
+                $roleRepo,
+                $connectionHolder,
+                new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $connectionHolder, $ircopRepo, $nickRepo),
+            ),
             $accessHelper,
             $connectionHolder,
-            new IdentifiedSessionRegistry(),
             $modeApplier,
-            new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $connectionHolder, $ircopRepo, $nickRepo),
             $vhostApplier,
             new VhostValidator('virtual'),
             $this->createStub(EventBusInterface::class),
