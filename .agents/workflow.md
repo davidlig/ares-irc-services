@@ -71,6 +71,16 @@ Never skip log review when debugging reported errors.
 
 ## 4. Pre-Commit Verification Order (NON-NEGOTIABLE)
 
+### Development Test Loop
+
+After finishing new or modified test files, run only those files without coverage:
+
+```bash
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Path/Test1.php tests/Path/Test2.php
+```
+
+Repeat focused file runs while implementing. Do not run the full suite and do not run `check-coverage.sh` during this loop.
+
 Run verifications in this EXACT order before committing:
 
 ```bash
@@ -86,11 +96,8 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags
 # Step 4: Format code
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
 
-# Step 5: Run tests
-./vendor/bin/phpunit --no-coverage --display-all-issues
-
-# Step 6: Check coverage
-./scripts/check-coverage.sh 100
+# Step 5: Run the full suite WITH coverage exactly ONCE (tests + gate)
+./scripts/check-coverage.sh 100 --issues
 ```
 
 **Why this order:**
@@ -98,19 +105,19 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags
 - `lint:container` catches DI errors early
 - `lint:yaml` catches configuration errors
 - `php-cs-fixer` ensures consistent style
-- `phpunit` validates functionality
-- `coverage` ensures code is tested
+- `check-coverage.sh` validates functionality AND the coverage floor in a single PHPUnit execution
+
+**Final verification (NON-NEGOTIABLE):** run `check-coverage.sh` only after the whole implementation is complete. It is the only full-suite run. NEVER run a standalone full PHPUnit suite immediately before or after it. Focused PHPUnit file runs belong only to the development loop above.
 
 If any step fails, do NOT proceed. Fix the error, re-run the failed step, and only continue when it passes.
 
-**Single command for phases 2-6:**
+**Single command for phases 2-5:**
 
 ```bash
 php bin/console lint:container && \
 php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
-./vendor/bin/phpunit --no-coverage --display-all-issues && \
-./scripts/check-coverage.sh 100
+./scripts/check-coverage.sh 100 --issues
 ```
 
 ---
@@ -148,8 +155,7 @@ Run all verifications together (order matters, use `&&`):
 php bin/console lint:container && \
 php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
-./vendor/bin/phpunit --no-coverage --display-all-issues && \
-./scripts/check-coverage.sh 100
+./scripts/check-coverage.sh 100 --issues
 ```
 
 ### Phase 4: Live MCP Validation

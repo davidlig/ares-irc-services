@@ -164,7 +164,8 @@ parameters:
 - [ ] Registry automatically discovers module via tag `irc.protocol_module`
 - [ ] All protocol-specific wire code stays in `<Name>/` namespace
 - [ ] `docs/<name>/` contains protocol documentation
-- [ ] Pre-commit chain passes: `lint:container`, `lint:yaml`, `php-cs-fixer`, `phpunit`, `check-coverage 100`
+- [ ] New/modified test files pass a focused `./vendor/bin/phpunit --no-coverage --display-all-issues Test1.php Test2.php ...` run during development
+- [ ] After the complete implementation, the pre-commit chain passes: `lint:container`, `lint:yaml`, `php-cs-fixer`, `./scripts/check-coverage.sh 100 --issues` (the only full-suite run)
 
 ## Reference Implementations
 

@@ -36,9 +36,9 @@ $repo->expects(self::once())->method('save')->with($entity);
 ## Coverage
 
 - Requires **PCOV** or **Xdebug**: `php -m | grep -E 'pcov|xdebug'`
-- Generate: `./vendor/bin/phpunit --coverage-text --coverage-filter=src`
-- Reports: `var/coverage/` (HTML, Clover)
-- Check: `./scripts/check-coverage.sh 100`
+- **While writing tests:** after finishing new or modified test files, run exactly those files with `./vendor/bin/phpunit --no-coverage --display-all-issues Test1.php Test2.php ...`. Repeat focused runs as needed; do not run the full suite.
+- **Only when the whole implementation is complete:** run `./scripts/check-coverage.sh 100 --issues` once. It runs the full PHPUnit suite WITH coverage, enforces the gate, and writes `var/coverage/clover.xml`.
+- NEVER run `check-coverage.sh` after each test file or sub-feature, and NEVER run a standalone full suite immediately before or after it.
 - Find uncovered: `grep 'count="0"' var/coverage/clover.xml`
 
 ## Test Conventions
@@ -51,12 +51,12 @@ $repo->expects(self::once())->method('save')->with($entity);
 ## Useful Commands
 
 ```bash
-./vendor/bin/phpunit --no-coverage
-./vendor/bin/phpunit --display-all-issues
-./vendor/bin/phpunit tests/Domain --no-coverage
-./vendor/bin/phpunit tests/Application --no-coverage
-./vendor/bin/phpunit --coverage-text --coverage-filter=src
-./scripts/check-coverage.sh 100
+# Full verification (tests + coverage gate, suite runs ONCE) — the final gate
+./scripts/check-coverage.sh 100 --issues
+
+# Focused runs immediately after writing new/modified tests
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Domain/FooTest.php
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Application/FooTest.php tests/Application/BarTest.php
 ```
 
 ## Related Skills

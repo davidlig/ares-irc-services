@@ -277,8 +277,14 @@ protected function setUp(): void
 ### Checking Coverage
 
 ```bash
-./scripts/check-coverage.sh 100
+# While writing tests: run only the files just created or modified
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Application/Service/Command/FooCommandTest.php tests/Application/Service/Command/BarCommandTest.php
+
+# Only after the complete implementation is finished: full suite + coverage gate
+./scripts/check-coverage.sh 100 --issues
 ```
+
+Do not run `check-coverage.sh` after each test file or intermediate command. Do not run a standalone full PHPUnit suite before or after the final script.
 
 ### Finding Uncovered Lines
 

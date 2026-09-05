@@ -4,15 +4,18 @@
 
 The PHPUnit coverage report requires a **coverage driver** (PCOV or Xdebug).
 
+# ONLY AFTER THE COMPLETE IMPLEMENTATION: full suite WITH coverage exactly ONCE
+./scripts/check-coverage.sh 100 --issues
+
 # With PCOV (recommended, faster)
 php -m | grep pcov   # check it is installed
 composer require --dev phpunit/phpunit  # already in project
-./vendor/bin/phpunit --coverage-text --coverage-filter=src
 
 # With Xdebug
 php -m | grep xdebug
 # Ensure xdebug.mode includes coverage (or XDEBUG_MODE=coverage)
-./vendor/bin/phpunit --coverage-text --coverage-filter=src
+
+While writing tests, run only the new/modified files with `./vendor/bin/phpunit --no-coverage --display-all-issues Test1.php Test2.php ...`. NEVER run `check-coverage.sh` during that loop. NEVER run a standalone full suite immediately before or after the final script.
 
 If no driver is installed, PHPUnit will not run tests when coverage is requested. To install PCOV:
 
@@ -168,6 +171,8 @@ The prioritisation below is based on code structure and which parts already have
 
 **For AI agents:** Run each agent's tests in PARALLEL using background jobs (`&` + `wait`).
 
+**Scope of this pattern:** fast iteration while fixing coverage gaps in a specific module. Prefer exact new/modified test files instead of broad suites. It is NEVER the pre-commit verification; after the whole implementation, the final gate is `./scripts/check-coverage.sh 100 --issues` alone.
+
 ### Command Pattern
 
 ```bash
@@ -209,20 +214,19 @@ When implementing a new command/service in a specific module:
    ```bash
    grep 'count="0"' var/coverage/clover.xml
    ```
-4. **Fix gaps**, then run ALL agents in parallel before commit
+4. **Fix gaps**, then run the full-suite single-run check before commit (below)
 
-### Before Commit: Full Suite Parallel Check
+### Before Commit: Full Suite Single-Run Check
+
+**NON-NEGOTIABLE:** run this final gate only after the whole implementation is complete. It is ONE command that runs the full suite exactly once. Focused test-file runs happen during development, not immediately before or after this gate.
 
 ```bash
-# Run CS Fixer + All Tests + Coverage in parallel
+# CS Fixer + full suite WITH coverage + gate (single PHPUnit execution)
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
-(./vendor/bin/phpunit tests/Application/ChanServ tests/Infrastructure/ChanServ --coverage-text --coverage-filter=src/Application/ChanServ --coverage-filter=src/Infrastructure/ChanServ & \
- ./vendor/bin/phpunit tests/Application/NickServ tests/Infrastructure/NickServ --coverage-text --coverage-filter=src/Application/NickServ --coverage-filter=src/Infrastructure/NickServ & \
- ./vendor/bin/phpunit tests/Application/MemoServ tests/Infrastructure/MemoServ --coverage-text --coverage-filter=src/Application/MemoServ --coverage-filter=src/Infrastructure/MemoServ & \
- ./vendor/bin/phpunit tests/Domain --no-coverage & \
- ./vendor/bin/phpunit tests/UI tests/Infrastructure/Mail tests/Infrastructure/Messenger --no-coverage &) && \
-wait && ./scripts/check-coverage.sh 100
+./scripts/check-coverage.sh 100 --issues
 ```
+
+The parallel per-agent pattern above (background `&` + `wait`) is ONLY for fast iteration while fixing coverage gaps in a specific module — never part of the pre-commit chain.
 
 ### Agent 1 (ChanServ) — Current status
 
@@ -256,33 +260,24 @@ wait && ./scripts/check-coverage.sh 100
 
 ---
 
-## 5. Coverage threshold (optional)
+## 5. Coverage threshold
 
 To fail the build if line coverage drops below a minimum:
 
-./scripts/check-coverage.sh [MIN_PERCENT]
+./scripts/check-coverage.sh [MIN_PERCENT] [--issues]
 # Example: ./scripts/check-coverage.sh 57   # enforce current baseline
 #          ./scripts/check-coverage.sh 100  # enforce 100% (once reached)
 
-The script runs PHPUnit with Clover, parses `var/coverage/clover.xml`, and exits with 1 if coverage is below the given percentage.
+The script runs the full PHPUnit suite WITH coverage exactly ONCE (Clover → `var/coverage/clover.xml`), parses it, and exits with 1 if coverage is below the given percentage. `--issues` forwards `--display-all-issues` to PHPUnit. This is the ONLY pre-commit test command.
 
 ## 6. Useful commands
 
-# All tests (no coverage)
-./vendor/bin/phpunit --no-coverage
+# Full verification — the final gate (suite runs ONCE)
+./scripts/check-coverage.sh 100 --issues
 
-# Domain only
-./vendor/bin/phpunit tests/Domain --no-coverage
-
-# Application only
-./vendor/bin/phpunit tests/Application --no-coverage
-
-# Infrastructure only
-./vendor/bin/phpunit tests/Infrastructure --no-coverage
-
-# With coverage (when driver is available)
-./vendor/bin/phpunit --coverage-text --coverage-filter=src
-./vendor/bin/phpunit --coverage-html var/coverage/html --coverage-filter=src
+# Focused runs immediately after writing new/modified tests
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Domain/FooTest.php
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Application/FooTest.php tests/Infrastructure/FooAdapterTest.php
 
 ---
 

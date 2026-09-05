@@ -1,16 +1,36 @@
 #!/usr/bin/env bash
-# Check that code coverage meets a minimum percentage (lines).
-# Usage: ./scripts/check-coverage.sh [MIN_PERCENT]
-# Example: ./scripts/check-coverage.sh 58   # fail if line coverage < 58%
-#          ./scripts/check-coverage.sh 100 # fail if not 100%
+# Single-command verification: runs the full PHPUnit suite WITH coverage and
+# fails if line coverage is below the minimum. Replaces the "run phpunit,
+# then run check-coverage" two-pass pattern — the suite executes exactly once.
+#
+# Usage:
+#   ./scripts/check-coverage.sh [MIN_PERCENT]              # phpunit default output
+#   ./scripts/check-coverage.sh [MIN_PERCENT] --issues     # PHPUnit --display-all-issues
+#
+# Examples:
+#   ./scripts/check-coverage.sh 100
+#   ./scripts/check-coverage.sh 100 --issues
 set -e
 
 MIN_PERCENT="${1:-0}"
+shift || true
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLOVER="${ROOT}/var/coverage/clover.xml"
 
 cd "$ROOT"
-./vendor/bin/phpunit --coverage-clover="$CLOVER" --coverage-filter=src --no-output --do-not-cache-result >/dev/null 2>&1
+
+# Forward remaining flags to PHPUnit; "--issues" is shorthand for
+# --display-all-issues, anything else is passed through unchanged.
+EXTRA_ARGS=()
+for arg in "$@"; do
+    if [[ "--issues" == "$arg" ]]; then
+        EXTRA_ARGS+=("--display-all-issues")
+    else
+        EXTRA_ARGS+=("$arg")
+    fi
+done
+
+./vendor/bin/phpunit --coverage-clover="$CLOVER" --coverage-filter=src --do-not-cache-result "${EXTRA_ARGS[@]}"
 
 if [[ ! -f "$CLOVER" ]]; then
     echo "Coverage report not found. Run PHPUnit with coverage (PCOV or Xdebug)." >&2
@@ -18,10 +38,8 @@ if [[ ! -f "$CLOVER" ]]; then
 fi
 
 # Project-level metrics: the <metrics> line that has files= (project aggregate)
-# Project aggregate is the only <metrics> with 3+ digit file count
 METRICS_LINE=$(grep -E 'files="[0-9]{3,}"' "$CLOVER" | tail -1)
 COVERED=$(echo "$METRICS_LINE" | sed -n 's/.*coveredstatements="\([0-9]*\)".*/\1/p')
-# Match "statements=" but not "coveredstatements="
 TOTAL=$(echo "$METRICS_LINE" | sed -n 's/.*[^d]statements="\([0-9]*\)".*/\1/p')
 
 if [[ -z "$COVERED" || -z "$TOTAL" || "$TOTAL" -eq 0 ]]; then
@@ -31,10 +49,10 @@ fi
 
 PERCENT=$(awk "BEGIN { printf \"%.2f\", ($COVERED / $TOTAL) * 100 }")
 
-# Compare with awk to avoid depending on bc
 BELOW=$(awk "BEGIN { print ($PERCENT < $MIN_PERCENT) ? 1 : 0 }")
 if [[ "$BELOW" -eq 1 ]]; then
     echo "Coverage $PERCENT% is below minimum ${MIN_PERCENT}% (lines: $COVERED/$TOTAL)." >&2
+    echo "Per-line inspection: ./vendor/bin/phpunit --coverage-html var/coverage/html" >&2
     exit 1
 fi
 

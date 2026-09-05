@@ -576,17 +576,13 @@ The container adds `host.docker.internal` → `host-gateway` in `extra_hosts`. U
 
 ## Testing & Development
 
-### Run tests
+### Run new or modified tests during development
 
 ```bash
-./vendor/bin/phpunit --no-coverage --display-all-issues
+./vendor/bin/phpunit --no-coverage --display-all-issues tests/Path/Test1.php tests/Path/Test2.php
 ```
 
-### Check code coverage (100% required)
-
-```bash
-./scripts/check-coverage.sh 100
-```
+Run only the files being developed. The full suite is reserved for the final implementation gate.
 
 ### Code style (PHP-CS-Fixer)
 
@@ -602,11 +598,10 @@ php -l path/to/file.php                                 # syntax check
 php bin/console lint:container                           # DI validation
 php bin/console lint:yaml . --exclude vendor/ --parse-tags  # YAML lint
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php  # format
-./vendor/bin/phpunit --no-coverage --display-all-issues   # tests
-./scripts/check-coverage.sh 100                          # coverage floor
+./scripts/check-coverage.sh 100 --issues                 # tests + coverage floor (single run)
 ```
 
-Zero warnings, zero skipped, zero deprecated, zero incomplete required.
+Zero warnings, zero skipped, zero deprecated, zero incomplete required. Run `check-coverage.sh` only after the complete implementation; it runs the full PHPUnit suite WITH coverage exactly once. Do not run a standalone full suite immediately before or after it.
 
 ### Architecture
 

@@ -34,13 +34,18 @@ When you need documentation for Symfony 7.4, PHP 8.5, Doctrine ORM 3.6, PHPUnit 
 # 1. PHP syntax check (on modified files)
 php -l path/to/file.php
 
-# 2–6. Single command:
+# 2–5. Single command:
 php bin/console lint:container && \
 php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
-./vendor/bin/phpunit --no-coverage --display-all-issues && \
-./scripts/check-coverage.sh 100
+./scripts/check-coverage.sh 100 --issues
 ```
+
+**CRITICAL — two verification phases (NON-NEGOTIABLE):**
+
+- **While writing tests:** after finishing new or modified test files, run only those files with `./vendor/bin/phpunit --no-coverage --display-all-issues tests/.../Test1.php tests/.../Test2.php`. Repeat focused runs as needed while developing; do not run the full suite.
+- **Only after the whole implementation is complete:** run `./scripts/check-coverage.sh 100 --issues` once. The script runs the full PHPUnit suite WITH coverage and enforces the gate.
+- NEVER run a standalone full PHPUnit suite immediately before or after `check-coverage.sh`; that executes the suite twice. NEVER run `check-coverage.sh` after each test file or intermediate feature.
 
 If any step fails, fix it and re-run from the failed step — never skip ahead.
 
@@ -55,7 +60,7 @@ If any step fails, fix it and re-run from the failed step — never skip ahead.
 - Every new class MUST have tests with `#[CoversClass(ClassName::class)]`
 - Every public method MUST have at least one test
 - Every branch/condition MUST be tested
-- Run `./scripts/check-coverage.sh 100` before claiming completion
+- Run focused PHPUnit commands for new/modified test files while developing; run `./scripts/check-coverage.sh 100 --issues` only once after the complete implementation, before claiming completion
 - Use `createStub()` for unverified dependencies, `createMock()` ONLY with `expects()`
 - Zero warnings, zero skipped, zero deprecated, zero incomplete
 
@@ -84,6 +89,29 @@ If any step fails, fix it and re-run from the failed step — never skip ahead.
 - **NEVER** use `match`/`switch` over protocol names — use `ProtocolModuleRegistry`
 - PHP 8.5 features: constructor promotion, property hooks, typed constants (`const string X = 'v';`)
 - Use Yoda conditions: `if (null === $variable)`
+
+### 5.1 Protocol Agnosticism of Shared Code (NON-NEGOTIABLE)
+
+Shared code (Domain, Application ports, the shared runtime, and the cross-protocol handlers) is the services base: it must stay agnostic to every IRCd implementation. **NEVER modify shared code to add a capability only one IRCd needs.**
+
+- **Prohibited shared surfaces** (never modified for one protocol's needs):
+  `src/Domain/IRC/Protocol/*`, `src/Infrastructure/IRC/Runtime/*` (`IRCClient`, factories),
+  `src/Infrastructure/IRC/Protocol/AbstractProtocolHandler.php`, `src/Infrastructure/IRC/Protocol/UnrealFamily/*` (frozen traits),
+  shared Application ports (`ProtocolModuleInterface`, `ProtocolServiceActionsInterface`, `ProtocolHandlerInterface`, …).
+- **Protocol-specific capabilities** are exposed through **NEW optional interfaces** (e.g. `src/Application/Port/OperclassServiceActionsInterface.php`) implemented ONLY by the protocol modules that support them. Consumers feature-detect with `instanceof` — never by adding methods to shared ports.
+- **Protocol-specific behavior** (session ticks, deadlines, wire workarounds) lives **inside the protocol's own namespace** (`src/Infrastructure/IRC/Protocol/<Name>/`), driven from its own handler — never wired into the shared read loop or abstract base.
+- A change is a **design violation** if it forces edits outside the protocol's own namespace and its own tests. Redesign with a new port, tag, or domain event instead.
+- Tests of shared components MUST NOT reference protocol-specific capabilities (no `tick`/`operclass` expectations in `IRCClientTest`, `AbstractProtocolHandler` tests, etc.).
+
+### 5.2 SOLID & Hexagonal Review Rules (MANDATORY before declaring work done)
+
+Full checklist: `.agents/architecture/README.md` → "SOLID & Hexagonal Review Rules".
+
+- **SRP**: one responsibility per class; separate state machines get separate collaborators (extracted, e.g. `UdbOclgView` inside its adapter namespace).
+- **OCP/ISP**: extend with NEW optional ports + `instanceof` feature detection; never grow shared interfaces or force no-op implementations.
+- **DIP**: Application imports `Application/Port/` + Domain ONLY — never `Infrastructure\*`. Infrastructure may implement ports and use external libraries but never leaks concrete classes inward.
+- **Hexagonal**: protocol adapters own their wire types (`UdbFrame`, raw lines); adapter internals (locks, views) never cross the Port boundary. Domain events = inbound direction; ports = outbound direction.
+- **Self-check before declaring done**: (1) shared contract touched? (2) one class, two responsibilities? (3) Application → Infrastructure import? (4) new classes without `#[CoversClass]` tests / full coverage? Any "yes" is a design violation — refactor or justify explicitly.
 
 ---
 
@@ -187,7 +215,8 @@ Follow this deterministic step-by-step workflow:
 6. **Tests & Verification (100% Coverage)**:
    - PHPUnit tests with `#[CoversClass(ClassName::class)]` for all layers.
    - Use `createStub()` for unverified stubs, `createMock()` ONLY when asserting `expects()`.
-   - Run Pre-Commit chain: `lint:container`, `lint:yaml`, `php-cs-fixer`, `phpunit`, `check-coverage 100`.
+   - After writing tests, run only the new/modified test files with `./vendor/bin/phpunit --no-coverage --display-all-issues Test1.php Test2.php ...`.
+   - Once the complete implementation is finished, run the Pre-Commit chain: `lint:container`, `lint:yaml`, `php-cs-fixer`, `./scripts/check-coverage.sh 100 --issues` (the only full-suite run).
    - Live MCP validation against temporary resources (when MCP is available).
 
 ### 10.2 Playbook: Implementing a New IRCd Protocol
