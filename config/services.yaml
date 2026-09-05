@@ -1669,9 +1669,11 @@ services:
             $logger: '@monolog.logger.irc'
 
     App\Application\OperServ\Command\Handler\RoleCommand:
+        tags: ['operserv.command']
+
+    App\Application\OperServ\Command\Handler\RolePermissionsHandler:
         arguments:
             $permissionRegistry: '@App\Application\Security\PermissionRegistry'
-        tags: ['operserv.command']
 
     App\Application\OperServ\Command\Handler\HelpCommand:
         tags: ['operserv.command']

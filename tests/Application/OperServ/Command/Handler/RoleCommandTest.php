@@ -11,6 +11,7 @@ use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
 use App\Application\OperServ\Command\Handler\RoleCommand;
+use App\Application\OperServ\Command\Handler\RolePermissionsHandler;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
@@ -44,6 +45,7 @@ use Psr\Log\NullLogger;
 use ReflectionClass;
 
 #[CoversClass(RoleCommand::class)]
+#[CoversClass(RolePermissionsHandler::class)]
 final class RoleCommandTest extends TestCase
 {
     private function createAccessHelper(bool $isRoot): IrcopAccessHelper
@@ -108,9 +110,8 @@ final class RoleCommandTest extends TestCase
 
         return new RoleCommand(
             $roleRepo,
-            $permRepo,
+            new RolePermissionsHandler($roleRepo, $permRepo, $permissionRegistry),
             $accessHelper,
-            $permissionRegistry,
             $connectionHolder,
             new IdentifiedSessionRegistry(),
             $modeApplier,
@@ -2053,9 +2054,8 @@ final class RoleCommandTest extends TestCase
 
         $cmd = new RoleCommand(
             $roleRepo,
-            $permRepo,
+            new RolePermissionsHandler($roleRepo, $permRepo, new PermissionRegistry([])),
             $accessHelper,
-            new PermissionRegistry([]),
             $connectionHolder,
             new IdentifiedSessionRegistry(),
             $modeApplier,

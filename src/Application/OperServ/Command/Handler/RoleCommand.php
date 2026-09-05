@@ -15,11 +15,8 @@ use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\OperclassServiceActionsInterface;
-use App\Application\Security\PermissionRegistry;
-use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
-use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
 
@@ -36,9 +33,8 @@ final readonly class RoleCommand implements OperServCommandInterface
 {
     public function __construct(
         private OperRoleRepositoryInterface $roleRepository,
-        private OperPermissionRepositoryInterface $permissionRepository,
+        private RolePermissionsHandler $permissions,
         private IrcopAccessHelper $accessHelper,
-        private PermissionRegistry $permissionRegistry,
         private ActiveConnectionHolderInterface $connectionHolder,
         private IdentifiedSessionRegistry $identifiedRegistry,
         private IrcopModeApplier $modeApplier,
@@ -127,7 +123,7 @@ final readonly class RoleCommand implements OperServCommandInterface
                 $this->doList($context);
                 break;
             case 'PERMS':
-                $this->doPerms($context);
+                $this->permissions->handle($context);
                 break;
             case 'MODES':
                 $this->doModes($context);
@@ -219,232 +215,6 @@ final readonly class RoleCommand implements OperServCommandInterface
             $protected = $role->isProtected() ? ' [PROTECTED]' : '';
             $context->replyRaw(sprintf('  %-12s%-40s%s', $role->getName(), $role->getDescription(), $protected));
         }
-    }
-
-    private function doPerms(OperServContext $context): void
-    {
-        if (count($context->args) < 3) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.perms.syntax')]);
-
-            return;
-        }
-
-        $roleName = strtoupper($context->args[1]);
-        $action = strtoupper($context->args[2]);
-
-        $role = $this->roleRepository->findByName($roleName);
-        if (null === $role) {
-            $context->reply('role.not_found', ['%role%' => $roleName]);
-
-            return;
-        }
-
-        switch ($action) {
-            case 'LIST':
-                $this->listPerms($context, $role);
-                break;
-            case 'ADD':
-                $this->addPerm($context, $role);
-                break;
-            case 'DEL':
-                $this->delPerm($context, $role);
-                break;
-            case 'CLEAR':
-                $this->clearPerms($context, $role);
-                break;
-            default:
-                $context->reply('role.perms.unknown_action', ['%action%' => $action]);
-        }
-    }
-
-    private function listPerms(OperServContext $context, OperRole $role): void
-    {
-        $assignedPermissions = [];
-        foreach ($role->getPermissions() as $permission) {
-            $assignedPermissions[] = $permission->getName();
-        }
-
-        $allPermissions = $this->permissionRegistry->getAllPermissions();
-        $availablePermissions = array_diff($allPermissions, $assignedPermissions);
-
-        if (empty($assignedPermissions) && empty($availablePermissions)) {
-            $context->reply('role.perms.list.empty', ['%role%' => $role->getName()]);
-
-            return;
-        }
-
-        $context->reply('role.perms.list.header', ['%role%' => $role->getName()]);
-
-        if (!empty($assignedPermissions)) {
-            $context->reply('role.perms.list.assigned');
-            foreach ($assignedPermissions as $perm) {
-                $description = $this->resolvePermissionDescription($perm, $context);
-                if (str_starts_with($description, 'permissions.')) {
-                    $context->replyRaw(sprintf('  %s', $perm));
-                } else {
-                    $context->replyRaw(sprintf('  %s - %s', $perm, $description));
-                }
-            }
-        } else {
-            $context->reply('role.perms.list.none_assigned');
-        }
-
-        if (!empty($availablePermissions)) {
-            $context->reply('role.perms.list.available');
-            foreach ($availablePermissions as $perm) {
-                $description = $this->resolvePermissionDescription($perm, $context);
-                if (str_starts_with($description, 'permissions.')) {
-                    $context->replyRaw(sprintf('  %s', $perm));
-                } else {
-                    $context->replyRaw(sprintf('  %s - %s', $perm, $description));
-                }
-            }
-        } else {
-            $context->reply('role.perms.list.all_assigned');
-        }
-    }
-
-    private function addPerm(OperServContext $context, OperRole $role): void
-    {
-        if (count($context->args) < 4) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.perms.add.syntax')]);
-
-            return;
-        }
-
-        $permName = $context->args[3];
-
-        if ('ALL' === strtoupper($permName)) {
-            $this->addAllPerms($context, $role);
-
-            return;
-        }
-
-        $permission = $this->findOrCreatePermission($permName);
-
-        $resultKey = null === $permission
-            ? 'role.perms.not_found'
-            : ($role->hasPermission($permName) ? 'role.perms.already_has' : null);
-
-        if (null !== $resultKey) {
-            $context->reply($resultKey, match ($resultKey) {
-                'role.perms.not_found' => ['%perm%' => $permName],
-                default => ['%role%' => $role->getName(), '%perm%' => $permName],
-            });
-
-            return;
-        }
-
-        $role->addPermission($permission);
-        $this->roleRepository->save($role);
-
-        $context->reply('role.perms.add.done', ['%role%' => $role->getName(), '%perm%' => $permName]);
-    }
-
-    private function addAllPerms(OperServContext $context, OperRole $role): void
-    {
-        $allPermissions = $this->permissionRegistry->getAllPermissions();
-        $added = 0;
-        $skipped = 0;
-
-        foreach ($allPermissions as $permName) {
-            if ($role->hasPermission($permName)) {
-                ++$skipped;
-
-                continue;
-            }
-
-            $permission = $this->findOrCreatePermission($permName);
-
-            $role->addPermission($permission);
-            ++$added;
-        }
-
-        if ($added > 0) {
-            $this->roleRepository->save($role);
-        }
-
-        if (0 === $added && $skipped > 0) {
-            $context->reply('role.perms.add.all_skipped', ['%role%' => $role->getName()]);
-
-            return;
-        }
-
-        if (0 === $added) {
-            $context->reply('role.perms.add.all_empty');
-
-            return;
-        }
-
-        $context->reply('role.perms.add.all_done', ['%role%' => $role->getName(), '%count%' => (string) $added]);
-    }
-
-    private function findOrCreatePermission(string $permName): ?OperPermission
-    {
-        $permission = $this->permissionRepository->findByName($permName);
-        if (null !== $permission) {
-            return $permission;
-        }
-
-        $allPermissions = $this->permissionRegistry->getAllPermissions();
-        if (!in_array($permName, $allPermissions, true)) {
-            return null;
-        }
-
-        $permission = OperPermission::create($permName);
-        $this->permissionRepository->save($permission);
-
-        return $permission;
-    }
-
-    private function clearPerms(OperServContext $context, OperRole $role): void
-    {
-        $permissions = $role->getPermissions();
-        if ([] === $permissions) {
-            $context->reply('role.perms.clear.empty', ['%role%' => $role->getName()]);
-
-            return;
-        }
-
-        $count = count($permissions);
-
-        foreach ($permissions as $permission) {
-            $role->removePermission($permission);
-        }
-
-        $this->roleRepository->save($role);
-
-        $context->reply('role.perms.clear.done', ['%role%' => $role->getName(), '%count%' => (string) $count]);
-    }
-
-    private function delPerm(OperServContext $context, OperRole $role): void
-    {
-        if (count($context->args) < 4) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.perms.del.syntax')]);
-
-            return;
-        }
-
-        $permName = $context->args[3];
-
-        $permission = $this->permissionRepository->findByName($permName);
-        if (null === $permission) {
-            $context->reply('role.perms.not_found', ['%perm%' => $permName]);
-
-            return;
-        }
-
-        $errorKey = !$role->hasPermission($permName) ? 'role.perms.does_not_have' : ($role->isProtected() ? 'role.perms.protected' : null);
-        if (null !== $errorKey) {
-            $context->reply($errorKey, ['%role%' => $role->getName(), '%perm%' => $permName]);
-
-            return;
-        }
-
-        $role->removePermission($permission);
-        $this->roleRepository->save($role);
-
-        $context->reply('role.perms.del.done', ['%role%' => $role->getName(), '%perm%' => $permName]);
     }
 
     private function doModes(OperServContext $context): void
@@ -748,18 +518,5 @@ final readonly class RoleCommand implements OperServCommandInterface
         $this->eventDispatcher->dispatch(new OperRoleForcedVhostChangedEvent($role->getId(), $normalized));
 
         $context->reply('role.vhost.set.done', ['%role%' => $role->getName()]);
-    }
-
-    private function resolvePermissionDescription(string $perm, OperServContext $context): string
-    {
-        $domain = str_contains($perm, '.') ? strstr($perm, '.', true) : 'operserv';
-
-        $description = $context->transForDomain('permissions.' . $perm, $domain);
-
-        if (str_starts_with($description, 'permissions.') && 'operserv' !== $domain) {
-            $description = $context->trans('permissions.' . $perm);
-        }
-
-        return $description;
     }
 }
