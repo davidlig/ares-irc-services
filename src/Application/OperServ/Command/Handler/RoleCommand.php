@@ -4,22 +4,15 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\NickServ\VhostValidator;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
-use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\Port\EventBusInterface;
 use App\Domain\OperServ\Entity\OperRole;
-use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
-use App\Domain\OperServ\ValueObject\ForcedVhost;
 
 use function count;
-use function in_array;
 use function sprintf;
 use function strtoupper;
-use function trim;
 
 final readonly class RoleCommand implements OperServCommandInterface
 {
@@ -28,10 +21,8 @@ final readonly class RoleCommand implements OperServCommandInterface
         private RolePermissionsHandler $permissions,
         private RoleOperclassHandler $operclass,
         private RoleModesHandler $modes,
+        private RoleVhostHandler $vhost,
         private IrcopAccessHelper $accessHelper,
-        private ForcedVhostApplier $vhostApplier,
-        private VhostValidator $vhostValidator,
-        private EventBusInterface $eventDispatcher,
     ) {}
 
     public function getName(): string
@@ -119,7 +110,7 @@ final readonly class RoleCommand implements OperServCommandInterface
                 $this->modes->handle($context);
                 break;
             case 'VHOST':
-                $this->doVhost($context);
+                $this->vhost->handle($context);
                 break;
             case 'OPERCLASS':
                 if (!$this->operclass->isSupported()) {
@@ -205,90 +196,5 @@ final readonly class RoleCommand implements OperServCommandInterface
             $protected = $role->isProtected() ? ' [PROTECTED]' : '';
             $context->replyRaw(sprintf('  %-12s%-40s%s', $role->getName(), $role->getDescription(), $protected));
         }
-    }
-
-    private function doVhost(OperServContext $context): void
-    {
-        if (count($context->args) < 3) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.vhost.syntax')]);
-
-            return;
-        }
-
-        $roleName = strtoupper($context->args[1]);
-        $action = strtoupper($context->args[2]);
-
-        $role = $this->roleRepository->findByName($roleName);
-        if (null === $role) {
-            $context->reply('role.not_found', ['%role%' => $roleName]);
-
-            return;
-        }
-
-        switch ($action) {
-            case 'VIEW':
-                $this->viewVhost($context, $role);
-                break;
-            case 'SET':
-                $this->setVhost($context, $role);
-                break;
-            default:
-                $context->reply('role.vhost.unknown_action', ['%action%' => $action]);
-        }
-    }
-
-    private function viewVhost(OperServContext $context, OperRole $role): void
-    {
-        $pattern = $role->getForcedVhostPattern();
-
-        if (null === $pattern || '' === $pattern) {
-            $context->reply('role.vhost.view.empty', ['%role%' => $role->getName()]);
-
-            return;
-        }
-
-        $context->reply('role.vhost.view.header', ['%role%' => $role->getName()]);
-        $context->reply('role.vhost.view.line', ['%pattern%' => $pattern]);
-        $context->reply('role.vhost.view.example', ['%pattern%' => $pattern]);
-    }
-
-    private function setVhost(OperServContext $context, OperRole $role): void
-    {
-        $patternArg = $context->args[3] ?? '';
-
-        $normalized = trim($patternArg);
-        $clearKeywords = ['OFF', ''];
-
-        if ('' === $normalized || in_array(strtoupper($normalized), $clearKeywords, true)) {
-            $role->changeForcedVhostPattern(null);
-            $this->roleRepository->save($role);
-
-            $this->vhostApplier->updateVhostForRole($role->getId(), null);
-            $this->eventDispatcher->dispatch(new OperRoleForcedVhostChangedEvent($role->getId(), null));
-
-            $context->reply('role.vhost.set.cleared', ['%role%' => $role->getName()]);
-
-            return;
-        }
-
-        if (!$this->vhostValidator->isValid($normalized)) {
-            $context->reply('role.vhost.set.invalid');
-
-            return;
-        }
-
-        if (!ForcedVhost::isValidPattern($normalized)) {
-            $context->reply('role.vhost.set.invalid');
-
-            return;
-        }
-
-        $role->changeForcedVhostPattern($normalized);
-        $this->roleRepository->save($role);
-
-        $this->vhostApplier->updateVhostForRole($role->getId(), $normalized);
-        $this->eventDispatcher->dispatch(new OperRoleForcedVhostChangedEvent($role->getId(), $normalized));
-
-        $context->reply('role.vhost.set.done', ['%role%' => $role->getName()]);
     }
 }

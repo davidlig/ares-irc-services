@@ -14,6 +14,7 @@ use App\Application\OperServ\Command\Handler\RoleCommand;
 use App\Application\OperServ\Command\Handler\RoleModesHandler;
 use App\Application\OperServ\Command\Handler\RoleOperclassHandler;
 use App\Application\OperServ\Command\Handler\RolePermissionsHandler;
+use App\Application\OperServ\Command\Handler\RoleVhostHandler;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Command\OperServNotifierInterface;
@@ -50,6 +51,7 @@ use ReflectionClass;
 #[CoversClass(RoleModesHandler::class)]
 #[CoversClass(RoleOperclassHandler::class)]
 #[CoversClass(RolePermissionsHandler::class)]
+#[CoversClass(RoleVhostHandler::class)]
 final class RoleCommandTest extends TestCase
 {
     private function createAccessHelper(bool $isRoot): IrcopAccessHelper
@@ -121,10 +123,13 @@ final class RoleCommandTest extends TestCase
                 new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $connectionHolder, $ircopRepo, $nickRepo),
             ),
             new RoleModesHandler($roleRepo, $connectionHolder, $modeApplier),
+            new RoleVhostHandler(
+                $roleRepo,
+                $vhostApplier,
+                new VhostValidator('virtual'),
+                $eventDispatcher ?? $this->createStub(EventBusInterface::class),
+            ),
             $accessHelper,
-            $vhostApplier,
-            new VhostValidator('virtual'),
-            $eventDispatcher ?? $this->createStub(EventBusInterface::class),
         );
     }
 
@@ -2067,10 +2072,13 @@ final class RoleCommandTest extends TestCase
                 new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $connectionHolder, $ircopRepo, $nickRepo),
             ),
             new RoleModesHandler($roleRepo, $connectionHolder, $modeApplier),
+            new RoleVhostHandler(
+                $roleRepo,
+                $vhostApplier,
+                new VhostValidator('virtual'),
+                $this->createStub(EventBusInterface::class),
+            ),
             $accessHelper,
-            $vhostApplier,
-            new VhostValidator('virtual'),
-            $this->createStub(EventBusInterface::class),
         );
         $cmd->execute($this->createContext($sender, ['MODES', 'ADMIN', 'SET', '+o'], $notifier, $translator, $registry, $accessHelper));
 
