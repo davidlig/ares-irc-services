@@ -93,10 +93,13 @@ php bin/console lint:container
 # Step 3: Verify YAML files are valid
 php bin/console lint:yaml . --exclude vendor/ --parse-tags
 
-# Step 4: Format code
+# Step 4: Static analysis with PHPStan (NON-NEGOTIABLE: MUST pass with 0 errors)
+./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress
+
+# Step 5: Format code
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php
 
-# Step 5: Run the full suite WITH coverage exactly ONCE (tests + gate)
+# Step 6: Run the full suite WITH coverage exactly ONCE (tests + gate)
 ./scripts/check-coverage.sh 100 --issues
 ```
 
@@ -104,18 +107,20 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags
 - `php -l` catches syntax errors instantly
 - `lint:container` catches DI errors early
 - `lint:yaml` catches configuration errors
-- `php-cs-fixer` ensures consistent style
+- `phpstan` enforces strict typing and static safety at maximum level (fixing all reported issues is non-negotiable)
+- `php-cs-fixer` ensures consistent style on verified, type-safe code
 - `check-coverage.sh` validates functionality AND the coverage floor in a single PHPUnit execution
 
 **Final verification (NON-NEGOTIABLE):** run `check-coverage.sh` only after the whole implementation is complete. It is the only full-suite run. NEVER run a standalone full PHPUnit suite immediately before or after it. Focused PHPUnit file runs belong only to the development loop above.
 
 If any step fails, do NOT proceed. Fix the error, re-run the failed step, and only continue when it passes.
 
-**Single command for phases 2-5:**
+**Single command for phases 2-6:**
 
 ```bash
 php bin/console lint:container && \
 php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
+./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress && \
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
 ./scripts/check-coverage.sh 100 --issues
 ```

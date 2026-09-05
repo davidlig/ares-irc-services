@@ -192,7 +192,7 @@ parameters:
 - [ ] All protocol-specific wire code stays in `<Name>/` namespace
 - [ ] `docs/<name>/` contains protocol documentation
 - [ ] New/modified test files pass a focused `./vendor/bin/phpunit --no-coverage --display-all-issues Test1.php Test2.php ...` run during development
-- [ ] After the complete implementation, the pre-commit chain passes: `lint:container`, `lint:yaml`, `php-cs-fixer`, `./scripts/check-coverage.sh 100 --issues` (the only full-suite run)
+- [ ] After the complete implementation, the pre-commit chain passes: `lint:container`, `lint:yaml`, `phpstan` (zero errors), `php-cs-fixer`, `./scripts/check-coverage.sh 100 --issues` (the only full-suite run)
 
 ## Reference Implementations
 

@@ -34,9 +34,10 @@ When you need documentation for Symfony 7.4, PHP 8.5, Doctrine ORM 3.6, PHPUnit 
 # 1. PHP syntax check (on modified files)
 php -l path/to/file.php
 
-# 2–5. Single command:
+# 2–6. Single command:
 php bin/console lint:container && \
 php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
+./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress && \
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php && \
 ./scripts/check-coverage.sh 100 --issues
 ```
@@ -47,9 +48,13 @@ php bin/console lint:yaml . --exclude vendor/ --parse-tags && \
 - **Only after the whole implementation is complete:** run `./scripts/check-coverage.sh 100 --issues` once. The script runs the full PHPUnit suite WITH coverage and enforces the gate.
 - NEVER run a standalone full PHPUnit suite immediately before or after `check-coverage.sh`; that executes the suite twice. NEVER run `check-coverage.sh` after each test file or intermediate feature.
 
+**PHPStan Analysis (NON-NEGOTIABLE):**
+- `./vendor/bin/phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress` MUST pass with ZERO errors.
+- Fixing every single issue reported by PHPStan (type errors, missing iterable value types, dead code, invalid parameters, return types) is MANDATORY before proceeding to code formatting and test coverage.
+
 If any step fails, fix it and re-run from the failed step — never skip ahead.
 
-**Commit order:** implement → php-cs-fixer → commit. Never commit unformatted code.
+**Commit order:** implement → fix phpstan errors → php-cs-fixer → commit. Never commit unformatted code or code with PHPStan errors.
 
 ---
 
@@ -217,7 +222,7 @@ Follow this deterministic step-by-step workflow:
    - PHPUnit tests with `#[CoversClass(ClassName::class)]` for all layers.
    - Use `createStub()` for unverified stubs, `createMock()` ONLY when asserting `expects()`.
    - After writing tests, run only the new/modified test files with `./vendor/bin/phpunit --no-coverage --display-all-issues Test1.php Test2.php ...`.
-   - Once the complete implementation is finished, run the Pre-Commit chain: `lint:container`, `lint:yaml`, `php-cs-fixer`, `./scripts/check-coverage.sh 100 --issues` (the only full-suite run).
+   - Once the complete implementation is finished, run the Pre-Commit chain: `lint:container`, `lint:yaml`, `phpstan` (zero errors), `php-cs-fixer`, `./scripts/check-coverage.sh 100 --issues` (the only full-suite run).
    - Live MCP validation against temporary resources (when MCP is available).
 
 ### 10.2 Playbook: Implementing a New IRCd Protocol

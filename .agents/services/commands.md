@@ -224,7 +224,7 @@ When creating a new command, complete ALL these steps:
 6. **Data Integrity / Drop Cleanup** — if storing `nickId` or `channelId`, subscribe to `NickDropEvent` or `ChannelDropEvent` (see `.agents/architecture/drop-cleanup.md`).
 7. **Tests (100% Coverage)** — test all branches, conditions, permissions, argument count checks with PHPUnit (see `.agents/services/commands-testing.md`).
 8. **Test loop** — after writing tests, run only the new/modified files with `./vendor/bin/phpunit --no-coverage --display-all-issues Test1.php Test2.php ...`.
-9. **Pre-Commit Chain** — only after the complete implementation, run `lint:container`, `lint:yaml`, `php-cs-fixer`, then `./scripts/check-coverage.sh 100 --issues` (the only full-suite run).
+9. **Pre-Commit Chain** — only after the complete implementation, run `lint:container`, `lint:yaml`, `phpstan` (zero errors), `php-cs-fixer`, then `./scripts/check-coverage.sh 100 --issues` (the only full-suite run).
 10. **Live MCP validation** — when IRC/MariaDB MCPs are available, smoke-test the command against temporary resources only (see `.agents/services/live-mcp-testing.md`).
 
 ## Context Reference
