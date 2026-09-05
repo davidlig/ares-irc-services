@@ -9,17 +9,13 @@ use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\OperServ\IrcopAccessHelper;
-use App\Application\OperServ\IrcopModeApplier;
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
 
-use function array_diff;
 use function count;
-use function implode;
 use function in_array;
 use function sprintf;
 use function strtoupper;
@@ -31,9 +27,8 @@ final readonly class RoleCommand implements OperServCommandInterface
         private OperRoleRepositoryInterface $roleRepository,
         private RolePermissionsHandler $permissions,
         private RoleOperclassHandler $operclass,
+        private RoleModesHandler $modes,
         private IrcopAccessHelper $accessHelper,
-        private ActiveConnectionHolderInterface $connectionHolder,
-        private IrcopModeApplier $modeApplier,
         private ForcedVhostApplier $vhostApplier,
         private VhostValidator $vhostValidator,
         private EventBusInterface $eventDispatcher,
@@ -121,7 +116,7 @@ final readonly class RoleCommand implements OperServCommandInterface
                 $this->permissions->handle($context);
                 break;
             case 'MODES':
-                $this->doModes($context);
+                $this->modes->handle($context);
                 break;
             case 'VHOST':
                 $this->doVhost($context);
@@ -209,101 +204,6 @@ final readonly class RoleCommand implements OperServCommandInterface
         foreach ($roles as $role) {
             $protected = $role->isProtected() ? ' [PROTECTED]' : '';
             $context->replyRaw(sprintf('  %-12s%-40s%s', $role->getName(), $role->getDescription(), $protected));
-        }
-    }
-
-    private function doModes(OperServContext $context): void
-    {
-        if (count($context->args) < 3) {
-            $context->reply('error.syntax', ['%syntax%' => $context->trans('role.modes.syntax')]);
-
-            return;
-        }
-
-        $roleName = strtoupper($context->args[1]);
-        $action = strtoupper($context->args[2]);
-
-        $role = $this->roleRepository->findByName($roleName);
-        if (null === $role) {
-            $context->reply('role.not_found', ['%role%' => $roleName]);
-
-            return;
-        }
-
-        switch ($action) {
-            case 'VIEW':
-                $this->viewModes($context, $role);
-                break;
-            case 'SET':
-                $this->setModes($context, $role);
-                break;
-            default:
-                $context->reply('role.modes.unknown_action', ['%action%' => $action]);
-        }
-    }
-
-    private function viewModes(OperServContext $context, OperRole $role): void
-    {
-        $modes = $role->getUserModes();
-
-        if (empty($modes)) {
-            $context->reply('role.modes.view.empty', ['%role%' => $role->getName()]);
-
-            return;
-        }
-
-        $context->reply('role.modes.view.header', ['%role%' => $role->getName()]);
-        $modesStr = '+' . implode('', $modes);
-        $context->reply('role.modes.view.line', ['%modes%' => $modesStr]);
-    }
-
-    private function setModes(OperServContext $context, OperRole $role): void
-    {
-        $modesArg = $context->args[3] ?? '';
-
-        $protocolModule = $this->connectionHolder->getProtocolModule();
-        if (null === $protocolModule) {
-            $context->reply('role.modes.set.no_irc_user_modes');
-
-            return;
-        }
-
-        $userModeSupport = $protocolModule->getUserModeSupport();
-        $validModes = $userModeSupport->getIrcOpUserModes();
-
-        if (empty($validModes)) {
-            $context->reply('role.modes.set.not_supported');
-
-            return;
-        }
-
-        $oldModes = $role->getUserModes();
-
-        if ('' === $modesArg) {
-            $role->changeUserModes([]);
-            $this->roleRepository->save($role);
-            $this->modeApplier->updateModesForRole($role->getId(), $oldModes, []);
-            $context->reply('role.modes.set.cleared', ['%role%' => $role->getName()]);
-        } else {
-            $modesStr = ltrim($modesArg, '+');
-            $modes = str_split($modesStr);
-            $modes = array_unique($modes);
-
-            $invalidModes = array_diff($modes, $validModes);
-            if (!empty($invalidModes)) {
-                $context->reply('role.modes.set.invalid_modes', [
-                    '%invalid%' => '+' . implode('', $invalidModes),
-                    '%valid%' => '+' . implode('', $validModes),
-                ]);
-            } else {
-                $role->changeUserModes($modes);
-                $this->roleRepository->save($role);
-                $this->modeApplier->updateModesForRole($role->getId(), $oldModes, $modes);
-                $context->reply('role.modes.set.done', [
-                    '%modes%' => '+' . implode('', $modes),
-                    '%role%' => $role->getName(),
-                ]);
-            }
         }
     }
 

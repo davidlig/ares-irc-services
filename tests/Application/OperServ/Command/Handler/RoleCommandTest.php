@@ -11,6 +11,7 @@ use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
 use App\Application\OperServ\Command\Handler\RoleCommand;
+use App\Application\OperServ\Command\Handler\RoleModesHandler;
 use App\Application\OperServ\Command\Handler\RoleOperclassHandler;
 use App\Application\OperServ\Command\Handler\RolePermissionsHandler;
 use App\Application\OperServ\Command\OperServCommandRegistry;
@@ -46,6 +47,7 @@ use Psr\Log\NullLogger;
 use ReflectionClass;
 
 #[CoversClass(RoleCommand::class)]
+#[CoversClass(RoleModesHandler::class)]
 #[CoversClass(RoleOperclassHandler::class)]
 #[CoversClass(RolePermissionsHandler::class)]
 final class RoleCommandTest extends TestCase
@@ -118,9 +120,8 @@ final class RoleCommandTest extends TestCase
                 $connectionHolder,
                 new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $connectionHolder, $ircopRepo, $nickRepo),
             ),
+            new RoleModesHandler($roleRepo, $connectionHolder, $modeApplier),
             $accessHelper,
-            $connectionHolder,
-            $modeApplier,
             $vhostApplier,
             new VhostValidator('virtual'),
             $eventDispatcher ?? $this->createStub(EventBusInterface::class),
@@ -2065,9 +2066,8 @@ final class RoleCommandTest extends TestCase
                 $connectionHolder,
                 new IrcopOperclassApplier(new IdentifiedSessionRegistry(), $connectionHolder, $ircopRepo, $nickRepo),
             ),
+            new RoleModesHandler($roleRepo, $connectionHolder, $modeApplier),
             $accessHelper,
-            $connectionHolder,
-            $modeApplier,
             $vhostApplier,
             new VhostValidator('virtual'),
             $this->createStub(EventBusInterface::class),
