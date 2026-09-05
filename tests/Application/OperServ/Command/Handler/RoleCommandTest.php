@@ -2595,7 +2595,7 @@ final class RoleCommandTest extends TestCase
 
         self::assertContains('role.perms.clear.done', $messages);
         self::assertCount(1, $savedRoles);
-        self::assertTrue($savedRoles[0]->getPermissions()->isEmpty());
+        self::assertSame([], $savedRoles[0]->getPermissions());
     }
 
     #[Test]

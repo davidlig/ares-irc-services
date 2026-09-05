@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Domain\OperServ\Entity;
 
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
+use function array_filter;
+use function array_values;
+use function in_array;
 use function is_array;
 
 class OperRole
@@ -19,19 +19,14 @@ class OperRole
 
     private bool $protected = false;
 
-    /** @var Collection<int, OperPermission> */
-    private Collection $permissions;
+    /** @var iterable<int, OperPermission> */
+    private iterable $permissions = [];
 
     private ?string $userModes = null;
 
     private ?string $forcedVhostPattern = null;
 
     private ?string $operclass = null;
-
-    public function __construct()
-    {
-        $this->permissions = new ArrayCollection();
-    }
 
     public static function create(string $name, string $description = '', bool $protected = false): self
     {
@@ -68,27 +63,31 @@ class OperRole
         return $this->protected;
     }
 
-    /** @return Collection<int, OperPermission> */
-    public function getPermissions(): Collection
+    /** @return list<OperPermission> */
+    public function getPermissions(): array
     {
-        return $this->permissions;
+        return [...$this->permissions];
     }
 
     public function hasPermission(string $permissionName): bool
     {
-        return array_any($this->permissions->toArray(), static fn ($permission) => $permission->getName() === $permissionName);
+        return array_any($this->getPermissions(), static fn ($permission) => $permission->getName() === $permissionName);
     }
 
     public function addPermission(OperPermission $permission): void
     {
-        if (!$this->permissions->contains($permission)) {
-            $this->permissions->add($permission);
+        $permissions = [...$this->permissions];
+        if (!in_array($permission, $permissions, true)) {
+            $this->permissions = [...$permissions, $permission];
         }
     }
 
     public function removePermission(OperPermission $permission): void
     {
-        $this->permissions->removeElement($permission);
+        $this->permissions = array_values(array_filter(
+            [...$this->permissions],
+            static fn (OperPermission $current): bool => $current !== $permission,
+        ));
     }
 
     /**

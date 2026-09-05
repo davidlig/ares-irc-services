@@ -211,4 +211,47 @@ final class OperRoleDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
         self::assertFalse($this->repository->hasPermission($role->getId(), 'operserv.kill'));
     }
+
+    #[Test]
+    public function addingPermissionAfterHydrationPersistsAssociation(): void
+    {
+        $role = $this->createRole('Admin');
+        $permission = $this->createPermission(OperPermission::KILL);
+        $this->entityManager->persist($permission);
+        $this->repository->save($role);
+        $roleId = $role->getId();
+        $this->flushAndClear();
+
+        $hydratedRole = $this->repository->find($roleId);
+        self::assertNotNull($hydratedRole);
+        $hydratedPermission = $this->entityManager->find(OperPermission::class, $permission->getId());
+        self::assertNotNull($hydratedPermission);
+        $hydratedRole->addPermission($hydratedPermission);
+        $this->repository->save($hydratedRole);
+        $this->flushAndClear();
+
+        self::assertTrue($this->repository->hasPermission($roleId, OperPermission::KILL));
+    }
+
+    #[Test]
+    public function removingPermissionAfterHydrationPersistsAssociation(): void
+    {
+        $role = $this->createRole('Admin');
+        $permission = $this->createPermission(OperPermission::KILL);
+        $this->entityManager->persist($permission);
+        $role->addPermission($permission);
+        $this->repository->save($role);
+        $roleId = $role->getId();
+        $this->flushAndClear();
+
+        $hydratedRole = $this->repository->find($roleId);
+        self::assertNotNull($hydratedRole);
+        $hydratedPermissions = $hydratedRole->getPermissions();
+        self::assertCount(1, $hydratedPermissions);
+        $hydratedRole->removePermission($hydratedPermissions[0]);
+        $this->repository->save($hydratedRole);
+        $this->flushAndClear();
+
+        self::assertFalse($this->repository->hasPermission($roleId, OperPermission::KILL));
+    }
 }

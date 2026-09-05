@@ -51,6 +51,6 @@ final readonly class OperRoleDoctrineRepository implements OperRoleRepositoryInt
             return false;
         }
 
-        return array_any($role->getPermissions()->toArray(), static fn ($permission) => $permission->getName() === $permissionName);
+        return $role->hasPermission($permissionName);
     }
 }

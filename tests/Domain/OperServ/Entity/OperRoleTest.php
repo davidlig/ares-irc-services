@@ -6,7 +6,6 @@ namespace App\Tests\Domain\OperServ\Entity;
 
 use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
-use Doctrine\Common\Collections\Collection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -81,14 +80,13 @@ final class OperRoleTest extends TestCase
     }
 
     #[Test]
-    public function getPermissionsReturnsEmptyCollectionInitially(): void
+    public function getPermissionsReturnsEmptyArrayInitially(): void
     {
         $role = OperRole::create('Test');
 
         $permissions = $role->getPermissions();
 
-        self::assertInstanceOf(Collection::class, $permissions);
-        self::assertCount(0, $permissions);
+        self::assertSame([], $permissions);
     }
 
     #[Test]
@@ -100,7 +98,7 @@ final class OperRoleTest extends TestCase
         $role->addPermission($permission);
 
         self::assertCount(1, $role->getPermissions());
-        self::assertTrue($role->getPermissions()->contains($permission));
+        self::assertContains($permission, $role->getPermissions());
     }
 
     #[Test]
@@ -127,7 +125,7 @@ final class OperRoleTest extends TestCase
         $role->removePermission($permission);
 
         self::assertCount(0, $role->getPermissions());
-        self::assertFalse($role->getPermissions()->contains($permission));
+        self::assertNotContains($permission, $role->getPermissions());
     }
 
     #[Test]

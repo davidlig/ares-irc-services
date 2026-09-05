@@ -399,15 +399,16 @@ final readonly class RoleCommand implements OperServCommandInterface
 
     private function clearPerms(OperServContext $context, OperRole $role): void
     {
-        if ($role->getPermissions()->isEmpty()) {
+        $permissions = $role->getPermissions();
+        if ([] === $permissions) {
             $context->reply('role.perms.clear.empty', ['%role%' => $role->getName()]);
 
             return;
         }
 
-        $count = $role->getPermissions()->count();
+        $count = count($permissions);
 
-        foreach ($role->getPermissions()->toArray() as $permission) {
+        foreach ($permissions as $permission) {
             $role->removePermission($permission);
         }
 
