@@ -49,7 +49,7 @@ final class UdbConnectionLifecycleSubscriberTest extends TestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $coordinator->onLinkReady($this->createConnection());
 
-        self::assertSame([':002 DB 001 HEL 4 services.example.net'], $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.example\.net [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
     }
 
     #[Test]

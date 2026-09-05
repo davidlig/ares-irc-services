@@ -26,4 +26,9 @@ final class RecordingSessionState implements UdbSessionStateInterface
     {
         $this->queue[] = $mutation;
     }
+
+    public function isOperclassGloballyAvailable(string $operclass): bool
+    {
+        return false;
+    }
 }

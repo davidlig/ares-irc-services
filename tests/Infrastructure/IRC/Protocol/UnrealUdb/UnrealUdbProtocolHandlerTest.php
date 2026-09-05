@@ -13,12 +13,27 @@ use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
+
+use function fclose;
+use function flock;
+use function fopen;
+use function mkdir;
+use function rmdir;
+use function sys_get_temp_dir;
+use function uniqid;
+use function unlink;
+
+use const LOCK_EX;
+use const LOCK_NB;
+use const LOCK_UN;
 
 #[CoversClass(UnrealUdbProtocolHandler::class)]
 final class UnrealUdbProtocolHandlerTest extends TestCase
@@ -65,6 +80,71 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     public function getProtocolNameReturnsUnrealUdb(): void
     {
         self::assertSame('unrealudb', $this->createHandler()->getProtocolName());
+    }
+
+    #[Test]
+    public function performHandshakeAcquiresTheUdbLockBeforeTheHandshake(): void
+    {
+        $directory = sys_get_temp_dir() . '/ares-udb-handler-' . uniqid('', true);
+        mkdir($directory);
+
+        try {
+            $handler = new UnrealUdbProtocolHandler(
+                '002',
+                new UdbSessionCoordinator(
+                    '002',
+                    $this->createStub(UdbBlockStateRepositoryInterface::class),
+                    $this->createStub(UdbSnapshotProviderInterface::class),
+                ),
+                new UdbSessionLock($directory),
+            );
+
+            $handler->performHandshake($this->createConnection(), $this->createServerLink());
+
+            self::assertStringStartsWith('PASS :', $this->written[0] ?? '');
+        } finally {
+            @rmdir($directory);
+        }
+    }
+
+    #[Test]
+    public function performHandshakeFailsWhenTheUdbDirectoryIsLocked(): void
+    {
+        $directory = sys_get_temp_dir() . '/ares-udb-handler-' . uniqid('', true);
+        mkdir($directory);
+        $foreign = fopen($directory . '/.udb.lock', 'c');
+        self::assertNotFalse($foreign);
+        self::assertTrue(flock($foreign, LOCK_EX | LOCK_NB));
+
+        try {
+            $handler = new UnrealUdbProtocolHandler(
+                '002',
+                new UdbSessionCoordinator(
+                    '002',
+                    $this->createStub(UdbBlockStateRepositoryInterface::class),
+                    $this->createStub(UdbSnapshotProviderInterface::class),
+                ),
+                new UdbSessionLock($directory),
+            );
+
+            $this->expectException(RuntimeException::class);
+            $handler->performHandshake($this->createConnection(), $this->createServerLink());
+        } finally {
+            flock($foreign, LOCK_UN);
+            fclose($foreign);
+            @unlink($directory . '/.udb.lock');
+            @rmdir($directory);
+        }
+    }
+
+    #[Test]
+    public function handleIncomingTicksTheCoordinator(): void
+    {
+        $coordinator = $this->createMock(UdbSessionCoordinator::class);
+        $coordinator->expects(self::once())->method('tick');
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator);
+
+        $handler->handleIncoming(new IRCMessage(command: 'PING', params: ['123']), $this->createConnection());
     }
 
     #[Test]
@@ -127,7 +207,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
 
         self::assertContains(':002 EOS', $this->written);
-        self::assertContains(':002 DB 001 HEL 4 services.test.local', $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.test\.local [0-9a-f]{16} OCL OCLG$/m', implode("\n", $this->written));
     }
 
     #[Test]
@@ -156,7 +236,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
 
         self::assertContains(':002 EOS', $this->written);
-        self::assertContains(':002 DB 001 HEL 4 services.test.local', $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.test\.local [0-9a-f]{16} OCL OCLG$/m', implode("\n", $this->written));
     }
 
     #[Test]
@@ -169,11 +249,11 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->performHandshake($connection, $this->createServerLink());
         $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['NOQUIT', 'SID=001']), $connection);
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['ircd.example.net', '1'], trailing: 'IRCd'), $connection);
-        $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', 'services.test.local']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', 'services.test.local', '0123456789abcdef', 'OCL', 'OCLG']), $connection);
         $handler->handleIncoming(new IRCMessage(command: 'EOS', prefix: '001'), $connection);
 
-        self::assertContains(':002 DB 001 HEL 4 ACK', $this->written);
-        self::assertContains(':002 DB 001 HEL 4 services.test.local', $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/m', implode("\n", $this->written));
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.test\.local [0-9a-f]{16} OCL OCLG$/m', implode("\n", $this->written));
     }
 
     #[Test]
@@ -183,9 +263,13 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler = $this->createHandler();
         $connection = $this->createConnection();
 
-        $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', 'ircd.example.net']), $connection);
+        $handler->performHandshake($connection, $this->createServerLink());
+        $this->written = [];
+        $handler->handleIncoming(new IRCMessage(command: 'PROTOCTL', params: ['SID=001']), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['ircd.example.net', '1'], trailing: 'IRCd'), $connection);
+        $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', 'ircd.example.net', '0123456789abcdef', 'OCL']), $connection);
 
-        self::assertSame([':002 DB 001 HEL 4 ACK'], $this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
     }
 
     #[Test]
@@ -198,7 +282,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
             $this->createStub(UdbSnapshotProviderInterface::class),
             $logger,
         );
-        $handler = new UnrealUdbProtocolHandler('002', $coordinator, $logger);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, logger: $logger);
 
         $this->written = [];
         $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'BOGUS']), $this->createConnection());

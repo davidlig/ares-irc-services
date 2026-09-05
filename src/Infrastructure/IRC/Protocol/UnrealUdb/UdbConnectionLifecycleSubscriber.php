@@ -16,6 +16,7 @@ final readonly class UdbConnectionLifecycleSubscriber implements EventSubscriber
 {
     public function __construct(
         private UdbSessionCoordinator $coordinator,
+        private UdbSessionLock $lock = new UdbSessionLock(''),
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -28,5 +29,6 @@ final readonly class UdbConnectionLifecycleSubscriber implements EventSubscriber
     public function onConnectionLost(ConnectionLostEvent $event): void
     {
         $this->coordinator->reset();
+        $this->lock->release();
     }
 }

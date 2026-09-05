@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\Udb\Doctrine;
 
+use App\Domain\Udb\Entity\UdbAuthorityState;
 use App\Domain\Udb\Entity\UdbBlockState;
 use App\Domain\Udb\Entity\UdbRecord;
+use App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface;
 use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
 use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
+use App\Infrastructure\Udb\Doctrine\UdbAuthorityStateDoctrineRepository;
 use App\Infrastructure\Udb\Doctrine\UdbBlockStateDoctrineRepository;
 use App\Infrastructure\Udb\Doctrine\UdbRecordDoctrineRepository;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
@@ -17,6 +20,7 @@ use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(UdbRecordDoctrineRepository::class)]
 #[CoversClass(UdbBlockStateDoctrineRepository::class)]
+#[CoversClass(UdbAuthorityStateDoctrineRepository::class)]
 #[Group('integration')]
 final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 {
@@ -24,11 +28,14 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
 
     private UdbBlockStateRepositoryInterface $states;
 
+    private UdbAuthorityStateRepositoryInterface $authority;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->records = new UdbRecordDoctrineRepository($this->entityManager);
         $this->states = new UdbBlockStateDoctrineRepository($this->entityManager);
+        $this->authority = new UdbAuthorityStateDoctrineRepository($this->entityManager);
     }
 
     #[Test]
@@ -80,6 +87,21 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         $this->flushAndClear();
 
         self::assertSame(['nick::vhost' => 'v'], $this->records->recordsByBlock('N'));
+    }
+
+    #[Test]
+    public function replaceBlockReplacesTheBlockWithoutTouchingOtherBlocks(): void
+    {
+        $this->records->upsert('N', 'old::vhost', 'stale.example.net');
+        $this->records->upsert('N', 'old::pass', 'stale-hash');
+        $this->records->upsert('S', 'propagator', 'hub1.example');
+        $this->flushAndClear();
+
+        $this->records->replaceBlock('N', ['fresh::vhost' => 'new.example.net']);
+        $this->flushAndClear();
+
+        self::assertSame(['fresh::vhost' => 'new.example.net'], $this->records->recordsByBlock('N'));
+        self::assertSame(['propagator' => 'hub1.example'], $this->records->recordsByBlock('S'));
     }
 
     #[Test]
@@ -141,5 +163,21 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertSame('1.2.3.4::clones', $stored->getIdentityPath());
         self::assertSame('*5', $stored->getValue());
         self::assertNotNull($stored->getUpdatedAt());
+    }
+
+    #[Test]
+    public function authorityRequiresApprovalAndPersistsItsFingerprint(): void
+    {
+        self::assertFalse($this->authority->isApproved());
+        self::assertInstanceOf(UdbAuthorityState::class, $this->authority->state());
+
+        $this->authority->approve(str_repeat('b', 64));
+        $this->flushAndClear();
+
+        self::assertTrue($this->authority->isApproved());
+        self::assertSame(str_repeat('b', 64), $this->authority->state()->getFingerprint());
+
+        $this->authority->revoke();
+        self::assertFalse($this->authority->isApproved());
     }
 }

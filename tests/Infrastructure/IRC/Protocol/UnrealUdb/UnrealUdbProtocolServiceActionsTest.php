@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
+use App\Application\Port\UdbRecordWriterInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -64,6 +66,33 @@ final class UnrealUdbProtocolServiceActionsTest extends TestCase
         $actions->setUserMode('001', '001ABCD', '+i');
 
         self::assertSame([], $this->written);
+    }
+
+    #[Test]
+    public function setUserOperclassRequiresReadyOclgAndDeletesWhenCleared(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $state = $this->createStub(UdbSessionStateInterface::class);
+        $state->method('isOperclassGloballyAvailable')->willReturn(false);
+        $writer->expects(self::once())->method('delete')->with('N', 'TestNick::oper');
+        $writer->expects(self::never())->method('insert');
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state);
+
+        $actions->setUserOperclass('001', '001ABCD', 'TestNick', 'services:netadmin');
+        $actions->setUserOperclass('001', '001ABCD', 'TestNick', null);
+    }
+
+    #[Test]
+    public function setUserOperclassInsertsWhenTheOclgViewIsReady(): void
+    {
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $state = $this->createStub(UdbSessionStateInterface::class);
+        $state->method('isOperclassGloballyAvailable')->willReturn(true);
+        $writer->expects(self::once())->method('insert')->with('N', 'TestNick::oper', 'services:netadmin');
+        $writer->expects(self::never())->method('delete');
+        $actions = new UnrealUdbProtocolServiceActions($this->connectionHolder, $writer, $state);
+
+        $actions->setUserOperclass('001', '001ABCD', 'TestNick', 'services:netadmin');
     }
 
     #[Test]

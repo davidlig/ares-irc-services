@@ -88,6 +88,24 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
         $this->em->clear();
     }
 
+    public function replaceBlock(string $block, array $records): void
+    {
+        $this->em->wrapInTransaction(function () use ($block, $records): void {
+            $this->em
+                ->createQuery('DELETE FROM App\Domain\Udb\Entity\UdbRecord r WHERE r.block = :block')
+                ->setParameter('block', $block)
+                ->execute();
+
+            foreach ($records as $path => $value) {
+                $this->em->persist(new UdbRecord($block, $path, $value));
+            }
+
+            $this->em->flush();
+        });
+
+        $this->em->clear();
+    }
+
     private function findRecord(string $block, string $path): ?UdbRecord
     {
         $record = $this->em

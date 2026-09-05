@@ -28,6 +28,10 @@ final class UdbFrameTest extends TestCase
             checksum: 'ABCDEF12',
             path: 'a::b',
             value: 'v',
+            epoch: '0123456789abcdef',
+            capabilities: ['OCL', 'OCLG'],
+            status: 'READY',
+            count: 1,
         );
 
         self::assertSame(UdbFrameKind::Put, $frame->kind);
@@ -39,8 +43,12 @@ final class UdbFrameTest extends TestCase
         self::assertSame('a::b', $frame->path);
         self::assertSame('v', $frame->value);
         self::assertNull($frame->propagator);
+        self::assertSame('0123456789abcdef', $frame->epoch);
+        self::assertSame(['OCL', 'OCLG'], $frame->capabilities);
         self::assertNull($frame->subcommand);
         self::assertNull($frame->errorCode);
+        self::assertSame('READY', $frame->status);
+        self::assertSame(1, $frame->count);
     }
 
     #[Test]
@@ -59,5 +67,8 @@ final class UdbFrameTest extends TestCase
         self::assertSame('DEL', UdbFrameKind::Del->value);
         self::assertSame('DRP', UdbFrameKind::Drp->value);
         self::assertSame('OPT', UdbFrameKind::Opt->value);
+        self::assertSame('OCLG_BEGIN', UdbFrameKind::OclgBegin->value);
+        self::assertSame('OCLG_ITEM', UdbFrameKind::OclgItem->value);
+        self::assertSame('OCLG_END', UdbFrameKind::OclgEnd->value);
     }
 }

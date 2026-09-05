@@ -9,7 +9,6 @@ use App\Application\ChanServ\Event\ChannelTopiclockUpdatedEvent;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelView;
 use App\Application\Port\UdbRecordWriterInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelAccessChangedEvent;
@@ -23,7 +22,6 @@ use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\ChanServ\ValueObject\ChannelStatus;
-use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelTopicChangedEvent;
 use App\Domain\IRC\Network\Channel as IrcChannel;
 use App\Domain\IRC\ValueObject\ChannelName;
@@ -128,7 +126,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             ChannelAccessChangedEvent::class => 'onChannelAccessChanged',
             ChannelMlockUpdatedEvent::class => 'onChannelMlockUpdated',
             ChannelTopiclockUpdatedEvent::class => 'onChannelTopiclockUpdated',
-            ChannelModesChangedEvent::class => 'onChannelModesChanged',
             ChannelTopicChangedEvent::class => 'onChannelTopicChanged',
         ], $events);
     }
@@ -146,9 +143,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan', topic: 'Welcome'));
 
-        $lookup = $this->createStub(ChannelLookupPort::class);
-        $lookup->method('findByChannelName')->willReturn(new ChannelView('#chan', '+rPnt', null, 1));
-
         $inserts = [];
         $writer = $this->createStub(UdbRecordWriterInterface::class);
         $writer->method('insert')->willReturnCallback(static function (string $block, string $path, string $value) use (&$inserts): bool {
@@ -163,7 +157,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         self::assertSame([
             '#chan::founder' => 'founder',
             '#chan::topic' => 'Welcome',
-            '#chan::modes' => '+nt',
             '#chan::options' => '*8',
         ], $inserts);
     }
@@ -197,7 +190,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $sub->onChannelFounderChanged(new ChannelFounderChangedEvent(1, '#chan', 7, 9, 'oper', null, '', ''));
         $sub->onChannelMlockUpdated(new ChannelMlockUpdatedEvent('#chan'));
         $sub->onChannelTopiclockUpdated(new ChannelTopiclockUpdatedEvent('#chan'));
-        $sub->onChannelModesChanged(new ChannelModesChangedEvent($this->createIrcChannel('#chan')));
         $sub->onChannelTopicChanged(new ChannelTopicChangedEvent($this->createIrcChannel('#chan')));
     }
 
@@ -360,35 +352,38 @@ final class UdbChannelSyncSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onChannelModesChangedUpdatesModesRecord(): void
+    public function onChannelMlockUpdatedUpdatesModesRecord(): void
     {
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
-        $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan'));
+        $channel = $this->createChannel('#chan');
+        $channel->configureMlock(true, '+ntkl', ['k' => 'key', 'l' => '10']);
+        $channelRepo->method('findByChannelName')->willReturn($channel);
 
-        $lookup = $this->createStub(ChannelLookupPort::class);
-        $lookup->method('findByChannelName')->willReturn(new ChannelView('#chan', '+rPntkl', null, 1, timestamp: 5, modeParams: ['l' => '10', 'k' => 'key']));
+        $inserts = [];
+        $writer = $this->createStub(UdbRecordWriterInterface::class);
+        $writer->method('insert')->willReturnCallback(static function (string $block, string $path, string $value) use (&$inserts): bool {
+            $inserts[$path] = $value;
 
-        $writer = $this->createMock(UdbRecordWriterInterface::class);
-        $writer->expects($this->once())->method('insert')->willReturn(true)->with('C', '#chan::modes', '+ntkl key 10');
+            return true;
+        });
 
-        $sub = $this->createSubscriber(channelRepo: $channelRepo, lookup: $lookup, writer: $writer);
-        $sub->onChannelModesChanged(new ChannelModesChangedEvent($this->createIrcChannel('#chan')));
+        $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
+        $sub->onChannelMlockUpdated(new ChannelMlockUpdatedEvent('#chan'));
+
+        self::assertSame(['#chan::options' => '*10', '#chan::modes' => '+ntkl key 10'], $inserts);
     }
 
     #[Test]
-    public function onChannelModesChangedDeletesModesWhenEmpty(): void
+    public function onChannelMlockUpdatedDeletesModesWhenInactive(): void
     {
         $channelRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
         $channelRepo->method('findByChannelName')->willReturn($this->createChannel('#chan'));
-
-        $lookup = $this->createStub(ChannelLookupPort::class);
-        $lookup->method('findByChannelName')->willReturn(new ChannelView('#chan', '+rP', null, 1));
 
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->once())->method('delete')->willReturn(true)->with('C', '#chan::modes');
 
-        $sub = $this->createSubscriber(channelRepo: $channelRepo, lookup: $lookup, writer: $writer);
-        $sub->onChannelModesChanged(new ChannelModesChangedEvent($this->createIrcChannel('#chan')));
+        $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
+        $sub->onChannelMlockUpdated(new ChannelMlockUpdatedEvent('#chan'));
     }
 
     #[Test]
@@ -419,7 +414,6 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         $writer->expects($this->never())->method('delete')->willReturn(true);
 
         $sub = $this->createSubscriber(channelRepo: $channelRepo, writer: $writer);
-        $sub->onChannelModesChanged(new ChannelModesChangedEvent($this->createIrcChannel('#bad')));
         $sub->onChannelTopicChanged(new ChannelTopicChangedEvent($this->createIrcChannel('#bad')));
     }
 

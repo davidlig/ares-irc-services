@@ -16,7 +16,13 @@ use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbSchema;
+use RuntimeException;
 
+use function array_filter;
+use function explode;
 use function preg_match;
 use function sprintf;
 use function trim;
@@ -125,6 +131,38 @@ final readonly class UdbRecordExporter
     }
 
     /**
+     * SQL-owned block rebuilt from the current SQL export, with encoded paths
+     * ready for the authoritative store (and for replaceBlock()). Empty values
+     * are filtered out: UDB rejects empty-value records and the store
+     * checksum must stay in sync with what reconciliation serves.
+     *
+     * @return array<string, string>
+     *
+     * @throws RuntimeException when the SQL export contains an invalid record
+     */
+    public function encodedBlockRecords(UdbBlock $block): array
+    {
+        $raw = match ($block) {
+            UdbBlock::Nicks => $this->allNickRecords(),
+            UdbBlock::Channels => $this->allChannelRecords(),
+            UdbBlock::Lines => $this->allGlineRecords(),
+        };
+
+        $records = [];
+        foreach ($raw as $rawPath => $value) {
+            $components = explode('::', $rawPath);
+            $path = UdbPathCodec::encodePath($components);
+            if (null === $path || !UdbSchema::validate($block, $components, $value)) {
+                throw new RuntimeException(sprintf('Current SQL export contains an invalid %s-block record.', $block->letter()));
+            }
+
+            $records[$path] = $value;
+        }
+
+        return array_filter($records, static fn (string $value): bool => '' !== $value);
+    }
+
+    /**
      * Full N-block profile of one nick (pass/vhost/oper).
      *
      * @return array<string, string>
@@ -144,8 +182,9 @@ final readonly class UdbRecordExporter
         }
 
         $ircop = $this->ircopRepository->findByNickId($nick->getId());
-        if (null !== $ircop) {
-            $records[sprintf('%s::oper', $nick->getNickname())] = $ircop->getRole()->getName();
+        $operclass = $ircop?->getRole()->getOperclass();
+        if (null !== $operclass && '' !== $operclass) {
+            $records[sprintf('%s::oper', $nick->getNickname())] = $operclass;
         }
 
         return $records;
@@ -185,9 +224,8 @@ final readonly class UdbRecordExporter
             $records[sprintf('%s::topic', $channel->getName())] = $channel->getTopic();
         }
 
-        $view = $this->channelLookup->findByChannelName($channel->getName());
-        if (null !== $view) {
-            $formatted = $this->modesFormatter->format($view->modes, $view->modeParams, $this->modeSupportProvider->getSupport());
+        if ($channel->isMlockActive()) {
+            $formatted = $this->modesFormatter->format($channel->getMlock(), $channel->getMlockParams(), $this->modeSupportProvider->getSupport());
             if (null !== $formatted) {
                 $records[sprintf('%s::modes', $channel->getName())] = $formatted;
             }

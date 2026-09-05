@@ -25,6 +25,7 @@ use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -258,14 +259,87 @@ final class UdbNickSyncSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onOperIrcopChangedDeletesOperRecordWhenOperclassIsMissing(): void
+    {
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findById')->willReturn($this->createNick('oper1'));
+
+        $role = OperRole::create('Helper');
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create(7, $role));
+
+        $deletes = [];
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->expects($this->exactly(2))->method('delete')->willReturnCallback(
+            static function (string $block, string $path) use (&$deletes): bool {
+                $deletes[] = [$block, $path];
+
+                return true;
+            },
+        );
+
+        $sub = $this->createSubscriber(repo: $repo, ircopRepo: $ircopRepo, writer: $writer);
+        $sub->onOperIrcopChanged(new OperIrcopChangedEvent(7, 'oper1'));
+
+        self::assertSame([
+            ['N', 'oper1::vhost'],
+            ['N', 'oper1::oper'],
+        ], $deletes);
+    }
+
+    #[Test]
+    public function onOperIrcopChangedDeletesOperRecordWhenOperclassIsNotGloballyAvailable(): void
+    {
+        $nick = $this->createNick('oper1');
+        $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $repo->method('findById')->willReturn($nick);
+
+        $role = OperRole::create('NetAdmin');
+        $role->changeOperclass('services:netadmin');
+        $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
+        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create(7, $role));
+
+        $sessionState = $this->createStub(UdbSessionStateInterface::class);
+        $sessionState->method('isOperclassGloballyAvailable')->willReturn(false);
+
+        $deletes = [];
+        $writer = $this->createMock(UdbRecordWriterInterface::class);
+        $writer->method('delete')->willReturnCallback(
+            static function (string $block, string $path) use (&$deletes): bool {
+                $deletes[] = [$block, $path];
+
+                return true;
+            },
+        );
+        $writer->expects($this->never())->method('insert');
+
+        $sub = new UdbNickSyncSubscriber(
+            $writer,
+            $repo,
+            $this->createStub(PasswordMigrationStateInterface::class),
+            $ircopRepo,
+            $this->createExporter($repo, $ircopRepo),
+            $sessionState,
+        );
+        $sub->onOperIrcopChanged(new OperIrcopChangedEvent(7, 'oper1'));
+
+        self::assertSame([
+            ['N', 'oper1::vhost'],
+            ['N', 'oper1::oper'],
+        ], $deletes);
+    }
+
+    #[Test]
     public function onOperIrcopChangedWritesOperRecordAndRefreshesVhost(): void
     {
         $nick = $this->createNick('oper1', 'oper.tld');
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findById')->willReturn($nick);
 
+        $role = OperRole::create('NetAdmin');
+        $role->changeOperclass('services:netadmin');
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
-        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create(7, OperRole::create('NetAdmin')));
+        $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create(7, $role));
 
         $inserts = [];
         $writer = $this->createMock(UdbRecordWriterInterface::class);
@@ -282,7 +356,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
 
         self::assertSame([
             ['N', 'oper1::vhost', 'oper.tld'],
-            ['N', 'oper1::oper', 'NETADMIN'],
+            ['N', 'oper1::oper', 'services:netadmin'],
         ], $inserts);
     }
 

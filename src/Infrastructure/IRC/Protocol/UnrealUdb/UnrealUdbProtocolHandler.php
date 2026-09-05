@@ -33,7 +33,9 @@ use function substr;
  */
 final class UnrealUdbProtocolHandler extends AbstractProtocolHandler
 {
-    use UnrealFamilyHandshakeTrait;
+    use UnrealFamilyHandshakeTrait {
+        performHandshake as unrealFamilyHandshake;
+    }
 
     private const string PROTOCOL_NAME = 'unrealudb';
 
@@ -44,6 +46,7 @@ final class UnrealUdbProtocolHandler extends AbstractProtocolHandler
     public function __construct(
         private readonly string $sid,
         private readonly UdbSessionCoordinator $coordinator,
+        private readonly UdbSessionLock $lock = new UdbSessionLock(''),
         LoggerInterface $logger = new NullLogger(),
         ?EventDispatcherInterface $eventDispatcher = null,
     ) {
@@ -53,6 +56,13 @@ final class UnrealUdbProtocolHandler extends AbstractProtocolHandler
     public function getProtocolName(): string
     {
         return self::PROTOCOL_NAME;
+    }
+
+    /** The daemon holds the UDB directory lock for the whole link lifetime. */
+    public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
+    {
+        $this->lock->acquire();
+        $this->unrealFamilyHandshake($connection, $link);
     }
 
     public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void

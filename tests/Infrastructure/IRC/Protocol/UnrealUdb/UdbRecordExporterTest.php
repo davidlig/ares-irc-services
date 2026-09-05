@@ -7,7 +7,6 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
@@ -20,12 +19,15 @@ use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use RuntimeException;
 
 #[CoversClass(UdbRecordExporter::class)]
 final class UdbRecordExporterTest extends TestCase
@@ -115,6 +117,7 @@ final class UdbRecordExporterTest extends TestCase
         $bcryptHash = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
         $nick = $this->createNick('davidlig', vhost: 'david.tld', passwordHash: $bcryptHash);
         $role = OperRole::create('netadmin');
+        $role->changeOperclass('services:netadmin');
         $ircopRepo = $this->createStub(OperIrcopRepositoryInterface::class);
         $ircopRepo->method('findByNickId')->willReturn(OperIrcop::create($nick->getId(), $role));
         $exporter = $this->createExporterWithIrcopRepo($ircopRepo);
@@ -122,7 +125,7 @@ final class UdbRecordExporterTest extends TestCase
         self::assertSame([
             'davidlig::pass' => 'crypt:' . $bcryptHash,
             'davidlig::vhost' => 'david.tld',
-            'davidlig::oper' => 'NETADMIN',
+            'davidlig::oper' => 'services:netadmin',
         ], $exporter->nickRecords($nick));
     }
 
@@ -157,8 +160,7 @@ final class UdbRecordExporterTest extends TestCase
             new ChannelAccess(1, 7, 300),
         ]);
 
-        $lookup = $this->createStub(ChannelLookupPort::class);
-        $lookup->method('findByChannelName')->willReturn(new ChannelView('#chan', '+rPnt', null, 2, timestamp: 111, modeParams: ['l' => '50']));
+        $channel->configureMlock(true, '+nt');
 
         $exporter = new UdbRecordExporter(
             $nickRepo,
@@ -166,7 +168,7 @@ final class UdbRecordExporterTest extends TestCase
             $accessRepo,
             $this->ircopRepository,
             $this->createStub(GlineRepositoryInterface::class),
-            $lookup,
+            $this->createStub(ChannelLookupPort::class),
             $this->createModeSupportProvider(),
         );
 
@@ -306,6 +308,30 @@ final class UdbRecordExporterTest extends TestCase
         $provider->method('getSupport')->willReturn($support);
 
         return $provider;
+    }
+
+    #[Test]
+    public function encodedBlockRecordsEncodesSqlOwnedBlockPaths(): void
+    {
+        $nick = $this->createNick('davidlig', vhost: 'david.tld');
+        $this->nickRepository->method('all')->willReturn([$nick]);
+
+        $encoded = UdbPathCodec::encodePath(['davidlig', 'vhost']);
+
+        self::assertNotNull($encoded);
+        self::assertSame([$encoded => 'david.tld'], $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
+    }
+
+    #[Test]
+    public function encodedBlockRecordsRejectsAnInvalidSqlExportRecord(): void
+    {
+        $nick = $this->createNick('davidlig', vhost: 'bad vhost with spaces');
+        $this->nickRepository->method('all')->willReturn([$nick]);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Current SQL export contains an invalid N-block record.');
+
+        $this->exporter->encodedBlockRecords(UdbBlock::Nicks);
     }
 
     private function createNick(string $nickname, ?string $vhost = null, ?string $passwordHash = null): RegisteredNick

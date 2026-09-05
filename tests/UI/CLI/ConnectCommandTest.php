@@ -7,6 +7,8 @@ namespace App\Tests\UI\CLI;
 use App\Application\IRC\Connect\ConnectToServerCommand;
 use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
 use App\Application\IRC\IrcSessionInterface;
+use App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface;
 use App\Infrastructure\Messenger\ConsumerProcessManagerInterface;
 use App\UI\CLI\ConnectCommand;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -34,9 +36,14 @@ final class ConnectCommandTest extends TestCase
         ?ConnectToServerHandlerInterface $handler = null,
         ?ConsumerProcessManagerInterface $consumerManager = null,
         array $defaults = [],
+        ?UdbAuthorityStateRepositoryInterface $udbAuthority = null,
+        ?UdbOfflineTakeoverInterface $udbTakeover = null,
+        string $udbDirectory = '',
+        bool $udbBootstrapFromPeer = false,
     ): ConnectCommand {
         $m = array_merge(self::DEFAULTS, $defaults);
         $defaultHandler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $authority = $udbAuthority ?? $this->approvedUdbAuthority();
 
         return new ConnectCommand(
             handler: $handler ?? $defaultHandler,
@@ -48,7 +55,19 @@ final class ConnectCommandTest extends TestCase
             defaultDescription: $m['description'],
             defaultProtocol: $m['protocol'],
             defaultUseTls: $m['useTls'],
+            udbAuthority: $authority,
+            udbTakeover: $udbTakeover ?? $this->createStub(UdbOfflineTakeoverInterface::class),
+            udbDirectory: $udbDirectory,
+            udbBootstrapFromPeer: $udbBootstrapFromPeer,
         );
+    }
+
+    private function approvedUdbAuthority(): UdbAuthorityStateRepositoryInterface
+    {
+        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(true);
+
+        return $authority;
     }
 
     private function createClientThatReturnsFromRun(): IrcSessionInterface
@@ -109,6 +128,107 @@ final class ConnectCommandTest extends TestCase
         self::assertTrue($command->getDefinition()->hasOption('protocol'));
         self::assertTrue($command->getDefinition()->hasOption('tls'));
         self::assertTrue($command->getDefinition()->hasOption('no-consumer'));
+    }
+
+    #[Test]
+    public function unrealUdbFreshStartsWithoutADirectoryAndSeedsFromSql(): void
+    {
+        $authority = $this->createMock(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(false);
+        $authority->expects(self::once())->method('approve');
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
+        $takeover->expects(self::never())->method('takeover');
+
+        $command = $this->createCommand($handler, null, ['protocol' => 'unrealudb'], $authority, $takeover, '');
+        $tester = new CommandTester($command);
+
+        self::assertSame(Command::SUCCESS, $tester->execute(['--no-consumer' => true]));
+        self::assertNotNull($handler->capturedCommand);
+        self::assertStringContainsString('UDB fresh bootstrap approved', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function unrealUdbFreshBootstrapFailsWhenTheApprovalIsRejected(): void
+    {
+        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(false);
+        $authority->method('approve')->willThrowException(new RuntimeException('Database error.'));
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+
+        $command = $this->createCommand($handler, null, ['protocol' => 'unrealudb'], $authority, null, '');
+        $tester = new CommandTester($command);
+
+        self::assertSame(Command::FAILURE, $tester->execute(['--no-consumer' => true]));
+        self::assertNull($handler->capturedCommand);
+        self::assertStringContainsString('UDB fresh bootstrap failed: Database error.', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function unrealUdbBootstrapFromPeerSkipsTheGateAndConnects(): void
+    {
+        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(false);
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
+        $takeover->expects(self::never())->method('takeover');
+
+        $command = $this->createCommand($handler, null, ['protocol' => 'unrealudb'], $authority, $takeover, '', true);
+        $tester = new CommandTester($command);
+
+        self::assertSame(Command::SUCCESS, $tester->execute(['--no-consumer' => true]));
+        self::assertNotNull($handler->capturedCommand);
+        self::assertSame('unrealudb', $handler->capturedCommand->protocol);
+        self::assertStringContainsString('UDB bootstrap from peer enabled', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function unrealUdbRunsTheTakeoverAutomaticallyWhenTheDatasetIsNotApproved(): void
+    {
+        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(false);
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
+        $takeover->expects(self::once())->method('takeover')->with('/data/udb')->willReturn(str_repeat('a', 64));
+
+        $command = $this->createCommand($handler, null, ['protocol' => 'unrealudb'], $authority, $takeover, '/data/udb');
+        $tester = new CommandTester($command);
+
+        self::assertSame(Command::SUCCESS, $tester->execute(['--no-consumer' => true]));
+        self::assertNotNull($handler->capturedCommand);
+        self::assertSame('unrealudb', $handler->capturedCommand->protocol);
+        self::assertStringContainsString('Automatic udb:takeover approved the dataset', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function unrealUdbFailsWhenTheAutomaticTakeoverRejectsTheDataset(): void
+    {
+        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(false);
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $takeover = $this->createStub(UdbOfflineTakeoverInterface::class);
+        $takeover->method('takeover')->willThrowException(new RuntimeException('Invalid block header.'));
+
+        $command = $this->createCommand($handler, null, ['protocol' => 'unrealudb'], $authority, $takeover, '/data/udb');
+        $tester = new CommandTester($command);
+
+        self::assertSame(Command::FAILURE, $tester->execute(['--no-consumer' => true]));
+        self::assertNull($handler->capturedCommand);
+        self::assertStringContainsString('Automatic udb:takeover failed: Invalid block header.', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function unrealUdbSkipsTheAutomaticTakeoverWhenAlreadyApproved(): void
+    {
+        $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
+        $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
+        $takeover->expects(self::never())->method('takeover');
+
+        $command = $this->createCommand($handler, null, ['protocol' => 'unrealudb'], null, $takeover, '/data/udb');
+        $tester = new CommandTester($command);
+
+        self::assertSame(Command::SUCCESS, $tester->execute(['--no-consumer' => true]));
+        self::assertNotNull($handler->capturedCommand);
     }
 
     #[Test]

@@ -17,6 +17,7 @@ use App\Domain\OperServ\Event\OperIrcopChangedEvent;
 use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;
@@ -38,6 +39,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         private PasswordMigrationStateInterface $migrationState,
         private OperIrcopRepositoryInterface $ircopRepository,
         private UdbRecordExporter $exporter,
+        private ?UdbSessionStateInterface $sessionState = null,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -131,7 +133,14 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->recordWriter->insert(self::BLOCK, $path, $ircop->getRole()->getName());
+        $operclass = $ircop->getRole()->getOperclass();
+        if (null === $operclass || '' === $operclass || (null !== $this->sessionState && !$this->sessionState->isOperclassGloballyAvailable($operclass))) {
+            $this->recordWriter->delete(self::BLOCK, $path);
+
+            return;
+        }
+
+        $this->recordWriter->insert(self::BLOCK, $path, $operclass);
     }
 
     private function writeVhost(string $nickname, RegisteredNick $account): void

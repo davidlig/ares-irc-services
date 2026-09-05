@@ -9,6 +9,7 @@ use App\Domain\IRC\Message\IRCMessage;
 use function array_slice;
 use function count;
 use function implode;
+use function in_array;
 use function sprintf;
 use function strpbrk;
 use function strpos;
@@ -19,7 +20,8 @@ use function substr;
  * Wire codec for the current UDB 4 DB command grammar.
  *
  * Outbound builders and an exact inbound parser for:
- *   DB <target> HEL 4 <propagator|ACK>
+ *   DB <target> HEL 4 <propagator> <epoch16> OCL [OCLG]
+ *   DB <target> HEL 4 ACK <propagator> <epoch16> OCL [OCLG]
  *   DB <target> INF   <round> <block> <crc32> <modified-at>
  *   DB <target> RES   <round> <block>
  *   DB <target> BEGIN <round> <block> <txid> <crc32>
@@ -36,14 +38,14 @@ use function substr;
  */
 final class UdbWireCodec
 {
-    public static function hel(string $sid, string $targetSid, string $propagator): string
+    public static function hel(string $sid, string $targetSid, string $propagator, string $epoch, array $capabilities = ['OCL']): string
     {
-        return sprintf(':%s DB %s HEL 4 %s', $sid, $targetSid, $propagator);
+        return sprintf(':%s DB %s HEL 4 %s %s %s', $sid, $targetSid, $propagator, $epoch, implode(' ', $capabilities));
     }
 
-    public static function helAck(string $sid, string $targetSid): string
+    public static function helAck(string $sid, string $targetSid, string $propagator, string $epoch, array $capabilities = ['OCL']): string
     {
-        return sprintf(':%s DB %s HEL 4 ACK', $sid, $targetSid);
+        return sprintf(':%s DB %s HEL 4 ACK %s %s %s', $sid, $targetSid, $propagator, $epoch, implode(' ', $capabilities));
     }
 
     public static function inf(string $sid, string $targetSid, int $roundId, UdbBlock $block, string $checksum, int $modifiedAt): string
@@ -119,27 +121,77 @@ final class UdbWireCodec
             'DEL' => self::parseDel($sourceSid, $target, $message),
             'DRP' => self::parseDrp($sourceSid, $target, $message),
             'OPT' => self::parseOpt($sourceSid, $target, $message),
+            'OCLG' => self::parseOclg($sourceSid, $target, $message),
             default => null,
         };
     }
 
+    private static function parseOclg(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
+    {
+        $operation = strtoupper($message->params[2] ?? '');
+        $epoch = $message->params[3] ?? '';
+        $generation = UdbPathCodec::parseUnsigned($message->params[4] ?? '');
+        if (1 !== preg_match('/^[0-9a-f]{16}$/D', $epoch) || null === $generation) {
+            return null;
+        }
+
+        if ('BEGIN' === $operation && 8 === count($message->params)) {
+            $status = strtoupper($message->params[5]);
+            $count = UdbPathCodec::parseUnsigned($message->params[6]);
+            $digest = $message->params[7];
+            if (!in_array($status, ['READY', 'INCOMPLETE'], true) || null === $count || !UdbOclgViewDigest::isValid($digest)) {
+                return null;
+            }
+
+            return new UdbFrame(UdbFrameKind::OclgBegin, $sourceSid, $target, roundId: $generation, epoch: $epoch, checksum: $digest, status: $status, count: $count);
+        }
+
+        if ('ITEM' === $operation && 7 === count($message->params)) {
+            $name = $message->params[5];
+            $digest = $message->params[6];
+            if ('' === $name || !UdbOclgViewDigest::isValid($digest)) {
+                return null;
+            }
+
+            return new UdbFrame(UdbFrameKind::OclgItem, $sourceSid, $target, roundId: $generation, epoch: $epoch, path: $name, checksum: $digest);
+        }
+
+        if ('END' === $operation && 5 === count($message->params)) {
+            return new UdbFrame(UdbFrameKind::OclgEnd, $sourceSid, $target, roundId: $generation, epoch: $epoch);
+        }
+
+        return null;
+    }
+
     private static function parseHel(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
     {
-        // HEL 4 ACK or HEL 4 <propagator>
-        if (4 !== count($message->params) || '4' !== $message->params[2]) {
+        if ('4' !== ($message->params[2] ?? null)) {
             return null;
         }
 
-        $argument = $message->params[3] ?? null;
-        if (null === $argument || '' === $argument) {
+        $isAck = 'ACK' === strtoupper($message->params[3] ?? '');
+        $argumentOffset = $isAck ? 4 : 3;
+        $capabilityOffset = $isAck ? 6 : 5;
+        $paramCount = count($message->params);
+        if (($isAck && (7 !== $paramCount && 8 !== $paramCount)) || (!$isAck && (6 !== $paramCount && 7 !== $paramCount))) {
             return null;
         }
 
-        if ('ACK' === strtoupper($argument)) {
-            return new UdbFrame(UdbFrameKind::HelAck, $sourceSid, $target);
+        $propagator = $message->params[$argumentOffset] ?? '';
+        $epoch = $message->params[$argumentOffset + 1] ?? '';
+        $capabilities = self::parseHelCapabilities(array_slice($message->params, $capabilityOffset));
+        if ('' === $propagator || 1 !== preg_match('/^[0-9a-f]{16}$/D', $epoch) || null === $capabilities) {
+            return null;
         }
 
-        return new UdbFrame(UdbFrameKind::Hel, $sourceSid, $target, propagator: $argument);
+        return new UdbFrame(
+            $isAck ? UdbFrameKind::HelAck : UdbFrameKind::Hel,
+            $sourceSid,
+            $target,
+            propagator: $propagator,
+            epoch: $epoch,
+            capabilities: $capabilities,
+        );
     }
 
     private static function parseInf(string $sourceSid, string $target, IRCMessage $message): ?UdbFrame
@@ -389,5 +441,16 @@ final class UdbWireCodec
     private static function checksumOrEmpty(string $checksum): string
     {
         return UdbChecksum::parse($checksum) ?? UdbChecksum::EMPTY;
+    }
+
+    /** @return list<string>|null */
+    private static function parseHelCapabilities(array $capabilities): ?array
+    {
+        $normalized = array_map(strtoupper(...), $capabilities);
+        if ('OCL' !== $normalized[0] || (isset($normalized[1]) && 'OCLG' !== $normalized[1])) {
+            return null;
+        }
+
+        return $normalized;
     }
 }

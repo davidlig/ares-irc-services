@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Domain\Udb\Entity;
 
+use App\Domain\Udb\Entity\UdbAuthorityState;
 use App\Domain\Udb\Entity\UdbBlockState;
 use App\Domain\Udb\Entity\UdbRecord;
 use DateTimeImmutable;
@@ -14,6 +15,7 @@ use ReflectionClass;
 
 #[CoversClass(UdbRecord::class)]
 #[CoversClass(UdbBlockState::class)]
+#[CoversClass(UdbAuthorityState::class)]
 final class UdbEntitiesTest extends TestCase
 {
     #[Test]
@@ -81,5 +83,27 @@ final class UdbEntitiesTest extends TestCase
 
         self::assertSame('BBBB2222', $state->getChecksum());
         self::assertGreaterThan(new DateTimeImmutable('2026-08-30 12:00:00')->getTimestamp(), $state->getSyncedAt()->getTimestamp());
+    }
+
+    #[Test]
+    public function authorityStateRequiresExplicitApprovalAndCanBeRevoked(): void
+    {
+        $state = new UdbAuthorityState();
+
+        self::assertFalse($state->isApproved());
+        self::assertNull($state->getApprovedAt());
+        self::assertNull($state->getFingerprint());
+
+        $state->approve(str_repeat('a', 64));
+
+        self::assertTrue($state->isApproved());
+        self::assertNotNull($state->getApprovedAt());
+        self::assertSame(str_repeat('a', 64), $state->getFingerprint());
+
+        $state->revoke();
+
+        self::assertFalse($state->isApproved());
+        self::assertNull($state->getApprovedAt());
+        self::assertNull($state->getFingerprint());
     }
 }

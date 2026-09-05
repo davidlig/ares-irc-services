@@ -19,6 +19,7 @@
         "symfony/dotenv": "7.4.*",
         "symfony/flex": "2.10.*",
         "symfony/framework-bundle": "7.4.*",
+        "symfony/lock": "7.4.*",
         "symfony/mailer": "7.4.*",
         "symfony/messenger": "7.4.*",
         "symfony/monolog-bundle": "4.0.*",
@@ -82,7 +83,7 @@
         }
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.95.23",
+        "friendsofphp/php-cs-fixer": "^3.95.24",
         "phpunit/phpunit": "^13.3.2"
     }
 }

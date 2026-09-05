@@ -19,4 +19,7 @@ enum UdbFrameKind: string
     case Del = 'DEL';
     case Drp = 'DRP';
     case Opt = 'OPT';
+    case OclgBegin = 'OCLG_BEGIN';
+    case OclgItem = 'OCLG_ITEM';
+    case OclgEnd = 'OCLG_END';
 }

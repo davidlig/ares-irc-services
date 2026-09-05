@@ -6,6 +6,7 @@ namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\UdbMutation;
 use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface;
 use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbChecksum;
@@ -15,13 +16,16 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Throwable;
 
 use function array_diff;
 use function array_keys;
 use function array_map;
 use function array_shift;
+use function bin2hex;
 use function count;
 use function in_array;
+use function random_bytes;
 use function sprintf;
 use function strcasecmp;
 use function strtoupper;
@@ -31,7 +35,7 @@ use function time;
  * Single authority for the UnrealUdb S2S session state machine.
  *
  * Services are ALWAYS the UDB authority: the HEL announces our own server
- * name, and once the peer selects us (or asks with "?") a reconciliation
+ * name, and once the peer selects us a reconciliation
  * round offers all six blocks from the authoritative store. A second HEL is
  * written right after the inventory as an ordered TCP barrier: when its ACK
  * arrives the peer has processed every INF, so any divergent block has
@@ -57,6 +61,9 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
     private const int MAX_STAGED_BYTES = 67108864; // 64 MB
 
     private const int ERR_REOFFER_BUDGET = 3;
+
+    /** @var list<string> */
+    private const array HEL_CAPABILITIES = ['OCL', 'OCLG'];
 
     private ?ConnectionInterface $connection = null;
 
@@ -88,18 +95,30 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
 
     private int $errReofferCount = 0;
 
+    private ?bool $approved = null;
+
+    private readonly string $epoch;
+
     /** @var array<string, array{txid: string, roundId: int, digest: string, deadline: int}> Outgoing staged transfers awaiting ACK. */
     private array $outstanding = [];
 
     /** @var list<UdbMutation> */
     private array $mutationQueue = [];
 
+    private readonly UdbOclgView $oclgView;
+
     public function __construct(
         private readonly string $sid,
         private readonly UdbBlockStateRepositoryInterface $blockStates,
         private readonly UdbSnapshotProviderInterface $snapshots,
         private readonly LoggerInterface $logger = new NullLogger(),
-    ) {}
+        UdbOclgView $oclgView = new UdbOclgView(),
+        private readonly ?UdbWireTakeover $wireTakeover = null,
+        private readonly ?UdbAuthorityStateRepositoryInterface $authority = null,
+    ) {
+        $this->epoch = bin2hex(random_bytes(8));
+        $this->oclgView = $oclgView;
+    }
 
     public function setOwnName(string $ownName): void
     {
@@ -171,6 +190,8 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         $this->activeRoundId = null;
         $this->errReofferCount = 0;
         $this->outstanding = [];
+        $this->oclgView->reset();
+        $this->wireTakeover?->reset();
         $this->connection = null;
         // $this->mutationQueue is preserved: the store already holds every
         // queued change and the next reconciliation round recovers delivery.
@@ -181,7 +202,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         $this->connection = $connection;
 
         match ($frame->kind) {
-            UdbFrameKind::HelAck => $this->handleHelAck(),
+            UdbFrameKind::HelAck => $this->handleHelAck($frame),
             UdbFrameKind::Hel => $this->handleHel($frame),
             UdbFrameKind::Inf => $this->logger->debug('Ignoring peer INF: services are the UDB authority.', [
                 'block' => $frame->block?->letter(),
@@ -191,6 +212,9 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
             UdbFrameKind::Ack => $this->handleAck($frame),
             UdbFrameKind::Err => $this->handleErr($frame),
             UdbFrameKind::Ins, UdbFrameKind::Del, UdbFrameKind::Drp, UdbFrameKind::Opt => $this->handleForbiddenMutation($frame),
+            UdbFrameKind::OclgBegin => $this->handleOclgBegin($frame),
+            UdbFrameKind::OclgItem => $this->handleOclgItem($frame),
+            UdbFrameKind::OclgEnd => $this->handleOclgEnd($frame),
         };
 
         if ($this->isAuthorityReady()) {
@@ -220,8 +244,20 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         $this->mutationQueue[] = $mutation;
     }
 
-    private function handleHelAck(): void
+    /** True only for classes in the last complete READY OCLG projection. */
+    public function isOperclassGloballyAvailable(string $operclass): bool
     {
+        return $this->oclgView->isOperclassGloballyAvailable($operclass);
+    }
+
+    private function handleHelAck(UdbFrame $frame): void
+    {
+        if (!$this->isDirectPeerFrame($frame)) {
+            $this->logger->warning('Ignoring UDB HEL ACK from an unexpected peer.');
+
+            return;
+        }
+
         $firstAck = !$this->ownHelAcked;
         ++$this->helAcksReceived;
         $this->ownHelAcked = true;
@@ -240,8 +276,16 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
 
     private function handleHel(UdbFrame $frame): void
     {
+        if (!$this->isDirectPeerFrame($frame)) {
+            $this->logger->warning('Ignoring UDB HEL from an unexpected peer.');
+
+            return;
+        }
+
         $propagator = $frame->propagator ?? '';
-        $this->peerAuthorized = '?' === $propagator
+        // During the wire bootstrap the direct peer is the exclusive
+        // bootstrap peer selected by our `?` advertisement.
+        $this->peerAuthorized = $this->isWireBootstrapActive()
             || (null !== $this->ownName && '' !== $this->ownName && 0 === strcasecmp($propagator, $this->ownName));
 
         $this->logger->info('UDB HEL 4 received from peer.', [
@@ -250,7 +294,10 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
             'authorizes_us' => $this->peerAuthorized,
         ]);
 
-        $this->write(UdbWireCodec::helAck($this->sid, $frame->sourceSid));
+        if (null !== $this->ownName && '' !== $this->ownName) {
+            $advertised = $this->isWireBootstrapActive() ? '?' : $this->ownName;
+            $this->write(UdbWireCodec::helAck($this->sid, $frame->sourceSid, $advertised, $this->epoch, self::HEL_CAPABILITIES));
+        }
 
         if (0 === $this->helSentCount) {
             $this->sendHel();
@@ -371,9 +418,15 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         ];
     }
 
-    /** Staged snapshots are downstream traffic: services never import them. */
+    /** Staged snapshots are downstream traffic — except during the wire bootstrap. */
     private function handleInboundStaged(UdbFrame $frame): void
     {
+        if ($this->isWireBootstrapActive()) {
+            $this->acceptWireStaged($frame);
+
+            return;
+        }
+
         $this->logger->warning('Rejected inbound staged snapshot: services are the sole UDB authority.', [
             'kind' => $frame->kind->value,
             'block' => $frame->block?->letter(),
@@ -388,6 +441,61 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
             $frame->roundId,
             $frame->block,
         ));
+    }
+
+    private function acceptWireStaged(UdbFrame $frame): void
+    {
+        $completed = $this->wireTakeover?->accept($frame);
+        if (null !== $completed) {
+            $this->write(UdbWireCodec::ack(
+                $this->sid,
+                $frame->sourceSid,
+                $completed['roundId'],
+                $completed['block'],
+                $completed['txid'],
+                $completed['digest'],
+            ));
+        }
+
+        if (null !== $this->wireTakeover && $this->wireTakeover->isComplete()) {
+            $this->completeWireBootstrap();
+        }
+    }
+
+    /** Applies the adopted generation, approves the authority and renegotiates as the FQDN authority. */
+    private function completeWireBootstrap(): void
+    {
+        try {
+            $fingerprint = $this->wireTakeover->finalize();
+            $this->authority->approve($fingerprint);
+            $this->approved = true;
+        } catch (Throwable $e) {
+            $this->logger->error('UDB wire bootstrap finalization failed; the store stays unapproved.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        $this->storeReady = null;
+        $this->logger->info('UDB wire bootstrap complete: services adopted the peer dataset and are now the authority.', [
+            'fingerprint' => $fingerprint,
+        ]);
+
+        // Announce ourselves as the FQDN propagator; the peer re-ACKs and
+        // reconciliation serves any remaining divergence (SQL-backed N/C/K).
+        $this->sendHel(force: true);
+        $this->maybeOfferReconciliation();
+    }
+
+    private function isWireBootstrapActive(): bool
+    {
+        if (null === $this->wireTakeover || null === $this->authority) {
+            return false;
+        }
+
+        // Bootstrap is active only while the store has never been approved.
+        return !$this->approved;
     }
 
     private function handleAck(UdbFrame $frame): void
@@ -476,6 +584,33 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         $this->write(UdbWireCodec::err($this->sid, $frame->sourceSid, $frame->kind->value, 6, $this->errorCorrelation, $block));
     }
 
+    private function handleOclgBegin(UdbFrame $frame): void
+    {
+        if (!$this->isDirectPeerFrame($frame)) {
+            return;
+        }
+
+        $this->oclgView->begin($frame);
+    }
+
+    private function handleOclgItem(UdbFrame $frame): void
+    {
+        if (!$this->isDirectPeerFrame($frame)) {
+            return;
+        }
+
+        $this->oclgView->item($frame);
+    }
+
+    private function handleOclgEnd(UdbFrame $frame): void
+    {
+        if (!$this->isDirectPeerFrame($frame)) {
+            return;
+        }
+
+        $this->oclgView->end($frame);
+    }
+
     /** True when every UDB block has been initialized in the authoritative store. */
     private function isStoreReady(): bool
     {
@@ -509,8 +644,16 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
             return;
         }
 
-        $this->write(UdbWireCodec::hel($this->sid, $this->remoteSid, $this->ownName));
+        $propagator = $this->isWireBootstrapActive() ? '?' : $this->ownName;
+        $this->write(UdbWireCodec::hel($this->sid, $this->remoteSid, $propagator, $this->epoch, self::HEL_CAPABILITIES));
         ++$this->helSentCount;
+    }
+
+    private function isDirectPeerFrame(UdbFrame $frame): bool
+    {
+        return null !== $this->remoteSid
+            && $frame->sourceSid === $this->remoteSid
+            && $frame->target === $this->sid;
     }
 
     private function flushMutations(): void

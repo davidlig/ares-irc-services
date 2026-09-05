@@ -30,7 +30,12 @@ final readonly class UdbFrame
         public readonly ?string $path = null,
         public readonly ?string $value = null,
         public readonly ?string $propagator = null,
+        public readonly ?string $epoch = null,
+        /** @var list<string> */
+        public readonly array $capabilities = [],
         public readonly ?string $subcommand = null,
         public readonly ?int $errorCode = null,
+        public readonly ?string $status = null,
+        public readonly ?int $count = null,
     ) {}
 }

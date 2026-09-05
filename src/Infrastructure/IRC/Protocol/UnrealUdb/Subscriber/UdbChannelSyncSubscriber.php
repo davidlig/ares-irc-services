@@ -17,7 +17,6 @@ use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Event\ChannelUnforbiddenEvent;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\ChannelModesChangedEvent;
 use App\Domain\IRC\Event\ChannelTopicChangedEvent;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -57,7 +56,6 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
             ChannelAccessChangedEvent::class => 'onChannelAccessChanged',
             ChannelMlockUpdatedEvent::class => 'onChannelMlockUpdated',
             ChannelTopiclockUpdatedEvent::class => 'onChannelTopiclockUpdated',
-            ChannelModesChangedEvent::class => 'onChannelModesChanged',
             ChannelTopicChangedEvent::class => 'onChannelTopicChanged',
         ];
     }
@@ -130,6 +128,7 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
     public function onChannelMlockUpdated(ChannelMlockUpdatedEvent $event): void
     {
         $this->refreshOptions(strtolower($event->channelName));
+        $this->refreshMlock(strtolower($event->channelName));
     }
 
     public function onChannelTopiclockUpdated(ChannelTopiclockUpdatedEvent $event): void
@@ -137,16 +136,15 @@ final class UdbChannelSyncSubscriber implements EventSubscriberInterface
         $this->refreshOptions(strtolower($event->channelName));
     }
 
-    public function onChannelModesChanged(ChannelModesChangedEvent $event): void
+    private function refreshMlock(string $channelNameLower): void
     {
-        $channelName = $event->channel->name->value;
-        $channel = $this->channelRepository->findByChannelName(strtolower($channelName));
+        $channel = $this->channelRepository->findByChannelName($channelNameLower);
         if (null === $channel || $channel->isForbidden()) {
             return;
         }
 
         $records = $this->exporter->channelRecords($channel);
-        $path = sprintf('%s::modes', $channelName);
+        $path = sprintf('%s::modes', $channel->getName());
         if (isset($records[$path])) {
             $this->recordWriter->insert(self::BLOCK, $path, $records[$path]);
 

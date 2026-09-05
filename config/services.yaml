@@ -227,6 +227,10 @@ services:
             $defaultDescription: '%irc.description%'
             $defaultProtocol:    '%irc.protocol%'
             $defaultUseTls:      '%irc.use_tls%'
+            $udbAuthority:       '@App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface'
+            $udbTakeover:        '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface'
+            $udbDirectory:       '%env(string:default::IRC_UDB_DIRECTORY)%'
+            $udbBootstrapFromPeer: '%env(bool:IRC_UDB_BOOTSTRAP_FROM_PEER)%'
 
     # --- Protocol modules (one per IRCd type: Unreal, InspIRCd, etc.) ---
 
@@ -241,9 +245,15 @@ services:
         arguments:
             $sid:             '%irc.server_sid%'
             $coordinator:     '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator'
+            $lock:            '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock'
             $logger:          '@monolog.logger.irc'
             $eventDispatcher: '@event_dispatcher'
         tags: ['irc.protocol_handler']
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock:
+        arguments:
+            $directory: '%env(string:default::IRC_UDB_DIRECTORY)%'
+            $logger:    '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
@@ -282,6 +292,21 @@ services:
             $blockStates:      '@App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface'
             $snapshots:        '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface'
             $logger:           '@monolog.logger.irc'
+            $oclgView:         '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOclgView'
+            $wireTakeover:     '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbWireTakeover'
+            $authority:        '@App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface'
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOclgView:
+        arguments:
+            $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbWireTakeover:
+        arguments:
+            $records:     '@App\Domain\Udb\Repository\UdbRecordRepositoryInterface'
+            $blockStates: '@App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface'
+            $em:          '@doctrine.orm.default_entity_manager'
+            $exporter:    '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter'
+            $logger:      '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface:
         alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator
@@ -308,6 +333,10 @@ services:
             $recordWriter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter'
             $introductionFormatter: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber:
+        arguments:
+            $sessionState: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface'
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions:
         arguments:
@@ -653,6 +682,12 @@ services:
 
     App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface:
         class: App\Infrastructure\Udb\Doctrine\UdbBlockStateDoctrineRepository
+
+    App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface:
+        class: App\Infrastructure\Udb\Doctrine\UdbAuthorityStateDoctrineRepository
+
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeoverInterface:
+        alias: App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeover
 
 
     # --- NickServ Bot pseudo-client ---------------------------------------------

@@ -30,4 +30,13 @@ interface UdbRecordRepositoryInterface
      * @param array<string, string> $records Encoded path => value
      */
     public function seedBlock(string $block, array $records): void;
+
+    /**
+     * Replaces the ENTIRE block with the given records in one transaction
+     * (existing rows are deleted first). Used by the offline and wire
+     * takeovers so the imported generation is never merged with stale rows.
+     *
+     * @param array<string, string> $records Encoded path => value
+     */
+    public function replaceBlock(string $block, array $records): void;
 }

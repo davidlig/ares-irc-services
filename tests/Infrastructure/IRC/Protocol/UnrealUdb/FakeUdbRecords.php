@@ -57,4 +57,13 @@ final class FakeUdbRecords implements UdbRecordRepositoryInterface
             $this->blocks[$block][$path] = $value;
         }
     }
+
+    public function replaceBlock(string $block, array $records): void
+    {
+        if ($this->fail) {
+            throw new RuntimeException('store unavailable');
+        }
+
+        $this->blocks[$block] = $records;
+    }
 }

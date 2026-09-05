@@ -7,19 +7,21 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb\Protocol;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbFrameKind;
+use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbOclgViewDigest;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(UdbWireCodec::class)]
+#[CoversClass(UdbOclgViewDigest::class)]
 final class UdbWireCodecTest extends TestCase
 {
     #[Test]
     public function buildersRenderExactWireGrammar(): void
     {
-        self::assertSame(':002 DB 001 HEL 4 irc.example.net', UdbWireCodec::hel('002', '001', 'irc.example.net'));
-        self::assertSame(':002 DB 001 HEL 4 ACK', UdbWireCodec::helAck('002', '001'));
+        self::assertSame(':002 DB 001 HEL 4 irc.example.net 0123456789abcdef OCL OCLG', UdbWireCodec::hel('002', '001', 'irc.example.net', '0123456789abcdef', ['OCL', 'OCLG']));
+        self::assertSame(':002 DB 001 HEL 4 ACK irc.example.net 0123456789abcdef OCL', UdbWireCodec::helAck('002', '001', 'irc.example.net', '0123456789abcdef'));
         self::assertSame(
             ':002 DB 001 INF 1000 N ABCDEF12 1700000000',
             UdbWireCodec::inf('002', '001', 1000, UdbBlock::Nicks, 'ABCDEF12', 1700000000),
@@ -60,31 +62,70 @@ final class UdbWireCodecTest extends TestCase
     #[Test]
     public function parseHelFrame(): void
     {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ircd.example.net'));
+        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef OCL OCLG'));
 
         self::assertNotNull($frame);
         self::assertSame(UdbFrameKind::Hel, $frame->kind);
         self::assertSame('001', $frame->sourceSid);
         self::assertSame('002', $frame->target);
         self::assertSame('ircd.example.net', $frame->propagator);
+        self::assertSame('0123456789abcdef', $frame->epoch);
+        self::assertSame(['OCL', 'OCLG'], $frame->capabilities);
     }
 
     #[Test]
     public function parseHelWithQuestionMarkPropagator(): void
     {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ?'));
+        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ? 0123456789abcdef OCL'));
 
         self::assertNotNull($frame);
         self::assertSame('?', $frame->propagator);
     }
 
     #[Test]
+    public function parseHelRejectsTooManyCapabilities(): void
+    {
+        self::assertNull(UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef OCL OCLG EXTRA')));
+    }
+
+    #[Test]
     public function parseHelAckFrame(): void
     {
-        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ACK'));
+        $frame = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 HEL 4 ACK ircd.example.net 0123456789abcdef OCL'));
 
         self::assertNotNull($frame);
         self::assertSame(UdbFrameKind::HelAck, $frame->kind);
+        self::assertSame('ircd.example.net', $frame->propagator);
+        self::assertSame('0123456789abcdef', $frame->epoch);
+    }
+
+    #[Test]
+    public function parseOclgSnapshotFrames(): void
+    {
+        $digest = str_repeat('a', 64);
+        $begin = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG BEGIN 0123456789abcdef 7 READY 1 ' . $digest));
+        self::assertNotNull($begin);
+        self::assertSame(UdbFrameKind::OclgBegin, $begin->kind);
+        self::assertSame('READY', $begin->status);
+        self::assertSame(1, $begin->count);
+        self::assertSame($digest, $begin->checksum);
+
+        $item = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG ITEM 0123456789abcdef 7 netadmin ' . $digest));
+        self::assertNotNull($item);
+        self::assertSame(UdbFrameKind::OclgItem, $item->kind);
+        self::assertSame('netadmin', $item->path);
+
+        $end = UdbWireCodec::parse(IRCMessage::fromRawLine(':001 DB 002 OCLG END 0123456789abcdef 7'));
+        self::assertNotNull($end);
+        self::assertSame(UdbFrameKind::OclgEnd, $end->kind);
+    }
+
+    #[Test]
+    public function oclgViewDigestMatchesTheUdbBinaryEncoding(): void
+    {
+        self::assertSame('db0993b14d12cd5761fe4a4540ac6088909756a64b4c0eefd8ff886df241d2be', UdbOclgViewDigest::fromEntries(true, ['netadmin' => str_repeat('a', 64)]));
+        self::assertTrue(UdbOclgViewDigest::isValid(str_repeat('a', 64)));
+        self::assertFalse(UdbOclgViewDigest::isValid('A'));
     }
 
     #[Test]
@@ -206,6 +247,11 @@ final class UdbWireCodecTest extends TestCase
             'PRIVMSG #chan :hello',
             ':001 DB',
             ':001 DB 002 HEL 5 x',
+            ':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef',
+            ':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef OCL OCL',
+            ':001 DB 002 HEL 4 ircd.example.net 0123456789abcdef OCL UNKNOWN',
+            ':001 DB 002 HEL 4 ircd.example.net 0123456789ABCDEf OCL',
+            ':001 DB 002 HEL 4 ACK ircd.example.net 0123456789abcdef OCL OCLG UNKNOWN',
             ':001 DB 002 HEL',
             ':001 DB 002 HEL 4',
             ':001 DB 002 INF 0 N 00 1',
@@ -227,6 +273,11 @@ final class UdbWireCodecTest extends TestCase
             ':001 DB * DEL',
             ':001 DB * DRP X',
             ':001 DB * OPT X',
+            ':001 DB 002 OCLG BEGIN 0123456789abcdef 7 READY 1 short',
+            ':001 DB 002 OCLG ITEM 0123456789abcdef 7 netadmin short',
+            ':001 DB 002 OCLG END 0123456789abcdef 7 extra',
+            ':001 DB 002 OCLG FOO 0123456789abcdef 7',
+            ':001 DB 002 OCLG BEGIN NOTHEX16 7 READY 1 ' . str_repeat('a', 64),
             ':UNKNOWN 002 001 HEL 4 x',
         ];
 
@@ -239,7 +290,7 @@ final class UdbWireCodecTest extends TestCase
     public function parseRejectsAdditionalMalformedWireShapes(): void
     {
         $malformed = [
-            ':001 DB 002 HEL 4',              // missing propagator (count)
+            ':001 DB 002 HEL 4',              // missing HEL fields
             ':001 DB 002 INF 999 N 00',       // INF with 5 params
             ':001 DB 002 RES 999',            // RES with 3 params
             ':001 DB 002 BEGIN 999 S tx',     // BEGIN with 5 params
@@ -264,7 +315,7 @@ final class UdbWireCodecTest extends TestCase
     #[Test]
     public function parseRejectsEmptyPropagatorParameter(): void
     {
-        $message = new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', '']);
+        $message = new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', '', '0123456789abcdef', 'OCL']);
 
         self::assertNull(UdbWireCodec::parse($message));
     }

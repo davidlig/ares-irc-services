@@ -25,6 +25,11 @@ trait CreatesUdbRecordWriter
             }
 
             public function enqueueMutation(UdbMutation $mutation): void {}
+
+            public function isOperclassGloballyAvailable(string $operclass): bool
+            {
+                return true;
+            }
         };
     }
 

@@ -26,4 +26,7 @@ interface UdbSessionStateInterface
      * divergence via snapshots (the store already holds every change).
      */
     public function enqueueMutation(UdbMutation $mutation): void;
+
+    /** True only when the latest complete OCLG projection contains the operclass. */
+    public function isOperclassGloballyAvailable(string $operclass): bool;
 }
