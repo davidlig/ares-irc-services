@@ -9,7 +9,7 @@ use App\Application\Port\ChannelSyncCompletedRegistryInterface;
 use App\Application\Port\UidResolverInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
+use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

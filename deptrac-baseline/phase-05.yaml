@@ -66,7 +66,7 @@ deptrac:
     App\Infrastructure\MemoServ\Bot\MemoServBot:
       - App\Irc\Adapter\Out\Connection\ConnectionInterface
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
-      - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+      - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
     App\Infrastructure\MemoServ\Subscriber\MemoServChannelDropCleanupSubscriber:
       - App\Domain\ChanServ\Event\ChannelDropCleanupEvent
     App\Infrastructure\MemoServ\Subscriber\MemoServCommandListener:

@@ -8,7 +8,6 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\Port\EventBusInterface;
-use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\ChanServ\Entity\ChannelAkick;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -23,6 +22,7 @@ use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\SenderView;
+use App\Shared\Application\Time\RelativeExpiryParser;
 
 use function array_slice;
 use function count;

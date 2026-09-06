@@ -22,16 +22,16 @@ use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Exception\InvalidCredentialsException;
 use App\Domain\NickServ\Exception\NickAlreadyRegisteredException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\Bot\NickServBot;
 use App\Infrastructure\NickServ\Subscriber\NickServCommandListener;
 use App\Infrastructure\NickServ\UserLanguageResolver;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\LocalUserModeSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Irc\Domain\LocalUserModeSyncInterface;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -89,7 +89,7 @@ final class NickServCommandListenerTest extends TestCase
             $this->createStub(NetworkUserLookupPort::class),
             $this->createStub(SendNoticePort::class),
             $this->createStub(PendingNickRestoreRegistryInterface::class),
-            $this->createStub(LocalUserModeSyncInterface::class),
+            $this->createStub(LocalUserModeSyncPort::class),
             $uidGenerator,
             'services.example.com',
             'NickServ',

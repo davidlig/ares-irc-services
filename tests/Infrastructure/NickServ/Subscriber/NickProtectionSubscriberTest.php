@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\NickServ\Subscriber;
 
-use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
@@ -20,16 +19,17 @@ use App\Application\Port\EventBusInterface;
 use App\Application\Port\NickChangePreservesIdentificationInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\TranslationInterface;
-use App\Application\Port\UserJoinedNetworkDTO;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber;
+use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
-use App\Irc\Domain\Event\IrcMessageProcessedEvent;
+use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
+use App\Irc\Application\PublishedEvent\UserJoinedNetworkDTO;
 use App\Irc\Domain\Event\UserModeChangedEvent;
 use App\Irc\Domain\Event\UserNickChangedEvent;
 use App\Irc\Domain\Event\UserQuitNetworkEvent;

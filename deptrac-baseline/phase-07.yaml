@@ -2,6 +2,25 @@
 # Exact source -> target exceptions owned by that phase; do not broaden.
 deptrac:
   skip_violations:
+    App\Application\Maintenance\MaintenanceScheduler:
+      - Psr\Log\LoggerInterface
+    App\Application\Security\IrcopContextInterface:
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Application\Shared\ServiceUidRegistry:
+      - App\Application\Port\ServiceUidProviderInterface
+    App\Infrastructure\IRC\ServiceBridge\AntifloodSubscriber:
+      - App\Application\OperServ\Command\OperServNotifierInterface
+      - App\Application\OperServ\RootUserRegistry
+    App\Infrastructure\IRC\Subscriber\IrcopsDebugChannelProtectionSubscriber:
+      - App\Application\OperServ\RootUserRegistry
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
+    App\Infrastructure\Security\Voter\IdentifiedVoter:
+      - App\Infrastructure\NickServ\Security\IrcServiceUser
+    App\Infrastructure\Security\Voter\IrcopPermissionVoter:
+      - App\Application\OperServ\IrcopAccessHelper
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Infrastructure\NickServ\Security\IrcServiceUser
     App\Application\OperServ\Command\Handler\GlineCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
@@ -117,12 +136,11 @@ deptrac:
     App\Infrastructure\OperServ\Bot\OperServBot:
       - App\Irc\Adapter\Out\Connection\ConnectionInterface
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
-      - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+      - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
     App\Infrastructure\OperServ\Service\OperServDebugNotifier:
       - App\Application\NickServ\IdentifiedSessionRegistry
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Infrastructure\OperServ\Subscriber\MotdOnConnectSubscriber:
-      - App\Application\Event\UserJoinedNetworkAppEvent
       - App\Application\NickServ\Service\NickForceService
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
@@ -130,11 +148,11 @@ deptrac:
       - App\Domain\NickServ\Event\NickIdentifiedEvent
     App\Infrastructure\OperServ\Subscriber\OperRoleModesDeidentifiedSubscriber:
       - App\Domain\NickServ\Event\UserDeidentifiedEvent
-      - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+      - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
     App\Infrastructure\OperServ\Subscriber\OperRoleModesSubscriber:
       - App\Domain\NickServ\Event\NickIdentifiedEvent
     App\Infrastructure\OperServ\Subscriber\OperServCommandListener:
-      - App\Infrastructure\IRC\Security\SensitiveDataRedactor
+      - App\Irc\Adapter\Security\SensitiveDataRedactor
       - App\Infrastructure\NickServ\UserMessageTypeResolver
     App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent

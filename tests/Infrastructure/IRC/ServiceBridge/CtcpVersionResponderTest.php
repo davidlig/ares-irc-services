@@ -55,6 +55,7 @@ final class CtcpVersionResponderTest extends TestCase
         $this->responder = new CtcpVersionResponder(
             $this->createTranslator(),
             $this->languageResolver,
+            'v1.0',
         );
     }
 
@@ -119,6 +120,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator($spanishTribute),
             $this->createLanguageResolver(),
+            'v1.0',
         );
 
         $lines = $responder->getAsciiArtLines('es');
@@ -134,6 +136,7 @@ final class CtcpVersionResponderTest extends TestCase
         $responder = new CtcpVersionResponder(
             $this->createTranslator($tributeWithEscapedCodes),
             $this->createLanguageResolver(),
+            'v1.0',
         );
 
         $lines = $responder->getAsciiArtLines('en');

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\Unreal;
 
 use App\Application\Port\ServiceNickReservationInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

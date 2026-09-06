@@ -12,10 +12,10 @@ use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\Port\EventBusInterface;
-use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Shared\Application\Time\RelativeExpiryParser;
 use DateTimeImmutable;
 
 use function array_slice;

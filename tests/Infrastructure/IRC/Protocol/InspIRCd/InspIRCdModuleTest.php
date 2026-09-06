@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\InspIRCd;
 
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule;
@@ -13,6 +12,7 @@ use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -18,6 +18,7 @@ parameters:
     services.default_language: '%env(SERVICES_DEFAULT_LANGUAGE)%'
     services.default_timezone_fallback: 'UTC'
     services.default_timezone: '%env(default:services.default_timezone_fallback:SERVICES_DEFAULT_TIMEZONE)%'
+    services.version: 'v1.0'
     services.guest_prefix:     '%env(NICKSERV_GUEST_PREFIX)%'
     services.vhost_suffix:     '%env(default::NICKSERV_VHOST_SUFFIX)%'
 
@@ -150,7 +151,7 @@ services:
     # --- Interface bindings ---------------------------------------------------
 
     App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface:
-        class: App\Infrastructure\IRC\Connection\SocketConnectionFactory
+        class: App\Irc\Adapter\Out\Connection\SocketConnectionFactory
         arguments:
             $logger: '@monolog.logger.irc'
 
@@ -203,9 +204,11 @@ services:
 
     App\Infrastructure\IRC\Runtime\LoopSchedulerInterface: '@App\Infrastructure\IRC\Runtime\RevoltLoopScheduler'
 
-    App\Infrastructure\IRC\Runtime\IRCClientFactoryInterface: '@App\Infrastructure\IRC\Runtime\IRCClientFactory'
+    App\Irc\Adapter\Runtime\IRCClientFactoryInterface: '@App\Irc\Adapter\Runtime\IRCClientFactory'
 
-    App\Infrastructure\IRC\Runtime\IRCClientFactory:
+    App\Irc\Application\Port\Out\IrcSessionConnectorInterface: '@App\Irc\Adapter\Out\Connection\IrcSessionConnector'
+
+    App\Irc\Adapter\Runtime\IRCClientFactory:
         arguments:
             $maintenanceDispatchIntervalSeconds: '%maintenance.interval%'
             $logger: '@monolog.logger.irc'
@@ -221,7 +224,7 @@ services:
 
     # --- CLI command — inject .env defaults so the command runs without arguments ---
 
-    App\Irc\Application\Connect\ConnectToServerHandlerInterface: '@App\Infrastructure\IRC\Connect\ConnectToServerHandler'
+    App\Irc\Application\Connect\ConnectToServerHandlerInterface: '@App\Irc\Application\Connect\ConnectToServerHandler'
 
     App\UI\CLI\ConnectCommand:
         arguments:
@@ -267,7 +270,7 @@ services:
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
             $sid:                '%irc.server_sid%'
-            $connectionHolder:   '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $connectionHolder:   '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $modeSupportFactory: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory'
             $logger:             '@monolog.logger.irc'
             $eventDispatcher:    '@event_dispatcher'
@@ -286,7 +289,7 @@ services:
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter:
         arguments:
-            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $sessionState:     '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface'
             $records:          '@App\Domain\Udb\Repository\UdbRecordRepositoryInterface'
             $sid:              '%irc.server_sid%'
@@ -355,7 +358,7 @@ services:
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation:
         arguments:
-            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbNickReservation:
@@ -369,7 +372,7 @@ services:
 
     App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation:
         arguments:
-            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport: ~
@@ -432,7 +435,7 @@ services:
 
     # --- Event subscriber — logs domain events to the irc channel ------------
 
-    App\Infrastructure\IRC\Logging\IRCEventSubscriber:
+    App\Irc\Adapter\Logging\IRCEventSubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
@@ -440,13 +443,13 @@ services:
     # --- Network state repositories (in-memory, live for the duration of the link) ---
 
     App\Irc\Domain\Repository\NetworkUserRepositoryInterface:
-        class: App\Infrastructure\IRC\Network\InMemoryNetworkUserRepository
+        class: App\Irc\Adapter\Network\InMemoryNetworkUserRepository
 
     App\Application\Port\UidResolverInterface:
-        class: App\Infrastructure\IRC\Network\NetworkUidResolver
+        class: App\Irc\Adapter\Network\NetworkUidResolver
 
     App\Irc\Domain\Repository\ChannelRepositoryInterface:
-        class: App\Infrastructure\IRC\Network\InMemoryChannelRepository
+        class: App\Irc\Adapter\Network\InMemoryChannelRepository
 
     # --- Network state: protocol router (wire → domain events) + subscriber (domain events → repos) ---
 
@@ -462,12 +465,12 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Network\NetworkEventEnricher:
+    App\Irc\Adapter\Network\NetworkEventEnricher:
         arguments:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\IRC\Network\ProtocolNetworkStateRouter:
+    App\Irc\Adapter\Network\ProtocolNetworkStateRouter:
         arguments:
             $adapters:
                 unreal: '@App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter'
@@ -479,7 +482,7 @@ services:
 
     App\Infrastructure\IRC\ServiceBridge\ServiceNickReservationSubscriber:
         arguments:
-            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $serviceListeners: !tagged_iterator service_command_listener
             $logger: '@monolog.logger.irc'
@@ -563,32 +566,32 @@ services:
             $nickservNick: '%nickserv.nick%'
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Network\NetworkStateSubscriber:
+    App\Irc\Adapter\Network\NetworkStateSubscriber:
         arguments:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\IRC\Subscriber\CoreToAppEventBridge:
+    App\Irc\Adapter\Subscriber\CoreToAppEventBridge:
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\IRC\Network\LocalUserModeSync: ~
+    App\Irc\Adapter\Network\LocalUserModeSync: ~
 
-    App\Irc\Domain\LocalUserModeSyncInterface:
-        alias: App\Infrastructure\IRC\Network\LocalUserModeSync
+    App\Irc\Application\Port\In\LocalUserModeSyncPort:
+        alias: App\Irc\Adapter\Network\LocalUserModeSync
 
-    App\Irc\Domain\SkipIdentifiedModeStripRegistryInterface:
+    App\Irc\Adapter\Network\SkipIdentifiedModeStripRegistryInterface:
         alias: App\Infrastructure\NickServ\PendingNickRestoreRegistry
 
     # --- Ports (Core ↔ Services): Core implements, Services consume ---
 
     App\Irc\Application\Port\In\NetworkUserLookupPort:
-        class: App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter
+        class: App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter
 
     App\Irc\Application\Port\In\BurstCompletePort:
-        class: App\Infrastructure\IRC\ServiceBridge\CoreBurstCompleteAdapter
+        class: App\Irc\Adapter\ServiceBridge\CoreBurstCompleteAdapter
 
     App\Irc\Application\Port\In\ChannelLookupPort:
-        class: App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter
+        class: App\Irc\Adapter\ServiceBridge\CoreChannelLookupAdapter
 
     App\Application\Port\ServiceChannelRegistrationPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreServiceChannelRegistrationAdapter
@@ -596,17 +599,17 @@ services:
     App\Application\Port\ApplyOutgoingChannelModesPort:
         class: App\Infrastructure\IRC\ServiceBridge\CoreApplyOutgoingChannelModesAdapter
 
-    App\Infrastructure\IRC\Network\ApplyOutgoingChannelModesApplicatorInterface: '@App\Infrastructure\IRC\Network\NetworkEventEnricher'
+    App\Irc\Adapter\Network\ApplyOutgoingChannelModesApplicatorInterface: '@App\Irc\Adapter\Network\NetworkEventEnricher'
 
     App\Application\Port\ChannelSyncCompletedRegistryInterface:
-        class: App\Infrastructure\IRC\Network\ChannelSyncCompletedRegistry
+        class: App\Irc\Adapter\Network\ChannelSyncCompletedRegistry
 
-    App\Infrastructure\IRC\Network\ChannelSyncCompletedMarkerSubscriber:
+    App\Irc\Adapter\Network\ChannelSyncCompletedMarkerSubscriber:
         arguments:
             $registry: '@App\Application\Port\ChannelSyncCompletedRegistryInterface'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\Shared\Subscriber\DoctrineIdentityMapClearSubscriber:
+    App\Irc\Adapter\In\Event\DoctrineIdentityMapClearSubscriber:
         tags: ['kernel.event_subscriber']
 
     App\Application\Port\SendNoticePort:
@@ -621,6 +624,7 @@ services:
         arguments:
             $translator: '@translator'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
+            $servicesVersion: '%services.version%'
 
     App\Infrastructure\IRC\ServiceBridge\CtcpHandler:
         arguments:
@@ -645,9 +649,9 @@ services:
     # --- ActiveConnectionHolder — stores the live S2S connection for all services ---
 
     App\Application\Port\ActiveConnectionHolderInterface:
-        alias: App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+        alias: App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
 
-    App\Infrastructure\IRC\Connection\ActiveConnectionHolder:
+    App\Irc\Adapter\Out\Connection\ActiveConnectionHolder:
         tags: ['kernel.event_subscriber']
 
     # --- NickServ Domain --------------------------------------------------------
@@ -1669,10 +1673,10 @@ services:
     App\Application\OperServ\IrcopModeApplier:
         arguments:
             $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
-            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
+            $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $userLookup: '@App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter'
+            $userLookup: '@App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
 
     App\Application\OperServ\Command\Handler\RoleCommand:
@@ -1734,8 +1738,8 @@ services:
     App\Infrastructure\OperServ\Subscriber\OperRoleModesDeidentifiedSubscriber:
         arguments:
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $connectionHolder: '@App\Infrastructure\IRC\Connection\ActiveConnectionHolder'
-            $userLookup: '@App\Infrastructure\IRC\ServiceBridge\CoreNetworkUserLookupAdapter'
+            $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
+            $userLookup: '@App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 

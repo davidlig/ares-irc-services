@@ -2,6 +2,12 @@
 # Exact source -> target exceptions owned by that phase; do not broaden.
 deptrac:
   skip_violations:
+    App\Application\Port\UserLanguageResolverInterface:
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Infrastructure\IRC\ServiceBridge\CtcpHandler:
+      - App\Infrastructure\NickServ\UserLanguageResolver
+    App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder:
+      - App\Infrastructure\NickServ\UserLanguageResolver
     App\Application\NickServ\BurstState:
       - App\Irc\Application\Port\In\SenderView
     App\Application\NickServ\Command\Handler\DropCommand:
@@ -232,11 +238,10 @@ deptrac:
     App\Infrastructure\NickServ\Bot\NickServBot:
       - App\Irc\Adapter\Out\Connection\ConnectionInterface
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
-      - App\Irc\Domain\LocalUserModeSyncInterface
       - App\Irc\Domain\ValueObject\Uid
-      - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+      - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
     App\Infrastructure\NickServ\PendingNickRestoreRegistry:
-      - App\Irc\Domain\SkipIdentifiedModeStripRegistryInterface
+      - App\Irc\Adapter\Network\SkipIdentifiedModeStripRegistryInterface
     App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter:
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
@@ -247,13 +252,12 @@ deptrac:
     App\Infrastructure\NickServ\Subscriber\ForbiddenNickEnforceSubscriber:
       - App\Irc\Domain\Event\UserNickChangedEvent
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
-      - App\Application\Event\UserJoinedNetworkAppEvent
-      - App\Irc\Domain\Event\IrcMessageProcessedEvent
+      - App\Irc\Adapter\Event\IrcMessageProcessedEvent
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
       - App\Irc\Domain\Event\UserModeChangedEvent
       - App\Irc\Domain\Event\UserNickChangedEvent
       - App\Irc\Domain\Event\UserQuitNetworkEvent
     App\Infrastructure\NickServ\Subscriber\NickServCommandListener:
-      - App\Infrastructure\IRC\Security\SensitiveDataRedactor
+      - App\Irc\Adapter\Security\SensitiveDataRedactor
     App\Infrastructure\NickServ\Subscriber\VhostClearOnDeidentifySubscriber:
       - App\Irc\Domain\Event\UserModeChangedEvent

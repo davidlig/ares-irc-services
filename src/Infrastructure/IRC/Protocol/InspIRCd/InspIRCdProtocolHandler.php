@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Domain\Server\ServerLink;

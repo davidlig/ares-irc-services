@@ -6,9 +6,9 @@ namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\UdbMutation;
 use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 
 /**
  * Shared helpers for tests that need a record writer wired to a session

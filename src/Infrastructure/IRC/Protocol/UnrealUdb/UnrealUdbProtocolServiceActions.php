@@ -7,7 +7,7 @@ namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 use App\Application\Port\OperclassServiceActionsInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\UdbRecordWriterInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

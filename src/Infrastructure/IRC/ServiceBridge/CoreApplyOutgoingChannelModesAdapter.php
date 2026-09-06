@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ApplyOutgoingChannelModesPort;
-use App\Infrastructure\IRC\Network\ApplyOutgoingChannelModesApplicatorInterface;
+use App\Irc\Adapter\Network\ApplyOutgoingChannelModesApplicatorInterface;
 
 /**
  * Core implements ApplyOutgoingChannelModesPort: applies MODE sent by services

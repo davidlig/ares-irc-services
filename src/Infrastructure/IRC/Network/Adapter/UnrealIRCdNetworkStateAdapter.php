@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network\Adapter;
 
-use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\ChannelPartReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\UserHostReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\UserMetadataReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
-use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Adapter\Network\Event\ChannelJoinReceivedEvent;
+use App\Irc\Adapter\Network\Event\ChannelKickReceivedEvent;
+use App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent;
+use App\Irc\Adapter\Network\Event\ChannelPartReceivedEvent;
+use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
+use App\Irc\Adapter\Network\Event\UserHostReceivedEvent;
+use App\Irc\Adapter\Network\Event\UserMetadataReceivedEvent;
+use App\Irc\Adapter\Network\Event\UserModeReceivedEvent;
+use App\Irc\Adapter\Network\Event\UserNickChangeReceivedEvent;
+use App\Irc\Adapter\Network\Event\UserQuitReceivedEvent;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
 use App\Irc\Domain\Event\ServerDelinkedEvent;

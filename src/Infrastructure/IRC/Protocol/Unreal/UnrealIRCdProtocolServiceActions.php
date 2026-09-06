@@ -6,7 +6,7 @@ namespace App\Infrastructure\IRC\Protocol\Unreal;
 
 use App\Application\Port\OperclassServiceActionsInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

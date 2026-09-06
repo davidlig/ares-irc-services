@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Subscriber;
 
-use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\IdentifiedUserVhostSyncService;
 use App\Application\NickServ\NickProtectionService;
 use App\Application\NickServ\PendingNickProtectionRegistryInterface;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NickChangePreservesIdentificationInterface;
+use App\Irc\Adapter\Event\IrcMessageProcessedEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Domain\Event\IrcMessageProcessedEvent;
+use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
 use App\Irc\Domain\Event\UserModeChangedEvent;
 use App\Irc\Domain\Event\UserNickChangedEvent;
 use App\Irc\Domain\Event\UserQuitNetworkEvent;

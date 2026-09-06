@@ -15,10 +15,10 @@ use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickSuspensionService;
 use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\Port\EventBusInterface;
-use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Shared\Application\Time\RelativeExpiryParser;
 use DateTimeImmutable;
 
 use function array_slice;

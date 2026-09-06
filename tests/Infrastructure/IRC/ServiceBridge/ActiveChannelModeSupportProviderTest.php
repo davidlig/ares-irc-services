@@ -6,9 +6,9 @@ namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ProtocolModuleInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

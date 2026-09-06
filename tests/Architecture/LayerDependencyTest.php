@@ -72,6 +72,19 @@ final class LayerDependencyTest extends TestCase
             }
         }
 
+        $finalPaths = ['src/Shared/Application'];
+        foreach (self::BOUNDED_CONTEXTS as $context) {
+            $finalPaths[] = 'src/' . $context . '/Application';
+        }
+
+        foreach ($finalPaths as $path) {
+            foreach (self::importsUnder($path) as $import) {
+                if (str_contains($import['name'], '\\Adapter\\') || self::isFrameworkOrInfrastructure($import['name'])) {
+                    $violations[] = self::describe($import);
+                }
+            }
+        }
+
         self::assertSame([], $violations, "Application has forbidden dependencies:\n" . implode("\n", $violations));
     }
 
@@ -86,6 +99,20 @@ final class LayerDependencyTest extends TestCase
             }
 
             $violations[] = self::describe($import);
+        }
+
+        foreach ([...self::BOUNDED_CONTEXTS, 'Shared'] as $context) {
+            foreach (self::importsUnder('src/' . $context . '/Domain') as $import) {
+                if (
+                    str_starts_with($import['name'], 'App\\' . $context . '\\Domain\\')
+                    || ('Shared' !== $context && str_starts_with($import['name'], 'App\\Shared\\Domain\\'))
+                    || self::isNativePhpSymbol($import['name'])
+                ) {
+                    continue;
+                }
+
+                $violations[] = self::describe($import);
+            }
         }
 
         self::assertSame([], $violations, "Domain has forbidden or external dependencies:\n" . implode("\n", $violations));
@@ -349,6 +376,17 @@ final class LayerDependencyTest extends TestCase
         return new ReflectionClass($name)->isInternal();
     }
 
+    private static function isFrameworkOrInfrastructure(string $name): bool
+    {
+        foreach (['App\\Infrastructure\\', 'Amp\\', 'Doctrine\\', 'Psr\\', 'Revolt\\', 'Symfony\\'] as $prefix) {
+            if (str_starts_with($name, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** @param array{file: string, line: int, name: string} $import */
     private static function describe(array $import): string
     {
@@ -473,6 +511,9 @@ final class LayerDependencyTest extends TestCase
             'src/Domain',
             'src/Application/Port',
             'src/Application/Shared',
+            'src/Irc/Domain',
+            'src/Irc/Application',
+            'src/Shared',
             'src/Infrastructure/IRC/Runtime',
             'src/Infrastructure/IRC/Protocol/AbstractProtocolHandler.php',
             'src/Infrastructure/IRC/Protocol/NullChannelModeSupport.php',
@@ -494,21 +535,29 @@ final class LayerDependencyTest extends TestCase
     /** @return list<string> */
     private static function protocolNames(): array
     {
-        $directory = new RecursiveDirectoryIterator(self::ROOT . '/src/Infrastructure/IRC/Protocol');
         $names = [];
 
-        foreach ($directory as $entry) {
-            if (!$entry instanceof SplFileInfo) {
+        foreach (['src/Infrastructure/IRC/Protocol', 'src/Irc/Adapter/Protocol'] as $path) {
+            $absolutePath = self::ROOT . '/' . $path;
+            if (!is_dir($absolutePath)) {
                 continue;
             }
 
-            if (!$entry->isDir() || str_starts_with($entry->getFilename(), '.') || 'UnrealFamily' === $entry->getFilename()) {
-                continue;
-            }
+            $directory = new RecursiveDirectoryIterator($absolutePath);
+            foreach ($directory as $entry) {
+                if (!$entry instanceof SplFileInfo) {
+                    continue;
+                }
 
-            $names[] = strtolower($entry->getFilename());
+                if (!$entry->isDir() || str_starts_with($entry->getFilename(), '.') || 'UnrealFamily' === $entry->getFilename()) {
+                    continue;
+                }
+
+                $names[] = strtolower($entry->getFilename());
+            }
         }
 
+        $names = array_unique($names);
         sort($names);
 
         return $names;

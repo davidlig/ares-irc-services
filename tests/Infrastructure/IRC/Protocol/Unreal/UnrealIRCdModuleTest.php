@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\Unreal;
 
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdModule;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation;
@@ -12,6 +11,7 @@ use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdUserModeSupport;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

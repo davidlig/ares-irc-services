@@ -10,7 +10,7 @@ use App\Application\Port\UidResolverInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber;
-use App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent;
+use App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent;
 use App\Irc\Domain\ValueObject\ChannelName;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

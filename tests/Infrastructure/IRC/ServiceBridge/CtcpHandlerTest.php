@@ -10,10 +10,10 @@ use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceUidProviderInterface;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\ServiceBridge\CtcpHandler;
 use App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder;
 use App\Infrastructure\NickServ\UserLanguageResolver;
+use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
@@ -77,6 +77,7 @@ final class CtcpHandlerTest extends TestCase
         $this->versionResponder = new CtcpVersionResponder(
             $this->createTranslator(),
             $this->createLanguageResolver(),
+            'v1.0',
         );
     }
 

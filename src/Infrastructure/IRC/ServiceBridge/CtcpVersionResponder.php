@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Infrastructure\NickServ\UserLanguageResolver;
-use App\Infrastructure\Shared\Version;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class CtcpVersionResponder
 {
-    private const string VERSION_RESPONSE = 'Ares IRC Services ' . Version::SERVICES;
-
     private const array ASCII_ART = [
         '                                                     ..                         ',
         '                                                  ..::......::...........       ',
@@ -60,6 +57,7 @@ final readonly class CtcpVersionResponder
     public function __construct(
         private TranslatorInterface $translator,
         private UserLanguageResolver $languageResolver,
+        private string $servicesVersion,
     ) {}
 
     public function getLanguageResolver(): UserLanguageResolver
@@ -69,7 +67,7 @@ final readonly class CtcpVersionResponder
 
     public function getVersionResponse(): string
     {
-        return self::VERSION_RESPONSE;
+        return 'Ares IRC Services ' . $this->servicesVersion;
     }
 
     /**

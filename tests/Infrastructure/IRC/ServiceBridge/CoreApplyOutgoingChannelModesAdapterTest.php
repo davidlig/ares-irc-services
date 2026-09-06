@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Infrastructure\IRC\Network\ApplyOutgoingChannelModesApplicatorInterface;
 use App\Infrastructure\IRC\ServiceBridge\CoreApplyOutgoingChannelModesAdapter;
+use App\Irc\Adapter\Network\ApplyOutgoingChannelModesApplicatorInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

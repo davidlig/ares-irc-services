@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\NickServ;
 
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
-use App\Irc\Domain\SkipIdentifiedModeStripRegistryInterface;
+use App\Irc\Adapter\Network\SkipIdentifiedModeStripRegistryInterface;
 
 /**
  * Tracks UIDs for which services sent an SVSNICK to restore a registered nick

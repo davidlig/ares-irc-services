@@ -9,11 +9,11 @@ use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceUidGeneratorInterface;
 use App\Application\Port\ServiceUidProviderInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\LocalUserModeSyncPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
-use App\Irc\Domain\LocalUserModeSyncInterface;
 use App\Irc\Domain\ValueObject\Uid;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use Psr\Log\LoggerInterface;
@@ -33,7 +33,7 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
         private readonly NetworkUserLookupPort $userLookup,
         private readonly SendNoticePort $sendNoticePort,
         private readonly PendingNickRestoreRegistryInterface $pendingRegistry,
-        private readonly LocalUserModeSyncInterface $localUserModeSync,
+        private readonly LocalUserModeSyncPort $localUserModeSync,
         private readonly ServiceUidGeneratorInterface $uidGenerator,
         private readonly string $servicesVhost,
         private readonly string $nickservNick = 'NickServ',

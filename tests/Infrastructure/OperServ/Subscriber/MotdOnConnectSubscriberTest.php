@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
-use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
@@ -13,7 +12,6 @@ use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Application\Port\ServiceNickReservationInterface;
-use App\Application\Port\UserJoinedNetworkDTO;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -25,6 +23,8 @@ use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
+use App\Irc\Application\PublishedEvent\UserJoinedNetworkDTO;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -2,6 +2,9 @@
 # Exact source -> target exceptions owned by that phase; do not broaden.
 deptrac:
   skip_violations:
+    App\Infrastructure\IRC\Subscriber\DebugChannelJoinSubscriber:
+      - App\Domain\ChanServ\Entity\RegisteredChannel
+      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
     App\Application\ChanServ\ChanServAccessHelper:
       - App\Application\Port\ChannelModeSupportInterface
     App\Application\ChanServ\ChanServService:
@@ -240,7 +243,7 @@ deptrac:
     App\Infrastructure\ChanServ\Bot\ChanServBot:
       - App\Irc\Adapter\Out\Connection\ConnectionInterface
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
-      - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+      - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
     App\Infrastructure\ChanServ\Security\Voter\ChanServLevelFounderVoter:
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
@@ -251,14 +254,14 @@ deptrac:
       - App\Irc\Domain\Event\UserJoinedChannelEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
       - App\Irc\Domain\Event\ChannelSyncedEvent
-      - App\Irc\Domain\Event\IrcMessageProcessedEvent
+      - App\Irc\Adapter\Event\IrcMessageProcessedEvent
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
       - App\Irc\Domain\Event\UserJoinedChannelEvent
       - App\Irc\Domain\Event\UserLeftChannelEvent
       - App\Irc\Domain\Network\ChannelMemberRole
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
-      - App\Infrastructure\IRC\Event\MessageReceivedEvent
-      - App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent
+      - App\Irc\Adapter\Event\MessageReceivedEvent
+      - App\Irc\Adapter\Network\Event\ChannelModeReceivedEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServCommandListener:
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
       - App\Infrastructure\NickServ\UserMessageTypeResolver
@@ -288,4 +291,4 @@ deptrac:
       - App\Irc\Domain\Event\ChannelSyncedEvent
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber:
-      - App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent
+      - App\Irc\Adapter\Network\Event\ChannelTopicReceivedEvent

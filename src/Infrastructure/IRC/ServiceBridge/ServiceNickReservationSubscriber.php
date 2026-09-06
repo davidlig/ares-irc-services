@@ -6,8 +6,8 @@ namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceCommandListenerInterface;
-use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;

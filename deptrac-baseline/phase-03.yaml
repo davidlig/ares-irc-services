@@ -4,3 +4,6 @@ deptrac:
   skip_violations:
     App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
       - App\Infrastructure\IRC\Protocol\UnrealFamily\UnrealFamilyHandshakeTrait
+    App\Application\Shared\ServiceUidGenerator:
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\ServiceUidGeneratorInterface
