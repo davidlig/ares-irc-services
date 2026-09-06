@@ -6,5 +6,5 @@ namespace App\Irc\Application\Connect;
 
 interface ProtocolConnectionPreflightInterface
 {
-    public function prepare(string $protocol): ConnectionPreflightResult;
+    public function prepare(): ConnectionPreflightResult;
 }

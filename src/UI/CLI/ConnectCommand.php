@@ -41,7 +41,6 @@ class ConnectCommand extends Command
         private readonly int $defaultPort,
         private readonly string $defaultPassword,
         private readonly string $defaultDescription,
-        private readonly string $defaultProtocol,
         private readonly bool $defaultUseTls,
         private readonly bool $defaultTlsVerifyPeer = true,
     ) {
@@ -75,12 +74,6 @@ class ConnectCommand extends Command
                 'description',
                 InputArgument::OPTIONAL,
                 'Human-readable server description. Defaults to IRC_DESCRIPTION.',
-            )
-            ->addOption(
-                'protocol',
-                'p',
-                InputOption::VALUE_REQUIRED,
-                'S2S protocol to use: unreal, inspircd. Defaults to IRC_PROTOCOL.',
             )
             ->addOption(
                 'tls',
@@ -121,12 +114,10 @@ class ConnectCommand extends Command
         $rawDescription = $input->getArgument('description');
         $description = is_string($rawDescription) ? $rawDescription : $this->defaultDescription;
 
-        $rawProtocol = $input->getOption('protocol');
-        $protocol = is_string($rawProtocol) ? $rawProtocol : $this->defaultProtocol;
         $useTls = $input->getOption('tls') ? true : $this->defaultUseTls;
         $tlsVerifyPeer = $input->getOption('insecure') ? false : $this->defaultTlsVerifyPeer;
 
-        $preflight = $this->connectionPreflight->prepare($protocol);
+        $preflight = $this->connectionPreflight->prepare();
         if (null !== $preflight->message) {
             if ($preflight->ready) {
                 $io->success($preflight->message);
@@ -142,7 +133,6 @@ class ConnectCommand extends Command
         $io->definitionList(
             ['Server name' => $serverName],
             ['Host' => sprintf('%s:%d', $host, $port)],
-            ['Protocol' => $protocol],
             ['TLS' => $useTls ? ($tlsVerifyPeer ? 'yes' : 'yes (insecure)') : 'no'],
         );
 
@@ -155,7 +145,6 @@ class ConnectCommand extends Command
                 port: $port,
                 password: $password,
                 description: $description,
-                protocol: $protocol,
                 useTls: $useTls,
                 tlsVerifyPeer: $tlsVerifyPeer,
             ));
@@ -167,7 +156,7 @@ class ConnectCommand extends Command
             }
 
             try {
-                $io->success(sprintf('Link established using protocol "%s". Entering read loop.', $protocol));
+                $io->success(sprintf('Link established using protocol "%s". Entering read loop.', $client->getProtocolName()));
 
                 $client->run();
 

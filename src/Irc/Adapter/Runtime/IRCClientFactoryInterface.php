@@ -8,5 +8,5 @@ use App\Irc\Domain\Server\ServerLink;
 
 interface IRCClientFactoryInterface
 {
-    public function create(string $protocolName, ServerLink $link): IRCClient;
+    public function create(ServerLink $link): IRCClient;
 }

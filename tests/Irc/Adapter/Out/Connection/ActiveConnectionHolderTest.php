@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Irc\Adapter\Out\Connection;
 
-use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Adapter\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Domain\Server\ServerLink;
 use App\Irc\Domain\ValueObject\Hostname;
 use App\Irc\Domain\ValueObject\LinkPassword;

@@ -16,20 +16,6 @@ use RuntimeException;
 final class UnrealUdbConnectionPreflightTest extends TestCase
 {
     #[Test]
-    public function ignoresOtherProtocols(): void
-    {
-        $authority = $this->createMock(UdbAuthorityStateRepositoryInterface::class);
-        $authority->expects(self::never())->method('isApproved');
-        $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
-        $takeover->expects(self::never())->method('takeover');
-
-        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '')->prepare('unreal');
-
-        self::assertTrue($result->ready);
-        self::assertNull($result->message);
-    }
-
-    #[Test]
     public function approvedStoreNeedsNoPreparation(): void
     {
         $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
@@ -37,7 +23,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
         $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
         $takeover->expects(self::never())->method('takeover');
 
-        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '/udb')->prepare('unrealudb');
+        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '/udb')->prepare();
 
         self::assertTrue($result->ready);
         self::assertNull($result->message);
@@ -51,7 +37,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
         $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
         $takeover->expects(self::never())->method('takeover');
 
-        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '', true)->prepare('unrealudb');
+        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '', true)->prepare();
 
         self::assertTrue($result->ready);
         self::assertNotNull($result->message);
@@ -68,7 +54,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
         $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
         $takeover->expects(self::never())->method('takeover');
 
-        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '')->prepare('unrealudb');
+        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '')->prepare();
 
         self::assertTrue($result->ready);
         self::assertNotNull($result->message);
@@ -86,7 +72,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
             $authority,
             $this->createStub(UdbOfflineTakeoverInterface::class),
             '',
-        )->prepare('unrealudb');
+        )->prepare();
 
         self::assertFalse($result->ready);
         self::assertSame('UDB fresh bootstrap failed: Database error.', $result->message);
@@ -100,7 +86,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
         $takeover = $this->createMock(UdbOfflineTakeoverInterface::class);
         $takeover->expects(self::once())->method('takeover')->with('/udb')->willReturn(str_repeat('a', 64));
 
-        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '/udb')->prepare('unrealudb');
+        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '/udb')->prepare();
 
         self::assertTrue($result->ready);
         self::assertNotNull($result->message);
@@ -115,7 +101,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
         $takeover = $this->createStub(UdbOfflineTakeoverInterface::class);
         $takeover->method('takeover')->willThrowException(new RuntimeException('Invalid snapshot.'));
 
-        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '/udb')->prepare('unrealudb');
+        $result = new UnrealUdbConnectionPreflight($authority, $takeover, '/udb')->prepare();
 
         self::assertFalse($result->ready);
         self::assertSame('Automatic udb:takeover failed: Invalid snapshot.', $result->message);

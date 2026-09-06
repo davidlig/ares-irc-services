@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
-use App\Application\Port\UserModeSupportInterface;
+use App\Irc\Application\Port\In\UserModeSupportInterface;
 
 /**
  * UnrealUdb IRCOp-only user modes.

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Application\OperServ;
 
 use App\Application\Port\OperclassServiceActionsInterface;
-use App\Application\Port\ProtocolServiceActionsInterface;
+use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 
 /**
  * Protocol service actions double implementing both the mandatory surface and

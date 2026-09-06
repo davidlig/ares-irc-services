@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
-use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport;
-use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbChannelModesFormatter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport;
+use App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupport;
+use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneChannelModeSupport;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -83,7 +83,7 @@ final class UdbChannelModesFormatterTest extends TestCase
     #[Test]
     public function formatWorksWithUnrealIRCdAndInspIRCdSupport(): void
     {
-        $unrealSupport = new UnrealIRCdChannelModeSupport();
+        $unrealSupport = new UnrealStandaloneChannelModeSupport();
         $formattedUnreal = $this->formatter->format('+rPntk', ['k' => 'key'], $unrealSupport);
         self::assertSame('+ntk key', $formattedUnreal);
 

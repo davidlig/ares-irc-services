@@ -3,43 +3,7 @@
   "description": "Exact, temporary Phase 1 architecture debt. Every entry must be removed in its owning later phase; new entries require an explicit architecture decision.",
   "legacy_paths": {
     "02-irc-core-bootstrap": [],
-    "03-protocol-adapters": [
-      "src/Application/Port/ProtocolModuleInterface.php",
-      "src/Application/Port/ProtocolModuleRegistryInterface.php",
-      "src/Application/Port/ProtocolServiceActionsInterface.php",
-      "src/Application/Port/ServiceIntroductionFormatterInterface.php",
-      "src/Application/Port/ServiceNickReservationInterface.php",
-      "src/Application/Port/ServiceUidGeneratorInterface.php",
-      "src/Application/Port/UserModeSupportInterface.php",
-      "src/Application/Shared/ServiceUidGenerator.php",
-      "src/Infrastructure/IRC/Network/Adapter/InspIRCdNetworkStateAdapter.php",
-      "src/Infrastructure/IRC/Network/Adapter/UnrealIRCdNetworkStateAdapter.php",
-      "src/Infrastructure/IRC/Network/Adapter/UnrealUdbNetworkStateAdapter.php",
-      "src/Infrastructure/IRC/Protocol/AbstractProtocolHandler.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdCapab.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdChannelModeSupport.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdChannelModeSupportFactory.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdModule.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdNickReservation.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdProtocolHandler.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdProtocolServiceActions.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdServiceIntroductionFormatter.php",
-      "src/Infrastructure/IRC/Protocol/InspIRCd/InspIRCdUserModeSupport.php",
-      "src/Infrastructure/IRC/Protocol/NullChannelModeSupport.php",
-      "src/Infrastructure/IRC/Protocol/ProtocolHandlerRegistry.php",
-      "src/Infrastructure/IRC/Protocol/ProtocolModuleRegistry.php",
-      "src/Infrastructure/IRC/Protocol/Unreal/UnrealIRCdChannelModeSupport.php",
-      "src/Infrastructure/IRC/Protocol/Unreal/UnrealIRCdModule.php",
-      "src/Infrastructure/IRC/Protocol/Unreal/UnrealIRCdNickReservation.php",
-      "src/Infrastructure/IRC/Protocol/Unreal/UnrealIRCdProtocolHandler.php",
-      "src/Infrastructure/IRC/Protocol/Unreal/UnrealIRCdProtocolServiceActions.php",
-      "src/Infrastructure/IRC/Protocol/Unreal/UnrealIRCdServiceIntroductionFormatter.php",
-      "src/Infrastructure/IRC/Protocol/Unreal/UnrealIRCdUserModeSupport.php",
-      "src/Infrastructure/IRC/Protocol/UnrealFamily/UnrealFamilyHandshakeTrait.php",
-      "src/Infrastructure/IRC/Runtime/ProtocolRuntimeModuleInterface.php",
-      "src/Infrastructure/IRC/Runtime/ProtocolRuntimeModuleRegistryInterface.php",
-      "src/Infrastructure/IRC/ServiceBridge/ServiceNickReservationSubscriber.php"
-    ],
+    "03-protocol-adapters": [],
     "04-nickserv": [
       "src/Application/Helper/EmailMasker.php",
       "src/Application/NickServ/BurstState.php",
@@ -535,9 +499,6 @@
     ]
   },
   "unreal_family_dependencies": {
-    "03-protocol-adapters": [
-      "src/Infrastructure/IRC/Protocol/Unreal/UnrealIRCdProtocolHandler.php:App\\Infrastructure\\IRC\\Protocol\\UnrealFamily\\UnrealFamilyHandshakeTrait",
-      "src/Infrastructure/IRC/Protocol/UnrealUdb/UnrealUdbProtocolHandler.php:App\\Infrastructure\\IRC\\Protocol\\UnrealFamily\\UnrealFamilyHandshakeTrait"
-    ]
+    "03-protocol-adapters": []
   }
 }

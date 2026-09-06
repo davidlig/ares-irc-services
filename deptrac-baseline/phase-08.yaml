@@ -41,5 +41,3 @@ deptrac:
       - App\Domain\OperServ\Repository\GlineRepositoryInterface
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
-    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler:
-      - App\Infrastructure\IRC\Protocol\UnrealFamily\UnrealFamilyHandshakeTrait

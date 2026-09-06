@@ -447,8 +447,12 @@ php bin/console irc:connect
 
 # Override individual values:
 php bin/console irc:connect services.example.com irc.example.com 6697 secret \
-    "Ares IRC Services" --protocol=unreal --tls
+    "Ares IRC Services" --tls
 ```
+
+The protocol adapter is selected once at startup through `IRC_PROTOCOL`; it cannot be switched per
+command invocation. This keeps protocol composition centralized and prevents mixing collaborators
+from different IRCd adapters in one daemon session.
 
 ### Startup flow
 
@@ -466,7 +470,6 @@ php bin/console irc:connect services.example.com irc.example.com 6697 secret \
 | `port` | `IRC_IRCD_PORT` | IRCd server-link port |
 | `password` | `IRC_LINK_PASSWORD` | Link password |
 | `description` | `IRC_DESCRIPTION` | Text in `/MAP` and `/LINKS` |
-| `--protocol` / `-p` | `IRC_PROTOCOL` | `unreal`, `unrealudb` or `inspircd` |
 | `--tls` | `IRC_USE_TLS` | Wrap connection in TLS |
 
 ---

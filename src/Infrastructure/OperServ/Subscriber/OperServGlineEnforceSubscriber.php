@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Connection;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\UdbRawCommandHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveUdbRawCommandHandlerProvider;
+use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

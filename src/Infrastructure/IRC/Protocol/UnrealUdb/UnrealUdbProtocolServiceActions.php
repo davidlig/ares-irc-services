@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\OperclassServiceActionsInterface;
-use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\UdbRecordWriterInterface;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

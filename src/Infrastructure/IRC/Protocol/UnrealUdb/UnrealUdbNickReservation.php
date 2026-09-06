@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
-use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UdbRecordWriterInterface;
+use App\Irc\Application\Port\In\ServiceNickReservationInterface;
 
 use function sprintf;
 use function strcasecmp;

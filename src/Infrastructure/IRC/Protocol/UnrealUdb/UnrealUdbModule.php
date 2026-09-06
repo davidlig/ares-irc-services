@@ -6,14 +6,14 @@ namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\NickChangePreservesIdentificationInterface;
-use App\Application\Port\ProtocolServiceActionsInterface;
-use App\Application\Port\ServiceIntroductionFormatterInterface;
-use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UdbRawCommandHandlerInterface;
 use App\Application\Port\UdbRawCommandResult;
-use App\Application\Port\UserModeSupportInterface;
-use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface;
+use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
+use App\Irc\Application\Port\In\ServiceIntroductionFormatterInterface;
+use App\Irc\Application\Port\In\ServiceNickReservationInterface;
+use App\Irc\Application\Port\In\UserModeSupportInterface;
 
 /**
  * UnrealUdb protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.

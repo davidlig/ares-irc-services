@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 final class ConnectToServerCommandTest extends TestCase
 {
     #[Test]
-    public function holdsAllParameters(): void
+    public function holdsAllConnectionParameters(): void
     {
         $cmd = new ConnectToServerCommand(
             serverName: 'services.example.com',
@@ -21,7 +21,6 @@ final class ConnectToServerCommandTest extends TestCase
             port: 7029,
             password: 'secret',
             description: 'Ares IRC Services',
-            protocol: 'unreal',
             useTls: true,
         );
 
@@ -30,7 +29,6 @@ final class ConnectToServerCommandTest extends TestCase
         self::assertSame(7029, $cmd->port);
         self::assertSame('secret', $cmd->password);
         self::assertSame('Ares IRC Services', $cmd->description);
-        self::assertSame('unreal', $cmd->protocol);
         self::assertTrue($cmd->useTls);
         self::assertTrue($cmd->tlsVerifyPeer);
     }
@@ -44,7 +42,6 @@ final class ConnectToServerCommandTest extends TestCase
             port: 7029,
             password: 'p',
             description: 'Desc',
-            protocol: 'unreal',
         );
 
         self::assertFalse($cmd->useTls);
@@ -60,7 +57,6 @@ final class ConnectToServerCommandTest extends TestCase
             port: 7029,
             password: 'p',
             description: 'Desc',
-            protocol: 'unreal',
             useTls: true,
             tlsVerifyPeer: false,
         );

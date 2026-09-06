@@ -155,13 +155,6 @@ services:
         arguments:
             $logger: '@monolog.logger.irc'
 
-    App\Irc\Adapter\Protocol\ProtocolHandlerRegistryInterface:
-        class: App\Infrastructure\IRC\Protocol\ProtocolHandlerRegistry
-        arguments:
-            $handlers: !tagged_iterator irc.protocol_handler
-
-    App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleRegistryInterface: '@App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry'
-
     App\Application\Mail\MailerInterface:
         class: App\Infrastructure\Mail\SymfonyMailerAdapter
         arguments:
@@ -195,8 +188,8 @@ services:
 
     # --- Service UID Generator (auto-generates UIDs on burst) --------------------
 
-    App\Application\Port\ServiceUidGeneratorInterface:
-        class: App\Application\Shared\ServiceUidGenerator
+    App\Irc\Application\Port\In\ServiceUidGeneratorInterface:
+        class: App\Irc\Application\ServiceUidGenerator
 
     # --- Application services — inject the irc Monolog channel ---------------
 
@@ -205,6 +198,12 @@ services:
     App\Infrastructure\IRC\Runtime\LoopSchedulerInterface: '@App\Infrastructure\IRC\Runtime\RevoltLoopScheduler'
 
     App\Irc\Adapter\Runtime\IRCClientFactoryInterface: '@App\Irc\Adapter\Runtime\IRCClientFactory'
+
+    App\Irc\Adapter\Runtime\ProtocolRuntimeModuleInterface:
+        factory: ['@App\Bootstrap\Protocol\ProtocolComposition', 'protocolModule']
+
+    App\Irc\Adapter\Protocol\NetworkStateAdapterInterface:
+        factory: ['@App\Bootstrap\Protocol\ProtocolComposition', 'networkStateAdapter']
 
     App\Irc\Application\Port\Out\IrcSessionConnectorInterface: '@App\Irc\Adapter\Out\Connection\IrcSessionConnector'
 
@@ -229,13 +228,11 @@ services:
     App\UI\CLI\ConnectCommand:
         arguments:
             $consumerManager:   '@App\Infrastructure\Messenger\ConsumerProcessManager'
-            $connectionPreflight: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight'
             $defaultServerName:  '%irc.server_name%'
             $defaultHost:        '%irc.ircd_host%'
             $defaultPort:        '%irc.ircd_port%'
             $defaultPassword:    '%irc.link_password%'
             $defaultDescription: '%irc.description%'
-            $defaultProtocol:    '%irc.protocol%'
             $defaultUseTls:      '%irc.use_tls%'
             $defaultTlsVerifyPeer: '%irc.tls_verify_peer%'
 
@@ -244,14 +241,23 @@ services:
             $directory: '%env(string:default::IRC_UDB_DIRECTORY)%'
             $bootstrapFromPeer: '%env(bool:IRC_UDB_BOOTSTRAP_FROM_PEER)%'
 
+    App\Irc\Application\Connect\ProtocolConnectionPreflightInterface:
+        alias: App\Bootstrap\Protocol\ProtocolComposition
+
+    App\Bootstrap\Protocol\ProtocolComposition:
+        arguments:
+            $protocolName: '%irc.protocol%'
+            $modules: !tagged_iterator irc.protocol_module
+            $networkStateAdapters: !tagged_iterator irc.network_state_adapter
+            $unrealUdbPreflight: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbConnectionPreflight'
+
     # --- Protocol modules (one per IRCd type: Unreal, InspIRCd, etc.) ---
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
+    App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolHandler:
         arguments:
             $sid:             '%irc.server_sid%'
             $logger:          '@monolog.logger.irc'
             $eventDispatcher: '@event_dispatcher'
-        tags: ['irc.protocol_handler']
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler:
         arguments:
@@ -260,31 +266,29 @@ services:
             $lock:            '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock'
             $logger:          '@monolog.logger.irc'
             $eventDispatcher: '@event_dispatcher'
-        tags: ['irc.protocol_handler']
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock:
         arguments:
             $directory: '%env(string:default::IRC_UDB_DIRECTORY)%'
             $logger:    '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler:
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolHandler:
         arguments:
             $sid:                '%irc.server_sid%'
             $connectionHolder:   '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
-            $modeSupportFactory: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory'
+            $modeSupportFactory: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory'
             $logger:             '@monolog.logger.irc'
             $eventDispatcher:    '@event_dispatcher'
-        tags: ['irc.protocol_handler']
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter: ~
+    App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneServiceIntroductionFormatter: ~
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter: ~
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter: ~
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbServiceIntroductionFormatter: ~
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions:
+    App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceActions:
         arguments:
-            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
+            $introductionFormatter: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbRecordWriter:
@@ -351,12 +355,12 @@ services:
         arguments:
             $sessionState: '@App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface'
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions:
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions:
         arguments:
-            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
+            $introductionFormatter: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation:
+    App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneNickReservation:
         arguments:
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $logger: '@monolog.logger.irc'
@@ -370,23 +374,23 @@ services:
             $chanservIdent: '%chanserv.ident%'
             $servicesVhost: '%services.vhost%'
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation:
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdNickReservation:
         arguments:
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $logger: '@monolog.logger.irc'
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport: ~
+    App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneChannelModeSupport: ~
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdUserModeSupport: ~
+    App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneUserModeSupport: ~
 
-    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdModule:
+    App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneModule:
         arguments:
-            $handler: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler'
-            $serviceActions: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolServiceActions'
-            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdServiceIntroductionFormatter'
-            $channelModeSupport: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport'
-            $userModeSupport: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdUserModeSupport'
-            $nickReservation: '@App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdNickReservation'
+            $handler: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolHandler'
+            $serviceActions: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneProtocolServiceActions'
+            $introductionFormatter: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneServiceIntroductionFormatter'
+            $channelModeSupport: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneChannelModeSupport'
+            $userModeSupport: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneUserModeSupport'
+            $nickReservation: '@App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneNickReservation'
         tags: ['irc.protocol_module']
 
     App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbChannelModeSupport: ~
@@ -409,29 +413,22 @@ services:
             $rawCommandHandler: '@App\Application\Port\UdbRawCommandHandlerInterface'
         tags: ['irc.protocol_module']
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory: ~
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory: ~
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport:
-        factory: ['@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory', 'createDefault']
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupport:
+        factory: ['@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupportFactory', 'createDefault']
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport: ~
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdUserModeSupport: ~
 
-    App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdModule:
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdModule:
         arguments:
-            $handler: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler'
-            $serviceActions: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolServiceActions'
-            $introductionFormatter: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
-            $channelModeSupport: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdChannelModeSupport'
-            $userModeSupport: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdUserModeSupport'
-            $nickReservation: '@App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdNickReservation'
+            $handler: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolHandler'
+            $serviceActions: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdProtocolServiceActions'
+            $introductionFormatter: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdServiceIntroductionFormatter'
+            $channelModeSupport: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdChannelModeSupport'
+            $userModeSupport: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdUserModeSupport'
+            $nickReservation: '@App\Irc\Adapter\Protocol\InspIRCd\InspIRCdNickReservation'
         tags: ['irc.protocol_module']
-
-    App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry:
-        arguments:
-            $modules: !tagged_iterator irc.protocol_module
-
-    App\Application\Port\ProtocolModuleRegistryInterface:
-        alias: App\Infrastructure\IRC\Protocol\ProtocolModuleRegistry
 
     # --- Event subscriber — logs domain events to the irc channel ------------
 
@@ -453,17 +450,20 @@ services:
 
     # --- Network state: protocol router (wire → domain events) + subscriber (domain events → repos) ---
 
-    App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter:
+    App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneNetworkStateAdapter:
         arguments:
             $logger: '@monolog.logger.irc'
+        tags: ['irc.network_state_adapter']
 
-    App\Infrastructure\IRC\Network\Adapter\UnrealUdbNetworkStateAdapter:
+    App\Irc\Adapter\Protocol\UnrealUdb\UnrealUdbNetworkStateAdapter:
         arguments:
             $logger: '@monolog.logger.irc'
+        tags: ['irc.network_state_adapter']
 
-    App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter:
+    App\Irc\Adapter\Protocol\InspIRCd\InspIRCdNetworkStateAdapter:
         arguments:
             $logger: '@monolog.logger.irc'
+        tags: ['irc.network_state_adapter']
 
     App\Irc\Adapter\Network\NetworkEventEnricher:
         arguments:
@@ -471,16 +471,11 @@ services:
         tags: ['kernel.event_subscriber']
 
     App\Irc\Adapter\Network\ProtocolNetworkStateRouter:
-        arguments:
-            $adapters:
-                unreal: '@App\Infrastructure\IRC\Network\Adapter\UnrealIRCdNetworkStateAdapter'
-                unrealudb: '@App\Infrastructure\IRC\Network\Adapter\UnrealUdbNetworkStateAdapter'
-                inspircd: '@App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter'
         tags: ['kernel.event_subscriber']
 
     # --- Service Nick Reservation: SQLINE/QLINE before bot introduction ---------------------
 
-    App\Infrastructure\IRC\ServiceBridge\ServiceNickReservationSubscriber:
+    App\Irc\Adapter\ServiceBridge\ServiceNickReservationSubscriber:
         arguments:
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
@@ -640,11 +635,11 @@ services:
     App\Application\Port\ActiveChannelModeSupportProviderInterface:
         class: App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider
 
-    App\Infrastructure\IRC\Protocol\NullChannelModeSupport: ~
+    App\Irc\Adapter\Protocol\NullChannelModeSupport: ~
 
     App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider:
         arguments:
-            $nullSupport: '@App\Infrastructure\IRC\Protocol\NullChannelModeSupport'
+            $nullSupport: '@App\Irc\Adapter\Protocol\NullChannelModeSupport'
 
     # --- ActiveConnectionHolder — stores the live S2S connection for all services ---
 
@@ -778,7 +773,7 @@ services:
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
             $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
-            $uidGenerator: '@App\Application\Port\ServiceUidGeneratorInterface'
+            $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
             $servicesVhost:   '%services.vhost%'
             $nickservNick:       '%nickserv.nick%'
             $nickservIdent:      '%nickserv.ident%'
@@ -793,7 +788,7 @@ services:
 
     App\Infrastructure\ChanServ\Bot\ChanServBot:
         arguments:
-            $uidGenerator: '@App\Application\Port\ServiceUidGeneratorInterface'
+            $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
             $servicesVhost:   '%services.vhost%'
             $chanservNick:      '%chanserv.nick%'
             $chanservIdent:     '%chanserv.ident%'
@@ -811,7 +806,7 @@ services:
 
     App\Infrastructure\MemoServ\Bot\MemoServBot:
         arguments:
-            $uidGenerator: '@App\Application\Port\ServiceUidGeneratorInterface'
+            $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
             $servicesVhost: '%services.vhost%'
             $memoservNick: '%memoserv.nick%'
             $memoservIdent: '%memoserv.ident%'
@@ -1702,7 +1697,7 @@ services:
 
     App\Infrastructure\OperServ\Bot\OperServBot:
         arguments:
-            $uidGenerator: '@App\Application\Port\ServiceUidGeneratorInterface'
+            $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
             $servicesVhost: '%services.vhost%'
             $operservNick: '%operserv.nick%'
             $operservIdent: '%operserv.ident%'

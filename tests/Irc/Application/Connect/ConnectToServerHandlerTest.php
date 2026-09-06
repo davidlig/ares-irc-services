@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 final class ConnectToServerHandlerTest extends TestCase
 {
     #[Test]
-    public function handleBuildsServerLinkCallsFactoryAndConnectThenReturnsClient(): void
+    public function handleBuildsServerLinkCallsConnectorAndReturnsSession(): void
     {
         $command = new ConnectToServerCommand(
             serverName: 'services.test.local',
@@ -25,14 +25,13 @@ final class ConnectToServerHandlerTest extends TestCase
             port: 7029,
             password: 'link-secret',
             description: 'Ares Test',
-            protocol: 'unreal',
             useTls: true,
         );
 
         $capturedLink = null;
         $session = $this->createStub(IrcSessionInterface::class);
         $connector = $this->createMock(IrcSessionConnectorInterface::class);
-        $connector->expects(self::once())->method('connect')->with('unreal', self::callback(static function (ServerLink $link) use (&$capturedLink): bool {
+        $connector->expects(self::once())->method('connect')->with(self::callback(static function (ServerLink $link) use (&$capturedLink): bool {
             $capturedLink = $link;
 
             return true;
@@ -64,7 +63,6 @@ final class ConnectToServerHandlerTest extends TestCase
             port: 7029,
             password: 'link-secret',
             description: 'Ares Test',
-            protocol: 'unreal',
             useTls: true,
             tlsVerifyPeer: false,
         );
@@ -72,7 +70,7 @@ final class ConnectToServerHandlerTest extends TestCase
         $capturedLink = null;
         $session = $this->createStub(IrcSessionInterface::class);
         $connector = $this->createMock(IrcSessionConnectorInterface::class);
-        $connector->expects(self::once())->method('connect')->with('unreal', self::callback(static function (ServerLink $link) use (&$capturedLink): bool {
+        $connector->expects(self::once())->method('connect')->with(self::callback(static function (ServerLink $link) use (&$capturedLink): bool {
             $capturedLink = $link;
 
             return true;
@@ -85,27 +83,5 @@ final class ConnectToServerHandlerTest extends TestCase
         self::assertInstanceOf(ServerLink::class, $capturedLink);
         self::assertTrue($capturedLink->useTls);
         self::assertFalse($capturedLink->tlsVerifyPeer);
-    }
-
-    #[Test]
-    public function handleUsesProtocolFromCommandForFactoryCreate(): void
-    {
-        $command = new ConnectToServerCommand(
-            serverName: 's.local',
-            host: 'irc.example.com',
-            port: 7100,
-            password: 'p',
-            description: 'Desc',
-            protocol: 'inspircd',
-            useTls: false,
-        );
-
-        $session = $this->createStub(IrcSessionInterface::class);
-        $connector = $this->createMock(IrcSessionConnectorInterface::class);
-        $connector->expects(self::once())->method('connect')->with('inspircd', self::anything())->willReturn($session);
-
-        $handler = new ConnectToServerHandler($connector);
-
-        $handler->handle($command);
     }
 }

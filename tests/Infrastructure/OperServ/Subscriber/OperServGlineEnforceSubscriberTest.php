@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\ProtocolModuleInterface;
-use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\ProtocolModuleInterface;
+use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

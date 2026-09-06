@@ -6,8 +6,8 @@ namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\NullChannelModeSupport;
 
 final readonly class ActiveChannelModeSupportProvider implements ActiveChannelModeSupportProviderInterface
 {

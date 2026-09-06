@@ -19,8 +19,8 @@ use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
-use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdChannelModeSupport;
+use App\Irc\Adapter\Protocol\NullChannelModeSupport;
+use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneChannelModeSupport;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
@@ -55,7 +55,7 @@ final class HalfopCommandTest extends TestCase
             'NOTICE',
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
-            new UnrealIRCdChannelModeSupport(),
+            new UnrealStandaloneChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -214,7 +214,7 @@ final class HalfopCommandTest extends TestCase
             'NOTICE',
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
-            new UnrealIRCdChannelModeSupport(),
+            new UnrealStandaloneChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );
@@ -257,7 +257,7 @@ final class HalfopCommandTest extends TestCase
             'NOTICE',
             new ChanServCommandRegistry([]),
             $this->createStub(ChannelLookupPort::class),
-            new UnrealIRCdChannelModeSupport(),
+            new UnrealStandaloneChannelModeSupport(),
             $this->createStub(NetworkUserLookupPort::class),
             $this->createServiceNicks(),
         );

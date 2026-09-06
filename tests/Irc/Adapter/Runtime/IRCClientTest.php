@@ -7,7 +7,6 @@ namespace App\Tests\Irc\Adapter\Runtime;
 use App\Application\Maintenance\Message\RunMaintenanceCycle;
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
-use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
 use App\Infrastructure\IRC\Runtime\RevoltLoopScheduler;
 use App\Infrastructure\IRC\Runtime\SessionEventPump;
@@ -117,7 +116,7 @@ final class IRCClientTest extends TestCase
     #[Test]
     public function connectFailsAndClearsEventPumpAwareProtocolWhenHandshakeThrows(): void
     {
-        $awareProtocol = new class extends AbstractProtocolHandler implements SessionEventPumpAwareInterface {
+        $awareProtocol = new class implements ProtocolHandlerInterface, SessionEventPumpAwareInterface {
             public ?SessionEventPump $pump = null;
 
             public function getProtocolName(): string
@@ -125,10 +124,27 @@ final class IRCClientTest extends TestCase
                 return 'custom';
             }
 
+            public function getSupportedCapabilities(): array
+            {
+                return [];
+            }
+
+            public function parseRawLine(string $rawLine): IRCMessage
+            {
+                return IRCMessage::fromRawLine($rawLine);
+            }
+
+            public function formatMessage(IRCMessage $message): string
+            {
+                return $message->toRawLine();
+            }
+
             public function performHandshake(ConnectionInterface $connection, ServerLink $link): void
             {
                 throw new RuntimeException('Handshake failed');
             }
+
+            public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void {}
 
             public function setEventPump(?SessionEventPump $eventPump): void
             {
@@ -528,7 +544,7 @@ final class IRCClientTest extends TestCase
     #[Test]
     public function sessionEventPumpAwareProtocolGetsPumpOnConnectAndClearedOnTermination(): void
     {
-        $awareProtocol = new class extends AbstractProtocolHandler implements SessionEventPumpAwareInterface {
+        $awareProtocol = new class implements ProtocolHandlerInterface, SessionEventPumpAwareInterface {
             public ?SessionEventPump $pump = null;
 
             public function getProtocolName(): string
@@ -536,7 +552,24 @@ final class IRCClientTest extends TestCase
                 return 'custom';
             }
 
+            public function getSupportedCapabilities(): array
+            {
+                return [];
+            }
+
+            public function parseRawLine(string $rawLine): IRCMessage
+            {
+                return IRCMessage::fromRawLine($rawLine);
+            }
+
+            public function formatMessage(IRCMessage $message): string
+            {
+                return $message->toRawLine();
+            }
+
             public function performHandshake(ConnectionInterface $connection, ServerLink $link): void {}
+
+            public function handleIncoming(IRCMessage $message, ConnectionInterface $connection): void {}
 
             public function setEventPump(?SessionEventPump $eventPump): void
             {

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ProtocolModuleInterface;
-use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;
 use App\Infrastructure\IRC\ServiceBridge\ActiveChannelModeSupportProvider;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\NullChannelModeSupport;
+use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -8,7 +8,6 @@ use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
 use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
-use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleRegistryInterface;
 use App\Infrastructure\IRC\Runtime\RevoltLoopScheduler;
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use App\Irc\Application\BurstCompleteRegistry;
@@ -17,14 +16,14 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 /**
- * Creates IRCClient instances wired with the appropriate protocol module.
+ * Creates IRCClient instances wired with the protocol module selected in Bootstrap.
  * Sets the active module on ActiveConnectionHolder so services obtain handler,
  * formatters and actions from the module for the connected IRCd type.
  */
 final readonly class IRCClientFactory implements IRCClientFactoryInterface
 {
     public function __construct(
-        private ProtocolRuntimeModuleRegistryInterface $moduleRegistry,
+        private ProtocolRuntimeModuleInterface $module,
         private ConnectionFactoryInterface $connectionFactory,
         private ActiveConnectionHolderInterface $connectionHolder,
         private EventBusInterface $eventDispatcher,
@@ -35,15 +34,14 @@ final readonly class IRCClientFactory implements IRCClientFactoryInterface
         private LoopSchedulerInterface $loopScheduler = new RevoltLoopScheduler(),
     ) {}
 
-    public function create(string $protocolName, ServerLink $link): IRCClient
+    public function create(ServerLink $link): IRCClient
     {
-        $module = $this->moduleRegistry->get($protocolName);
-        $this->connectionHolder->setProtocolModule($module);
+        $this->connectionHolder->setProtocolModule($this->module);
         $connection = $this->connectionFactory->create($link);
 
         return new IRCClient(
             $connection,
-            $module->getHandler(),
+            $this->module->getHandler(),
             $this->eventDispatcher,
             $this->messageBus,
             $this->burstCompleteRegistry,

@@ -30,6 +30,6 @@ final readonly class ConnectToServerHandler implements ConnectToServerHandlerInt
             tlsVerifyPeer: $command->tlsVerifyPeer,
         );
 
-        return $this->sessionConnector->connect($command->protocol, $serverLink);
+        return $this->sessionConnector->connect($serverLink);
     }
 }

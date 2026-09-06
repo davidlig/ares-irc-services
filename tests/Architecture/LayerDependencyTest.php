@@ -39,11 +39,13 @@ use function trim;
 
 use const JSON_THROW_ON_ERROR;
 use const PATHINFO_EXTENSION;
+use const T_ABSTRACT;
 use const T_CONSTANT_ENCAPSED_STRING;
 use const T_NAME_FULLY_QUALIFIED;
 use const T_NAME_QUALIFIED;
 use const T_NAME_RELATIVE;
 use const T_STRING;
+use const T_TRAIT;
 use const T_USE;
 
 #[CoversNothing]
@@ -289,22 +291,21 @@ final class LayerDependencyTest extends TestCase
     {
         $actual = [];
         $paths = [
-            'src/Infrastructure/IRC/Protocol/Unreal',
             'src/Infrastructure/IRC/Protocol/UnrealUdb',
             'src/Irc/Adapter/Protocol/UnrealStandalone',
             'src/Irc/Adapter/Protocol/UnrealUdb',
         ];
 
         foreach ($paths as $path) {
-            foreach (self::importsUnder($path) as $import) {
-                $isForbidden = str_starts_with($import['name'], 'App\\Infrastructure\\IRC\\Protocol\\UnrealFamily\\')
-                    || (str_contains($import['file'], '/Unreal/') && str_starts_with($import['name'], 'App\\Infrastructure\\IRC\\Protocol\\UnrealUdb\\'))
-                    || (str_contains($import['file'], '/UnrealUdb/') && str_starts_with($import['name'], 'App\\Infrastructure\\IRC\\Protocol\\Unreal\\'))
-                    || (str_contains($import['file'], '/UnrealStandalone/') && str_starts_with($import['name'], 'App\\Irc\\Adapter\\Protocol\\UnrealUdb\\'))
-                    || (str_contains($import['file'], '/UnrealUdb/') && str_starts_with($import['name'], 'App\\Irc\\Adapter\\Protocol\\UnrealStandalone\\'));
+            foreach (self::phpFiles($path) as $file) {
+                $contents = file_get_contents(self::ROOT . '/' . $file);
+                self::assertIsString($contents);
 
-                if ($isForbidden) {
-                    $actual[] = $import['file'] . ':' . $import['name'];
+                if (str_contains($file, '/UnrealStandalone/') && str_contains($contents, '\\UnrealUdb\\')) {
+                    $actual[] = $file . ':UnrealUdb';
+                }
+                if (str_contains($file, '/UnrealUdb/') && str_contains($contents, '\\UnrealStandalone\\')) {
+                    $actual[] = $file . ':UnrealStandalone';
                 }
             }
         }
@@ -319,6 +320,56 @@ final class LayerDependencyTest extends TestCase
         sort($documented);
 
         self::assertSame($documented, $actual, 'UnrealStandalone and UnrealUdb must evolve independently without a shared behavioral layer');
+        self::assertDirectoryDoesNotExist(self::ROOT . '/src/Infrastructure/IRC/Protocol/Unreal');
+        self::assertDirectoryDoesNotExist(self::ROOT . '/src/Infrastructure/IRC/Protocol/UnrealFamily');
+    }
+
+    #[Test]
+    public function neutralProtocolRootContainsNoSharedBehavioralBaseOrTrait(): void
+    {
+        $path = self::ROOT . '/src/Irc/Adapter/Protocol';
+        $entries = scandir($path);
+        self::assertIsArray($entries);
+
+        foreach ($entries as $entry) {
+            $file = $path . '/' . $entry;
+            if (!is_file($file) || 'php' !== pathinfo($file, PATHINFO_EXTENSION)) {
+                continue;
+            }
+
+            $contents = file_get_contents($file);
+            self::assertIsString($contents);
+            self::assertDoesNotMatchRegularExpression('/(?:UnrealFamily|UnrealBase|AbstractUnreal)/', $contents, $entry);
+
+            foreach (token_get_all($contents) as $token) {
+                if (!is_array($token)) {
+                    continue;
+                }
+
+                self::assertNotContains($token[0], [T_TRAIT, T_ABSTRACT], $entry . ' must remain a protocol-neutral contract or concrete primitive');
+            }
+        }
+    }
+
+    #[Test]
+    public function configuredProtocolSelectionDoesNotLeakFromBootstrap(): void
+    {
+        $filesAndForbiddenFragments = [
+            'src/Irc/Application/Connect/ConnectToServerCommand.php' => ['public string $protocol'],
+            'src/Irc/Application/Connect/ConnectToServerHandler.php' => ['$command->protocol'],
+            'src/Irc/Adapter/Runtime/IRCClientFactory.php' => ['$protocolName', '->get($protocolName)'],
+            'src/Irc/Adapter/Network/ProtocolNetworkStateRouter.php' => ['$adapters', 'getProtocolName()'],
+            'src/UI/CLI/ConnectCommand.php' => ["'protocol',", "getOption('protocol')"],
+        ];
+
+        foreach ($filesAndForbiddenFragments as $file => $fragments) {
+            $contents = file_get_contents(self::ROOT . '/' . $file);
+            self::assertIsString($contents);
+
+            foreach ($fragments as $fragment) {
+                self::assertStringNotContainsString($fragment, $contents, $file . ' must not select a concrete protocol');
+            }
+        }
     }
 
     /**
@@ -515,11 +566,12 @@ final class LayerDependencyTest extends TestCase
             'src/Irc/Application',
             'src/Shared',
             'src/Infrastructure/IRC/Runtime',
-            'src/Infrastructure/IRC/Protocol/AbstractProtocolHandler.php',
-            'src/Infrastructure/IRC/Protocol/NullChannelModeSupport.php',
-            'src/Infrastructure/IRC/Protocol/ProtocolHandlerRegistry.php',
-            'src/Infrastructure/IRC/Protocol/ProtocolModuleRegistry.php',
-            'src/Infrastructure/IRC/Protocol/UnrealFamily',
+            'src/Irc/Adapter/Protocol/IRCMessage.php',
+            'src/Irc/Adapter/Protocol/MessageDirection.php',
+            'src/Irc/Adapter/Protocol/NetworkStateAdapterInterface.php',
+            'src/Irc/Adapter/Protocol/NullChannelModeSupport.php',
+            'src/Irc/Adapter/Protocol/ProtocolHandlerInterface.php',
+            'src/Irc/Adapter/Runtime/ProtocolRuntimeModuleInterface.php',
         ];
         $files = [];
 
@@ -549,7 +601,7 @@ final class LayerDependencyTest extends TestCase
                     continue;
                 }
 
-                if (!$entry->isDir() || str_starts_with($entry->getFilename(), '.') || 'UnrealFamily' === $entry->getFilename()) {
+                if (!$entry->isDir() || str_starts_with($entry->getFilename(), '.')) {
                     continue;
                 }
 

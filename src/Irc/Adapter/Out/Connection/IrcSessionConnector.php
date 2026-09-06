@@ -15,9 +15,9 @@ final readonly class IrcSessionConnector implements IrcSessionConnectorInterface
         private IRCClientFactoryInterface $clientFactory,
     ) {}
 
-    public function connect(string $protocolName, ServerLink $serverLink): IrcSessionInterface
+    public function connect(ServerLink $serverLink): IrcSessionInterface
     {
-        $client = $this->clientFactory->create($protocolName, $serverLink);
+        $client = $this->clientFactory->create($serverLink);
         $client->connect($serverLink);
 
         return $client;

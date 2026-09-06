@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\Irc\Adapter\Protocol\UnrealStandalone;
+
+use App\Irc\Adapter\Protocol\UnrealStandalone\UnrealStandaloneServiceIntroductionFormatter;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(UnrealStandaloneServiceIntroductionFormatter::class)]
+final class UnrealStandaloneServiceIntroductionFormatterTest extends TestCase
+{
+    private UnrealStandaloneServiceIntroductionFormatter $formatter;
+
+    protected function setUp(): void
+    {
+        $this->formatter = new UnrealStandaloneServiceIntroductionFormatter();
+    }
+
+    #[Test]
+    public function formatIntroductionProducesValidUidLine(): void
+    {
+        $line = $this->formatter->formatIntroduction(
+            serverSid: '001',
+            nick: 'NickServ',
+            ident: 'services',
+            host: 'services.test.local',
+            uid: '001ABCD',
+            realname: 'Nickname Service',
+            serviceName: 'nickserv',
+        );
+
+        self::assertStringStartsWith(':001 UID ', $line);
+        self::assertStringContainsString('NickServ', $line);
+        self::assertStringContainsString('services', $line);
+        self::assertStringContainsString('services.test.local', $line);
+        self::assertStringContainsString('001ABCD', $line);
+        self::assertStringContainsString('+dIopqS', $line);
+        self::assertStringContainsString(':Nickname Service', $line);
+    }
+
+    #[Test]
+    public function formatIntroductionContainsCorrectHopcount(): void
+    {
+        $line = $this->formatter->formatIntroduction(
+            serverSid: '002',
+            nick: 'ChanServ',
+            ident: 'services',
+            host: 'services.test.local',
+            uid: '002EFGH',
+            realname: 'Channel Service',
+            serviceName: 'chanserv',
+        );
+
+        self::assertMatchesRegularExpression('/:002 UID ChanServ 1 \d+/', $line);
+    }
+
+    #[Test]
+    public function formatIntroductionUsesUnrealFormat(): void
+    {
+        $line = $this->formatter->formatIntroduction(
+            serverSid: '003',
+            nick: 'MemoServ',
+            ident: 'services',
+            host: 'services.test.local',
+            uid: '003IJKL',
+            realname: 'Memo Service',
+            serviceName: 'memoserv',
+        );
+
+        self::assertMatchesRegularExpression(
+            '/^:003 UID MemoServ 1 \d+ services services\.test\.local 003IJKL 0 \+dIopqRS \* \* \* :Memo Service$/',
+            $line
+        );
+    }
+
+    #[Test]
+    public function formatIntroductionEscapesSpecialCharactersInRealname(): void
+    {
+        $line = $this->formatter->formatIntroduction(
+            serverSid: '001',
+            nick: 'TestBot',
+            ident: 'test',
+            host: 'test.local',
+            uid: '001TEST',
+            realname: 'Test Bot Service',
+            serviceName: 'nickserv',
+        );
+
+        self::assertStringEndsWith(':Test Bot Service', $line);
+    }
+}

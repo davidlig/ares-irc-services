@@ -6,11 +6,11 @@ namespace App\Infrastructure\MemoServ\Bot;
 
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceUidGeneratorInterface;
 use App\Application\Port\ServiceUidProviderInterface;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;

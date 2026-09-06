@@ -9,5 +9,5 @@ use App\Irc\Domain\Server\ServerLink;
 
 interface IrcSessionConnectorInterface
 {
-    public function connect(string $protocolName, ServerLink $serverLink): IrcSessionInterface;
+    public function connect(ServerLink $serverLink): IrcSessionInterface;
 }

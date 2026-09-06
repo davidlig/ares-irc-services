@@ -46,7 +46,7 @@ deptrac:
         - type: classNameRegex
           value: '#^App\\Irc\\Adapter\\(?!(?:Protocol\\(?:InspIRCd|UnrealStandalone|UnrealUdb))(?:\\|$))#'
         - type: classNameRegex
-          value: '#^App\\Infrastructure\\IRC\\(?!(?:Protocol\\(?:InspIRCd|Unreal|UnrealFamily|UnrealUdb))(?:\\|$))#'
+          value: '#^App\\Infrastructure\\IRC\\(?!(?:Protocol\\UnrealUdb)(?:\\|$))#'
         - type: classNameRegex
           value: '#^App\\Infrastructure\\(?!(?:ChanServ|IRC|MemoServ|NickServ|OperServ|Udb)(?:\\|$))#'
         - type: classNameRegex
@@ -182,15 +182,11 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Irc\\Adapter\\Protocol\\InspIRCd(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\IRC\\Protocol\\InspIRCd(?:\\|$)#'
 
     - name: UnrealStandalone
       collectors:
         - type: classNameRegex
           value: '#^App\\Irc\\Adapter\\Protocol\\UnrealStandalone(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\IRC\\Protocol\\Unreal(?:\\|$)#'
 
     - name: UnrealUdb
       collectors:
@@ -202,12 +198,6 @@ deptrac:
           value: '#^App\\Domain\\Udb(?:\\|$)#'
         - type: classNameRegex
           value: '#^App\\Infrastructure\\Udb(?:\\|$)#'
-
-    # Temporary layer: phase 03 removes this shared Unreal implementation debt.
-    - name: UnrealFamily
-      collectors:
-        - type: classNameRegex
-          value: '#^App\\Infrastructure\\IRC\\Protocol\\UnrealFamily(?:\\|$)#'
 
     - name: Bootstrap
       collectors:
@@ -375,15 +365,6 @@ deptrac:
       - Shared Domain
       - Shared Application
       - External
-    UnrealFamily:
-      - Irc Domain
-      - Irc Application Public
-      - Irc Application Internal
-      - Irc Adapter
-      - Shared Domain
-      - Shared Application
-      - External
-
     Bootstrap:
       - Irc Domain
       - Irc Application Public
@@ -410,6 +391,5 @@ deptrac:
       - InspIRCd
       - UnrealStandalone
       - UnrealUdb
-      - UnrealFamily
       - External
     External: ~

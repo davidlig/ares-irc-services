@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Network;
 
-use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -13,14 +12,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * Subscribes to MessageReceivedEvent and delegates to the network state adapter
  * for the configured IRCd protocol. Only one adapter handles each message.
  */
-class ProtocolNetworkStateRouter implements EventSubscriberInterface
+final class ProtocolNetworkStateRouter implements EventSubscriberInterface
 {
-    /**
-     * @param array<string, NetworkStateAdapterInterface> $adapters
-     */
     public function __construct(
-        private readonly ActiveConnectionHolderInterface $connectionHolder,
-        private readonly array $adapters,
+        private readonly NetworkStateAdapterInterface $adapter,
     ) {}
 
     /**
@@ -37,16 +32,6 @@ class ProtocolNetworkStateRouter implements EventSubscriberInterface
 
     public function onMessageReceived(MessageReceivedEvent $event): void
     {
-        $protocol = $this->connectionHolder->getProtocolModule()?->getProtocolName();
-        if (null === $protocol) {
-            return;
-        }
-
-        $adapter = $this->adapters[$protocol] ?? null;
-        if (null === $adapter) {
-            return;
-        }
-
-        $adapter->handleMessage($event->message);
+        $this->adapter->handleMessage($event->message);
     }
 }

@@ -29,7 +29,6 @@ final class ConnectCommandTest extends TestCase
      *     port: int,
      *     password: string,
      *     description: string,
-     *     protocol: string,
      *     useTls: bool,
      *     tlsVerifyPeer: bool,
      * }
@@ -40,7 +39,6 @@ final class ConnectCommandTest extends TestCase
         'port' => 7029,
         'password' => 'link-secret',
         'description' => 'Ares Test',
-        'protocol' => 'unreal',
         'useTls' => false,
         'tlsVerifyPeer' => true,
     ];
@@ -52,7 +50,6 @@ final class ConnectCommandTest extends TestCase
      *     port?: int,
      *     password?: string,
      *     description?: string,
-     *     protocol?: string,
      *     useTls?: bool,
      *     tlsVerifyPeer?: bool,
      * } $defaults
@@ -79,7 +76,6 @@ final class ConnectCommandTest extends TestCase
             defaultPort: $m['port'],
             defaultPassword: $m['password'],
             defaultDescription: $m['description'],
-            defaultProtocol: $m['protocol'],
             defaultUseTls: $m['useTls'],
             defaultTlsVerifyPeer: $m['tlsVerifyPeer'],
         );
@@ -120,7 +116,6 @@ final class ConnectCommandTest extends TestCase
         self::assertSame(7029, $handler->capturedCommand->port);
         self::assertSame('link-secret', $handler->capturedCommand->password);
         self::assertSame('Ares Test', $handler->capturedCommand->description);
-        self::assertSame('unreal', $handler->capturedCommand->protocol);
         self::assertFalse($handler->capturedCommand->useTls);
         self::assertTrue($handler->capturedCommand->tlsVerifyPeer);
 
@@ -131,7 +126,7 @@ final class ConnectCommandTest extends TestCase
     }
 
     #[Test]
-    public function configureDefinesAllOptions(): void
+    public function configureDefinesConnectionArgumentsAndOptionsWithoutRuntimeProtocolSelection(): void
     {
         $command = $this->createCommand();
         $command->getDefinition();
@@ -141,7 +136,7 @@ final class ConnectCommandTest extends TestCase
         self::assertTrue($command->getDefinition()->hasArgument('port'));
         self::assertTrue($command->getDefinition()->hasArgument('password'));
         self::assertTrue($command->getDefinition()->hasArgument('description'));
-        self::assertTrue($command->getDefinition()->hasOption('protocol'));
+        self::assertFalse($command->getDefinition()->hasOption('protocol'));
         self::assertTrue($command->getDefinition()->hasOption('tls'));
         self::assertTrue($command->getDefinition()->hasOption('insecure'));
         self::assertTrue($command->getDefinition()->hasOption('no-consumer'));
@@ -199,10 +194,10 @@ final class ConnectCommandTest extends TestCase
     {
         $handler = new HandlerStub($this->createClientThatReturnsFromRun(), null);
         $preflight = $this->createMock(ProtocolConnectionPreflightInterface::class);
-        $preflight->expects(self::once())->method('prepare')->with('unrealudb')
+        $preflight->expects(self::once())->method('prepare')->with()
             ->willReturn(new ConnectionPreflightResult(true, 'Dataset ready.'));
 
-        $command = $this->createCommand($handler, null, ['protocol' => 'unrealudb'], $preflight);
+        $command = $this->createCommand($handler, null, [], $preflight);
         $tester = new CommandTester($command);
 
         self::assertSame(Command::SUCCESS, $tester->execute(['--no-consumer' => true]));
@@ -217,7 +212,7 @@ final class ConnectCommandTest extends TestCase
         $preflight = $this->createStub(ProtocolConnectionPreflightInterface::class);
         $preflight->method('prepare')->willReturn(new ConnectionPreflightResult(false, 'Dataset rejected.'));
 
-        $command = $this->createCommand($handler, null, ['protocol' => 'unrealudb'], $preflight);
+        $command = $this->createCommand($handler, null, [], $preflight);
         $tester = new CommandTester($command);
 
         self::assertSame(Command::FAILURE, $tester->execute(['--no-consumer' => true]));
@@ -239,7 +234,6 @@ final class ConnectCommandTest extends TestCase
             'port' => '7100',
             'password' => 'mypass',
             'description' => 'My Services',
-            '--protocol' => 'inspircd',
             '--tls' => true,
             '--no-consumer' => true,
         ]);
@@ -251,7 +245,6 @@ final class ConnectCommandTest extends TestCase
         self::assertSame(7100, $capturedCommand->port);
         self::assertSame('mypass', $capturedCommand->password);
         self::assertSame('My Services', $capturedCommand->description);
-        self::assertSame('inspircd', $capturedCommand->protocol);
         self::assertTrue($capturedCommand->useTls);
     }
 

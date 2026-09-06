@@ -24,9 +24,9 @@ final readonly class UnrealUdbConnectionPreflight implements ProtocolConnectionP
         private bool $bootstrapFromPeer = false,
     ) {}
 
-    public function prepare(string $protocol): ConnectionPreflightResult
+    public function prepare(): ConnectionPreflightResult
     {
-        if (UnrealUdbModule::PROTOCOL_NAME !== $protocol || $this->authority->isApproved()) {
+        if ($this->authority->isApproved()) {
             return new ConnectionPreflightResult(true);
         }
 

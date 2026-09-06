@@ -32,9 +32,9 @@ final class IrcSessionConnectorTest extends TestCase
         $client = $this->createMock(IRCClient::class);
         $client->expects(self::once())->method('connect')->with($serverLink);
         $factory = $this->createMock(IRCClientFactoryInterface::class);
-        $factory->expects(self::once())->method('create')->with('unreal', $serverLink)->willReturn($client);
+        $factory->expects(self::once())->method('create')->with($serverLink)->willReturn($client);
 
-        $session = new IrcSessionConnector($factory)->connect('unreal', $serverLink);
+        $session = new IrcSessionConnector($factory)->connect($serverLink);
 
         self::assertSame($client, $session);
     }

@@ -10,6 +10,7 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionLock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler;
 use App\Infrastructure\IRC\Runtime\SessionEventPump;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Domain\Server\ServerLink;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 use function fclose;
 use function flock;
@@ -55,7 +57,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         return $connection;
     }
 
-    private function createHandler(string $sid = '002'): UnrealUdbProtocolHandler
+    private function createHandler(string $sid = '002', ?EventDispatcherInterface $eventDispatcher = null): UnrealUdbProtocolHandler
     {
         $coordinator = new UdbSessionCoordinator(
             $sid,
@@ -63,7 +65,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
             $this->createStub(UdbSnapshotProviderInterface::class),
         );
 
-        return new UnrealUdbProtocolHandler($sid, $coordinator);
+        return new UnrealUdbProtocolHandler($sid, $coordinator, eventDispatcher: $eventDispatcher);
     }
 
     private function createServerLink(): ServerLink
@@ -233,8 +235,18 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     public function eosTriggersBurstCompletionOurEosAndHelNegotiation(): void
     {
         $this->written = [];
-        $handler = $this->createHandler();
         $connection = $this->createConnection();
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher->expects(self::once())
+            ->method('dispatch')
+            ->willReturnCallback(static function (object $event) use ($connection): object {
+                self::assertInstanceOf(NetworkBurstCompleteEvent::class, $event);
+                self::assertSame($connection, $event->connection);
+                self::assertSame('002', $event->serverSid);
+
+                return $event;
+            });
+        $handler = $this->createHandler(eventDispatcher: $eventDispatcher);
 
         // The handshake captures our own FQDN (onLinkEstablished).
         $handler->performHandshake($connection, $this->createServerLink());
@@ -371,6 +383,24 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'PING', trailing: 'token'), $this->createConnection());
 
         self::assertSame(['PONG :token'], $this->written);
+    }
+
+    #[Test]
+    public function errorIsLoggedAndStillTicksTheCoordinator(): void
+    {
+        $this->written = [];
+        $connection = $this->createConnection();
+        $coordinator = $this->createMock(UdbSessionCoordinator::class);
+        $coordinator->expects(self::once())->method('tick')->with($connection);
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())
+            ->method('critical')
+            ->with('Remote server sent ERROR — closing link.', ['reason' => 'Link rejected']);
+        $handler = new UnrealUdbProtocolHandler('002', $coordinator, logger: $logger);
+
+        $handler->handleIncoming(new IRCMessage(command: 'ERROR', trailing: 'Link rejected'), $connection);
+
+        self::assertSame([], $this->written);
     }
 
     #[Test]
