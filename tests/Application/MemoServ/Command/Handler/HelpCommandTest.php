@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(HelpCommand::class)]
 final class HelpCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         array $args,
         MemoServNotifierInterface $notifier,

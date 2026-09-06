@@ -54,19 +54,27 @@ final class MemoServCommandRegistryTest extends TestCase
         self::assertContains($h2, $all);
     }
 
+    /** @param list<string> $aliases */
     private function createHandler(string $name, array $aliases = []): MemoServCommandInterface
     {
         return new class($name, $aliases) implements MemoServCommandInterface {
+            /** @var list<string> */
+            private readonly array $aliases;
+
+            /** @param list<string> $aliases */
             public function __construct(
                 private readonly string $name,
-                private readonly array $aliases,
-            ) {}
+                array $aliases,
+            ) {
+                $this->aliases = $aliases;
+            }
 
             public function getName(): string
             {
                 return $this->name;
             }
 
+            /** @return list<string> */
             public function getAliases(): array
             {
                 return $this->aliases;

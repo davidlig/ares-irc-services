@@ -28,9 +28,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function is_string;
+
 #[CoversClass(ListCommand::class)]
 final class ListCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -255,7 +258,7 @@ final class ListCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%target%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : ''));
 
         $cmd = new ListCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, [], $notifier, $translator));
@@ -360,7 +363,7 @@ final class ListCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%target%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : ''));
 
         $cmd = new ListCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, ['#mychan'], $notifier, $translator));
@@ -407,7 +410,7 @@ final class ListCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%target%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : ''));
 
         $cmd = new ListCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, [], $notifier, $translator));
@@ -447,7 +450,7 @@ final class ListCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%target%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : ''));
 
         $cmd = new ListCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, [], $notifier, $translator));
@@ -481,7 +484,7 @@ final class ListCommandTest extends TestCase
             $messages[] = $m;
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . ($params['%target%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id . (isset($params['%target%']) && is_string($params['%target%']) ? $params['%target%'] : ''));
 
         $cmd = new ListCommand($nickRepo, $channelRepo, $memoRepo, $accessHelper);
         $cmd->execute($this->createContext($sender, $account, [], $notifier, $translator));

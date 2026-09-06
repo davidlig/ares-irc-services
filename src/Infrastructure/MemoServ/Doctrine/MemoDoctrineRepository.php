@@ -18,7 +18,7 @@ final class MemoDoctrineRepository implements MemoRepositoryInterface
     public function save(Memo $memo): void
     {
         $this->em->persist($memo);
-        $this->em->flush($memo);
+        $this->em->flush();
     }
 
     public function delete(Memo $memo): void
@@ -36,7 +36,8 @@ final class MemoDoctrineRepository implements MemoRepositoryInterface
             ->getRepository(Memo::class)
             ->findBy(['targetNickId' => $nickId], ['createdAt' => 'ASC']);
 
-        return array_filter($result, static fn ($row): bool => $row instanceof Memo);
+        // @phpstan-ignore instanceof.alwaysTrue
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof Memo));
     }
 
     /**
@@ -48,7 +49,8 @@ final class MemoDoctrineRepository implements MemoRepositoryInterface
             ->getRepository(Memo::class)
             ->findBy(['targetChannelId' => $channelId], ['createdAt' => 'ASC']);
 
-        return array_filter($result, static fn ($row): bool => $row instanceof Memo);
+        // @phpstan-ignore instanceof.alwaysTrue
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof Memo));
     }
 
     public function countUnreadByTargetNick(int $nickId): int
@@ -112,9 +114,7 @@ final class MemoDoctrineRepository implements MemoRepositoryInterface
             return null;
         }
 
-        $memo = $list[$oneBased];
-
-        return $memo instanceof Memo ? $memo : null;
+        return $list[$oneBased];
     }
 
     public function findByTargetChannelAndIndex(int $channelId, int $index): ?Memo
@@ -125,9 +125,7 @@ final class MemoDoctrineRepository implements MemoRepositoryInterface
             return null;
         }
 
-        $memo = $list[$oneBased];
-
-        return $memo instanceof Memo ? $memo : null;
+        return $list[$oneBased];
     }
 
     public function deleteAllForNick(int $nickId): void

@@ -24,6 +24,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(DisableCommand::class)]
 final class DisableCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,

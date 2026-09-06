@@ -34,6 +34,34 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(SendCommand::class)]
 final class SendCommandTest extends TestCase
 {
+    #[Test]
+    public function metadataExposesAccessHelperAndDefaultLanguage(): void
+    {
+        $accessHelper = new ChanServAccessHelper(
+            $this->createStub(ChannelAccessRepositoryInterface::class),
+            $this->createStub(ChannelLevelRepositoryInterface::class),
+        );
+        $command = new SendCommand(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(RegisteredChannelRepositoryInterface::class),
+            $this->createStub(MemoRepositoryInterface::class),
+            $this->createStub(MemoIgnoreRepositoryInterface::class),
+            $this->createStub(MemoSettingsRepositoryInterface::class),
+            new MemoServSendThrottleRegistry(),
+            $accessHelper,
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(TranslationInterface::class),
+            'es',
+            20,
+            50,
+            60,
+        );
+
+        self::assertSame($accessHelper, $command->getAccessHelper());
+        self::assertSame('es', $command->getDefaultLanguage());
+    }
+
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,

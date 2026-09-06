@@ -18,6 +18,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function is_string;
+
 #[CoversClass(MemoServContext::class)]
 final class MemoServContextTest extends TestCase
 {
@@ -93,7 +95,11 @@ final class MemoServContextTest extends TestCase
             $sent[] = ['uid' => $uid, 'msg' => $msg, 'type' => $type];
         });
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params, string $domain, ?string $locale): string => $id . '|' . ($params['%name%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params, string $domain, ?string $locale): string {
+            $name = $params['%name%'] ?? null;
+
+            return $id . '|' . (is_string($name) ? $name : '');
+        });
         $registry = new MemoServCommandRegistry([]);
         $sender = new SenderView('UID1', 'Nick', 'i', 'h', 'c', 'ip');
         $context = new MemoServContext(
@@ -260,7 +266,11 @@ final class MemoServContextTest extends TestCase
     public function transReturnsTranslationWithWrappedParams(): void
     {
         $translator = $this->createStub(TranslationInterface::class);
-        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params): string => $id . ':' . ($params['%nick%'] ?? ''));
+        $translator->method('trans')->willReturnCallback(static function (string $id, array $params): string {
+            $nick = $params['%nick%'] ?? null;
+
+            return $id . ':' . (is_string($nick) ? $nick : '');
+        });
         $context = new MemoServContext(
             null,
             null,

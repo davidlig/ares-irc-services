@@ -193,7 +193,6 @@ final class MemoServCommandListenerTest extends TestCase
     {
         $sender = self::senderView();
         $contextHolder = new stdClass();
-        $contextHolder->context = null;
 
         $captureHandler = $this->createCaptureContextHandler($contextHolder);
         $this->memoServService = new MemoServService(

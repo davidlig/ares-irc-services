@@ -29,6 +29,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(DelCommand::class)]
 final class DelCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,

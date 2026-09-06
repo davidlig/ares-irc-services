@@ -28,6 +28,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(IgnoreCommand::class)]
 final class IgnoreCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,

@@ -27,9 +27,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function is_string;
+
 #[CoversClass(ReadCommand::class)]
 final class ReadCommandTest extends TestCase
 {
+    /** @param array<string> $args */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -391,7 +394,7 @@ final class ReadCommandTest extends TestCase
         });
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = [], ?string $domain = null, ?string $locale = null): string {
-            if ('read.header' === $id && isset($params['%from%'])) {
+            if ('read.header' === $id && isset($params['%from%']) && is_string($params['%from%'])) {
                 return 'read.header from:' . $params['%from%'];
             }
 

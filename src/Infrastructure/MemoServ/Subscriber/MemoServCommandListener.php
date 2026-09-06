@@ -41,7 +41,7 @@ final readonly class MemoServCommandListener implements ServiceCommandListenerIn
         return $this->memoServBot->getNick();
     }
 
-    public function getServiceUid(): ?string
+    public function getServiceUid(): string
     {
         return $this->memoServBot->getUid();
     }

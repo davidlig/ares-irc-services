@@ -18,7 +18,7 @@ final class MemoServIrcopPermissionTest extends TestCase
     {
         $permission = new MemoServIrcopPermission();
 
-        self::assertInstanceOf(PermissionProviderInterface::class, $permission);
+        self::assertContains(PermissionProviderInterface::class, class_implements($permission));
     }
 
     #[Test]

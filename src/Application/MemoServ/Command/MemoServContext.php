@@ -15,11 +15,14 @@ use DateTimeZone;
 
 final readonly class MemoServContext implements IrcopContextInterface
 {
+    /**
+     * @param string[]           $args
+     * @param 'NOTICE'|'PRIVMSG' $messageType
+     */
     public function __construct(
         public ?SenderView $sender,
         public ?RegisteredNick $senderAccount,
         public string $command,
-        /** @var string[] */
         public array $args,
         private MemoServNotifierInterface $notifier,
         private TranslationInterface $translator,
@@ -40,6 +43,9 @@ final readonly class MemoServContext implements IrcopContextInterface
         return $this->senderAccount;
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function reply(string $key, array $params = []): void
     {
         $message = $this->translator->trans($key, $this->wrapParams($params), 'memoserv', $this->language);
@@ -82,6 +88,9 @@ final readonly class MemoServContext implements IrcopContextInterface
         return $this->registry;
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function trans(string $key, array $params = []): string
     {
         return $this->translator->trans($key, $this->wrapParams($params), 'memoserv', $this->language);

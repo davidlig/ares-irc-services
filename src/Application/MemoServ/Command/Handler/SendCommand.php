@@ -20,6 +20,7 @@ use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
 use function array_slice;
+use function assert;
 use function implode;
 use function mb_strlen;
 use function str_starts_with;
@@ -86,12 +87,22 @@ final readonly class SendCommand implements MemoServCommandInterface
         return [];
     }
 
+    public function getAccessHelper(): ChanServAccessHelper
+    {
+        return $this->accessHelper;
+    }
+
+    public function getDefaultLanguage(): string
+    {
+        return $this->defaultLanguage;
+    }
+
     public function isOperOnly(): bool
     {
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -134,6 +145,7 @@ final readonly class SendCommand implements MemoServCommandInterface
             return 'too_long';
         }
 
+        assert(null !== $context->sender);
         $remaining = $this->throttleRegistry->getRemainingCooldownSeconds($context->sender->uid, $this->sendMinIntervalSeconds);
         $errorKey = $remaining > 0 ? 'throttled' : null;
         if ('throttled' === $errorKey) {
@@ -159,6 +171,7 @@ final readonly class SendCommand implements MemoServCommandInterface
 
         $memo = new Memo($recipient->getId(), null, $senderAccount->getId(), $message);
         $this->memoRepository->save($memo);
+        assert(null !== $context->sender);
         $this->throttleRegistry->recordSend($context->sender->uid);
 
         $context->reply('send.sent_nick', ['nick' => $recipient->getNickname()]);
@@ -239,6 +252,7 @@ final readonly class SendCommand implements MemoServCommandInterface
 
         $memo = new Memo(null, $channel->getId(), $senderAccount->getId(), $message);
         $this->memoRepository->save($memo);
+        assert(null !== $context->sender);
         $this->throttleRegistry->recordSend($context->sender->uid);
 
         $context->reply('send.sent_channel', ['channel' => $channel->getName()]);

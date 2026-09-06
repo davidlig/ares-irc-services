@@ -69,7 +69,7 @@ final readonly class DisableCommand implements MemoServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }

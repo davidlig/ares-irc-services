@@ -24,6 +24,7 @@ use Psr\Log\NullLogger;
 use Throwable;
 
 use function count;
+use function is_string;
 use function sprintf;
 
 use const PREG_SPLIT_NO_EMPTY;
@@ -55,8 +56,10 @@ final readonly class MemoServService
      */
     public function dispatch(string $rawText, SenderView $sender): void
     {
-        $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY);
-        $cmdName = strtoupper(array_shift($parts) ?? '');
+        $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $cmdPart = array_shift($parts);
+        $cmdName = strtoupper(is_string($cmdPart) ? $cmdPart : '');
+        /** @var list<string> $args */
         $args = $parts;
 
         if ('' === $cmdName) {

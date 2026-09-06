@@ -75,6 +75,9 @@ final class MemoServBot implements MemoServNotifierInterface, ServiceNicknamePro
         $this->sendNoticePort->sendNotice($this->uid, $targetUidOrNick, $message);
     }
 
+    /**
+     * @param 'NOTICE'|'PRIVMSG' $messageType
+     */
     public function sendMessage(string $targetUidOrNick, string $message, string $messageType): void
     {
         $this->sendNoticePort->sendMessage($this->uid, $targetUidOrNick, $message, $messageType);

@@ -66,7 +66,7 @@ final readonly class MemoServPendingChannelNoticeSubscriber implements EventSubs
             return;
         }
 
-        $language = $account->getLanguage() ?? $this->defaultLanguage;
+        $language = '' !== $account->getLanguage() ? $account->getLanguage() : $this->defaultLanguage;
         $message = $this->translator->trans('notify.channel_pending', [
             '%channel%' => $event->channel->value,
             '%count%' => $unread,

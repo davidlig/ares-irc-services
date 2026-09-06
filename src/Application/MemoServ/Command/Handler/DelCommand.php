@@ -9,6 +9,7 @@ use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Domain\MemoServ\Entity\Memo;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 
 use function ctype_digit;
@@ -72,7 +73,7 @@ final readonly class DelCommand implements MemoServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -102,6 +103,9 @@ final readonly class DelCommand implements MemoServCommandInterface
         $context->reply('del.deleted', ['index' => $index]);
     }
 
+    /**
+     * @return array{0: Memo, 1: int}|null
+     */
     private function resolveChannelMemo(MemoServContext $context, int $senderNickId, string $channelName): ?array
     {
         $indexArg = $context->args[1] ?? '';
@@ -130,6 +134,9 @@ final readonly class DelCommand implements MemoServCommandInterface
         return $result;
     }
 
+    /**
+     * @return array{0: Memo, 1: int}|null
+     */
     private function resolveNickMemo(MemoServContext $context, int $senderNickId, string $indexArg): ?array
     {
         if (!ctype_digit($indexArg)) {

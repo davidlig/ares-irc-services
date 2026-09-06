@@ -75,7 +75,7 @@ final readonly class ReadCommand implements MemoServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -107,6 +107,9 @@ final readonly class ReadCommand implements MemoServCommandInterface
         $this->displayMemo($context, $memo, $index);
     }
 
+    /**
+     * @return array{0: Memo, 1: int}|null
+     */
     private function resolveChannelMemo(MemoServContext $context, int $senderNickId, string $channelName): ?array
     {
         $indexArg = $context->args[1] ?? '';
@@ -135,6 +138,9 @@ final readonly class ReadCommand implements MemoServCommandInterface
         return $result;
     }
 
+    /**
+     * @return array{0: Memo, 1: int}|null
+     */
     private function resolveNickMemo(MemoServContext $context, int $senderNickId, string $indexArg): ?array
     {
         if (!ctype_digit($indexArg)) {

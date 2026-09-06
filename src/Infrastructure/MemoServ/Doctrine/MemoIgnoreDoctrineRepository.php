@@ -60,7 +60,8 @@ final class MemoIgnoreDoctrineRepository implements MemoIgnoreRepositoryInterfac
                 ['ignoredNickId' => 'ASC']
             );
 
-        return array_filter($result, static fn ($row): bool => $row instanceof MemoIgnore);
+        // @phpstan-ignore instanceof.alwaysTrue
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof MemoIgnore));
     }
 
     /**
@@ -75,7 +76,8 @@ final class MemoIgnoreDoctrineRepository implements MemoIgnoreRepositoryInterfac
                 ['ignoredNickId' => 'ASC']
             );
 
-        return array_filter($result, static fn ($row): bool => $row instanceof MemoIgnore);
+        // @phpstan-ignore instanceof.alwaysTrue
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof MemoIgnore));
     }
 
     public function countByTargetNick(int $targetNickId): int

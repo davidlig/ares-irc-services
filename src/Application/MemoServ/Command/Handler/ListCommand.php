@@ -88,7 +88,7 @@ final readonly class ListCommand implements MemoServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -130,6 +130,7 @@ final readonly class ListCommand implements MemoServCommandInterface
         $context->reply('list.header', ['target' => $targetLabel]);
         $index = 1;
         foreach ($memos as $memo) {
+            // @phpstan-ignore instanceof.alwaysTrue
             if (!$memo instanceof Memo) {
                 continue;
             }

@@ -31,7 +31,18 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use stdClass;
+
+use function is_string;
+
+final class MemoServContextHolder
+{
+    public ?MemoServContext $context = null;
+
+    public function getContext(): ?MemoServContext
+    {
+        return $this->context;
+    }
+}
 
 #[CoversClass(MemoServService::class)]
 final class MemoServServiceTest extends TestCase
@@ -109,10 +120,10 @@ final class MemoServServiceTest extends TestCase
         $translator = $this->createStub(TranslationInterface::class);
         $logger = $this->createStub(LoggerInterface::class);
 
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -185,10 +196,11 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('FOO arg1', $sender);
 
-        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
-        self::assertSame('FOO', $contextHolder->context->command);
-        self::assertSame(['arg1'], $contextHolder->context->args);
-        self::assertSame($sender, $contextHolder->context->sender);
+        $context = $contextHolder->getContext();
+        self::assertInstanceOf(MemoServContext::class, $context);
+        self::assertSame('FOO', $context->command);
+        self::assertSame(['arg1'], $context->args);
+        self::assertSame($sender, $context->sender);
     }
 
     #[Test]
@@ -240,11 +252,11 @@ final class MemoServServiceTest extends TestCase
     public function repliesPermissionDeniedWhenHandlerRequiresPermissionAndUserLacksIt(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
 
         $permissionHandler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -291,7 +303,7 @@ final class MemoServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'MEMOSERV_OP_TEST';
             }
@@ -331,18 +343,18 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('OPCMD', $sender);
 
-        self::assertNull($contextHolder->context);
+        self::assertNull($contextHolder->getContext());
     }
 
     #[Test]
     public function repliesNotIdentifiedWhenRequiredPermissionIdentifiedAndNoAccount(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
 
         $identifiedHandler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -389,7 +401,7 @@ final class MemoServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }
@@ -421,18 +433,18 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('NEEDID', $sender);
 
-        self::assertNull($contextHolder->context);
+        self::assertNull($contextHolder->getContext());
     }
 
     #[Test]
     public function repliesSyntaxWhenArgsBelowMinArgs(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
 
         $minArgsHandler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -492,7 +504,11 @@ final class MemoServServiceTest extends TestCase
 
         $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . ($params['syntax'] ?? '') : $id
+            static function (string $id, array $params = []): string {
+                $syntax = $params['syntax'] ?? null;
+
+                return 'error.syntax' === $id ? 'Syntax: ' . (is_string($syntax) ? $syntax : '') : $id;
+            }
         );
         $notifier = $this->createMock(MemoServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, self::stringContains('Syntax:'), 'NOTICE');
@@ -508,7 +524,7 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('TWOARGS onlyone', $sender);
 
-        self::assertNull($contextHolder->context);
+        self::assertNull($contextHolder->getContext());
     }
 
     #[Test]
@@ -604,10 +620,10 @@ final class MemoServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn($account);
 
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -679,9 +695,11 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('TEST', $sender);
 
-        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
-        self::assertSame('es', $contextHolder->context->getLanguage());
-        self::assertSame('Europe/Madrid', $contextHolder->context->getTimezone());
+        $context = $contextHolder->getContext();
+        self::assertInstanceOf(MemoServContext::class, $context);
+        self::assertSame('TEST', $context->command);
+        self::assertSame('es', $context->getLanguage());
+        self::assertSame('Europe/Madrid', $context->getTimezone());
     }
 
     #[Test]
@@ -692,10 +710,10 @@ final class MemoServServiceTest extends TestCase
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
 
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
         $handler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -767,9 +785,11 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('TEST', $sender);
 
-        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
-        self::assertSame('fr', $contextHolder->context->getLanguage());
-        self::assertSame('Europe/Paris', $contextHolder->context->getTimezone());
+        $context = $contextHolder->getContext();
+        self::assertInstanceOf(MemoServContext::class, $context);
+        self::assertSame('TEST', $context->command);
+        self::assertSame('fr', $context->getLanguage());
+        self::assertSame('Europe/Paris', $context->getTimezone());
     }
 
     #[Test]
@@ -864,11 +884,11 @@ final class MemoServServiceTest extends TestCase
     public function dispatchesCommandExecutedEventWithSuccessfulOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
 
         $auditableHandler = new class($contextHolder) implements MemoServCommandInterface, IrcopAuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -915,7 +935,7 @@ final class MemoServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'MEMOSERV_ADMIN';
             }
@@ -975,18 +995,20 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('AUDITCMD', $sender);
 
-        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
+        $context = $contextHolder->getContext();
+        self::assertInstanceOf(MemoServContext::class, $context);
+        self::assertSame('AUDITCMD', $context->command);
     }
 
     #[Test]
     public function dispatchesCommandExecutedEventForNonAuditableHandler(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
 
         $nonAuditableHandler = new class($contextHolder) implements MemoServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1033,7 +1055,7 @@ final class MemoServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'MEMOSERV_OP';
             }
@@ -1074,18 +1096,20 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('NONAUDIT', $sender);
 
-        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
+        $context = $contextHolder->getContext();
+        self::assertInstanceOf(MemoServContext::class, $context);
+        self::assertSame('NONAUDIT', $context->command);
     }
 
     #[Test]
     public function dispatchesCommandExecutedEventWithRejectedOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', 'ip', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
+        $contextHolder = new MemoServContextHolder();
         $contextHolder->context = null;
 
         $auditableHandler = new class($contextHolder) implements MemoServCommandInterface, IrcopAuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly MemoServContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1132,7 +1156,7 @@ final class MemoServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'MEMOSERV_ADMIN';
             }
@@ -1175,7 +1199,9 @@ final class MemoServServiceTest extends TestCase
 
         $service->dispatch('FAILCMD', $sender);
 
-        self::assertInstanceOf(MemoServContext::class, $contextHolder->context);
+        $context = $contextHolder->getContext();
+        self::assertInstanceOf(MemoServContext::class, $context);
+        self::assertSame('FAILCMD', $context->command);
     }
 
     /**

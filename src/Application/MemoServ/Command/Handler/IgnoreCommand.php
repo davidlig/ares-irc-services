@@ -13,6 +13,7 @@ use App\Domain\MemoServ\Entity\MemoIgnore;
 use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
+use function assert;
 use function in_array;
 use function str_starts_with;
 use function strtolower;
@@ -85,7 +86,7 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return 'IDENTIFIED';
     }
@@ -139,12 +140,16 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         }
 
         $channelNameForLimit = $isChannel ? $context->args[1] : null;
-        $_ = match ($sub) {
-            'ADD' => $this->doAdd($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore, $channelNameForLimit),
-            default => $this->doDel($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore),
-        };
+        if ('ADD' === $sub) {
+            $this->doAdd($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore, $channelNameForLimit);
+        } else {
+            $this->doDel($context, $targetNickId, $targetChannelId, $ignoredAccount->getId(), $nickToIgnore);
+        }
     }
 
+    /**
+     * @return array{0: int|null, 1: int|null}|null
+     */
     private function resolveIgnoreTarget(MemoServContext $context, int $senderNickId, string $sub): ?array
     {
         $arg1 = $context->args[1] ?? null;
@@ -169,9 +174,13 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
 
     private function doAdd(MemoServContext $context, ?int $targetNickId, ?int $targetChannelId, int $ignoredNickId, string $nickDisplay, ?string $channelNameForLimit): void
     {
-        $existing = null !== $targetChannelId
-            ? $this->memoIgnoreRepository->findByTargetChannelAndIgnored($targetChannelId, $ignoredNickId)
-            : $this->memoIgnoreRepository->findByTargetNickAndIgnored($targetNickId, $ignoredNickId);
+        if (null !== $targetChannelId) {
+            $existing = $this->memoIgnoreRepository->findByTargetChannelAndIgnored($targetChannelId, $ignoredNickId);
+        } else {
+            assert(null !== $targetNickId);
+            $existing = $this->memoIgnoreRepository->findByTargetNickAndIgnored($targetNickId, $ignoredNickId);
+        }
+
         if (null !== $existing) {
             $context->reply('ignore.already_ignored', ['nick' => $nickDisplay]);
 
@@ -202,9 +211,13 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
 
     private function doDel(MemoServContext $context, ?int $targetNickId, ?int $targetChannelId, int $ignoredNickId, string $nickDisplay): void
     {
-        $existing = null !== $targetChannelId
-            ? $this->memoIgnoreRepository->findByTargetChannelAndIgnored($targetChannelId, $ignoredNickId)
-            : $this->memoIgnoreRepository->findByTargetNickAndIgnored($targetNickId, $ignoredNickId);
+        if (null !== $targetChannelId) {
+            $existing = $this->memoIgnoreRepository->findByTargetChannelAndIgnored($targetChannelId, $ignoredNickId);
+        } else {
+            assert(null !== $targetNickId);
+            $existing = $this->memoIgnoreRepository->findByTargetNickAndIgnored($targetNickId, $ignoredNickId);
+        }
+
         if (null === $existing) {
             $context->reply('ignore.not_ignored', ['nick' => $nickDisplay]);
 
@@ -216,9 +229,13 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
 
     private function doList(MemoServContext $context, ?int $targetNickId, ?int $targetChannelId): void
     {
-        $list = null !== $targetChannelId
-            ? $this->memoIgnoreRepository->listByTargetChannel($targetChannelId)
-            : $this->memoIgnoreRepository->listByTargetNick($targetNickId);
+        if (null !== $targetChannelId) {
+            $list = $this->memoIgnoreRepository->listByTargetChannel($targetChannelId);
+        } else {
+            assert(null !== $targetNickId);
+            $list = $this->memoIgnoreRepository->listByTargetNick($targetNickId);
+        }
+
         if ([] === $list) {
             $context->reply('ignore.list_empty');
 
@@ -226,6 +243,7 @@ final readonly class IgnoreCommand implements MemoServCommandInterface
         }
         $context->reply('ignore.list_header');
         foreach ($list as $ignore) {
+            // @phpstan-ignore instanceof.alwaysTrue
             if (!$ignore instanceof MemoIgnore) {
                 continue;
             }
