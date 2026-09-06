@@ -138,13 +138,15 @@ final class ClientKeyResolverTest extends TestCase
     public function getClientDescriptionDecodesIpFromBase64(): void
     {
         $resolver = new ClientKeyResolver();
+        $packedIp = inet_pton('5.224.47.252');
+        self::assertNotFalse($packedIp);
         $sender = new SenderView(
             uid: '002AAAAAB',
             nick: 'TestUser',
             ident: 'test',
             hostname: 'host.example.com',
             cloakedHost: 'cloak.example.com',
-            ipBase64: base64_encode(inet_pton('5.224.47.252')),
+            ipBase64: base64_encode($packedIp),
         );
 
         self::assertSame('5.224.47.252', $resolver->getClientDescription($sender));
@@ -154,13 +156,15 @@ final class ClientKeyResolverTest extends TestCase
     public function getClientDescriptionDecodesIpv6FromBase64(): void
     {
         $resolver = new ClientKeyResolver();
+        $packedIp = inet_pton('::1');
+        self::assertNotFalse($packedIp);
         $sender = new SenderView(
             uid: '002AAAAAB',
             nick: 'TestUser',
             ident: 'test',
             hostname: 'host.example.com',
             cloakedHost: 'cloak.example.com',
-            ipBase64: base64_encode(inet_pton('::1')),
+            ipBase64: base64_encode($packedIp),
         );
 
         self::assertSame('::1', $resolver->getClientDescription($sender));

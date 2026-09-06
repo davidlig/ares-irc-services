@@ -15,7 +15,7 @@ final class VersionTest extends TestCase
     #[Test]
     public function servicesVersionIsNotEmpty(): void
     {
-        self::assertNotEmpty(Version::SERVICES);
+        self::assertStringContainsString('.', Version::SERVICES);
     }
 
     #[Test]

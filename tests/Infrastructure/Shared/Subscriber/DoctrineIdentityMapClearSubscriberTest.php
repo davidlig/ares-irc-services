@@ -41,6 +41,6 @@ final class DoctrineIdentityMapClearSubscriberTest extends TestCase
         $entityManager = $this->createStub(EntityManagerInterface::class);
         $subscriber = new DoctrineIdentityMapClearSubscriber($entityManager);
 
-        self::assertInstanceOf(EventSubscriberInterface::class, $subscriber);
+        self::assertContains(EventSubscriberInterface::class, class_implements($subscriber));
     }
 }

@@ -8,7 +8,6 @@ use App\Domain\MemoServ\Exception\MemoNotFoundException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 
 #[CoversClass(MemoNotFoundException::class)]
 final class MemoNotFoundExceptionTest extends TestCase
@@ -28,6 +27,6 @@ final class MemoNotFoundExceptionTest extends TestCase
     {
         $e = MemoNotFoundException::forIndex(1);
 
-        self::assertInstanceOf(RuntimeException::class, $e);
+        self::assertSame('Memo #1 not found.', $e->getMessage());
     }
 }

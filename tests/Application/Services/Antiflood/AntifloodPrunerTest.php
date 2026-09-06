@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Services\Antiflood;
 
-use App\Application\Maintenance\InMemoryPrunableInterface;
 use App\Application\Services\Antiflood\AntifloodPruner;
 use App\Application\Services\Antiflood\AntifloodRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -21,7 +20,6 @@ final class AntifloodPrunerTest extends TestCase
         $registry = new AntifloodRegistry();
         $pruner = new AntifloodPruner($registry, 3600);
 
-        self::assertInstanceOf(InMemoryPrunableInterface::class, $pruner);
         self::assertSame(0, $pruner->prune());
     }
 

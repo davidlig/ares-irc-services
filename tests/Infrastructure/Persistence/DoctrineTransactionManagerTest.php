@@ -20,7 +20,7 @@ final class DoctrineTransactionManagerTest extends TestCase
         $calls = [];
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects(self::once())->method('wrapInTransaction')->willReturnCallback(
-            static function (callable $operation) use (&$calls): string {
+            static function (callable $operation) use (&$calls): mixed {
                 $result = $operation();
                 $calls[] = 'commit';
 

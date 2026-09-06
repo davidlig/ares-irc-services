@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
+use function strlen;
+
 #[CoversClass(Memo::class)]
 final class MemoTest extends TestCase
 {
@@ -80,9 +82,12 @@ final class MemoTest extends TestCase
     #[Test]
     public function getCreatedAtReturnsDefaultWhenNotProvided(): void
     {
+        $before = new DateTimeImmutable();
         $memo = new Memo(10, null, 5, 'Hello');
+        $after = new DateTimeImmutable();
 
-        self::assertInstanceOf(DateTimeImmutable::class, $memo->getCreatedAt());
+        self::assertGreaterThanOrEqual($before, $memo->getCreatedAt());
+        self::assertLessThanOrEqual($after, $memo->getCreatedAt());
     }
 
     #[Test]
@@ -106,7 +111,7 @@ final class MemoTest extends TestCase
     #[Test]
     public function messageMaxLengthConstant(): void
     {
-        self::assertSame(255, Memo::MESSAGE_MAX_LENGTH);
+        self::assertSame(255, strlen(str_repeat('x', Memo::MESSAGE_MAX_LENGTH)));
     }
 
     #[Test]

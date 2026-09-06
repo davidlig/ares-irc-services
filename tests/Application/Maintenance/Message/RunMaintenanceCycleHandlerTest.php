@@ -18,17 +18,6 @@ use stdClass;
 final class RunMaintenanceCycleHandlerTest extends TestCase
 {
     #[Test]
-    public function invokeRunsSchedulerTick(): void
-    {
-        $scheduler = new MaintenanceScheduler([], new NullLogger());
-        $handler = new RunMaintenanceCycleHandler($scheduler);
-
-        $handler(new RunMaintenanceCycle());
-
-        self::assertTrue(true, 'Handler runs without throwing');
-    }
-
-    #[Test]
     public function invokeCausesSchedulerToRunRegisteredTasks(): void
     {
         $holder = new stdClass();

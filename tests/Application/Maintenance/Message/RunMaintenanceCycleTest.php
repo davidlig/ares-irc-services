@@ -17,6 +17,6 @@ final class RunMaintenanceCycleTest extends TestCase
     {
         $message = new RunMaintenanceCycle();
 
-        self::assertInstanceOf(RunMaintenanceCycle::class, $message);
+        self::assertSame([], get_object_vars($message));
     }
 }
