@@ -20,7 +20,6 @@ deptrac:
     App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber:
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Event\NickDropEvent
-      - App\Domain\NickServ\Event\NickPasswordProvidedEvent
       - App\Domain\NickServ\Event\NickSuspendedEvent
       - App\Domain\NickServ\Event\NickUnsuspendedEvent
       - App\Domain\NickServ\Event\NickVhostChangedEvent

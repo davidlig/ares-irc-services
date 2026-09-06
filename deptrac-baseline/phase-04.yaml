@@ -27,7 +27,6 @@ deptrac:
       - App\Application\Command\IrcopAuditableCommandInterface
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Command\Handler\HelpCommand:
-      - App\Application\Command\CommandOutcome
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
       - App\Irc\Application\Port\In\SenderView
@@ -37,14 +36,12 @@ deptrac:
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
     App\Application\NickServ\Command\Handler\IdentifyCommand:
-      - App\Application\Command\CommandOutcome
       - App\Application\Port\EventBusInterface
       - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Irc\Application\Port\In\SenderView
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
     App\Application\NickServ\Command\Handler\InfoCommand:
-      - App\Application\Command\CommandOutcome
       - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Irc\Application\Port\In\SenderView
       - App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface
@@ -54,21 +51,11 @@ deptrac:
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
     App\Application\NickServ\Command\Handler\RecoverCommand:
-      - App\Application\Command\CommandOutcome
       - App\Application\Helper\EmailMasker
       - App\Application\Helper\SecureToken
       - App\Application\Mail\Message\SendEmail
       - App\Application\Port\AsyncMessageDispatcherInterface
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\TranslationInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\RegisterCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Application\Helper\SecureToken
-      - App\Application\Mail\Message\SendEmail
-      - App\Application\Port\AsyncMessageDispatcherInterface
-      - App\Application\Port\EventBusInterface
-      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Command\Handler\RenameCommand:
@@ -78,7 +65,6 @@ deptrac:
       - App\Irc\Application\Port\In\NetworkUserLookupPort
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Command\Handler\ResendCommand:
-      - App\Application\Command\CommandOutcome
       - App\Application\Helper\SecureToken
       - App\Application\Mail\Message\SendEmail
       - App\Application\Port\AsyncMessageDispatcherInterface
@@ -93,7 +79,6 @@ deptrac:
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
     App\Application\NickServ\Command\Handler\SetCommand:
-      - App\Application\Command\CommandOutcome
     App\Application\NickServ\Command\Handler\SetEmailHandler:
       - App\Application\Helper\SecureToken
       - App\Application\Mail\Message\SendEmail
@@ -109,7 +94,6 @@ deptrac:
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
     App\Application\NickServ\Command\Handler\StatusCommand:
-      - App\Application\Command\CommandOutcome
       - App\Irc\Application\Port\In\NetworkUserLookupPort
     App\Application\NickServ\Command\Handler\SuspendCommand:
       - App\Application\Command\CommandOutcome
@@ -132,14 +116,11 @@ deptrac:
       - App\Application\Command\IrcopAuditableCommandInterface
       - App\Irc\Application\Port\In\NetworkUserLookupPort
     App\Application\NickServ\Command\Handler\VerifyCommand:
-      - App\Application\Command\CommandOutcome
     App\Application\NickServ\Command\HelpFormatterContextAdapter:
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
       - App\Application\Security\IrcopPermissionDetector
       - App\Application\Security\PermissionRegistry
-    App\Application\NickServ\Command\NickServCommandInterface:
-      - App\Application\Command\CommandOutcome
     App\Application\NickServ\Command\NickServContext:
       - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface

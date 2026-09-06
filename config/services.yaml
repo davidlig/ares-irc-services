@@ -50,6 +50,7 @@ parameters:
     # Minimum seconds between REGISTER attempts per host/IP (default 300 = 5 minutes, anti-bot)
     nickserv.register_min_interval_default: 300
     nickserv.register_min_interval: '%env(int:default:nickserv.register_min_interval_default:NICKSERV_REGISTER_MIN_INTERVAL)%'
+    nickserv.verification_token_ttl_seconds: 3600
     # IDENTIFY lockout after repeated failures (anti brute-force)
     nickserv.identify_max_failed_attempts_default: 5
     nickserv.identify_max_failed_attempts: '%env(int:default:nickserv.identify_max_failed_attempts_default:NICKSERV_IDENTIFY_MAX_FAILED_ATTEMPTS)%'
@@ -162,7 +163,46 @@ services:
             $senderName: '%irc.server_name%'
 
     App\Domain\NickServ\Service\PasswordHasherInterface:
-        class: App\Infrastructure\NickServ\Security\PhpPasswordHasher
+        class: App\NickServ\Adapter\Out\Security\PhpPasswordHasher
+
+    App\NickServ\Application\Port\Out\PasswordHasher:
+        alias: App\NickServ\Adapter\Out\Security\PhpPasswordHasher
+
+    App\NickServ\Application\Port\Out\Clock:
+        alias: App\NickServ\Adapter\Out\Time\SystemClock
+
+    App\NickServ\Application\Port\Out\VerificationTokenGenerator:
+        alias: App\NickServ\Adapter\Out\Random\SecureVerificationTokenGenerator
+
+    App\NickServ\Application\Port\Out\RegisterNickRepository:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegisterNickRepository
+
+    App\NickServ\Application\Port\Out\RegistrationThrottle:
+        alias: App\NickServ\Adapter\Out\InMemory\InMemoryRegistrationThrottle
+
+    App\NickServ\Application\Port\Out\RegistrationVerificationStore:
+        alias: App\NickServ\Adapter\Out\InMemory\PendingRegistrationVerificationStore
+
+    App\NickServ\Application\Port\Out\RegistrationEventPublisher:
+        alias: App\NickServ\Adapter\Out\Event\SymfonyRegistrationEventPublisher
+
+    App\NickServ\Application\Port\Out\RegistrationMailSender:
+        alias: App\NickServ\Adapter\Out\Mail\MessengerRegistrationMailSender
+
+    App\NickServ\Application\UseCase\Register\RegisterNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Register\RegisterNickHandler
+
+    App\NickServ\Adapter\Out\Mail\MessengerRegistrationMailSender:
+        arguments:
+            $logger: '@monolog.logger.irc'
+            $nickservNick: '%nickserv.nick%'
+
+    App\NickServ\Adapter\Out\Mail\RegistrationVerificationEmailHandler:
+        arguments:
+            $from: '%mailer.from%'
+            $senderName: '%irc.server_name%'
+            $sendDelaySeconds: '%mailer.send_delay_seconds%'
+        tags: ['messenger.message_handler']
 
     App\Infrastructure\Messenger\Middleware\EmailDelayMiddleware:
         arguments:
@@ -1186,10 +1226,13 @@ services:
     App\Application\NickServ\IdentifyFailedAttemptRegistry: ~
     App\Application\NickServ\NickServClientKeyResolver: ~
 
-    App\Application\NickServ\Command\Handler\RegisterCommand:
+    App\NickServ\Application\UseCase\Register\RegisterNickHandler:
         arguments:
-            $registerMinIntervalSeconds: '%nickserv.register_min_interval%'
+            $minimumIntervalSeconds: '%nickserv.register_min_interval%'
+            $verificationTokenTtlSeconds: '%nickserv.verification_token_ttl_seconds%'
             $guestPrefix: '%services.guest_prefix%'
+
+    App\NickServ\Adapter\In\Irc\Command\RegisterCommand:
         tags: ['nickserv.command']
 
     App\Application\NickServ\Command\Handler\VerifyCommand:

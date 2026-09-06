@@ -101,6 +101,7 @@ class RegisteredNick
         string $email,
         string $language,
         DateTimeImmutable $expiresAt,
+        ?DateTimeImmutable $registeredAt = null,
     ): self {
         $nick = new self();
         $nick->nickname = $nickname;
@@ -110,7 +111,7 @@ class RegisteredNick
         self::assertValidEmail($email);
         $nick->email = $email;
         $nick->language = self::normalizeLanguage($language);
-        $nick->registeredAt = new DateTimeImmutable();
+        $nick->registeredAt = $registeredAt ?? new DateTimeImmutable();
         $nick->expiresAt = $expiresAt;
 
         return $nick;

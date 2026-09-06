@@ -24,16 +24,16 @@ final class RegisterThrottleRegistry
         return $this->lastAttemptAt[$clientKey] ?? null;
     }
 
-    public function recordAttempt(string $clientKey): void
+    public function recordAttempt(string $clientKey, ?DateTimeImmutable $now = null): void
     {
-        $this->lastAttemptAt[$clientKey] = new DateTimeImmutable();
+        $this->lastAttemptAt[$clientKey] = $now ?? new DateTimeImmutable();
     }
 
     /**
      * Returns the number of seconds the client must wait before REGISTER is allowed again,
      * or 0 if allowed.
      */
-    public function getRemainingCooldownSeconds(string $clientKey, int $minIntervalSeconds): int
+    public function getRemainingCooldownSeconds(string $clientKey, int $minIntervalSeconds, ?DateTimeImmutable $now = null): int
     {
         if ($minIntervalSeconds <= 0) {
             return 0;
@@ -46,7 +46,7 @@ final class RegisterThrottleRegistry
         }
 
         $nextAllowedAt = $last->modify(sprintf('+%d seconds', $minIntervalSeconds));
-        $now = new DateTimeImmutable();
+        $now ??= new DateTimeImmutable();
 
         return $now >= $nextAllowedAt ? 0 : $nextAllowedAt->getTimestamp() - $now->getTimestamp();
     }

@@ -158,7 +158,7 @@ final readonly class NickServService
             return;
         }
 
-        if (null !== $context->senderAccount && $context->senderAccount->isPendingDeletion() && !in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
+        if (null !== $context->senderAccount && $context->senderAccount->isPendingDeletion() && !in_array($handler->getName(), ['REGISTER', 'INFO', 'RESTORE', 'DROP'], true)) {
             $context->reply('drop.pending_deletion', ['%nickname%' => $sender->nick]);
 
             return;

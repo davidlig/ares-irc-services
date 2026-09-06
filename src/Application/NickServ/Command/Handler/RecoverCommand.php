@@ -14,9 +14,9 @@ use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickPasswordChangedEvent;
-use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
+use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -259,10 +259,9 @@ final readonly class RecoverCommand implements NickServCommandInterface
         $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
-        $this->eventDispatcher->dispatch(new NickPasswordProvidedEvent(
+        $this->eventDispatcher->dispatch(new NickPasswordHashAvailable(
             nickId: $account->getId(),
             nickname: $targetNick,
-            plaintextPassword: $newPassword,
             passwordHash: $account->getPasswordHash(),
         ));
 

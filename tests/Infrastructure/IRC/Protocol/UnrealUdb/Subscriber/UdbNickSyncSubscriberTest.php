@@ -11,7 +11,6 @@ use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropEvent;
-use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Event\NickUnsuspendedEvent;
 use App\Domain\NickServ\Event\NickVhostChangedEvent;
@@ -26,6 +25,7 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -88,7 +88,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $events = UdbNickSyncSubscriber::getSubscribedEvents();
 
         self::assertSame([
-            NickPasswordProvidedEvent::class => 'onPasswordProvided',
+            NickPasswordHashAvailable::class => 'onPasswordHashAvailable',
             NickVhostChangedEvent::class => 'onVhostChanged',
             NickSuspendedEvent::class => 'onNickSuspended',
             NickUnsuspendedEvent::class => 'onNickUnsuspended',
@@ -109,7 +109,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onPasswordProvidedMarksMigrationAndWritesUdbCompatibleHash(): void
+    public function onPasswordHashAvailableMarksMigrationAndWritesUdbCompatibleHash(): void
     {
         $bcryptHash = '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe';
         $migrationState = $this->createMock(PasswordMigrationStateInterface::class);
@@ -119,31 +119,31 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::pass', 'crypt:' . $bcryptHash);
 
         $sub = $this->createSubscriber(migrationState: $migrationState, writer: $writer);
-        $sub->onPasswordProvided(new NickPasswordProvidedEvent(null, 'nick', 'pass', $bcryptHash));
+        $sub->onPasswordHashAvailable(new NickPasswordHashAvailable(null, 'nick', $bcryptHash));
     }
 
     #[Test]
-    public function onPasswordProvidedSkipsTheRecordWhenTheHashIsNotProjectable(): void
+    public function onPasswordHashAvailableSkipsTheRecordWhenTheHashIsNotProjectable(): void
     {
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->never())->method('insert');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onPasswordProvided(new NickPasswordProvidedEvent(null, 'nick', 'pass', 'md5:deadbeef'));
+        $sub->onPasswordHashAvailable(new NickPasswordHashAvailable(null, 'nick', 'md5:deadbeef'));
     }
 
     #[Test]
-    public function onPasswordProvidedSkipsTheRecordWhenTheHashIsNull(): void
+    public function onPasswordHashAvailableSkipsTheRecordWhenTheHashIsNull(): void
     {
         $writer = $this->createMock(UdbRecordWriterInterface::class);
         $writer->expects($this->never())->method('insert');
 
         $sub = $this->createSubscriber(writer: $writer);
-        $sub->onPasswordProvided(new NickPasswordProvidedEvent(null, 'nick', 'pass', null));
+        $sub->onPasswordHashAvailable(new NickPasswordHashAvailable(null, 'nick', null));
     }
 
     #[Test]
-    public function onPasswordProvidedRefreshesVhostWhenNickExists(): void
+    public function onPasswordHashAvailableRefreshesVhostWhenNickExists(): void
     {
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findById')->willReturn($this->createNick('nick', 'nick.tld'));
@@ -159,7 +159,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         );
 
         $sub = $this->createSubscriber(repo: $repo, writer: $writer);
-        $sub->onPasswordProvided(new NickPasswordProvidedEvent(7, 'nick', 'pass', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe'));
+        $sub->onPasswordHashAvailable(new NickPasswordHashAvailable(7, 'nick', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe'));
 
         self::assertSame('N', $inserts[0][0]);
         self::assertSame('nick::pass', $inserts[0][1]);
@@ -168,7 +168,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
     }
 
     #[Test]
-    public function onPasswordProvidedIsSkippedWhenTheNickVanished(): void
+    public function onPasswordHashAvailableIsSkippedWhenTheNickVanished(): void
     {
         $repo = $this->createStub(RegisteredNickRepositoryInterface::class);
         $repo->method('findById')->willReturn(null);
@@ -177,7 +177,7 @@ final class UdbNickSyncSubscriberTest extends TestCase
         $writer->expects($this->once())->method('insert')->willReturn(true)->with('N', 'nick::pass', $this->stringStartsWith('crypt:$2y$'));
 
         $sub = $this->createSubscriber(repo: $repo, writer: $writer);
-        $sub->onPasswordProvided(new NickPasswordProvidedEvent(999, 'nick', 'pass', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe'));
+        $sub->onPasswordHashAvailable(new NickPasswordHashAvailable(999, 'nick', '$2y$12$V1fmubjfLQd.sMvEU4x.5.hjN6wtGG1aNhiJqy.dc0O0sfKFzyLGe'));
     }
 
     #[Test]

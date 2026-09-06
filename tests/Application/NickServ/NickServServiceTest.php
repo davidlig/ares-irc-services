@@ -1167,9 +1167,9 @@ final class NickServServiceTest extends TestCase
     }
 
     #[Test]
-    public function allowsInfoRestoreAndDropWhenAccountIsPendingDeletion(): void
+    public function allowsRegisterInfoRestoreAndDropWhenAccountIsPendingDeletion(): void
     {
-        foreach (['INFO', 'RESTORE', 'DROP'] as $allowedCommand) {
+        foreach (['REGISTER', 'INFO', 'RESTORE', 'DROP'] as $allowedCommand) {
             $sender = new SenderView('UID1', 'DroppedNick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
             $contextHolder = new NickServTestContextHolder();
 

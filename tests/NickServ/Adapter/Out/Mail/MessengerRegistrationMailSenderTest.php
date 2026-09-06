@@ -1,0 +1,71 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Adapter\Out\Mail;
+
+use App\Application\Port\TranslationInterface;
+use App\NickServ\Adapter\Out\Mail\MessengerRegistrationMailSender;
+use App\NickServ\Adapter\Out\Mail\RegistrationVerificationEmail;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
+use Symfony\Component\Messenger\Envelope;
+use Symfony\Component\Messenger\MessageBusInterface;
+
+#[CoversClass(MessengerRegistrationMailSender::class)]
+final class MessengerRegistrationMailSenderTest extends TestCase
+{
+    #[Test]
+    public function translatesAndDispatchesTheSemanticRegistrationMail(): void
+    {
+        $translator = $this->createMock(TranslationInterface::class);
+        $translator->expects(self::exactly(2))->method('trans')->willReturnMap([
+            ['register_verification_subject', ['%bot%' => 'ConfiguredServ'], 'mail', 'es', 'subject'],
+            ['register_verification_body', ['%nickname%' => 'Nick', '%token%' => 'safe-token', '%bot%' => 'ConfiguredServ'], 'mail', 'es', 'body'],
+        ]);
+        $dispatcher = $this->createMock(MessageBusInterface::class);
+        $dispatcher->expects(self::once())->method('dispatch')->with(self::callback(
+            static fn (object $message): bool => $message instanceof RegistrationVerificationEmail
+                && 'user@example.com' === $message->to
+                && 'subject' === $message->subject
+                && 'body' === $message->body,
+        ))->willReturnCallback(static fn (object $message): Envelope => new Envelope($message));
+
+        new MessengerRegistrationMailSender(
+            $dispatcher,
+            $translator,
+            $this->createStub(LoggerInterface::class),
+            'ConfiguredServ',
+        )->sendVerification('Nick', 'user@example.com', 'safe-token', 'es');
+    }
+
+    #[Test]
+    public function logsOnlySafeMetadataAndRethrowsDeliveryFailure(): void
+    {
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturn('translated');
+        $dispatcher = $this->createMock(MessageBusInterface::class);
+        $dispatcher->expects(self::once())->method('dispatch')->willThrowException(new RuntimeException('transport failed'));
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('error')->with(
+            'NickServ REGISTER: failed to dispatch verification email',
+            self::callback(static function (array $context): bool {
+                $serialized = serialize($context);
+
+                return 'Nick' === $context['nick']
+                    && 'user@example.com' === $context['recipient']
+                    && RuntimeException::class === $context['exception_class']
+                    && !str_contains($serialized, 'secret-token');
+            }),
+        );
+
+        $sender = new MessengerRegistrationMailSender($dispatcher, $translator, $logger, 'NickServ');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('transport failed');
+        $sender->sendVerification('Nick', 'user@example.com', 'secret-token', 'en');
+    }
+}

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Infrastructure\NickServ\Security;
+namespace App\Tests\NickServ\Adapter\Out\Security;
 
-use App\Infrastructure\NickServ\Security\PhpPasswordHasher;
+use App\NickServ\Adapter\Out\Security\PhpPasswordHasher;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

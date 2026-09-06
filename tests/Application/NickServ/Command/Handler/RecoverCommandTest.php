@@ -16,10 +16,10 @@ use App\Application\Port\EventBusInterface;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickPasswordChangedEvent;
-use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
@@ -554,7 +554,7 @@ final class RecoverCommandTest extends TestCase
 
         self::assertContains('recover.success_identify', $messages);
         self::assertCount(2, $dispatchedEvents);
-        self::assertInstanceOf(NickPasswordProvidedEvent::class, $dispatchedEvents[0]);
+        self::assertInstanceOf(NickPasswordHashAvailable::class, $dispatchedEvents[0]);
         self::assertSame('User', $dispatchedEvents[0]->nickname);
         self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[1]);
         self::assertSame('*', $dispatchedEvents[1]->performedByIp);
@@ -610,7 +610,7 @@ final class RecoverCommandTest extends TestCase
 
         self::assertContains('recover.success_identify', $messages);
         self::assertCount(2, $dispatchedEvents);
-        self::assertInstanceOf(NickPasswordProvidedEvent::class, $dispatchedEvents[0]);
+        self::assertInstanceOf(NickPasswordHashAvailable::class, $dispatchedEvents[0]);
         self::assertSame('User', $dispatchedEvents[0]->nickname);
         self::assertInstanceOf(NickPasswordChangedEvent::class, $dispatchedEvents[1]);
         self::assertSame('invalid!base64', $dispatchedEvents[1]->performedByIp);

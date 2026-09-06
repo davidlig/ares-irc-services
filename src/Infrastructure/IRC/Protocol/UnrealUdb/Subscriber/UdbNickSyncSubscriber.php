@@ -8,7 +8,6 @@ use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\UdbRecordWriterInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropEvent;
-use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Event\NickSuspendedEvent;
 use App\Domain\NickServ\Event\NickUnsuspendedEvent;
 use App\Domain\NickServ\Event\NickVhostChangedEvent;
@@ -18,6 +17,7 @@ use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
+use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;
@@ -45,7 +45,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            NickPasswordProvidedEvent::class => 'onPasswordProvided',
+            NickPasswordHashAvailable::class => 'onPasswordHashAvailable',
             NickVhostChangedEvent::class => 'onVhostChanged',
             NickSuspendedEvent::class => 'onNickSuspended',
             NickUnsuspendedEvent::class => 'onNickUnsuspended',
@@ -60,7 +60,7 @@ final class UdbNickSyncSubscriber implements EventSubscriberInterface
         $this->recordWriter->delete(self::BLOCK, $event->nickname);
     }
 
-    public function onPasswordProvided(NickPasswordProvidedEvent $event): void
+    public function onPasswordHashAvailable(NickPasswordHashAvailable $event): void
     {
         $this->migrationState->markAsMigrated($event->nickname);
 

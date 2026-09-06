@@ -82,6 +82,29 @@ Presentation decides:
 - HELP layout;
 - IRC formatting/colors.
 
+### NickServ canonical command pattern
+
+Use `NickServ/Adapter/In/Irc/Command/RegisterCommand` as the migration reference:
+
+```text
+IRC command adapter
+  -> immutable typed input
+  -> <Action>Handler
+  -> context-owned Port/Out capabilities
+  -> semantic result
+  -> IRC presentation
+```
+
+For security-sensitive workflows, time and randomness are explicit output ports. Repositories are
+owned by NickServ Application, mail ports express the business notification rather than translated
+subject/body strings, and cross-context events live under `Application/PublishedEvent`. Published
+events may carry the persisted password hash when an integration requires it, but never plaintext
+passwords or tokens.
+
+During the bounded migration, a new IRC adapter may implement the legacy command registry contract;
+that compatibility stops at the adapter. `NickServContext`, `SenderView`, translation keys, framework
+services, and protocol actions must not enter the use case.
+
 ## 4. Translations
 
 Every user-visible translation key exists in:
