@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Application\MemoServ\Command;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Shared\Help\HelpableCommandInterface;
+
 /**
  * Contract every MemoServ command module must implement.
  *
  * Commands are tagged with 'memoserv.command' and registered in MemoServCommandRegistry.
  */
-interface MemoServCommandInterface
+interface MemoServCommandInterface extends HelpableCommandInterface
 {
     public function getName(): string;
 
@@ -36,5 +39,8 @@ interface MemoServCommandInterface
     /** Null = no permission; 'IDENTIFIED' = sender must have a registered nick (senderAccount). */
     public function getRequiredPermission(): ?string;
 
+    /**
+     * @return CommandOutcome|void|null
+     */
     public function execute(MemoServContext $context);
 }

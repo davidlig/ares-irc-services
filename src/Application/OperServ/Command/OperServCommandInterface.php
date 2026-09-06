@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command;
 
-interface OperServCommandInterface
+use App\Application\Command\CommandOutcome;
+use App\Application\Shared\Help\HelpableCommandInterface;
+
+interface OperServCommandInterface extends HelpableCommandInterface
 {
     public function getName(): string;
 
@@ -28,5 +31,8 @@ interface OperServCommandInterface
 
     public function getRequiredPermission(): ?string;
 
+    /**
+     * @return CommandOutcome|void|null
+     */
     public function execute(OperServContext $context);
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Shared\Help;
 
+use function is_array;
 use function sprintf;
 
 /**
@@ -29,8 +30,9 @@ final readonly class UnifiedHelpFormatter
 
     public function showGeneralHelp(HelpFormatterContextInterface $context): void
     {
-        $commands = iterator_to_array($context->getCommandsForGeneralHelp());
-        usort($commands, static fn (object $a, object $b): int => $a->getOrder() <=> $b->getOrder());
+        /** @var list<HelpableCommandInterface> $commands */
+        $commands = array_values(iterator_to_array($context->getCommandsForGeneralHelp()));
+        usort($commands, static fn (HelpableCommandInterface $a, HelpableCommandInterface $b): int => $a->getOrder() <=> $b->getOrder());
 
         $this->sendHeader($context, $context->trans('help.header_title'));
         $context->reply('help.intro');
@@ -58,16 +60,17 @@ final readonly class UnifiedHelpFormatter
 
         // Show IRCop commands section if user has IRCop access
         if ($context->hasIrcopAccess()) {
-            $ircopCommands = iterator_to_array($context->getIrcopCommands());
+            /** @var list<HelpableCommandInterface> $ircopCommands */
+            $ircopCommands = array_values(iterator_to_array($context->getIrcopCommands()));
             if ([] !== $ircopCommands) {
-                usort($ircopCommands, static fn (object $a, object $b): int => $a->getOrder() <=> $b->getOrder());
+                usort($ircopCommands, static fn (HelpableCommandInterface $a, HelpableCommandInterface $b): int => $a->getOrder() <=> $b->getOrder());
                 $this->showIrcopCommandsSection($context, $ircopCommands);
             }
         }
     }
 
     /**
-     * @param array<object> $commands
+     * @param array<HelpableCommandInterface> $commands
      */
     private function showIrcopCommandsSection(HelpFormatterContextInterface $context, array $commands): void
     {
@@ -82,11 +85,13 @@ final readonly class UnifiedHelpFormatter
         }
     }
 
-    public function showCommandHelp(HelpFormatterContextInterface $context, object $handler): void
+    public function showCommandHelp(HelpFormatterContextInterface $context, HelpableCommandInterface $handler): void
     {
         $this->sendHeader($context, $handler->getName());
 
-        $params = method_exists($handler, 'getHelpParams') ? $handler->getHelpParams() : [];
+        $rawParams = method_exists($handler, 'getHelpParams') ? $handler->getHelpParams() : [];
+        /** @var array<string, mixed> $params */
+        $params = is_array($rawParams) ? $rawParams : [];
         $context->reply($handler->getHelpKey(), $params);
 
         $subCmds = $handler->getSubCommandHelp();

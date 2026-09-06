@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\MemoServ\Command;
 
+use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
 
 /**
@@ -15,6 +16,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         private MemoServContext $context,
     ) {}
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function reply(string $key, array $params = []): void
     {
         $this->context->reply($key, $params);
@@ -25,6 +29,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         $this->context->replyRaw($message);
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function trans(string $key, array $params = []): string
     {
         return $this->context->trans($key, $params);
@@ -35,7 +42,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         return $this->context->getRegistry()->all();
     }
 
-    public function shouldShowCommandInGeneralHelp(object $command): bool
+    public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool
     {
         return !$command->isOperOnly();
     }

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Command;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Shared\Help\HelpableCommandInterface;
+
 /**
  * Contract every ChanServ command module must implement.
  *
  * Commands are tagged with 'chanserv.command' and registered in ChanServCommandRegistry.
  */
-interface ChanServCommandInterface
+interface ChanServCommandInterface extends HelpableCommandInterface
 {
     public function getName(): string;
 
@@ -56,5 +59,8 @@ interface ChanServCommandInterface
      */
     public function usesLevelFounder(): bool;
 
+    /**
+     * @return CommandOutcome|void|null
+     */
     public function execute(ChanServContext $context);
 }

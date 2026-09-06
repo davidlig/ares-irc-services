@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Shared\Help;
 
+use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function is_string;
 use function strlen;
 
 #[CoversClass(UnifiedHelpFormatter::class)]
@@ -70,7 +72,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showGeneralHelpCallsReplyAndReplyRaw(): void
     {
-        $cmd = new class {
+        $cmd = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'HELP';
@@ -96,6 +98,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 return 'help';
             }
 
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
             public function getSubCommandHelp(): array
             {
                 return [];
@@ -120,7 +123,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showGeneralHelpOmitsHelpCommandFromCommandList(): void
     {
-        $helpCmd = new class {
+        $helpCmd = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'HELP';
@@ -135,8 +138,29 @@ final class UnifiedHelpFormatterTest extends TestCase
             {
                 return 'short.help';
             }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.help';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.help';
+            }
+
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
         };
-        $fooCmd = new class {
+        $fooCmd = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'FOO';
@@ -150,6 +174,27 @@ final class UnifiedHelpFormatterTest extends TestCase
             public function getShortDescKey(): string
             {
                 return 'short.foo';
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.foo';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.foo';
+            }
+
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
@@ -204,7 +249,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showGeneralHelpSortsCommandsByOrder(): void
     {
-        $second = new class {
+        $second = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'SECOND';
@@ -219,8 +264,29 @@ final class UnifiedHelpFormatterTest extends TestCase
             {
                 return 'short.second';
             }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.second';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.second';
+            }
+
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
         };
-        $first = new class {
+        $first = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'FIRST';
@@ -235,17 +301,42 @@ final class UnifiedHelpFormatterTest extends TestCase
             {
                 return 'short.first';
             }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.first';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.first';
+            }
+
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([$second, $first]);
         $context->expects(self::atLeastOnce())->method('shouldShowCommandInGeneralHelp')->willReturn(true);
         $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
         $context->expects(self::atLeastOnce())->method('replyRaw');
+        /** @var list<string> $commandLineParams */
         $commandLineParams = [];
         $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key, array $params = []) use (&$commandLineParams): void {
                 if ('help.command_line' === $key) {
-                    $commandLineParams[] = $params['command'] ?? null;
+                    $command = $params['command'] ?? null;
+                    if (is_string($command)) {
+                        $commandLineParams[] = $command;
+                    }
                 }
             }
         );
@@ -261,7 +352,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showGeneralHelpPadsCommandNameToCmdPad(): void
     {
-        $cmd = new class {
+        $cmd = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'X';
@@ -276,6 +367,27 @@ final class UnifiedHelpFormatterTest extends TestCase
             {
                 return 'short.x';
             }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.x';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.x';
+            }
+
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([$cmd]);
@@ -286,7 +398,10 @@ final class UnifiedHelpFormatterTest extends TestCase
         $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key, array $params = []) use (&$capturedCommand): void {
                 if ('help.command_line' === $key) {
-                    $capturedCommand = $params['command'] ?? null;
+                    $command = $params['command'] ?? null;
+                    if (is_string($command)) {
+                        $capturedCommand = $command;
+                    }
                 }
             }
         );
@@ -294,14 +409,18 @@ final class UnifiedHelpFormatterTest extends TestCase
         $formatter = new UnifiedHelpFormatter();
         $formatter->showGeneralHelp($context);
 
-        self::assertSame(12, strlen($capturedCommand ?? ''));
-        self::assertStringStartsWith('X', $capturedCommand ?? '');
+        if (null === $capturedCommand) {
+            self::fail('Expected a rendered command line.');
+        }
+
+        self::assertSame(12, strlen($capturedCommand));
+        self::assertStringStartsWith('X', $capturedCommand);
     }
 
     #[Test]
     public function showGeneralHelpSkipsCommandWhenShouldShowCommandInGeneralHelpReturnsFalse(): void
     {
-        $hiddenCmd = new class {
+        $hiddenCmd = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'HIDDEN';
@@ -316,8 +435,29 @@ final class UnifiedHelpFormatterTest extends TestCase
             {
                 return 'short.hidden';
             }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.hidden';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.hidden';
+            }
+
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
         };
-        $visibleCmd = new class {
+        $visibleCmd = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'VISIBLE';
@@ -332,11 +472,32 @@ final class UnifiedHelpFormatterTest extends TestCase
             {
                 return 'short.visible';
             }
+
+            public function getSyntaxKey(): string
+            {
+                return 'syntax.visible';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'help.visible';
+            }
+
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::atLeastOnce())->method('getCommandsForGeneralHelp')->willReturn([$hiddenCmd, $visibleCmd]);
         $context->expects(self::atLeastOnce())->method('shouldShowCommandInGeneralHelp')->willReturnCallback(
-            static fn (object $cmd): bool => 'VISIBLE' === $cmd->getName()
+            static fn (object $cmd): bool => method_exists($cmd, 'getName') && 'VISIBLE' === $cmd->getName()
         );
         $context->expects(self::atLeastOnce())->method('trans')->willReturn('');
         $context->expects(self::atLeastOnce())->method('replyRaw');
@@ -358,10 +519,20 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showCommandHelpCallsReplyWithHandlerData(): void
     {
-        $handler = new class {
+        $handler = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'REGISTER';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.register';
             }
 
             public function getHelpKey(): string
@@ -369,6 +540,7 @@ final class UnifiedHelpFormatterTest extends TestCase
                 return 'help.register';
             }
 
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
             public function getSubCommandHelp(): array
             {
                 return [];
@@ -377,6 +549,11 @@ final class UnifiedHelpFormatterTest extends TestCase
             public function getSyntaxKey(): string
             {
                 return 'syntax.register';
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
@@ -391,10 +568,20 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showCommandHelpWithSubCommandsShowsOptionsBlock(): void
     {
-        $handler = new class {
+        $handler = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'SET';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.set';
             }
 
             public function getHelpKey(): string
@@ -402,16 +589,22 @@ final class UnifiedHelpFormatterTest extends TestCase
                 return 'help.set';
             }
 
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
             public function getSubCommandHelp(): array
             {
                 return [
-                    ['name' => 'FOUNDER', 'desc_key' => 'help.set.founder'],
+                    ['name' => 'FOUNDER', 'desc_key' => 'help.set.founder', 'help_key' => 'help.set.founder', 'syntax_key' => 'syntax.set.founder'],
                 ];
             }
 
             public function getSyntaxKey(): string
             {
                 return 'syntax.set';
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
@@ -426,10 +619,20 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showCommandHelpPadsSubCommandNameToSubsPad(): void
     {
-        $handler = new class {
+        $handler = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'ACCESS';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'short.access';
             }
 
             public function getHelpKey(): string
@@ -437,10 +640,11 @@ final class UnifiedHelpFormatterTest extends TestCase
                 return 'help.access';
             }
 
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
             public function getSubCommandHelp(): array
             {
                 return [
-                    ['name' => 'ADD', 'desc_key' => 'help.access.add'],
+                    ['name' => 'ADD', 'desc_key' => 'help.access.add', 'help_key' => 'help.access.add', 'syntax_key' => 'syntax.access.add'],
                 ];
             }
 
@@ -448,14 +652,23 @@ final class UnifiedHelpFormatterTest extends TestCase
             {
                 return 'syntax.access';
             }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);
         $context->expects(self::atLeastOnce())->method('trans')->willReturn('x');
+        /** @var list<string> $subCommandLineParams */
         $subCommandLineParams = [];
         $context->expects(self::atLeastOnce())->method('reply')->willReturnCallback(
             static function (string $key, array $params = []) use (&$subCommandLineParams): void {
                 if ('help.subcommand_line' === $key) {
-                    $subCommandLineParams[] = $params['command'] ?? null;
+                    $command = $params['command'] ?? null;
+                    if (is_string($command)) {
+                        $subCommandLineParams[] = $command;
+                    }
                 }
             }
         );
@@ -465,8 +678,8 @@ final class UnifiedHelpFormatterTest extends TestCase
         $formatter->showCommandHelp($context, $handler);
 
         self::assertCount(1, $subCommandLineParams);
-        self::assertSame(10, strlen($subCommandLineParams[0] ?? ''));
-        self::assertStringStartsWith('ADD', $subCommandLineParams[0] ?? '');
+        self::assertSame(10, strlen($subCommandLineParams[0]));
+        self::assertStringStartsWith('ADD', $subCommandLineParams[0]);
     }
 
     #[Test]
@@ -505,7 +718,7 @@ final class UnifiedHelpFormatterTest extends TestCase
     #[Test]
     public function showGeneralHelpShowsIrcopCommandsWhenUserHasIrcopAccess(): void
     {
-        $cmd = new class {
+        $cmd = new class implements HelpableCommandInterface {
             public function getName(): string
             {
                 return 'USERIP';
@@ -519,6 +732,27 @@ final class UnifiedHelpFormatterTest extends TestCase
             public function getShortDescKey(): string
             {
                 return 'userip.short';
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'userip.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'userip.help';
+            }
+
+            /** @return array<array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string}> */
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return true;
             }
         };
         $context = $this->createMock(HelpFormatterContextInterface::class);

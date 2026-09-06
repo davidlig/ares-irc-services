@@ -6,9 +6,12 @@ namespace App\Application\ChanServ\Command;
 
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Port\SenderView;
 use App\Application\Security\IrcopPermissionDetector;
 use App\Application\Security\PermissionRegistry;
+use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
+use App\Domain\NickServ\Entity\RegisteredNick;
 
 use function strtolower;
 
@@ -32,6 +35,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         private PermissionRegistry $permissionRegistry,
     ) {}
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function reply(string $key, array $params = []): void
     {
         $this->context->reply($key, $params);
@@ -42,42 +48,55 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         $this->context->replyRaw($message);
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function trans(string $key, array $params = []): string
     {
         return $this->context->trans($key, $params);
     }
 
+    /**
+     * @return iterable<HelpableCommandInterface>
+     */
     public function getCommandsForGeneralHelp(): iterable
     {
         return $this->context->getRegistry()->all();
     }
 
-    public function shouldShowCommandInGeneralHelp(object $command): bool
+    public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool
     {
-        $permission = $command->getRequiredPermission();
+        $permission = $command instanceof ChanServCommandInterface ? $command->getRequiredPermission() : null;
         if (null !== $permission && IrcopPermissionDetector::isIrcopPermission($permission)) {
             return false;
         }
 
         if ($command->isOperOnly()) {
-            return $this->context->sender?->isOper ?? false;
+            return $this->context->sender->isOper ?? false;
         }
 
         return $this->shouldShowByName($command);
     }
 
-    private function shouldShowByName(object $command): bool
+    private function shouldShowByName(HelpableCommandInterface $command): bool
     {
         $name = $command->getName();
         if (isset(self::MODE_DEPENDENT_COMMANDS[$name])) {
             $mode = self::MODE_DEPENDENT_COMMANDS[$name];
+            $map = [
+                'a' => $this->context->getChannelModeSupport()->hasAdmin(),
+                'h' => $this->context->getChannelModeSupport()->hasHalfOp(),
+            ];
 
-            return ['a' => $this->context->getChannelModeSupport()->hasAdmin(), 'h' => $this->context->getChannelModeSupport()->hasHalfOp()][$mode] ?? false;
+            return $map[$mode];
         }
 
         return true;
     }
 
+    /**
+     * @return iterable<HelpableCommandInterface>
+     */
     public function getIrcopCommands(): iterable
     {
         $sender = $this->context->sender;
@@ -92,7 +111,10 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         return $this->resolveIrcopCommands($sender, $account, $nickLower);
     }
 
-    private function resolveIrcopCommands(object $sender, object $account, string $nickLower): iterable
+    /**
+     * @return iterable<HelpableCommandInterface>
+     */
+    private function resolveIrcopCommands(SenderView $sender, RegisteredNick $account, string $nickLower): iterable
     {
         if ($this->rootRegistry->isRoot($nickLower)) {
             return $this->filterIrcopCommands($this->context->getRegistry()->all());
@@ -104,7 +126,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         return $this->filterByPermission(
             $this->context->getRegistry()->all(),
-            $account->getId(),
+            (int) $account->getId(),
             $nickLower,
         );
     }
@@ -123,7 +145,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         return $this->checkIrcopAccess($sender, $account, $nickLower);
     }
 
-    private function checkIrcopAccess(object $sender, object $account, string $nickLower): bool
+    private function checkIrcopAccess(SenderView $sender, RegisteredNick $account, string $nickLower): bool
     {
         if ($this->rootRegistry->isRoot($nickLower)) {
             return true;
@@ -131,7 +153,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
 
         if ($sender->isOper) {
             $servicePermissions = $this->permissionRegistry->getPermissionsByService()['ChanServ'] ?? [];
-            if (array_any($servicePermissions, fn ($permission) => $this->accessHelper->hasPermission($account->getId(), $nickLower, $permission))) {
+            if (array_any($servicePermissions, fn (string $permission): bool => $this->accessHelper->hasPermission((int) $account->getId(), $nickLower, $permission))) {
                 return true;
             }
         }
@@ -140,9 +162,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     }
 
     /**
-     * @param iterable<object> $commands
+     * @param iterable<ChanServCommandInterface> $commands
      *
-     * @return iterable<object>
+     * @return iterable<HelpableCommandInterface>
      */
     private function filterIrcopCommands(iterable $commands): iterable
     {
@@ -155,9 +177,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     }
 
     /**
-     * @param iterable<object> $commands
+     * @param iterable<ChanServCommandInterface> $commands
      *
-     * @return iterable<object>
+     * @return iterable<HelpableCommandInterface>
      */
     private function filterByPermission(iterable $commands, int $nickId, string $nickLower): iterable
     {

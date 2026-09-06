@@ -10,27 +10,32 @@ namespace App\Application\Shared\Help;
  */
 interface HelpFormatterContextInterface
 {
+    /**
+     * @param array<string, mixed> $params
+     */
     public function reply(string $key, array $params = []): void;
 
     public function replyRaw(string $message): void;
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function trans(string $key, array $params = []): string;
 
     /**
-     * Commands to list in general HELP. Each element must have getName(), getOrder(),
-     * getShortDescKey(), getSyntaxKey(), getHelpKey(), getSubCommandHelp(), isOperOnly().
+     * Commands to list in general HELP.
      *
-     * @return iterable<object>
+     * @return iterable<HelpableCommandInterface>
      */
     public function getCommandsForGeneralHelp(): iterable;
 
-    public function shouldShowCommandInGeneralHelp(object $command): bool;
+    public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool;
 
     /**
      * Returns IRCop commands that the current user has permission for.
      * Used to show a separated section in HELP for IRCop-only commands.
      *
-     * @return iterable<object>
+     * @return iterable<HelpableCommandInterface>
      */
     public function getIrcopCommands(): iterable;
 

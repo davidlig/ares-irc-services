@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Command;
 
+use App\Application\Command\CommandOutcome;
+use App\Application\Shared\Help\HelpableCommandInterface;
+
 /**
  * Contract every NickServ command module must implement.
  *
@@ -11,7 +14,7 @@ namespace App\Application\NickServ\Command;
  * tag it with 'nickserv.command' in services.yaml (or rely on autoconfigure),
  * and it will be automatically registered in the NickServCommandRegistry.
  */
-interface NickServCommandInterface
+interface NickServCommandInterface extends HelpableCommandInterface
 {
     /** Primary command name (uppercase). E.g. "REGISTER". */
     public function getName(): string;
@@ -87,6 +90,8 @@ interface NickServCommandInterface
      */
     public function getHelpParams(): array;
 
-    /** Execute the command. All communication is done via $context->reply(). */
+    /**
+     * @return CommandOutcome|void|null
+     */
     public function execute(NickServContext $context);
 }

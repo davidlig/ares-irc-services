@@ -8,12 +8,13 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Security\IrcopPermissionDetector;
 use App\Application\Security\PermissionRegistry;
+use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
 
 use function strtolower;
 
 /**
- * Adapter from NickServContext to HelpFormatterContextInterface for UnifiedHelpFormatter.
+ * Adapter that exposes HelpFormatterContextInterface from NickServContext.
  */
 final readonly class HelpFormatterContextAdapter implements HelpFormatterContextInterface
 {
@@ -24,6 +25,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         private PermissionRegistry $permissionRegistry,
     ) {}
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function reply(string $key, array $params = []): void
     {
         $this->context->reply($key, $params);
@@ -34,32 +38,41 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         $this->context->replyRaw($message);
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function trans(string $key, array $params = []): string
     {
         return $this->context->trans($key, $params);
     }
 
+    /**
+     * @return iterable<HelpableCommandInterface>
+     */
     public function getCommandsForGeneralHelp(): iterable
     {
         return $this->context->getRegistry()->all();
     }
 
-    public function shouldShowCommandInGeneralHelp(object $command): bool
+    public function shouldShowCommandInGeneralHelp(HelpableCommandInterface $command): bool
     {
         // Commands with IRCop permissions are not shown in general help
-        $permission = $command->getRequiredPermission();
+        $permission = $command instanceof NickServCommandInterface ? $command->getRequiredPermission() : null;
         if (null !== $permission && IrcopPermissionDetector::isIrcopPermission($permission)) {
             return false;
         }
 
         // Legacy: isOperOnly() commands shown only to opers
         if ($command->isOperOnly()) {
-            return $this->context->sender?->isOper ?? false;
+            return $this->context->sender->isOper ?? false;
         }
 
         return true;
     }
 
+    /**
+     * @return iterable<HelpableCommandInterface>
+     */
     public function getIrcopCommands(): iterable
     {
         $sender = $this->context->sender;
@@ -78,7 +91,7 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         $allCommands = $this->context->getRegistry()->all();
 
         return $sender->isOper
-            ? $this->filterByPermission($allCommands, $account->getId(), $nickLower)
+            ? $this->filterByPermission($allCommands, (int) $account->getId(), $nickLower)
             : [];
     }
 
@@ -100,16 +113,16 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
         $result = false;
         if ($sender->isOper) {
             $servicePermissions = $this->permissionRegistry->getPermissionsByService()['NickServ'] ?? [];
-            $result = array_any($servicePermissions, fn ($permission) => $this->accessHelper->hasPermission($account->getId(), $nickLower, $permission));
+            $result = array_any($servicePermissions, fn (string $permission): bool => $this->accessHelper->hasPermission((int) $account->getId(), $nickLower, $permission));
         }
 
         return $result;
     }
 
     /**
-     * @param iterable<object> $commands
+     * @param iterable<NickServCommandInterface> $commands
      *
-     * @return iterable<object>
+     * @return iterable<HelpableCommandInterface>
      */
     private function filterIrcopCommands(iterable $commands): iterable
     {
@@ -122,9 +135,9 @@ final readonly class HelpFormatterContextAdapter implements HelpFormatterContext
     }
 
     /**
-     * @param iterable<object> $commands
+     * @param iterable<NickServCommandInterface> $commands
      *
-     * @return iterable<object>
+     * @return iterable<HelpableCommandInterface>
      */
     private function filterByPermission(iterable $commands, int $nickId, string $nickLower): iterable
     {
