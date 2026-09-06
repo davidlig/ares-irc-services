@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Connection;
 
-use App\Domain\IRC\Server\ServerLink;
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

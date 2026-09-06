@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Logging;
 
-use App\Domain\IRC\Event\ConnectionEstablishedEvent;
-use App\Domain\IRC\Event\ConnectionLostEvent;
-use App\Domain\IRC\Server\ServerLink;
-use App\Domain\IRC\ValueObject\Hostname;
-use App\Domain\IRC\ValueObject\LinkPassword;
-use App\Domain\IRC\ValueObject\Port;
-use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\Logging\IRCEventSubscriber;
 use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Domain\Event\ConnectionEstablishedEvent;
+use App\Irc\Domain\Event\ConnectionLostEvent;
+use App\Irc\Domain\Server\ServerLink;
+use App\Irc\Domain\ValueObject\Hostname;
+use App\Irc\Domain\ValueObject\LinkPassword;
+use App\Irc\Domain\ValueObject\Port;
+use App\Irc\Domain\ValueObject\ServerName;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Monolog\LogRecord;

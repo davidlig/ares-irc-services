@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\IRC\BurstCompleteRegistry;
+use App\Irc\Application\BurstCompleteRegistry;
 use App\Irc\Application\Port\In\BurstCompletePort;
 
 /**

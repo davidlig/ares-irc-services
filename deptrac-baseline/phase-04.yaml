@@ -232,11 +232,11 @@ deptrac:
     App\Infrastructure\NickServ\Bot\NickServBot:
       - App\Irc\Adapter\Out\Connection\ConnectionInterface
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
-      - App\Domain\IRC\LocalUserModeSyncInterface
-      - App\Domain\IRC\ValueObject\Uid
+      - App\Irc\Domain\LocalUserModeSyncInterface
+      - App\Irc\Domain\ValueObject\Uid
       - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
     App\Infrastructure\NickServ\PendingNickRestoreRegistry:
-      - App\Domain\IRC\SkipIdentifiedModeStripRegistryInterface
+      - App\Irc\Domain\SkipIdentifiedModeStripRegistryInterface
     App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter:
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
@@ -245,15 +245,15 @@ deptrac:
       - App\Application\OperServ\RootUserRegistry
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
     App\Infrastructure\NickServ\Subscriber\ForbiddenNickEnforceSubscriber:
-      - App\Domain\IRC\Event\UserNickChangedEvent
+      - App\Irc\Domain\Event\UserNickChangedEvent
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
       - App\Application\Event\UserJoinedNetworkAppEvent
-      - App\Domain\IRC\Event\IrcMessageProcessedEvent
+      - App\Irc\Domain\Event\IrcMessageProcessedEvent
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
-      - App\Domain\IRC\Event\UserModeChangedEvent
-      - App\Domain\IRC\Event\UserNickChangedEvent
-      - App\Domain\IRC\Event\UserQuitNetworkEvent
+      - App\Irc\Domain\Event\UserModeChangedEvent
+      - App\Irc\Domain\Event\UserNickChangedEvent
+      - App\Irc\Domain\Event\UserQuitNetworkEvent
     App\Infrastructure\NickServ\Subscriber\NickServCommandListener:
       - App\Infrastructure\IRC\Security\SensitiveDataRedactor
     App\Infrastructure\NickServ\Subscriber\VhostClearOnDeidentifySubscriber:
-      - App\Domain\IRC\Event\UserModeChangedEvent
+      - App\Irc\Domain\Event\UserModeChangedEvent

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Runtime;
 
-use App\Domain\IRC\Server\ServerLink;
+use App\Irc\Domain\Server\ServerLink;
 
 interface IRCClientFactoryInterface
 {

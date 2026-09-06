@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\IRC\BurstCompleteRegistry;
 use App\Infrastructure\IRC\ServiceBridge\CoreBurstCompleteAdapter;
+use App\Irc\Application\BurstCompleteRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

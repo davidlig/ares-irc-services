@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Network;
 
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Domain\IRC\Network\Channel;
-use App\Domain\IRC\Network\ChannelMemberRole;
-use App\Domain\IRC\Network\NetworkUser;
+use App\Irc\Domain\Network\Channel;
+use App\Irc\Domain\Network\ChannelMemberRole;
+use App\Irc\Domain\Network\NetworkUser;
 
 use function count;
 use function in_array;

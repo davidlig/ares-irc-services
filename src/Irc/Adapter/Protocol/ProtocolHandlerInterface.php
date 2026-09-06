@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Irc\Adapter\Protocol;
 
-use App\Domain\IRC\Server\ServerLink;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Domain\Server\ServerLink;
 
 interface ProtocolHandlerInterface
 {

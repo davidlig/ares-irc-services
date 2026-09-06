@@ -17,8 +17,8 @@ use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Event\ChannelUnforbiddenEvent;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\ChannelTopicChangedEvent;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
+use App\Irc\Domain\Event\ChannelTopicChangedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;

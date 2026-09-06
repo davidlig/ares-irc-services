@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network;
 
-use App\Domain\IRC\Event\ServerDelinkedEvent;
-use App\Domain\IRC\Event\UserQuitNetworkEvent;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
+use App\Irc\Domain\Event\ServerDelinkedEvent;
+use App\Irc\Domain\Event\UserQuitNetworkEvent;
+use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

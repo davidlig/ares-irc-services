@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\UI\CLI;
 
-use App\Application\IRC\Connect\ConnectToServerCommand;
-use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
-use App\Application\IRC\Connect\ProtocolConnectionPreflightInterface;
-use App\Application\IRC\IrcSessionInterface;
 use App\Application\Port\ConsumerProcessManagerInterface;
+use App\Irc\Application\Connect\ConnectToServerCommand;
+use App\Irc\Application\Connect\ConnectToServerHandlerInterface;
+use App\Irc\Application\Connect\ProtocolConnectionPreflightInterface;
+use App\Irc\Application\IrcSessionInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;

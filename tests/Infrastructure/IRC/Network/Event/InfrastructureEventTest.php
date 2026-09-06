@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Network\Event;
 
-use App\Domain\IRC\Network\ChannelMemberRole;
-use App\Domain\IRC\ValueObject\ChannelName;
-use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelListModeReceivedEvent;
@@ -18,6 +15,9 @@ use App\Infrastructure\IRC\Network\Event\UserMetadataReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Domain\Network\ChannelMemberRole;
+use App\Irc\Domain\ValueObject\ChannelName;
+use App\Irc\Domain\ValueObject\Uid;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Network;
 
 use App\Application\Port\UidResolverInterface;
-use App\Domain\IRC\Network\NetworkUser;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
-use App\Domain\IRC\ValueObject\Nick;
-use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\NetworkUidResolver;
+use App\Irc\Domain\Network\NetworkUser;
+use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
+use App\Irc\Domain\ValueObject\Nick;
+use App\Irc\Domain\ValueObject\Uid;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

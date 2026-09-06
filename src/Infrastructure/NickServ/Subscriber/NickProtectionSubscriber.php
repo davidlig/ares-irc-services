@@ -11,12 +11,12 @@ use App\Application\NickServ\NickProtectionService;
 use App\Application\NickServ\PendingNickProtectionRegistryInterface;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NickChangePreservesIdentificationInterface;
-use App\Domain\IRC\Event\IrcMessageProcessedEvent;
-use App\Domain\IRC\Event\UserModeChangedEvent;
-use App\Domain\IRC\Event\UserNickChangedEvent;
-use App\Domain\IRC\Event\UserQuitNetworkEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Domain\Event\IrcMessageProcessedEvent;
+use App\Irc\Domain\Event\UserModeChangedEvent;
+use App\Irc\Domain\Event\UserNickChangedEvent;
+use App\Irc\Domain\Event\UserQuitNetworkEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function str_contains;

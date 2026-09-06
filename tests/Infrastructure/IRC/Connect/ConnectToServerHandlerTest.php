@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Connect;
 
-use App\Application\IRC\Connect\ConnectToServerCommand;
-use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Connect\ConnectToServerHandler;
 use App\Infrastructure\IRC\Runtime\IRCClient;
 use App\Infrastructure\IRC\Runtime\IRCClientFactoryInterface;
+use App\Irc\Application\Connect\ConnectToServerCommand;
+use App\Irc\Domain\Server\ServerLink;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

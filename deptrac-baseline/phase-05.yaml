@@ -83,5 +83,5 @@ deptrac:
       - App\Application\ChanServ\ChanServAccessHelper
       - App\Domain\ChanServ\Entity\ChannelLevel
       - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-      - App\Domain\IRC\Event\UserJoinedChannelEvent
+      - App\Irc\Domain\Event\UserJoinedChannelEvent
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface

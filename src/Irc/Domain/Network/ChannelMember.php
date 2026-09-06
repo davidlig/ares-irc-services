@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Irc\Domain\Network;
+
+use App\Irc\Domain\ValueObject\Uid;
+
+/**
+ * Represents a user's membership and privilege level in a channel.
+ * Immutable — the Channel aggregate creates a new instance when the role changes.
+ * prefixLetters is the actual set of prefix modes (q,a,o,h,v) the user has; when empty we derive from role.
+ */
+readonly class ChannelMember
+{
+    /** @var list<string> */
+    public array $prefixLetters;
+
+    /**
+     * @param list<string>|null $prefixLetters
+     */
+    public function __construct(
+        public Uid $uid,
+        public ChannelMemberRole $role,
+        ?array $prefixLetters = null,
+    ) {
+        if (null !== $prefixLetters) {
+            $this->prefixLetters = $prefixLetters;
+        } else {
+            $this->prefixLetters = ChannelMemberRole::None !== $this->role
+                ? [$this->role->toModeLetter()]
+                : [];
+        }
+    }
+
+    public function withRole(ChannelMemberRole $role): self
+    {
+        return new self($this->uid, $role);
+    }
+
+    /**
+     * @param list<string> $prefixLetters
+     */
+    public function withPrefixLetters(array $prefixLetters): self
+    {
+        $role = ChannelMemberRole::highestRoleFromLetters($prefixLetters);
+
+        return new self($this->uid, $role, $prefixLetters);
+    }
+}

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 
-use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Domain\Server\ServerLink;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\Shared\Subscriber;
 
-use App\Domain\IRC\Event\IrcMessageProcessedEvent;
 use App\Infrastructure\Shared\Subscriber\DoctrineIdentityMapClearSubscriber;
+use App\Irc\Domain\Event\IrcMessageProcessedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

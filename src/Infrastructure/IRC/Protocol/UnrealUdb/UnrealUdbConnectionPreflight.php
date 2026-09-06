@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
-use App\Application\IRC\Connect\ConnectionPreflightResult;
-use App\Application\IRC\Connect\ProtocolConnectionPreflightInterface;
 use App\Application\Port\UdbOfflineTakeoverInterface;
 use App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface;
+use App\Irc\Application\Connect\ConnectionPreflightResult;
+use App\Irc\Application\Connect\ProtocolConnectionPreflightInterface;
 use Throwable;
 
 use function sprintf;

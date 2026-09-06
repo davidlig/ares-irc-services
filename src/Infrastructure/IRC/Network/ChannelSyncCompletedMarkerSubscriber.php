@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Network;
 
 use App\Application\Port\ChannelSyncCompletedRegistryInterface;
-use App\Domain\IRC\Event\ChannelSyncedEvent;
+use App\Irc\Domain\Event\ChannelSyncedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

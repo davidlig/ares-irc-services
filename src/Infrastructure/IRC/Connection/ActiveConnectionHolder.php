@@ -6,11 +6,11 @@ namespace App\Infrastructure\IRC\Connection;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\ProtocolModuleInterface;
-use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Domain\Event\ConnectionLostEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

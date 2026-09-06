@@ -221,7 +221,7 @@ services:
 
     # --- CLI command — inject .env defaults so the command runs without arguments ---
 
-    App\Application\IRC\Connect\ConnectToServerHandlerInterface: '@App\Infrastructure\IRC\Connect\ConnectToServerHandler'
+    App\Irc\Application\Connect\ConnectToServerHandlerInterface: '@App\Infrastructure\IRC\Connect\ConnectToServerHandler'
 
     App\UI\CLI\ConnectCommand:
         arguments:
@@ -439,13 +439,13 @@ services:
 
     # --- Network state repositories (in-memory, live for the duration of the link) ---
 
-    App\Domain\IRC\Repository\NetworkUserRepositoryInterface:
+    App\Irc\Domain\Repository\NetworkUserRepositoryInterface:
         class: App\Infrastructure\IRC\Network\InMemoryNetworkUserRepository
 
     App\Application\Port\UidResolverInterface:
         class: App\Infrastructure\IRC\Network\NetworkUidResolver
 
-    App\Domain\IRC\Repository\ChannelRepositoryInterface:
+    App\Irc\Domain\Repository\ChannelRepositoryInterface:
         class: App\Infrastructure\IRC\Network\InMemoryChannelRepository
 
     # --- Network state: protocol router (wire → domain events) + subscriber (domain events → repos) ---
@@ -573,10 +573,10 @@ services:
 
     App\Infrastructure\IRC\Network\LocalUserModeSync: ~
 
-    App\Domain\IRC\LocalUserModeSyncInterface:
+    App\Irc\Domain\LocalUserModeSyncInterface:
         alias: App\Infrastructure\IRC\Network\LocalUserModeSync
 
-    App\Domain\IRC\SkipIdentifiedModeStripRegistryInterface:
+    App\Irc\Domain\SkipIdentifiedModeStripRegistryInterface:
         alias: App\Infrastructure\NickServ\PendingNickRestoreRegistry
 
     # --- Ports (Core ↔ Services): Core implements, Services consume ---

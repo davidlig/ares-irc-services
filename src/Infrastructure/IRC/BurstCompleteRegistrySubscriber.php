@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC;
 
-use App\Application\IRC\BurstCompleteRegistry;
-use App\Domain\IRC\Event\ConnectionEstablishedEvent;
-use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Application\BurstCompleteRegistry;
+use App\Irc\Domain\Event\ConnectionEstablishedEvent;
+use App\Irc\Domain\Event\ConnectionLostEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

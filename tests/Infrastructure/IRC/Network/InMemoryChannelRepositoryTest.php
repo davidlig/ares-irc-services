@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Network;
 
-use App\Domain\IRC\Network\Channel;
-use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\IRC\Network\InMemoryChannelRepository;
+use App\Irc\Domain\Network\Channel;
+use App\Irc\Domain\ValueObject\ChannelName;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

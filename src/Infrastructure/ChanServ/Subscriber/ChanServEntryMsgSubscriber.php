@@ -8,7 +8,7 @@ use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\UserJoinedChannelEvent;
+use App\Irc\Domain\Event\UserJoinedChannelEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;

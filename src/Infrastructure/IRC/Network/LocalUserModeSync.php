@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network;
 
-use App\Domain\IRC\Event\UserModeChangedEvent;
-use App\Domain\IRC\LocalUserModeSyncInterface;
-use App\Domain\IRC\ValueObject\Uid;
+use App\Irc\Domain\Event\UserModeChangedEvent;
+use App\Irc\Domain\LocalUserModeSyncInterface;
+use App\Irc\Domain\ValueObject\Uid;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**

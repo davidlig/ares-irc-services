@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\UI\CLI;
 
-use App\Application\IRC\Connect\ConnectionPreflightResult;
-use App\Application\IRC\Connect\ConnectToServerCommand;
-use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
-use App\Application\IRC\Connect\ProtocolConnectionPreflightInterface;
-use App\Application\IRC\IrcSessionInterface;
 use App\Application\Port\ConsumerProcessManagerInterface;
+use App\Irc\Application\Connect\ConnectionPreflightResult;
+use App\Irc\Application\Connect\ConnectToServerCommand;
+use App\Irc\Application\Connect\ConnectToServerHandlerInterface;
+use App\Irc\Application\Connect\ProtocolConnectionPreflightInterface;
+use App\Irc\Application\IrcSessionInterface;
 use App\UI\CLI\ConnectCommand;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

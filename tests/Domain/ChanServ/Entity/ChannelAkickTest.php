@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Domain\ChanServ\Entity;
 
 use App\Domain\ChanServ\Entity\ChannelAkick;
-use App\Domain\IRC\ValueObject\UserMask;
+use App\Irc\Domain\ValueObject\UserMask;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;

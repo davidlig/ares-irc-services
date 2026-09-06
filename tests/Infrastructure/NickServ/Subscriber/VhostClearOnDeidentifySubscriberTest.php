@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\NickServ\Subscriber;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Domain\IRC\Event\UserModeChangedEvent;
-use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\NickServ\Subscriber\VhostClearOnDeidentifySubscriber;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Domain\Event\UserModeChangedEvent;
+use App\Irc\Domain\ValueObject\Uid;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

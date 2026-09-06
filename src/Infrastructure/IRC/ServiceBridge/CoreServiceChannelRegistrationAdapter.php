@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\ServiceChannelRegistrationPort;
-use App\Domain\IRC\Network\Channel;
-use App\Domain\IRC\Network\ChannelMemberRole;
-use App\Domain\IRC\Repository\ChannelRepositoryInterface;
-use App\Domain\IRC\ValueObject\ChannelName;
-use App\Domain\IRC\ValueObject\Uid;
+use App\Irc\Domain\Network\Channel;
+use App\Irc\Domain\Network\ChannelMemberRole;
+use App\Irc\Domain\Repository\ChannelRepositoryInterface;
+use App\Irc\Domain\ValueObject\ChannelName;
+use App\Irc\Domain\ValueObject\Uid;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;

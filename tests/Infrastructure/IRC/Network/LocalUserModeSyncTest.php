@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Network;
 
-use App\Domain\IRC\Event\UserModeChangedEvent;
-use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Network\LocalUserModeSync;
+use App\Irc\Domain\Event\UserModeChangedEvent;
+use App\Irc\Domain\ValueObject\Uid;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

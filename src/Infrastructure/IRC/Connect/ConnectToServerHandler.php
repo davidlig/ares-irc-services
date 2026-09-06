@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Connect;
 
-use App\Application\IRC\Connect\ConnectToServerCommand;
-use App\Application\IRC\Connect\ConnectToServerHandlerInterface;
-use App\Application\IRC\IrcSessionInterface;
-use App\Domain\IRC\Server\ServerLink;
-use App\Domain\IRC\ValueObject\Hostname;
-use App\Domain\IRC\ValueObject\LinkPassword;
-use App\Domain\IRC\ValueObject\Port;
-use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Runtime\IRCClientFactoryInterface;
+use App\Irc\Application\Connect\ConnectToServerCommand;
+use App\Irc\Application\Connect\ConnectToServerHandlerInterface;
+use App\Irc\Application\IrcSessionInterface;
+use App\Irc\Domain\Server\ServerLink;
+use App\Irc\Domain\ValueObject\Hostname;
+use App\Irc\Domain\ValueObject\LinkPassword;
+use App\Irc\Domain\ValueObject\Port;
+use App\Irc\Domain\ValueObject\ServerName;
 
 final readonly class ConnectToServerHandler implements ConnectToServerHandlerInterface
 {

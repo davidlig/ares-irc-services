@@ -6,12 +6,12 @@ namespace App\Tests\Infrastructure\IRC\Subscriber;
 
 use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\Port\UserJoinedNetworkDTO;
-use App\Domain\IRC\Event\UserJoinedNetworkEvent;
-use App\Domain\IRC\Network\NetworkUser;
-use App\Domain\IRC\ValueObject\Ident;
-use App\Domain\IRC\ValueObject\Nick;
-use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Subscriber\CoreToAppEventBridge;
+use App\Irc\Domain\Event\UserJoinedNetworkEvent;
+use App\Irc\Domain\Network\NetworkUser;
+use App\Irc\Domain\ValueObject\Ident;
+use App\Irc\Domain\ValueObject\Nick;
+use App\Irc\Domain\ValueObject\Uid;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

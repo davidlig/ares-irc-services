@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\Domain\IRC\Repository\ChannelRepositoryInterface;
-use App\Domain\IRC\ValueObject\ChannelName;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Irc\Domain\Repository\ChannelRepositoryInterface;
+use App\Irc\Domain\ValueObject\ChannelName;
 use InvalidArgumentException;
 
 /**

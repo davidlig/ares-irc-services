@@ -237,8 +237,6 @@ deptrac:
     App\Application\ChanServ\Service\MlockStateFromChannelResolver:
       - App\Application\Port\ChannelModeSupportInterface
       - App\Irc\Application\Port\In\ChannelView
-    App\Domain\ChanServ\Entity\ChannelAkick:
-      - App\Domain\IRC\ValueObject\UserMask
     App\Infrastructure\ChanServ\Bot\ChanServBot:
       - App\Irc\Adapter\Out\Connection\ConnectionInterface
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
@@ -250,14 +248,14 @@ deptrac:
       - App\Infrastructure\NickServ\Security\IrcServiceUser
     App\Infrastructure\ChanServ\Subscriber\ChanServAkickEnforceSubscriber:
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
-      - App\Domain\IRC\Event\UserJoinedChannelEvent
+      - App\Irc\Domain\Event\UserJoinedChannelEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
-      - App\Domain\IRC\Event\ChannelSyncedEvent
-      - App\Domain\IRC\Event\IrcMessageProcessedEvent
+      - App\Irc\Domain\Event\ChannelSyncedEvent
+      - App\Irc\Domain\Event\IrcMessageProcessedEvent
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
-      - App\Domain\IRC\Event\UserJoinedChannelEvent
-      - App\Domain\IRC\Event\UserLeftChannelEvent
-      - App\Domain\IRC\Network\ChannelMemberRole
+      - App\Irc\Domain\Event\UserJoinedChannelEvent
+      - App\Irc\Domain\Event\UserLeftChannelEvent
+      - App\Irc\Domain\Network\ChannelMemberRole
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
       - App\Infrastructure\IRC\Event\MessageReceivedEvent
       - App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent
@@ -265,29 +263,29 @@ deptrac:
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
       - App\Infrastructure\NickServ\UserMessageTypeResolver
     App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
-      - App\Domain\IRC\Event\UserJoinedChannelEvent
+      - App\Irc\Domain\Event\UserJoinedChannelEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelBurstSubscriber:
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelJoinSubscriber:
-      - App\Domain\IRC\Event\ChannelSyncedEvent
-      - App\Domain\IRC\Event\UserJoinedChannelEvent
+      - App\Irc\Domain\Event\ChannelSyncedEvent
+      - App\Irc\Domain\Event\UserJoinedChannelEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServHistorySubscriber:
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Infrastructure\ChanServ\Subscriber\ChanServMlockEnforceSubscriber:
-      - App\Domain\IRC\Event\ChannelModesChangedEvent
-      - App\Domain\IRC\Event\ChannelSyncedEvent
+      - App\Irc\Domain\Event\ChannelModesChangedEvent
+      - App\Irc\Domain\Event\ChannelSyncedEvent
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
       - App\Domain\NickServ\Event\NickDropCleanupEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServNojoinEnforceSubscriber:
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
-      - App\Domain\IRC\Event\UserJoinedChannelEvent
+      - App\Irc\Domain\Event\UserJoinedChannelEvent
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Infrastructure\ChanServ\Subscriber\ChanServRejoinSubscriber:
-      - App\Domain\IRC\Event\ChannelSyncedEvent
+      - App\Irc\Domain\Event\ChannelSyncedEvent
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber:
-      - App\Domain\IRC\Event\ChannelSyncedEvent
+      - App\Irc\Domain\Event\ChannelSyncedEvent
       - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber:
       - App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent

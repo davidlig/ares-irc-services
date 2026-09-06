@@ -4,14 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Runtime;
 
-use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
-use App\Domain\IRC\Server\ServerLink;
-use App\Domain\IRC\ValueObject\Hostname;
-use App\Domain\IRC\ValueObject\LinkPassword;
-use App\Domain\IRC\ValueObject\Port;
-use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Runtime\IRCClientFactory;
 use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
@@ -20,6 +14,12 @@ use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleRegistryInterface;
 use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Application\BurstCompleteRegistry;
+use App\Irc\Domain\Server\ServerLink;
+use App\Irc\Domain\ValueObject\Hostname;
+use App\Irc\Domain\ValueObject\LinkPassword;
+use App\Irc\Domain\ValueObject\Port;
+use App\Irc\Domain\ValueObject\ServerName;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

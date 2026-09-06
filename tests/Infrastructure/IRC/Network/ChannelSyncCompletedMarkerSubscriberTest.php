@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Network;
 
 use App\Application\Port\ChannelSyncCompletedRegistryInterface;
-use App\Domain\IRC\Event\ChannelSyncedEvent;
-use App\Domain\IRC\Network\Channel;
-use App\Domain\IRC\ValueObject\ChannelName;
 use App\Infrastructure\IRC\Network\ChannelSyncCompletedMarkerSubscriber;
+use App\Irc\Domain\Event\ChannelSyncedEvent;
+use App\Irc\Domain\Network\Channel;
+use App\Irc\Domain\ValueObject\ChannelName;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

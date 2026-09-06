@@ -6,7 +6,7 @@ namespace App\Infrastructure\IRC\Subscriber;
 
 use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\Port\UserJoinedNetworkDTO;
-use App\Domain\IRC\Event\UserJoinedNetworkEvent;
+use App\Irc\Domain\Event\UserJoinedNetworkEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

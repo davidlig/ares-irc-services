@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Network;
 
 use App\Application\Port\UidResolverInterface;
-use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
-use App\Domain\IRC\ValueObject\Uid;
+use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
+use App\Irc\Domain\ValueObject\Uid;
 
 final readonly class NetworkUidResolver implements UidResolverInterface
 {

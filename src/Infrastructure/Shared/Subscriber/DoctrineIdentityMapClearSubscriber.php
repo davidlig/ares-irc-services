@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\Shared\Subscriber;
 
-use App\Domain\IRC\Event\IrcMessageProcessedEvent;
+use App\Irc\Domain\Event\IrcMessageProcessedEvent;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

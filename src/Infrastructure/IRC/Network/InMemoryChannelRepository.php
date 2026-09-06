@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network;
 
-use App\Domain\IRC\Network\Channel;
-use App\Domain\IRC\Repository\ChannelRepositoryInterface;
-use App\Domain\IRC\ValueObject\ChannelName;
+use App\Irc\Domain\Network\Channel;
+use App\Irc\Domain\Repository\ChannelRepositoryInterface;
+use App\Irc\Domain\ValueObject\ChannelName;
 
 use function count;
 

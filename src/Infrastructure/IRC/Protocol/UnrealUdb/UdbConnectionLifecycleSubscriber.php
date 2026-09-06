@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
-use App\Domain\IRC\Event\ConnectionLostEvent;
+use App\Irc\Domain\Event\ConnectionLostEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

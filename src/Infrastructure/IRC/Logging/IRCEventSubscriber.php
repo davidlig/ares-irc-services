@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Logging;
 
-use App\Domain\IRC\Event\ConnectionEstablishedEvent;
-use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\Security\SensitiveDataRedactor;
+use App\Irc\Domain\Event\ConnectionEstablishedEvent;
+use App\Irc\Domain\Event\ConnectionLostEvent;
 use DateTimeInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

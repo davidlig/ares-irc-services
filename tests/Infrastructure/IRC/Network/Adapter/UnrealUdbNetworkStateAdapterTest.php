@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Network\Adapter;
 
-use App\Domain\IRC\Event\ServerDelinkedEvent;
-use App\Domain\IRC\Event\UserJoinedNetworkEvent;
-use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Infrastructure\IRC\Network\Adapter\UnrealUdbNetworkStateAdapter;
 use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\ChannelKickReceivedEvent;
@@ -19,6 +16,9 @@ use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
 use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Domain\Event\ServerDelinkedEvent;
+use App\Irc\Domain\Event\UserJoinedNetworkEvent;
+use App\Irc\Domain\Network\ChannelMemberRole;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

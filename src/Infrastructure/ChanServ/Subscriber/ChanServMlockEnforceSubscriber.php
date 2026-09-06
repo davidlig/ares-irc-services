@@ -9,12 +9,12 @@ use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\ChannelModesChangedEvent;
-use App\Domain\IRC\Event\ChannelSyncedEvent;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Application\Port\In\BurstCompletePort;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\ChannelView;
+use App\Irc\Domain\Event\ChannelModesChangedEvent;
+use App\Irc\Domain\Event\ChannelSyncedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function in_array;

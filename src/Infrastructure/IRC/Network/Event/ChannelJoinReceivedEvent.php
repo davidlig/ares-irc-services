@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Network\Event;
 
-use App\Domain\IRC\Network\ChannelMemberRole;
-use App\Domain\IRC\ValueObject\ChannelName;
-use App\Domain\IRC\ValueObject\Uid;
+use App\Irc\Domain\Network\ChannelMemberRole;
+use App\Irc\Domain\ValueObject\ChannelName;
+use App\Irc\Domain\ValueObject\Uid;
 
 /**
  * @param array<int, array{uid: Uid, role: ChannelMemberRole, prefixLetters?: list<string>}> $members
