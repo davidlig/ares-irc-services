@@ -48,7 +48,6 @@ final class ConnectToServerHandlerTest extends TestCase
 
         self::assertSame($client, $result);
         self::assertInstanceOf(ServerLink::class, $capturedLink);
-        self::assertNotNull($capturedLink);
 
         $link = $capturedLink;
         self::assertSame('services.test.local', $link->serverName->value);

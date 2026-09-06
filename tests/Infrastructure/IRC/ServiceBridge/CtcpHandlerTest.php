@@ -30,6 +30,9 @@ final class CtcpHandlerTest extends TestCase
     private function createTranslator(): TranslatorInterface
     {
         return new class implements TranslatorInterface {
+            /**
+             * @param array<string, mixed> $parameters
+             */
             public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
             {
                 if ('ctcp.version.tribute' === $id) {

@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 
 use function array_key_exists;
+use function assert;
 use function count;
 use function explode;
 use function fclose;
@@ -76,6 +77,7 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
             }
 
             [$generation, $snapshots] = $this->loadSnapshots($directory);
+            /** @var array<string, array<string, string>> $candidate */
             $candidate = [
                 'N' => $this->exportRecords($this->exporter->allNickRecords(), UdbBlock::Nicks),
                 'C' => $this->exportRecords($this->exporter->allChannelRecords(), UdbBlock::Channels),
@@ -205,7 +207,9 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
             }
             $components = [];
             foreach (explode('::', $recordPath) as $component) {
-                $components[] = UdbPathCodec::decodeComponent($component);
+                $decoded = UdbPathCodec::decodeComponent($component);
+                assert(null !== $decoded);
+                $components[] = $decoded;
             }
             if (!UdbSchema::validate($block, $components, $value)) {
                 throw new RuntimeException(sprintf('Invalid UDB schema record in %s at line %d.', $path, $lineNumber + 1));
@@ -229,7 +233,11 @@ final readonly class UdbOfflineTakeover implements UdbOfflineTakeoverInterface
         return $canonical;
     }
 
-    /** @param array<string, string> $rawRecords @return array<string, string> */
+    /**
+     * @param array<string, string> $rawRecords
+     *
+     * @return array<string, string>
+     */
     private function exportRecords(array $rawRecords, UdbBlock $block): array
     {
         $records = [];

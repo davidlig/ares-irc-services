@@ -15,7 +15,15 @@ final class MessageDirectionTest extends TestCase
     #[Test]
     public function incomingAndOutgoingCasesExist(): void
     {
-        self::assertSame(MessageDirection::Incoming, MessageDirection::Incoming);
-        self::assertSame(MessageDirection::Outgoing, MessageDirection::Outgoing);
+        $caseNames = array_map(
+            static fn (MessageDirection $direction): string => $direction->name,
+            MessageDirection::cases(),
+        );
+
+        $uniqueCaseNames = array_values(array_unique($caseNames));
+
+        self::assertCount(2, $uniqueCaseNames);
+        self::assertContains('Incoming', $uniqueCaseNames);
+        self::assertContains('Outgoing', $uniqueCaseNames);
     }
 }

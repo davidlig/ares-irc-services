@@ -61,6 +61,11 @@ final class UnrealUdbProtocolHandler extends AbstractProtocolHandler implements 
         return self::PROTOCOL_NAME;
     }
 
+    public function getSid(): string
+    {
+        return $this->sid;
+    }
+
     public function setEventPump(?SessionEventPump $eventPump): void
     {
         $this->coordinator->setEventPump($eventPump);

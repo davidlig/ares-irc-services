@@ -24,6 +24,7 @@ class ServiceUidRegistry
      */
     public static function fromIterable(iterable $providerIter): self
     {
+        /** @var array<string, ServiceUidProviderInterface> $providers */
         $providers = [];
         foreach ($providerIter as $provider) {
             $providers[$provider->getServiceKey()] = $provider;
@@ -60,11 +61,11 @@ class ServiceUidRegistry
     {
         $nicknameLower = strtolower($nickname);
 
-        return array_find($this->providers, static fn ($provider) => strtolower($provider->getNickname()) === $nicknameLower)?->getUid();
+        return array_find($this->providers, static fn (ServiceUidProviderInterface $provider): bool => strtolower($provider->getNickname()) === $nicknameLower)?->getUid();
     }
 
     public function getUidByUid(string $uid): ?string
     {
-        return array_find($this->providers, static fn ($provider) => $provider->getUid() === $uid)?->getUid();
+        return array_find($this->providers, static fn (ServiceUidProviderInterface $provider): bool => $provider->getUid() === $uid)?->getUid();
     }
 }

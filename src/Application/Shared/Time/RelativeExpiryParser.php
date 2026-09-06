@@ -46,9 +46,9 @@ final readonly class RelativeExpiryParser
     private static function intervalSpec(int $value, string $unit): string
     {
         return match ($unit) {
-            'd' => "P{$value}D",
             'h' => "PT{$value}H",
             'm' => "PT{$value}M",
+            default => "P{$value}D",
         };
     }
 }

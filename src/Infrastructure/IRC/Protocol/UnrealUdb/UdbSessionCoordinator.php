@@ -59,10 +59,6 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
 
     private const int MUTATION_QUEUE_LIMIT = 1024;
 
-    private const int MAX_STAGED_RECORDS = 500000;
-
-    private const int MAX_STAGED_BYTES = 67108864; // 64 MB
-
     private const int ERR_REOFFER_BUDGET = 3;
 
     /** @var list<string> */
@@ -73,6 +69,11 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
     private ?string $ownName = null;
 
     private ?string $remoteServerName = null;
+
+    public function getRemoteServerName(): ?string
+    {
+        return $this->remoteServerName;
+    }
 
     private ?string $remoteSid = null;
 
@@ -421,7 +422,8 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
             return;
         }
 
-        if (null === $this->remoteSid || null === $this->connection || !$this->isStoreReady()) {
+        $remoteSid = $this->remoteSid;
+        if (null === $remoteSid || null === $this->connection || !$this->isStoreReady()) {
             return;
         }
 
@@ -433,7 +435,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         foreach (UdbBlock::all() as $block) {
             $this->write(UdbWireCodec::inf(
                 $this->sid,
-                $this->remoteSid,
+                $remoteSid,
                 $roundId,
                 $block,
                 $this->snapshots->checksumForBlock($block),
@@ -454,25 +456,27 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
     private function handleRes(UdbFrame $frame): void
     {
         $block = $frame->block;
-        if (null === $block) {
-            $this->logger->debug('Ignoring RES for unknown UDB block.');
+        $roundId = $frame->roundId;
+        if (null === $block || null === $roundId) {
+            $this->logger->debug('Ignoring RES for unknown UDB block or missing roundId.');
 
             return;
         }
 
         if (!$this->ownHelAcked || !$this->peerAuthorized || !$this->isStoreReady()) {
-            $this->write(UdbWireCodec::err($this->sid, $frame->sourceSid, 'RES', 6, $frame->roundId, $block));
+            $this->write(UdbWireCodec::err($this->sid, $frame->sourceSid, 'RES', 6, $roundId, $block));
 
             return;
         }
 
-        $this->serveBlock($block, $frame->roundId);
+        $this->serveBlock($block, $roundId);
     }
 
     /** Serves one block as a staged snapshot (BEGIN / PUT ... / END). */
     private function serveBlock(UdbBlock $block, int $roundId): void
     {
-        if (null === $this->remoteSid) {
+        $remoteSid = $this->remoteSid;
+        if (null === $remoteSid) {
             return;
         }
 
@@ -481,7 +485,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
         ++$this->txidSequence;
         $txid = sprintf('%08x', $this->txidSequence);
 
-        $this->write(UdbWireCodec::begin($this->sid, $this->remoteSid, $roundId, $block, $txid, $digest));
+        $this->write(UdbWireCodec::begin($this->sid, $remoteSid, $roundId, $block, $txid, $digest));
 
         foreach ($records as $path => $value) {
             if (!UdbPathCodec::fitsLimits($path, $value)) {
@@ -489,15 +493,15 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
                     'block' => $block->letter(),
                     'path' => $path,
                 ]);
-                $this->write(UdbWireCodec::err($this->sid, $this->remoteSid, 'PUT', 3, $roundId, $block));
+                $this->write(UdbWireCodec::err($this->sid, $remoteSid, 'PUT', 3, $roundId, $block));
 
                 return;
             }
 
-            $this->write(UdbWireCodec::put($this->sid, $this->remoteSid, $roundId, $block, $txid, $path, $value));
+            $this->write(UdbWireCodec::put($this->sid, $remoteSid, $roundId, $block, $txid, $path, $value));
         }
 
-        $this->write(UdbWireCodec::end($this->sid, $this->remoteSid, $roundId, $block, $txid, $digest));
+        $this->write(UdbWireCodec::end($this->sid, $remoteSid, $roundId, $block, $txid, $digest));
 
         $this->outstanding[$block->letter()] = [
             'txid' => $txid,
@@ -528,7 +532,7 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
             $frame->sourceSid,
             $frame->kind->value,
             6,
-            $frame->roundId,
+            $frame->roundId ?? 0,
             $frame->block,
         ));
     }
@@ -555,6 +559,10 @@ class UdbSessionCoordinator implements UdbSessionStateInterface
     /** Applies the adopted generation, approves the authority and renegotiates as the FQDN authority. */
     private function completeWireBootstrap(): void
     {
+        if (null === $this->wireTakeover || null === $this->authority) {
+            return;
+        }
+
         try {
             $fingerprint = $this->wireTakeover->finalize();
             $this->authority->approve($fingerprint);

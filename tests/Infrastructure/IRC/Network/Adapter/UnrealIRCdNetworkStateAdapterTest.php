@@ -362,6 +362,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage($message);
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertArrayHasKey('b', $captured->listModes);
         self::assertSame(['*!*@bad.host'], $captured->listModes['b']);
     }
 
@@ -387,6 +388,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage($message);
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertArrayHasKey('b', $captured->listModes);
         self::assertSame(['*!*@bad.host'], $captured->listModes['b']);
     }
 
@@ -412,6 +414,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage($message);
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertArrayHasKey('e', $captured->listModes);
         self::assertSame(['*!*@exempt.host'], $captured->listModes['e']);
     }
 
@@ -437,6 +440,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage($message);
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
+        self::assertArrayHasKey('I', $captured->listModes);
         self::assertSame(['*!*@invite.host'], $captured->listModes['I']);
     }
 
@@ -692,6 +696,7 @@ final class UnrealIRCdNetworkStateAdapterTest extends TestCase
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertCount(0, $captured->members);
+        self::assertArrayHasKey('b', $captured->listModes);
         self::assertSame(['*!*@ban1', '*!*@ban2'], $captured->listModes['b']);
     }
 

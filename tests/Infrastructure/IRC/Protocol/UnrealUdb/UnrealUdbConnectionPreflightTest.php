@@ -54,6 +54,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
         $result = new UnrealUdbConnectionPreflight($authority, $takeover, '', true)->prepare('unrealudb');
 
         self::assertTrue($result->ready);
+        self::assertNotNull($result->message);
         self::assertStringContainsString('bootstrap from peer enabled', $result->message);
     }
 
@@ -70,6 +71,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
         $result = new UnrealUdbConnectionPreflight($authority, $takeover, '')->prepare('unrealudb');
 
         self::assertTrue($result->ready);
+        self::assertNotNull($result->message);
         self::assertStringContainsString('fresh bootstrap approved', $result->message);
     }
 
@@ -101,6 +103,7 @@ final class UnrealUdbConnectionPreflightTest extends TestCase
         $result = new UnrealUdbConnectionPreflight($authority, $takeover, '/udb')->prepare('unrealudb');
 
         self::assertTrue($result->ready);
+        self::assertNotNull($result->message);
         self::assertStringContainsString(str_repeat('a', 64), $result->message);
     }
 

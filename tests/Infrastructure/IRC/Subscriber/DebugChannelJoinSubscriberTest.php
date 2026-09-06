@@ -55,14 +55,14 @@ final class DebugChannelJoinSubscriberTest extends TestCase
     #[Test]
     public function onBurstCompleteHandlesEmptyNotifiersArray(): void
     {
+        self::expectNotToPerformAssertions();
+
         $subscriber = $this->createSubscriber(debugNotifiers: []);
 
         $connection = $this->createStub(ConnectionInterface::class);
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
         $subscriber->onBurstComplete($event);
-
-        self::assertTrue(true);
     }
 
     #[Test]
@@ -225,6 +225,45 @@ final class DebugChannelJoinSubscriberTest extends TestCase
             channelLookup: $channelLookup,
             channelServiceActions: $channelActions,
             modeSupportProvider: $modeSupportProvider,
+        );
+
+        $event = new NetworkSyncCompleteEvent($this->createStub(ConnectionInterface::class), '001');
+        $subscriber->onSyncComplete($event);
+    }
+
+    #[Test]
+    public function onSyncCompleteSkipsChanServRankWhenChanServUidIsUnavailable(): void
+    {
+        $registered = $this->createStub(RegisteredChannel::class);
+        $registered->method('isSuspended')->willReturn(false);
+        $registered->method('isForbidden')->willReturn(false);
+        $registered->method('isMlockActive')->willReturn(false);
+        $registered->method('getTopic')->willReturn(null);
+
+        $registeredRepo = $this->createStub(RegisteredChannelRepositoryInterface::class);
+        $registeredRepo->method('findByChannelName')->willReturn($registered);
+
+        $channelLookup = $this->createStub(ChannelLookupPort::class);
+        $channelLookup->method('findByChannelName')->willReturn(null);
+
+        $modeSupport = $this->createStub(ChannelModeSupportInterface::class);
+        $modeSupport->method('getChannelRegisteredModeLetter')->willReturn('r');
+        $modeSupport->method('getPermanentChannelModeLetter')->willReturn(null);
+
+        $modeSupportProvider = $this->createStub(ActiveChannelModeSupportProviderInterface::class);
+        $modeSupportProvider->method('getSupport')->willReturn($modeSupport);
+
+        $channelActions = $this->createMock(ChannelServiceActionsPort::class);
+        $channelActions->expects(self::once())->method('setChannelModes')->with('#opers', '+r', []);
+        $channelActions->expects(self::never())->method('setChannelMemberMode');
+
+        $subscriber = $this->createSubscriber(
+            debugChannel: '#opers',
+            registeredChannelRepository: $registeredRepo,
+            channelLookup: $channelLookup,
+            channelServiceActions: $channelActions,
+            modeSupportProvider: $modeSupportProvider,
+            uidRegistry: ServiceUidRegistry::fromIterable([]),
         );
 
         $event = new NetworkSyncCompleteEvent($this->createStub(ConnectionInterface::class), '001');

@@ -47,9 +47,10 @@ final class UdbChannelSyncSubscriberTest extends TestCase
         ?ChannelLookupPort $lookup = null,
         ?UdbRecordWriterInterface $writer = null,
     ): UdbChannelSyncSubscriber {
-        $writer ??= $this->createStub(UdbRecordWriterInterface::class);
-        $writer->method('insert')->willReturn(true);
-        $writer->method('delete')->willReturn(true);
+        $defaultWriter = $this->createStub(UdbRecordWriterInterface::class);
+        $defaultWriter->method('insert')->willReturn(true);
+        $defaultWriter->method('delete')->willReturn(true);
+        $writer ??= $defaultWriter;
 
         return new UdbChannelSyncSubscriber(
             $writer,
@@ -151,7 +152,7 @@ final class UdbChannelSyncSubscriberTest extends TestCase
             return true;
         });
 
-        $sub = $this->createSubscriber(channelRepo: $channelRepo, nickRepo: $nickRepo, lookup: $lookup, writer: $writer);
+        $sub = $this->createSubscriber(channelRepo: $channelRepo, nickRepo: $nickRepo, writer: $writer);
         $sub->onChannelRegistered(new ChannelRegisteredEvent(1, '#chan', '#chan'));
 
         self::assertSame([

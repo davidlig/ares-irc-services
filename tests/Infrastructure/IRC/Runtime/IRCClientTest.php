@@ -298,10 +298,7 @@ final class IRCClientTest extends TestCase
         $this->connection = $this->createMock(ConnectionInterface::class);
         $this->connection->expects(self::once())->method('connect');
         $this->connection->expects(self::atLeastOnce())->method('isConnected')->willReturnCallback(static fn (): bool => $connected);
-        $this->connection->expects(self::atLeastOnce())->method('readLine')->willReturnCallback(static function () use (&$connected, $rawLine): ?string {
-            if (!$connected) {
-                return null;
-            }
+        $this->connection->expects(self::atLeastOnce())->method('readLine')->willReturnCallback(static function () use ($rawLine): string {
             \Amp\delay(0.001);
 
             return $rawLine;
@@ -375,12 +372,12 @@ final class IRCClientTest extends TestCase
         $this->burstCompleteRegistry->setBurstComplete(false);
         $rawLine = ':server EOS';
         $message = new IRCMessage('EOS', 'server', []);
+        $called = 0;
 
         $this->connection = $this->createMock(ConnectionInterface::class);
         $this->connection->expects(self::atLeastOnce())->method('isConnected')->willReturn(true);
         $this->connection->expects(self::atLeastOnce())->method('readLine')->willReturnCallback(
-            static function () use ($rawLine): ?string {
-                static $called = 0;
+            static function () use (&$called, $rawLine): ?string {
                 ++$called;
                 if (1 === $called) {
                     return $rawLine;
@@ -419,12 +416,12 @@ final class IRCClientTest extends TestCase
         $this->burstCompleteRegistry->setBurstComplete(true);
         $rawLine = ':server PING 12345';
         $message = new IRCMessage('PING', 'server', ['12345']);
+        $called = 0;
 
         $this->connection = $this->createMock(ConnectionInterface::class);
         $this->connection->expects(self::atLeastOnce())->method('isConnected')->willReturn(true);
         $this->connection->expects(self::atLeastOnce())->method('readLine')->willReturnCallback(
-            static function () use ($rawLine): ?string {
-                static $called = 0;
+            static function () use (&$called, $rawLine): ?string {
                 ++$called;
                 if (1 === $called) {
                     return $rawLine;
@@ -435,14 +432,15 @@ final class IRCClientTest extends TestCase
             }
         );
 
-        $repeatCallback = null;
+        $repeatCallbackInvocations = 0;
+        $repeatCallback = static function () use (&$repeatCallbackInvocations): void {
+            ++$repeatCallbackInvocations;
+        };
         $this->protocol = $this->createMock(ProtocolHandlerInterface::class);
         $this->protocol->expects(self::atLeastOnce())->method('getProtocolName')->willReturn('unreal');
         $this->protocol->expects(self::once())->method('parseRawLine')->with($rawLine)->willReturn($message);
         $this->protocol->expects(self::once())->method('handleIncoming')->willReturnCallback(static function () use (&$repeatCallback): void {
-            if (null !== $repeatCallback) {
-                $repeatCallback();
-            }
+            $repeatCallback();
         });
 
         $this->messageBus = $this->createMock(AsyncMessageDispatcherInterface::class);

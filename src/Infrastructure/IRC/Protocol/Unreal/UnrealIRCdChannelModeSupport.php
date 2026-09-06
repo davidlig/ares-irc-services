@@ -100,7 +100,7 @@ final readonly class UnrealIRCdChannelModeSupport implements ChannelModeSupportI
         return true;
     }
 
-    public function getChannelRegisteredModeLetter(): ?string
+    public function getChannelRegisteredModeLetter(): string
     {
         return 'r';
     }
@@ -110,7 +110,7 @@ final readonly class UnrealIRCdChannelModeSupport implements ChannelModeSupportI
         return true;
     }
 
-    public function getPermanentChannelModeLetter(): ?string
+    public function getPermanentChannelModeLetter(): string
     {
         return 'P';
     }

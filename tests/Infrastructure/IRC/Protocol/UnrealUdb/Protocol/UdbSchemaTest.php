@@ -147,6 +147,7 @@ final class UdbSchemaTest extends TestCase
         yield 'too long' => ['#' . str_repeat('a', 32), false];
     }
 
+    /** @param list<string> $components */
     #[Test]
     #[DataProvider('channelSubkeyProvider')]
     public function channelSubkeysAreValidated(array $components, string $value, bool $expected): void
@@ -410,11 +411,14 @@ final class UdbSchemaTest extends TestCase
 
     // ---------- Secrets ----------
 
+    /** @param list<string> $components */
     #[Test]
     #[DataProvider('secretProvider')]
     public function secretPathsAreDetected(string $block, array $components, bool $expected): void
     {
-        self::assertSame($expected, UdbSchema::isSecret(UdbBlock::fromLetter($block), $components));
+        $udbBlock = UdbBlock::fromLetter($block);
+        self::assertNotNull($udbBlock);
+        self::assertSame($expected, UdbSchema::isSecret($udbBlock, $components));
     }
 
     /** @return iterable<string, array{0: string, 1: list<string>, 2: bool}> */

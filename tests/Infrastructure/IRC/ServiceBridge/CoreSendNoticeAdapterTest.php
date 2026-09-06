@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
+use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
@@ -73,7 +74,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
         });
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
-        $handler->method('formatMessage')->willReturnCallback(static fn ($msg) => 'NOTICE 001USER :' . $msg->trailing);
+        $handler->method('formatMessage')->willReturnCallback(static fn (IRCMessage $message): string => 'NOTICE 001USER :' . ($message->trailing ?? ''));
         $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->connectionHolder->setProtocolModule($module);
@@ -128,7 +129,7 @@ final class CoreSendNoticeAdapterTest extends TestCase
         });
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
-        $handler->method('formatMessage')->willReturnCallback(static fn ($msg) => 'NOTICE #test :' . $msg->trailing);
+        $handler->method('formatMessage')->willReturnCallback(static fn (IRCMessage $message): string => 'NOTICE #test :' . ($message->trailing ?? ''));
         $module = $this->createStub(ProtocolRuntimeModuleInterface::class);
         $module->method('getHandler')->willReturn($handler);
         $this->connectionHolder->setProtocolModule($module);

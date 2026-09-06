@@ -16,6 +16,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[CoversClass(CtcpVersionResponder::class)]
 final class CtcpVersionResponderTest extends TestCase
 {
+    private UserLanguageResolver $languageResolver;
+
     private CtcpVersionResponder $responder;
 
     private function createTranslator(string $returnValue = ''): TranslatorInterface
@@ -23,6 +25,9 @@ final class CtcpVersionResponderTest extends TestCase
         return new class($returnValue) implements TranslatorInterface {
             public function __construct(private string $return) {}
 
+            /**
+             * @param array<string, mixed> $parameters
+             */
             public function trans(string $id, array $parameters = [], ?string $domain = null, ?string $locale = null): string
             {
                 return $this->return;
@@ -46,9 +51,10 @@ final class CtcpVersionResponderTest extends TestCase
 
     protected function setUp(): void
     {
+        $this->languageResolver = $this->createLanguageResolver();
         $this->responder = new CtcpVersionResponder(
             $this->createTranslator(),
-            $this->createLanguageResolver(),
+            $this->languageResolver,
         );
     }
 
@@ -59,11 +65,16 @@ final class CtcpVersionResponderTest extends TestCase
     }
 
     #[Test]
+    public function getLanguageResolverReturnsConfiguredResolver(): void
+    {
+        self::assertSame($this->languageResolver, $this->responder->getLanguageResolver());
+    }
+
+    #[Test]
     public function getAsciiArtLinesReturnsNonEmptyArray(): void
     {
         $lines = $this->responder->getAsciiArtLines('en');
 
-        self::assertIsArray($lines);
         self::assertNotEmpty($lines);
     }
 

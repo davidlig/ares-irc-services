@@ -23,7 +23,17 @@ use function strlen;
  */
 final readonly class InspIRCdCapab
 {
-    /** @param array<string, int> $prefixModes prefix mode name → level (sorted ascending) */
+    /**
+     * @param array<string, int>    $prefixModes   prefix mode name → level (sorted ascending)
+     * @param list<string>          $listModes
+     * @param list<string>          $paramSetModes
+     * @param list<string>          $simpleModes
+     * @param list<string>          $modules
+     * @param list<string>          $modSupport
+     * @param list<string>          $userModes
+     * @param list<string>          $extbans
+     * @param array<string, string> $capabilities
+     */
     private function __construct(
         private array $prefixModes,
         private array $listModes,
@@ -137,7 +147,7 @@ final readonly class InspIRCdCapab
 
     public function hasModule(string $moduleBaseName): bool
     {
-        $matches = static fn ($mod) => strtolower(explode('=', $mod, 2)[0]) === strtolower($moduleBaseName);
+        $matches = static fn (string $mod): bool => strtolower(explode('=', $mod, 2)[0]) === strtolower($moduleBaseName);
 
         return array_any($this->modSupport, $matches) || array_any($this->modules, $matches);
     }
@@ -201,7 +211,7 @@ final readonly class InspIRCdCapab
             }
 
             $segments = explode(':', $part, 3);
-            $category = $segments[0] ?? '';
+            $category = $segments[0];
 
             if ('prefix' === $category) {
                 $level = (int) ($segments[1] ?? '0');
@@ -215,7 +225,7 @@ final readonly class InspIRCdCapab
                 continue;
             }
 
-            $assignment = $segments[1] ?? $segments[0] ?? '';
+            $assignment = $segments[1] ?? $segments[0];
             $letter = self::parseModeLetter($assignment);
 
             if ('' === $letter) {
@@ -256,14 +266,17 @@ final readonly class InspIRCdCapab
         }
 
         $letter = substr($assignment, $eqPos + 1);
+        $len = strlen($letter);
 
-        $result = match (true) {
-            1 === strlen($letter) => $letter,
-            2 === strlen($letter) && in_array($letter[0], ['+', '%', '@', '&', '~'], true) => $letter[1],
-            default => '',
-        };
+        if (1 === $len) {
+            return $letter;
+        }
 
-        return $result;
+        if (2 === $len && in_array($letter[0], ['+', '%', '@', '&', '~'], true)) {
+            return $letter[1];
+        }
+
+        return '';
     }
 
     /**
@@ -292,7 +305,7 @@ final readonly class InspIRCdCapab
             }
 
             $segments = explode(':', $part, 2);
-            $assignment = $segments[1] ?? $segments[0] ?? '';
+            $assignment = $segments[1] ?? $segments[0];
             $letter = self::parseModeLetter($assignment);
 
             if ('' !== $letter) {
@@ -321,7 +334,7 @@ final readonly class InspIRCdCapab
             }
 
             $segments = explode(':', $part, 2);
-            $assignment = $segments[1] ?? $segments[0] ?? '';
+            $assignment = $segments[1] ?? $segments[0];
             $letter = self::parseModeLetter($assignment);
 
             if ('' !== $letter) {

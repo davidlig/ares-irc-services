@@ -16,8 +16,6 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(UdbOclgView::class)]
 final class UdbOclgViewTest extends TestCase
 {
-    private const string EPOCH = '0123456789abcdef';
-
     private const int GENERATION = 7;
 
     private UdbOclgView $view;

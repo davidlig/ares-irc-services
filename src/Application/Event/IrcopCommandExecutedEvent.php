@@ -6,6 +6,9 @@ namespace App\Application\Event;
 
 final readonly class IrcopCommandExecutedEvent
 {
+    /**
+     * @param array<string, mixed> $extra
+     */
     public function __construct(
         public string $serviceName,
         public string $operatorNick,

@@ -16,7 +16,6 @@ use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
-use App\Infrastructure\IRC\Runtime\IRCClient;
 use App\Infrastructure\IRC\Runtime\IRCClientFactory;
 use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
@@ -79,7 +78,6 @@ final class IRCClientFactoryTest extends TestCase
 
         $client = $this->factory->create('unreal', $this->link);
 
-        self::assertInstanceOf(IRCClient::class, $client);
         self::assertSame('unreal', $client->getProtocolName());
         self::assertSame($module, $this->connectionHolder->getProtocolModule());
     }
@@ -110,7 +108,6 @@ final class IRCClientFactoryTest extends TestCase
 
         $client = $factory->create('unreal', $this->link);
 
-        self::assertInstanceOf(IRCClient::class, $client);
         self::assertSame('unreal', $client->getProtocolName());
     }
 }

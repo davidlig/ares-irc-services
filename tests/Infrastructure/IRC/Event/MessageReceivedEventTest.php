@@ -20,7 +20,6 @@ final class MessageReceivedEventTest extends TestCase
         $event = new MessageReceivedEvent($message);
 
         self::assertSame($message, $event->message);
-        self::assertNotNull($event->occurredAt);
     }
 
     #[Test]

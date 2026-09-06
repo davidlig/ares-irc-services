@@ -45,6 +45,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -69,6 +70,23 @@ final class NetworkEventEnricherTest extends TestCase
         self::assertArrayHasKey(UserQuitReceivedEvent::class, $events);
         self::assertIsArray($events[UserQuitReceivedEvent::class]);
         self::assertSame('onUserQuitReceived', $events[UserQuitReceivedEvent::class][0]);
+    }
+
+    #[Test]
+    public function getLoggerReturnsConfiguredLogger(): void
+    {
+        $logger = $this->createStub(LoggerInterface::class);
+        $enricher = new NetworkEventEnricher(
+            $this->createStub(ChannelRepositoryInterface::class),
+            $this->createStub(NetworkUserRepositoryInterface::class),
+            $this->createStub(EventDispatcherInterface::class),
+            $this->createStub(SkipIdentifiedModeStripRegistryInterface::class),
+            $this->createStub(ActiveChannelModeSupportProviderInterface::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
+            $logger,
+        );
+
+        self::assertSame($logger, $enricher->getLogger());
     }
 
     #[Test]
@@ -1068,7 +1086,7 @@ final class NetworkEventEnricherTest extends TestCase
         );
         $enricher->onChannelJoinReceived($event);
 
-        self::assertNotNull($dispatched['channel']);
+        self::assertArrayHasKey('channel', $dispatched);
     }
 
     #[Test]
@@ -1467,7 +1485,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
-        $enricher->applyOutgoingChannelModes('#chan', '+ov', ['001ABC', 'nick'], []);
+        $enricher->applyOutgoingChannelModes('#chan', '+ov', ['001ABC', 'nick']);
 
         self::assertStringContainsString('n', $channel->getModes());
         self::assertStringContainsString('t', $channel->getModes());
@@ -1496,7 +1514,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
-        $enricher->applyOutgoingChannelModes('#chan', '+b', ['*!*@bad.host'], []);
+        $enricher->applyOutgoingChannelModes('#chan', '+b', ['*!*@bad.host']);
 
         self::assertStringNotContainsString('b', $channel->getModes());
     }
@@ -1525,7 +1543,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
-        $enricher->applyOutgoingChannelModes('#chan', '-k', [], []);
+        $enricher->applyOutgoingChannelModes('#chan', '-k', []);
 
         self::assertNull($channel->getModeParam('k'));
     }
@@ -2655,7 +2673,7 @@ final class NetworkEventEnricherTest extends TestCase
             $this->createStub(ActiveConnectionHolderInterface::class),
         );
 
-        $enricher->applyOutgoingChannelModes('#chan', '-k', ['oldsecret'], []);
+        $enricher->applyOutgoingChannelModes('#chan', '-k', ['oldsecret']);
 
         self::assertNull($channel->getModeParam('k'));
         self::assertSame('+nt', $channel->getModes());

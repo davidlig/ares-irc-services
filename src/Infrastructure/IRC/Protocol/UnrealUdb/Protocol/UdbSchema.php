@@ -147,6 +147,7 @@ final class UdbSchema
         };
     }
 
+    /** @param list<string> $components */
     private static function validateNicks(array $components, string $value): bool
     {
         $depth = count($components);
@@ -165,11 +166,11 @@ final class UdbSchema
             'oper' => self::operName($value),
             'challenge' => self::challenge($value),
             'modes' => self::userModes($value),
-            'snomasks' => self::snomasks($value),
-            default => false,
+            default => self::snomasks($value),
         };
     }
 
+    /** @param list<string> $components */
     private static function validateChannels(array $components, string $value): bool
     {
         $depth = count($components);
@@ -199,6 +200,7 @@ final class UdbSchema
             && ('*' === $value[0] ? self::numericRecord($value) : self::stringRecord($value));
     }
 
+    /** @param list<string> $components */
     private static function validateIps(array $components, string $value): bool
     {
         $depth = count($components);
@@ -213,11 +215,11 @@ final class UdbSchema
         return match (strtolower($components[1])) {
             'clones' => self::cloneLimit($value),
             'nolines' => self::nolines($value),
-            'host' => self::vhost($value),
-            default => false,
+            default => self::vhost($value),
         };
     }
 
+    /** @param list<string> $components */
     private static function validateSettings(array $components, string $value): bool
     {
         if (1 !== count($components) || !in_array(strtolower($components[0]), self::SETTINGS_KEYS, true)) {
@@ -231,11 +233,11 @@ final class UdbSchema
             'suffix' => self::suffix($value),
             'nickserv', 'chanserv', 'ipserv' => self::serviceMask($value),
             'flood' => self::flood($value),
-            'propagator' => self::propagatorList($value),
-            default => false,
+            default => self::propagatorList($value),
         };
     }
 
+    /** @param list<string> $components */
     private static function validateLinks(array $components, string $value): bool
     {
         $depth = count($components);
@@ -245,10 +247,11 @@ final class UdbSchema
 
         return 2 === $depth
             && self::serverName($components[0])
-            && 'options' === strtolower($components[1])
+            && in_array(strtolower($components[1]), self::LINK_KEYS, true)
             && self::numericRecord($value);
     }
 
+    /** @param list<string> $components */
     private static function validateLines(array $components, string $value): bool
     {
         $depth = count($components);
@@ -561,7 +564,7 @@ final class UdbSchema
             }
         }
 
-        return [] !== $names;
+        return true;
     }
 
     /** RFC 4648 canonical base64 (optionally "b64:"-prefixed) spamfilter pattern. */

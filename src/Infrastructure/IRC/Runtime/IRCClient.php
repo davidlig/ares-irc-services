@@ -127,6 +127,7 @@ class IRCClient implements IrcSessionInterface
                         continue;
                     }
 
+                    // @phpstan-ignore if.alwaysFalse
                     if ($this->finalized) {
                         break;
                     }

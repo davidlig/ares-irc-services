@@ -63,7 +63,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
             return;
         }
 
-        $this->kickIfUnauthorized($uid, $user);
+        $this->kickIfUnauthorized($this->debugChannel, $uid, $user);
     }
 
     public function onSyncComplete(NetworkSyncCompleteEvent $event): void
@@ -78,7 +78,7 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
         }
 
         foreach ($channelView->members as $member) {
-            $uid = $member['uid'] ?? '';
+            $uid = $member['uid'];
             if ('' === $uid) {
                 continue;
             }
@@ -88,11 +88,11 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
                 continue;
             }
 
-            $this->kickIfUnauthorized($uid, $user);
+            $this->kickIfUnauthorized($this->debugChannel, $uid, $user);
         }
     }
 
-    private function kickIfUnauthorized(string $uid, SenderView $user): void
+    private function kickIfUnauthorized(string $channelName, string $uid, SenderView $user): void
     {
         if ($user->nick === $this->chanservNick) {
             return;
@@ -114,10 +114,10 @@ final readonly class IrcopsDebugChannelProtectionSubscriber implements EventSubs
             $language,
         );
 
-        $this->channelActions->kickFromChannel($this->debugChannel, $uid, $reason);
+        $this->channelActions->kickFromChannel($channelName, $uid, $reason);
 
         $this->logger->info('IRCops debug channel: kicked non-IRCop user', [
-            'channel' => $this->debugChannel,
+            'channel' => $channelName,
             'uid' => $uid,
             'nick' => $user->nick,
         ]);

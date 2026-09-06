@@ -62,6 +62,11 @@ final readonly class CtcpVersionResponder
         private UserLanguageResolver $languageResolver,
     ) {}
 
+    public function getLanguageResolver(): UserLanguageResolver
+    {
+        return $this->languageResolver;
+    }
+
     public function getVersionResponse(): string
     {
         return self::VERSION_RESPONSE;

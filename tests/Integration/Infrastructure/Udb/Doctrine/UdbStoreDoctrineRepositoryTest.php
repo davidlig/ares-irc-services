@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration\Infrastructure\Udb\Doctrine;
 
-use App\Domain\Udb\Entity\UdbAuthorityState;
-use App\Domain\Udb\Entity\UdbBlockState;
 use App\Domain\Udb\Entity\UdbRecord;
 use App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface;
 use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
@@ -144,7 +142,6 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertCount(2, $all);
         self::assertSame('BBBB2222', $all['S']->getChecksum());
         self::assertSame('00000000', $all['L']->getChecksum());
-        self::assertInstanceOf(UdbBlockState::class, $all['S']);
     }
 
     #[Test]
@@ -162,14 +159,12 @@ final class UdbStoreDoctrineRepositoryTest extends DoctrineIntegrationTestCase
         self::assertSame('1.2.3.4::clones', $stored->getPath());
         self::assertSame('1.2.3.4::clones', $stored->getIdentityPath());
         self::assertSame('*5', $stored->getValue());
-        self::assertNotNull($stored->getUpdatedAt());
     }
 
     #[Test]
     public function authorityRequiresApprovalAndPersistsItsFingerprint(): void
     {
         self::assertFalse($this->authority->isApproved());
-        self::assertInstanceOf(UdbAuthorityState::class, $this->authority->state());
 
         $this->authority->approve(str_repeat('b', 64));
         $this->flushAndClear();

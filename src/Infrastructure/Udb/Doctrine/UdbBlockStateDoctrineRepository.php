@@ -16,15 +16,19 @@ final readonly class UdbBlockStateDoctrineRepository implements UdbBlockStateRep
 
     public function all(): array
     {
+        /** @var array<mixed> $states */
         $states = $this->em
             ->createQuery('SELECT s FROM App\Domain\Udb\Entity\UdbBlockState s')
             ->getResult();
 
         $this->em->clear();
 
+        /** @var array<string, UdbBlockState> $byBlock */
         $byBlock = [];
         foreach ($states as $state) {
-            $byBlock[$state->getBlock()] = $state;
+            if ($state instanceof UdbBlockState) {
+                $byBlock[$state->getBlock()] = $state;
+            }
         }
 
         return $byBlock;

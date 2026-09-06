@@ -86,9 +86,9 @@ final readonly class UnrealUdbRawCommandHandler implements UdbRawCommandHandlerI
     {
         $parts = explode('::', $blockPath);
 
-        $block = UdbBlock::tryFrom($parts[0] ?? '');
+        $block = UdbBlock::tryFrom($parts[0]);
         if (null === $block) {
-            return UdbRawCommandResult::error('raw.udb.invalid_block', ['%block%' => $parts[0] ?? '']);
+            return UdbRawCommandResult::error('raw.udb.invalid_block', ['%block%' => $parts[0]]);
         }
 
         if (!UdbPathCodec::isCanonicalPath($blockPath) || count($parts) < 2) {
@@ -96,7 +96,11 @@ final readonly class UnrealUdbRawCommandHandler implements UdbRawCommandHandlerI
         }
 
         // isCanonicalPath already proved every component decodes strictly.
-        $components = array_map(UdbPathCodec::decodeComponent(...), array_slice($parts, 1));
+        /** @var list<string> $components */
+        $components = array_values(array_filter(
+            array_map(UdbPathCodec::decodeComponent(...), array_slice($parts, 1)),
+            static fn (?string $c): bool => null !== $c,
+        ));
 
         return new ParsedUdbPath($block, $blockPath, $components);
     }

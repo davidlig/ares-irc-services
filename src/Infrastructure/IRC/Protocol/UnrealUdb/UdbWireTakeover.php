@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function assert;
 use function count;
 use function explode;
 use function hash;
@@ -54,7 +55,7 @@ final class UdbWireTakeover
     /** @var list<string> block letters with a validated (and acknowledged) transfer */
     private array $completed = [];
 
-    /** @var array<string, string> imported records per wire-imported block letter */
+    /** @var array<string, array<string, string>> imported records per wire-imported block letter */
     private array $imported = [];
 
     public function __construct(
@@ -134,6 +135,8 @@ final class UdbWireTakeover
     /** @return array{block: UdbBlock, roundId: int, txid: string, digest: string}|null */
     private function begin(UdbFrame $frame, UdbBlock $block): ?array
     {
+        assert(null !== $frame->roundId && null !== $frame->txid);
+
         if (in_array($block->letter(), $this->completed, true)) {
             // Retransmission of an already completed block is idempotent.
             return ['block' => $block, 'roundId' => $frame->roundId, 'txid' => $frame->txid, 'digest' => $frame->checksum ?? ''];
@@ -154,8 +157,7 @@ final class UdbWireTakeover
         return null;
     }
 
-    /** @return array{block: UdbBlock, roundId: int, txid: string, digest: string}|null */
-    private function put(UdbFrame $frame, UdbBlock $block): ?array
+    private function put(UdbFrame $frame, UdbBlock $block): null
     {
         $stage = $this->stageFor($frame, $block);
         if (null === $stage || null === $frame->path || null === $frame->value) {
@@ -177,7 +179,9 @@ final class UdbWireTakeover
         $components = [];
         foreach (explode('::', $frame->path) as $component) {
             // fitsLimits() proved every component decodes; this is infallible.
-            $components[] = UdbPathCodec::decodeComponent($component);
+            $decoded = UdbPathCodec::decodeComponent($component);
+            assert(null !== $decoded);
+            $components[] = $decoded;
         }
 
         if (!UdbSchema::validate($block, $components, $frame->value)) {
@@ -186,9 +190,10 @@ final class UdbWireTakeover
             return null;
         }
 
-        $this->stages[$block->letter()]['entries'][$frame->path] = $frame->value;
-        $this->stages[$block->letter()]['bytes'] += strlen($frame->path) + strlen($frame->value);
-        if ($this->stages[$block->letter()]['bytes'] > $this->maxStageBytes) {
+        $stage['entries'][$frame->path] = $frame->value;
+        $stage['bytes'] += strlen($frame->path) + strlen($frame->value);
+        $this->stages[$block->letter()] = $stage;
+        if ($stage['bytes'] > $this->maxStageBytes) {
             $this->abortStage($block, 'byte limit exhausted');
         }
 
@@ -198,6 +203,8 @@ final class UdbWireTakeover
     /** @return array{block: UdbBlock, roundId: int, txid: string, digest: string}|null */
     private function end(UdbFrame $frame, UdbBlock $block): ?array
     {
+        assert(null !== $frame->roundId && null !== $frame->txid);
+
         $stage = $this->stageFor($frame, $block);
         if (null === $stage) {
             return null;

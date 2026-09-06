@@ -10,6 +10,7 @@ use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +21,7 @@ final class ConnectionEstablishedEventTest extends TestCase
     #[Test]
     public function constructionAndProperties(): void
     {
+        $before = new DateTimeImmutable();
         $serverLink = new ServerLink(
             serverName: new ServerName('services.example.com'),
             host: new Hostname('127.0.0.1'),
@@ -29,8 +31,10 @@ final class ConnectionEstablishedEventTest extends TestCase
             useTls: false,
         );
         $event = new ConnectionEstablishedEvent($serverLink);
+        $after = new DateTimeImmutable();
 
         self::assertSame($serverLink, $event->serverLink);
-        self::assertNotNull($event->occurredAt);
+        self::assertGreaterThanOrEqual($before, $event->occurredAt);
+        self::assertLessThanOrEqual($after, $event->occurredAt);
     }
 }

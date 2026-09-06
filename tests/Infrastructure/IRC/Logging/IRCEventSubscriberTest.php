@@ -14,6 +14,9 @@ use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\Logging\IRCEventSubscriber;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
+use Monolog\LogRecord;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,11 +27,14 @@ final class IRCEventSubscriberTest extends TestCase
 {
     private LoggerInterface $logger;
 
+    private TestHandler $handler;
+
     private IRCEventSubscriber $subscriber;
 
     protected function setUp(): void
     {
-        $this->logger = $this->createStub(LoggerInterface::class);
+        $this->handler = new TestHandler();
+        $this->logger = new Logger('test', [$this->handler]);
         $this->subscriber = new IRCEventSubscriber($this->logger);
     }
 
@@ -45,68 +51,49 @@ final class IRCEventSubscriberTest extends TestCase
     #[Test]
     public function onConnectionEstablishedLogsInfo(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new IRCEventSubscriber($this->logger);
         $serverLink = $this->createServerLink();
         $event = new ConnectionEstablishedEvent($serverLink);
 
-        $this->logger->expects(self::once())
-            ->method('info')
-            ->with(
-                'Server link established.',
-                self::callback(static fn (array $context): bool => $context['server'] === (string) $serverLink->serverName
-                        && $context['host'] === (string) $serverLink->host
-                        && $context['port'] === $serverLink->port->value
-                        && $context['tls'] === $serverLink->useTls
-                        && isset($context['occurred'])),
-            );
-
         $this->subscriber->onConnectionEstablished($event);
+
+        $record = $this->record();
+        self::assertSame('Server link established.', $record->message);
+        self::assertSame((string) $serverLink->serverName, $record->context['server']);
+        self::assertSame((string) $serverLink->host, $record->context['host']);
+        self::assertSame($serverLink->port->value, $record->context['port']);
+        self::assertSame($serverLink->useTls, $record->context['tls']);
+        self::assertArrayHasKey('occurred', $record->context);
     }
 
     #[Test]
     public function onConnectionLostLogsWarning(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new IRCEventSubscriber($this->logger);
         $serverLink = $this->createServerLink();
         $event = new ConnectionLostEvent($serverLink, 'Connection reset');
 
-        $this->logger->expects(self::once())
-            ->method('warning')
-            ->with(
-                'Server link lost.',
-                self::callback(static fn (array $context): bool => $context['server'] === (string) $serverLink->serverName
-                        && 'Connection reset' === $context['reason']
-                        && isset($context['occurred'])),
-            );
-
         $this->subscriber->onConnectionLost($event);
+
+        $record = $this->record();
+        self::assertSame('Server link lost.', $record->message);
+        self::assertSame((string) $serverLink->serverName, $record->context['server']);
+        self::assertSame('Connection reset', $record->context['reason']);
+        self::assertArrayHasKey('occurred', $record->context);
     }
 
     #[Test]
     public function onConnectionLostWithNullReason(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new IRCEventSubscriber($this->logger);
         $serverLink = $this->createServerLink();
         $event = new ConnectionLostEvent($serverLink, null);
 
-        $this->logger->expects(self::once())
-            ->method('warning')
-            ->with(
-                'Server link lost.',
-                self::callback(static fn (array $context): bool => 'unknown' === $context['reason']),
-            );
-
         $this->subscriber->onConnectionLost($event);
+
+        self::assertSame('unknown', $this->record()->context['reason']);
     }
 
     #[Test]
     public function onMessageReceivedLogsDebug(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new IRCEventSubscriber($this->logger);
         $message = new IRCMessage(
             prefix: 'irc.example.com',
             command: 'PING',
@@ -115,23 +102,18 @@ final class IRCEventSubscriberTest extends TestCase
         );
         $event = new MessageReceivedEvent($message);
 
-        $this->logger->expects(self::once())
-            ->method('debug')
-            ->with(
-                '< PING',
-                self::callback(static fn (array $context): bool => 'irc.example.com' === $context['prefix']
-                        && $context['params'] === ['irc.example.com']
-                        && null === $context['trailing']),
-            );
-
         $this->subscriber->onMessageReceived($event);
+
+        $record = $this->record();
+        self::assertSame('< PING', $record->message);
+        self::assertSame('irc.example.com', $record->context['prefix']);
+        self::assertSame(['irc.example.com'], $record->context['params']);
+        self::assertNull($record->context['trailing']);
     }
 
     #[Test]
     public function onMessageReceivedRedactsSensitiveNickServCommands(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new IRCEventSubscriber($this->logger);
         $message = new IRCMessage(
             prefix: 'nick!user@host',
             command: 'PRIVMSG',
@@ -140,23 +122,18 @@ final class IRCEventSubscriberTest extends TestCase
         );
         $event = new MessageReceivedEvent($message);
 
-        $this->logger->expects(self::once())
-            ->method('debug')
-            ->with(
-                '< PRIVMSG',
-                self::callback(static fn (array $context): bool => 'IDENTIFY ******' === $context['trailing']
-                        && str_contains($context['raw'], 'IDENTIFY ******')
-                        && !str_contains($context['raw'], 'mysecretpassword')),
-            );
-
         $this->subscriber->onMessageReceived($event);
+
+        $record = $this->record();
+        self::assertSame('IDENTIFY ******', $record->context['trailing']);
+        self::assertIsString($record->context['raw']);
+        self::assertStringContainsString('IDENTIFY ******', $record->context['raw']);
+        self::assertStringNotContainsString('mysecretpassword', $record->context['raw']);
     }
 
     #[Test]
     public function onMessageReceivedRedactsSensitiveSqueryCommands(): void
     {
-        $this->logger = $this->createMock(LoggerInterface::class);
-        $this->subscriber = new IRCEventSubscriber($this->logger);
         $message = new IRCMessage(
             prefix: 'nick!user@host',
             command: 'SQUERY',
@@ -165,16 +142,22 @@ final class IRCEventSubscriberTest extends TestCase
         );
         $event = new MessageReceivedEvent($message);
 
-        $this->logger->expects(self::once())
-            ->method('debug')
-            ->with(
-                '< SQUERY',
-                self::callback(static fn (array $context): bool => 'VERIFY ******' === $context['trailing']
-                        && str_contains($context['raw'], 'VERIFY ******')
-                        && !str_contains($context['raw'], 'verification-token')),
-            );
-
         $this->subscriber->onMessageReceived($event);
+
+        $record = $this->record();
+        self::assertSame('VERIFY ******', $record->context['trailing']);
+        self::assertIsString($record->context['raw']);
+        self::assertStringContainsString('VERIFY ******', $record->context['raw']);
+        self::assertStringNotContainsString('verification-token', $record->context['raw']);
+    }
+
+    private function record(): LogRecord
+    {
+        $records = $this->handler->getRecords();
+        self::assertCount(1, $records);
+        $record = array_pop($records);
+
+        return $record;
     }
 
     private function createServerLink(): ServerLink

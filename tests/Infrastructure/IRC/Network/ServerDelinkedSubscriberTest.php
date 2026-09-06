@@ -68,10 +68,10 @@ final class ServerDelinkedSubscriberTest extends TestCase
 
         $event = new ServerDelinkedEvent('002', 'Server split');
 
+        $index = 0;
         $this->eventDispatcher->expects(self::exactly(2))
             ->method('dispatch')
-            ->with(self::callback(static function (UserQuitNetworkEvent $quitEvent) use ($user1, $user2): bool {
-                static $index = 0;
+            ->with(self::callback(static function (UserQuitNetworkEvent $quitEvent) use ($user1, $user2, &$index): bool {
                 $expectedUids = [$user1->uid->value, $user2->uid->value];
                 $result = $quitEvent->uid->value === $expectedUids[$index];
                 ++$index;

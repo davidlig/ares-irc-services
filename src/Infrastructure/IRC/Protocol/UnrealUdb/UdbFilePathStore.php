@@ -12,6 +12,7 @@ use Symfony\Component\Lock\PersistingStoreInterface;
 use function fclose;
 use function flock;
 use function fopen;
+use function is_resource;
 
 use const LOCK_EX;
 use const LOCK_NB;
@@ -62,8 +63,10 @@ final class UdbFilePathStore implements PersistingStoreInterface
         }
 
         $handle = $key->getState(self::class);
-        flock($handle, LOCK_UN | LOCK_NB);
-        fclose($handle);
+        if (is_resource($handle)) {
+            flock($handle, LOCK_UN | LOCK_NB);
+            fclose($handle);
+        }
         $key->removeState(self::class);
     }
 

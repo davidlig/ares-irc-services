@@ -18,6 +18,7 @@ use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+use function assert;
 use function in_array;
 
 /**
@@ -85,17 +86,19 @@ final readonly class AntifloodSubscriber implements EventSubscriberInterface
         return in_array($message->command, ['PRIVMSG', 'SQUERY'], true)
             && '' !== ($message->params[0] ?? '')
             && '' !== ($message->prefix ?? '')
-            && null !== $this->gateway->findListenerFor($message->params[0] ?? '');
+            && null !== $this->gateway->findListenerFor($message->params[0]);
     }
 
     private function processFloodCheck(MessageReceivedEvent $event): void
     {
         $message = $event->message;
+        assert(null !== $message->prefix);
+
         $target = $message->params[0];
         $sender = $this->userLookup->findByUid($message->prefix);
         $listener = $this->gateway->findListenerFor($target);
 
-        if (null === $sender || $sender->isOper || $this->rootRegistry->isRoot($sender->nick)) {
+        if (null === $sender || null === $listener || $sender->isOper || $this->rootRegistry->isRoot($sender->nick)) {
             return;
         }
 

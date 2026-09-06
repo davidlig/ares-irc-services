@@ -49,7 +49,7 @@ final class UdbConnectionLifecycleSubscriberTest extends TestCase
         $coordinator->onRemoteServer('001', 'ircd.example.net');
         $coordinator->onLinkReady($this->createConnection());
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.example\.net [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 services\.example\.net [0-9a-f]{16} OCL OCLG$/', $this->firstWrittenLine());
     }
 
     #[Test]
@@ -68,6 +68,15 @@ final class UdbConnectionLifecycleSubscriberTest extends TestCase
         });
 
         return $connection;
+    }
+
+    private function firstWrittenLine(): string
+    {
+        foreach ($this->written as $line) {
+            return $line;
+        }
+
+        self::fail('Expected at least one written line.');
     }
 
     private function createServerLink(): ServerLink

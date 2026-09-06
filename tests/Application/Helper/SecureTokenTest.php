@@ -26,7 +26,6 @@ final class SecureTokenTest extends TestCase
     public function hexZeroLengthReturnsEmptyString(): void
     {
         self::assertSame('', SecureToken::hex(0));
-        self::assertSame(0, strlen(SecureToken::hex(0)));
     }
 
     #[Test]

@@ -52,6 +52,7 @@ final class InspIRCdProtocolHandlerTest extends TestCase
         );
     }
 
+    /** @param list<string> $written */
     private function createRecordingConnection(array &$written): ConnectionInterface
     {
         $connection = $this->createMock(ConnectionInterface::class);

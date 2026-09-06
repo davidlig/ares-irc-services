@@ -119,7 +119,8 @@ final class UdbOclgView
 
     private function matchesStage(UdbFrame $frame): bool
     {
-        return null !== $frame->epoch
+        return null !== $this->stage
+            && null !== $frame->epoch
             && null !== $frame->roundId
             && $frame->epoch === $this->stage['epoch']
             && $frame->roundId === $this->stage['generation'];

@@ -35,7 +35,7 @@ interface UserModeSupportInterface
      * @param string             $sign  '+' or '-'
      * @param array<int, string> $modes Mode letters to include
      *
-     * @return array{string, array<string>} [mode string, params to append after the MODE command]
+     * @return array{string, list<string>} [mode string, params to append after the MODE command]
      */
     public function buildModeParams(string $sign, array $modes): array;
 }

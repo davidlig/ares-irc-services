@@ -270,7 +270,7 @@ final class UnrealUdbNetworkStateAdapter implements NetworkStateAdapterInterface
     /**
      * Parses a member entry from SJOIN buffer, extracting UID and role.
      *
-     * @return array{uid: Uid, role: ChannelMemberRole, prefixLetters: string}|null
+     * @return array{uid: Uid, role: ChannelMemberRole, prefixLetters: list<string>}|null
      */
     private function parseMemberEntry(string $entry): ?array
     {

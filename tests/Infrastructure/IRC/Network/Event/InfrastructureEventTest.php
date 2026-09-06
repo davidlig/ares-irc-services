@@ -53,6 +53,7 @@ final class InfrastructureEventTest extends TestCase
         self::assertCount(1, $event->members);
         self::assertSame('001ABC', $event->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::Op, $event->members[0]['role']);
+        self::assertArrayHasKey('b', $event->listModes);
         self::assertSame(['*!*@bad.host'], $event->listModes['b']);
         self::assertSame(['key123'], $event->modeParams);
     }

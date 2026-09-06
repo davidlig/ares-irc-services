@@ -24,8 +24,9 @@ final readonly class SensitiveDataRedactor
 
     public static function redactNickServCommand(string $text): string
     {
-        $parts = preg_split('/\s+/', trim($text), 4);
-        $cmd = strtoupper($parts[0] ?? '');
+        $parts = preg_split('/\s+/', trim($text), 4) ?: [$text];
+
+        $cmd = strtoupper($parts[0]);
 
         switch ($cmd) {
             case 'REGISTER':

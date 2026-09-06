@@ -105,6 +105,24 @@ final class UdbSessionCoordinatorTest extends TestCase
     }
 
     #[Test]
+    public function getRemoteServerNameReturnsCapturedRemoteName(): void
+    {
+        self::assertNull($this->coordinator->getRemoteServerName());
+
+        $this->coordinator->onRemoteServer('001', 'ircd.example.net');
+
+        self::assertSame('ircd.example.net', $this->coordinator->getRemoteServerName());
+    }
+
+    #[Test]
+    public function completeWireBootstrapDoesNothingWithoutWireAuthority(): void
+    {
+        new ReflectionMethod(UdbSessionCoordinator::class, 'completeWireBootstrap')->invoke($this->coordinator);
+
+        self::assertSame([], $this->written);
+    }
+
+    #[Test]
     public function repeatedHelSendWithoutForceIsANoOp(): void
     {
         $this->prepareLink();
@@ -612,13 +630,13 @@ final class UdbSessionCoordinatorTest extends TestCase
         // served and acked again.
         $this->written = [];
         $this->handle(new UdbFrame(UdbFrameKind::Res, '001', '002', roundId: 20, block: UdbBlock::Ips));
-        preg_match('/:002 DB 001 BEGIN 20 I (\S+) /', $this->written[0], $matches);
+        $txid = $this->extractTxid($this->firstWrittenLine());
         // The three re-offer barrier HELs are confirmed in TCP order.
         $this->handle(new UdbFrame(UdbFrameKind::HelAck, '001', '002'));
         $this->handle(new UdbFrame(UdbFrameKind::HelAck, '001', '002'));
         $this->handle(new UdbFrame(UdbFrameKind::HelAck, '001', '002'));
         $digest = UdbChecksum::fromRecords([['1.2.3.4::clones', '*5']]);
-        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: $matches[1], checksum: $digest));
+        $this->handle(new UdbFrame(UdbFrameKind::Ack, '001', '002', roundId: 20, block: UdbBlock::Ips, txid: $txid, checksum: $digest));
         self::assertTrue($this->coordinator->isAuthorityReady());
 
         $this->written = [];
@@ -661,7 +679,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->written = [];
         $this->coordinator->tick($this->connection);
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
     }
 
     #[Test]
@@ -685,7 +703,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->written = [];
         $this->coordinator->tick($this->connection);
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
         self::assertFalse($this->coordinator->isAuthorityReady());
     }
 
@@ -720,9 +738,14 @@ final class UdbSessionCoordinatorTest extends TestCase
         }
 
         $queue = new ReflectionClass(UdbSessionCoordinator::class)->getProperty('mutationQueue')->getValue($this->coordinator);
+        self::assertIsArray($queue);
         self::assertCount(1024, $queue);
-        self::assertSame('nick1', $queue[0]->encodedPath);
-        self::assertSame('nick1024', $queue[1023]->encodedPath);
+        $first = $queue[0] ?? null;
+        $last = $queue[1023] ?? null;
+        self::assertInstanceOf(UdbMutation::class, $first);
+        self::assertInstanceOf(UdbMutation::class, $last);
+        self::assertSame('nick1', $first->encodedPath);
+        self::assertSame('nick1024', $last->encodedPath);
     }
 
     #[Test]
@@ -737,7 +760,7 @@ final class UdbSessionCoordinatorTest extends TestCase
             $this->coordinator->enqueueMutation(new UdbMutation('N', 'nick' . $i, 'v'));
         }
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
     }
 
     // ---------- Lifecycle ----------
@@ -844,6 +867,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         new ReflectionMethod(UdbSessionCoordinator::class, 'flushMutations')->invoke($this->coordinator);
 
         $queue = new ReflectionClass(UdbSessionCoordinator::class)->getProperty('mutationQueue')->getValue($this->coordinator);
+        self::assertIsArray($queue);
         self::assertCount(1, $queue);
     }
 
@@ -882,7 +906,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Put, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', path: '1.2.3.4::clones', value: '*5'), $connection);
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::End, '001', '002', roundId: 1, block: UdbBlock::Ips, txid: 'tx1', checksum: $digest), $connection);
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 ACK 1 I tx1 ' . $digest . '$/', $this->written[0] ?? '');
+        self::assertMatchesRegularExpression('/^:002 DB 001 ACK 1 I tx1 ' . $digest . '$/', $this->firstWrittenLine());
     }
 
     #[Test]
@@ -966,12 +990,12 @@ final class UdbSessionCoordinatorTest extends TestCase
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->atLeastOnce())->method('error');
         $takeover = $this->createWireTakeover();
-        $coordinator = $this->bootstrapCoordinator($takeover, $logger);
+        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+        $authority->method('isApproved')->willReturn(false);
+        $authority->method('approve')->willThrowException(new RuntimeException('Database down.'));
+        $coordinator = $this->bootstrapCoordinator($takeover, $logger, $authority);
         $coordinator->setOwnName(self::OWN_NAME);
         $coordinator->onRemoteServer('001', 'ircd.example.net');
-
-        $authority = new ReflectionClass(UdbSessionCoordinator::class)->getProperty('authority')->getValue($coordinator);
-        $authority->method('approve')->willThrowException(new RuntimeException('Database down.'));
 
         $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('writeLine')->willReturnCallback(function (string $line): void {
@@ -1045,14 +1069,14 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         // 2. Peer sends HEL with '-': does not authorize us when store is approved
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: '-'), $connection);
-        self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        self::assertNotEmpty($this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->firstWrittenLine());
         $this->written = [];
 
         // 3. Peer sends HEL selecting our FQDN: authorizes us, HEL ACK announces our FQDN
         $coordinator->handleFrame(new UdbFrame(UdbFrameKind::Hel, '001', '002', propagator: self::OWN_NAME), $connection);
-        self::assertCount(1, $this->written);
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        self::assertNotEmpty($this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->firstWrittenLine());
         $this->written = [];
 
         // Seed store so reconciliation can proceed
@@ -1095,7 +1119,7 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         // First link: not approved yet -> announces '?'
         $coordinator->onLinkReady($connection);
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 \? [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 \? [0-9a-f]{16} OCL OCLG$/', $this->firstWrittenLine());
 
         $this->written = [];
         $coordinator->reset();
@@ -1104,13 +1128,19 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         // Second link: reset cleared cache, authority now returns true -> announces FQDN
         $coordinator->onLinkReady($connection);
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ' . preg_quote(self::OWN_NAME, '/') . ' [0-9a-f]{16} OCL OCLG$/', $this->firstWrittenLine());
     }
 
-    private function bootstrapCoordinator(UdbWireTakeover $takeover, ?LoggerInterface $logger = null): UdbSessionCoordinator
-    {
-        $authority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
-        $authority->method('isApproved')->willReturn(false);
+    private function bootstrapCoordinator(
+        UdbWireTakeover $takeover,
+        ?LoggerInterface $logger = null,
+        ?UdbAuthorityStateRepositoryInterface $authority = null,
+    ): UdbSessionCoordinator {
+        if (null === $authority) {
+            $defaultAuthority = $this->createStub(UdbAuthorityStateRepositoryInterface::class);
+            $defaultAuthority->method('isApproved')->willReturn(false);
+            $authority = $defaultAuthority;
+        }
 
         return new UdbSessionCoordinator(
             '002',
@@ -1142,7 +1172,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         );
     }
 
-    /** Valid schema record for every block, shared by the bootstrap tests. @return list<array{0: UdbBlock, 1: string, 2: string}> */
+    /** @return list<array{0: UdbBlock, 1: string, 2: string}> */
     private function bootstrapRecords(): array
     {
         return [
@@ -1203,17 +1233,24 @@ final class UdbSessionCoordinatorTest extends TestCase
 
     private function activeRoundId(): int
     {
-        return new ReflectionClass(UdbSessionCoordinator::class)
+        $roundId = new ReflectionClass(UdbSessionCoordinator::class)
             ->getProperty('activeRoundId')
             ->getValue($this->coordinator);
+
+        self::assertIsInt($roundId);
+
+        return $roundId;
     }
 
     private function expireOutstanding(): void
     {
         $property = new ReflectionClass(UdbSessionCoordinator::class)->getProperty('outstanding');
         $outstanding = $property->getValue($this->coordinator);
+        self::assertIsArray($outstanding);
         foreach ($outstanding as $letter => $info) {
-            $outstanding[$letter]['deadline'] = time() - 1;
+            self::assertIsArray($info);
+            $info['deadline'] = time() - 1;
+            $outstanding[$letter] = $info;
         }
         $property->setValue($this->coordinator, $outstanding);
     }
@@ -1231,9 +1268,29 @@ final class UdbSessionCoordinatorTest extends TestCase
     private function epoch(): string
     {
         $epoch = new ReflectionClass(UdbSessionCoordinator::class)->getProperty('epoch')->getValue($this->coordinator);
+        self::assertIsString($epoch);
         self::assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $epoch);
 
         return $epoch;
+    }
+
+    private function firstWrittenLine(): string
+    {
+        foreach ($this->written as $line) {
+            return $line;
+        }
+
+        self::fail('Expected at least one written line.');
+    }
+
+    private function extractTxid(string $line): string
+    {
+        $matches = array_fill(0, 2, '');
+        if (1 !== preg_match('/:002 DB 001 BEGIN 20 I (\S+) /', $line, $matches)) {
+            self::fail('Expected a BEGIN frame with a transaction ID.');
+        }
+
+        return $matches[1];
     }
 
     #[Test]
@@ -1252,7 +1309,7 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         \Amp\delay(0.03);
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
     }
 
     #[Test]
@@ -1269,7 +1326,7 @@ final class UdbSessionCoordinatorTest extends TestCase
 
         \Amp\delay(0.03);
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
         self::assertFalse($this->coordinator->isAuthorityReady());
     }
 
@@ -1308,7 +1365,7 @@ final class UdbSessionCoordinatorTest extends TestCase
         $this->coordinator->tick($this->connection);
         $this->handle(new UdbFrame(UdbFrameKind::HelAck, '001', '002'));
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
     }
 
     #[Test]
@@ -1395,6 +1452,6 @@ final class UdbSessionCoordinatorTest extends TestCase
         });
         $pump->drain();
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->written[0] ?? '');
+        self::assertMatchesRegularExpression('/^:002 DB 001 INF \d+ N /', $this->firstWrittenLine());
     }
 }

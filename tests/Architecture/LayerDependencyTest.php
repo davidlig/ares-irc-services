@@ -202,6 +202,10 @@ final class LayerDependencyTest extends TestCase
         $names = [];
 
         foreach ($directory as $entry) {
+            if (!$entry instanceof SplFileInfo) {
+                continue;
+            }
+
             if (!$entry->isDir() || str_starts_with($entry->getFilename(), '.') || 'UnrealFamily' === $entry->getFilename()) {
                 continue;
             }

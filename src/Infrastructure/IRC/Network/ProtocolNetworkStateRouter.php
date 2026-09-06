@@ -15,7 +15,9 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  */
 class ProtocolNetworkStateRouter implements EventSubscriberInterface
 {
-    /** @var array<string, NetworkStateAdapterInterface> */
+    /**
+     * @param array<string, NetworkStateAdapterInterface> $adapters
+     */
     public function __construct(
         private readonly ActiveConnectionHolderInterface $connectionHolder,
         private readonly array $adapters,

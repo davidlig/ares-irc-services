@@ -23,6 +23,7 @@ final class RelativeExpiryParserTest extends TestCase
         self::assertSame($expected, RelativeExpiryParser::parse($value, $now)?->format('Y-m-d H:i:s'));
     }
 
+    /** @return iterable<string, array{string, string}> */
     public static function relativeExpiryProvider(): iterable
     {
         yield 'days' => ['7d', '2026-05-17 12:00:00'];
@@ -44,6 +45,7 @@ final class RelativeExpiryParserTest extends TestCase
         self::assertNull(RelativeExpiryParser::parse($value, new DateTimeImmutable('2026-05-10 12:00:00')));
     }
 
+    /** @return iterable<string, array{string}> */
     public static function invalidExpiryProvider(): iterable
     {
         yield 'empty' => [''];

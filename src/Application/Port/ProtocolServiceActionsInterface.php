@@ -14,6 +14,9 @@ interface ProtocolServiceActionsInterface
 {
     public function setUserAccount(string $serverSid, string $targetUid, string $accountName): void;
 
+    /**
+     * @param list<string> $params
+     */
     public function setUserMode(string $serverSid, string $targetUid, string $modes, array $params = []): void;
 
     public function setUserVhost(string $serverSid, string $targetUid, string $vhost, string $cloakedHost = ''): void;
@@ -30,6 +33,8 @@ interface ProtocolServiceActionsInterface
     /**
      * Set channel modes (e.g. +nt). Params for modes that require a value (e.g. +k key).
      * Source of the MODE line is $serviceUid when non-empty (e.g. :ChanServ MODE #chan +nt).
+     *
+     * @param list<string> $params
      */
     public function setChannelModes(string $serverSid, string $channelName, string $modeStr, array $params = [], string $serviceUid = '', ?int $channelTimestamp = null): void;
 

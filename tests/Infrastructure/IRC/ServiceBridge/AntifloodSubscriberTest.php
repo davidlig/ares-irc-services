@@ -547,6 +547,23 @@ final class AntifloodSubscriberTest extends TestCase
     }
 
     #[Test]
+    public function onMessageIgnoresMissingPrefix(): void
+    {
+        $subscriber = $this->createSubscriber();
+        $event = new MessageReceivedEvent(new IRCMessage(
+            command: 'PRIVMSG',
+            prefix: null,
+            params: ['NickServ'],
+            trailing: 'HELP',
+            direction: MessageDirection::Incoming,
+        ));
+
+        $subscriber->onMessage($event);
+
+        self::assertFalse($event->isPropagationStopped());
+    }
+
+    #[Test]
     public function getSubscribedEventsReturnsCorrectPriority(): void
     {
         $events = AntifloodSubscriber::getSubscribedEvents();

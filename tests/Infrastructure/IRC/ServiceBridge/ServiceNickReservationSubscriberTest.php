@@ -139,6 +139,8 @@ final class ServiceNickReservationSubscriberTest extends TestCase
     #[Test]
     public function onBurstCompleteDoesNothingWhenNoProtocolModule(): void
     {
+        self::expectNotToPerformAssertions();
+
         $connection = $this->createStub(ConnectionInterface::class);
         $connectionHolder = new ActiveConnectionHolder();
 
@@ -155,13 +157,13 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
         $subscriber->onBurstComplete($event);
-
-        self::assertTrue(true);
     }
 
     #[Test]
     public function onBurstCompleteDoesNothingWhenReservationNull(): void
     {
+        self::expectNotToPerformAssertions();
+
         $connection = $this->createStub(ConnectionInterface::class);
 
         $connectionHolder = new ActiveConnectionHolder();
@@ -186,7 +188,5 @@ final class ServiceNickReservationSubscriberTest extends TestCase
         $event = new NetworkBurstCompleteEvent($connection, '001');
 
         $subscriber->onBurstComplete($event);
-
-        self::assertTrue(true);
     }
 }

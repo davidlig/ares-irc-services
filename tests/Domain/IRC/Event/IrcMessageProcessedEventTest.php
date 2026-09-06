@@ -17,6 +17,6 @@ final class IrcMessageProcessedEventTest extends TestCase
     {
         $event = new IrcMessageProcessedEvent();
 
-        self::assertInstanceOf(IrcMessageProcessedEvent::class, $event);
+        self::addToAssertionCount(1);
     }
 }

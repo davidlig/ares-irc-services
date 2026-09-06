@@ -215,6 +215,9 @@ class Channel
         return array_values($this->inviteExceptions);
     }
 
+    /**
+     * @return array{name: string, modes: string, topic: ?string, members: int, createdAt: string}
+     */
     public function toArray(): array
     {
         return [

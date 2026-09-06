@@ -6,6 +6,7 @@ namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
+use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
@@ -13,7 +14,6 @@ use App\Infrastructure\IRC\ServiceBridge\CoreSendCtcpAdapter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use stdClass;
 
 #[CoversClass(CoreSendCtcpAdapter::class)]
 final class CoreSendCtcpAdapterTest extends TestCase
@@ -65,14 +65,14 @@ final class CoreSendCtcpAdapterTest extends TestCase
     #[Test]
     public function sendCtcpReplyUsesCorrectFormat(): void
     {
-        $capturedMessage = new stdClass();
+        $capturedMessage = null;
         $connection = $this->createMock(ConnectionInterface::class);
         $connection->method('isConnected')->willReturn(true);
         $connection->expects(self::once())->method('writeLine');
         $this->connectionHolder->onBurstComplete(new NetworkBurstCompleteEvent($connection, '001'));
         $handler = $this->createStub(ProtocolHandlerInterface::class);
-        $handler->method('formatMessage')->willReturnCallback(static function ($msg) use (&$capturedMessage) {
-            $capturedMessage->value = $msg;
+        $handler->method('formatMessage')->willReturnCallback(static function (IRCMessage $message) use (&$capturedMessage): string {
+            $capturedMessage = $message;
 
             return 'formatted';
         });
@@ -82,9 +82,10 @@ final class CoreSendCtcpAdapterTest extends TestCase
 
         $this->adapter->sendCtcpReply('001NS', '001TARGET', 'PING', '12345');
 
-        self::assertSame('NOTICE', $capturedMessage->value->command);
-        self::assertSame('001NS', $capturedMessage->value->prefix);
-        self::assertSame(['001TARGET'], $capturedMessage->value->params);
-        self::assertSame("\x01PING 12345\x01", $capturedMessage->value->trailing);
+        self::assertNotNull($capturedMessage);
+        self::assertSame('NOTICE', $capturedMessage->command);
+        self::assertSame('001NS', $capturedMessage->prefix);
+        self::assertSame(['001TARGET'], $capturedMessage->params);
+        self::assertSame("\x01PING 12345\x01", $capturedMessage->trailing);
     }
 }

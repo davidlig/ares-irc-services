@@ -16,6 +16,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
 
     public function recordsByBlock(string $block): array
     {
+        /** @var array<array{path: string, value: string}> $rows */
         $rows = $this->em
             ->createQuery('SELECT r.path, r.value FROM App\Domain\Udb\Entity\UdbRecord r WHERE r.block = :block')
             ->setParameter('block', $block)
@@ -141,6 +142,7 @@ final readonly class UdbRecordDoctrineRepository implements UdbRecordRepositoryI
     /** @return array<string, int> identity path => record id */
     private function blockIdentities(string $block): array
     {
+        /** @var array<array{id: int, identityPath: string}> $rows */
         $rows = $this->em
             ->createQuery('SELECT r.id, r.identityPath FROM App\Domain\Udb\Entity\UdbRecord r WHERE r.block = :block')
             ->setParameter('block', $block)

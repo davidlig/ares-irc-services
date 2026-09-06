@@ -25,6 +25,7 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use RuntimeException;
@@ -32,15 +33,15 @@ use RuntimeException;
 #[CoversClass(UdbRecordExporter::class)]
 final class UdbRecordExporterTest extends TestCase
 {
-    private RegisteredNickRepositoryInterface $nickRepository;
+    private RegisteredNickRepositoryInterface&Stub $nickRepository;
 
-    private RegisteredChannelRepositoryInterface $channelRepository;
+    private RegisteredChannelRepositoryInterface&Stub $channelRepository;
 
-    private ChannelAccessRepositoryInterface $accessRepository;
+    private ChannelAccessRepositoryInterface&Stub $accessRepository;
 
-    private OperIrcopRepositoryInterface $ircopRepository;
+    private OperIrcopRepositoryInterface&Stub $ircopRepository;
 
-    private GlineRepositoryInterface $glineRepository;
+    private GlineRepositoryInterface&Stub $glineRepository;
 
     private ChannelLookupPort $channelLookup;
 
@@ -64,6 +65,12 @@ final class UdbRecordExporterTest extends TestCase
             $this->channelLookup,
             $this->createModeSupportProvider(),
         );
+    }
+
+    #[Test]
+    public function getChannelLookupReturnsConfiguredPort(): void
+    {
+        self::assertSame($this->channelLookup, $this->exporter->getChannelLookup());
     }
 
     #[Test]
@@ -323,6 +330,12 @@ final class UdbRecordExporterTest extends TestCase
 
         self::assertNotNull($encoded);
         self::assertSame([$encoded => 'david.tld'], $this->exporter->encodedBlockRecords(UdbBlock::Nicks));
+    }
+
+    #[Test]
+    public function encodedBlockRecordsReturnsEmptyForWireOwnedBlock(): void
+    {
+        self::assertSame([], $this->exporter->encodedBlockRecords(UdbBlock::Ips));
     }
 
     #[Test]

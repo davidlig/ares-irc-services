@@ -36,7 +36,6 @@ final class AbstractProtocolHandlerTest extends TestCase
         $handler = new InspIRCdProtocolHandler();
         $message = $handler->parseRawLine(':001 PRIVMSG #test :Hello world');
 
-        self::assertInstanceOf(IRCMessage::class, $message);
         self::assertSame('PRIVMSG', $message->command);
         self::assertSame('001', $message->prefix);
         self::assertSame(['#test'], $message->params);
@@ -49,7 +48,6 @@ final class AbstractProtocolHandlerTest extends TestCase
         $handler = new InspIRCdProtocolHandler();
         $message = $handler->parseRawLine('PING :server');
 
-        self::assertInstanceOf(IRCMessage::class, $message);
         self::assertSame('PING', $message->command);
         self::assertNull($message->prefix);
         self::assertSame('server', $message->trailing);

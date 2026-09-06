@@ -110,6 +110,9 @@ final class SensitiveDataRedactorTest extends TestCase
         self::assertSame($expected, $result);
     }
 
+    /**
+     * @return iterable<string, array{string, string}>
+     */
     public static function provideCommandsToRedact(): iterable
     {
         yield 'REGISTER with password and email' => [

@@ -14,4 +14,14 @@ interface ServiceUidProviderInterface
      * Get the UID of this service on the IRC network.
      */
     public function getUid(): string;
+
+    /**
+     * Get the service key (e.g. 'nickserv', 'chanserv').
+     */
+    public function getServiceKey(): string;
+
+    /**
+     * Get the service nickname.
+     */
+    public function getNickname(): string;
 }

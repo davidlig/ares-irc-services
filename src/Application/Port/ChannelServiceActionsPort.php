@@ -12,6 +12,9 @@ namespace App\Application\Port;
  */
 interface ChannelServiceActionsPort
 {
+    /**
+     * @param list<string> $params
+     */
     public function setChannelModes(string $channelName, string $modeStr, array $params = [], ?int $channelTimestamp = null): void;
 
     public function setChannelMemberMode(string $channelName, string $targetUid, string $modeLetter, bool $add, ?int $channelTimestamp = null): void;

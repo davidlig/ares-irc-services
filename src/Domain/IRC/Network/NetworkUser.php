@@ -188,6 +188,9 @@ class NetworkUser
         return '*' !== $this->virtualHost ? $this->virtualHost : $this->cloakedHost;
     }
 
+    /**
+     * @return array<string, string|null>
+     */
     public function toArray(): array
     {
         return [

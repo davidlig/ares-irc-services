@@ -133,7 +133,7 @@ final readonly class InspIRCdChannelModeSupportFactory
             }
         }
 
-        uksort($letterLevels, static fn (string $a, string $b): int => $letterLevels[$a] <=> $letterLevels[$b]);
+        uksort($letterLevels, static fn (string $a, string $b): int => ($letterLevels[$a] ?? 0) <=> ($letterLevels[$b] ?? 0));
 
         return array_keys($letterLevels);
     }

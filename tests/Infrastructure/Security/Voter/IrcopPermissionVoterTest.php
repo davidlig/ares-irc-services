@@ -38,6 +38,24 @@ final class IrcopPermissionVoterTest extends TestCase
     }
 
     #[Test]
+    public function getNickRepositoryReturnsConfiguredRepository(): void
+    {
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $rootRegistry = new RootUserRegistry('');
+        $accessHelper = new IrcopAccessHelper(
+            $rootRegistry,
+            $this->createStub(OperIrcopRepositoryInterface::class),
+            $this->createStub(OperRoleRepositoryInterface::class),
+        );
+        $voter = new IrcopPermissionVoter(
+            $accessHelper,
+            $repository,
+        );
+
+        self::assertSame($repository, $voter->getNickRepository());
+    }
+
+    #[Test]
     public function abstainsForUppercaseFormat(): void
     {
         $voter = $this->createVoterWithoutRoots();

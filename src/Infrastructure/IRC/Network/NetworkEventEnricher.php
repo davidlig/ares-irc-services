@@ -63,6 +63,11 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         private ChannelModeStateSynchronizer $channelModeStateSynchronizer = new ChannelModeStateSynchronizer(),
     ) {}
 
+    public function getLogger(): LoggerInterface
+    {
+        return $this->logger;
+    }
+
     public static function getSubscribedEvents(): array
     {
         return [
@@ -223,7 +228,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             $this->eventDispatcher->dispatch(new ChannelSyncedEvent($channel, $channelSetupApplicable));
             foreach ($joinedUids as $uid) {
                 $member = $channel->getMember($uid);
-                $role = $member?->role ?? ChannelMemberRole::None;
+                $role = null !== $member ? $member->role : ChannelMemberRole::None;
                 $this->eventDispatcher->dispatch(new UserJoinedChannelEvent($uid, $event->channelName, $role));
             }
         }
@@ -239,7 +244,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
         $this->channelModeStateSynchronizer->applyReceived(
             $channel,
             $event->modeStr,
-            $event->modeParams,
+            array_values($event->modeParams),
             $this->modeSupportProvider->getSupport(),
             $this->resolveUser(...),
         );
@@ -255,7 +260,7 @@ final readonly class NetworkEventEnricher implements EventSubscriberInterface, A
             return;
         }
 
-        $this->channelModeStateSynchronizer->applyListSnapshot($channel, $event->modeChar, $event->params);
+        $this->channelModeStateSynchronizer->applyListSnapshot($channel, $event->modeChar, array_values($event->params));
 
         $this->channelRepository->save($channel);
         $this->eventDispatcher->dispatch(new ChannelModesChangedEvent($channel));

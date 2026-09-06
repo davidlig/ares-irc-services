@@ -7,6 +7,7 @@ namespace App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol;
 use App\Domain\IRC\Message\IRCMessage;
 
 use function array_slice;
+use function assert;
 use function count;
 use function implode;
 use function in_array;
@@ -38,11 +39,17 @@ use function substr;
  */
 final class UdbWireCodec
 {
+    /**
+     * @param list<string> $capabilities
+     */
     public static function hel(string $sid, string $targetSid, string $propagator, string $epoch, array $capabilities = ['OCL']): string
     {
         return sprintf(':%s DB %s HEL 4 %s %s %s', $sid, $targetSid, $propagator, $epoch, implode(' ', $capabilities));
     }
 
+    /**
+     * @param list<string> $capabilities
+     */
     public static function helAck(string $sid, string $targetSid, string $propagator, string $epoch, array $capabilities = ['OCL']): string
     {
         return sprintf(':%s DB %s HEL 4 ACK %s %s %s', $sid, $targetSid, $propagator, $epoch, implode(' ', $capabilities));
@@ -179,7 +186,7 @@ final class UdbWireCodec
 
         $propagator = $message->params[$argumentOffset] ?? '';
         $epoch = $message->params[$argumentOffset + 1] ?? '';
-        $capabilities = self::parseHelCapabilities(array_slice($message->params, $capabilityOffset));
+        $capabilities = self::parseHelCapabilities(array_values(array_slice($message->params, $capabilityOffset)));
         if ('' === $propagator || 1 !== preg_match('/^[0-9a-f]{16}$/D', $epoch) || null === $capabilities) {
             return null;
         }
@@ -443,9 +450,15 @@ final class UdbWireCodec
         return UdbChecksum::parse($checksum) ?? UdbChecksum::EMPTY;
     }
 
-    /** @return list<string>|null */
+    /**
+     * @param list<string> $capabilities
+     *
+     * @return list<string>|null
+     */
     private static function parseHelCapabilities(array $capabilities): ?array
     {
+        assert([] !== $capabilities);
+
         $normalized = array_map(strtoupper(...), $capabilities);
         if ('OCL' !== $normalized[0] || (isset($normalized[1]) && 'OCLG' !== $normalized[1])) {
             return null;

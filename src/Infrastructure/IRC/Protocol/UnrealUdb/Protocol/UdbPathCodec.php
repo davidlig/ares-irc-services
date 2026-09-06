@@ -107,7 +107,7 @@ final class UdbPathCodec
             if (strlen($decoded) + 1 > self::COMPONENT_RAW_MAX) {
                 return null;
             }
-            $decoded .= chr($value);
+            $decoded .= chr((int) $value & 0xFF);
             $i += 2;
         }
 
@@ -131,7 +131,7 @@ final class UdbPathCodec
         }
 
         $path = implode('::', $encoded);
-        if ('' === $path || strlen($path) > self::PATH_MAX || !self::isCanonicalPath($path)) {
+        if (strlen($path) > self::PATH_MAX || !self::isCanonicalPath($path)) {
             return null;
         }
 
@@ -158,6 +158,7 @@ final class UdbPathCodec
         $valueLength = null !== $value && '' !== $value ? 1 + strlen($value) : 0;
         $lineLength = strlen($path) + $valueLength + 1;
 
+        // @phpstan-ignore smallerOrEqual.alwaysTrue
         return $lineLength <= self::RECORD_LINE_MAX;
     }
 

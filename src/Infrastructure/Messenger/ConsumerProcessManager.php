@@ -28,7 +28,7 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
     /** @var resource|null Process handle from proc_open */
     private mixed $process = null;
 
-    /** @var array{pipe: array<int, resource>}|null */
+    /** @var array<int, resource>|null */
     private ?array $pipes = null;
 
     /**
@@ -92,16 +92,14 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
         $end = time() + self::STOP_TIMEOUT_SECONDS;
         while (time() < $end) {
             $status = proc_get_status($this->process);
-            if (false !== $status && !$status['running']) {
+            if (!$status['running']) {
                 break;
             }
             usleep(50_000);
         }
 
-        if (is_resource($this->process)) {
-            @proc_terminate($this->process, 9);
-            proc_close($this->process);
-        }
+        @proc_terminate($this->process, 9);
+        proc_close($this->process);
 
         if (null !== $this->pipes) {
             foreach ($this->pipes as $pipe) {
@@ -126,6 +124,6 @@ final class ConsumerProcessManager implements ConsumerProcessManagerInterface
 
         $status = proc_get_status($this->process);
 
-        return false !== $status && $status['running'];
+        return $status['running'];
     }
 }

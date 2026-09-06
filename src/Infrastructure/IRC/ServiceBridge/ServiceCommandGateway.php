@@ -28,6 +28,9 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
     /** @var ServiceCommandListenerInterface[] */
     private array $listenersAll;
 
+    /**
+     * @param iterable<object> $listeners
+     */
     public function __construct(
         iterable $listeners,
         private LoggerInterface $logger = new NullLogger(),
@@ -90,7 +93,7 @@ final readonly class ServiceCommandGateway implements EventSubscriberInterface
             'sender' => $sourceId,
         ]);
 
-        $listener->onCommand($sourceId, $text ?? '');
+        $listener->onCommand($sourceId, $text);
     }
 
     private function resolveListener(string $target): ?ServiceCommandListenerInterface

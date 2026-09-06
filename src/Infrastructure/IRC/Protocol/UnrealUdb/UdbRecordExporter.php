@@ -48,6 +48,11 @@ final readonly class UdbRecordExporter
         private UdbChannelModesFormatter $modesFormatter = new UdbChannelModesFormatter(),
     ) {}
 
+    public function getChannelLookup(): ChannelLookupPort
+    {
+        return $this->channelLookup;
+    }
+
     /**
      * Projects the SQL bcrypt hash into its UDB form.
      *
@@ -146,6 +151,7 @@ final readonly class UdbRecordExporter
             UdbBlock::Nicks => $this->allNickRecords(),
             UdbBlock::Channels => $this->allChannelRecords(),
             UdbBlock::Lines => $this->allGlineRecords(),
+            default => [],
         };
 
         $records = [];

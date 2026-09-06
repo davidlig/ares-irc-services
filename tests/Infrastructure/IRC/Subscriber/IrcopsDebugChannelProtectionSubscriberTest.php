@@ -108,7 +108,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::never())->method('kickFromChannel');
 
-        $sender = new SenderView('UID001', 'ChanServ', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i', '');
+        $sender = new SenderView('UID001', 'ChanServ', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
@@ -222,7 +222,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions->expects(self::once())->method('kickFromChannel')
             ->with('#ircops', 'UID1', 'debug_channel.kick_reason');
 
-        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i', '');
+        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
@@ -258,7 +258,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $nick = RegisteredNick::createPending('NormalUser', 'hash', 'test@test.com', 'es', new DateTimeImmutable('+1 day'));
         $nick->activate();
 
-        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i', '');
+        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
@@ -292,7 +292,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::once())->method('kickFromChannel');
 
-        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', true, false, 'SID1', 'h', 'i', '');
+        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', true, false, 'SID1', 'h', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
@@ -360,7 +360,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
         $channelActions = $this->createMock(ChannelServiceActionsPort::class);
         $channelActions->expects(self::once())->method('kickFromChannel');
 
-        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i', '');
+        $sender = new SenderView('UID1', 'NormalUser', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByUid')->willReturn($sender);
@@ -712,7 +712,7 @@ final class IrcopsDebugChannelProtectionSubscriberTest extends TestCase
             topic: null,
             memberCount: 1,
             members: [
-                ['uid' => ''], // Empty UID should be skipped
+                ['uid' => '', 'roleLetter' => ''], // Empty UID should be skipped
             ],
         );
 

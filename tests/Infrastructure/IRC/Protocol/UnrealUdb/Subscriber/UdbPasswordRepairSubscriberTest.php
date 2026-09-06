@@ -178,6 +178,10 @@ final class UdbPasswordRepairSubscriberTest extends TestCase
         self::assertSame(0, $subscriber->repair());
     }
 
+    /**
+     * @param list<RegisteredNick>  $nicks
+     * @param array<string, string> $store
+     */
     private function createSubscriber(
         ?UdbRecordWriterInterface $writer = null,
         array $nicks = [],

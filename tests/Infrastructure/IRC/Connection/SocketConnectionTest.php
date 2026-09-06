@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Connection;
 
 use Amp\ByteStream\StreamException;
+use Amp\Socket\InternetAddress;
+use Amp\Socket\ResourceServerSocket;
 use Amp\Socket\Socket;
 use App\Domain\IRC\Connection\ConnectionStatus;
 use App\Infrastructure\IRC\Connection\SocketConnection;
@@ -22,6 +24,9 @@ use function count;
 #[CoversClass(SocketConnection::class)]
 final class SocketConnectionTest extends TestCase
 {
+    /** @var list<string> */
+    private array $receivedLines = [];
+
     #[Test]
     public function getStatusReturnsDisconnectedBeforeConnect(): void
     {
@@ -106,10 +111,11 @@ final class SocketConnectionTest extends TestCase
     public function disconnectIsIdempotent(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
         async(static function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             $client->close();
             $server->close();
         });
@@ -130,10 +136,11 @@ final class SocketConnectionTest extends TestCase
     public function connectWriteLineReadLineDisconnectWithLocalServer(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
         async(static function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             $line = '';
             while (!str_contains($line, "\n")) {
                 $chunk = $client->read();
@@ -167,10 +174,11 @@ final class SocketConnectionTest extends TestCase
     public function readLineReturnsNullOnEof(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
         async(static function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             // Close immediately without writing
             $client->close();
             $server->close();
@@ -192,10 +200,11 @@ final class SocketConnectionTest extends TestCase
     public function readLineSuspendsUntilDataArrives(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
         async(static function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             delay(0.04);
             $client->write("DELAYED DATA\r\n");
             $client->close();
@@ -215,10 +224,11 @@ final class SocketConnectionTest extends TestCase
     public function readLineHandlesFragmentationAcrossChunks(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
         async(static function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             $client->write('PART');
             delay(0.01);
             $client->write('IAL ');
@@ -241,10 +251,11 @@ final class SocketConnectionTest extends TestCase
     public function readLineHandlesCrLfSplitAcrossChunks(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
         async(static function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             $client->write("SPLIT\r");
             delay(0.01);
             $client->write("\n");
@@ -265,10 +276,11 @@ final class SocketConnectionTest extends TestCase
     public function readLineHandlesMultipleLinesInSingleChunk(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
         async(static function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             $client->write("LINE 1\r\nLINE 2\r\nLINE 3\r\n");
             $client->close();
             $server->close();
@@ -289,10 +301,11 @@ final class SocketConnectionTest extends TestCase
     public function readLineReturnsTrailingDataAtEofWithoutNewline(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
         async(static function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             $client->write('TRAILING DATA');
             $client->close();
             $server->close();
@@ -311,20 +324,21 @@ final class SocketConnectionTest extends TestCase
     public function writeLinePreservesOrderForMultipleWrites(): void
     {
         $server = listen('127.0.0.1:0');
-        $port = $server->getAddress()->getPort();
+        $port = $this->serverPort($server);
 
-        $receivedLines = [];
-        async(static function () use ($server, &$receivedLines): void {
+        $this->receivedLines = [];
+        async(function () use ($server): void {
             $client = $server->accept();
+            self::assertNotNull($client);
             $buf = '';
-            while (count($receivedLines) < 3) {
+            while (count($this->receivedLines) < 3) {
                 $chunk = $client->read();
                 if (null === $chunk) {
                     break;
                 }
                 $buf .= $chunk;
                 while (false !== ($pos = strpos($buf, "\n"))) {
-                    $receivedLines[] = rtrim(substr($buf, 0, $pos), "\r");
+                    $this->receivedLines[] = rtrim(substr($buf, 0, $pos), "\r");
                     $buf = substr($buf, $pos + 1);
                 }
             }
@@ -341,7 +355,7 @@ final class SocketConnectionTest extends TestCase
 
         delay(0.05);
 
-        self::assertSame(['FIRST', 'SECOND', 'THIRD'], $receivedLines);
+        self::assertSame(['FIRST', 'SECOND', 'THIRD'], $this->receivedLines);
 
         $conn->disconnect();
     }
@@ -394,5 +408,13 @@ final class SocketConnectionTest extends TestCase
             self::assertStringContainsString('Error reading from IRC connection: Simulated read failure', $e->getMessage());
             self::assertSame(ConnectionStatus::Error, $conn->getStatus());
         }
+    }
+
+    private function serverPort(ResourceServerSocket $server): int
+    {
+        $address = $server->getAddress();
+        self::assertInstanceOf(InternetAddress::class, $address);
+
+        return $address->getPort();
     }
 }

@@ -152,7 +152,6 @@ final class ActiveConnectionHolderTest extends TestCase
     public function setRemoteServerSidStoresValue(): void
     {
         $this->holder->setRemoteServerSid('994');
-        // Value is stored; verified indirectly via InspIRCdProtocolHandler integration
-        $this->addToAssertionCount(1);
+        self::assertSame('994', $this->holder->getRemoteServerSid());
     }
 }

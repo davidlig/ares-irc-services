@@ -15,6 +15,7 @@ use ReflectionClass;
 #[CoversClass(UnrealIRCdNickReservation::class)]
 final class UnrealIRCdNickReservationTest extends TestCase
 {
+    /** @var list<string> */
     private array $written = [];
 
     private ActiveConnectionHolder $connectionHolder;

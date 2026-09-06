@@ -17,6 +17,7 @@ use App\Domain\Udb\Entity\UdbRecord;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeover;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
+use Closure;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -74,7 +75,9 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
         self::assertSame(['1.2.3.4::clones' => '*5'], $this->records('I'));
         self::assertSame(['propagator' => 'hub1.example, hub2.example'], $this->records('S'));
         self::assertSame(['hub1.example::options' => '*1'], $this->records('L'));
-        self::assertCount(6, $this->entityManager->createQuery('SELECT s FROM App\Domain\Udb\Entity\UdbBlockState s')->getResult());
+        $blockStates = $this->entityManager->createQuery('SELECT s FROM App\Domain\Udb\Entity\UdbBlockState s')->getResult();
+        self::assertIsArray($blockStates);
+        self::assertCount(6, $blockStates);
 
         $authority = $this->entityManager->find(UdbAuthorityState::class, 1);
         self::assertInstanceOf(UdbAuthorityState::class, $authority);
@@ -156,7 +159,47 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
     #[Test]
     public function rejectsUnsafeStateAndBlockFileForms(): void
     {
-        $cases = [
+        $cases = $this->unsafeStateAndBlockFileMutations();
+
+        foreach ($cases as $mutate) {
+            $this->writeValidGeneration();
+            $mutate($this->directory);
+            try {
+                $this->takeover()->takeover($this->directory, false);
+                self::fail('Invalid snapshot was accepted.');
+            } catch (RuntimeException) {
+                self::addToAssertionCount(1);
+            }
+        }
+    }
+
+    #[Test]
+    public function rejectsMissingSymlinkedAndRepeatedMetadata(): void
+    {
+        $cases = $this->metadataMutations();
+
+        foreach ($cases as $mutate) {
+            $this->writeValidGeneration();
+            $mutate($this->directory);
+            try {
+                $this->takeover()->takeover($this->directory, false);
+                self::fail('Invalid metadata was accepted.');
+            } catch (RuntimeException) {
+                self::addToAssertionCount(1);
+            }
+        }
+
+        $this->writeValidGeneration();
+        unlink($this->directory . '/udb_S.db');
+        self::assertTrue(symlink($this->directory . '/udb_I.db', $this->directory . '/udb_S.db'));
+        $this->expectException(RuntimeException::class);
+        $this->takeover()->takeover($this->directory, false);
+    }
+
+    /** @return list<Closure(string): void> */
+    private function unsafeStateAndBlockFileMutations(): array
+    {
+        return [
             static function (string $directory): void {
                 file_put_contents($directory . '/.udb_state', "FORMAT=1\nFORMAT=1\nSTATE=READY\nORIGIN=FRESH\nGENERATION=7\nLAST_SYNC=1\n");
             },
@@ -176,26 +219,18 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
                 file_put_contents($directory . '/udb_C.db', "; UDB Block C - Version 1\n; Generation: 7\ninvalid\n");
             },
             static function (string $directory): void {
+                file_put_contents($directory . '/udb_I.db', "; UDB Block I - Version 1\n; Generation: 7\nbad%ZZ::clones *5\n");
+            },
+            static function (string $directory): void {
                 file_put_contents($directory . '/udb_C.db', "; UDB Block C - Version 1\n; Generation: 7\n" . str_repeat('a', 13000) . " x\n");
             },
         ];
-
-        foreach ($cases as $mutate) {
-            $this->writeValidGeneration();
-            $mutate($this->directory);
-            try {
-                $this->takeover()->takeover($this->directory, false);
-                self::fail('Invalid snapshot was accepted.');
-            } catch (RuntimeException) {
-                self::addToAssertionCount(1);
-            }
-        }
     }
 
-    #[Test]
-    public function rejectsMissingSymlinkedAndRepeatedMetadata(): void
+    /** @return list<Closure(string): void> */
+    private function metadataMutations(): array
     {
-        $cases = [
+        return [
             static function (string $directory): void {
                 unlink($directory . '/.udb_state');
             },
@@ -206,23 +241,6 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
                 file_put_contents($directory . '/udb_C.db', "; UDB Block C - Version 1\n; UDB Block C - Version 1\n; Generation: 7\n");
             },
         ];
-
-        foreach ($cases as $mutate) {
-            $this->writeValidGeneration();
-            $mutate($this->directory);
-            try {
-                $this->takeover()->takeover($this->directory, false);
-                self::fail('Invalid metadata was accepted.');
-            } catch (RuntimeException) {
-                self::addToAssertionCount(1);
-            }
-        }
-
-        $this->writeValidGeneration();
-        unlink($this->directory . '/udb_S.db');
-        self::assertTrue(symlink($this->directory . '/udb_I.db', $this->directory . '/udb_S.db'));
-        $this->expectException(RuntimeException::class);
-        $this->takeover()->takeover($this->directory, false);
     }
 
     #[Test]
@@ -305,6 +323,11 @@ final class UdbOfflineTakeoverTest extends DoctrineIntegrationTestCase
             ->getArrayResult();
         $records = [];
         foreach ($rows as $row) {
+            self::assertIsArray($row);
+            self::assertArrayHasKey('path', $row);
+            self::assertArrayHasKey('value', $row);
+            self::assertIsString($row['path']);
+            self::assertIsString($row['value']);
             $records[$row['path']] = $row['value'];
         }
 

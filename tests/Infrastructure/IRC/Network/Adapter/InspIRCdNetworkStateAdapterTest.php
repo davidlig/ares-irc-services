@@ -646,6 +646,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertCount(3, $captured->members);
         self::assertSame('abc123', $captured->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::Op, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame(['o', 'v'], $captured->members[0]['prefixLetters']);
         self::assertSame('def456', $captured->members[1]['uid']->value);
         self::assertSame(ChannelMemberRole::Voice, $captured->members[1]['role']);
@@ -776,7 +777,9 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         $adapter->handleMessage($message);
 
         self::assertInstanceOf(UserJoinedNetworkEvent::class, $captured);
-        self::assertSame(base64_encode(inet_pton('192.168.1.1')), $captured->user->ipBase64);
+        $binaryIp = inet_pton('192.168.1.1');
+        self::assertNotFalse($binaryIp);
+        self::assertSame(base64_encode($binaryIp), $captured->user->ipBase64);
     }
 
     #[Test]
@@ -859,6 +862,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertCount(1, $captured->members);
         self::assertSame('abc123', $captured->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -881,6 +885,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertCount(1, $captured->members);
         self::assertSame('abc123', $captured->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -1332,6 +1337,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertCount(1, $captured->members);
         self::assertSame('994AAAAAQ', $captured->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -1356,6 +1362,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
         self::assertCount(1, $captured->members);
         self::assertSame('994AAAAAQ', $captured->members[0]['uid']->value);
         self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -1376,6 +1383,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(ChannelMemberRole::None, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame([], $captured->members[0]['prefixLetters']);
     }
 
@@ -1396,6 +1404,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(ChannelMemberRole::Voice, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame(['v'], $captured->members[0]['prefixLetters']);
     }
 
@@ -1416,6 +1425,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(ChannelMemberRole::Owner, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame(['q'], $captured->members[0]['prefixLetters']);
     }
 
@@ -1436,6 +1446,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(ChannelMemberRole::Admin, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame(['a'], $captured->members[0]['prefixLetters']);
     }
 
@@ -1456,6 +1467,7 @@ final class InspIRCdNetworkStateAdapterTest extends TestCase
 
         self::assertInstanceOf(ChannelJoinReceivedEvent::class, $captured);
         self::assertSame(ChannelMemberRole::HalfOp, $captured->members[0]['role']);
+        self::assertArrayHasKey('prefixLetters', $captured->members[0]);
         self::assertSame(['h'], $captured->members[0]['prefixLetters']);
     }
 

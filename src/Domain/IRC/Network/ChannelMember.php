@@ -16,6 +16,9 @@ readonly class ChannelMember
     /** @var list<string> */
     public array $prefixLetters;
 
+    /**
+     * @param list<string>|null $prefixLetters
+     */
     public function __construct(
         public Uid $uid,
         public ChannelMemberRole $role,
@@ -35,6 +38,9 @@ readonly class ChannelMember
         return new self($this->uid, $role);
     }
 
+    /**
+     * @param list<string> $prefixLetters
+     */
     public function withPrefixLetters(array $prefixLetters): self
     {
         $role = ChannelMemberRole::highestRoleFromLetters($prefixLetters);

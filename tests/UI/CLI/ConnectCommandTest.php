@@ -22,6 +22,18 @@ use Throwable;
 #[CoversClass(ConnectCommand::class)]
 final class ConnectCommandTest extends TestCase
 {
+    /**
+     * @var array{
+     *     serverName: string,
+     *     host: string,
+     *     port: int,
+     *     password: string,
+     *     description: string,
+     *     protocol: string,
+     *     useTls: bool,
+     *     tlsVerifyPeer: bool,
+     * }
+     */
     private const array DEFAULTS = [
         'serverName' => 'services.test.local',
         'host' => '127.0.0.1',
@@ -33,6 +45,18 @@ final class ConnectCommandTest extends TestCase
         'tlsVerifyPeer' => true,
     ];
 
+    /**
+     * @param array{
+     *     serverName?: string,
+     *     host?: string,
+     *     port?: int,
+     *     password?: string,
+     *     description?: string,
+     *     protocol?: string,
+     *     useTls?: bool,
+     *     tlsVerifyPeer?: bool,
+     * } $defaults
+     */
     private function createCommand(
         ?ConnectToServerHandlerInterface $handler = null,
         ?ConsumerProcessManagerInterface $consumerManager = null,
@@ -220,13 +244,15 @@ final class ConnectCommandTest extends TestCase
             '--no-consumer' => true,
         ]);
 
-        self::assertSame('myservices.local', $handler->capturedCommand->serverName);
-        self::assertSame('irc.example.com', $handler->capturedCommand->host);
-        self::assertSame(7100, $handler->capturedCommand->port);
-        self::assertSame('mypass', $handler->capturedCommand->password);
-        self::assertSame('My Services', $handler->capturedCommand->description);
-        self::assertSame('inspircd', $handler->capturedCommand->protocol);
-        self::assertTrue($handler->capturedCommand->useTls);
+        $capturedCommand = $handler->capturedCommand;
+        self::assertInstanceOf(ConnectToServerCommand::class, $capturedCommand);
+        self::assertSame('myservices.local', $capturedCommand->serverName);
+        self::assertSame('irc.example.com', $capturedCommand->host);
+        self::assertSame(7100, $capturedCommand->port);
+        self::assertSame('mypass', $capturedCommand->password);
+        self::assertSame('My Services', $capturedCommand->description);
+        self::assertSame('inspircd', $capturedCommand->protocol);
+        self::assertTrue($capturedCommand->useTls);
     }
 
     #[Test]
@@ -406,6 +432,10 @@ final class HandlerStub implements ConnectToServerHandlerInterface
         $this->capturedCommand = $command;
         if (null !== $this->throw) {
             throw $this->throw;
+        }
+
+        if (null === $this->client) {
+            throw new RuntimeException('Handler client was not configured.');
         }
 
         return $this->client;

@@ -64,6 +64,11 @@ final class ActiveConnectionHolder implements ActiveConnectionHolderInterface, E
         $this->remoteServerSid = $sid;
     }
 
+    public function getRemoteServerSid(): ?string
+    {
+        return $this->remoteServerSid;
+    }
+
     public function writeLine(string $line): void
     {
         $this->connection?->writeLine($line);

@@ -61,11 +61,17 @@ final class ChannelMemberRoleTest extends TestCase
     #[Test]
     public function enumValuesAreAbstractLabels(): void
     {
-        self::assertSame('voice', ChannelMemberRole::Voice->value);
-        self::assertSame('halfop', ChannelMemberRole::HalfOp->value);
-        self::assertSame('op', ChannelMemberRole::Op->value);
-        self::assertSame('admin', ChannelMemberRole::Admin->value);
-        self::assertSame('owner', ChannelMemberRole::Owner->value);
-        self::assertSame('', ChannelMemberRole::None->value);
+        $expectedValues = [
+            'None' => '',
+            'Voice' => 'voice',
+            'HalfOp' => 'halfop',
+            'Op' => 'op',
+            'Admin' => 'admin',
+            'Owner' => 'owner',
+        ];
+
+        foreach (ChannelMemberRole::cases() as $role) {
+            self::assertSame($expectedValues[$role->name], $role->value);
+        }
     }
 }

@@ -28,6 +28,7 @@ use function flock;
 use function fopen;
 use function mkdir;
 use function rmdir;
+use function sprintf;
 use function sys_get_temp_dir;
 use function uniqid;
 use function unlink;
@@ -81,6 +82,12 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
     public function getProtocolNameReturnsUnrealUdb(): void
     {
         self::assertSame('unrealudb', $this->createHandler()->getProtocolName());
+    }
+
+    #[Test]
+    public function getSidReturnsConfiguredSid(): void
+    {
+        self::assertSame('002', $this->createHandler('002')->getSid());
     }
 
     #[Test]
@@ -216,11 +223,10 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
 
         $handler->performHandshake($connection, $link);
 
-        self::assertSame('PASS :link-secret', $this->written[0]);
-        self::assertStringContainsString('PROTOCTL EAUTH=services.test.local SID=002', $this->written[1]);
-        self::assertStringStartsWith('PROTOCTL ', $this->written[2]);
-        self::assertSame('SERVER services.test.local 1 :Ares IRC Services', $this->written[3]);
-        self::assertCount(4, $this->written);
+        self::assertSame('PASS :link-secret', $this->writtenLine(0));
+        self::assertStringContainsString('PROTOCTL EAUTH=services.test.local SID=002', $this->writtenLine(1));
+        self::assertStringStartsWith('PROTOCTL ', $this->writtenLine(2));
+        self::assertSame('SERVER services.test.local 1 :Ares IRC Services', $this->writtenLine(3));
     }
 
     #[Test]
@@ -248,7 +254,7 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['', '1']), $this->createConnection());
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', prefix: '001', params: ['ircd.example.net', '1'], trailing: 'IRCd'), $this->createConnection());
 
-        self::assertTrue(true);
+        self::assertSame('unrealudb', $handler->getProtocolName());
     }
 
     #[Test]
@@ -299,7 +305,8 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
         $handler->handleIncoming(new IRCMessage(command: 'SERVER', params: ['ircd.example.net', '1'], trailing: 'IRCd'), $connection);
         $handler->handleIncoming(new IRCMessage(command: 'DB', prefix: '001', params: ['002', 'HEL', '4', 'ircd.example.net', '0123456789abcdef', 'OCL']), $connection);
 
-        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->written[0]);
+        self::assertNotEmpty($this->written);
+        self::assertMatchesRegularExpression('/^:002 DB 001 HEL 4 ACK services\.test\.local [0-9a-f]{16} OCL OCLG$/', $this->writtenLine(0));
     }
 
     #[Test]
@@ -329,7 +336,19 @@ final class UnrealUdbProtocolHandlerTest extends TestCase
 
         $handler->handleIncoming(new IRCMessage(command: 'NETINFO', params: ['0', '1', '6100', '*', '0', '0', '0'], trailing: 'Net'), $this->createConnection());
 
-        self::assertMatchesRegularExpression('/^NETINFO 0 \d+ 6100 \* 0 0 0 :Net$/', $this->written[0]);
+        self::assertNotEmpty($this->written);
+        self::assertMatchesRegularExpression('/^NETINFO 0 \d+ 6100 \* 0 0 0 :Net$/', $this->writtenLine(0));
+    }
+
+    private function writtenLine(int $index): string
+    {
+        foreach ($this->written as $position => $line) {
+            if ($position === $index) {
+                return $line;
+            }
+        }
+
+        self::fail(sprintf('Expected written line %d.', $index));
     }
 
     #[Test]

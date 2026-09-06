@@ -15,6 +15,7 @@ use ReflectionClass;
 #[CoversClass(InspIRCdNickReservation::class)]
 final class InspIRCdNickReservationTest extends TestCase
 {
+    /** @var list<string> */
     private array $written = [];
 
     private ActiveConnectionHolder $connectionHolder;

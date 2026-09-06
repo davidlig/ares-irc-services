@@ -200,6 +200,8 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
     #[Test]
     public function onIrcopCommandDoesNotLogWhenNotifierNotFound(): void
     {
+        self::expectNotToPerformAssertions();
+
         $registry = new ServiceDebugNotifierRegistry([]);
         $detector = new IrcopPermissionDetector();
         $subscriber = new IrcopCommandAuditSubscriber($registry, $detector);
@@ -213,7 +215,5 @@ final class IrcopCommandAuditSubscriberTest extends TestCase
         );
 
         $subscriber->onIrcopCommand($event);
-
-        self::assertTrue(true);
     }
 }

@@ -87,13 +87,13 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
             return;
         }
 
-        $this->applyRegisteredChannelSetup($registered);
+        $this->applyRegisteredChannelSetup($this->debugChannel, $registered);
     }
 
     private function applyRegisteredChannelSetup(
+        string $channelName,
         RegisteredChannel $registered,
     ): void {
-        $channelName = $this->debugChannel;
         $modeSupport = $this->modeSupportProvider->getSupport();
 
         $this->applyRegisteredAndPermanentModes($channelName, $modeSupport);
@@ -197,14 +197,19 @@ final readonly class DebugChannelJoinSubscriber implements EventSubscriberInterf
 
     private function applyChanServRank(string $channelName): void
     {
+        $chanServUid = $this->uidRegistry->getUid('chanserv');
+        if (null === $chanServUid) {
+            return;
+        }
+
         $supported = $this->modeSupportProvider->getSupport()->getSupportedPrefixModes();
         $prefixOrder = ['q', 'a', 'o', 'h', 'v'];
         $maxPrefix = array_find($prefixOrder, static fn ($letter) => in_array($letter, $supported, true)) ?? 'o';
 
-        $this->channelServiceActions->setChannelMemberMode($channelName, $this->uidRegistry->getUid('chanserv'), $maxPrefix, true);
+        $this->channelServiceActions->setChannelMemberMode($channelName, $chanServUid, $maxPrefix, true);
         $this->logger->debug('Debug channel: set ChanServ rank', [
             'channel' => $channelName,
-            'uid' => $this->uidRegistry->getUid('chanserv'),
+            'uid' => $chanServUid,
             'mode' => '+' . $maxPrefix,
         ]);
     }

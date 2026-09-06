@@ -38,9 +38,9 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
             return;
         }
 
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->warning('CoreSendNoticeAdapter: cannot send message — no active protocol module.');
+        $handler = $this->connectionHolder->getProtocolHandler();
+        if (null === $handler) {
+            $this->logger->warning('CoreSendNoticeAdapter: cannot send message — no active protocol handler.');
 
             return;
         }
@@ -57,7 +57,7 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
                 trailing: $line,
                 direction: MessageDirection::Outgoing,
             );
-            $rawLine = $module->getHandler()->formatMessage($ircMessage);
+            $rawLine = $handler->formatMessage($ircMessage);
             $this->connectionHolder->writeLine($rawLine);
         }
     }
@@ -73,9 +73,9 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
             return;
         }
 
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->warning('CoreSendNoticeAdapter: cannot send channel notice — no active protocol module.');
+        $handler = $this->connectionHolder->getProtocolHandler();
+        if (null === $handler) {
+            $this->logger->warning('CoreSendNoticeAdapter: cannot send channel notice — no active protocol handler.');
 
             return;
         }
@@ -91,7 +91,7 @@ final readonly class CoreSendNoticeAdapter implements SendNoticePort
                 trailing: $line,
                 direction: MessageDirection::Outgoing,
             );
-            $rawLine = $module->getHandler()->formatMessage($ircMessage);
+            $rawLine = $handler->formatMessage($ircMessage);
             $this->connectionHolder->writeLine($rawLine);
         }
     }

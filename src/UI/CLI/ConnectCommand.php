@@ -19,6 +19,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
 use function function_exists;
+use function is_string;
 use function sprintf;
 
 use const SIGHUP;
@@ -105,12 +106,23 @@ class ConnectCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $serverName = (string) ($input->getArgument('server-name') ?? $this->defaultServerName);
-        $host = (string) ($input->getArgument('host') ?? $this->defaultHost);
-        $port = (int) ($input->getArgument('port') ?? $this->defaultPort);
-        $password = (string) ($input->getArgument('password') ?? $this->defaultPassword);
-        $description = (string) ($input->getArgument('description') ?? $this->defaultDescription);
-        $protocol = (string) ($input->getOption('protocol') ?? $this->defaultProtocol);
+        $rawServerName = $input->getArgument('server-name');
+        $serverName = is_string($rawServerName) ? $rawServerName : $this->defaultServerName;
+
+        $rawHost = $input->getArgument('host');
+        $host = is_string($rawHost) ? $rawHost : $this->defaultHost;
+
+        $rawPort = $input->getArgument('port');
+        $port = is_numeric($rawPort) ? (int) $rawPort : $this->defaultPort;
+
+        $rawPassword = $input->getArgument('password');
+        $password = is_string($rawPassword) ? $rawPassword : $this->defaultPassword;
+
+        $rawDescription = $input->getArgument('description');
+        $description = is_string($rawDescription) ? $rawDescription : $this->defaultDescription;
+
+        $rawProtocol = $input->getOption('protocol');
+        $protocol = is_string($rawProtocol) ? $rawProtocol : $this->defaultProtocol;
         $useTls = $input->getOption('tls') ? true : $this->defaultUseTls;
         $tlsVerifyPeer = $input->getOption('insecure') ? false : $this->defaultTlsVerifyPeer;
 

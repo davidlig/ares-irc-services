@@ -95,9 +95,11 @@ final class PermissionRegistryTest extends TestCase
         self::assertSame(['A_PERM', 'M_PERM', 'Z_PERM'], $byService['TestService']);
     }
 
+    /** @param list<string> $permissions */
     private static function createProvider(string $serviceName, array $permissions): PermissionProviderInterface
     {
         return new readonly class($serviceName, $permissions) implements PermissionProviderInterface {
+            /** @param list<string> $permissions */
             public function __construct(
                 private string $serviceName,
                 private array $permissions,
@@ -108,6 +110,7 @@ final class PermissionRegistryTest extends TestCase
                 return $this->serviceName;
             }
 
+            /** @return list<string> */
             public function getPermissions(): array
             {
                 return $this->permissions;

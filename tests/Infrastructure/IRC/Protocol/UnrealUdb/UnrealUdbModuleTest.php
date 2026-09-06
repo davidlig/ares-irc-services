@@ -143,7 +143,8 @@ final class UnrealUdbModuleTest extends TestCase
     {
         $module = $this->createModule();
 
-        self::assertInstanceOf(NickChangePreservesIdentificationInterface::class, $module);
+        $implementedInterfaces = class_implements($module);
+        self::assertArrayHasKey(NickChangePreservesIdentificationInterface::class, $implementedInterfaces);
     }
 
     #[Test]

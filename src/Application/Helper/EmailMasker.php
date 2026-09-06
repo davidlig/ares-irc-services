@@ -37,6 +37,6 @@ final class EmailMasker
 
         $visible = mb_substr(substr($email, 0, $at), 0, 2);
 
-        return '' !== $visible ? $visible . '****' . substr($email, $at) : self::FALLBACK;
+        return '' !== $visible ? $visible . self::MASK . substr($email, $at) : self::FALLBACK;
     }
 }

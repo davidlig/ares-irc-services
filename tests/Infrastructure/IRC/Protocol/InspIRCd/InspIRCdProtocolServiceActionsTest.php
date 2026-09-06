@@ -17,6 +17,7 @@ final class InspIRCdProtocolServiceActionsTest extends TestCase
 {
     private ActiveConnectionHolder $connectionHolder;
 
+    /** @var list<string> */
     private array $written = [];
 
     protected function setUp(): void

@@ -70,7 +70,10 @@ final readonly class UnrealUdbProtocolServiceActions implements ProtocolServiceA
         $this->recordWriter->insert('N', $path, $operclass);
     }
 
-    public function getAvailableOperclasses(): ?array
+    /**
+     * @return list<string>
+     */
+    public function getAvailableOperclasses(): array
     {
         return $this->sessionState?->getAvailableOperclasses() ?? [];
     }

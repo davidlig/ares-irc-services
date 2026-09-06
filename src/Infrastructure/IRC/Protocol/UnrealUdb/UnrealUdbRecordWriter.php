@@ -16,6 +16,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;
 
+use function assert;
 use function explode;
 
 /**
@@ -65,6 +66,7 @@ final readonly class UnrealUdbRecordWriter implements UdbRecordWriterInterface
         // The schema guarantees bounded, encodable components, so the
         // canonical encoding cannot fail here.
         $encodedPath = UdbPathCodec::encodePath($components);
+        assert(null !== $encodedPath);
 
         if (!$this->persistInsert($blockEnum->letter(), $encodedPath, $value)) {
             return false;

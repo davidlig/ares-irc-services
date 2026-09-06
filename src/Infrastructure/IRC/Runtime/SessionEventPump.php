@@ -16,6 +16,7 @@ final class SessionEventPump
     /** @var list<Closure(): void> */
     private array $queue = [];
 
+    /** @var DeferredFuture<void>|null */
     private ?DeferredFuture $deferred = null;
 
     private bool $running = false;

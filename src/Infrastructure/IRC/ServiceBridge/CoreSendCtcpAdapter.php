@@ -30,9 +30,9 @@ final readonly class CoreSendCtcpAdapter implements SendCtcpPort
             return;
         }
 
-        $module = $this->connectionHolder->getProtocolModule();
-        if (null === $module) {
-            $this->logger->warning('CoreSendCtcpAdapter: cannot send CTCP reply — no active protocol module.');
+        $handler = $this->connectionHolder->getProtocolHandler();
+        if (null === $handler) {
+            $this->logger->warning('CoreSendCtcpAdapter: cannot send CTCP reply — no active protocol handler.');
 
             return;
         }
@@ -45,7 +45,7 @@ final readonly class CoreSendCtcpAdapter implements SendCtcpPort
             trailing: $ctcpMessage,
             direction: MessageDirection::Outgoing,
         );
-        $rawLine = $module->getHandler()->formatMessage($ircMessage);
+        $rawLine = $handler->formatMessage($ircMessage);
         $this->connectionHolder->writeLine($rawLine);
     }
 }

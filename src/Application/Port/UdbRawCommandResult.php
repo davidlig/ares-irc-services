@@ -12,6 +12,9 @@ namespace App\Application\Port;
  */
 final readonly class UdbRawCommandResult
 {
+    /**
+     * @param array<string, mixed> $errorParams
+     */
     public function __construct(
         public bool $success,
         public ?string $errorKey = null,
@@ -24,6 +27,9 @@ final readonly class UdbRawCommandResult
         return new self(true, auditLine: $auditLine);
     }
 
+    /**
+     * @param array<string, mixed> $errorParams
+     */
     public static function error(string $errorKey, array $errorParams = []): self
     {
         return new self(false, errorKey: $errorKey, errorParams: $errorParams);

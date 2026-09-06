@@ -15,11 +15,19 @@ final class ConnectionStatusTest extends TestCase
     #[Test]
     public function allCasesExist(): void
     {
-        self::assertInstanceOf(ConnectionStatus::class, ConnectionStatus::Disconnected);
-        self::assertInstanceOf(ConnectionStatus::class, ConnectionStatus::Connecting);
-        self::assertInstanceOf(ConnectionStatus::class, ConnectionStatus::Connected);
-        self::assertInstanceOf(ConnectionStatus::class, ConnectionStatus::Authenticating);
-        self::assertInstanceOf(ConnectionStatus::class, ConnectionStatus::Authenticated);
-        self::assertInstanceOf(ConnectionStatus::class, ConnectionStatus::Error);
+        $caseNames = array_map(
+            static fn (ConnectionStatus $status): string => $status->name,
+            ConnectionStatus::cases(),
+        );
+
+        $uniqueCaseNames = array_values(array_unique($caseNames));
+
+        self::assertCount(6, $uniqueCaseNames);
+        self::assertContains('Disconnected', $uniqueCaseNames);
+        self::assertContains('Connecting', $uniqueCaseNames);
+        self::assertContains('Connected', $uniqueCaseNames);
+        self::assertContains('Authenticating', $uniqueCaseNames);
+        self::assertContains('Authenticated', $uniqueCaseNames);
+        self::assertContains('Error', $uniqueCaseNames);
     }
 }

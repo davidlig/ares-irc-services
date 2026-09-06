@@ -16,6 +16,7 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
+use function is_string;
 use function sprintf;
 
 #[AsCommand(
@@ -40,7 +41,8 @@ final class UdbTakeoverCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $directory = (string) $input->getArgument('directory');
+        $rawDirectory = $input->getArgument('directory');
+        $directory = is_string($rawDirectory) ? $rawDirectory : '';
 
         try {
             $dryRun = (bool) $input->getOption('dry-run');

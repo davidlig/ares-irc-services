@@ -14,6 +14,8 @@ use function in_array;
 /**
  * Grants access when the user is identified (+r) with NickServ.
  * Used for commands that require nickname identification.
+ *
+ * @extends Voter<string, IrcopContextInterface>
  */
 final class IdentifiedVoter extends Voter
 {

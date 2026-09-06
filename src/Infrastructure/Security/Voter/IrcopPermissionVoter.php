@@ -25,6 +25,8 @@ use function in_array;
  * 1. Root users identified have all permissions automatically (bypass +o requirement)
  * 2. User has ROLE_OPER (is an IRC operator)
  * 3. User's role has the required permission (via IrcopAccessHelper)
+ *
+ * @extends Voter<string, IrcopContextInterface>
  */
 final class IrcopPermissionVoter extends Voter
 {
@@ -32,6 +34,11 @@ final class IrcopPermissionVoter extends Voter
         private readonly IrcopAccessHelper $accessHelper,
         private readonly RegisteredNickRepositoryInterface $nickRepository,
     ) {}
+
+    public function getNickRepository(): RegisteredNickRepositoryInterface
+    {
+        return $this->nickRepository;
+    }
 
     protected function supports(string $attribute, mixed $subject): bool
     {

@@ -17,6 +17,9 @@ interface IrcopContextInterface
 
     public function getSenderAccount(): ?RegisteredNick;
 
+    /**
+     * @param array<string, mixed> $parameters
+     */
     public function reply(string $key, array $parameters = []): void;
 
     public function replyRaw(string $message): void;

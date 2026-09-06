@@ -41,9 +41,10 @@ final class UdbNickSyncSubscriberTest extends TestCase
         ?OperIrcopRepositoryInterface $ircopRepo = null,
         ?UdbRecordWriterInterface $writer = null,
     ): UdbNickSyncSubscriber {
-        $writer ??= $this->createStub(UdbRecordWriterInterface::class);
-        $writer->method('insert')->willReturn(true);
-        $writer->method('delete')->willReturn(true);
+        $defaultWriter = $this->createStub(UdbRecordWriterInterface::class);
+        $defaultWriter->method('insert')->willReturn(true);
+        $defaultWriter->method('delete')->willReturn(true);
+        $writer ??= $defaultWriter;
 
         return new UdbNickSyncSubscriber(
             $writer,
