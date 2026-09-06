@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Application\ApplicationPort;
+namespace App\Application\Shared;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Port\ServiceUidGeneratorInterface;
 
 use function str_pad;
 

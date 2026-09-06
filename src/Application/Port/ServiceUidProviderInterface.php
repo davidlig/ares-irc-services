@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\ApplicationPort;
+namespace App\Application\Port;
 
 /**
  * Interface for services that can provide their UID on the IRC network.

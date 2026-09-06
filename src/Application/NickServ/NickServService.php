@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ;
 
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Command\CommandOutcome;
 use App\Application\Event\CommandExecutedEvent;
 use App\Application\NickServ\Command\NickServCommandInterface;
@@ -18,6 +17,7 @@ use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserLanguageResolverInterface;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Subscriber;
 
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\ChanServ\Event\ChannelSecureEnabledEvent;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
@@ -13,6 +12,7 @@ use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\Handler\UnforbidCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
@@ -16,7 +14,9 @@ use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
-use App\Application\ApplicationPort\ServiceUidProviderInterface;
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\OperServ\Command\Handler\GlobalCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -22,8 +18,12 @@ use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\ServiceNickReservationInterface;
+use App\Application\Port\ServiceUidProviderInterface;
 use App\Application\Port\TranslationInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;

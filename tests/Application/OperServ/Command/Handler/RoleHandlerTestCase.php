@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
@@ -29,9 +27,11 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\OperclassServiceActionsInterface;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserModeSupportInterface;
 use App\Application\Security\PermissionRegistry;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;

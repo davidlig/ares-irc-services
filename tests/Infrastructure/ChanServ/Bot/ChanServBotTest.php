@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Bot;
 
-use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
@@ -13,6 +12,7 @@ use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceChannelRegistrationPort;
+use App\Application\Port\ServiceUidGeneratorInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\ChanServ\Bot\ChanServBot;

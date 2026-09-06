@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\MemoServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\MemoServ\Command\Handler\HelpCommand;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
+use App\Application\Shared\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
@@ -15,6 +14,7 @@ use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\ValueObject\GlobalMessageMask;
 use Psr\Log\LoggerInterface;

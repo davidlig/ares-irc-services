@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\MemoServ\Command;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeZone;

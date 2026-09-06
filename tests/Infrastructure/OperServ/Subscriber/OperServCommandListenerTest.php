@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
-use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\NickServ\SessionLanguageRegistry;
@@ -21,8 +18,11 @@ use App\Application\Port\EventBusInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\ServiceNicknameProviderInterface;
+use App\Application\Port\ServiceUidGeneratorInterface;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;

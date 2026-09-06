@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Bot;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
-use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceChannelRegistrationPort;
+use App\Application\Port\ServiceNicknameProviderInterface;
+use App\Application\Port\ServiceUidGeneratorInterface;
+use App\Application\Port\ServiceUidProviderInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;

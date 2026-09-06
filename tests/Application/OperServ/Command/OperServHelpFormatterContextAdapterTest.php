@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\OperServCommandInterface;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -14,7 +12,9 @@ use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;

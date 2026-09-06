@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\NickServ\Bot;
 
-use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\ServiceUidGeneratorInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;

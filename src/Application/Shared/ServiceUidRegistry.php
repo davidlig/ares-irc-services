@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Application\ApplicationPort;
+namespace App\Application\Shared;
+
+use App\Application\Port\ServiceUidProviderInterface;
 
 /**
  * Registry that provides UID lookup for services.

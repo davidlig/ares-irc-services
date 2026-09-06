@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\MemoServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\Handler\SendCommand;
 use App\Application\MemoServ\Command\MemoServCommandRegistry;
@@ -14,7 +12,9 @@ use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\MemoServ\MemoServSendThrottleRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;

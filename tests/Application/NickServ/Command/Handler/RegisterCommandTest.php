@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Mail\Message\SendEmail;
 use App\Application\NickServ\Command\Handler\RegisterCommand;
 use App\Application\NickServ\Command\NickServCommandRegistry;
@@ -18,7 +16,9 @@ use App\Application\NickServ\RegisterThrottleRegistry;
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\Service\PasswordHasherInterface;

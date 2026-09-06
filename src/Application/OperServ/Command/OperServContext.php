@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command;
 
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use DateTimeImmutable;
 use DateTimeInterface;

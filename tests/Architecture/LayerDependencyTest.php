@@ -176,7 +176,7 @@ final class LayerDependencyTest extends TestCase
         $paths = [
             'src/Domain',
             'src/Application/Port',
-            'src/Application/ApplicationPort',
+            'src/Application/Shared',
             'src/Infrastructure/IRC/Runtime',
             'src/Infrastructure/IRC/Protocol/AbstractProtocolHandler.php',
             'src/Infrastructure/IRC/Protocol/NullChannelModeSupport.php',

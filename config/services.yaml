@@ -182,20 +182,20 @@ services:
 
     # --- Service Nickname Registry (dynamic service names for placeholders) ---------
 
-    App\Application\ApplicationPort\ServiceNicknameRegistry:
+    App\Application\Shared\ServiceNicknameRegistry:
         arguments:
             $providers: !tagged_iterator app.service_nickname_provider
 
     # --- Service UID Registry (resolve service nick to UID) -------------------------
 
-    App\Application\ApplicationPort\ServiceUidRegistry:
-        factory: ['App\Application\ApplicationPort\ServiceUidRegistry', 'fromIterable']
+    App\Application\Shared\ServiceUidRegistry:
+        factory: ['App\Application\Shared\ServiceUidRegistry', 'fromIterable']
         arguments: [!tagged_iterator app.service_uid_provider]
 
     # --- Service UID Generator (auto-generates UIDs on burst) --------------------
 
-    App\Application\ApplicationPort\ServiceUidGeneratorInterface:
-        class: App\Application\ApplicationPort\ServiceUidGenerator
+    App\Application\Port\ServiceUidGeneratorInterface:
+        class: App\Application\Shared\ServiceUidGenerator
 
     # --- Application services — inject the irc Monolog channel ---------------
 
@@ -546,12 +546,12 @@ services:
 
     App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
         arguments:
-            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $logger: '@monolog.logger.irc'
 
     App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
         arguments:
-            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
 
     App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber:
         arguments:
@@ -629,7 +629,7 @@ services:
             $versionResponder: '@App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder'
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
-            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
@@ -774,7 +774,7 @@ services:
     App\Infrastructure\NickServ\Bot\NickServBot:
         arguments:
             $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
-            $uidGenerator: '@App\Application\ApplicationPort\ServiceUidGeneratorInterface'
+            $uidGenerator: '@App\Application\Port\ServiceUidGeneratorInterface'
             $servicesVhost:   '%services.vhost%'
             $nickservNick:       '%nickserv.nick%'
             $nickservIdent:      '%nickserv.ident%'
@@ -789,7 +789,7 @@ services:
 
     App\Infrastructure\ChanServ\Bot\ChanServBot:
         arguments:
-            $uidGenerator: '@App\Application\ApplicationPort\ServiceUidGeneratorInterface'
+            $uidGenerator: '@App\Application\Port\ServiceUidGeneratorInterface'
             $servicesVhost:   '%services.vhost%'
             $chanservNick:      '%chanserv.nick%'
             $chanservIdent:     '%chanserv.ident%'
@@ -807,7 +807,7 @@ services:
 
     App\Infrastructure\MemoServ\Bot\MemoServBot:
         arguments:
-            $uidGenerator: '@App\Application\ApplicationPort\ServiceUidGeneratorInterface'
+            $uidGenerator: '@App\Application\Port\ServiceUidGeneratorInterface'
             $servicesVhost: '%services.vhost%'
             $memoservNick: '%memoserv.nick%'
             $memoservIdent: '%memoserv.ident%'
@@ -825,7 +825,7 @@ services:
 
     App\Application\ChanServ\ChanServService:
         arguments:
-            $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
+            $serviceNicks: '@App\Application\Shared\ServiceNicknameRegistry'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
@@ -1088,7 +1088,7 @@ services:
 
     App\Application\MemoServ\MemoServService:
         arguments:
-            $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
+            $serviceNicks: '@App\Application\Shared\ServiceNicknameRegistry'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
@@ -1136,7 +1136,7 @@ services:
 
     App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber:
         arguments:
-            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $defaultLanguage: '%services.default_language%'
 
     App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber:
@@ -1331,7 +1331,7 @@ services:
         arguments:
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $serviceUidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $serviceUidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
 
     App\Application\NickServ\Service\ForbiddenNickService:
@@ -1458,7 +1458,7 @@ services:
         arguments:
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker:  '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
-            $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
+            $serviceNicks: '@App\Application\Shared\ServiceNicknameRegistry'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $defaultLanguage:      '%services.default_language%'
             $defaultTimezone:      '%services.default_timezone%'
@@ -1655,7 +1655,7 @@ services:
 
     App\Application\OperServ\OperServService:
         arguments:
-            $serviceNicks: '@App\Application\ApplicationPort\ServiceNicknameRegistry'
+            $serviceNicks: '@App\Application\Shared\ServiceNicknameRegistry'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
             $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
@@ -1698,7 +1698,7 @@ services:
 
     App\Infrastructure\OperServ\Bot\OperServBot:
         arguments:
-            $uidGenerator: '@App\Application\ApplicationPort\ServiceUidGeneratorInterface'
+            $uidGenerator: '@App\Application\Port\ServiceUidGeneratorInterface'
             $servicesVhost: '%services.vhost%'
             $operservNick: '%operserv.nick%'
             $operservIdent: '%operserv.ident%'
@@ -1718,7 +1718,7 @@ services:
     App\Infrastructure\OperServ\Subscriber\MotdOnConnectSubscriber:
         arguments:
             $motdRepository: '@App\Domain\OperServ\Repository\MotdRepositoryInterface'
-            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $channelLookup: '@App\Application\Port\ChannelLookupPort'
             $channelRegistration: '@App\Application\Port\ServiceChannelRegistrationPort'
@@ -1815,7 +1815,7 @@ services:
         arguments:
             $userLookup: '@App\Application\Port\NetworkUserLookupPort'
             $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $serviceUidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $serviceUidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $uidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $sendNoticePort: '@App\Application\Port\SendNoticePort'
@@ -1887,7 +1887,7 @@ services:
             $channelLookup: '@App\Application\Port\ChannelLookupPort'
             $channelServiceActions: '@App\Application\Port\ChannelServiceActionsPort'
             $modeSupportProvider: '@App\Application\Port\ActiveChannelModeSupportProviderInterface'
-            $uidRegistry: '@App\Application\ApplicationPort\ServiceUidRegistry'
+            $uidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $logger: '@monolog.logger.ircops'
         tags: ['kernel.event_subscriber']
 

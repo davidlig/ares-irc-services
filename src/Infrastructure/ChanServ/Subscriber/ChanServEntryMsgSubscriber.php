@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Subscriber;
 
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;

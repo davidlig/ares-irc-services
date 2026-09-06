@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Subscriber;
 
-use App\Application\ApplicationPort\ServiceUidProviderInterface;
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
 use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ChannelView;
 use App\Application\Port\ServiceDebugNotifierInterface;
+use App\Application\Port\ServiceUidProviderInterface;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;

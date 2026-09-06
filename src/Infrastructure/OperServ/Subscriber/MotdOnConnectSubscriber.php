@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Subscriber;
 
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\Event\UserJoinedNetworkAppEvent;
 use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
@@ -13,6 +12,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceChannelRegistrationPort;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Motd;

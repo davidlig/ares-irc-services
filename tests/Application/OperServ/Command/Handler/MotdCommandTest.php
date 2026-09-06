@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\Handler\MotdCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -15,6 +14,7 @@ use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\SenderView;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Application\Port\TranslationInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;

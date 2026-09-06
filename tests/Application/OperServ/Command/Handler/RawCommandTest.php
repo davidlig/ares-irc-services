@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\OperServ\Command\Handler\RawCommand;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServContext;
@@ -15,10 +13,12 @@ use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UdbRawCommandHandlerInterface;
 use App\Application\Port\UdbRawCommandHandlerProviderInterface;
 use App\Application\Port\UdbRawCommandResult;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;

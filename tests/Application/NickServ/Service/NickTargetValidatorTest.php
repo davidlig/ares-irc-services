@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\NickServ\Service;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceUidProviderInterface;
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickTargetValidator;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Port\ServiceNicknameProviderInterface;
+use App\Application\Port\ServiceUidProviderInterface;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;

@@ -17,7 +17,7 @@ The project has **5 bounded contexts**:
                             │
                     ┌───────▼───────┐
                     │     PORTS     │  Application/Port/
-                    │  Interfaces   │  28 interfaces + DTOs
+                    │  Interfaces   │  39 interfaces + DTOs
                     │    + DTOs     │  The ONLY boundary
                     └───┬───┬───┬───┘
             ┌───────────┘   │   └───────────┐
@@ -94,9 +94,11 @@ Infrastructure ────────┘
 
 ## The Port Boundary (CRITICAL)
 
-**Location**: `src/Application/Port/` — 28 interfaces + DTOs
+**Location**: `src/Application/Port/` — 39 interfaces + DTOs
 
 Ports are the ONLY way Services talk to Core (IRC). Services MUST NOT import `Domain\IRC` entities directly.
+
+Shared application services that are NOT ports (in-memory registries, service-level helpers) live in `src/Application/Shared/` (e.g. `ServiceNicknameRegistry`, `ServiceUidRegistry`, `ServiceUidGenerator`).
 
 ### Key Ports
 

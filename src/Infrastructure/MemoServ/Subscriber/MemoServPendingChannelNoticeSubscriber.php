@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\MemoServ\Subscriber;
 
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;

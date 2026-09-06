@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Bot;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
-use App\Application\ApplicationPort\ServiceUidProviderInterface;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\ServiceNicknameProviderInterface;
+use App\Application\Port\ServiceUidGeneratorInterface;
+use App\Application\Port\ServiceUidProviderInterface;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;

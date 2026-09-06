@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\ChanServ\Command\Handler;
 
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
@@ -16,6 +15,7 @@ use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\NullChannelModeSupport;

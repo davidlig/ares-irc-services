@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Service;
 
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\OperServ\RootUserRegistry;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 

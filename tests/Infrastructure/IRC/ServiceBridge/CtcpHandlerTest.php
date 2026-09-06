@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\ApplicationPort\ServiceUidProviderInterface;
-use App\Application\ApplicationPort\ServiceUidRegistry;
 use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendCtcpPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
+use App\Application\Port\ServiceUidProviderInterface;
+use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;

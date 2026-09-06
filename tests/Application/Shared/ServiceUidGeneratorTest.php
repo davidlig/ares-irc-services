@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Application\ApplicationPort;
+namespace App\Tests\Application\Shared;
 
-use App\Application\ApplicationPort\ServiceUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
+use App\Application\Shared\ServiceUidGenerator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

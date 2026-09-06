@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ;
 
-use App\Application\ApplicationPort\ServiceNicknameProviderInterface;
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
@@ -22,8 +20,10 @@ use App\Application\OperServ\OperServService;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\EventBusInterface;
 use App\Application\Port\SenderView;
+use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;

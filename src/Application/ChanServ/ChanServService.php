@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ;
 
-use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServCommandRegistry;
 use App\Application\ChanServ\Command\ChanServContext;
@@ -24,6 +23,7 @@ use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserLanguageResolverInterface;
 use App\Application\Port\UserMessageTypeResolverInterface;
+use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
-use App\Application\ApplicationPort\ServiceUidGeneratorInterface;
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ApplyOutgoingChannelModesPort;
 use App\Application\Port\ChannelLookupPort;
@@ -13,6 +12,7 @@ use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceChannelRegistrationPort;
+use App\Application\Port\ServiceUidGeneratorInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Exception\InsufficientAccessException;

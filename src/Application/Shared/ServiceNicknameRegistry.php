@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Application\ApplicationPort;
+namespace App\Application\Shared;
+
+use App\Application\Port\ServiceNicknameProviderInterface;
 
 /**
  * Registry that collects all services implementing ServiceNicknameProviderInterface.
