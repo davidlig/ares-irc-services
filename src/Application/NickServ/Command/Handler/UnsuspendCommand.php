@@ -68,7 +68,7 @@ final class UnsuspendCommand implements NickServCommandInterface, IrcopAuditable
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::SUSPEND;
     }
@@ -80,6 +80,11 @@ final class UnsuspendCommand implements NickServCommandInterface, IrcopAuditable
 
     public function execute(NickServContext $context): CommandOutcome
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return CommandOutcome::rejected();
+        }
+
         $targetNick = $context->args[0];
 
         $account = $this->nickRepository->findByNick($targetNick);
@@ -99,14 +104,14 @@ final class UnsuspendCommand implements NickServCommandInterface, IrcopAuditable
         $account->unsuspend();
         $this->nickRepository->save($account);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new NickUnsuspendedEvent(
             nickId: $account->getId(),
             nickname: $targetNick,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,

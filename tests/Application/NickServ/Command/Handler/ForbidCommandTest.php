@@ -269,7 +269,7 @@ final class ForbidCommandTest extends TestCase
     #[Test]
     public function executeWithUnregisteredNickCreatesForbidden(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $messages = [];
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
@@ -304,7 +304,7 @@ final class ForbidCommandTest extends TestCase
     #[Test]
     public function executeWithRegisteredNickDropsThenCreatesForbidden(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $nick = $this->createActivatedNick('BadUser');
         $messages = [];
 
@@ -348,7 +348,7 @@ final class ForbidCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
     private function createActivatedNick(string $nickname): RegisteredNick
@@ -363,6 +363,10 @@ final class ForbidCommandTest extends TestCase
         return $nick;
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,

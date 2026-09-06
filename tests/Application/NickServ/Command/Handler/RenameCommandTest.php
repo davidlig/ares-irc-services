@@ -171,7 +171,7 @@ final class RenameCommandTest extends TestCase
         $sender = $this->createSender();
         $messages = [];
 
-        $targetUser = new SenderView('UID2', 'RootUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $targetUser = new SenderView('UID2', 'RootUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($targetUser);
@@ -199,7 +199,7 @@ final class RenameCommandTest extends TestCase
         $sender = $this->createSender();
         $messages = [];
 
-        $targetUser = new SenderView('UID2', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $targetUser = new SenderView('UID2', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($targetUser);
@@ -227,7 +227,7 @@ final class RenameCommandTest extends TestCase
         $sender = $this->createSender();
         $messages = [];
 
-        $targetUser = new SenderView('UID2', 'NickServ', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $targetUser = new SenderView('UID2', 'NickServ', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($targetUser);
@@ -255,7 +255,7 @@ final class RenameCommandTest extends TestCase
         $sender = $this->createSender();
         $messages = [];
 
-        $targetUser = new SenderView('UID2', 'BadUser', 'ident', 'host.example.com', 'c', 'aBcD', false, false, 'SID1', 'host.example.com', 'i', '');
+        $targetUser = new SenderView('UID2', 'BadUser', 'ident', 'host.example.com', 'c', 'aBcD', false, false, 'SID1', 'host.example.com', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($targetUser);
@@ -286,7 +286,7 @@ final class RenameCommandTest extends TestCase
         $sender = $this->createSender();
         $messages = [];
 
-        $targetUser = new SenderView('UID2', 'BadUser', 'ident', 'host.example.com', 'c', 'aBcD', false, false, 'SID1', 'host.example.com', 'i', '');
+        $targetUser = new SenderView('UID2', 'BadUser', 'ident', 'host.example.com', 'c', 'aBcD', false, false, 'SID1', 'host.example.com', 'i');
 
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
         $userLookup->method('findByNick')->willReturn($targetUser);
@@ -324,9 +324,13 @@ final class RenameCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,

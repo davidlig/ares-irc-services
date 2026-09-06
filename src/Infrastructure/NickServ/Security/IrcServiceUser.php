@@ -42,7 +42,7 @@ final readonly class IrcServiceUser implements UserInterface
 
     public function getUserIdentifier(): string
     {
-        return $this->senderView->uid;
+        return '' !== $this->senderView->uid ? $this->senderView->uid : 'unknown';
     }
 
     public function getSenderView(): SenderView

@@ -72,7 +72,7 @@ final class RenameCommand implements NickServCommandInterface, IrcopAuditableCom
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::RENAME;
     }
@@ -133,6 +133,7 @@ final class RenameCommand implements NickServCommandInterface, IrcopAuditableCom
         $nickname = $result->nickname;
 
         match ($result->status) {
+            NickProtectabilityStatus::Allowed => null,
             NickProtectabilityStatus::IsRoot => $context->reply('rename.cannot_rename_root', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsIrcop => $context->reply('rename.cannot_rename_oper', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsService => $context->reply('rename.cannot_rename_service', ['%nickname%' => $nickname]),

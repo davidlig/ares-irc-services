@@ -13,10 +13,13 @@ use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickHistoryService;
 use App\Domain\NickServ\Repository\NickHistoryRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use Stringable;
 
 use function array_slice;
+use function assert;
 use function count;
 use function implode;
+use function is_scalar;
 use function sprintf;
 use function strtoupper;
 use function trim;
@@ -88,7 +91,7 @@ final class HistoryCommand implements NickServCommandInterface, IrcopAuditableCo
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::HISTORY;
     }
@@ -148,6 +151,7 @@ final class HistoryCommand implements NickServCommandInterface, IrcopAuditableCo
             return CommandOutcome::rejected();
         }
 
+        assert(null !== $context->sender);
         $ip = $this->decodeIp($context->sender->ipBase64);
         $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
@@ -316,6 +320,9 @@ final class HistoryCommand implements NickServCommandInterface, IrcopAuditableCo
         return $performedBy;
     }
 
+    /**
+     * @param array<string, mixed> $extraData
+     */
     private function translateMessage(string $message, array $extraData, NickServContext $context): string
     {
         if (!str_starts_with($message, 'history.message.')) {
@@ -325,49 +332,61 @@ final class HistoryCommand implements NickServCommandInterface, IrcopAuditableCo
         $params = [];
 
         if (isset($extraData['old_email'])) {
-            $params['%old_email%'] = $extraData['old_email'] ?? '(none)';
+            $params['%old_email%'] = $this->stringifyExtra($extraData['old_email']);
         }
 
         if (isset($extraData['new_email'])) {
-            $params['%new_email%'] = $extraData['new_email'];
+            $params['%new_email%'] = $this->stringifyExtra($extraData['new_email']);
         }
 
         return $context->trans($message, $params);
     }
 
+    /**
+     * @param array<string, mixed> $extraData
+     */
     private function formatExtraData(array $extraData, NickServContext $context): string
     {
         $parts = [];
 
         if (isset($extraData['duration'])) {
-            $parts[] = $context->trans('history.extra.duration', ['%value%' => $extraData['duration']]);
+            $parts[] = $context->trans('history.extra.duration', ['%value%' => $this->stringifyExtra($extraData['duration'])]);
         }
 
         if (isset($extraData['expires_at'])) {
-            $parts[] = $context->trans('history.extra.expires_at', ['%value%' => $extraData['expires_at']]);
+            $parts[] = $context->trans('history.extra.expires_at', ['%value%' => $this->stringifyExtra($extraData['expires_at'])]);
         }
 
         if (isset($extraData['old_email'])) {
-            $parts[] = $context->trans('history.extra.old_email', ['%value%' => $extraData['old_email'] ?? '(none)']);
+            $parts[] = $context->trans('history.extra.old_email', ['%value%' => $this->stringifyExtra($extraData['old_email'])]);
         }
 
         if (isset($extraData['new_email'])) {
-            $parts[] = $context->trans('history.extra.new_email', ['%value%' => $extraData['new_email']]);
+            $parts[] = $context->trans('history.extra.new_email', ['%value%' => $this->stringifyExtra($extraData['new_email'])]);
         }
 
         if (isset($extraData['method'])) {
-            $parts[] = $context->trans('history.extra.method', ['%value%' => $extraData['method']]);
+            $parts[] = $context->trans('history.extra.method', ['%value%' => $this->stringifyExtra($extraData['method'])]);
         }
 
         if (isset($extraData['ip'])) {
-            $parts[] = $context->trans('history.extra.ip', ['%value%' => $extraData['ip']]);
+            $parts[] = $context->trans('history.extra.ip', ['%value%' => $this->stringifyExtra($extraData['ip'])]);
         }
 
         if (isset($extraData['host'])) {
-            $parts[] = $context->trans('history.extra.host', ['%value%' => $extraData['host']]);
+            $parts[] = $context->trans('history.extra.host', ['%value%' => $this->stringifyExtra($extraData['host'])]);
         }
 
         return implode(', ', $parts);
+    }
+
+    private function stringifyExtra(mixed $value): string
+    {
+        if (is_scalar($value) || $value instanceof Stringable) {
+            return (string) $value;
+        }
+
+        return '';
     }
 
     private function decodeIp(string $ipBase64): string

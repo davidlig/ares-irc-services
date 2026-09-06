@@ -121,18 +121,30 @@ final class RestoreCommandTest extends TestCase
     }
 
     /** @param string[] $args */
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(array $args, array &$messages): NickServContext
     {
-        return $this->createContextWithSender(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', ''), $args, $messages);
+        return $this->createContextWithSender(new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o'), $args, $messages);
     }
 
     /** @param string[] $args */
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContextWithoutSender(array $args, array &$messages): NickServContext
     {
         return $this->createContextWithSender(null, $args, $messages);
     }
 
     /** @param string[] $args */
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContextWithSender(?SenderView $sender, array $args, array &$messages): NickServContext
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);

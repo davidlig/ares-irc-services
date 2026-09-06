@@ -38,7 +38,7 @@ final class PendingNickRestoreRegistryTest extends TestCase
     {
         $this->registry->mark('001ABCD');
 
-        $this->registry->peek('001ABCD');
+        self::assertTrue($this->registry->peek('001ABCD'));
         self::assertTrue($this->registry->peek('001ABCD'));
     }
 

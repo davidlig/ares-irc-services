@@ -9,6 +9,7 @@ use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
+use App\Application\NickServ\Security\NickServPermission;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickTargetValidator;
@@ -142,14 +143,19 @@ final class SasetCommand implements NickServCommandInterface, IrcopAuditableComm
         ];
     }
 
+    public function getNickRepository(): RegisteredNickRepositoryInterface
+    {
+        return $this->nickRepository;
+    }
+
     public function isOperOnly(): bool
     {
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
-        return 'nickserv.saset';
+        return NickServPermission::SASET;
     }
 
     public function getHelpParams(): array

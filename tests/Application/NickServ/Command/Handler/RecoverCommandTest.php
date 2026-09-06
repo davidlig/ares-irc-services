@@ -34,6 +34,9 @@ use Symfony\Component\Messenger\Envelope;
 #[CoversClass(RecoverCommand::class)]
 final class RecoverCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -296,7 +299,6 @@ final class RecoverCommandTest extends TestCase
         $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'recovery_token_subject' === $c['id']);
         self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');
         $subjectCall = reset($emailSubjectCalls);
-        self::assertSame('recovery_token_subject', $subjectCall['id']);
         self::assertSame('mail', $subjectCall['domain']);
         self::assertArrayHasKey('%bot%', $subjectCall['params']);
         self::assertSame('NickServ', $subjectCall['params']['%bot%']);

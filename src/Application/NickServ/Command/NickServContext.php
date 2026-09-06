@@ -37,7 +37,7 @@ readonly class NickServContext implements IrcopContextInterface
         private string $language,
         /** PHP timezone identifier (e.g. UTC, Europe/Madrid) used when displaying dates. */
         private string $timezone,
-        /** 'NOTICE'|'PRIVMSG' — how to send replies to the user. */
+        /** @var 'NOTICE'|'PRIVMSG' */
         private string $messageType,
         private NickServCommandRegistry $registry,
         private PendingVerificationRegistry $pendingVerificationRegistry,
@@ -123,6 +123,9 @@ readonly class NickServContext implements IrcopContextInterface
         return $this->recoveryTokenRegistry;
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
     public function trans(string $key, array $params = []): string
     {
         return $this->translator->trans($key, $this->wrapParams($params), 'nickserv', $this->language);
@@ -131,6 +134,8 @@ readonly class NickServContext implements IrcopContextInterface
     /**
      * Translate using an explicit language instead of the sender's language.
      * Useful when the message targets another user (e.g. KILL reason for a ghost).
+     *
+     * @param array<string, mixed> $params
      */
     public function transIn(string $key, array $params = [], string $language = ''): string
     {

@@ -168,4 +168,9 @@ readonly class NickDropService
     ): void {
         $this->hardDropNick($account, $reason, $operatorNick);
     }
+
+    public function getGuestPrefix(): string
+    {
+        return $this->guestPrefix;
+    }
 }

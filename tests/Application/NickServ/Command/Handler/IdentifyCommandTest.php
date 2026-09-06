@@ -33,6 +33,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(IdentifyCommand::class)]
 final class IdentifyCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,

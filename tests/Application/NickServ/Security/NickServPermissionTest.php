@@ -16,6 +16,7 @@ final class NickServPermissionTest extends TestCase
     #[Test]
     public function identifiedOwnerConstant(): void
     {
+        // @phpstan-ignore staticMethod.alreadyNarrowedType
         self::assertSame('nickserv_identified_owner', NickServPermission::IDENTIFIED_OWNER);
     }
 
@@ -26,6 +27,6 @@ final class NickServPermissionTest extends TestCase
         $constructor = $reflection->getConstructor();
         self::assertNotNull($constructor);
         $constructor->invoke($reflection->newInstanceWithoutConstructor());
-        self::assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 }

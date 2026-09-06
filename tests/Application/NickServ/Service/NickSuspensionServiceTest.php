@@ -54,7 +54,7 @@ final class NickSuspensionServiceTest extends TestCase
         $account = RegisteredNick::createPending('TestNick', 'hash', 'test@example.com', 'en', new DateTimeImmutable('+1 hour'));
         $account->activate();
 
-        $onlineUser = new SenderView('UID123', 'TestNick', 'user', 'host', 'server', 'ip', false, true, 'SID1', 'host', 'o', '');
+        $onlineUser = new SenderView('UID123', 'TestNick', 'user', 'host', 'server', 'ip', false, true, 'SID1', 'host', 'o');
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::once())
@@ -80,5 +80,17 @@ final class NickSuspensionServiceTest extends TestCase
         );
 
         $service->enforceSuspension($account);
+    }
+
+    #[Test]
+    public function exposesGuestPrefix(): void
+    {
+        $service = new NickSuspensionService(
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickForceService::class),
+            'Guest-',
+        );
+
+        self::assertSame('Guest-', $service->getGuestPrefix());
     }
 }

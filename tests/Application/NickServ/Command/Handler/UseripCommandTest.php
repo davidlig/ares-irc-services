@@ -121,7 +121,7 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function executeUserNotOnlineRepliesNotOnline(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -144,8 +144,8 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function executeUserOnlineRepliesWithIpAndHost(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', 'targetip', false, false, 'SID1', 'targeth', 'i', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', 'targetip', false, false, 'SID1', 'targeth', 'i');
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -168,10 +168,10 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function executeDecodesIpV4Correctly(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         // IP 192.168.1.1 in base64: base64(pack('C4', 192, 168, 1, 1)) = wKgBAQ==
         $ipBase64 = base64_encode(pack('C4', 192, 168, 1, 1));
-        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', $ipBase64, false, false, 'SID1', 'displayhost.example.com', 'i', '');
+        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', $ipBase64, false, false, 'SID1', 'displayhost.example.com', 'i');
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -195,8 +195,8 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function executeUsesDisplayHostWhenAvailable(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', 'targetip', false, false, 'SID1', 'my.vhost.example.com', 'i', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', 'targetip', false, false, 'SID1', 'my.vhost.example.com', 'i');
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -220,11 +220,11 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function executeDecodesIpV6Correctly(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         // IPv6 address in base64: 2001:0db8:85a3::8a2e:0370:7334
         $ipV6 = '20010db885a3000000008a2e03707334';
-        $ipBase64 = base64_encode(hex2bin($ipV6));
-        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', $ipBase64, false, false, 'SID1', 'targeth', 'i', '');
+        $ipBase64 = base64_encode(hex2bin($ipV6) ?: '');
+        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', $ipBase64, false, false, 'SID1', 'targeth', 'i');
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -248,9 +248,9 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function executeReturnsOriginalIpWhenDecodeFails(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $invalidBase64 = '!!invalid-base64!!';
-        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', $invalidBase64, false, false, 'SID1', 'targeth', 'i', '');
+        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', $invalidBase64, false, false, 'SID1', 'targeth', 'i');
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -274,10 +274,10 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function executeReturnsOriginalIpWhenLengthNot4Or16(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         // 8 bytes (not IPv4 4 bytes or IPv6 16 bytes)
         $ipBase64 = base64_encode('12345678');
-        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', $ipBase64, false, false, 'SID1', 'targeth', 'i', '');
+        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'targeth', 'targetc', $ipBase64, false, false, 'SID1', 'targeth', 'i');
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -305,6 +305,9 @@ final class UseripCommandTest extends TestCase
         );
     }
 
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -353,8 +356,8 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function getAuditDataReturnsDataAfterSuccessfulExecute(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
-        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'hostname.example.com', 'targetc', 'targetip', false, false, 'SID1', 'my.vhost.example.com', 'i', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
+        $target = new SenderView('UID2', 'TargetUser', 'targeti', 'hostname.example.com', 'targetc', 'targetip', false, false, 'SID1', 'my.vhost.example.com', 'i');
         $messages = [];
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $t, string $m) use (&$messages): void {
@@ -381,7 +384,7 @@ final class UseripCommandTest extends TestCase
     #[Test]
     public function getAuditDataReturnsNullWhenUserNotOnline(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);

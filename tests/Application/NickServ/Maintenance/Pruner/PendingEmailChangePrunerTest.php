@@ -21,7 +21,6 @@ final class PendingEmailChangePrunerTest extends TestCase
 
         $result = $pruner->prune();
 
-        self::assertIsInt($result);
         self::assertGreaterThanOrEqual(0, $result);
     }
 }

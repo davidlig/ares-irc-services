@@ -30,6 +30,32 @@ use ReflectionClass;
 final class NickProtectionServiceTest extends TestCase
 {
     #[Test]
+    public function returnsConfiguredDefaultLanguage(): void
+    {
+        $service = $this->createServiceWithDefaultLanguage('es');
+
+        self::assertSame('es', $service->getDefaultLanguage());
+    }
+
+    private function createServiceWithDefaultLanguage(string $language): NickProtectionService
+    {
+        return new NickProtectionService(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickServNotifierInterface::class),
+            new BurstState(),
+            new IdentifiedSessionRegistry(),
+            new SessionLanguageRegistry(),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(ForbiddenNickService::class),
+            $this->createStub(ActiveConnectionHolderInterface::class),
+            defaultLanguage: $language,
+        );
+    }
+
+    #[Test]
     public function onUserJoinedAddsPendingWhenBurstNotComplete(): void
     {
         $burstState = new BurstState();
@@ -813,7 +839,7 @@ final class NickProtectionServiceTest extends TestCase
 
         // IPv4 base64 encoded: 192.168.1.100
         // inet_pton('192.168.1.100') = bytes [C0,A8,01,64] = base64_encode -> 'wKgBZA=='
-        $ipBase64 = base64_encode(inet_pton('192.168.1.100'));
+        $ipBase64 = base64_encode(inet_pton('192.168.1.100') ?: '');
         $service->onUserQuit('UID1', 'QuitNick', 'Leaving', 'ident', 'display.host', 'real.isp.example', $ipBase64);
 
         self::assertSame('192.168.1.100', $account->getLastConnectIp());

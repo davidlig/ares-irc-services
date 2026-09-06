@@ -13,6 +13,9 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
  * Grants access when the sender is identified (+r) and is the owner of the account
  * (sender's nick matches the account nickname). Used for SET and other owner-only commands.
  */
+/**
+ * @extends Voter<string, NickServContext>
+ */
 final class NickServIdentifiedOwnerVoter extends Voter
 {
     protected function supports(string $attribute, mixed $subject): bool

@@ -39,7 +39,7 @@ final readonly class NickServCommandListener implements ServiceCommandListenerIn
         return $this->nickServBot->getNick();
     }
 
-    public function getServiceUid(): ?string
+    public function getServiceUid(): string
     {
         return $this->nickServBot->getUid();
     }

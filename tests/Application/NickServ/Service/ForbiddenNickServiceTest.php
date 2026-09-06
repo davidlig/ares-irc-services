@@ -71,7 +71,7 @@ final class ForbiddenNickServiceTest extends TestCase
     #[Test]
     public function forbidForcesRenameIfUserOnline(): void
     {
-        $onlineUser = new SenderView('UID123', 'BadNick', 'i', 'h', 'c', 'aBcD', false, false, 'SID1', 'h', 'o', '');
+        $onlineUser = new SenderView('UID123', 'BadNick', 'i', 'h', 'c', 'aBcD', false, false, 'SID1', 'h', 'o');
 
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->method('findByNick')->willReturn(null);
@@ -145,7 +145,7 @@ final class ForbiddenNickServiceTest extends TestCase
     public function updateReasonForcesRenameIfUserOnline(): void
     {
         $nick = RegisteredNick::createForbidden('BadNick', 'Old reason');
-        $onlineUser = new SenderView('UID123', 'BadNick', 'i', 'h', 'c', 'aBcD', false, false, 'SID1', 'h', 'o', '');
+        $onlineUser = new SenderView('UID123', 'BadNick', 'i', 'h', 'c', 'aBcD', false, false, 'SID1', 'h', 'o');
 
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->expects(self::once())->method('save');
@@ -260,7 +260,7 @@ final class ForbiddenNickServiceTest extends TestCase
     #[Test]
     public function notifyAndForceGuestFetchesNicknameFromUserLookupWhenNull(): void
     {
-        $onlineUser = new SenderView('UID123', 'BadNick', 'i', 'h', 'c', 'aBcD', false, false, 'SID1', 'h', 'o', '');
+        $onlineUser = new SenderView('UID123', 'BadNick', 'i', 'h', 'c', 'aBcD', false, false, 'SID1', 'h', 'o');
 
         $userLookup = $this->createMock(NetworkUserLookupPort::class);
         $userLookup->expects(self::once())->method('findByUid')->with('UID123')->willReturn($onlineUser);

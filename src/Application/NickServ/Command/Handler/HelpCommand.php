@@ -170,6 +170,9 @@ final readonly class HelpCommand implements NickServCommandInterface
         );
     }
 
+    /**
+     * @param array{name: string, desc_key: string, help_key: string, syntax_key: string, options_key?: string} $sub
+     */
     private function showTimezoneIndexHelp(NickServContext $context, string $parentName, array $sub): void
     {
         $adapter = $this->createAdapter($context);

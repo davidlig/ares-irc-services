@@ -90,6 +90,9 @@ final class SetEmailHandlerIrcopTest extends TestCase
         self::assertContains('register.email_already_used', $messages);
     }
 
+    /**
+     * @param string[] $messages
+     */
     private function createContext(array &$messages): NickServContext
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -101,7 +104,7 @@ final class SetEmailHandlerIrcopTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'AQ==', false, true, 'SID1', 'h', 'o', ''),
+            new SenderView('UID1', 'User', 'i', 'h', 'c', 'AQ==', false, true, 'SID1', 'h', 'o'),
             null,
             'SET',
             ['EMAIL', 'new@example.com'],

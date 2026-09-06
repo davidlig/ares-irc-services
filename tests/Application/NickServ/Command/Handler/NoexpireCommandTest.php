@@ -305,12 +305,16 @@ final class NoexpireCommandTest extends TestCase
         return $nick;
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(
         array $args,
         array &$messages,
         ?RegisteredNickRepositoryInterface $nickRepository = null,
     ): NickServContext {
-        $sender = new SenderView('UID123', 'TestOper', 'test', 'test', 'test', '127.0.0.1', true, true, 'SID001', 'test', 'o', '');
+        $sender = new SenderView('UID123', 'TestOper', 'test', 'test', 'test', '127.0.0.1', true, true, 'SID001', 'test', 'o');
 
         $notifier = $this->createStub(NickServNotifierInterface::class);
         $notifier->method('sendMessage')->willReturnCallback(static function (string $type, string $message) use (&$messages): void {

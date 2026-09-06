@@ -100,7 +100,7 @@ readonly class ForbiddenNickService
     {
         if (null === $nickname) {
             $user = $this->userLookup->findByUid($uid);
-            $nickname = $user?->nick ?? 'Unknown';
+            $nickname = $user->nick ?? 'Unknown';
         }
 
         $message = $this->translator->trans(

@@ -42,6 +42,7 @@ final readonly class PurgePendingDeletionNicknamesTask implements MaintenanceTas
         $expired = $this->nickRepository->findPendingDeletionBefore($threshold);
 
         foreach ($expired as $nick) {
+            // @phpstan-ignore instanceof.alwaysTrue
             if (!$nick instanceof RegisteredNick) {
                 continue;
             }

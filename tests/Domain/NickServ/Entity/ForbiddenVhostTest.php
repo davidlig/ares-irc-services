@@ -18,11 +18,14 @@ final class ForbiddenVhostTest extends TestCase
     #[Test]
     public function createForbiddenVhost(): void
     {
+        $before = new DateTimeImmutable();
         $forbidden = ForbiddenVhost::create('*.pirated.com', 123);
+        $after = new DateTimeImmutable();
 
         self::assertSame('*.pirated.com', $forbidden->getPattern());
         self::assertSame(123, $forbidden->getCreatedByNickId());
-        self::assertInstanceOf(DateTimeImmutable::class, $forbidden->getCreatedAt());
+        self::assertGreaterThanOrEqual($before, $forbidden->getCreatedAt());
+        self::assertLessThanOrEqual($after, $forbidden->getCreatedAt());
     }
 
     #[Test]

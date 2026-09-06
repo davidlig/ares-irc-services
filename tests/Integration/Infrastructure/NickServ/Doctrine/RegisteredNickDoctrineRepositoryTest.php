@@ -210,7 +210,7 @@ final class RegisteredNickDoctrineRepositoryTest extends DoctrineIntegrationTest
             ->update(RegisteredNick::class, 'n')
             ->set('n.registeredAt', ':date')
             ->where('n.nicknameLower = :name')
-            ->setParameter('date', new DateTimeImmutable('-60 days'))
+            ->setParameter('date', new DateTimeImmutable('-60 days')->format('Y-m-d H:i:s'))
             ->setParameter('name', 'inactive')
             ->getQuery()
             ->execute();

@@ -21,6 +21,7 @@ final readonly class PhpPasswordHasher implements PasswordHasherInterface
         // Cannot test password_hash failure in unit tests.
         // Returns false only on memory exhaustion or invalid algo constant.
         // PASSWORD_BCRYPT is always valid, and memory exhaustion would kill the process.
+        // @phpstan-ignore identical.alwaysFalse
         if (false === $hash) {
             throw new RuntimeException('Password hashing failed.');
         }

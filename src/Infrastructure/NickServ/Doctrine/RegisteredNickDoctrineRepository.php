@@ -76,16 +76,18 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->andWhere('COALESCE(n.lastSeenAt, n.registeredAt) < :threshold')
             ->andWhere('n.noExpire = false')
             ->setParameter('status', NickStatus::Registered)
-            ->setParameter('threshold', $threshold);
+            ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
+        /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();
 
-        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick);
+        /* @var array<RegisteredNick> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
     }
 
     public function deleteExpiredPending(): int
     {
-        return (int) $this->em
+        $result = $this->em
             ->createQuery(
                 'DELETE FROM App\Domain\NickServ\Entity\RegisteredNick n
                  WHERE n.status = :status
@@ -93,8 +95,10 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
                  AND n.expiresAt < :now'
             )
             ->setParameter('status', NickStatus::Pending)
-            ->setParameter('now', new DateTimeImmutable())
+            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'))
             ->execute();
+
+        return is_numeric($result) ? (int) $result : 0;
     }
 
     public function findByStatus(NickStatus $status): array
@@ -113,11 +117,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->andWhere('n.suspendedUntil IS NOT NULL')
             ->andWhere('n.suspendedUntil < :now')
             ->setParameter('status', NickStatus::Suspended)
-            ->setParameter('now', new DateTimeImmutable());
+            ->setParameter('now', new DateTimeImmutable()->format('Y-m-d H:i:s'));
 
+        /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();
 
-        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick);
+        /* @var array<RegisteredNick> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
     }
 
     public function findPendingDeletionBefore(DateTimeImmutable $threshold): array
@@ -129,11 +135,13 @@ class RegisteredNickDoctrineRepository implements RegisteredNickRepositoryInterf
             ->andWhere('n.pendingDeletionAt IS NOT NULL')
             ->andWhere('n.pendingDeletionAt <= :threshold')
             ->setParameter('status', NickStatus::PendingDeletion)
-            ->setParameter('threshold', $threshold);
+            ->setParameter('threshold', $threshold->format('Y-m-d H:i:s'));
 
+        /** @var array<mixed> $result */
         $result = $qb->getQuery()->getResult();
 
-        return array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick);
+        /* @var array<RegisteredNick> */
+        return array_values(array_filter($result, static fn ($row): bool => $row instanceof RegisteredNick));
     }
 
     public function all(): array

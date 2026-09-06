@@ -15,6 +15,7 @@ use App\Application\NickServ\Service\ForbiddenVhostService;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
+use function assert;
 use function count;
 use function sprintf;
 use function strtoupper;
@@ -78,7 +79,7 @@ final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditab
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::FORBIDVHOST;
     }
@@ -145,6 +146,7 @@ final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditab
 
     private function executeAdd(NickServContext $context, string $pattern): CommandOutcome
     {
+        assert(null !== $context->sender);
         $creatorNickId = $context->senderAccount?->getId();
         $this->forbiddenVhostService->forbid($pattern, $creatorNickId);
 
@@ -180,6 +182,7 @@ final class ForbidvhostCommand implements NickServCommandInterface, IrcopAuditab
             return CommandOutcome::rejected();
         }
 
+        assert(null !== $context->sender);
         $this->logger->info('Vhost pattern unforbidden via FORBIDVHOST DEL', [
             'operator' => $context->sender->nick,
             'pattern' => $pattern,

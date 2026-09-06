@@ -47,4 +47,9 @@ readonly class NickSuspensionService
 
         $this->forceService->forceGuestNick($onlineUser->uid, null, 'suspension');
     }
+
+    public function getGuestPrefix(): string
+    {
+        return $this->guestPrefix;
+    }
 }

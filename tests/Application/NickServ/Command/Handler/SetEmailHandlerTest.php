@@ -34,9 +34,10 @@ final class SetEmailHandlerTest extends TestCase
         NickServNotifierInterface $notifier,
         TranslationInterface $translator,
         string $value,
+        bool $withoutSender = false,
     ): NickServContext {
         return new NickServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             null,
             'SET',
             ['EMAIL', $value],
@@ -165,7 +166,6 @@ final class SetEmailHandlerTest extends TestCase
         $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'email_change_token_subject' === $c['id']);
         self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');
         $subjectCall = reset($emailSubjectCalls);
-        self::assertSame('email_change_token_subject', $subjectCall['id']);
         self::assertSame('mail', $subjectCall['domain']);
         self::assertArrayHasKey('%bot%', $subjectCall['params']);
         self::assertSame('NickServ', $subjectCall['params']['%bot%']);
@@ -347,6 +347,60 @@ final class SetEmailHandlerTest extends TestCase
         $handler->handle($this->createContext($notifier, $translator, 'new@example.com'), $account, 'new@example.com');
 
         self::assertSame(['error.not_identified'], $messages);
+    }
+
+    #[Test]
+    public function confirmedChangeWithoutSenderStopsBeforeUpdatingEmail(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getNickname')->willReturn('TestNick');
+        $account->method('getEmail')->willReturn('old@example.com');
+        $account->expects(self::never())->method('changeEmail');
+        $pending = new PendingEmailChangeRegistry();
+        $pending->store('TestNick', 'new@example.com', 'token');
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByEmail')->willReturn(null);
+
+        $handler = new SetEmailHandler(
+            $nickRepository,
+            $pending,
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class),
+        );
+
+        $handler->handle(
+            $this->createContext($this->createStub(NickServNotifierInterface::class), $this->createStub(TranslationInterface::class), 'new@example.com token', true),
+            $account,
+            'new@example.com token',
+        );
+    }
+
+    #[Test]
+    public function directChangeWithoutSenderStopsBeforeUpdatingEmail(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->method('getEmail')->willReturn('old@example.com');
+        $account->expects(self::never())->method('changeEmail');
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $nickRepository->method('findByEmail')->willReturn(null);
+
+        $handler = new SetEmailHandler(
+            $nickRepository,
+            new PendingEmailChangeRegistry(),
+            $this->createStub(AsyncMessageDispatcherInterface::class),
+            $this->createStub(TranslationInterface::class),
+            $this->createStub(LoggerInterface::class),
+            $this->createStub(EventBusInterface::class),
+        );
+
+        $handler->handle(
+            $this->createContext($this->createStub(NickServNotifierInterface::class), $this->createStub(TranslationInterface::class), 'new@example.com', true),
+            $account,
+            'new@example.com',
+            isIrcopMode: true,
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

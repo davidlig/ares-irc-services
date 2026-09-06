@@ -21,6 +21,7 @@ use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+use function assert;
 use function count;
 use function sprintf;
 
@@ -126,9 +127,14 @@ final readonly class RecoverCommand implements NickServCommandInterface
             return;
         }
 
+        assert(null !== $account);
+
         $this->sendRecoveryToken($context, $targetNick, $account);
     }
 
+    /**
+     * @return array{key: string, params: array<string, mixed>}|null
+     */
     private function validateRecoverRequest(NickServContext $context, string $targetNick, ?RegisteredNick $account): ?array
     {
         if (null === $account) {
@@ -146,6 +152,9 @@ final readonly class RecoverCommand implements NickServCommandInterface
         return $result;
     }
 
+    /**
+     * @return array{key: string, params: array<string, mixed>}|null
+     */
     private function validateRecoverThrottle(NickServContext $context, string $targetNick): ?array
     {
         $registry = $context->getRecoveryTokenRegistry();
@@ -164,6 +173,9 @@ final readonly class RecoverCommand implements NickServCommandInterface
 
     private function sendRecoveryToken(NickServContext $context, string $targetNick, RegisteredNick $account): void
     {
+        $email = $account->getEmail();
+        assert(null !== $email && '' !== $email);
+
         $registry = $context->getRecoveryTokenRegistry();
         $token = SecureToken::hex(32);
         $expiresAt = new DateTimeImmutable(sprintf('+%d seconds', $this->recoverTokenTtlSeconds));
@@ -177,11 +189,11 @@ final readonly class RecoverCommand implements NickServCommandInterface
                 '%token%' => $token,
                 '%bot%' => $context->getNotifier()->getNick(),
             ], 'mail', $locale);
-            $this->messageBus->dispatch(new SendEmail($account->getEmail(), $subject, $body));
+            $this->messageBus->dispatch(new SendEmail($email, $subject, $body));
         } catch (Throwable $e) {
             $this->logger->error('NickServ RECOVER: failed to dispatch recovery email', [
                 'nick' => $targetNick,
-                'recipient' => $account->getEmail(),
+                'recipient' => $email,
                 'exception' => $e,
             ]);
             $context->reply('error.mail_failed');
@@ -190,7 +202,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
         }
 
         $registry->recordRecover($targetNick);
-        $context->reply('recover.email_sent', ['email_hint' => EmailMasker::mask($account->getEmail())]);
+        $context->reply('recover.email_sent', ['email_hint' => EmailMasker::mask($email)]);
     }
 
     private function consumeToken(NickServContext $context, string $targetNick, string $token, ?RegisteredNick $account): void
@@ -202,9 +214,14 @@ final readonly class RecoverCommand implements NickServCommandInterface
             return;
         }
 
+        assert(null !== $account);
+
         $this->executeRecoverConsume($context, $targetNick, $account);
     }
 
+    /**
+     * @return array{key: string, params: array<string, mixed>}|null
+     */
     private function validateRecoverConsume(NickServContext $context, string $targetNick, string $token, ?RegisteredNick $account): ?array
     {
         if (null === $account) {
@@ -231,12 +248,15 @@ final readonly class RecoverCommand implements NickServCommandInterface
 
     private function executeRecoverConsume(NickServContext $context, string $targetNick, RegisteredNick $account): void
     {
+        $sender = $context->sender;
+        assert(null !== $sender);
+
         $newPassword = SecureToken::hex(12);
         $account->changePasswordWithHasher($newPassword, $this->passwordHasher);
         $this->nickRepository->save($account);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new NickPasswordProvidedEvent(
@@ -250,7 +270,7 @@ final readonly class RecoverCommand implements NickServCommandInterface
             nickId: $account->getId(),
             nickname: $targetNick,
             changedByOwner: true,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,

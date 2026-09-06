@@ -363,7 +363,6 @@ final class NickProtectionSubscriberTest extends TestCase
         );
 
         $this->subscriber->onUserQuit($event);
-        self::assertTrue(true, 'No exception when delegating onUserQuit');
     }
 
     #[Test]
@@ -720,7 +719,6 @@ final class NickProtectionSubscriberTest extends TestCase
         );
 
         $subscriber->onIrcMessageProcessed(new IrcMessageProcessedEvent());
-        self::assertTrue(true);
     }
 
     private function createVhostSyncService(): IdentifiedUserVhostSyncService

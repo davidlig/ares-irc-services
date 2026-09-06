@@ -21,6 +21,9 @@ use function strtolower;
  * User is an IRCop with 'nickserv.saset' permission.
  * Root users always have access.
  */
+/**
+ * @extends Voter<string, NickServContext>
+ */
 final class NickServSasetVoter extends Voter
 {
     public function __construct(
@@ -28,6 +31,11 @@ final class NickServSasetVoter extends Voter
         private readonly RootUserRegistry $rootRegistry,
         private readonly OperIrcopRepositoryInterface $ircopRepository,
     ) {}
+
+    public function getIrcopRepository(): OperIrcopRepositoryInterface
+    {
+        return $this->ircopRepository;
+    }
 
     protected function supports(string $attribute, mixed $subject): bool
     {
@@ -46,6 +54,7 @@ final class NickServSasetVoter extends Voter
 
         // @codeCoverageIgnoreStart
         // Defensive: IrcServiceUser is always created with a valid SenderView
+        // @phpstan-ignore identical.alwaysFalse
         if (null === $sender) {
             return false;
         }

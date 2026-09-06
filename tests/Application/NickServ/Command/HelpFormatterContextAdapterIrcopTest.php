@@ -84,7 +84,7 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return $this->permission;
             }
@@ -156,9 +156,15 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
         return new ServiceNicknameRegistry([$provider1, $provider2, $provider3, $provider4]);
     }
 
+    /**
+     * @param string[] $permissions
+     */
     private function createPermissionRegistry(array $permissions): PermissionRegistry
     {
         $provider = new class($permissions) implements PermissionProviderInterface {
+            /**
+             * @param string[] $perms
+             */
             public function __construct(private array $perms) {}
 
             public function getServiceName(): string
@@ -166,6 +172,9 @@ final class HelpFormatterContextAdapterIrcopTest extends TestCase
                 return 'NickServ';
             }
 
+            /**
+             * @return string[]
+             */
             public function getPermissions(): array
             {
                 return $this->perms;

@@ -72,7 +72,7 @@ final class NickTargetValidatorTest extends TestCase
     {
         $nick = $this->createNickWithId('OperUser', 42);
 
-        $role = new OperRole('Admin', 'desc');
+        $role = OperRole::create('Admin', 'desc');
         $ircop = OperIrcop::create(42, $role);
 
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);

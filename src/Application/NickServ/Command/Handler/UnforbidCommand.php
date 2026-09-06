@@ -65,7 +65,7 @@ final class UnforbidCommand implements NickServCommandInterface, IrcopAuditableC
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::FORBID;
     }

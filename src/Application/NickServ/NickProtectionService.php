@@ -369,7 +369,7 @@ final readonly class NickProtectionService
 
     private function enforceGuestRename(RegisteredNick $account, SenderView $user, string $nick): void
     {
-        $language = $account->getLanguage() ?? $this->defaultLanguage;
+        $language = $account->getLanguage();
         $botName = $this->notifier->getNick();
 
         $warning = $this->translator->trans(
@@ -418,5 +418,10 @@ final readonly class NickProtectionService
         $ip = inet_ntop($binary);
 
         return false !== $ip ? $ip : '*';
+    }
+
+    public function getDefaultLanguage(): string
+    {
+        return $this->defaultLanguage;
     }
 }

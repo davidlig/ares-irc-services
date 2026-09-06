@@ -465,7 +465,7 @@ final class HelpFormatterContextAdapterTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return $this->permission;
             }

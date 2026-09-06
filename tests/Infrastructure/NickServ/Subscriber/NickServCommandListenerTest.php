@@ -373,6 +373,9 @@ final class NickServCommandListenerTest extends TestCase
         };
     }
 
+    /**
+     * @param array<int, NickServCommandInterface> $commands
+     */
     private function createNickServServiceWithCommands(array $commands): NickServService
     {
         $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);

@@ -7,6 +7,7 @@ namespace App\Application\NickServ;
 use App\Application\ApplicationPort\ServiceNicknameRegistry;
 use App\Application\Command\CommandOutcome;
 use App\Application\Event\CommandExecutedEvent;
+use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServCommandRegistry;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Command\NickServNotifierInterface;
@@ -21,8 +22,10 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
+use function assert;
 use function count;
 use function in_array;
+use function is_string;
 use function sprintf;
 
 use const PREG_SPLIT_NO_EMPTY;
@@ -60,8 +63,10 @@ final readonly class NickServService
      */
     public function dispatch(string $rawText, SenderView $sender): void
     {
-        $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY);
-        $cmdName = strtoupper(array_shift($parts) ?? '');
+        $parts = preg_split('/\s+/', trim($rawText), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $cmdPart = array_shift($parts);
+        $cmdName = strtoupper(is_string($cmdPart) ? $cmdPart : '');
+        /** @var list<string> $args */
         $args = $parts;
 
         if ('' === $cmdName) {
@@ -121,7 +126,7 @@ final readonly class NickServService
         );
     }
 
-    private function checkCommandPermissions(NickServContext $context, $handler): ?string
+    private function checkCommandPermissions(NickServContext $context, NickServCommandInterface $handler): ?string
     {
         $requiredPermission = $handler->getRequiredPermission();
         if (null !== $requiredPermission && !$this->authorizationChecker->isGranted($requiredPermission, $context)) {
@@ -137,8 +142,14 @@ final readonly class NickServService
         return null;
     }
 
-    private function executeHandlerAfterValidation(NickServContext $context, $handler, array $args): void
+    /**
+     * @param list<string> $args
+     */
+    private function executeHandlerAfterValidation(NickServContext $context, NickServCommandInterface $handler, array $args): void
     {
+        $sender = $context->sender;
+        assert(null !== $sender);
+
         if (count($args) < $handler->getMinArgs()) {
             $context->reply('error.syntax', [
                 'syntax' => $context->trans($handler->getSyntaxKey()),
@@ -148,7 +159,7 @@ final readonly class NickServService
         }
 
         if (null !== $context->senderAccount && $context->senderAccount->isPendingDeletion() && !in_array($handler->getName(), ['INFO', 'RESTORE', 'DROP'], true)) {
-            $context->reply('drop.pending_deletion', ['%nickname%' => $context->sender->nick]);
+            $context->reply('drop.pending_deletion', ['%nickname%' => $sender->nick]);
 
             return;
         }
@@ -157,7 +168,7 @@ final readonly class NickServService
 
         $this->logger->debug(sprintf(
             'NickServ: %s executed %s [args: %d]',
-            $context->sender->nick,
+            $sender->nick,
             $context->command,
             count($context->args),
         ));
@@ -166,7 +177,7 @@ final readonly class NickServService
         $this->eventDispatcher->dispatch(new CommandExecutedEvent(
             command: $handler,
             serviceName: $this->notifier->getServiceKey(),
-            operatorNick: $context->sender->nick,
+            operatorNick: $sender->nick,
             commandName: $context->command,
             permission: $requiredPermission,
             outcome: $result instanceof CommandOutcome ? $result : null,

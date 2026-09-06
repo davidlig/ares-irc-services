@@ -28,9 +28,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function is_string;
+
 #[CoversClass(InfoCommand::class)]
 final class InfoCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,
@@ -572,7 +577,7 @@ final class InfoCommandTest extends TestCase
         });
         $translator = $this->createStub(TranslationInterface::class);
         $translator->method('trans')->willReturnCallback(static function (string $id, array $params = []): string {
-            if (isset($params['date'])) {
+            if (isset($params['date']) && is_string($params['date'])) {
                 return $params['date'];
             }
 

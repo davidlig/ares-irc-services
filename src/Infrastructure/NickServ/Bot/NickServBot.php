@@ -143,7 +143,7 @@ final class NickServBot implements NickServNotifierInterface, ServiceNicknamePro
             return;
         }
         $sid = $this->getServerSid();
-        $cloakedHost = $sender?->cloakedHost ?? '';
+        $cloakedHost = null !== $sender ? $sender->cloakedHost : '';
         $module->getServiceActions()->setUserVhost($sid, $targetUid, $vhost, $cloakedHost);
 
         $this->userLookup->updateVhost($targetUid, '' === $vhost ? '*' : $vhost);

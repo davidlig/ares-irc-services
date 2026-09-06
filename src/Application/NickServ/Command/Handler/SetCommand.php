@@ -11,6 +11,7 @@ use App\Application\NickServ\SessionLanguageRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
 
 use function array_slice;
+use function assert;
 use function count;
 use function implode;
 use function in_array;
@@ -144,7 +145,7 @@ final class SetCommand implements NickServCommandInterface
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::IDENTIFIED_OWNER;
     }
@@ -243,6 +244,7 @@ final class SetCommand implements NickServCommandInterface
             return;
         }
 
+        assert(null !== $context->sender);
         $this->sessionLanguageRegistry->register($context->sender->uid, $lang);
         $context->reply('set.language.success', ['language' => $lang]);
     }

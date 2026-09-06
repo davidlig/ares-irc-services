@@ -19,6 +19,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
 use function array_slice;
+use function assert;
 use function implode;
 use function trim;
 
@@ -77,7 +78,7 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::FORBID;
     }
@@ -107,6 +108,8 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
 
     private function processForbid(NickServContext $context, string $targetNick, string $reason): CommandOutcome
     {
+        assert(null !== $context->sender);
+
         $protectability = $this->targetValidator->validate($targetNick);
 
         if (!$protectability->isAllowed()) {
@@ -156,6 +159,7 @@ final class ForbidCommand implements NickServCommandInterface, IrcopAuditableCom
         $nickname = $result->nickname;
 
         match ($result->status) {
+            NickProtectabilityStatus::Allowed => null,
             NickProtectabilityStatus::IsRoot => $context->reply('forbid.cannot_forbid_root', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsIrcop => $context->reply('forbid.cannot_forbid_oper', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsService => $context->reply('forbid.cannot_forbid_service', ['%nickname%' => $nickname]),

@@ -65,7 +65,7 @@ final class RestoreCommand implements NickServCommandInterface, IrcopAuditableCo
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::RESTORE;
     }

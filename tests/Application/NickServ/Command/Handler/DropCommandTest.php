@@ -144,7 +144,7 @@ final class DropCommandTest extends TestCase
     #[Test]
     public function executeWithSelfDropRepliesCannotDropSelf(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $nick = $this->createNickWithId('OperUser', 1);
 
         $messages = [];
@@ -267,7 +267,7 @@ final class DropCommandTest extends TestCase
     #[Test]
     public function executeWithIrcopNickRepliesCannotDropOper(): void
     {
-        $sender = new SenderView('UID1', 'AdminUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'AdminUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $nick = $this->createNickWithId('OperUser', 1);
 
         $messages = [];
@@ -294,7 +294,7 @@ final class DropCommandTest extends TestCase
     #[Test]
     public function executeWithAllowedNickDropsSuccessfully(): void
     {
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', true, true, 'SID1', 'h', 'o');
         $nick = $this->createNickWithId('TargetNick', 42);
 
         $messages = [];
@@ -460,6 +460,20 @@ final class DropCommandTest extends TestCase
         self::assertContains('drop.cannot_drop_service', $messages);
     }
 
+    #[Test]
+    public function protectedErrorDoesNotReplyForAllowedResult(): void
+    {
+        $method = new ReflectionClass(DropCommand::class)->getMethod('replyProtectabilityError');
+        $messages = [];
+        $method->invoke(
+            $this->createCommand(),
+            $this->createContext($this->createSender(), ['TargetNick'], $messages),
+            NickProtectabilityResult::allowed('TargetNick', null),
+        );
+
+        self::assertSame([], $messages);
+    }
+
     private function createCommand(): DropCommand
     {
         return new DropCommand(
@@ -472,7 +486,7 @@ final class DropCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
     private function createActivatedNick(string $nickname): RegisteredNick
@@ -495,6 +509,10 @@ final class DropCommandTest extends TestCase
         return $nick;
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,

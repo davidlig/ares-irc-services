@@ -16,13 +16,16 @@ final class NickDropEventTest extends TestCase
     #[Test]
     public function constructionAndProperties(): void
     {
+        $before = new DateTimeImmutable();
         $event = new NickDropEvent(1, 'TestNick', 'testnick', 'inactivity');
+        $after = new DateTimeImmutable();
 
         self::assertSame(1, $event->nickId);
         self::assertSame('TestNick', $event->nickname);
         self::assertSame('testnick', $event->nicknameLower);
         self::assertSame('inactivity', $event->reason);
-        self::assertNotNull($event->occurredAt);
+        self::assertGreaterThanOrEqual($before, $event->occurredAt);
+        self::assertLessThanOrEqual($after, $event->occurredAt);
     }
 
     #[Test]

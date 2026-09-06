@@ -22,6 +22,7 @@ use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use DateTimeImmutable;
 
 use function array_slice;
+use function assert;
 use function sprintf;
 use function strtolower;
 
@@ -79,7 +80,7 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::SUSPEND;
     }
@@ -91,6 +92,10 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
 
     public function execute(NickServContext $context): CommandOutcome
     {
+        if (null === $context->sender) {
+            return CommandOutcome::rejected();
+        }
+
         $reasonParts = array_slice($context->args, 2);
         $reason = trim(implode(' ', $reasonParts));
 
@@ -170,8 +175,11 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
 
         $this->suspensionService->enforceSuspension($account);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $sender = $context->sender;
+        assert(null !== $sender);
+
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new NickSuspendedEvent(
@@ -180,7 +188,7 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
             reason: $reason,
             duration: '0' === strtolower($durationStr) ? null : $durationStr,
             expiresAt: $expiresAt,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -209,6 +217,7 @@ final class SuspendCommand implements NickServCommandInterface, IrcopAuditableCo
         $nickname = $result->nickname;
 
         match ($result->status) {
+            NickProtectabilityStatus::Allowed => null,
             NickProtectabilityStatus::IsRoot => $context->reply('suspend.cannot_suspend_root', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsIrcop => $context->reply('suspend.cannot_suspend_oper', ['%nickname%' => $nickname]),
             NickProtectabilityStatus::IsService => $context->reply('suspend.cannot_suspend_service', ['%nickname%' => $nickname]),

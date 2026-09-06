@@ -12,6 +12,7 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 
+use function assert;
 use function in_array;
 use function strtoupper;
 
@@ -66,7 +67,7 @@ final class NoexpireCommand implements NickServCommandInterface, IrcopAuditableC
         return true;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::NOEXPIRE;
     }
@@ -114,6 +115,7 @@ final class NoexpireCommand implements NickServCommandInterface, IrcopAuditableC
         $targetNick = $context->args[0];
         $action = strtoupper($context->args[1]);
         $account = $this->nickRepository->findByNick($targetNick);
+        assert(null !== $account);
 
         $account->changeNoExpire($newValue);
         $this->nickRepository->save($account);

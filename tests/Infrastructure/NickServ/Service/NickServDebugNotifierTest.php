@@ -30,11 +30,13 @@ final class NickServDebugNotifierTest extends TestCase
         ?RootUserRegistry $rootRegistry = null,
         ?TranslatorInterface $translator = null,
         ?LoggerInterface $logger = null,
+        ?NetworkUserLookupPort $userLookup = null,
+        ?IdentifiedSessionRegistry $identifiedRegistry = null,
     ): NickServDebugNotifier {
         return new NickServDebugNotifier(
             $notifier ?? $this->createStub(NickServNotifierInterface::class),
-            $this->createStub(NetworkUserLookupPort::class),
-            new IdentifiedSessionRegistry(),
+            $userLookup ?? $this->createStub(NetworkUserLookupPort::class),
+            $identifiedRegistry ?? new IdentifiedSessionRegistry(),
             $ircopRepo ?? $this->createStub(OperIrcopRepositoryInterface::class),
             $rootRegistry ?? new RootUserRegistry(''),
             $nickRepo ?? $this->createStub(RegisteredNickRepositoryInterface::class),
@@ -51,6 +53,24 @@ final class NickServDebugNotifierTest extends TestCase
         $notifier = $this->createNotifier();
 
         self::assertSame('nickserv', $notifier->getServiceName());
+    }
+
+    #[Test]
+    public function getUserLookupReturnsConfiguredLookup(): void
+    {
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $notifier = $this->createNotifier(userLookup: $userLookup);
+
+        self::assertSame($userLookup, $notifier->getUserLookup());
+    }
+
+    #[Test]
+    public function getIdentifiedRegistryReturnsConfiguredRegistry(): void
+    {
+        $identifiedRegistry = new IdentifiedSessionRegistry();
+        $notifier = $this->createNotifier(identifiedRegistry: $identifiedRegistry);
+
+        self::assertSame($identifiedRegistry, $notifier->getIdentifiedRegistry());
     }
 
     #[Test]
@@ -148,8 +168,13 @@ final class NickServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())
             ->method('trans')
-            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale) use (&$capturedMessage): string {
+            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale): string {
                 if ('debug.action_with_option' === $id) {
+                    self::assertIsString($params['%operator%']);
+                    self::assertIsString($params['%command%']);
+                    self::assertIsString($params['%target%']);
+                    self::assertIsString($params['%option%']);
+
                     return $params['%operator%'] . ' ' . $params['%command%'] . ' ' . $params['%target%'] . ' ' . $params['%option%'];
                 }
 
@@ -184,8 +209,11 @@ final class NickServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())
             ->method('trans')
-            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale) use (&$capturedMessage): string {
+            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale): string {
                 if ('debug.action_with_value' === $id) {
+                    self::assertIsString($params['%option%']);
+                    self::assertIsString($params['%value%']);
+
                     return $params['%option%'] . '=' . $params['%value%'];
                 }
 
@@ -219,8 +247,13 @@ final class NickServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())
             ->method('trans')
-            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale) use (&$capturedMessage): string {
+            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale): string {
                 if ('debug.action_with_option' === $id) {
+                    self::assertIsString($params['%operator%']);
+                    self::assertIsString($params['%command%']);
+                    self::assertIsString($params['%target%']);
+                    self::assertIsString($params['%option%']);
+
                     return $params['%operator%'] . ' ' . $params['%command%'] . ' ' . $params['%target%'] . ' Option=' . $params['%option%'];
                 }
 
@@ -254,11 +287,15 @@ final class NickServDebugNotifierTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->expects(self::atLeastOnce())
             ->method('trans')
-            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale) use (&$capturedMessage): string {
+            ->willReturnCallback(static function (string $id, array $params, string $domain, string $locale): string {
                 if ('debug.action_duration' === $id) {
+                    self::assertIsString($params['%duration%']);
+
                     return 'dur=' . $params['%duration%'];
                 }
                 if ('debug.prefix_reason' === $id) {
+                    self::assertIsString($params['%reason%']);
+
                     return 'r=' . $params['%reason%'];
                 }
 
@@ -356,11 +393,11 @@ final class NickServDebugNotifierTest extends TestCase
     #[Test]
     public function ensureChannelJoinedDoesNothing(): void
     {
-        $debug = $this->createNotifier();
+        $debug = $this->createNotifier(null);
 
         $debug->ensureChannelJoined();
 
-        self::assertTrue(true);
+        self::assertNull($debug->getDebugChannel());
     }
 
     #[Test]

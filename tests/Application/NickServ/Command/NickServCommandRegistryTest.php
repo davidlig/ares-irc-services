@@ -54,9 +54,15 @@ final class NickServCommandRegistryTest extends TestCase
         self::assertContains($h2, $all);
     }
 
+    /**
+     * @param string[] $aliases
+     */
     private function createHandler(string $name, array $aliases = []): NickServCommandInterface
     {
         return new class($name, $aliases) implements NickServCommandInterface {
+            /**
+             * @param string[] $aliases
+             */
             public function __construct(
                 private readonly string $name,
                 private readonly array $aliases,
@@ -67,6 +73,9 @@ final class NickServCommandRegistryTest extends TestCase
                 return $this->name;
             }
 
+            /**
+             * @return string[]
+             */
             public function getAliases(): array
             {
                 return $this->aliases;

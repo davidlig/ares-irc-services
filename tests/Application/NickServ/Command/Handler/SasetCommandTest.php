@@ -43,6 +43,9 @@ use Psr\Log\LoggerInterface;
 #[CoversClass(SasetCommand::class)]
 final class SasetCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,
@@ -276,7 +279,7 @@ final class SasetCommandTest extends TestCase
         $passwordHasher = $this->createStub(PasswordHasherInterface::class);
         $passwordHasher->method('hash')->willReturn('newhash');
         $setPassword = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class, $this->createStub(EventBusInterface::class)), $this->createStub(EventBusInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -404,7 +407,7 @@ final class SasetCommandTest extends TestCase
         $passwordHasher = $this->createStub(PasswordHasherInterface::class);
         $passwordHasher->method('hash')->willReturn('hash');
         $setPassword = new SetPasswordHandler($nickRepo, $passwordHasher, $this->createStub(EventBusInterface::class));
-        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class, $this->createStub(EventBusInterface::class)), $this->createStub(EventBusInterface::class));
+        $setEmail = new SetEmailHandler($nickRepo, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class));
         $setLanguage = new SetLanguageHandler($nickRepo);
         $setPrivate = new SetPrivateHandler($nickRepo);
         $setMsg = new SetMsgHandler($nickRepo);
@@ -442,6 +445,25 @@ final class SasetCommandTest extends TestCase
 
         $cmd = new SasetCommand($setPassword, $setEmail, $setLanguage, $setPrivate, $setMsg, $setTimezone, $setVhost, $nickRepo, $targetValidator);
         self::assertTrue($cmd->isOperOnly());
+    }
+
+    #[Test]
+    public function getNickRepositoryReturnsConfiguredRepository(): void
+    {
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $cmd = new SasetCommand(
+            new SetPasswordHandler($nickRepository, $this->createStub(PasswordHasherInterface::class), $this->createStub(EventBusInterface::class)),
+            new SetEmailHandler($nickRepository, new PendingEmailChangeRegistry(), $this->createStub(AsyncMessageDispatcherInterface::class), $this->createStub(TranslationInterface::class), $this->createStub(LoggerInterface::class), $this->createStub(EventBusInterface::class)),
+            new SetLanguageHandler($nickRepository),
+            new SetPrivateHandler($nickRepository),
+            new SetMsgHandler($nickRepository),
+            new SetTimezoneHandler($nickRepository),
+            new SetVhostHandler($nickRepository, new VhostValidator(), new VhostDisplayResolver(''), $this->createStub(NetworkUserLookupPort::class), $this->createStub(OperIrcopRepositoryInterface::class), $this->createStub(ForbiddenVhostRepositoryInterface::class), $this->createStub(EventBusInterface::class)),
+            $nickRepository,
+            $this->createStub(NickTargetValidator::class),
+        );
+
+        self::assertSame($nickRepository, $cmd->getNickRepository());
     }
 
     #[Test]

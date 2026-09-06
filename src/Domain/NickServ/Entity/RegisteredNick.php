@@ -412,6 +412,8 @@ class RegisteredNick
 
     /**
      * Whether services send messages to this account as PRIVMSG (true) or NOTICE (false).
+     *
+     * @return 'PRIVMSG'|'NOTICE'
      */
     public function getMessageType(): string
     {

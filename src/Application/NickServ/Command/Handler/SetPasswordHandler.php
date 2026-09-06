@@ -33,8 +33,13 @@ final readonly class SetPasswordHandler implements SetOptionHandlerInterface
         $account->changePasswordWithHasher($value, $this->passwordHasher);
         $this->nickRepository->save($account);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new NickPasswordProvidedEvent(
@@ -48,7 +53,7 @@ final readonly class SetPasswordHandler implements SetOptionHandlerInterface
             nickId: $account->getId(),
             nickname: $account->getNickname(),
             changedByOwner: !$isIrcopMode,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,

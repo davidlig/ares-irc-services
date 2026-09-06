@@ -52,6 +52,7 @@ final readonly class PurgeInactiveNicknamesTask implements MaintenanceTaskInterf
         $inactive = $this->nickRepository->findRegisteredInactiveSince($threshold);
 
         foreach ($inactive as $nick) {
+            // @phpstan-ignore instanceof.alwaysTrue
             if (!$nick instanceof RegisteredNick) {
                 continue;
             }

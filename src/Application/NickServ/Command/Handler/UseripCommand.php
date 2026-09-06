@@ -12,7 +12,6 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
 use App\Application\Port\NetworkUserLookupPort;
 
-use function sprintf;
 use function strlen;
 
 final class UseripCommand implements NickServCommandInterface, IrcopAuditableCommandInterface
@@ -66,7 +65,7 @@ final class UseripCommand implements NickServCommandInterface, IrcopAuditableCom
         return false;
     }
 
-    public function getRequiredPermission(): ?string
+    public function getRequiredPermission(): string
     {
         return NickServPermission::USERIP;
     }
@@ -120,9 +119,9 @@ final class UseripCommand implements NickServCommandInterface, IrcopAuditableCom
         $len = strlen($decoded);
 
         if (4 === $len) {
-            $parts = unpack('C4', $decoded);
+            $ip = inet_ntop($decoded);
 
-            return sprintf('%d.%d.%d.%d', $parts[1], $parts[2], $parts[3], $parts[4]);
+            return false !== $ip ? $ip : $ipBase64;
         }
 
         return 16 === $len ? bin2hex($decoded) : $ipBase64;

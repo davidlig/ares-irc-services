@@ -21,11 +21,7 @@ final class TimezoneHelpProviderTest extends TestCase
         $provider = new TimezoneHelpProvider();
         $regions = $provider->getRegions();
 
-        self::assertIsArray($regions);
         self::assertNotEmpty($regions);
-        foreach ($regions as $r) {
-            self::assertIsString($r);
-        }
     }
 
     #[Test]
@@ -36,7 +32,6 @@ final class TimezoneHelpProviderTest extends TestCase
         self::assertNotEmpty($regions);
 
         $tzs = $provider->getTimezonesForRegion($regions[0]);
-        self::assertIsArray($tzs);
         $sorted = $tzs;
         sort($sorted);
         self::assertSame($sorted, $tzs);

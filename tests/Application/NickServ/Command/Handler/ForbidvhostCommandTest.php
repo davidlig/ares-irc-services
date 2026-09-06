@@ -451,6 +451,10 @@ final class ForbidvhostCommandTest extends TestCase
         );
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(array $args, array &$messages): NickServContext
     {
         $sender = new SenderView('UID123', 'TestUser', 'ident', 'host', 'name', 'ip');
@@ -480,6 +484,10 @@ final class ForbidvhostCommandTest extends TestCase
         );
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContextWithNullSender(array $args, array &$messages): NickServContext
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -526,6 +534,10 @@ final class ForbidvhostCommandTest extends TestCase
         return new ServiceNicknameRegistry([$provider]);
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContextWithSenderAccount(array $args, array &$messages, int $senderAccountId): NickServContext
     {
         $sender = new SenderView('UID123', 'TestUser', 'ident', 'host', 'name', 'ip');

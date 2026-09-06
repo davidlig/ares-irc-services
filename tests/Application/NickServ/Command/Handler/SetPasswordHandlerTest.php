@@ -30,9 +30,10 @@ final class SetPasswordHandlerTest extends TestCase
     private function createContext(
         NickServNotifierInterface $notifier,
         TranslationInterface $translator,
+        bool $withoutSender = false,
     ): NickServContext {
         return new NickServContext(
-            new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
+            $withoutSender ? null : new SenderView('UID1', 'User', 'i', 'h', 'c', 'ip'),
             null,
             'SET',
             ['PASSWORD', ''],
@@ -90,6 +91,24 @@ final class SetPasswordHandlerTest extends TestCase
         $handler->handle($this->createContext($notifier, $translator), $account, 'newpass');
 
         self::assertSame(['set.password.success'], $messages);
+    }
+
+    #[Test]
+    public function validValueWithoutSenderStopsAfterSaving(): void
+    {
+        $account = $this->createMock(RegisteredNick::class);
+        $account->expects(self::once())->method('changePasswordWithHasher');
+        $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
+        $nickRepository->expects(self::once())->method('save')->with($account);
+        $eventBus = $this->createMock(EventBusInterface::class);
+        $eventBus->expects(self::never())->method('dispatch');
+
+        $handler = new SetPasswordHandler($nickRepository, $this->createStub(PasswordHasherInterface::class), $eventBus);
+        $handler->handle(
+            $this->createContext($this->createStub(NickServNotifierInterface::class), $this->createStub(TranslationInterface::class), true),
+            $account,
+            'newpass',
+        );
     }
 
     private function createServiceNicks(): ServiceNicknameRegistry

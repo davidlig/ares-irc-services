@@ -88,6 +88,9 @@ final class VerifyCommandTest extends TestCase
         ]);
     }
 
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,

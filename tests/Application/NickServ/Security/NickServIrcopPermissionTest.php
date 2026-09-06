@@ -17,9 +17,8 @@ final class NickServIrcopPermissionTest extends TestCase
     #[Test]
     public function implementsPermissionProviderInterface(): void
     {
-        $permission = new NickServIrcopPermission();
-
-        self::assertInstanceOf(PermissionProviderInterface::class, $permission);
+        // @phpstan-ignore staticMethod.alreadyNarrowedType
+        self::assertInstanceOf(PermissionProviderInterface::class, new NickServIrcopPermission());
     }
 
     #[Test]

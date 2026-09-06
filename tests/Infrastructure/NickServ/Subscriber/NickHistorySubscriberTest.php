@@ -35,6 +35,16 @@ final class NickHistorySubscriberTest extends TestCase
     }
 
     #[Test]
+    public function getNickRepositoryReturnsConfiguredRepository(): void
+    {
+        $historyRepository = $this->createStub(NickHistoryRepositoryInterface::class);
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $subscriber = new NickHistorySubscriber(new NickHistoryService($historyRepository), $nickRepository);
+
+        self::assertSame($nickRepository, $subscriber->getNickRepository());
+    }
+
+    #[Test]
     public function onNickSuspendedRecordsHistory(): void
     {
         $historyRepo = $this->createMock(NickHistoryRepositoryInterface::class);

@@ -45,6 +45,7 @@ final class NickHistoryEventsTest extends TestCase
         self::assertSame('TestNick', $event->nickname);
         self::assertSame('Spamming', $event->reason);
         self::assertSame('7d', $event->duration);
+        self::assertNotNull($event->expiresAt);
         self::assertSame('2024-01-22 10:30:00', $event->expiresAt->format('Y-m-d H:i:s'));
         self::assertSame('OperNick', $event->performedBy);
         self::assertSame(456, $event->performedByNickId);

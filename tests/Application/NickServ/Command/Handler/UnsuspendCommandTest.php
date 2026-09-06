@@ -110,6 +110,18 @@ final class UnsuspendCommandTest extends TestCase
     }
 
     #[Test]
+    public function executeWithNullSenderReturnsRejected(): void
+    {
+        $messages = [];
+        $repository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $outcome = new UnsuspendCommand($repository, $this->createStub(EventBusInterface::class))
+            ->execute($this->createContext(null, [], $messages, nickRepository: $repository));
+
+        self::assertFalse($outcome->success);
+        self::assertSame([], $messages);
+    }
+
+    #[Test]
     public function executeWithNonexistentNickRepliesNotRegistered(): void
     {
         $sender = $this->createSender();
@@ -253,7 +265,7 @@ final class UnsuspendCommandTest extends TestCase
                 return $event;
             });
 
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
@@ -288,7 +300,7 @@ final class UnsuspendCommandTest extends TestCase
                 return $event;
             });
 
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'invalid!base64', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'invalid!base64', false, true, 'SID1', 'h', 'o');
 
         $context = $this->createContext($sender, ['TestNick'], $messages, nickRepository: $nickRepository);
 
@@ -332,9 +344,13 @@ final class UnsuspendCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,

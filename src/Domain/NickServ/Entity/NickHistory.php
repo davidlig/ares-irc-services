@@ -28,8 +28,12 @@ final class NickHistory
 
     private readonly string $message;
 
+    /** @var array<string, mixed> */
     private readonly array $extraData;
 
+    /**
+     * @param array<string, mixed> $extraData
+     */
     public function __construct(
         int $id,
         int $nickId,
@@ -50,6 +54,9 @@ final class NickHistory
         $this->extraData = $extraData;
     }
 
+    /**
+     * @param array<string, mixed> $extraData
+     */
     public static function record(
         int $nickId,
         string $action,
@@ -106,6 +113,9 @@ final class NickHistory
         return $this->message;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getExtraData(): array
     {
         return $this->extraData;

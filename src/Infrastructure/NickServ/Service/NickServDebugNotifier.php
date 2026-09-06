@@ -37,6 +37,16 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
         private LoggerInterface $logger,
     ) {}
 
+    public function getUserLookup(): NetworkUserLookupPort
+    {
+        return $this->userLookup;
+    }
+
+    public function getIdentifiedRegistry(): IdentifiedSessionRegistry
+    {
+        return $this->identifiedRegistry;
+    }
+
     public function getServiceName(): string
     {
         return 'nickserv';
@@ -51,13 +61,16 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
 
     public function notify(string $message): void
     {
-        if (!$this->isConfigured()) {
+        if (null === $this->debugChannel || '' === $this->debugChannel) {
             return;
         }
 
         $this->notifier->sendMessage($this->debugChannel, $message, 'NOTICE');
     }
 
+    /**
+     * @param array<string, mixed> $extra
+     */
     public function log(
         string $operator,
         string $command,
@@ -74,6 +87,9 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
         }
     }
 
+    /**
+     * @param array<string, mixed> $extra
+     */
     private function logToFile(
         string $operator,
         string $command,
@@ -108,6 +124,9 @@ final readonly class NickServDebugNotifier implements ServiceDebugNotifierInterf
         $this->logger->info($command, $context);
     }
 
+    /**
+     * @param array<string, mixed> $extra
+     */
     private function logToChannel(
         string $operator,
         string $command,

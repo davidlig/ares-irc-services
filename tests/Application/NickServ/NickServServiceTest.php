@@ -33,7 +33,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use stdClass;
+
+use function is_string;
+
+final class NickServTestContextHolder
+{
+    public ?NickServContext $context = null;
+}
 
 #[CoversClass(NickServService::class)]
 final class NickServServiceTest extends TestCase
@@ -116,11 +122,10 @@ final class NickServServiceTest extends TestCase
         $logger = $this->createStub(LoggerInterface::class);
         $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
 
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new NickServTestContextHolder();
         $handler = new class($contextHolder) implements NickServCommandInterface {
             public function __construct(
-                private readonly stdClass $contextHolder,
+                private readonly NickServTestContextHolder $contextHolder,
             ) {}
 
             public function getName(): string
@@ -300,11 +305,10 @@ final class NickServServiceTest extends TestCase
     public function repliesPermissionDeniedWhenRequiredPermissionNotGranted(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new NickServTestContextHolder();
 
         $permissionHandler = new class($contextHolder) implements NickServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly NickServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -351,7 +355,7 @@ final class NickServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return NickServPermission::IDENTIFIED_OWNER;
             }
@@ -404,11 +408,10 @@ final class NickServServiceTest extends TestCase
     public function repliesNotIdentifiedWhenRequiredPermissionIdentifiedAndUserNotIdentified(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new NickServTestContextHolder();
 
         $identifiedHandler = new class($contextHolder) implements NickServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly NickServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -455,7 +458,7 @@ final class NickServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'IDENTIFIED';
             }
@@ -508,11 +511,10 @@ final class NickServServiceTest extends TestCase
     public function repliesSyntaxWhenArgsBelowMinArgs(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new NickServTestContextHolder();
 
         $minArgsHandler = new class($contextHolder) implements NickServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly NickServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -577,7 +579,7 @@ final class NickServServiceTest extends TestCase
 
         $translator = $this->createMock(TranslationInterface::class);
         $translator->expects(self::atLeastOnce())->method('trans')->willReturnCallback(
-            static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . ($params['syntax'] ?? '') : $id
+            static fn (string $id, array $params = []): string => 'error.syntax' === $id ? 'Syntax: ' . (is_string($params['syntax'] ?? null) ? $params['syntax'] : '') : $id
         );
         $notifier = $this->createMock(NickServNotifierInterface::class);
         $notifier->expects(self::once())->method('sendMessage')->with($sender->uid, self::stringContains('Syntax:'), 'NOTICE');
@@ -697,11 +699,10 @@ final class NickServServiceTest extends TestCase
     public function dispatchesCommandExecutedEventWithSuccessfulOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new NickServTestContextHolder();
 
         $auditableHandler = new class($contextHolder) implements NickServCommandInterface, IrcopAuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly NickServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -748,7 +749,7 @@ final class NickServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'NICKSERV_ADMIN';
             }
@@ -829,11 +830,10 @@ final class NickServServiceTest extends TestCase
     public function dispatchesCommandExecutedEventForNonAuditableHandler(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new NickServTestContextHolder();
 
         $nonAuditableHandler = new class($contextHolder) implements NickServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly NickServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -880,7 +880,7 @@ final class NickServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'NICKSERV_OP';
             }
@@ -942,11 +942,10 @@ final class NickServServiceTest extends TestCase
     public function dispatchesCommandExecutedEventWithRejectedOutcome(): void
     {
         $sender = new SenderView('UID1', 'Nick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new NickServTestContextHolder();
 
         $auditableHandler = new class($contextHolder) implements NickServCommandInterface, IrcopAuditableCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly NickServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -993,7 +992,7 @@ final class NickServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return 'NICKSERV_ADMIN';
             }
@@ -1057,11 +1056,10 @@ final class NickServServiceTest extends TestCase
     public function blocksNormalCommandsWhenAccountIsPendingDeletion(): void
     {
         $sender = new SenderView('UID1', 'DroppedNick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-        $contextHolder = new stdClass();
-        $contextHolder->context = null;
+        $contextHolder = new NickServTestContextHolder();
 
         $handler = new class($contextHolder) implements NickServCommandInterface {
-            public function __construct(private readonly stdClass $holder) {}
+            public function __construct(private readonly NickServTestContextHolder $holder) {}
 
             public function getName(): string
             {
@@ -1108,7 +1106,7 @@ final class NickServServiceTest extends TestCase
                 return false;
             }
 
-            public function getRequiredPermission(): ?string
+            public function getRequiredPermission(): string
             {
                 return NickServPermission::IDENTIFIED_OWNER;
             }
@@ -1173,12 +1171,11 @@ final class NickServServiceTest extends TestCase
     {
         foreach (['INFO', 'RESTORE', 'DROP'] as $allowedCommand) {
             $sender = new SenderView('UID1', 'DroppedNick', 'ident', 'host', 'cloak', '127.0.0.1', true, false, '001', 'cloak');
-            $contextHolder = new stdClass();
-            $contextHolder->context = null;
+            $contextHolder = new NickServTestContextHolder();
 
             $handler = new class($contextHolder, $allowedCommand) implements NickServCommandInterface {
                 public function __construct(
-                    private readonly stdClass $holder,
+                    private readonly NickServTestContextHolder $holder,
                     private readonly string $name,
                 ) {}
 

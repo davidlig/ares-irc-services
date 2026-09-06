@@ -35,7 +35,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
     public function handle(NickServContext $context, RegisteredNick $account, string $value, bool $isIrcopMode = false): void
     {
         $parts = explode(' ', $value, 2);
-        $newEmail = trim($parts[0] ?? '');
+        $newEmail = trim($parts[0]);
         $token = isset($parts[1]) ? trim($parts[1]) : null;
 
         $errorKey = $this->validateEmailInput($context, $newEmail, $account);
@@ -51,7 +51,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
     private function validateEmailInput(NickServContext $context, string $newEmail, RegisteredNick $account): ?string
     {
         if ('' === $newEmail) {
-            return $context->trans('error.syntax', ['syntax' => $context->trans('set.email.syntax')], 'nickserv', $context->getLanguage());
+            return $context->trans('error.syntax', ['syntax' => $context->trans('set.email.syntax')]);
         }
 
         $result = match (true) {
@@ -65,11 +65,13 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
 
     private function dispatchEmailChange(NickServContext $context, RegisteredNick $account, string $newEmail, ?string $token, bool $isIrcopMode): void
     {
-        $_ = match (true) {
-            $isIrcopMode => $this->changeEmailDirectly($context, $account, $newEmail),
-            null !== $token && '' !== $token => $this->confirmEmailChange($context, $account, $newEmail, $token),
-            default => $this->requestEmailChange($context, $account, $newEmail),
-        };
+        if ($isIrcopMode) {
+            $this->changeEmailDirectly($context, $account, $newEmail);
+        } elseif (null !== $token && '' !== $token) {
+            $this->confirmEmailChange($context, $account, $newEmail, $token);
+        } else {
+            $this->requestEmailChange($context, $account, $newEmail);
+        }
     }
 
     private function requestEmailChange(NickServContext $context, RegisteredNick $account, string $newEmail): void
@@ -130,12 +132,17 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             return;
         }
 
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $oldEmail = $account->getEmail();
         $account->changeEmail($newEmail);
         $this->nickRepository->save($account);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new NickEmailChangedEvent(
@@ -144,7 +151,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             oldEmail: $oldEmail,
             newEmail: $newEmail,
             changedByOwner: true,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,
@@ -155,6 +162,11 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
 
     private function changeEmailDirectly(NickServContext $context, RegisteredNick $account, string $newEmail): void
     {
+        $sender = $context->sender;
+        if (null === $sender) {
+            return;
+        }
+
         $existingByEmail = $this->nickRepository->findByEmail($newEmail);
         if (null !== $existingByEmail && $existingByEmail->getId() !== $account->getId()) {
             $context->reply('register.email_already_used', ['email' => $newEmail]);
@@ -166,8 +178,8 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
         $account->changeEmail($newEmail);
         $this->nickRepository->save($account);
 
-        $ip = $this->decodeIp($context->sender->ipBase64);
-        $host = sprintf('%s@%s', $context->sender->ident, $context->sender->hostname);
+        $ip = $this->decodeIp($sender->ipBase64);
+        $host = sprintf('%s@%s', $sender->ident, $sender->hostname);
         $performedByNickId = $context->senderAccount?->getId();
 
         $this->eventDispatcher->dispatch(new NickEmailChangedEvent(
@@ -176,7 +188,7 @@ final readonly class SetEmailHandler implements SetOptionHandlerInterface
             oldEmail: $oldEmail,
             newEmail: $newEmail,
             changedByOwner: false,
-            performedBy: $context->sender->nick,
+            performedBy: $sender->nick,
             performedByNickId: $performedByNickId,
             performedByIp: $ip,
             performedByHost: $host,

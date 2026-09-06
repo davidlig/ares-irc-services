@@ -119,6 +119,7 @@ final class PendingEmailChangeRegistryTest extends TestCase
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('entries');
 
+        /** @var array<string, array{newEmail: string, token: string, expiresAt: DateTimeImmutable}> $entries */
         $entries = $property->getValue($registry);
         $entries['nick']['expiresAt'] = new DateTimeImmutable('-1 hour');
         $property->setValue($registry, $entries);
@@ -136,6 +137,7 @@ final class PendingEmailChangeRegistryTest extends TestCase
         $reflection = new ReflectionClass($registry);
         $property = $reflection->getProperty('entries');
 
+        /** @var array<string, array{newEmail: string, token: string, expiresAt: DateTimeImmutable}> $entries */
         $entries = $property->getValue($registry);
         $entries['nick1']['expiresAt'] = new DateTimeImmutable('-1 hour');
         $property->setValue($registry, $entries);

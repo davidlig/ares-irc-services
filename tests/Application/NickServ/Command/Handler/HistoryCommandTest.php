@@ -445,7 +445,7 @@ final class HistoryCommandTest extends TestCase
             performedBy: 'OperUser',
             performedByNickId: 2,
             message: 'history.message.suspended',
-            extraData: ['duration' => '7d', 'expires_at' => '2024-01-22', 'ip' => '192.168.1.1', 'host' => 'oper@test'],
+            extraData: ['duration' => '7d', 'expires_at' => '2024-01-22', 'ip' => '192.168.1.1', 'host' => 'oper@test', 'unexpected' => ['value']],
         );
         $history1 = self::historyWithId($history1, 1);
 
@@ -465,7 +465,7 @@ final class HistoryCommandTest extends TestCase
             performedBy: 'Admin',
             performedByNickId: 3,
             message: 'Custom message not a translation key',
-            extraData: ['method' => 'email'],
+            extraData: ['method' => ['email']],
         );
         $history3 = self::historyWithId($history3, 3);
 
@@ -622,7 +622,7 @@ final class HistoryCommandTest extends TestCase
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'AQ==', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'AQ==', false, true, 'SID1', 'h', 'o');
     }
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick
@@ -637,6 +637,10 @@ final class HistoryCommandTest extends TestCase
         return $nick;
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(
         array $args,
         array &$messages,
@@ -670,6 +674,9 @@ final class HistoryCommandTest extends TestCase
         );
     }
 
+    /**
+     * @param string[] $args
+     */
     private function createContextWithNullSender(array $args, NickHistoryRepositoryInterface $historyRepo): NickServContext
     {
         $notifier = $this->createStub(NickServNotifierInterface::class);
@@ -739,9 +746,14 @@ final class HistoryCommandTest extends TestCase
         $cmd->execute($context);
 
         self::assertContains('history.add.success', $messages);
+        self::assertInstanceOf(NickHistory::class, $savedHistory);
         self::assertSame('invalid!base64', $savedHistory->getExtraData()['ip']);
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContextWithIp(
         array $args,
         array &$messages,
@@ -758,7 +770,7 @@ final class HistoryCommandTest extends TestCase
         $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
 
         return new NickServContext(
-            new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $ip, false, true, 'SID1', 'h', 'o', ''),
+            new SenderView('UID1', 'OperUser', 'i', 'h', 'c', $ip, false, true, 'SID1', 'h', 'o'),
             $this->createNickWithId('OperUser', 2),
             'HISTORY',
             $args,

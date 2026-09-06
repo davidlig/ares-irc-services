@@ -45,6 +45,9 @@ use Symfony\Component\Messenger\Envelope;
 #[CoversClass(SetCommand::class)]
 final class SetCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         ?RegisteredNick $senderAccount,

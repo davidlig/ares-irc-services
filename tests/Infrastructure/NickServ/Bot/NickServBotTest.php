@@ -14,6 +14,7 @@ use App\Application\Port\SendNoticePort;
 use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Domain\IRC\LocalUserModeSyncInterface;
+use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\NickServ\Bot\NickServBot;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -189,7 +190,7 @@ final class NickServBotTest extends TestCase
 
         $localUserModeSync = $this->createMock(LocalUserModeSyncInterface::class);
         $localUserModeSync->expects(self::once())->method('apply')
-            ->with(self::callback(static fn ($u): bool => '001USER' === $u->value), '+r');
+            ->with(self::callback(static fn (Uid $uid): bool => '001USER' === $uid->value), '+r');
 
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);
@@ -221,7 +222,7 @@ final class NickServBotTest extends TestCase
 
         $localUserModeSync = $this->createMock(LocalUserModeSyncInterface::class);
         $localUserModeSync->expects(self::once())->method('apply')
-            ->with(self::callback(static fn ($u): bool => '001USER' === $u->value), '-r');
+            ->with(self::callback(static fn (Uid $uid): bool => '001USER' === $uid->value), '-r');
 
         $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
         $uidGenerator->method('generateUid')->willReturn(self::NICKSERV_UID);

@@ -93,31 +93,21 @@ final readonly class InfoCommand implements NickServCommandInterface
         $targetNick = $context->args[0];
         $account = $this->nickRepository->findByNick($targetNick);
 
-        $action = $this->resolveInfoAction($context, $account, $targetNick);
-
-        match ($action) {
-            'not_registered' => $context->reply('info.not_registered', ['nickname' => $targetNick]),
-            'forbidden' => $this->replyForbidden($context, $account),
-            'pending_deletion' => $this->replyPendingDeletion($context, $account),
-            'private' => $context->reply('info.private', ['nickname' => $account->getNickname()]),
-            'display' => $this->displayInfo($context, $account),
-        };
-    }
-
-    private function resolveInfoAction(NickServContext $context, ?RegisteredNick $account, string $targetNick): string
-    {
         if (null === $account || $account->isPending()) {
-            return 'not_registered';
+            $context->reply('info.not_registered', ['nickname' => $targetNick]);
+
+            return;
         }
 
-        $result = match (true) {
-            $account->isForbidden() => 'forbidden',
-            $account->isPendingDeletion() => 'pending_deletion',
-            $account->isPrivate() && !$this->isSenderOwner($context->sender, $account) => 'private',
-            default => 'display',
-        };
-
-        return $result;
+        if ($account->isForbidden()) {
+            $this->replyForbidden($context, $account);
+        } elseif ($account->isPendingDeletion()) {
+            $this->replyPendingDeletion($context, $account);
+        } elseif ($account->isPrivate() && !$this->isSenderOwner($context->sender, $account)) {
+            $context->reply('info.private', ['nickname' => $account->getNickname()]);
+        } else {
+            $this->displayInfo($context, $account);
+        }
     }
 
     private function displayInfo(NickServContext $context, RegisteredNick $account): void
@@ -259,7 +249,7 @@ final readonly class InfoCommand implements NickServCommandInterface
             $context->reply('info.last_quit', ['message' => $account->getLastQuitMessage()]);
         }
 
-        $canSeeConnectionInfo = $isOwnerIdentified || ($context->sender?->isOper ?? false);
+        $canSeeConnectionInfo = $isOwnerIdentified || ($context->sender->isOper ?? false);
         if ($canSeeConnectionInfo) {
             $this->replyLastConnection($context, $account);
         }

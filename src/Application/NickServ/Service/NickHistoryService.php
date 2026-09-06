@@ -20,14 +20,14 @@ final readonly class NickHistoryService
     /**
      * Record a history entry for a nickname.
      *
-     * @param int      $nickId            The nickname ID where action was performed
-     * @param string   $action            Action type (SUSPEND, SET_PASSWORD, etc.)
-     * @param string   $performedBy       Nickname of the operator who performed the action
-     * @param int|null $performedByNickId Nick ID of operator (null if not registered)
-     * @param string   $performedByIp     IP address of the operator
-     * @param string   $performedByHost   Full host (ident@hostname) of the operator
-     * @param string   $message           Human-readable description
-     * @param array    $extraData         Additional context (old_value, new_value, duration, etc.)
+     * @param int                  $nickId            The nickname ID where action was performed
+     * @param string               $action            Action type (SUSPEND, SET_PASSWORD, etc.)
+     * @param string               $performedBy       Nickname of the operator who performed the action
+     * @param int|null             $performedByNickId Nick ID of operator (null if not registered)
+     * @param string               $performedByIp     IP address of the operator
+     * @param string               $performedByHost   Full host (ident@hostname) of the operator
+     * @param string               $message           Human-readable description
+     * @param array<string, mixed> $extraData         Additional context (old_value, new_value, duration, etc.)
      */
     public function recordAction(
         int $nickId,

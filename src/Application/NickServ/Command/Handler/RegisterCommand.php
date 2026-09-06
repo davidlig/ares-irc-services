@@ -186,6 +186,7 @@ final readonly class RegisterCommand implements NickServCommandInterface
         })();
     }
 
+    /** @return array<string, mixed> */
     private function getRegisterErrorParams(NickServContext $context, string $errorKey): array
     {
         return match ($errorKey) {

@@ -33,6 +33,9 @@ use Symfony\Component\Messenger\Envelope;
 #[CoversClass(RegisterCommand::class)]
 final class RegisterCommandTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         SenderView $sender,
         array $args,
@@ -470,7 +473,6 @@ final class RegisterCommandTest extends TestCase
         $emailSubjectCalls = array_filter($translatorCalls, static fn (array $c): bool => 'register_verification_subject' === $c['id']);
         self::assertCount(1, $emailSubjectCalls, 'Subject translation should be called once');
         $subjectCall = reset($emailSubjectCalls);
-        self::assertSame('register_verification_subject', $subjectCall['id']);
         self::assertSame('mail', $subjectCall['domain']);
         self::assertArrayHasKey('%bot%', $subjectCall['params']);
         self::assertSame('NickServ', $subjectCall['params']['%bot%']);

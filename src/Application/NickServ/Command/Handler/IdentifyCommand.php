@@ -188,6 +188,7 @@ final readonly class IdentifyCommand implements NickServCommandInterface
         return $result;
     }
 
+    /** @param array<string, mixed> $params */
     private function replyAndReturn(NickServContext $context, string $key, array $params): string
     {
         $context->reply($key, $params);

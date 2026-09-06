@@ -47,6 +47,9 @@ final class HelpCommandTest extends TestCase
         );
     }
 
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,

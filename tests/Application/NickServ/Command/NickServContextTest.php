@@ -23,6 +23,9 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(NickServContext::class)]
 final class NickServContextTest extends TestCase
 {
+    /**
+     * @param string[] $args
+     */
     private function createContext(
         ?SenderView $sender,
         NickServNotifierInterface $notifier,

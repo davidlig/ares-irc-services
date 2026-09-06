@@ -16,8 +16,6 @@ use function trim;
  */
 final readonly class ForbiddenPatternValidator
 {
-    private const string LABEL_PART = '[a-zA-Z0-9*?]+(-[a-zA-Z0-9*?]+)*';
-
     private const string PATTERN_REGEX = '/^[a-zA-Z0-9*?]+(-[a-zA-Z0-9*?]+)*(\\.[a-zA-Z0-9*?]+(-[a-zA-Z0-9*?]+)*)*$/';
 
     public function isValid(?string $pattern): bool

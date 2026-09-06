@@ -23,8 +23,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
 
-use function in_array;
-
 #[CoversClass(NickDropService::class)]
 final class NickDropServiceTest extends TestCase
 {
@@ -45,7 +43,7 @@ final class NickDropServiceTest extends TestCase
         $calls = [];
         $eventDispatcher = $this->createMock(EventBusInterface::class);
         $eventDispatcher->expects(self::exactly(2))->method('dispatch')->willReturnCallback(
-            static function (object $event) use (&$calls): void {
+            static function (NickDropCleanupEvent|NickDropEvent $event) use (&$calls): void {
                 $calls[] = match ($event::class) {
                     NickDropCleanupEvent::class => 'cleanup',
                     NickDropEvent::class => 'post-commit',
@@ -107,7 +105,7 @@ final class NickDropServiceTest extends TestCase
     {
         $nick = $this->createNickWithId('OnlineNick', 100);
 
-        $onlineUser = new SenderView('UID123', 'OnlineNick', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'o', '');
+        $onlineUser = new SenderView('UID123', 'OnlineNick', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'o');
 
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->expects(self::once())->method('delete')->with($nick);
@@ -157,8 +155,8 @@ final class NickDropServiceTest extends TestCase
         $forceService->expects(self::never())->method('forceGuestNick');
 
         $eventDispatcher = $this->createMock(EventBusInterface::class);
-        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->with(self::callback(static fn (object $event): bool => 'inactivity' === $event->reason
-                && in_array($event::class, [NickDropCleanupEvent::class, NickDropEvent::class], true)));
+        $eventDispatcher->expects(self::exactly(2))->method('dispatch')->with(self::callback(static fn (object $event): bool => ($event instanceof NickDropCleanupEvent || $event instanceof NickDropEvent)
+            && 'inactivity' === $event->reason));
 
         $debug = $this->createMock(ServiceDebugNotifierInterface::class);
         $debug->expects(self::once())->method('log')->with(
@@ -277,7 +275,7 @@ final class NickDropServiceTest extends TestCase
     public function softDropNickForcesOnlineUserToGuestNick(): void
     {
         $nick = $this->createNickWithId('SoftOnline', 303);
-        $onlineUser = new SenderView('UID303', 'SoftOnline', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'o', '');
+        $onlineUser = new SenderView('UID303', 'SoftOnline', 'i', 'h', 'c', 'ip', false, false, 'SID1', 'h', 'o');
         $nickRepository = $this->createMock(RegisteredNickRepositoryInterface::class);
         $nickRepository->expects(self::once())->method('save')->with($nick);
         $userLookup = $this->createStub(NetworkUserLookupPort::class);
@@ -363,6 +361,24 @@ final class NickDropServiceTest extends TestCase
         $service->restoreNick($nick, 'OperUser');
 
         self::assertTrue($nick->isRegistered());
+    }
+
+    #[Test]
+    public function exposesGuestPrefix(): void
+    {
+        $service = new NickDropService(
+            $this->createStub(RegisteredNickRepositoryInterface::class),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(NickForceService::class),
+            $this->createStub(EventBusInterface::class),
+            $this->createStub(ServiceDebugNotifierInterface::class),
+            $this->createStub(LoggerInterface::class),
+            new IdentifiedSessionRegistry(),
+            $this->immediateTransactionManager(),
+            'Guest-',
+        );
+
+        self::assertSame('Guest-', $service->getGuestPrefix());
     }
 
     private function createNickWithId(string $nickname, int $id): RegisteredNick

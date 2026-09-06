@@ -113,6 +113,16 @@ final class SuspendCommandTest extends TestCase
     }
 
     #[Test]
+    public function executeWithNullSenderReturnsRejected(): void
+    {
+        $messages = [];
+        $outcome = $this->createCommand()->execute($this->createContext(null, [], $messages));
+
+        self::assertFalse($outcome->success);
+        self::assertSame([], $messages);
+    }
+
+    #[Test]
     public function executeWithEmptyIpStoresAsteriskInEvent(): void
     {
         $nick = $this->createNickWithId('TestNick', 1);
@@ -138,7 +148,7 @@ final class SuspendCommandTest extends TestCase
                 return $event;
             });
 
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', '', false, true, 'SID1', 'h', 'o');
 
         $context = $this->createContext($sender, ['TestNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
 
@@ -183,7 +193,7 @@ final class SuspendCommandTest extends TestCase
                 return $event;
             });
 
-        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'invalid!base64', false, true, 'SID1', 'h', 'o', '');
+        $sender = new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'invalid!base64', false, true, 'SID1', 'h', 'o');
 
         $context = $this->createContext($sender, ['TestNick', '7d', 'Test reason'], $messages, nickRepository: $nickRepository);
 
@@ -554,13 +564,12 @@ final class SuspendCommandTest extends TestCase
             $this->createStub(NickTargetValidator::class),
             $this->createStub(NickSuspensionService::class),
             $this->createStub(EventBusInterface::class),
-            $this->createStub(EventBusInterface::class),
         );
     }
 
     private function createSender(): SenderView
     {
-        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o', '');
+        return new SenderView('UID1', 'OperUser', 'i', 'h', 'c', 'ip', false, true, 'SID1', 'h', 'o');
     }
 
     private function createActivatedNick(string $nickname): RegisteredNick
@@ -583,6 +592,10 @@ final class SuspendCommandTest extends TestCase
         return $nick;
     }
 
+    /**
+     * @param string[] $args
+     * @param string[] $messages
+     */
     private function createContext(
         ?SenderView $sender,
         array $args,
