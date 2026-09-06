@@ -1,0 +1,293 @@
+# Phase 06: ChanServ.
+# Exact source -> target exceptions owned by that phase; do not broaden.
+deptrac:
+  skip_violations:
+    App\Application\ChanServ\ChanServAccessHelper:
+      - App\Application\Port\ChannelModeSupportInterface
+    App\Application\ChanServ\ChanServService:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Event\CommandExecutedEvent
+      - App\Application\Event\IrcopCommandExecutedEvent
+      - App\Application\NickServ\Security\AuthorizationCheckerInterface
+      - App\Application\NickServ\Security\AuthorizationContextInterface
+      - App\Application\Port\ActiveChannelModeSupportProviderInterface
+      - App\Application\Port\ChanServDispatchPort
+      - App\Application\Port\ChannelLookupPort
+      - App\Application\Port\EventBusInterface
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Application\Port\TranslationInterface
+      - App\Application\Port\UserLanguageResolverInterface
+      - App\Application\Port\UserMessageTypeResolverInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - Psr\Log\LoggerInterface
+      - Psr\Log\NullLogger
+    App\Application\ChanServ\Command\ChanServCommandInterface:
+      - App\Application\Command\CommandOutcome
+    App\Application\ChanServ\Command\ChanServContext:
+      - App\Application\Port\ChannelLookupPort
+      - App\Application\Port\ChannelModeSupportInterface
+      - App\Application\Port\ChannelView
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Application\Port\TranslationInterface
+      - App\Application\Security\IrcopContextInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Application\ChanServ\Command\Handler\AccessCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\EventBusInterface
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\AdminCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\AkickCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\BurstCompletePort
+      - App\Application\Port\ChannelLookupPort
+      - App\Application\Port\ChannelView
+      - App\Application\Port\EventBusInterface
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\ClearaccessCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\Application\ChanServ\Command\Handler\ClearusersCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\Port\ChannelView
+    App\Application\ChanServ\Command\Handler\DeadminCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\DehalfopCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\DelaccessCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\EventBusInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Application\ChanServ\Command\Handler\DeopCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\DevoiceCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\DropCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\NickServ\Security\AuthorizationCheckerInterface
+    App\Application\ChanServ\Command\Handler\ForbidCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\Application\ChanServ\Command\Handler\HalfopCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\HelpCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\OperServ\IrcopAccessHelper
+      - App\Application\OperServ\RootUserRegistry
+      - App\Application\Security\PermissionRegistry
+    App\Application\ChanServ\Command\Handler\HistoryCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\InfoCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\InviteCommand:
+      - App\Application\Command\CommandOutcome
+    App\Application\ChanServ\Command\Handler\LevelsCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\ChannelModeSupportInterface
+    App\Application\ChanServ\Command\Handler\NoexpireCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\Application\ChanServ\Command\Handler\OpCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\Handler\RegisterCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\OperServ\RootUserRegistry
+      - App\Application\Port\ChannelView
+      - App\Application\Port\EventBusInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Application\ChanServ\Command\Handler\RestoreCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\Application\ChanServ\Command\Handler\SetCommand:
+      - App\Application\Command\CommandOutcome
+    App\Application\ChanServ\Command\Handler\SetFounderHandler:
+      - App\Application\Helper\SecureToken
+      - App\Application\Mail\Message\SendEmail
+      - App\Application\Port\AsyncMessageDispatcherInterface
+      - App\Application\Port\EventBusInterface
+      - App\Application\Port\TranslationInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Domain\NickServ\ValueObject\NickStatus
+      - Psr\Log\LoggerInterface
+      - Psr\Log\NullLogger
+    App\Application\ChanServ\Command\Handler\SetMlockHandler:
+      - App\Application\Port\EventBusInterface
+    App\Application\ChanServ\Command\Handler\SetSecureHandler:
+      - App\Application\Port\EventBusInterface
+    App\Application\ChanServ\Command\Handler\SetSuccessorHandler:
+      - App\Application\Port\EventBusInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Domain\NickServ\ValueObject\NickStatus
+    App\Application\ChanServ\Command\Handler\SetTopiclockHandler:
+      - App\Application\Port\EventBusInterface
+    App\Application\ChanServ\Command\Handler\SuspendCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\Port\EventBusInterface
+    App\Application\ChanServ\Command\Handler\UnforbidCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\Application\ChanServ\Command\Handler\UnsuspendCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\Port\EventBusInterface
+    App\Application\ChanServ\Command\Handler\VoiceCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\ChanServ\Command\HelpFormatterContextAdapter:
+      - App\Application\OperServ\IrcopAccessHelper
+      - App\Application\OperServ\RootUserRegistry
+      - App\Application\Port\SenderView
+      - App\Application\Security\IrcopPermissionDetector
+      - App\Application\Security\PermissionRegistry
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Application\ChanServ\Maintenance\CleanupChannelHistoryTask:
+      - App\Application\Maintenance\MaintenanceTaskInterface
+      - Psr\Log\LoggerInterface
+    App\Application\ChanServ\Maintenance\PurgeExpiredAkickTask:
+      - App\Application\Maintenance\MaintenanceTaskInterface
+      - App\Application\Port\ServiceDebugNotifierInterface
+      - Psr\Log\LoggerInterface
+    App\Application\ChanServ\Maintenance\PurgeInactiveChannelsTask:
+      - App\Application\Maintenance\MaintenanceTaskInterface
+      - App\Application\Port\EventBusInterface
+      - Psr\Log\LoggerInterface
+    App\Application\ChanServ\Maintenance\PurgePendingDeletionChannelsTask:
+      - App\Application\Maintenance\MaintenanceTaskInterface
+      - Psr\Log\LoggerInterface
+    App\Application\ChanServ\Maintenance\UnsuspendExpiredChannelsTask:
+      - App\Application\Maintenance\MaintenanceTaskInterface
+      - App\Application\Port\EventBusInterface
+      - Psr\Log\LoggerInterface
+    App\Application\ChanServ\Security\ChanServIrcopPermission:
+      - App\Application\Security\PermissionProviderInterface
+    App\Application\ChanServ\Service\ChanDropService:
+      - App\Application\Port\ChannelServiceActionsPort
+      - App\Application\Port\EventBusInterface
+      - App\Application\Port\ServiceDebugNotifierInterface
+      - App\Application\Port\TransactionManagerInterface
+      - Psr\Log\LoggerInterface
+    App\Application\ChanServ\Service\ChannelForbiddenService:
+      - App\Application\Port\ChannelLookupPort
+      - App\Application\Port\ChannelServiceActionsPort
+      - App\Application\Port\ChannelView
+      - App\Application\Port\EventBusInterface
+      - Psr\Log\LoggerInterface
+    App\Application\ChanServ\Service\ChannelSuspensionService:
+      - App\Application\Port\ActiveChannelModeSupportProviderInterface
+      - App\Application\Port\ChannelLookupPort
+      - App\Application\Port\ChannelModeSupportInterface
+      - App\Application\Port\ChannelServiceActionsPort
+      - App\Application\Port\TranslationInterface
+      - Psr\Log\LoggerInterface
+      - Psr\Log\NullLogger
+    App\Application\ChanServ\Service\MlockStateFromChannelResolver:
+      - App\Application\Port\ChannelModeSupportInterface
+      - App\Application\Port\ChannelView
+    App\Domain\ChanServ\Entity\ChannelAkick:
+      - App\Domain\IRC\ValueObject\UserMask
+    App\Infrastructure\ChanServ\Bot\ChanServBot:
+      - App\Domain\IRC\Connection\ConnectionInterface
+      - App\Domain\IRC\Event\NetworkBurstCompleteEvent
+      - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+    App\Infrastructure\ChanServ\Security\Voter\ChanServLevelFounderVoter:
+      - App\Application\OperServ\IrcopAccessHelper
+      - App\Application\OperServ\RootUserRegistry
+      - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
+      - App\Infrastructure\NickServ\Security\IrcServiceUser
+    App\Infrastructure\ChanServ\Subscriber\ChanServAkickEnforceSubscriber:
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Domain\IRC\Event\UserJoinedChannelEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
+      - App\Domain\IRC\Event\ChannelSyncedEvent
+      - App\Domain\IRC\Event\IrcMessageProcessedEvent
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Domain\IRC\Event\UserJoinedChannelEvent
+      - App\Domain\IRC\Event\UserLeftChannelEvent
+      - App\Domain\IRC\Network\ChannelMemberRole
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Infrastructure\IRC\Event\MessageReceivedEvent
+      - App\Infrastructure\IRC\Network\Event\ChannelModeReceivedEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServCommandListener:
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Infrastructure\NickServ\UserMessageTypeResolver
+    App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
+      - App\Domain\IRC\Event\UserJoinedChannelEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelBurstSubscriber:
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelJoinSubscriber:
+      - App\Domain\IRC\Event\ChannelSyncedEvent
+      - App\Domain\IRC\Event\UserJoinedChannelEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServHistorySubscriber:
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Infrastructure\ChanServ\Subscriber\ChanServMlockEnforceSubscriber:
+      - App\Domain\IRC\Event\ChannelModesChangedEvent
+      - App\Domain\IRC\Event\ChannelSyncedEvent
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
+      - App\Domain\NickServ\Event\NickDropCleanupEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServNojoinEnforceSubscriber:
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Domain\IRC\Event\UserJoinedChannelEvent
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Infrastructure\ChanServ\Subscriber\ChanServRejoinSubscriber:
+      - App\Domain\IRC\Event\ChannelSyncedEvent
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber:
+      - App\Domain\IRC\Event\ChannelSyncedEvent
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+    App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber:
+      - App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent

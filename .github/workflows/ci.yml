@@ -50,6 +50,12 @@ jobs:
       - name: Check coding standards
         run: ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --dry-run --diff
 
+      - name: Run PHPStan at max level
+        run: composer phpstan
+
+      - name: Run architecture gate
+        run: composer architecture
+
       - name: Run tests and check coverage
         run: ./scripts/check-coverage.sh 100 --issues
 

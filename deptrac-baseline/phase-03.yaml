@@ -1,0 +1,6 @@
+# Phase 03: InspIRCd, UnrealStandalone and removal of UnrealFamily.
+# Exact source -> target exceptions owned by that phase; do not broaden.
+deptrac:
+  skip_violations:
+    App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler:
+      - App\Infrastructure\IRC\Protocol\UnrealFamily\UnrealFamilyHandshakeTrait

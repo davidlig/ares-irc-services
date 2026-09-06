@@ -1,0 +1,37 @@
+# Phase 02: Irc core, Shared kernel and Bootstrap.
+# Exact source -> target exceptions owned by that phase; do not broaden.
+deptrac:
+  skip_violations:
+    App\Application\Maintenance\MaintenanceScheduler:
+      - Psr\Log\LoggerInterface
+    App\Application\Port\UserLanguageResolverInterface:
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Application\Security\IrcopContextInterface:
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Application\Shared\ServiceNicknameRegistry:
+      - App\Application\Port\ServiceNicknameProviderInterface
+    App\Application\Shared\ServiceUidGenerator:
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\ServiceUidGeneratorInterface
+    App\Application\Shared\ServiceUidRegistry:
+      - App\Application\Port\ServiceUidProviderInterface
+    App\Infrastructure\IRC\ServiceBridge\AntifloodSubscriber:
+      - App\Application\OperServ\Command\OperServNotifierInterface
+      - App\Application\OperServ\RootUserRegistry
+    App\Infrastructure\IRC\ServiceBridge\CtcpHandler:
+      - App\Infrastructure\NickServ\UserLanguageResolver
+    App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder:
+      - App\Infrastructure\NickServ\UserLanguageResolver
+    App\Infrastructure\IRC\Subscriber\DebugChannelJoinSubscriber:
+      - App\Domain\ChanServ\Entity\RegisteredChannel
+      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
+    App\Infrastructure\IRC\Subscriber\IrcopsDebugChannelProtectionSubscriber:
+      - App\Application\OperServ\RootUserRegistry
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
+    App\Infrastructure\Security\Voter\IdentifiedVoter:
+      - App\Infrastructure\NickServ\Security\IrcServiceUser
+    App\Infrastructure\Security\Voter\IrcopPermissionVoter:
+      - App\Application\OperServ\IrcopAccessHelper
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Infrastructure\NickServ\Security\IrcServiceUser

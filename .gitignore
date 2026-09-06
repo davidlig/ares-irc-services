@@ -9,6 +9,7 @@
 /vendor/
 ###< symfony/framework-bundle ###
 /.php-cs-fixer.cache
+/.deptrac.cache
 /.vscode/
 /docs/
 /backups/

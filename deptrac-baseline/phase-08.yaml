@@ -1,0 +1,45 @@
+# Phase 08: UnrealUdb and legacy UDB ownership.
+# Exact source -> target exceptions owned by that phase; do not broaden.
+deptrac:
+  skip_violations:
+    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbChannelSyncSubscriber:
+      - App\Application\ChanServ\Event\ChannelMlockUpdatedEvent
+      - App\Application\ChanServ\Event\ChannelTopiclockUpdatedEvent
+      - App\Domain\ChanServ\Entity\RegisteredChannel
+      - App\Domain\ChanServ\Event\ChannelAccessChangedEvent
+      - App\Domain\ChanServ\Event\ChannelDropEvent
+      - App\Domain\ChanServ\Event\ChannelForbiddenEvent
+      - App\Domain\ChanServ\Event\ChannelFounderChangedEvent
+      - App\Domain\ChanServ\Event\ChannelRegisteredEvent
+      - App\Domain\ChanServ\Event\ChannelSuspendedEvent
+      - App\Domain\ChanServ\Event\ChannelUnforbiddenEvent
+      - App\Domain\ChanServ\Event\ChannelUnsuspendedEvent
+      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
+    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbGlineSyncSubscriber:
+      - App\Domain\OperServ\Event\GlineRemovedEvent
+    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber:
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Event\NickDropEvent
+      - App\Domain\NickServ\Event\NickPasswordProvidedEvent
+      - App\Domain\NickServ\Event\NickSuspendedEvent
+      - App\Domain\NickServ\Event\NickUnsuspendedEvent
+      - App\Domain\NickServ\Event\NickVhostChangedEvent
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Domain\OperServ\Event\OperIrcopChangedEvent
+      - App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent
+      - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
+    App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbPasswordRepairSubscriber:
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter:
+      - App\Domain\ChanServ\Entity\ChannelAccess
+      - App\Domain\ChanServ\Entity\RegisteredChannel
+      - App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface
+      - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - App\Domain\OperServ\Entity\Gline
+      - App\Domain\OperServ\Repository\GlineRepositoryInterface
+      - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
+      - App\Domain\OperServ\ValueObject\ForcedVhost
+    App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolHandler:
+      - App\Infrastructure\IRC\Protocol\UnrealFamily\UnrealFamilyHandshakeTrait

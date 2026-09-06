@@ -12,15 +12,23 @@ use RecursiveIteratorIterator;
 use ReflectionClass;
 use SplFileInfo;
 
+use function array_unique;
 use function class_exists;
+use function dirname;
 use function enum_exists;
 use function file_get_contents;
 use function in_array;
 use function interface_exists;
 use function is_array;
+use function is_dir;
+use function is_file;
+use function json_decode;
 use function ltrim;
+use function preg_match;
+use function scandir;
 use function sort;
 use function str_ends_with;
+use function str_replace;
 use function str_starts_with;
 use function strlen;
 use function strtolower;
@@ -29,13 +37,24 @@ use function token_get_all;
 use function trait_exists;
 use function trim;
 
+use const JSON_THROW_ON_ERROR;
 use const T_CONSTANT_ENCAPSED_STRING;
+use const T_NAME_FULLY_QUALIFIED;
+use const T_NAME_QUALIFIED;
+use const T_NAME_RELATIVE;
+use const T_STRING;
 use const T_USE;
 
 #[CoversNothing]
 final class LayerDependencyTest extends TestCase
 {
     private const string ROOT = __DIR__ . '/../..';
+
+    /** @var list<string> */
+    private const array BOUNDED_CONTEXTS = ['Irc', 'NickServ', 'ChanServ', 'MemoServ', 'OperServ'];
+
+    /** @var list<string> */
+    private const array LEGACY_ROOTS = ['src/Application', 'src/Domain', 'src/Infrastructure', 'src/UI', 'src/Kernel.php'];
 
     #[Test]
     public function applicationDoesNotImportInfrastructureOrFrameworks(): void
@@ -109,6 +128,168 @@ final class LayerDependencyTest extends TestCase
         self::assertSame([], $violations, "Shared code references concrete protocols:\n" . implode("\n", $violations));
     }
 
+    #[Test]
+    public function legacyFilesMatchTheExactPhaseOwnedDebtInventory(): void
+    {
+        $documented = [];
+
+        foreach (self::architectureDebt()['legacy_paths'] as $phase => $files) {
+            self::assertSame(1, preg_match('/^0[2-9]-[a-z0-9-]+$/', $phase), 'Every legacy path group must name its owning later phase');
+
+            foreach ($files as $file) {
+                $documented[] = $file;
+            }
+        }
+
+        self::assertSameSize(array_unique($documented), $documented, 'The legacy path inventory contains duplicates');
+
+        $actual = [];
+        foreach (self::LEGACY_ROOTS as $path) {
+            $actual = [...$actual, ...self::phpFiles($path)];
+        }
+
+        sort($actual);
+        sort($documented);
+
+        self::assertSame(
+            $documented,
+            $actual,
+            'Legacy PHP paths changed. Remove migrated paths or assign every new exception to its owning phase in architecture-debt.json.'
+        );
+    }
+
+    #[Test]
+    public function newTopologyOnlyUsesTheModeledContextsAndHexagonalLayers(): void
+    {
+        $allowedRoots = [
+            'Application',
+            'Bootstrap',
+            'ChanServ',
+            'Domain',
+            'Infrastructure',
+            'Irc',
+            'Kernel.php',
+            'MemoServ',
+            'NickServ',
+            'OperServ',
+            'Shared',
+            'UI',
+        ];
+        $entries = scandir(self::ROOT . '/src');
+        self::assertIsArray($entries);
+
+        foreach ($entries as $entry) {
+            if ('.' === $entry || '..' === $entry) {
+                continue;
+            }
+
+            self::assertContains($entry, $allowedRoots, 'src/' . $entry . ' is not a modeled bounded context, Shared, Bootstrap, or exact legacy root');
+        }
+
+        foreach (self::BOUNDED_CONTEXTS as $context) {
+            self::assertOnlyContainsDirectories($context, ['Adapter', 'Application', 'Domain']);
+        }
+
+        self::assertOnlyContainsDirectories('Shared', ['Application', 'Domain']);
+        self::assertFalse(is_dir(self::ROOT . '/src/Udb'), 'UDB is a protocol concern, not a bounded context');
+
+        $protocolPath = self::ROOT . '/src/Irc/Adapter/Protocol';
+        if (is_dir($protocolPath)) {
+            self::assertOnlyContainsDirectories('Irc/Adapter/Protocol', ['InspIRCd', 'UnrealStandalone', 'UnrealUdb']);
+        }
+    }
+
+    #[Test]
+    public function phpNamespacesFollowTheirPsr4Paths(): void
+    {
+        foreach (self::phpFiles('src') as $file) {
+            $relativeDirectory = dirname(substr($file, strlen('src/')));
+            $expectedNamespace = '.' === $relativeDirectory
+                ? 'App'
+                : 'App\\' . str_replace('/', '\\', $relativeDirectory);
+            $contents = file_get_contents(self::ROOT . '/' . $file);
+            self::assertIsString($contents);
+            $matches = [];
+
+            self::assertSame(1, preg_match('/^namespace\s+([^;{]+)[;{]/m', $contents, $matches), $file . ' must declare its namespace');
+            self::assertSame($expectedNamespace, trim($matches[1]), $file . ' must follow the App\\ PSR-4 path');
+        }
+    }
+
+    #[Test]
+    public function innerLayersDoNotNameConcreteProtocolsExceptForExactPhaseOwnedDebt(): void
+    {
+        $actual = [];
+        $paths = ['src/Application', 'src/Domain'];
+
+        foreach (self::BOUNDED_CONTEXTS as $context) {
+            $paths[] = 'src/' . $context . '/Application';
+            $paths[] = 'src/' . $context . '/Domain';
+        }
+        $paths[] = 'src/Shared/Application';
+        $paths[] = 'src/Shared/Domain';
+
+        foreach ($paths as $path) {
+            foreach (self::phpFiles($path) as $file) {
+                if (self::containsConcreteProtocolIdentifier($file)) {
+                    $actual[] = $file;
+                }
+            }
+        }
+
+        $documented = [];
+        foreach (self::architectureDebt()['protocol_named_inner_files'] as $phase => $files) {
+            self::assertSame(1, preg_match('/^0[2-9]-[a-z0-9-]+$/', $phase), 'Every protocol-name exception must name its owning later phase');
+            $documented = [...$documented, ...$files];
+        }
+
+        sort($actual);
+        sort($documented);
+
+        self::assertSame(
+            $documented,
+            $actual,
+            'Service, Irc, and Shared inner layers must not acquire concrete IRCd or UDB types'
+        );
+    }
+
+    #[Test]
+    public function unrealImplementationsNeitherDependOnSiblingsNorShareBehaviorExceptForExactDebt(): void
+    {
+        $actual = [];
+        $paths = [
+            'src/Infrastructure/IRC/Protocol/Unreal',
+            'src/Infrastructure/IRC/Protocol/UnrealUdb',
+            'src/Irc/Adapter/Protocol/UnrealStandalone',
+            'src/Irc/Adapter/Protocol/UnrealUdb',
+        ];
+
+        foreach ($paths as $path) {
+            foreach (self::importsUnder($path) as $import) {
+                $isForbidden = str_starts_with($import['name'], 'App\\Infrastructure\\IRC\\Protocol\\UnrealFamily\\')
+                    || (str_contains($import['file'], '/Unreal/') && str_starts_with($import['name'], 'App\\Infrastructure\\IRC\\Protocol\\UnrealUdb\\'))
+                    || (str_contains($import['file'], '/UnrealUdb/') && str_starts_with($import['name'], 'App\\Infrastructure\\IRC\\Protocol\\Unreal\\'))
+                    || (str_contains($import['file'], '/UnrealStandalone/') && str_starts_with($import['name'], 'App\\Irc\\Adapter\\Protocol\\UnrealUdb\\'))
+                    || (str_contains($import['file'], '/UnrealUdb/') && str_starts_with($import['name'], 'App\\Irc\\Adapter\\Protocol\\UnrealStandalone\\'));
+
+                if ($isForbidden) {
+                    $actual[] = $import['file'] . ':' . $import['name'];
+                }
+            }
+        }
+
+        $documented = [];
+        foreach (self::architectureDebt()['unreal_family_dependencies'] as $phase => $dependencies) {
+            self::assertSame('03-protocol-adapters', $phase, 'Shared Unreal behavior belongs only to Phase 03 cleanup');
+            $documented = [...$documented, ...$dependencies];
+        }
+
+        sort($actual);
+        sort($documented);
+
+        self::assertSame($documented, $actual, 'UnrealStandalone and UnrealUdb must evolve independently without a shared behavioral layer');
+    }
+
     /**
      * @return list<array{file: string, line: int, name: string}>
      */
@@ -170,6 +351,62 @@ final class LayerDependencyTest extends TestCase
         return $import['file'] . ':' . $import['line'] . ' imports ' . $import['name'];
     }
 
+    /**
+     * @return array{
+     *     legacy_paths: array<string, list<string>>,
+     *     protocol_named_inner_files: array<string, list<string>>,
+     *     unreal_family_dependencies: array<string, list<string>>
+     * }
+     */
+    private static function architectureDebt(): array
+    {
+        $contents = file_get_contents(self::ROOT . '/architecture-debt.json');
+        self::assertIsString($contents);
+        $debt = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($debt);
+
+        /* @var array{legacy_paths: array<string, list<string>>, protocol_named_inner_files: array<string, list<string>>, unreal_family_dependencies: array<string, list<string>>} $debt */
+        return $debt;
+    }
+
+    /** @param list<string> $allowed */
+    private static function assertOnlyContainsDirectories(string $relativePath, array $allowed): void
+    {
+        $absolutePath = self::ROOT . '/src/' . $relativePath;
+        if (!is_dir($absolutePath)) {
+            return;
+        }
+
+        $entries = scandir($absolutePath);
+        self::assertIsArray($entries);
+
+        foreach ($entries as $entry) {
+            if ('.' === $entry || '..' === $entry) {
+                continue;
+            }
+
+            self::assertTrue(is_dir($absolutePath . '/' . $entry), 'Only modeled layer directories may live directly under src/' . $relativePath);
+            self::assertContains($entry, $allowed, 'Unexpected layer src/' . $relativePath . '/' . $entry);
+        }
+    }
+
+    private static function containsConcreteProtocolIdentifier(string $file): bool
+    {
+        $identifierTokenTypes = [T_STRING, T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED, T_NAME_RELATIVE];
+
+        foreach (token_get_all((string) file_get_contents(self::ROOT . '/' . $file)) as $token) {
+            if (!is_array($token) || !in_array($token[0], $identifierTokenTypes, true)) {
+                continue;
+            }
+
+            if (1 === preg_match('/(?:InspIRCd|UnrealStandalone|UnrealUdb|Udb)/', $token[1])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** @return list<string> */
     private static function sharedPhpFiles(): array
     {
@@ -224,6 +461,9 @@ final class LayerDependencyTest extends TestCase
         $absolutePath = self::ROOT . '/' . $path;
         if (is_file($absolutePath)) {
             return [$path];
+        }
+        if (!is_dir($absolutePath)) {
+            return [];
         }
 
         $files = [];

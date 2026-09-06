@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ares architecture debt inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "description",
+    "legacy_paths",
+    "protocol_named_inner_files",
+    "unreal_family_dependencies"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "description": { "type": "string" },
+    "legacy_paths": { "$ref": "#/$defs/phasedStringLists" },
+    "protocol_named_inner_files": { "$ref": "#/$defs/phasedStringLists" },
+    "unreal_family_dependencies": { "$ref": "#/$defs/phasedStringLists" }
+  },
+  "$defs": {
+    "phasedStringLists": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 },
+        "uniqueItems": true
+      }
+    }
+  }
+}

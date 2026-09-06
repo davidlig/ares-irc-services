@@ -1,0 +1,142 @@
+# Phase 07: OperServ, authorization and audit.
+# Exact source -> target exceptions owned by that phase; do not broaden.
+deptrac:
+  skip_violations:
+    App\Application\OperServ\Command\Handler\GlineCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - Psr\Log\LoggerInterface
+    App\Application\OperServ\Command\Handler\GlobalCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SendNoticePort
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - Psr\Log\LoggerInterface
+    App\Application\OperServ\Command\Handler\HelpCommand:
+      - App\Application\Command\CommandOutcome
+    App\Application\OperServ\Command\Handler\IrcopCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Port\EventBusInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\OperServ\Command\Handler\KillCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Application\Port\SenderView
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - Psr\Log\LoggerInterface
+    App\Application\OperServ\Command\Handler\MotdCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\Port\ServiceDebugNotifierInterface
+    App\Application\OperServ\Command\Handler\RawCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\UdbRawCommandHandlerInterface
+      - App\Application\Port\UdbRawCommandHandlerProviderInterface
+      - App\Application\Port\UdbRawCommandResult
+      - Psr\Log\LoggerInterface
+    App\Application\OperServ\Command\Handler\RoleCommand:
+      - App\Application\Command\CommandOutcome
+    App\Application\OperServ\Command\Handler\RoleModesHandler:
+      - App\Application\Port\ActiveConnectionHolderInterface
+    App\Application\OperServ\Command\Handler\RoleOperclassHandler:
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\OperclassServiceActionsInterface
+    App\Application\OperServ\Command\Handler\RolePermissionsHandler:
+      - App\Application\Security\PermissionRegistry
+    App\Application\OperServ\Command\Handler\RoleVhostHandler:
+      - App\Application\NickServ\VhostValidator
+      - App\Application\Port\EventBusInterface
+    App\Application\OperServ\Command\OperServCommandInterface:
+      - App\Application\Command\CommandOutcome
+    App\Application\OperServ\Command\OperServContext:
+      - App\Application\Port\SenderView
+      - App\Application\Port\TranslationInterface
+      - App\Application\Security\IrcopContextInterface
+      - App\Domain\NickServ\Entity\RegisteredNick
+    App\Application\OperServ\ForcedVhostApplier:
+      - App\Application\NickServ\Command\NickServNotifierInterface
+      - App\Application\NickServ\IdentifiedSessionRegistry
+      - App\Application\NickServ\VhostDisplayResolver
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - Psr\Log\LoggerInterface
+    App\Application\OperServ\IrcopModeApplier:
+      - App\Application\NickServ\IdentifiedSessionRegistry
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\NetworkUserLookupPort
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - Psr\Log\LoggerInterface
+    App\Application\OperServ\IrcopOperclassApplier:
+      - App\Application\NickServ\IdentifiedSessionRegistry
+      - App\Application\Port\ActiveConnectionHolderInterface
+      - App\Application\Port\OperclassServiceActionsInterface
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Application\OperServ\Maintenance\PurgeExpiredGlinesTask:
+      - App\Application\Maintenance\MaintenanceTaskInterface
+      - App\Application\Port\EventBusInterface
+      - App\Application\Port\ServiceDebugNotifierInterface
+      - Psr\Log\LoggerInterface
+    App\Application\OperServ\Maintenance\PurgeExpiredMotdsTask:
+      - App\Application\Maintenance\MaintenanceTaskInterface
+      - App\Application\Port\ServiceDebugNotifierInterface
+      - App\Application\Port\TranslationInterface
+      - Psr\Log\LoggerInterface
+    App\Application\OperServ\OperServService:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Event\CommandExecutedEvent
+      - App\Application\NickServ\Security\AuthorizationCheckerInterface
+      - App\Application\NickServ\Security\AuthorizationContextInterface
+      - App\Application\Port\EventBusInterface
+      - App\Application\Port\SenderView
+      - App\Application\Port\TranslationInterface
+      - App\Application\Port\UserLanguageResolverInterface
+      - App\Application\Port\UserMessageTypeResolverInterface
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+      - Psr\Log\LoggerInterface
+      - Psr\Log\NullLogger
+    App\Application\OperServ\Security\OperServIrcopPermission:
+      - App\Application\Security\PermissionProviderInterface
+    App\Application\OperServ\Service\PseudoClientUidGenerator:
+      - App\Application\Port\ActiveConnectionHolderInterface
+    App\Infrastructure\OperServ\Bot\OperServBot:
+      - App\Domain\IRC\Connection\ConnectionInterface
+      - App\Domain\IRC\Event\NetworkBurstCompleteEvent
+      - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+    App\Infrastructure\OperServ\Service\OperServDebugNotifier:
+      - App\Application\NickServ\IdentifiedSessionRegistry
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Infrastructure\OperServ\Subscriber\MotdOnConnectSubscriber:
+      - App\Application\Event\UserJoinedNetworkAppEvent
+      - App\Application\NickServ\Service\NickForceService
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
+    App\Infrastructure\OperServ\Subscriber\OperRoleForcedVhostSubscriber:
+      - App\Domain\NickServ\Event\NickIdentifiedEvent
+    App\Infrastructure\OperServ\Subscriber\OperRoleModesDeidentifiedSubscriber:
+      - App\Domain\NickServ\Event\UserDeidentifiedEvent
+      - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
+    App\Infrastructure\OperServ\Subscriber\OperRoleModesSubscriber:
+      - App\Domain\NickServ\Event\NickIdentifiedEvent
+    App\Infrastructure\OperServ\Subscriber\OperServCommandListener:
+      - App\Infrastructure\IRC\Security\SensitiveDataRedactor
+      - App\Infrastructure\NickServ\UserMessageTypeResolver
+    App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
+      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+    App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber:
+      - App\Domain\NickServ\Event\NickDropCleanupEvent

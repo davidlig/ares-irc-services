@@ -598,7 +598,9 @@ composer cs-check   # check only
 php -l path/to/file.php                                 # syntax check
 php bin/console lint:container                           # DI validation
 php bin/console lint:yaml . --exclude vendor/ --parse-tags  # YAML lint
+composer phpstan                                        # PHPStan level max
 ./vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php  # format
+composer architecture                                   # Deptrac + exact debt baseline
 ./scripts/check-coverage.sh 100 --issues                 # tests + coverage floor (single run)
 ```
 
@@ -606,16 +608,19 @@ Zero warnings, zero skipped, zero deprecated, zero incomplete required. Run `che
 
 ### Architecture
 
-The project follows **Clean Architecture** with **Domain-Driven Design**:
+The target architecture uses five bounded contexts with hexagonal layers inside each context:
 
 | Layer | Directory | Depends on | Imports |
 |-------|-----------|------------|---------|
-| Domain | `src/Domain/` | Nothing | Pure PHP |
-| Application | `src/Application/` | Domain | Domain |
-| Infrastructure | `src/Infrastructure/` | Domain + Application | Symfony, Doctrine |
-| UI | `src/UI/` | Application | Symfony Console |
+| Domain | `src/{Irc,NickServ,ChanServ,MemoServ,OperServ}/Domain/` | Same-context Domain, `Shared/Domain` | Pure PHP |
+| Application | `src/<Context>/Application/` | Same-context Domain/Application, Shared kernel | No framework or concrete adapter |
+| Adapter | `src/<Context>/Adapter/` | Own inner layers and public cross-context boundaries | External mechanisms |
+| Protocol | `src/Irc/Adapter/Protocol/{InspIRCd,UnrealStandalone,UnrealUdb}/` | Irc boundaries | Protocol-specific wire/runtime code |
+| Bootstrap | `src/Bootstrap/` | All composition boundaries | Framework/container wiring only |
 
-Read `.agents/architecture/README.md` for the full architecture guide.
+`composer architecture` enforces this graph with Deptrac and fails on uncovered dependencies. `architecture-debt.json` and the imported Deptrac baselines enumerate every temporary legacy exception by exact file or dependency and assign it to a later migration phase. Removing debt requires removing its baseline entry; adding unlisted legacy structure fails the gate.
+
+Read `AGENTS.md` and `.agents/architecture.md` for the full architecture contract.
 
 ---
 

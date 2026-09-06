@@ -75,8 +75,10 @@
         "post-update-cmd": [
             "@auto-scripts"
         ],
+        "architecture": "deptrac analyse --config-file=deptrac.yaml --no-progress --fail-on-uncovered --report-uncovered",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
-        "cs-fix": "php-cs-fixer fix"
+        "cs-fix": "php-cs-fixer fix",
+        "phpstan": "phpstan analyse src/ tests/ --level=max --error-format=raw --no-progress"
     },
     "conflict": {
         "symfony/symfony": "*"
@@ -89,6 +91,7 @@
         }
     },
     "require-dev": {
+        "deptrac/deptrac": "^4.7",
         "friendsofphp/php-cs-fixer": "^3.95.24",
         "phpstan/phpstan": "^2.2",
         "phpstan/phpstan-phpunit": "^2.0",
