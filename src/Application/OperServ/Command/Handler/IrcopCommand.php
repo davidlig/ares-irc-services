@@ -10,13 +10,13 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\EventBusInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Event\OperIrcopChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Entity\RegisteredNick;
 
 use function count;
 use function in_array;

@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\NickServ\Application\UseCase\Verify;
+
+use App\NickServ\Application\Port\Out\IdentifiedSessionTracker;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\VerificationTokenConsumer;
+
+final readonly class VerifyNickHandler implements VerifyNickHandlerInterface
+{
+    public function __construct(
+        private RegisteredNickRepositoryInterface $nickRepository,
+        private VerificationTokenConsumer $tokenConsumer,
+        private IdentifiedSessionTracker $identifiedRegistry,
+    ) {}
+
+    public function handle(VerifyNick $command): VerifyNickResult
+    {
+        $account = $this->nickRepository->findByNick($command->nickname);
+
+        if (null === $account || !$account->isPending()) {
+            return VerifyNickResult::noPending();
+        }
+
+        if (!$this->tokenConsumer->consume($command->nickname, $command->token)) {
+            return VerifyNickResult::invalidToken();
+        }
+
+        $account->activate();
+        $this->nickRepository->save($account);
+
+        $this->identifiedRegistry->register($command->senderUid, $account->getNickname());
+
+        return VerifyNickResult::success($account->getNickname());
+    }
+}

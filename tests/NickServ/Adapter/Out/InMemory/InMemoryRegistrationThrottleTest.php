@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\InMemory;
 
-use App\Application\NickServ\RegisterThrottleRegistry;
 use App\NickServ\Adapter\Out\InMemory\InMemoryRegistrationThrottle;
+use App\NickServ\Adapter\Out\InMemory\RegisterThrottleRegistry;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

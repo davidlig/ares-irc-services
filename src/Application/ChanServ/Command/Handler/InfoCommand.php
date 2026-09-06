@@ -10,7 +10,7 @@ use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\ChanServ\ValueObject\ChannelStatus;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 
 /**
  * INFO <#channel>.

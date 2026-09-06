@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber;
 
 use App\Application\Port\UdbRecordWriterInterface;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

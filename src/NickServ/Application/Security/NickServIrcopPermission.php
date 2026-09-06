@@ -1,0 +1,31 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\NickServ\Application\Security;
+
+use App\Application\Security\PermissionProviderInterface;
+
+final readonly class NickServIrcopPermission implements PermissionProviderInterface
+{
+    public function getServiceName(): string
+    {
+        return 'NickServ';
+    }
+
+    public function getPermissions(): array
+    {
+        return [
+            NickServPermission::USERIP,
+            NickServPermission::SUSPEND,
+            NickServPermission::RENAME,
+            NickServPermission::DROP,
+            NickServPermission::DROP_FORCE,
+            NickServPermission::RESTORE,
+            NickServPermission::FORBID,
+            NickServPermission::FORBIDVHOST,
+            NickServPermission::SASET,
+            NickServPermission::HISTORY,
+        ];
+    }
+}

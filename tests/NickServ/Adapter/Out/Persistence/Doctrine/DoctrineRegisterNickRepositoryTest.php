@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\Out\Persistence\Doctrine;
 
-use App\Domain\NickServ\Entity\RegisteredNick;
 use App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineRegisterNickRepository;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
+use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

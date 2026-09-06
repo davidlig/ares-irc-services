@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Persistence\Doctrine;
 
-use App\Domain\NickServ\Entity\RegisteredNick;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
+use App\NickServ\Domain\Entity\RegisteredNick;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class DoctrineRegisterNickRepository implements RegisterNickRepository

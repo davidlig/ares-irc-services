@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Adapter\In\Irc\Command;
 
-use App\Application\NickServ\Command\NickServCommandRegistry;
-use App\Application\NickServ\Command\NickServContext;
-use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\PendingVerificationRegistry;
-use App\Application\NickServ\RecoveryTokenRegistry;
 use App\Application\Port\TranslationInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\NickServ\Adapter\In\Irc\Command\RegisterCommand;
+use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
+use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
+use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
+use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
 use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandlerInterface;
 use App\NickServ\Application\UseCase\Register\RegisterNickResult;

@@ -11,9 +11,9 @@ use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Domain\Event\UserJoinedChannelEvent;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\InMemory;
 
-use App\Application\NickServ\RegisterThrottleRegistry;
 use App\NickServ\Application\Port\Out\RegistrationThrottle;
 use DateTimeImmutable;
 

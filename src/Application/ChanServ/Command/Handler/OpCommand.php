@@ -14,9 +14,9 @@ use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Entity\RegisteredNick;
 
 /**
  * OP <#channel> <nickname>.

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ\Command\Handler;
 
-use App\Application\NickServ\VhostValidator;
 use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\Port\EventBusInterface;
@@ -12,6 +11,7 @@ use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
+use App\NickServ\Application\Service\VhostValidator;
 
 use function count;
 use function in_array;

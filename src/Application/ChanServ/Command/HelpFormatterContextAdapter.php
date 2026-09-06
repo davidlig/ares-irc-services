@@ -10,8 +10,8 @@ use App\Application\Security\IrcopPermissionDetector;
 use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Domain\Entity\RegisteredNick;
 
 use function strtolower;
 

@@ -6,8 +6,8 @@ namespace App\Infrastructure\Security\Voter;
 
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\Security\IrcopContextInterface;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Infrastructure\NickServ\Security\IrcServiceUser;
+use App\NickServ\Adapter\Out\Security\IrcServiceUser;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 

@@ -11,10 +11,10 @@ use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Entity\RegisteredNick;
 
 /**
  * VOICE <#channel> <nickname>.

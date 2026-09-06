@@ -13,7 +13,7 @@ use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
 use App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 
 use function array_slice;
 use function assert;

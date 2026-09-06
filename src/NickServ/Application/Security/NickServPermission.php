@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\NickServ\Application\Security;
+
+/**
+ * Permission attributes used for NickServ authorization checks.
+ * Used with Symfony Security isGranted($attribute, $subject).
+ */
+final readonly class NickServPermission
+{
+    /** Command requires the sender to be identified as the account owner (same nick + +r). */
+    public const string IDENTIFIED_OWNER = 'nickserv_identified_owner';
+
+    /** IRCop permission to view the real IP/Host of a user. */
+    public const string USERIP = 'nickserv.userip';
+
+    /** IRCop permission to suspend a nickname. */
+    public const string SUSPEND = 'nickserv.suspend';
+
+    /** IRCop permission to force rename a connected user to a random nickname. */
+    public const string RENAME = 'nickserv.rename';
+
+    /** IRCop permission to drop a registered nickname. */
+    public const string DROP = 'nickserv.drop';
+
+    /** IRCop permission to force permanent deletion of a recoverable nickname drop. */
+    public const string DROP_FORCE = 'nickserv.drop.force';
+
+    /** IRCop permission to restore a nickname in recoverable deletion grace. */
+    public const string RESTORE = 'nickserv.restore';
+
+    /** IRCop permission to forbid and unforbid nicknames. */
+    public const string FORBID = 'nickserv.forbid';
+
+    /** IRCop permission to forbid and allow vhost patterns. */
+    public const string FORBIDVHOST = 'nickserv.forbidvhost';
+
+    /** IRCop permission to modify another user's settings. */
+    public const string SASET = 'nickserv.saset';
+
+    /** IRCop permission to protect a nickname from expiration. */
+    public const string NOEXPIRE = 'nickserv.noexpire';
+
+    /** IRCop permission to view and manage nickname action history. */
+    public const string HISTORY = 'nickserv.history';
+
+    private function __construct() {}
+}

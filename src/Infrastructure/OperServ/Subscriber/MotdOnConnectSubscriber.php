@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Subscriber;
 
-use App\Application\NickServ\Service\NickForceService;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceChannelRegistrationPort;
 use App\Application\Shared\ServiceUidRegistry;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Motd;
 use App\Domain\OperServ\Repository\MotdRepositoryInterface;
 use App\Domain\OperServ\ValueObject\GlobalMessageMask;
@@ -18,6 +16,8 @@ use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\PublishedEvent\UserJoinedNetworkAppEvent;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Service\NickForceService;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

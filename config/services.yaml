@@ -162,9 +162,6 @@ services:
             $from: '%mailer.from%'
             $senderName: '%irc.server_name%'
 
-    App\Domain\NickServ\Service\PasswordHasherInterface:
-        class: App\NickServ\Adapter\Out\Security\PhpPasswordHasher
-
     App\NickServ\Application\Port\Out\PasswordHasher:
         alias: App\NickServ\Adapter\Out\Security\PhpPasswordHasher
 
@@ -191,6 +188,88 @@ services:
 
     App\NickServ\Application\UseCase\Register\RegisterNickHandlerInterface:
         alias: App\NickServ\Application\UseCase\Register\RegisterNickHandler
+
+    App\NickServ\Application\Port\Out\IdentifiedSessionTracker:
+        alias: App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry
+
+    App\NickServ\Application\Port\Out\IdentifyLockoutTracker:
+        alias: App\NickServ\Adapter\Out\InMemory\IdentifyFailedAttemptRegistry
+
+    App\NickServ\Application\Port\Out\IdentifyEventPublisher:
+        alias: App\NickServ\Adapter\Out\Event\SymfonyIdentifyEventPublisher
+
+    App\NickServ\Application\Port\Out\ForcedVhostCheckerInterface:
+        alias: App\NickServ\Adapter\Out\Security\OperIrcopForcedVhostChecker
+
+    App\NickServ\Application\Port\Out\VerificationTokenConsumer:
+        alias: App\NickServ\Adapter\Out\InMemory\PendingRegistrationVerificationStore
+
+    App\NickServ\Application\Port\Out\ResendThrottle:
+        alias: App\NickServ\Adapter\Out\InMemory\InMemoryResendThrottle
+
+    App\NickServ\Application\Port\Out\ResendMailSender:
+        alias: App\NickServ\Adapter\Out\Mail\MessengerResendMailSender
+
+    App\NickServ\Application\Port\Out\NickAssociatedChannelsPort:
+        alias: App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineNickAssociatedChannelsAdapter
+
+    App\NickServ\Application\UseCase\Identify\IdentifyNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Identify\IdentifyNickHandler
+
+    App\NickServ\Application\UseCase\Verify\VerifyNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Verify\VerifyNickHandler
+
+    App\NickServ\Application\UseCase\Resend\ResendVerificationHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Resend\ResendVerificationHandler
+
+    App\NickServ\Application\UseCase\Status\StatusNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Status\StatusNickHandler
+
+    App\NickServ\Application\UseCase\Info\InfoNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Info\InfoNickHandler
+
+    App\NickServ\Application\UseCase\Rename\RenameNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Rename\RenameNickHandler
+
+    App\NickServ\Application\Port\Out\RecoveryTokenStore:
+        alias: App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry
+
+    App\NickServ\Application\Port\Out\RecoveryPasswordGenerator:
+        alias: App\NickServ\Adapter\Out\Random\SecureRecoveryPasswordGenerator
+
+    App\NickServ\Application\Port\Out\RecoveryMailSender:
+        alias: App\NickServ\Adapter\Out\Mail\MessengerRecoveryMailSender
+
+    App\NickServ\Application\Port\Out\RecoverEventPublisher:
+        alias: App\NickServ\Adapter\Out\Event\SymfonyRecoverEventPublisher
+
+    App\NickServ\Application\UseCase\Recover\RecoverNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Recover\RecoverNickHandler
+
+    App\NickServ\Application\UseCase\Restore\RestoreNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Restore\RestoreNickHandler
+
+    App\NickServ\Application\UseCase\Drop\DropNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Drop\DropNickHandler
+
+    App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandler
+
+    App\NickServ\Application\UseCase\History\HistoryNickHandlerInterface:
+        alias: App\NickServ\Application\UseCase\History\HistoryNickHandler
+
+    App\NickServ\Application\UseCase\Userip\GetUseripHandlerInterface:
+        alias: App\NickServ\Application\UseCase\Userip\GetUseripHandler
+
+    App\NickServ\Adapter\Out\Mail\MessengerRecoveryMailSender:
+        arguments:
+            $logger: '@monolog.logger.irc'
+            $nickservNick: '%nickserv.nick%'
+
+    App\NickServ\Adapter\Out\Mail\MessengerResendMailSender:
+        arguments:
+            $logger: '@monolog.logger.irc'
+            $nickservNick: '%nickserv.nick%'
 
     App\NickServ\Adapter\Out\Mail\MessengerRegistrationMailSender:
         arguments:
@@ -549,7 +628,7 @@ services:
             $gateway: '@App\Infrastructure\IRC\ServiceBridge\ServiceCommandGateway'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $sendNotice: '@App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter'
-            $messageTypeResolver: '@App\Infrastructure\NickServ\UserMessageTypeResolver'
+            $messageTypeResolver: '@App\NickServ\Adapter\Out\User\UserMessageTypeResolver'
             $notifier: '@App\Application\OperServ\Command\OperServNotifierInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $translator: '@translator'
@@ -561,7 +640,7 @@ services:
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\NickServ\Subscriber\NickServCommandListener:
+    App\NickServ\Adapter\In\Irc\Subscriber\NickServCommandListener:
         arguments:
             $logger: '@monolog.logger.irc'
         tags: ['service_command_listener']
@@ -615,7 +694,7 @@ services:
         alias: App\Irc\Adapter\Network\LocalUserModeSync
 
     App\Irc\Adapter\Network\SkipIdentifiedModeStripRegistryInterface:
-        alias: App\Infrastructure\NickServ\PendingNickRestoreRegistry
+        alias: App\NickServ\Adapter\Out\InMemory\PendingNickRestoreRegistry
 
     # --- Ports (Core ↔ Services): Core implements, Services consume ---
 
@@ -691,14 +770,14 @@ services:
 
     # --- NickServ Domain --------------------------------------------------------
 
-    App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface:
-        class: App\Infrastructure\NickServ\Doctrine\RegisteredNickDoctrineRepository
+    App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface:
+        class: App\NickServ\Adapter\Out\Persistence\Doctrine\RegisteredNickDoctrineRepository
 
-    App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface:
-        class: App\Infrastructure\NickServ\Doctrine\ForbiddenVhostDoctrineRepository
+    App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface:
+        class: App\NickServ\Adapter\Out\Persistence\Doctrine\ForbiddenVhostDoctrineRepository
 
-    App\Domain\NickServ\Repository\NickHistoryRepositoryInterface:
-        class: App\Infrastructure\NickServ\Doctrine\NickHistoryDoctrineRepository
+    App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface:
+        class: App\NickServ\Adapter\Out\Persistence\Doctrine\NickHistoryDoctrineRepository
 
     # --- ChanServ Domain --------------------------------------------------------
 
@@ -742,77 +821,77 @@ services:
 
     # --- NickServ Bot pseudo-client ---------------------------------------------
 
-    App\Infrastructure\NickServ\PendingNickRestoreRegistry:
-        class: App\Infrastructure\NickServ\PendingNickRestoreRegistry
+    App\NickServ\Adapter\Out\InMemory\PendingNickRestoreRegistry:
+        class: App\NickServ\Adapter\Out\InMemory\PendingNickRestoreRegistry
 
-    App\Application\NickServ\PendingNickRestoreRegistryInterface:
-        alias: App\Infrastructure\NickServ\PendingNickRestoreRegistry
+    App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface:
+        alias: App\NickServ\Adapter\Out\InMemory\PendingNickRestoreRegistry
 
-    App\Infrastructure\NickServ\PendingNickProtectionRegistry:
-        class: App\Infrastructure\NickServ\PendingNickProtectionRegistry
+    App\NickServ\Adapter\Out\InMemory\PendingNickProtectionRegistry:
+        class: App\NickServ\Adapter\Out\InMemory\PendingNickProtectionRegistry
 
-    App\Application\NickServ\PendingNickProtectionRegistryInterface:
-        alias: App\Infrastructure\NickServ\PendingNickProtectionRegistry
+    App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface:
+        alias: App\NickServ\Adapter\Out\InMemory\PendingNickProtectionRegistry
 
-    App\Application\NickServ\BurstState:
-        class: App\Application\NickServ\BurstState
+    App\NickServ\Application\Service\BurstState:
+        class: App\NickServ\Application\Service\BurstState
 
-    App\Application\NickServ\VhostValidator: ~
-    App\Application\NickServ\VhostDisplayResolver:
+    App\NickServ\Application\Service\VhostValidator: ~
+    App\NickServ\Application\Service\VhostDisplayResolver:
         arguments:
             $vhostSuffix: '%services.vhost_suffix%'
 
-    App\Application\NickServ\IdentifiedUserVhostSyncService:
+    App\NickServ\Application\Service\IdentifiedUserVhostSyncService:
         arguments:
-            $notifier:        '@App\Application\NickServ\Command\NickServNotifierInterface'
-            $displayResolver: '@App\Application\NickServ\VhostDisplayResolver'
+            $notifier:        '@App\NickServ\Application\Port\Out\NickNetworkActions'
+            $displayResolver: '@App\NickServ\Application\Service\VhostDisplayResolver'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $logger:          '@monolog.logger.irc'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
 
-    App\Application\NickServ\NickProtectionService:
+    App\NickServ\Application\Service\NickProtectionService:
         arguments:
-            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
-            $burstState: '@App\Application\NickServ\BurstState'
-            $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
+            $notifier: '@App\NickServ\Application\Port\Out\NickNetworkActions'
+            $burstState: '@App\NickServ\Application\Service\BurstState'
+            $forbiddenService: '@App\NickServ\Application\Service\ForbiddenNickService'
             $guestPrefix: '%services.guest_prefix%'
             $defaultLanguage: '%services.default_language%'
             $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $logger: '@monolog.logger.irc'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
 
-    App\Application\NickServ\Service\NickForceService:
+    App\NickServ\Application\Service\NickForceService:
         arguments:
-            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
-            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
-            $pendingRegistry: '@App\Application\NickServ\PendingNickRestoreRegistryInterface'
+            $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
+            $notifier: '@App\NickServ\Application\Port\Out\NickNetworkActions'
+            $pendingRegistry: '@App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $eventDispatcher: '@App\Application\Port\EventBusInterface'
             $logger: '@monolog.logger.irc'
             $guestPrefix: '%services.guest_prefix%'
 
-    App\Application\NickServ\Service\NickSuspensionService:
+    App\NickServ\Application\Service\NickSuspensionService:
         arguments:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $forceService: '@App\Application\NickServ\Service\NickForceService'
+            $forceService: '@App\NickServ\Application\Service\NickForceService'
             $guestPrefix: '%services.guest_prefix%'
             $logger: '@monolog.logger.irc'
 
-    App\Application\NickServ\Service\NickDropService:
+    App\NickServ\Application\Service\NickDropService:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $forceService: '@App\Application\NickServ\Service\NickForceService'
+            $forceService: '@App\NickServ\Application\Service\NickForceService'
             $eventDispatcher: '@App\Application\Port\EventBusInterface'
-            $debug: '@App\Infrastructure\NickServ\Service\NickServDebugNotifier'
+            $debug: '@App\NickServ\Adapter\Out\Service\NickServDebugNotifier'
             $logger: '@monolog.logger.irc'
-            $sessionRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $sessionRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
             $guestPrefix: '%services.guest_prefix%'
 
-    App\Infrastructure\NickServ\Bot\NickServBot:
+    App\NickServ\Adapter\In\Irc\Bot\NickServBot:
         arguments:
-            $pendingRegistry:    '@App\Infrastructure\NickServ\PendingNickRestoreRegistry'
+            $pendingRegistry:    '@App\NickServ\Adapter\Out\InMemory\PendingNickRestoreRegistry'
             $uidGenerator: '@App\Irc\Application\Port\In\ServiceUidGeneratorInterface'
             $servicesVhost:   '%services.vhost%'
             $nickservNick:       '%nickserv.nick%'
@@ -821,8 +900,14 @@ services:
             $logger:             '@monolog.logger.irc'
         tags: ['kernel.event_subscriber', { name: 'app.service_nickname_provider' }, { name: 'app.service_uid_provider' }]
 
-    App\Application\NickServ\Command\NickServNotifierInterface:
-        alias: App\Infrastructure\NickServ\Bot\NickServBot
+    App\NickServ\Adapter\In\Irc\NickServNotifierInterface:
+        alias: App\NickServ\Adapter\In\Irc\Bot\NickServBot
+
+    App\NickServ\Application\Port\Out\NickNetworkActions:
+        alias: App\NickServ\Adapter\In\Irc\Bot\NickServBot
+
+    App\NickServ\Application\Port\Out\SessionLanguageTracker:
+        alias: App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry
 
     # --- ChanServ Bot pseudo-client ---------------------------------------------
 
@@ -866,8 +951,8 @@ services:
         arguments:
             $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
-            $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
-            $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
+            $authorizationContext: '@App\NickServ\Application\Port\Out\AuthorizationContextInterface'
+            $authorizationChecker: '@App\NickServ\Application\Port\Out\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
             $logger: '@monolog.logger.irc'
@@ -981,7 +1066,7 @@ services:
             $channelRepository: '@App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface'
             $historyRepository: '@App\Domain\ChanServ\Repository\ChannelHistoryRepositoryInterface'
             $historyService: '@App\Application\ChanServ\Service\ChannelHistoryService'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $historyViewLimit: '%chanserv.history_view_limit%'
         tags: ['chanserv.command']
 
@@ -1129,8 +1214,8 @@ services:
         arguments:
             $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
-            $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
-            $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
+            $authorizationContext: '@App\NickServ\Application\Port\Out\AuthorizationContextInterface'
+            $authorizationChecker: '@App\NickServ\Application\Port\Out\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
             $logger: '@monolog.logger.irc'
@@ -1194,7 +1279,7 @@ services:
     App\Infrastructure\ChanServ\Subscriber\ChanServHistorySubscriber:
         arguments:
             $historyService: '@App\Application\ChanServ\Service\ChannelHistoryService'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
         tags: ['kernel.event_subscriber']
 
     App\Infrastructure\ChanServ\Subscriber\ChanServHistoryChannelDropSubscriber:
@@ -1216,15 +1301,15 @@ services:
 
     # --- NickServ Command Registry — auto-collects all tagged commands ----------
 
-    App\Application\NickServ\Command\NickServCommandRegistry:
+    App\NickServ\Adapter\In\Irc\NickServCommandRegistry:
         arguments:
             $commands: !tagged_iterator nickserv.command
 
     # --- NickServ Command Handlers (tagged for auto-registration) ---------------
 
-    App\Application\NickServ\RegisterThrottleRegistry: ~
-    App\Application\NickServ\IdentifyFailedAttemptRegistry: ~
-    App\Application\NickServ\NickServClientKeyResolver: ~
+    App\NickServ\Adapter\Out\InMemory\RegisterThrottleRegistry: ~
+    App\NickServ\Adapter\Out\InMemory\IdentifyFailedAttemptRegistry: ~
+    App\NickServ\Application\Service\NickServClientKeyResolver: ~
 
     App\NickServ\Application\UseCase\Register\RegisterNickHandler:
         arguments:
@@ -1235,182 +1320,196 @@ services:
     App\NickServ\Adapter\In\Irc\Command\RegisterCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\VerifyCommand:
+    App\NickServ\Application\UseCase\Verify\VerifyNickHandler: ~
+
+    App\NickServ\Adapter\In\Irc\Command\VerifyCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\ResendCommand:
+    App\NickServ\Application\UseCase\Resend\ResendVerificationHandler:
         arguments:
             $resendMinIntervalSeconds: '%nickserv.resend_min_interval%'
+
+    App\NickServ\Adapter\In\Irc\Command\ResendCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\RecoverCommand:
+    App\NickServ\Application\UseCase\Recover\RecoverNickHandler:
         arguments:
             $recoverTokenTtlSeconds: '%nickserv.recover_token_ttl_seconds%'
             $recoverMinIntervalSeconds: '%nickserv.recover_min_interval_seconds%'
-            $eventDispatcher: '@App\Application\Port\EventBusInterface'
+
+    App\NickServ\Adapter\In\Irc\Command\RecoverCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\StatusCommand:
+    App\NickServ\Application\UseCase\Status\StatusNickHandler: ~
+
+    App\NickServ\Adapter\In\Irc\Command\StatusCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\IdentifyCommand:
+    App\NickServ\Application\UseCase\Identify\IdentifyNickHandler:
         arguments:
             $identifyMaxFailedAttempts: '%nickserv.identify_max_failed_attempts%'
             $identifyFailedWindowSeconds: '%nickserv.identify_failed_window_seconds%'
             $identifyLockoutSeconds: '%nickserv.identify_lockout_seconds%'
+
+    App\NickServ\Adapter\In\Irc\Command\IdentifyCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\InfoCommand:
+    App\NickServ\Application\UseCase\Info\InfoNickHandler:
         arguments:
             $dropGraceDays: '%nickserv.drop_grace_days%'
+
+    App\NickServ\Adapter\In\Irc\Command\InfoCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\RestoreCommand:
+    App\NickServ\Application\UseCase\Restore\RestoreNickHandler: ~
+
+    App\NickServ\Adapter\In\Irc\Command\RestoreCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\SetCommand:
+    App\NickServ\Adapter\In\Irc\Command\SetCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\SetPasswordHandler:
+    App\NickServ\Adapter\In\Irc\Command\SetPasswordHandler:
         arguments:
             $eventDispatcher: '@App\Application\Port\EventBusInterface'
 
-    App\Application\NickServ\Command\Handler\SetEmailHandler:
+    App\NickServ\Adapter\In\Irc\Command\SetEmailHandler:
         arguments:
             $eventDispatcher: '@App\Application\Port\EventBusInterface'
 
-    App\Application\NickServ\Command\Handler\SasetCommand:
+    App\NickServ\Adapter\In\Irc\Command\SasetCommand:
         arguments:
-            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
+            $targetValidator: '@App\NickServ\Application\Service\NickTargetValidator'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\TimezoneHelpProvider: ~
+    App\NickServ\Adapter\In\Irc\TimezoneHelpProvider: ~
 
-    App\Application\NickServ\Command\Handler\HelpCommand:
+    App\NickServ\Adapter\In\Irc\Command\HelpCommand:
         arguments:
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $permissionRegistry: '@App\Application\Security\PermissionRegistry'
-            $timezoneHelpProvider: '@App\Application\NickServ\TimezoneHelpProvider'
+            $timezoneHelpProvider: '@App\NickServ\Adapter\In\Irc\TimezoneHelpProvider'
             $inactivityExpiryDays: '%nickserv.inactivity_expiry_days%'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\UseripCommand:
+    App\NickServ\Application\UseCase\Userip\GetUseripHandler: ~
+
+    App\NickServ\Adapter\In\Irc\Command\UseripCommand:
         arguments:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\SuspendCommand:
+    App\NickServ\Adapter\In\Irc\Command\SuspendCommand:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
-            $suspensionService: '@App\Application\NickServ\Service\NickSuspensionService'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $targetValidator: '@App\NickServ\Application\Service\NickTargetValidator'
+            $suspensionService: '@App\NickServ\Application\Service\NickSuspensionService'
             $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\UnsuspendCommand:
+    App\NickServ\Adapter\In\Irc\Command\UnsuspendCommand:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $eventDispatcher: '@App\Application\Port\EventBusInterface'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\RenameCommand:
+    App\NickServ\Application\UseCase\Rename\RenameNickHandler:
         arguments:
-            $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $forceService: '@App\Application\NickServ\Service\NickForceService'
-            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
+            $guestPrefix: '%services.guest_prefix%'
+
+    App\NickServ\Adapter\In\Irc\Command\RenameCommand:
+        arguments:
             $logger: '@monolog.logger.irc'
             $guestPrefix: '%services.guest_prefix%'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\DropCommand:
+    App\NickServ\Application\UseCase\Drop\DropNickHandler: ~
+
+    App\NickServ\Adapter\In\Irc\Command\DropCommand:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
-            $dropService: '@App\Application\NickServ\Service\NickDropService'
             $logger: '@monolog.logger.irc'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\ForbidCommand:
+    App\NickServ\Adapter\In\Irc\Command\ForbidCommand:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $targetValidator: '@App\Application\NickServ\Service\NickTargetValidator'
-            $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
-            $dropService: '@App\Application\NickServ\Service\NickDropService'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $targetValidator: '@App\NickServ\Application\Service\NickTargetValidator'
+            $forbiddenService: '@App\NickServ\Application\Service\ForbiddenNickService'
+            $dropService: '@App\NickServ\Application\Service\NickDropService'
             $logger: '@monolog.logger.irc'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\UnforbidCommand:
+    App\NickServ\Adapter\In\Irc\Command\UnforbidCommand:
         arguments:
-            $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
+            $forbiddenService: '@App\NickServ\Application\Service\ForbiddenNickService'
             $logger: '@monolog.logger.irc'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\ForbidvhostCommand:
+    App\NickServ\Adapter\In\Irc\Command\ForbidvhostCommand:
         arguments:
-            $forbiddenVhostRepository: '@App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface'
-            $forbiddenVhostService: '@App\Application\NickServ\Service\ForbiddenVhostService'
-            $patternValidator: '@App\Application\NickServ\ForbiddenPatternValidator'
+            $forbiddenVhostRepository: '@App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface'
+            $forbiddenVhostService: '@App\NickServ\Application\Service\ForbiddenVhostService'
+            $patternValidator: '@App\NickServ\Application\Service\ForbiddenPatternValidator'
             $logger: '@monolog.logger.irc'
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\NoexpireCommand:
-        arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+    App\NickServ\Application\UseCase\Noexpire\SetNoexpireNickHandler: ~
+
+    App\NickServ\Adapter\In\Irc\Command\NoexpireCommand:
         tags: ['nickserv.command']
 
-    App\Application\NickServ\Command\Handler\HistoryCommand:
+    App\NickServ\Application\UseCase\History\HistoryNickHandler:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $historyRepository: '@App\Domain\NickServ\Repository\NickHistoryRepositoryInterface'
-            $historyService: '@App\Application\NickServ\Service\NickHistoryService'
             $historyViewLimit: '%nickserv.history_view_limit%'
+
+    App\NickServ\Adapter\In\Irc\Command\HistoryCommand:
         tags: ['nickserv.command']
 
     # --- NickServ Services -------------------------------------------------------
 
-    App\Application\NickServ\Service\NickTargetValidator:
+    App\NickServ\Application\Service\NickTargetValidator:
         arguments:
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $serviceUidRegistry: '@App\Application\Shared\ServiceUidRegistry'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
 
-    App\Application\NickServ\Service\ForbiddenNickService:
+    App\NickServ\Application\Service\ForbiddenNickService:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $forceService: '@App\Application\NickServ\Service\NickForceService'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $forceService: '@App\NickServ\Application\Service\NickForceService'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $notifier: '@App\NickServ\Application\Port\Out\NickNetworkActions'
             $translator: '@App\Application\Port\TranslationInterface'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $logger: '@monolog.logger.irc'
             $defaultLanguage: '%services.default_language%'
 
-    App\Application\NickServ\Service\ForbiddenVhostService:
+    App\NickServ\Application\Service\ForbiddenVhostService:
         arguments:
-            $repository: '@App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface'
+            $repository: '@App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface'
 
-    App\Application\NickServ\Service\NickHistoryService:
+    App\NickServ\Application\Service\NickHistoryService:
         arguments:
-            $historyRepository: '@App\Domain\NickServ\Repository\NickHistoryRepositoryInterface'
+            $historyRepository: '@App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface'
 
     # --- NickServ Subscribers (event cleanup) -----------------------------------
 
-    App\Infrastructure\NickServ\Subscriber\ForbiddenVhostCleanupSubscriber:
+    App\NickServ\Adapter\In\Event\ForbiddenVhostCleanupSubscriber:
         arguments:
-            $forbiddenVhostRepository: '@App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface'
+            $forbiddenVhostRepository: '@App\NickServ\Application\Port\Out\ForbiddenVhostRepositoryInterface'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\NickServ\Subscriber\NickHistorySubscriber:
+    App\NickServ\Adapter\In\Event\NickHistorySubscriber:
         arguments:
-            $historyService: '@App\Application\NickServ\Service\NickHistoryService'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $historyService: '@App\NickServ\Application\Service\NickHistoryService'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\NickServ\Subscriber\NickHistoryNickDropSubscriber:
+    App\NickServ\Adapter\In\Event\NickHistoryNickDropSubscriber:
         arguments:
-            $historyRepository: '@App\Domain\NickServ\Repository\NickHistoryRepositoryInterface'
+            $historyRepository: '@App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface'
         tags: ['kernel.event_subscriber']
 
     # --- Symfony Security (authorization only: TokenStorage + AccessDecisionManager + Voters) ---
@@ -1422,9 +1521,9 @@ services:
     App\Infrastructure\Security\Voter\IrcopPermissionVoter:
         arguments:
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
 
-    App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter:
+    App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter:
         arguments:
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
@@ -1439,8 +1538,8 @@ services:
     Symfony\Component\Security\Core\Authorization\AccessDecisionManager:
         arguments:
             $voters:
-                - '@App\Infrastructure\NickServ\Security\Voter\NickServIdentifiedOwnerVoter'
-                - '@App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter'
+                - '@App\NickServ\Adapter\Out\Security\Voter\NickServIdentifiedOwnerVoter'
+                - '@App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter'
                 - '@App\Infrastructure\ChanServ\Security\Voter\ChanServLevelFounderVoter'
                 - '@App\Infrastructure\Security\Voter\IdentifiedVoter'
                 - '@App\Infrastructure\Security\Voter\IrcopPermissionVoter'
@@ -1450,13 +1549,13 @@ services:
             $tokenStorage: '@Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage'
             $accessDecisionManager: '@Symfony\Component\Security\Core\Authorization\AccessDecisionManager'
 
-    App\Application\NickServ\Security\AuthorizationContextInterface:
-        class: App\Infrastructure\NickServ\Security\SymfonyAuthorizationContext
+    App\NickServ\Application\Port\Out\AuthorizationContextInterface:
+        class: App\NickServ\Adapter\Out\Security\SymfonyAuthorizationContext
         arguments:
             $tokenStorage: '@Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage'
 
-    App\Application\NickServ\Security\AuthorizationCheckerInterface:
-        class: App\Infrastructure\NickServ\Security\SymfonyAuthorizationCheckerAdapter
+    App\NickServ\Application\Port\Out\AuthorizationCheckerInterface:
+        class: App\NickServ\Adapter\Out\Security\SymfonyAuthorizationCheckerAdapter
         arguments:
             $authorizationChecker: '@Symfony\Component\Security\Core\Authorization\AuthorizationChecker'
 
@@ -1466,7 +1565,7 @@ services:
         arguments:
             $providers: !tagged_iterator permission.provider
 
-    App\Application\NickServ\Security\NickServIrcopPermission:
+    App\NickServ\Application\Security\NickServIrcopPermission:
         tags: ['permission.provider']
 
     App\Application\ChanServ\Security\ChanServIrcopPermission:
@@ -1480,26 +1579,26 @@ services:
 
     # --- NickServ registries ----------------------------------------------------
 
-    App\Application\NickServ\IdentifiedSessionRegistry:
-        class: App\Application\NickServ\IdentifiedSessionRegistry
+    App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry:
+        class: App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry
         arguments:
             $logger: '@monolog.logger.irc'
 
-    App\Application\NickServ\PendingVerificationRegistry:
-        class: App\Application\NickServ\PendingVerificationRegistry
+    App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry:
+        class: App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry
 
-    App\Application\NickServ\PendingEmailChangeRegistry:
-        class: App\Application\NickServ\PendingEmailChangeRegistry
+    App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry:
+        class: App\NickServ\Adapter\Out\InMemory\PendingEmailChangeRegistry
 
-    App\Application\NickServ\RecoveryTokenRegistry:
-        class: App\Application\NickServ\RecoveryTokenRegistry
+    App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry:
+        class: App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry
 
     # --- NickServ Service -------------------------------------------------------
 
-    App\Application\NickServ\NickServService:
+    App\NickServ\Adapter\In\Irc\NickServService:
         arguments:
-            $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
-            $authorizationChecker:  '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
+            $authorizationContext: '@App\NickServ\Application\Port\Out\AuthorizationContextInterface'
+            $authorizationChecker:  '@App\NickServ\Application\Port\Out\AuthorizationCheckerInterface'
             $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
             $defaultLanguage:      '%services.default_language%'
@@ -1509,22 +1608,22 @@ services:
     # --- NickServ Subscribers ---------------------------------------------------
     # NickServMessageSubscriber removed: commands are routed via ServiceCommandGateway + NickServCommandListener
 
-    App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
+    App\NickServ\Adapter\In\Event\NickProtectionSubscriber:
         arguments:
-            $nickProtectionService:      '@App\Application\NickServ\NickProtectionService'
-            $identifiedUserVhostSync:   '@App\Application\NickServ\IdentifiedUserVhostSyncService'
-            $burstState:                '@App\Application\NickServ\BurstState'
+            $nickProtectionService:      '@App\NickServ\Application\Service\NickProtectionService'
+            $identifiedUserVhostSync:   '@App\NickServ\Application\Service\IdentifiedUserVhostSyncService'
+            $burstState:                '@App\NickServ\Application\Service\BurstState'
             $networkUserLookup:        '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $pendingProtectionRegistry: '@App\Application\NickServ\PendingNickProtectionRegistryInterface'
+            $pendingProtectionRegistry: '@App\NickServ\Application\Port\Out\PendingNickProtectionRegistryInterface'
             $connectionHolder:          '@App\Application\Port\ActiveConnectionHolderInterface'
         tags: ['kernel.event_subscriber']
 
-    App\Infrastructure\NickServ\Subscriber\ForbiddenNickEnforceSubscriber:
+    App\NickServ\Adapter\In\Event\ForbiddenNickEnforceSubscriber:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $forbiddenService: '@App\Application\NickServ\Service\ForbiddenNickService'
-            $burstState: '@App\Application\NickServ\BurstState'
-            $pendingRegistry: '@App\Application\NickServ\PendingNickRestoreRegistryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $forbiddenService: '@App\NickServ\Application\Service\ForbiddenNickService'
+            $burstState: '@App\NickServ\Application\Service\BurstState'
+            $pendingRegistry: '@App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
@@ -1536,40 +1635,40 @@ services:
             $tasks:  !tagged_iterator maintenance.task
             $logger: '@monolog.logger.maintenance'
 
-    App\Application\NickServ\Maintenance\PurgeExpiredPendingTask:
+    App\NickServ\Adapter\In\Maintenance\PurgeExpiredPendingTask:
         arguments:
             $intervalSeconds: '%maintenance.interval%'
             $logger:          '@monolog.logger.maintenance'
         tags: ['maintenance.task']
 
-    App\Application\NickServ\Maintenance\UnsuspendExpiredSuspensionsTask:
+    App\NickServ\Adapter\In\Maintenance\UnsuspendExpiredSuspensionsTask:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $debugNotifier: '@App\Infrastructure\NickServ\Service\NickServDebugNotifier'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $debugNotifier: '@App\NickServ\Adapter\Out\Service\NickServDebugNotifier'
             $serverName: '%irc.server_name%'
             $logger: '@monolog.logger.maintenance'
             $intervalSeconds: '%maintenance.interval%'
         tags: ['maintenance.task']
 
-    App\Application\NickServ\Maintenance\PurgeInactiveNicknamesTask:
+    App\NickServ\Adapter\In\Maintenance\PurgeInactiveNicknamesTask:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $dropService: '@App\Application\NickServ\Service\NickDropService'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $dropService: '@App\NickServ\Application\Service\NickDropService'
             $intervalSeconds: '%maintenance.interval%'
             $inactivityExpiryDays: '%nickserv.inactivity_expiry_days%'
         tags: ['maintenance.task']
 
-    App\Application\NickServ\Maintenance\PurgePendingDeletionNicknamesTask:
+    App\NickServ\Adapter\In\Maintenance\PurgePendingDeletionNicknamesTask:
         arguments:
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
-            $dropService: '@App\Application\NickServ\Service\NickDropService'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
+            $dropService: '@App\NickServ\Application\Service\NickDropService'
             $intervalSeconds: '%maintenance.interval%'
             $dropGraceDays: '%nickserv.drop_grace_days%'
         tags: ['maintenance.task']
 
-    App\Application\NickServ\Maintenance\CleanupHistoryTask:
+    App\NickServ\Adapter\In\Maintenance\CleanupHistoryTask:
         arguments:
-            $historyRepository: '@App\Domain\NickServ\Repository\NickHistoryRepositoryInterface'
+            $historyRepository: '@App\NickServ\Application\Port\Out\NickHistoryRepositoryInterface'
             $logger: '@monolog.logger.maintenance'
             $intervalSeconds: '%maintenance.interval%'
             $retentionDays: '%nickserv.history_retention_days%'
@@ -1602,32 +1701,32 @@ services:
         tags: ['maintenance.task']
 
     # --- In-memory pruners (tagged for PruneMemoryRegistriesTask) -----------------
-    App\Application\NickServ\Maintenance\Pruner\IdentifyFailedAttemptPruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\IdentifyFailedAttemptPruner:
         arguments:
             $windowSeconds: '%nickserv.identify_failed_window_seconds%'
         tags: ['maintenance.prunable']
 
-    App\Application\NickServ\Maintenance\Pruner\RegisterThrottlePruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\RegisterThrottlePruner:
         arguments:
             $minIntervalSeconds: '%nickserv.register_min_interval%'
         tags: ['maintenance.prunable']
 
-    App\Application\NickServ\Maintenance\Pruner\PendingVerificationPruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\PendingVerificationPruner:
         tags: ['maintenance.prunable']
 
-    App\Application\NickServ\Maintenance\Pruner\PendingEmailChangePruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\PendingEmailChangePruner:
         tags: ['maintenance.prunable']
 
-    App\Application\NickServ\Maintenance\Pruner\IdentifiedSessionPruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\IdentifiedSessionPruner:
         tags: ['maintenance.prunable']
 
-    App\Application\NickServ\Maintenance\Pruner\SessionLanguagePruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\SessionLanguagePruner:
         tags: ['maintenance.prunable']
 
-    App\Application\NickServ\Maintenance\Pruner\RecoveryTokenPruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\RecoveryTokenPruner:
         tags: ['maintenance.prunable']
 
-    App\Application\NickServ\Maintenance\PruneMemoryRegistriesTask:
+    App\NickServ\Adapter\In\Maintenance\PruneMemoryRegistriesTask:
         arguments:
             $prunables:        !tagged_iterator maintenance.prunable
             $logger:           '@monolog.logger.maintenance'
@@ -1636,23 +1735,23 @@ services:
 
     # --- Session Language Registry — temporary language for unregistered users ---
 
-    App\Application\NickServ\SessionLanguageRegistry: ~
+    App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry: ~
 
     # --- UserLanguageResolver — shared across all services ----------------------
 
-    App\Infrastructure\NickServ\UserLanguageResolver:
+    App\NickServ\Adapter\Out\User\UserLanguageResolver:
         arguments:
             $defaultLanguage: '%services.default_language%'
 
     App\Application\Port\UserLanguageResolverInterface:
-        alias: App\Infrastructure\NickServ\UserLanguageResolver
+        alias: App\NickServ\Adapter\Out\User\UserLanguageResolver
 
     # --- UserMessageTypeResolver — NOTICE vs PRIVMSG preference -----------------
 
     App\Application\Port\UserMessageTypeResolverInterface:
-        alias: App\Infrastructure\NickServ\UserMessageTypeResolver
+        alias: App\NickServ\Adapter\Out\User\UserMessageTypeResolver
 
-    App\Infrastructure\NickServ\UserMessageTypeResolver: ~
+    App\NickServ\Adapter\Out\User\UserMessageTypeResolver: ~
 
     App\Application\Port\EventBusInterface:
         alias: App\Infrastructure\Event\SymfonyEventBus
@@ -1699,8 +1798,8 @@ services:
         arguments:
             $serviceNicks: '@App\Shared\Application\ServiceNicknameRegistry'
             $languageResolver: '@App\Application\Port\UserLanguageResolverInterface'
-            $authorizationContext: '@App\Application\NickServ\Security\AuthorizationContextInterface'
-            $authorizationChecker: '@App\Application\NickServ\Security\AuthorizationCheckerInterface'
+            $authorizationContext: '@App\NickServ\Application\Port\Out\AuthorizationContextInterface'
+            $authorizationChecker: '@App\NickServ\Application\Port\Out\AuthorizationCheckerInterface'
             $defaultLanguage: '%services.default_language%'
             $defaultTimezone: '%services.default_timezone%'
             $logger: '@monolog.logger.irc'
@@ -1710,10 +1809,10 @@ services:
 
     App\Application\OperServ\IrcopModeApplier:
         arguments:
-            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
             $connectionHolder: '@App\Irc\Adapter\Out\Connection\ActiveConnectionHolder'
             $ircopRepository: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $userLookup: '@App\Irc\Adapter\ServiceBridge\CoreNetworkUserLookupAdapter'
             $logger: '@monolog.logger.irc'
 
@@ -1766,9 +1865,9 @@ services:
             $channelRegistration: '@App\Application\Port\ServiceChannelRegistrationPort'
             $pseudoUidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $sendNoticePort: '@App\Application\Port\SendNoticePort'
-            $nickForce: '@App\Application\NickServ\Service\NickForceService'
+            $nickForce: '@App\NickServ\Application\Service\NickForceService'
             $debugChannel: '%ircops.debug_channel%'
             $logger: '@monolog.logger.irc'
         tags: ['kernel.event_subscriber']
@@ -1787,14 +1886,14 @@ services:
         arguments:
             $notifierIter: !tagged_iterator app.debug_notifier
 
-    App\Infrastructure\NickServ\Service\NickServDebugNotifier:
+    App\NickServ\Adapter\Out\Service\NickServDebugNotifier:
         arguments:
-            $notifier: '@App\Application\NickServ\Command\NickServNotifierInterface'
+            $notifier: '@App\NickServ\Application\Port\Out\NickNetworkActions'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
             $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepo: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
@@ -1806,10 +1905,10 @@ services:
             $channelActions: '@App\Application\Port\ChannelServiceActionsPort'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $notifier: '@App\Application\OperServ\Command\OperServNotifierInterface'
-            $identifiedRegistry: '@App\Application\NickServ\IdentifiedSessionRegistry'
+            $identifiedRegistry: '@App\NickServ\Application\Port\Out\IdentifiedSessionTracker'
             $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepo: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $debugChannel: '%ircops.debug_channel%'
@@ -1830,7 +1929,7 @@ services:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
-            $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepo: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
             $logger: '@monolog.logger.ircops'
@@ -1840,7 +1939,7 @@ services:
         arguments:
             $glineRepository: '@App\Domain\OperServ\Repository\GlineRepositoryInterface'
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
             $accessHelper: '@App\Application\OperServ\IrcopAccessHelper'
@@ -1856,7 +1955,7 @@ services:
     App\Application\OperServ\Command\Handler\GlobalCommand:
         arguments:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
-            $nickRepository: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepository: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $serviceUidRegistry: '@App\Application\Shared\ServiceUidRegistry'
             $uidGenerator: '@App\Application\OperServ\Service\PseudoClientUidGenerator'
             $connectionHolder: '@App\Application\Port\ActiveConnectionHolderInterface'
@@ -1911,7 +2010,7 @@ services:
             $userLookup: '@App\Irc\Application\Port\In\NetworkUserLookupPort'
             $ircopRepo: '@App\Domain\OperServ\Repository\OperIrcopRepositoryInterface'
             $rootRegistry: '@App\Application\OperServ\RootUserRegistry'
-            $nickRepo: '@App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface'
+            $nickRepo: '@App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface'
             $translator: '@translator'
             $defaultLanguage: '%services.default_language%'
             $chanservNick: '%chanserv.nick%'

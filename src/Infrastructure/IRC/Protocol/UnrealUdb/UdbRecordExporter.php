@@ -9,8 +9,6 @@ use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -19,6 +17,8 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbSchema;
 use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Entity\RegisteredNick;
 use RuntimeException;
 
 use function array_filter;

@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\NickServ\SessionLanguageRegistry;
 use App\Application\Port\SendCtcpPort;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceUidProviderInterface;
 use App\Application\Shared\ServiceUidRegistry;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\ServiceBridge\CtcpHandler;
 use App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder;
-use App\Infrastructure\NickServ\UserLanguageResolver;
 use App\Irc\Adapter\Event\MessageReceivedEvent;
 use App\Irc\Adapter\Protocol\IRCMessage;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
+use App\NickServ\Adapter\Out\User\UserLanguageResolver;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

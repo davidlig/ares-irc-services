@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\NickServ\Application\UseCase\Register;
 
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\ValueObject\NickStatus;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
@@ -19,6 +17,8 @@ use App\NickServ\Application\UseCase\Register\RegisterNick;
 use App\NickServ\Application\UseCase\Register\RegisterNickHandler;
 use App\NickServ\Application\UseCase\Register\RegisterNickOutcome;
 use App\NickServ\Application\UseCase\Register\RegisterNickResult;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Domain\ValueObject\NickStatus;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\NickServ\SessionLanguageRegistry;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder;
-use App\Infrastructure\NickServ\UserLanguageResolver;
+use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
+use App\NickServ\Adapter\Out\User\UserLanguageResolver;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

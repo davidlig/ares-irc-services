@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Application\OperServ;
 
-use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\OperclassServiceActionsInterface;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 
 /**
  * Applies role operclasses to online IRC operators through the active

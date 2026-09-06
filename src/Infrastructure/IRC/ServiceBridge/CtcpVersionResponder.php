@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\Infrastructure\NickServ\UserLanguageResolver;
+use App\NickServ\Adapter\Out\User\UserLanguageResolver;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final readonly class CtcpVersionResponder

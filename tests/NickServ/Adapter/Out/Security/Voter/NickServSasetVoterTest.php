@@ -1,0 +1,341 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Adapter\Out\Security\Voter;
+
+use App\Application\OperServ\IrcopAccessHelper;
+use App\Application\OperServ\RootUserRegistry;
+use App\Domain\OperServ\Entity\OperIrcop;
+use App\Domain\OperServ\Entity\OperRole;
+use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
+use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Adapter\Out\Security\IrcServiceUser;
+use App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter;
+use App\NickServ\Application\Security\NickServPermission;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use stdClass;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
+
+#[CoversClass(NickServSasetVoter::class)]
+final class NickServSasetVoterTest extends TestCase
+{
+    private NickServSasetVoter $voter;
+
+    private IrcopAccessHelper $accessHelper;
+
+    private RootUserRegistry $rootRegistry;
+
+    private OperIrcopRepositoryInterface $ircopRepository;
+
+    protected function setUp(): void
+    {
+        $this->rootRegistry = new RootUserRegistry('RootAdmin');
+        $this->ircopRepository = $this->createStub(OperIrcopRepositoryInterface::class);
+        $this->accessHelper = new IrcopAccessHelper(
+            $this->rootRegistry,
+            $this->ircopRepository,
+            $this->createStub(OperRoleRepositoryInterface::class)
+        );
+        $this->voter = new NickServSasetVoter($this->accessHelper, $this->rootRegistry, $this->ircopRepository);
+    }
+
+    #[Test]
+    public function getIrcopRepositoryReturnsConfiguredRepository(): void
+    {
+        self::assertSame($this->ircopRepository, $this->voter->getIrcopRepository());
+    }
+
+    #[Test]
+    public function voteAbstainsForUnsupportedAttribute(): void
+    {
+        $context = $this->createNickServContext(null, null);
+        $token = $this->createStub(TokenInterface::class);
+
+        $result = $this->voter->vote($token, $context, ['OTHER_ATTRIBUTE']);
+
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
+    }
+
+    #[Test]
+    public function voteAbstainsForWrongSubject(): void
+    {
+        $token = $this->createStub(TokenInterface::class);
+
+        $result = $this->voter->vote($token, new stdClass(), [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_ABSTAIN, $result);
+    }
+
+    #[Test]
+    public function voteDeniesWhenUserIsNotIrcServiceUser(): void
+    {
+        $context = $this->createNickServContext(null, null);
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn(null);
+
+        $result = $this->voter->vote($token, $context, [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $result);
+    }
+
+    #[Test]
+    public function voteGrantsForRootUser(): void
+    {
+        $sender = new SenderView(
+            uid: '001ABCD',
+            nick: 'RootAdmin',
+            ident: 'root',
+            hostname: 'root.local',
+            cloakedHost: 'root.local',
+            ipBase64: 'cm9vdA==',
+            isIdentified: true,
+            isOper: true
+        );
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+
+        $context = $this->createNickServContext($sender, $account);
+        $user = new IrcServiceUser($sender);
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $result = $this->voter->vote($token, $context, [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $result);
+    }
+
+    #[Test]
+    public function voteDeniesForRootUserNotIdentifiedAndNotOper(): void
+    {
+        $sender = new SenderView(
+            uid: '001ABCD',
+            nick: 'RootAdmin',
+            ident: 'root',
+            hostname: 'root.local',
+            cloakedHost: 'root.local',
+            ipBase64: 'cm9vdA==',
+            isIdentified: false,
+            isOper: false
+        );
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+
+        $context = $this->createNickServContext($sender, $account);
+        $user = new IrcServiceUser($sender);
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $result = $this->voter->vote($token, $context, [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $result);
+    }
+
+    #[Test]
+    public function voteDeniesWhenUserDoesNotHaveOperRole(): void
+    {
+        $sender = new SenderView(
+            uid: '001ABCD',
+            nick: 'RegularUser',
+            ident: 'user',
+            hostname: 'user.local',
+            cloakedHost: 'user.local',
+            ipBase64: 'dXNlcg==',
+            isIdentified: true,
+            isOper: false
+        );
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+
+        $context = $this->createNickServContext($sender, $account);
+        $user = new IrcServiceUser($sender);
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $result = $this->voter->vote($token, $context, [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $result);
+    }
+
+    #[Test]
+    public function voteDeniesWhenContextHasNoSenderAccount(): void
+    {
+        $sender = new SenderView(
+            uid: '001ABCD',
+            nick: 'OperUser',
+            ident: 'oper',
+            hostname: 'oper.local',
+            cloakedHost: 'oper.local',
+            ipBase64: 'b3Blcg==',
+            isIdentified: true,
+            isOper: true
+        );
+
+        $context = $this->createNickServContext($sender, null);
+        $user = new IrcServiceUser($sender);
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $result = $this->voter->vote($token, $context, [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $result);
+    }
+
+    #[Test]
+    public function voteGrantsWhenIrcopHasSasetPermission(): void
+    {
+        $sender = new SenderView(
+            uid: '001ABCD',
+            nick: 'OperUser',
+            ident: 'oper',
+            hostname: 'oper.local',
+            cloakedHost: 'oper.local',
+            ipBase64: 'b3Blcg==',
+            isIdentified: true,
+            isOper: true
+        );
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+
+        $role = $this->createStub(OperRole::class);
+        $role->method('getId')->willReturn(1);
+
+        $ircop = $this->createStub(OperIrcop::class);
+        $ircop->method('getRole')->willReturn($role);
+
+        $roleRepository = $this->createMock(OperRoleRepositoryInterface::class);
+        $roleRepository->expects(self::once())->method('hasPermission')->with(1, NickServPermission::SASET)->willReturn(true);
+
+        $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
+        $ircopRepository->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
+
+        $accessHelper = new IrcopAccessHelper(
+            $this->rootRegistry,
+            $ircopRepository,
+            $roleRepository
+        );
+
+        $voter = new NickServSasetVoter($accessHelper, $this->rootRegistry, $ircopRepository);
+
+        $context = $this->createNickServContext($sender, $account);
+        $user = new IrcServiceUser($sender);
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $result = $voter->vote($token, $context, [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_GRANTED, $result);
+    }
+
+    #[Test]
+    public function voteDeniesWhenIrcopLacksSasetPermission(): void
+    {
+        $sender = new SenderView(
+            uid: '001ABCD',
+            nick: 'OperUser',
+            ident: 'oper',
+            hostname: 'oper.local',
+            cloakedHost: 'oper.local',
+            ipBase64: 'b3Blcg==',
+            isIdentified: true,
+            isOper: true
+        );
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+
+        $role = $this->createStub(OperRole::class);
+        $role->method('getId')->willReturn(1);
+
+        $ircop = $this->createStub(OperIrcop::class);
+        $ircop->method('getRole')->willReturn($role);
+
+        $roleRepository = $this->createMock(OperRoleRepositoryInterface::class);
+        $roleRepository->expects(self::once())->method('hasPermission')->with(1, NickServPermission::SASET)->willReturn(false);
+
+        $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
+        $ircopRepository->expects(self::once())->method('findByNickId')->with(1)->willReturn($ircop);
+
+        $accessHelper = new IrcopAccessHelper(
+            $this->rootRegistry,
+            $ircopRepository,
+            $roleRepository
+        );
+
+        $voter = new NickServSasetVoter($accessHelper, $this->rootRegistry, $ircopRepository);
+
+        $context = $this->createNickServContext($sender, $account);
+        $user = new IrcServiceUser($sender);
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $result = $voter->vote($token, $context, [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $result);
+    }
+
+    #[Test]
+    public function voteDeniesWhenIrcopNotFound(): void
+    {
+        $sender = new SenderView(
+            uid: '001ABCD',
+            nick: 'OperUser',
+            ident: 'oper',
+            hostname: 'oper.local',
+            cloakedHost: 'oper.local',
+            ipBase64: 'b3Blcg==',
+            isIdentified: true,
+            isOper: true
+        );
+
+        $account = $this->createStub(RegisteredNick::class);
+        $account->method('getId')->willReturn(1);
+
+        $roleRepository = $this->createStub(OperRoleRepositoryInterface::class);
+
+        $ircopRepository = $this->createMock(OperIrcopRepositoryInterface::class);
+        $ircopRepository->expects(self::once())->method('findByNickId')->with(1)->willReturn(null);
+
+        $accessHelper = new IrcopAccessHelper(
+            $this->rootRegistry,
+            $ircopRepository,
+            $roleRepository
+        );
+
+        $voter = new NickServSasetVoter($accessHelper, $this->rootRegistry, $ircopRepository);
+
+        $context = $this->createNickServContext($sender, $account);
+        $user = new IrcServiceUser($sender);
+        $token = $this->createStub(TokenInterface::class);
+        $token->method('getUser')->willReturn($user);
+
+        $result = $voter->vote($token, $context, [NickServPermission::SASET]);
+
+        self::assertSame(VoterInterface::ACCESS_DENIED, $result);
+    }
+
+    private function createNickServContext(?SenderView $sender, ?RegisteredNick $account): NickServContext
+    {
+        $reflection = new ReflectionClass(NickServContext::class);
+        $context = $reflection->newInstanceWithoutConstructor();
+
+        $senderProp = $reflection->getProperty('sender');
+        $senderProp->setValue($context, $sender);
+
+        $accountProp = $reflection->getProperty('senderAccount');
+        $accountProp->setValue($context, $account);
+
+        return $context;
+    }
+}

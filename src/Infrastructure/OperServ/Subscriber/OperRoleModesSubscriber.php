@@ -6,8 +6,8 @@ namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\IrcopOperclassApplier;
-use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\NickServ\Domain\Event\NickIdentifiedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

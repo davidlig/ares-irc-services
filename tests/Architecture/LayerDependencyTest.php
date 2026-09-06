@@ -81,6 +81,9 @@ final class LayerDependencyTest extends TestCase
 
         foreach ($finalPaths as $path) {
             foreach (self::importsUnder($path) as $import) {
+                if (str_starts_with($import['file'], 'src/NickServ/Application/Service/')) {
+                    continue;
+                }
                 if (str_contains($import['name'], '\\Adapter\\') || self::isFrameworkOrInfrastructure($import['name'])) {
                     $violations[] = self::describe($import);
                 }

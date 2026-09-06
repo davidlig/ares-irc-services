@@ -6,8 +6,8 @@ namespace App\Application\MemoServ\Command;
 
 use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Domain\Entity\RegisteredNick;
 use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use DateTimeInterface;

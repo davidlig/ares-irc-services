@@ -9,9 +9,9 @@ use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelSuccessorChangedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
-use App\Domain\NickServ\ValueObject\NickStatus;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Domain\ValueObject\NickStatus;
 
 use function sprintf;
 

@@ -1,0 +1,467 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Adapter\In\Irc\Subscriber;
+
+use App\Application\Port\EventBusInterface;
+use App\Application\Port\SendNoticePort;
+use App\Application\Port\TranslationInterface;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\LocalUserModeSyncPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\Irc\Application\Port\In\ServiceUidGeneratorInterface;
+use App\NickServ\Adapter\In\Irc\Bot\NickServBot;
+use App\NickServ\Adapter\In\Irc\NickServCommandInterface;
+use App\NickServ\Adapter\In\Irc\NickServCommandRegistry;
+use App\NickServ\Adapter\In\Irc\NickServContext;
+use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
+use App\NickServ\Adapter\In\Irc\NickServService;
+use App\NickServ\Adapter\In\Irc\Subscriber\NickServCommandListener;
+use App\NickServ\Adapter\Out\InMemory\PendingVerificationRegistry;
+use App\NickServ\Adapter\Out\InMemory\RecoveryTokenRegistry;
+use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
+use App\NickServ\Adapter\Out\User\UserLanguageResolver;
+use App\NickServ\Adapter\Out\User\UserMessageTypeResolver;
+use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
+use App\NickServ\Application\Port\Out\AuthorizationContextInterface;
+use App\NickServ\Application\Port\Out\PendingNickRestoreRegistryInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Exception\InvalidCredentialsException;
+use App\NickServ\Domain\Exception\NickAlreadyRegisteredException;
+use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\ServiceNicknameRegistry;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
+use Throwable;
+
+#[CoversClass(NickServCommandListener::class)]
+final class NickServCommandListenerTest extends TestCase
+{
+    private const string SENDER_UID = '001ABC';
+
+    private const string NICKSERV_UID = '001NS';
+
+    private NickServBot $nickServBot;
+
+    private NickServService $nickServService;
+
+    private MockObject&NetworkUserLookupPort $userLookup;
+
+    private MockObject&SendNoticePort $sendNotice;
+
+    private UserMessageTypeResolver $messageTypeResolver;
+
+    private MockObject&NickServNotifierInterface $nickServNotifier;
+
+    private LoggerInterface&MockObject $logger;
+
+    private NickServCommandListener $listener;
+
+    private static function senderView(): SenderView
+    {
+        return new SenderView(
+            uid: self::SENDER_UID,
+            nick: 'TestUser',
+            ident: 'test',
+            hostname: 'host.example',
+            cloakedHost: 'cloak.example',
+            ipBase64: 'dGVzdA==',
+            isIdentified: false,
+            serverSid: '001',
+        );
+    }
+
+    protected function setUp(): void
+    {
+        $uidGenerator = $this->createStub(ServiceUidGeneratorInterface::class);
+        $uidGenerator->method('generateUid')->willReturn('001NS');
+
+        $this->nickServBot = new NickServBot(
+            new ActiveConnectionHolder(),
+            $this->createStub(NetworkUserLookupPort::class),
+            $this->createStub(SendNoticePort::class),
+            $this->createStub(PendingNickRestoreRegistryInterface::class),
+            $this->createStub(LocalUserModeSyncPort::class),
+            $uidGenerator,
+            'services.example.com',
+            'NickServ',
+        );
+
+        $this->nickServBot->onBurstComplete(new NetworkBurstCompleteEvent(
+            $this->createStub(ConnectionInterface::class),
+            '001',
+        ));
+
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $this->nickServNotifier = $this->createMock(NickServNotifierInterface::class);
+        $this->messageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id, array $params = []): string => $id);
+
+        $this->nickServService = new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
+            new NickServCommandRegistry([]),
+            $nickRepository,
+            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), 'en'),
+            $this->nickServNotifier,
+            $this->messageTypeResolver,
+            $translator,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+            $this->createStub(EventBusInterface::class),
+            'en',
+            'UTC',
+        );
+
+        $this->userLookup = $this->createMock(NetworkUserLookupPort::class);
+        $this->sendNotice = $this->createMock(SendNoticePort::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
+
+        $this->listener = new NickServCommandListener(
+            $this->nickServBot,
+            $this->nickServService,
+            $this->userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->logger,
+        );
+    }
+
+    #[Test]
+    public function getServiceNameReturnsBotNick(): void
+    {
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+        $this->logger->expects(self::never())->method('error');
+
+        self::assertSame('NickServ', $this->listener->getServiceName());
+    }
+
+    #[Test]
+    public function getServiceUidReturnsBotUid(): void
+    {
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+        $this->logger->expects(self::never())->method('error');
+
+        self::assertSame('001NS', $this->listener->getServiceUid());
+    }
+
+    #[Test]
+    public function onCommandDoesNothingWhenTextIsEmpty(): void
+    {
+        $this->userLookup->expects(self::never())->method('findByUid');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('debug');
+        $this->logger->expects(self::never())->method('error');
+
+        $this->listener->onCommand(self::SENDER_UID, '');
+    }
+
+    #[Test]
+    public function onCommandLogsWarningAndReturnsWhenSenderNotFound(): void
+    {
+        $this->userLookup
+            ->expects(self::once())
+            ->method('findByUid')
+            ->with(self::SENDER_UID)
+            ->willReturn(null);
+
+        $this->logger
+            ->expects(self::once())
+            ->method('warning')
+            ->with('NickServ: could not resolve sender UID: ' . self::SENDER_UID);
+
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+
+        $this->listener->onCommand(self::SENDER_UID, 'IDENTIFY secret');
+    }
+
+    #[Test]
+    public function onCommandDispatchesToNickServServiceWhenSenderFound(): void
+    {
+        $sender = self::senderView();
+        $this->userLookup
+            ->expects(self::once())
+            ->method('findByUid')
+            ->with(self::SENDER_UID)
+            ->willReturn($sender);
+
+        $this->nickServNotifier
+            ->expects(self::once())
+            ->method('sendMessage')
+            ->with(self::SENDER_UID, self::anything(), 'NOTICE');
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::atLeastOnce())->method('debug');
+
+        $this->listener->onCommand(self::SENDER_UID, 'IDENTIFY secret');
+    }
+
+    #[Test]
+    public function onCommandSendsNoticeOnNickAlreadyRegisteredException(): void
+    {
+        $sender = self::senderView();
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+
+        $throwCommand = $this->createThrowCommand('REGISTER', new NickAlreadyRegisteredException('TestNick'));
+        $this->nickServService = $this->createNickServServiceWithCommands([$throwCommand]);
+        $this->listener = new NickServCommandListener(
+            $this->nickServBot,
+            $this->nickServService,
+            $this->userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->logger,
+        );
+
+        $this->sendNotice
+            ->expects(self::once())
+            ->method('sendMessage')
+            ->with(self::NICKSERV_UID, self::SENDER_UID, 'Nickname "TestNick" is already registered.', 'NOTICE');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('error');
+
+        $this->listener->onCommand(self::SENDER_UID, 'REGISTER pass');
+    }
+
+    #[Test]
+    public function onCommandSendsNoticeOnInvalidCredentialsException(): void
+    {
+        $sender = self::senderView();
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+
+        $throwCommand = $this->createThrowCommand('IDENTIFY', new InvalidCredentialsException());
+        $this->nickServService = $this->createNickServServiceWithCommands([$throwCommand]);
+        $this->listener = new NickServCommandListener(
+            $this->nickServBot,
+            $this->nickServService,
+            $this->userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->logger,
+        );
+
+        $this->sendNotice
+            ->expects(self::once())
+            ->method('sendMessage')
+            ->with(self::NICKSERV_UID, self::SENDER_UID, 'Invalid nickname or password.', 'NOTICE');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+        $this->logger->expects(self::never())->method('warning');
+        $this->logger->expects(self::never())->method('error');
+
+        $this->listener->onCommand(self::SENDER_UID, 'IDENTIFY wrong');
+    }
+
+    #[Test]
+    public function onCommandLogsErrorOnGenericThrowable(): void
+    {
+        $sender = self::senderView();
+        $this->userLookup->expects(self::atLeastOnce())->method('findByUid')->with(self::SENDER_UID)->willReturn($sender);
+
+        $throwCommand = $this->createThrowCommand('LIST', new RuntimeException('Unexpected error.'));
+        $this->nickServService = $this->createNickServServiceWithCommands([$throwCommand]);
+        $this->listener = new NickServCommandListener(
+            $this->nickServBot,
+            $this->nickServService,
+            $this->userLookup,
+            $this->sendNotice,
+            $this->messageTypeResolver,
+            $this->logger,
+        );
+
+        $this->sendNotice->expects(self::never())->method('sendMessage');
+        $this->nickServNotifier->expects(self::never())->method('sendMessage');
+
+        $this->logger
+            ->expects(self::once())
+            ->method('error')
+            ->with(
+                self::stringContains('NickServ dispatch error:'),
+                self::callback(static fn (array $context): bool => isset($context['exception'], $context['sender'], $context['text'])),
+            );
+
+        $this->listener->onCommand(self::SENDER_UID, 'LIST');
+    }
+
+    private function createThrowCommand(string $name, Throwable $e): NickServCommandInterface
+    {
+        return new class($name, $e) implements NickServCommandInterface {
+            public function __construct(
+                private readonly string $commandName,
+                private readonly Throwable $exception,
+            ) {}
+
+            public function getName(): string
+            {
+                return $this->commandName;
+            }
+
+            public function getAliases(): array
+            {
+                return [];
+            }
+
+            public function getMinArgs(): int
+            {
+                return 0;
+            }
+
+            public function getSyntaxKey(): string
+            {
+                return 'dummy.syntax';
+            }
+
+            public function getHelpKey(): string
+            {
+                return 'dummy.help';
+            }
+
+            public function getOrder(): int
+            {
+                return 0;
+            }
+
+            public function getShortDescKey(): string
+            {
+                return 'dummy.short';
+            }
+
+            public function getSubCommandHelp(): array
+            {
+                return [];
+            }
+
+            public function isOperOnly(): bool
+            {
+                return false;
+            }
+
+            public function getRequiredPermission(): ?string
+            {
+                return null;
+            }
+
+            public function getHelpParams(): array
+            {
+                return [];
+            }
+
+            public function execute(NickServContext $context): void
+            {
+                throw $this->exception;
+            }
+        };
+    }
+
+    /**
+     * @param array<int, NickServCommandInterface> $commands
+     */
+    private function createNickServServiceWithCommands(array $commands): NickServService
+    {
+        $nickRepository = $this->createStub(RegisteredNickRepositoryInterface::class);
+        $notifier = $this->createStub(NickServNotifierInterface::class);
+        $messageTypeResolver = new UserMessageTypeResolver($nickRepository);
+        $translator = $this->createStub(TranslationInterface::class);
+        $translator->method('trans')->willReturnCallback(static fn (string $id): string => $id);
+
+        return new NickServService(
+            $this->createStub(AuthorizationContextInterface::class),
+            $this->createStub(AuthorizationCheckerInterface::class),
+            new NickServCommandRegistry($commands),
+            $nickRepository,
+            new UserLanguageResolver($nickRepository, new SessionLanguageRegistry(), 'en'),
+            $notifier,
+            $messageTypeResolver,
+            $translator,
+            new PendingVerificationRegistry(),
+            new RecoveryTokenRegistry(),
+            $this->createServiceNicks(),
+            $this->createStub(EventBusInterface::class),
+            'en',
+            'UTC',
+        );
+    }
+
+    private function createServiceNicks(): ServiceNicknameRegistry
+    {
+        $nickservProvider = new class('nickserv', 'NickServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $chanservProvider = new class('chanserv', 'ChanServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $memoservProvider = new class('memoserv', 'MemoServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+        $operservProvider = new class('operserv', 'OperServ') implements ServiceNicknameProviderInterface {
+            public function __construct(private string $key, private string $nick) {}
+
+            public function getServiceKey(): string
+            {
+                return $this->key;
+            }
+
+            public function getNickname(): string
+            {
+                return $this->nick;
+            }
+        };
+
+        return new ServiceNicknameRegistry([
+            $nickservProvider,
+            $chanservProvider,
+            $memoservProvider,
+            $operservProvider,
+        ]);
+    }
+}

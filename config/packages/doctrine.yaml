@@ -8,9 +8,15 @@ doctrine:
         mappings:
             App:
                 is_bundle: false
-                dir: '%kernel.project_dir%/config/doctrine'
+                dir: '%kernel.project_dir%/config/doctrine/domain'
                 prefix: 'App\Domain'
                 alias: App
+                type: xml
+            NickServ:
+                is_bundle: false
+                dir: '%kernel.project_dir%/config/doctrine/nickserv'
+                prefix: 'App\NickServ\Domain\Entity'
+                alias: NickServ
                 type: xml
 
 doctrine_migrations:

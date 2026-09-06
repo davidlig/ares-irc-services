@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\UseCase\Register;
 
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\ValueObject\NickStatus;
 use App\NickServ\Application\Port\Out\Clock;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use App\NickServ\Application\Port\Out\RegisterNickRepository;
@@ -15,6 +13,8 @@ use App\NickServ\Application\Port\Out\RegistrationThrottle;
 use App\NickServ\Application\Port\Out\RegistrationVerificationStore;
 use App\NickServ\Application\Port\Out\VerificationTokenGenerator;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Domain\ValueObject\NickStatus;
 use Throwable;
 
 use function sprintf;

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Maintenance;
 
+use App\NickServ\Adapter\In\Maintenance\PruneMemoryRegistriesTask;
+
 /**
  * Contract for in-memory registries (or adapters) that can prune stale entries
  * during maintenance. Used by PruneMemoryRegistriesTask to run cleanup without

@@ -11,7 +11,7 @@ use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\MemoServ\Entity\MemoIgnore;
 use App\Domain\MemoServ\Repository\MemoIgnoreRepositoryInterface;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 
 use function assert;
 use function in_array;

@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\OperServ;
 
-use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\NickServ\IdentifiedSessionRegistry;
-use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\OperServ\ForcedVhostApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Adapter\In\Irc\NickServNotifierInterface;
+use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Service\VhostDisplayResolver;
+use App\NickServ\Domain\Entity\RegisteredNick;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

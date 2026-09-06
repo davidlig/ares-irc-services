@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Application\OperServ\ForcedVhostApplier;
-use App\Domain\NickServ\Event\NickIdentifiedEvent;
+use App\NickServ\Domain\Event\NickIdentifiedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final readonly class OperRoleForcedVhostSubscriber implements EventSubscriberInterface

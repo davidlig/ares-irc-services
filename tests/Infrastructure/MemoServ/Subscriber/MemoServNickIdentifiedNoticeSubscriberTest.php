@@ -6,10 +6,10 @@ namespace App\Tests\Infrastructure\MemoServ\Subscriber;
 
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Event\NickIdentifiedEvent;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\MemoServ\Subscriber\MemoServNickIdentifiedNoticeSubscriber;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Domain\Event\NickIdentifiedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

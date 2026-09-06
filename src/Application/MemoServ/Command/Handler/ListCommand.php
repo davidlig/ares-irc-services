@@ -11,7 +11,7 @@ use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\MemoServ\Entity\Memo;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 
 use function mb_strlen;
 use function mb_substr;

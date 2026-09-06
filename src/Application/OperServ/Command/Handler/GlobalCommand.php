@@ -14,9 +14,9 @@ use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Shared\ServiceUidRegistry;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\ValueObject\GlobalMessageMask;
 use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Psr\Log\LoggerInterface;
 use ValueError;
 

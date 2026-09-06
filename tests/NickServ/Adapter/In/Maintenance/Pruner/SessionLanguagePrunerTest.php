@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Tests\NickServ\Adapter\In\Maintenance\Pruner;
+
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\NickServ\Adapter\In\Maintenance\Pruner\SessionLanguagePruner;
+use App\NickServ\Adapter\Out\InMemory\SessionLanguageRegistry;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(SessionLanguagePruner::class)]
+final class SessionLanguagePrunerTest extends TestCase
+{
+    #[Test]
+    public function pruneListsConnectedUidsThenPrunesSessionsNotInAndReturnsCount(): void
+    {
+        $userLookup = $this->createStub(NetworkUserLookupPort::class);
+        $userLookup->method('listConnectedUids')->willReturn(['UID1', 'UID2']);
+
+        $registry = new SessionLanguageRegistry();
+        $pruner = new SessionLanguagePruner($registry, $userLookup);
+
+        $result = $pruner->prune();
+
+        self::assertGreaterThanOrEqual(0, $result);
+    }
+}

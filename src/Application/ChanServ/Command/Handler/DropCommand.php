@@ -11,9 +11,9 @@ use App\Application\ChanServ\Service\ChanDropService;
 use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
-use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\NickServ\Application\Port\Out\AuthorizationCheckerInterface;
 
 use function assert;
 use function strcasecmp;

@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
-use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\IrcopModeApplier;
 use App\Application\OperServ\IrcopOperclassApplier;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Domain\NickServ\Event\NickIdentifiedEvent;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperIrcop;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
@@ -19,6 +16,9 @@ use App\Irc\Application\Port\In\ProtocolModuleInterface;
 use App\Irc\Application\Port\In\ProtocolServiceActionsInterface;
 use App\Irc\Application\Port\In\SenderView;
 use App\Irc\Application\Port\In\UserModeSupportInterface;
+use App\NickServ\Adapter\Out\InMemory\IdentifiedSessionRegistry;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
+use App\NickServ\Domain\Event\NickIdentifiedEvent;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

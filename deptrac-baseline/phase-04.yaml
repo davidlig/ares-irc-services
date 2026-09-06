@@ -3,131 +3,61 @@
 deptrac:
   skip_violations:
     App\Application\Port\UserLanguageResolverInterface:
-      - App\Domain\NickServ\Entity\RegisteredNick
+      - App\NickServ\Domain\Entity\RegisteredNick
     App\Infrastructure\IRC\ServiceBridge\CtcpHandler:
-      - App\Infrastructure\NickServ\UserLanguageResolver
+      - App\NickServ\Adapter\Out\User\UserLanguageResolver
     App\Infrastructure\IRC\ServiceBridge\CtcpVersionResponder:
-      - App\Infrastructure\NickServ\UserLanguageResolver
-    App\Application\NickServ\BurstState:
+      - App\NickServ\Adapter\Out\User\UserLanguageResolver
+    App\NickServ\Application\Service\BurstState:
       - App\Irc\Application\Port\In\SenderView
-    App\Application\NickServ\Command\Handler\DropCommand:
+    App\NickServ\Adapter\In\Irc\Command\ForbidCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Irc\Application\Port\In\SenderView
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\ForbidCommand:
+    App\NickServ\Adapter\In\Irc\Command\ForbidvhostCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\ForbidvhostCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Application\Command\IrcopAuditData
-      - App\Application\Command\IrcopAuditableCommandInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\HelpCommand:
+    App\NickServ\Adapter\In\Irc\Command\HelpCommand:
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
-      - App\Irc\Application\Port\In\SenderView
       - App\Application\Security\PermissionRegistry
-    App\Application\NickServ\Command\Handler\HistoryCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Application\Command\IrcopAuditData
-      - App\Application\Command\IrcopAuditableCommandInterface
-    App\Application\NickServ\Command\Handler\IdentifyCommand:
-      - App\Application\Port\EventBusInterface
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
-      - App\Irc\Application\Port\In\SenderView
+    App\NickServ\Adapter\Out\Security\OperIrcopForcedVhostChecker:
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
-    App\Application\NickServ\Command\Handler\InfoCommand:
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
-      - App\Irc\Application\Port\In\SenderView
+    App\NickServ\Adapter\Out\Persistence\Doctrine\DoctrineNickAssociatedChannelsAdapter:
       - App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface
       - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
-    App\Application\NickServ\Command\Handler\NoexpireCommand:
+    App\NickServ\Adapter\In\Irc\Command\SasetCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-    App\Application\NickServ\Command\Handler\RecoverCommand:
-      - App\Application\Helper\EmailMasker
+    App\NickServ\Adapter\In\Irc\Command\SetEmailHandler:
       - App\Application\Helper\SecureToken
       - App\Application\Mail\Message\SendEmail
-      - App\Application\Port\AsyncMessageDispatcherInterface
-      - App\Application\Port\EventBusInterface
-      - App\Application\Port\TranslationInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\RenameCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Application\Command\IrcopAuditData
-      - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\ResendCommand:
-      - App\Application\Helper\SecureToken
-      - App\Application\Mail\Message\SendEmail
-      - App\Application\Port\AsyncMessageDispatcherInterface
-      - App\Application\Port\TranslationInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\RestoreCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Application\Command\IrcopAuditData
-      - App\Application\Command\IrcopAuditableCommandInterface
-    App\Application\NickServ\Command\Handler\SasetCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Application\Command\IrcopAuditData
-      - App\Application\Command\IrcopAuditableCommandInterface
-    App\Application\NickServ\Command\Handler\SetCommand:
-    App\Application\NickServ\Command\Handler\SetEmailHandler:
-      - App\Application\Helper\SecureToken
-      - App\Application\Mail\Message\SendEmail
-      - App\Application\Port\AsyncMessageDispatcherInterface
-      - App\Application\Port\EventBusInterface
-      - App\Application\Port\TranslationInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\SetPasswordHandler:
-      - App\Application\Port\EventBusInterface
-    App\Application\NickServ\Command\Handler\SetVhostHandler:
-      - App\Application\Port\EventBusInterface
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
+    App\NickServ\Adapter\In\Irc\Command\SetVhostHandler:
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
-    App\Application\NickServ\Command\Handler\StatusCommand:
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
-    App\Application\NickServ\Command\Handler\SuspendCommand:
+    App\NickServ\Adapter\In\Irc\Command\SuspendCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Application\Port\EventBusInterface
-    App\Application\NickServ\Command\Handler\UnforbidCommand:
+    App\NickServ\Adapter\In\Irc\Command\UnforbidCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Command\Handler\UnsuspendCommand:
+    App\NickServ\Adapter\In\Irc\Command\UnsuspendCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Application\Port\EventBusInterface
-    App\Application\NickServ\Command\Handler\UseripCommand:
-      - App\Application\Command\CommandOutcome
-      - App\Application\Command\IrcopAuditData
-      - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
-    App\Application\NickServ\Command\Handler\VerifyCommand:
-    App\Application\NickServ\Command\HelpFormatterContextAdapter:
+    App\NickServ\Adapter\In\Irc\HelpFormatterContextAdapter:
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
       - App\Application\Security\IrcopPermissionDetector
       - App\Application\Security\PermissionRegistry
-    App\Application\NickServ\Command\NickServContext:
-      - App\Irc\Application\Port\In\SenderView
-      - App\Application\Port\TranslationInterface
+    App\NickServ\Adapter\In\Irc\NickServContext:
       - App\Application\Security\IrcopContextInterface
-    App\Application\NickServ\IdentifiedSessionRegistry:
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\IdentifiedUserVhostSyncService:
+    App\NickServ\Application\Service\IdentifiedUserVhostSyncService:
       - App\Application\Port\ActiveConnectionHolderInterface
       - App\Application\Port\NickChangePreservesIdentificationInterface
       - App\Irc\Application\Port\In\SenderView
@@ -135,41 +65,34 @@ deptrac:
       - App\Domain\OperServ\ValueObject\ForcedVhost
       - Psr\Log\LoggerInterface
       - Psr\Log\NullLogger
-    App\Application\NickServ\Maintenance\CleanupHistoryTask:
+    App\NickServ\Adapter\In\Maintenance\CleanupHistoryTask:
       - App\Application\Maintenance\MaintenanceTaskInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Maintenance\PruneMemoryRegistriesTask:
+    App\NickServ\Adapter\In\Maintenance\PruneMemoryRegistriesTask:
       - App\Application\Maintenance\InMemoryPrunableInterface
       - App\Application\Maintenance\MaintenanceTaskInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Maintenance\Pruner\IdentifiedSessionPruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\IdentifiedSessionPruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
-    App\Application\NickServ\Maintenance\Pruner\IdentifyFailedAttemptPruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\IdentifyFailedAttemptPruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-    App\Application\NickServ\Maintenance\Pruner\PendingEmailChangePruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\PendingEmailChangePruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-    App\Application\NickServ\Maintenance\Pruner\PendingVerificationPruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\PendingVerificationPruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-    App\Application\NickServ\Maintenance\Pruner\RecoveryTokenPruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\RecoveryTokenPruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-    App\Application\NickServ\Maintenance\Pruner\RegisterThrottlePruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\RegisterThrottlePruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-    App\Application\NickServ\Maintenance\Pruner\SessionLanguagePruner:
+    App\NickServ\Adapter\In\Maintenance\Pruner\SessionLanguagePruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-      - App\Irc\Application\Port\In\NetworkUserLookupPort
-    App\Application\NickServ\Maintenance\PurgeExpiredPendingTask:
+    App\NickServ\Adapter\In\Maintenance\PurgeExpiredPendingTask:
       - App\Application\Maintenance\MaintenanceTaskInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\Maintenance\PurgeInactiveNicknamesTask:
+    App\NickServ\Adapter\In\Maintenance\PurgeInactiveNicknamesTask:
       - App\Application\Maintenance\MaintenanceTaskInterface
-    App\Application\NickServ\Maintenance\PurgePendingDeletionNicknamesTask:
+    App\NickServ\Adapter\In\Maintenance\PurgePendingDeletionNicknamesTask:
       - App\Application\Maintenance\MaintenanceTaskInterface
-    App\Application\NickServ\Maintenance\UnsuspendExpiredSuspensionsTask:
+    App\NickServ\Adapter\In\Maintenance\UnsuspendExpiredSuspensionsTask:
       - App\Application\Maintenance\MaintenanceTaskInterface
-      - App\Application\Port\ServiceDebugNotifierInterface
-      - Psr\Log\LoggerInterface
-    App\Application\NickServ\NickProtectionService:
+    App\NickServ\Application\Service\NickProtectionService:
       - App\Application\Port\ActiveConnectionHolderInterface
       - App\Application\Port\EventBusInterface
       - App\Irc\Application\Port\In\NetworkUserLookupPort
@@ -178,67 +101,84 @@ deptrac:
       - App\Application\Port\TranslationInterface
       - Psr\Log\LoggerInterface
       - Psr\Log\NullLogger
-    App\Application\NickServ\NickServClientKeyResolver:
+    App\NickServ\Application\Service\NickServClientKeyResolver:
       - App\Irc\Application\Port\In\SenderView
-    App\Application\NickServ\NickServService:
+    App\NickServ\Adapter\In\Irc\NickServService:
       - App\Application\Command\CommandOutcome
       - App\Application\Event\CommandExecutedEvent
-      - App\Application\Port\EventBusInterface
+    App\NickServ\Application\Port\Out\AuthorizationContextInterface:
       - App\Irc\Application\Port\In\SenderView
-      - App\Application\Port\TranslationInterface
-      - App\Application\Port\UserLanguageResolverInterface
-      - App\Application\Port\UserMessageTypeResolverInterface
-      - Psr\Log\LoggerInterface
-      - Psr\Log\NullLogger
-    App\Application\NickServ\Security\AuthorizationContextInterface:
-      - App\Irc\Application\Port\In\SenderView
-    App\Application\NickServ\Security\NickServIrcopPermission:
+    App\NickServ\Application\Security\NickServIrcopPermission:
       - App\Application\Security\PermissionProviderInterface
-    App\Application\NickServ\Service\ForbiddenNickService:
+    App\NickServ\Application\Service\ForbiddenNickService:
       - App\Application\Port\ActiveConnectionHolderInterface
       - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Application\Port\TranslationInterface
       - Psr\Log\LoggerInterface
-    App\Application\NickServ\Service\NickDropService:
+    App\NickServ\Application\Service\NickDropService:
       - App\Application\Port\EventBusInterface
       - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Application\Port\ServiceDebugNotifierInterface
       - App\Application\Port\TransactionManagerInterface
       - Psr\Log\LoggerInterface
-    App\Application\NickServ\Service\NickForceService:
+    App\NickServ\Application\Service\NickForceService:
       - App\Application\Port\EventBusInterface
       - App\Irc\Application\Port\In\NetworkUserLookupPort
       - Psr\Log\LoggerInterface
-    App\Application\NickServ\Service\NickSuspensionService:
+    App\NickServ\Application\Service\NickSuspensionService:
       - App\Irc\Application\Port\In\NetworkUserLookupPort
       - Psr\Log\LoggerInterface
       - Psr\Log\NullLogger
-    App\Application\NickServ\Service\NickTargetValidator:
+    App\NickServ\Application\Service\NickTargetValidator:
       - App\Application\OperServ\RootUserRegistry
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
-    App\Infrastructure\NickServ\Bot\NickServBot:
+    App\NickServ\Adapter\In\Irc\Bot\NickServBot:
       - App\Irc\Adapter\Out\Connection\ConnectionInterface
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
       - App\Irc\Domain\ValueObject\Uid
       - App\Irc\Adapter\Out\Connection\ActiveConnectionHolder
-    App\Infrastructure\NickServ\PendingNickRestoreRegistry:
+    App\NickServ\Adapter\Out\InMemory\PendingNickRestoreRegistry:
       - App\Irc\Adapter\Network\SkipIdentifiedModeStripRegistryInterface
-    App\Infrastructure\NickServ\Security\Voter\NickServSasetVoter:
+    App\NickServ\Adapter\Out\Security\Voter\NickServSasetVoter:
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
-    App\Infrastructure\NickServ\Service\NickServDebugNotifier:
+    App\NickServ\Adapter\Out\Service\NickServDebugNotifier:
       - App\Application\OperServ\RootUserRegistry
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
-    App\Infrastructure\NickServ\Subscriber\ForbiddenNickEnforceSubscriber:
+    App\NickServ\Adapter\In\Event\ForbiddenNickEnforceSubscriber:
       - App\Irc\Domain\Event\UserNickChangedEvent
-    App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
+    App\NickServ\Adapter\In\Event\NickProtectionSubscriber:
       - App\Irc\Adapter\Event\IrcMessageProcessedEvent
       - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
       - App\Irc\Domain\Event\UserModeChangedEvent
       - App\Irc\Domain\Event\UserNickChangedEvent
       - App\Irc\Domain\Event\UserQuitNetworkEvent
-    App\Infrastructure\NickServ\Subscriber\NickServCommandListener:
+    App\NickServ\Adapter\In\Irc\Subscriber\NickServCommandListener:
       - App\Irc\Adapter\Security\SensitiveDataRedactor
-    App\Infrastructure\NickServ\Subscriber\VhostClearOnDeidentifySubscriber:
+    App\NickServ\Adapter\In\Event\VhostClearOnDeidentifySubscriber:
       - App\Irc\Domain\Event\UserModeChangedEvent
+    App\NickServ\Adapter\In\Irc\Command\DropCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\NickServ\Adapter\In\Irc\Command\HistoryCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\NickServ\Adapter\In\Irc\Command\NoexpireCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\NickServ\Adapter\In\Irc\Command\RenameCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\NickServ\Adapter\In\Irc\Command\RestoreCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface
+    App\NickServ\Adapter\In\Irc\Command\UseripCommand:
+      - App\Application\Command\CommandOutcome
+      - App\Application\Command\IrcopAuditData
+      - App\Application\Command\IrcopAuditableCommandInterface

@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\NickServ\Adapter\Out\Security;
 
-use App\Domain\NickServ\Service\PasswordHasherInterface;
 use App\NickServ\Application\Port\Out\PasswordHasher;
 use RuntimeException;
 
 use const PASSWORD_BCRYPT;
 
-final readonly class PhpPasswordHasher implements PasswordHasher, PasswordHasherInterface
+final readonly class PhpPasswordHasher implements PasswordHasher
 {
     private const int BCRYPT_COST = 12;
 

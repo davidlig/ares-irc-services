@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\NickServ\Application\Port\Out;
 
-use App\Domain\NickServ\Entity\RegisteredNick;
+use App\NickServ\Domain\Entity\RegisteredNick;
 
 interface RegisterNickRepository
 {

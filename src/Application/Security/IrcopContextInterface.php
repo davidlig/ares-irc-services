@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Security;
 
-use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Irc\Application\Port\In\SenderView;
+use App\NickServ\Domain\Entity\RegisteredNick;
 
 /**
  * Interface for contexts that support IRCOP permission checks.

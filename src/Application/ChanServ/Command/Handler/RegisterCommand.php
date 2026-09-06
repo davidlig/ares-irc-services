@@ -15,8 +15,8 @@ use App\Domain\ChanServ\Event\ChannelRegisteredEvent;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Irc\Application\Port\In\ChannelView;
+use App\NickServ\Domain\Entity\RegisteredNick;
 
 use function array_slice;
 use function count;

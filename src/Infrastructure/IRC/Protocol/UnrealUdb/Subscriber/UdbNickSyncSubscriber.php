@@ -6,18 +6,18 @@ namespace App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber;
 
 use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\UdbRecordWriterInterface;
-use App\Domain\NickServ\Entity\RegisteredNick;
-use App\Domain\NickServ\Event\NickDropEvent;
-use App\Domain\NickServ\Event\NickSuspendedEvent;
-use App\Domain\NickServ\Event\NickUnsuspendedEvent;
-use App\Domain\NickServ\Event\NickVhostChangedEvent;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Event\OperIrcopChangedEvent;
 use App\Domain\OperServ\Event\OperRoleForcedVhostChangedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use App\NickServ\Application\PublishedEvent\NickPasswordHashAvailable;
+use App\NickServ\Domain\Entity\RegisteredNick;
+use App\NickServ\Domain\Event\NickDropEvent;
+use App\NickServ\Domain\Event\NickSuspendedEvent;
+use App\NickServ\Domain\Event\NickUnsuspendedEvent;
+use App\NickServ\Domain\Event\NickVhostChangedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 use function sprintf;

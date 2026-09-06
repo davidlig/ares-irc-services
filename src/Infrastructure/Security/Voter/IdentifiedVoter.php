@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Security\Voter;
 
 use App\Application\Security\IrcopContextInterface;
-use App\Infrastructure\NickServ\Security\IrcServiceUser;
+use App\NickServ\Adapter\Out\Security\IrcServiceUser;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 

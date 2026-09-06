@@ -11,7 +11,7 @@ use App\Domain\ChanServ\Event\ChannelFounderChangedEvent;
 use App\Domain\ChanServ\Event\ChannelSuccessorChangedEvent;
 use App\Domain\ChanServ\Event\ChannelSuspendedEvent;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
-use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\NickServ\Application\Port\Out\RegisteredNickRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final readonly class ChanServHistorySubscriber implements EventSubscriberInterface

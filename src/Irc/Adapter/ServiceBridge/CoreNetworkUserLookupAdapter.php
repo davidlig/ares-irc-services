@@ -10,6 +10,7 @@ use App\Irc\Domain\Network\NetworkUser;
 use App\Irc\Domain\Repository\NetworkUserRepositoryInterface;
 use App\Irc\Domain\ValueObject\Nick;
 use App\Irc\Domain\ValueObject\Uid;
+use App\NickServ\Adapter\In\Event\NickProtectionSubscriber;
 use InvalidArgumentException;
 
 /**
