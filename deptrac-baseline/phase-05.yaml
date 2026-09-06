@@ -36,7 +36,7 @@ deptrac:
     App\Application\MemoServ\Command\Handler\SendCommand:
       - App\Application\ChanServ\ChanServAccessHelper
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Application\Port\TranslationInterface
       - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
       - App\Domain\NickServ\Entity\RegisteredNick
@@ -44,7 +44,7 @@ deptrac:
     App\Application\MemoServ\Command\MemoServCommandInterface:
       - App\Application\Command\CommandOutcome
     App\Application\MemoServ\Command\MemoServContext:
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - App\Application\Security\IrcopContextInterface
       - App\Domain\NickServ\Entity\RegisteredNick
@@ -54,7 +54,7 @@ deptrac:
       - App\Application\NickServ\Security\AuthorizationCheckerInterface
       - App\Application\NickServ\Security\AuthorizationContextInterface
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - App\Application\Port\UserLanguageResolverInterface
       - App\Application\Port\UserMessageTypeResolverInterface
@@ -64,8 +64,8 @@ deptrac:
     App\Application\MemoServ\Security\MemoServIrcopPermission:
       - App\Application\Security\PermissionProviderInterface
     App\Infrastructure\MemoServ\Bot\MemoServBot:
-      - App\Domain\IRC\Connection\ConnectionInterface
-      - App\Domain\IRC\Event\NetworkBurstCompleteEvent
+      - App\Irc\Adapter\Out\Connection\ConnectionInterface
+      - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
       - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
     App\Infrastructure\MemoServ\Subscriber\MemoServChannelDropCleanupSubscriber:
       - App\Domain\ChanServ\Event\ChannelDropCleanupEvent

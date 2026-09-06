@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Port;
+namespace App\Shared\Application\Port\Out;
 
 /**
  * Interface for services that expose a configurable nickname.

@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\IRC\Network;
-
-use App\Domain\IRC\Message\IRCMessage;
+namespace App\Irc\Adapter\Protocol;
 
 /**
  * Port: translates protocol-specific wire messages into domain events.

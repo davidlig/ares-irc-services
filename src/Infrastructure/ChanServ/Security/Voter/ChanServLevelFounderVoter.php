@@ -8,9 +8,9 @@ use App\Application\ChanServ\Command\ChanServContext;
 use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\SenderView;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\NickServ\Security\IrcServiceUser;
+use App\Irc\Application\Port\In\SenderView;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 

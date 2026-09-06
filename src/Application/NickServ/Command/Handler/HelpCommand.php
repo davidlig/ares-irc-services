@@ -10,9 +10,9 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\TimezoneHelpProvider;
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\SenderView;
 use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\UnifiedHelpFormatter;
+use App\Irc\Application\Port\In\SenderView;
 
 use function strlen;
 

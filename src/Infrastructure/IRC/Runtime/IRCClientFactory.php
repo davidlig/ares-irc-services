@@ -8,8 +8,8 @@ use App\Application\IRC\BurstCompleteRegistry;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\AsyncMessageDispatcherInterface;
 use App\Application\Port\EventBusInterface;
-use App\Domain\IRC\Connection\ConnectionFactoryInterface;
 use App\Domain\IRC\Server\ServerLink;
+use App\Irc\Adapter\Out\Connection\ConnectionFactoryInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

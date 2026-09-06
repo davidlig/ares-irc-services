@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Application\OperServ\OperServService;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceCommandListenerInterface;
 use App\Infrastructure\IRC\Security\SensitiveDataRedactor;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
 use App\Infrastructure\OperServ\Bot\OperServBot;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;

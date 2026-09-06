@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceCommandListenerInterface;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

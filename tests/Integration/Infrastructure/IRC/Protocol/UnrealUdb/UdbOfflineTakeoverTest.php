@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Integration\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelLookupPort;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
@@ -16,6 +15,7 @@ use App\Domain\Udb\Entity\UdbAuthorityState;
 use App\Domain\Udb\Entity\UdbRecord;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbOfflineTakeover;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use App\Tests\Integration\DoctrineIntegrationTestCase;
 use Closure;
 use DateTimeImmutable;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\IRC\BurstCompleteRegistry;
-use App\Application\Port\BurstCompletePort;
+use App\Irc\Application\Port\In\BurstCompletePort;
 
 /**
  * Core implements BurstCompletePort: exposes burst-complete state to Services

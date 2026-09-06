@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Domain\IRC\Connection;
 
-use App\Domain\IRC\Connection\ConnectionStatus;
+use App\Irc\Adapter\Out\Connection\ConnectionStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Service;
 
-use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Command;
 
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelView;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
-use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelView;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
+use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;

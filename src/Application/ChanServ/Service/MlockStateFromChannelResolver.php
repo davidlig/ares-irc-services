@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Application\ChanServ\Service;
 
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelView;
+use App\Irc\Application\Port\In\ChannelView;
 
 use function in_array;
 use function str_split;

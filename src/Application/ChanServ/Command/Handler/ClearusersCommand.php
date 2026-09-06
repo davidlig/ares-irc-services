@@ -11,8 +11,8 @@ use App\Application\ChanServ\Security\ChanServPermission;
 use App\Application\Command\CommandOutcome;
 use App\Application\Command\IrcopAuditableCommandInterface;
 use App\Application\Command\IrcopAuditData;
-use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Irc\Application\Port\In\ChannelView;
 
 use function array_slice;
 use function count;

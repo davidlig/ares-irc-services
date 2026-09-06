@@ -10,7 +10,7 @@ use App\Application\Command\IrcopAuditData;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
-use App\Application\Port\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 
 use function strlen;
 

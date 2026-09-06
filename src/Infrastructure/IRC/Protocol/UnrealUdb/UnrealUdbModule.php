@@ -12,8 +12,8 @@ use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UdbRawCommandHandlerInterface;
 use App\Application\Port\UdbRawCommandResult;
 use App\Application\Port\UserModeSupportInterface;
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
+use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 
 /**
  * UnrealUdb protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.

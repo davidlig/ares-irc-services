@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Subscriber;
 
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\UserModeSupportInterface;
@@ -14,6 +13,7 @@ use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\OperServ\Subscriber\OperRoleModesDeidentifiedSubscriber;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

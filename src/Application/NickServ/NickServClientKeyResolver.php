@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ;
 
-use App\Application\Port\SenderView;
+use App\Irc\Application\Port\In\SenderView;
 
 /**
  * Resolves a stable client key for NickServ throttling/lockout (REGISTER, IDENTIFY).

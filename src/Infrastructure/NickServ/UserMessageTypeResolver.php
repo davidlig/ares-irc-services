@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ;
 
-use App\Application\Port\SenderView;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\SenderView;
 
 /**
  * Resolves the preferred message type (NOTICE or PRIVMSG) for services to use when talking to a user.

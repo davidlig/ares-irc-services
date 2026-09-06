@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\IRC\Protocol;
+namespace App\Irc\Adapter\Protocol;
 
 interface ProtocolHandlerRegistryInterface
 {

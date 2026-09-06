@@ -8,9 +8,9 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\Port\EventBusInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Application\Port;
 
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Irc\Application\Port\In\SenderView;
 
 interface UserLanguageResolverInterface
 {

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\Port\SendNoticePort;
-use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Message\MessageDirection;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Adapter\Protocol\MessageDirection;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Port;
 
+use App\Irc\Application\Port\In\SenderView;
+
 /**
  * Port for dispatching a ChanServ command. Implemented by ChanServService.
  * Allows Infrastructure (e.g. ChanServCommandListener) to be tested with a mock.

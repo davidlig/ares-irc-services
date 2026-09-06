@@ -6,9 +6,9 @@ namespace App\Infrastructure\OperServ\Subscriber;
 
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
-use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

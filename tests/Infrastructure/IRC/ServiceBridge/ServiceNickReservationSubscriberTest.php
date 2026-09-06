@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
-use App\Application\Port\SenderView;
 use App\Application\Port\ServiceCommandListenerInterface;
 use App\Application\Port\ServiceNickReservationInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\ServiceBridge\ServiceNickReservationSubscriber;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

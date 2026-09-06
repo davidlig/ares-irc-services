@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\NickServ\Security;
 
-use App\Application\Port\SenderView;
+use App\Irc\Application\Port\In\SenderView;
 
 /**
  * Port for setting the current IRC user in the authorization layer (e.g. Security token).

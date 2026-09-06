@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Application\ChanServ\Service;
 
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\ChannelView;
 use App\Application\Port\EventBusInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelForbiddenEvent;
 use App\Domain\ChanServ\Event\ChannelUnforbiddenEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelView;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

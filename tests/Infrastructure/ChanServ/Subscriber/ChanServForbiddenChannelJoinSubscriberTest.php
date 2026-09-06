@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\Service\ChannelForbiddenService;
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\IRC\Event\ChannelSyncedEvent;
@@ -17,6 +15,8 @@ use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelJoinSubscriber;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelView;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

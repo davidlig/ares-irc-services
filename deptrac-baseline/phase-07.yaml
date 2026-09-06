@@ -7,7 +7,7 @@ deptrac:
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
       - App\Application\Port\ActiveConnectionHolderInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
       - Psr\Log\LoggerInterface
     App\Application\OperServ\Command\Handler\GlobalCommand:
@@ -15,7 +15,7 @@ deptrac:
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
       - App\Application\Port\ActiveConnectionHolderInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Application\Port\SendNoticePort
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
       - Psr\Log\LoggerInterface
@@ -31,8 +31,8 @@ deptrac:
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
       - App\Application\Port\ActiveConnectionHolderInterface
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
       - Psr\Log\LoggerInterface
     App\Application\OperServ\Command\Handler\MotdCommand:
@@ -64,7 +64,7 @@ deptrac:
     App\Application\OperServ\Command\OperServCommandInterface:
       - App\Application\Command\CommandOutcome
     App\Application\OperServ\Command\OperServContext:
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - App\Application\Security\IrcopContextInterface
       - App\Domain\NickServ\Entity\RegisteredNick
@@ -73,13 +73,13 @@ deptrac:
       - App\Application\NickServ\IdentifiedSessionRegistry
       - App\Application\NickServ\VhostDisplayResolver
       - App\Application\Port\ActiveConnectionHolderInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
       - Psr\Log\LoggerInterface
     App\Application\OperServ\IrcopModeApplier:
       - App\Application\NickServ\IdentifiedSessionRegistry
       - App\Application\Port\ActiveConnectionHolderInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
       - Psr\Log\LoggerInterface
     App\Application\OperServ\IrcopOperclassApplier:
@@ -103,7 +103,7 @@ deptrac:
       - App\Application\NickServ\Security\AuthorizationCheckerInterface
       - App\Application\NickServ\Security\AuthorizationContextInterface
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - App\Application\Port\UserLanguageResolverInterface
       - App\Application\Port\UserMessageTypeResolverInterface
@@ -115,8 +115,8 @@ deptrac:
     App\Application\OperServ\Service\PseudoClientUidGenerator:
       - App\Application\Port\ActiveConnectionHolderInterface
     App\Infrastructure\OperServ\Bot\OperServBot:
-      - App\Domain\IRC\Connection\ConnectionInterface
-      - App\Domain\IRC\Event\NetworkBurstCompleteEvent
+      - App\Irc\Adapter\Out\Connection\ConnectionInterface
+      - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
       - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
     App\Infrastructure\OperServ\Service\OperServDebugNotifier:
       - App\Application\NickServ\IdentifiedSessionRegistry
@@ -124,7 +124,7 @@ deptrac:
     App\Infrastructure\OperServ\Subscriber\MotdOnConnectSubscriber:
       - App\Application\Event\UserJoinedNetworkAppEvent
       - App\Application\NickServ\Service\NickForceService
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Infrastructure\OperServ\Subscriber\OperRoleForcedVhostSubscriber:
       - App\Domain\NickServ\Event\NickIdentifiedEvent
@@ -137,6 +137,6 @@ deptrac:
       - App\Infrastructure\IRC\Security\SensitiveDataRedactor
       - App\Infrastructure\NickServ\UserMessageTypeResolver
     App\Infrastructure\OperServ\Subscriber\OperServGlineEnforceSubscriber:
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\OperServ\Subscriber\OperServNickDropCleanupSubscriber:
       - App\Domain\NickServ\Event\NickDropCleanupEvent

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\UdbMutation;
-use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\Udb\Repository\UdbAuthorityStateRepositoryInterface;
 use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
@@ -17,6 +16,7 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
 use App\Infrastructure\IRC\Runtime\LoopSchedulerInterface;
 use App\Infrastructure\IRC\Runtime\RevoltLoopScheduler;
 use App\Infrastructure\IRC\Runtime\SessionEventPump;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Throwable;

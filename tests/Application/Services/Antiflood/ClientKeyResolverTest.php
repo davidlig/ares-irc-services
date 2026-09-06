@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Services\Antiflood;
 
-use App\Application\Port\SenderView;
 use App\Application\Services\Antiflood\ClientKeyResolver;
+use App\Irc\Application\Port\In\SenderView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

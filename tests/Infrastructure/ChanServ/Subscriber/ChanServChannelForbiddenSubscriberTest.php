@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\ChanServ\Subscriber;
 
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\ChannelView;
 use App\Domain\ChanServ\Event\ChannelForbiddenEvent;
 use App\Infrastructure\ChanServ\Subscriber\ChanServChannelForbiddenSubscriber;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

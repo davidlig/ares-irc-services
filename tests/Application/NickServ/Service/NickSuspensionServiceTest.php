@@ -6,9 +6,9 @@ namespace App\Tests\Application\NickServ\Service;
 
 use App\Application\NickServ\Service\NickForceService;
 use App\Application\NickServ\Service\NickSuspensionService;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

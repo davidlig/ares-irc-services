@@ -6,9 +6,9 @@ namespace App\Tests\Infrastructure\NickServ\Security\Voter;
 
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\Security\NickServPermission;
-use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Infrastructure\NickServ\Security\Voter\NickServIdentifiedOwnerVoter;
+use App\Irc\Application\Port\In\SenderView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

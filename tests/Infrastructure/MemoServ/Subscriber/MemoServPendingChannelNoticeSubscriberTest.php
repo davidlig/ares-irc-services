@@ -6,8 +6,6 @@ namespace App\Tests\Infrastructure\MemoServ\Subscriber;
 
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Application\Port\ServiceUidProviderInterface;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\ChanServ\Entity\ChannelAccess;
@@ -25,6 +23,8 @@ use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\MemoServ\Subscriber\MemoServPendingChannelNoticeSubscriber;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;

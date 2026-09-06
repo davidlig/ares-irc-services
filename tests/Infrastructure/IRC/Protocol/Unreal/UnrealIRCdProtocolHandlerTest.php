@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\Unreal;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
 use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
 use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Protocol\Unreal\UnrealIRCdProtocolHandler;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

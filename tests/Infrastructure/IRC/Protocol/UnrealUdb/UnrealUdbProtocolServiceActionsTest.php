@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\UdbRecordWriterInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UnrealUdbProtocolServiceActions;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

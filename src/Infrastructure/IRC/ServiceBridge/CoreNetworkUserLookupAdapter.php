@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\Repository\NetworkUserRepositoryInterface;
 use App\Domain\IRC\ValueObject\Nick;
 use App\Domain\IRC\ValueObject\Uid;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use InvalidArgumentException;
 
 /**

@@ -6,11 +6,11 @@ namespace App\Application\ChanServ\Service;
 
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

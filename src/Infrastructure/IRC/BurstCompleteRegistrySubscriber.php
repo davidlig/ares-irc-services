@@ -7,7 +7,7 @@ namespace App\Infrastructure\IRC;
 use App\Application\IRC\BurstCompleteRegistry;
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

@@ -13,12 +13,12 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Security\AuthorizationCheckerInterface;
 use App\Application\NickServ\Security\AuthorizationContextInterface;
 use App\Application\Port\EventBusInterface;
-use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Port\UserLanguageResolverInterface;
 use App\Application\Port\UserMessageTypeResolverInterface;
-use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\SenderView;
+use App\Shared\Application\ServiceNicknameRegistry;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

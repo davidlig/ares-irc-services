@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol;
 
-use App\Domain\IRC\Message\IRCMessage;
+use App\Irc\Adapter\Protocol\IRCMessage;
 
 use function array_slice;
 use function assert;

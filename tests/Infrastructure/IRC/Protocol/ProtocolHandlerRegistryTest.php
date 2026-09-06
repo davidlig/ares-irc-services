@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol;
 
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Protocol\ProtocolHandlerRegistry;
+use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

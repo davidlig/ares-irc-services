@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\NickServ\Subscriber;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\IRC\Event\UserModeChangedEvent;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

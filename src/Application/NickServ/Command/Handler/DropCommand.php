@@ -15,9 +15,9 @@ use App\Application\NickServ\Service\NickDropService;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickTargetValidator;
-use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\SenderView;
 use Psr\Log\LoggerInterface;
 
 use function assert;

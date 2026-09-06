@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelLookupPort;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -17,6 +16,7 @@ use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbFrame;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbFrameKind;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbWireTakeover;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -6,12 +6,12 @@ namespace App\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\Service\ChannelSuspensionService;
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Event\ChannelUnsuspendedEvent;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

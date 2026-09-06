@@ -6,11 +6,11 @@ namespace App\Application\NickServ\Command;
 
 use App\Application\NickServ\PendingVerificationRegistry;
 use App\Application\NickServ\RecoveryTokenRegistry;
-use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Security\IrcopContextInterface;
-use App\Application\Shared\ServiceNicknameRegistry;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Irc\Application\Port\In\SenderView;
+use App\Shared\Application\ServiceNicknameRegistry;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;

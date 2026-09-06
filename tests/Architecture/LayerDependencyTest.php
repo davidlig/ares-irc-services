@@ -38,6 +38,7 @@ use function trait_exists;
 use function trim;
 
 use const JSON_THROW_ON_ERROR;
+use const PATHINFO_EXTENSION;
 use const T_CONSTANT_ENCAPSED_STRING;
 use const T_NAME_FULLY_QUALIFIED;
 use const T_NAME_QUALIFIED;
@@ -195,7 +196,10 @@ final class LayerDependencyTest extends TestCase
 
         $protocolPath = self::ROOT . '/src/Irc/Adapter/Protocol';
         if (is_dir($protocolPath)) {
-            self::assertOnlyContainsDirectories('Irc/Adapter/Protocol', ['InspIRCd', 'UnrealStandalone', 'UnrealUdb']);
+            self::assertProtocolRootContainsOnlyNeutralContractsAndImplementations(
+                'Irc/Adapter/Protocol',
+                ['InspIRCd', 'UnrealStandalone', 'UnrealUdb'],
+            );
         }
     }
 
@@ -365,8 +369,35 @@ final class LayerDependencyTest extends TestCase
         $debt = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
         self::assertIsArray($debt);
 
-        /* @var array{legacy_paths: array<string, list<string>>, protocol_named_inner_files: array<string, list<string>>, unreal_family_dependencies: array<string, list<string>>} $debt */
-        return $debt;
+        self::assertArrayHasKey('legacy_paths', $debt);
+        self::assertArrayHasKey('protocol_named_inner_files', $debt);
+        self::assertArrayHasKey('unreal_family_dependencies', $debt);
+
+        return [
+            'legacy_paths' => self::stringListMap($debt['legacy_paths']),
+            'protocol_named_inner_files' => self::stringListMap($debt['protocol_named_inner_files']),
+            'unreal_family_dependencies' => self::stringListMap($debt['unreal_family_dependencies']),
+        ];
+    }
+
+    /** @return array<string, list<string>> */
+    private static function stringListMap(mixed $value): array
+    {
+        self::assertIsArray($value);
+        $result = [];
+
+        foreach ($value as $key => $items) {
+            self::assertIsString($key);
+            self::assertIsArray($items);
+            $result[$key] = [];
+
+            foreach ($items as $item) {
+                self::assertIsString($item);
+                $result[$key][] = $item;
+            }
+        }
+
+        return $result;
     }
 
     /** @param list<string> $allowed */
@@ -387,6 +418,34 @@ final class LayerDependencyTest extends TestCase
 
             self::assertTrue(is_dir($absolutePath . '/' . $entry), 'Only modeled layer directories may live directly under src/' . $relativePath);
             self::assertContains($entry, $allowed, 'Unexpected layer src/' . $relativePath . '/' . $entry);
+        }
+    }
+
+    /** @param list<string> $allowedDirectories */
+    private static function assertProtocolRootContainsOnlyNeutralContractsAndImplementations(
+        string $relativePath,
+        array $allowedDirectories,
+    ): void {
+        $absolutePath = self::ROOT . '/src/' . $relativePath;
+        $entries = scandir($absolutePath);
+        self::assertIsArray($entries);
+
+        foreach ($entries as $entry) {
+            if ('.' === $entry || '..' === $entry) {
+                continue;
+            }
+
+            if (is_dir($absolutePath . '/' . $entry)) {
+                self::assertContains($entry, $allowedDirectories, 'Unexpected protocol implementation src/' . $relativePath . '/' . $entry);
+
+                continue;
+            }
+
+            self::assertSame('php', pathinfo($entry, PATHINFO_EXTENSION), 'Only protocol-neutral PHP contracts may live directly under src/' . $relativePath);
+            self::assertFalse(
+                self::containsConcreteProtocolIdentifier($relativePath . '/' . $entry),
+                'Concrete protocol code must live in its named implementation directory: src/' . $relativePath . '/' . $entry,
+            );
         }
     }
 

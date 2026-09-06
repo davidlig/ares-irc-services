@@ -8,7 +8,6 @@ use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\MemoServCommandInterface;
 use App\Application\MemoServ\Command\MemoServContext;
 use App\Application\MemoServ\MemoServSendThrottleRegistry;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\TranslationInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\MemoServ\Entity\Memo;
@@ -18,6 +17,7 @@ use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 
 use function array_slice;
 use function assert;

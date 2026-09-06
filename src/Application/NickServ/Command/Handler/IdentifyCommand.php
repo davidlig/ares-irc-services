@@ -12,14 +12,14 @@ use App\Application\NickServ\NickServClientKeyResolver;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\EventBusInterface;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Event\NickPasswordProvidedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 
 /**
  * IDENTIFY <nickname> <password>.

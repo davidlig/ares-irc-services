@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
-use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
-use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;

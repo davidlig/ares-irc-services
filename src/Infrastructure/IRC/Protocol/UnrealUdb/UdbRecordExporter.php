@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelLookupPort;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
@@ -19,6 +18,7 @@ use App\Domain\OperServ\ValueObject\ForcedVhost;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbSchema;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use RuntimeException;
 
 use function array_filter;

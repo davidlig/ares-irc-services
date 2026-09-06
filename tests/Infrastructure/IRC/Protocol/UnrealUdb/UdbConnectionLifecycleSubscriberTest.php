@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionLostEvent;
 use App\Domain\IRC\Server\ServerLink;
 use App\Domain\IRC\ValueObject\Hostname;
@@ -15,6 +14,7 @@ use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbConnectionLifecycleSubscriber;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionCoordinator;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSnapshotProviderInterface;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

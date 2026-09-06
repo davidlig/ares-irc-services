@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\OperServ\Subscriber;
 
-use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

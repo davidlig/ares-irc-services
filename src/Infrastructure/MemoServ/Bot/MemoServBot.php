@@ -6,12 +6,12 @@ namespace App\Infrastructure\MemoServ\Bot;
 
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
 use App\Application\Port\SendNoticePort;
-use App\Application\Port\ServiceNicknameProviderInterface;
 use App\Application\Port\ServiceUidGeneratorInterface;
 use App\Application\Port\ServiceUidProviderInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

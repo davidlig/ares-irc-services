@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol;
 
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
-use App\Domain\IRC\Protocol\ProtocolHandlerRegistryInterface;
+use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
+use App\Irc\Adapter\Protocol\ProtocolHandlerRegistryInterface;
 use InvalidArgumentException;
 
 use function sprintf;

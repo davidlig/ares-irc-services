@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\PasswordMigrationStateInterface;
 use App\Application\Port\UdbRecordWriterInterface;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
@@ -26,6 +25,7 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Subscriber\UdbNickSyncSubscriber;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbRecordExporter;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\UdbSessionStateInterface;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

@@ -6,7 +6,7 @@ namespace App\Tests\Application\ChanServ\Service;
 
 use App\Application\ChanServ\Service\MlockStateFromChannelResolver;
 use App\Application\Port\ChannelModeSupportInterface;
-use App\Application\Port\ChannelView;
+use App\Irc\Application\Port\In\ChannelView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

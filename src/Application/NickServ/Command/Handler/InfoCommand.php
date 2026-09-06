@@ -7,13 +7,13 @@ namespace App\Application\NickServ\Command\Handler;
 use App\Application\NickServ\Command\NickServCommandInterface;
 use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\VhostDisplayResolver;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\NickServ\ValueObject\NickStatus;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 
 /**
  * INFO <nickname>.

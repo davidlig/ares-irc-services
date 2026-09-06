@@ -6,10 +6,10 @@ namespace App\Application\OperServ;
 
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 
 use function array_diff;

@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\IRC\Protocol;
+namespace App\Irc\Adapter\Protocol;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 
 interface ProtocolHandlerInterface
 {

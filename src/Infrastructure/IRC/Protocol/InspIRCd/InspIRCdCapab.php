@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\InspIRCd;
 
-use App\Domain\IRC\Message\IRCMessage;
+use App\Irc\Adapter\Protocol\IRCMessage;
 
 use function in_array;
 use function strlen;

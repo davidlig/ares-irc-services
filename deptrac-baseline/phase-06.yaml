@@ -12,10 +12,10 @@ deptrac:
       - App\Application\NickServ\Security\AuthorizationContextInterface
       - App\Application\Port\ActiveChannelModeSupportProviderInterface
       - App\Application\Port\ChanServDispatchPort
-      - App\Application\Port\ChannelLookupPort
+      - App\Irc\Application\Port\In\ChannelLookupPort
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - App\Application\Port\UserLanguageResolverInterface
       - App\Application\Port\UserMessageTypeResolverInterface
@@ -26,33 +26,33 @@ deptrac:
     App\Application\ChanServ\Command\ChanServCommandInterface:
       - App\Application\Command\CommandOutcome
     App\Application\ChanServ\Command\ChanServContext:
-      - App\Application\Port\ChannelLookupPort
+      - App\Irc\Application\Port\In\ChannelLookupPort
       - App\Application\Port\ChannelModeSupportInterface
-      - App\Application\Port\ChannelView
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\ChannelView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - App\Application\Security\IrcopContextInterface
       - App\Domain\NickServ\Entity\RegisteredNick
     App\Application\ChanServ\Command\Handler\AccessCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\AdminCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\AkickCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\BurstCompletePort
-      - App\Application\Port\ChannelLookupPort
-      - App\Application\Port\ChannelView
+      - App\Irc\Application\Port\In\BurstCompletePort
+      - App\Irc\Application\Port\In\ChannelLookupPort
+      - App\Irc\Application\Port\In\ChannelView
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\ClearaccessCommand:
@@ -63,17 +63,17 @@ deptrac:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Application\Port\ChannelView
+      - App\Irc\Application\Port\In\ChannelView
     App\Application\ChanServ\Command\Handler\DeadminCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\DehalfopCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\DelaccessCommand:
@@ -82,13 +82,13 @@ deptrac:
       - App\Domain\NickServ\Entity\RegisteredNick
     App\Application\ChanServ\Command\Handler\DeopCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\DevoiceCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\DropCommand:
@@ -102,8 +102,8 @@ deptrac:
       - App\Application\Command\IrcopAuditableCommandInterface
     App\Application\ChanServ\Command\Handler\HalfopCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\HelpCommand:
@@ -130,13 +130,13 @@ deptrac:
       - App\Application\Command\IrcopAuditableCommandInterface
     App\Application\ChanServ\Command\Handler\OpCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\Handler\RegisterCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\OperServ\RootUserRegistry
-      - App\Application\Port\ChannelView
+      - App\Irc\Application\Port\In\ChannelView
       - App\Application\Port\EventBusInterface
       - App\Domain\NickServ\Entity\RegisteredNick
     App\Application\ChanServ\Command\Handler\RestoreCommand:
@@ -183,14 +183,14 @@ deptrac:
       - App\Application\Port\EventBusInterface
     App\Application\ChanServ\Command\Handler\VoiceCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\NickServ\Entity\RegisteredNick
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Application\ChanServ\Command\HelpFormatterContextAdapter:
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Security\IrcopPermissionDetector
       - App\Application\Security\PermissionRegistry
       - App\Domain\NickServ\Entity\RegisteredNick
@@ -221,14 +221,14 @@ deptrac:
       - App\Application\Port\TransactionManagerInterface
       - Psr\Log\LoggerInterface
     App\Application\ChanServ\Service\ChannelForbiddenService:
-      - App\Application\Port\ChannelLookupPort
+      - App\Irc\Application\Port\In\ChannelLookupPort
       - App\Application\Port\ChannelServiceActionsPort
-      - App\Application\Port\ChannelView
+      - App\Irc\Application\Port\In\ChannelView
       - App\Application\Port\EventBusInterface
       - Psr\Log\LoggerInterface
     App\Application\ChanServ\Service\ChannelSuspensionService:
       - App\Application\Port\ActiveChannelModeSupportProviderInterface
-      - App\Application\Port\ChannelLookupPort
+      - App\Irc\Application\Port\In\ChannelLookupPort
       - App\Application\Port\ChannelModeSupportInterface
       - App\Application\Port\ChannelServiceActionsPort
       - App\Application\Port\TranslationInterface
@@ -236,12 +236,12 @@ deptrac:
       - Psr\Log\NullLogger
     App\Application\ChanServ\Service\MlockStateFromChannelResolver:
       - App\Application\Port\ChannelModeSupportInterface
-      - App\Application\Port\ChannelView
+      - App\Irc\Application\Port\In\ChannelView
     App\Domain\ChanServ\Entity\ChannelAkick:
       - App\Domain\IRC\ValueObject\UserMask
     App\Infrastructure\ChanServ\Bot\ChanServBot:
-      - App\Domain\IRC\Connection\ConnectionInterface
-      - App\Domain\IRC\Event\NetworkBurstCompleteEvent
+      - App\Irc\Adapter\Out\Connection\ConnectionInterface
+      - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
       - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
     App\Infrastructure\ChanServ\Security\Voter\ChanServLevelFounderVoter:
       - App\Application\OperServ\IrcopAccessHelper
@@ -249,12 +249,12 @@ deptrac:
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Infrastructure\NickServ\Security\IrcServiceUser
     App\Infrastructure\ChanServ\Subscriber\ChanServAkickEnforceSubscriber:
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
       - App\Domain\IRC\Event\UserJoinedChannelEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServChannelRankSubscriber:
       - App\Domain\IRC\Event\ChannelSyncedEvent
       - App\Domain\IRC\Event\IrcMessageProcessedEvent
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
       - App\Domain\IRC\Event\UserJoinedChannelEvent
       - App\Domain\IRC\Event\UserLeftChannelEvent
       - App\Domain\IRC\Network\ChannelMemberRole
@@ -267,7 +267,7 @@ deptrac:
     App\Infrastructure\ChanServ\Subscriber\ChanServEntryMsgSubscriber:
       - App\Domain\IRC\Event\UserJoinedChannelEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelBurstSubscriber:
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServForbiddenChannelJoinSubscriber:
       - App\Domain\IRC\Event\ChannelSyncedEvent
       - App\Domain\IRC\Event\UserJoinedChannelEvent
@@ -276,18 +276,18 @@ deptrac:
     App\Infrastructure\ChanServ\Subscriber\ChanServMlockEnforceSubscriber:
       - App\Domain\IRC\Event\ChannelModesChangedEvent
       - App\Domain\IRC\Event\ChannelSyncedEvent
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServNickDropCleanupSubscriber:
       - App\Domain\NickServ\Event\NickDropCleanupEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServNojoinEnforceSubscriber:
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
       - App\Domain\IRC\Event\UserJoinedChannelEvent
       - App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface
     App\Infrastructure\ChanServ\Subscriber\ChanServRejoinSubscriber:
       - App\Domain\IRC\Event\ChannelSyncedEvent
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServTopicApplySubscriber:
       - App\Domain\IRC\Event\ChannelSyncedEvent
-      - App\Domain\IRC\Event\NetworkSyncCompleteEvent
+      - App\Irc\Adapter\Event\NetworkSyncCompleteEvent
     App\Infrastructure\ChanServ\Subscriber\ChanServTopicSyncSubscriber:
       - App\Infrastructure\IRC\Network\Event\ChannelTopicReceivedEvent

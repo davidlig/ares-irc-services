@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use App\Infrastructure\IRC\Protocol\UnrealFamily\UnrealFamilyHandshakeTrait;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
 use App\Infrastructure\IRC\Runtime\SessionEventPump;
 use App\Infrastructure\IRC\Runtime\SessionEventPumpAwareInterface;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;

@@ -8,10 +8,10 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 
 final readonly class ForcedVhostApplier

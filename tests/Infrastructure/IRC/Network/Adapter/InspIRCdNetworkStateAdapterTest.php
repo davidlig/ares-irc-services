@@ -6,7 +6,6 @@ namespace App\Tests\Infrastructure\IRC\Network\Adapter;
 
 use App\Domain\IRC\Event\ServerDelinkedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
-use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Infrastructure\IRC\Network\Adapter\InspIRCdNetworkStateAdapter;
 use App\Infrastructure\IRC\Network\Event\ChannelJoinReceivedEvent;
@@ -19,6 +18,7 @@ use App\Infrastructure\IRC\Network\Event\UserMetadataReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

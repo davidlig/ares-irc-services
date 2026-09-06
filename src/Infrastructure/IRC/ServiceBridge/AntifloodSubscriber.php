@@ -6,13 +6,13 @@ namespace App\Infrastructure\IRC\ServiceBridge;
 
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\UserMessageTypeResolverInterface;
 use App\Application\Services\Antiflood\AntifloodRegistry;
 use App\Application\Services\Antiflood\ClientKeyResolver;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

@@ -6,7 +6,6 @@ namespace App\Infrastructure\MemoServ\Subscriber;
 
 use App\Application\ChanServ\ChanServAccessHelper;
 use App\Application\MemoServ\Command\MemoServNotifierInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
@@ -14,6 +13,7 @@ use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\MemoServ\Repository\MemoRepositoryInterface;
 use App\Domain\MemoServ\Repository\MemoSettingsRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 

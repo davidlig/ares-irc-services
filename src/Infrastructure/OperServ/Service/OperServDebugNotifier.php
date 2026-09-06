@@ -8,10 +8,10 @@ use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\OperServ\Command\OperServNotifierInterface;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 

@@ -6,7 +6,6 @@ namespace App\Tests\Infrastructure\IRC\Logging;
 
 use App\Domain\IRC\Event\ConnectionEstablishedEvent;
 use App\Domain\IRC\Event\ConnectionLostEvent;
-use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
 use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
@@ -14,6 +13,7 @@ use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\IRC\Logging\IRCEventSubscriber;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use Monolog\LogRecord;

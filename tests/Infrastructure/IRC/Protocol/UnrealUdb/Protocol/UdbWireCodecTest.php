@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol\UnrealUdb\Protocol;
 
-use App\Domain\IRC\Message\IRCMessage;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbFrameKind;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbOclgViewDigest;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbWireCodec;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

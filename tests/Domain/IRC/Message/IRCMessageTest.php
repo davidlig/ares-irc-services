@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Domain\IRC\Message;
 
-use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Message\MessageDirection;
+use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Adapter\Protocol\MessageDirection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

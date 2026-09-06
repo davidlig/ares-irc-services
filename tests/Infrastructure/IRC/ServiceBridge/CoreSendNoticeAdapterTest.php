@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
-use App\Domain\IRC\Message\IRCMessage;
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
 use App\Infrastructure\IRC\ServiceBridge\CoreSendNoticeAdapter;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

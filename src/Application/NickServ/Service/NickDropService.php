@@ -6,13 +6,13 @@ namespace App\Application\NickServ\Service;
 
 use App\Application\NickServ\IdentifiedSessionRegistry;
 use App\Application\Port\EventBusInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Application\Port\TransactionManagerInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickDropCleanupEvent;
 use App\Domain\NickServ\Event\NickDropEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

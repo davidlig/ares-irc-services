@@ -6,8 +6,6 @@ namespace App\Application\ChanServ\Command\Handler;
 
 use App\Application\ChanServ\Command\ChanServCommandInterface;
 use App\Application\ChanServ\Command\ChanServContext;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\ChannelAccess;
 use App\Domain\ChanServ\Entity\ChannelLevel;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
@@ -17,6 +15,8 @@ use App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface;
 use App\Domain\ChanServ\Repository\ChannelLevelRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 
 /**
  * DEOP <#channel> <nickname>. ChanServ removes +o.

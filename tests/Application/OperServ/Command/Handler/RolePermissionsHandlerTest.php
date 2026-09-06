@@ -8,7 +8,6 @@ use App\Application\OperServ\Command\Handler\RoleCommand;
 use App\Application\OperServ\Command\Handler\RolePermissionsHandler;
 use App\Application\OperServ\Command\OperServCommandRegistry;
 use App\Application\OperServ\Command\OperServNotifierInterface;
-use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Application\Security\PermissionProviderInterface;
 use App\Application\Security\PermissionRegistry;
@@ -16,6 +15,7 @@ use App\Domain\OperServ\Entity\OperPermission;
 use App\Domain\OperServ\Entity\OperRole;
 use App\Domain\OperServ\Repository\OperPermissionRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
+use App\Irc\Application\Port\In\SenderView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 

@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Connection;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
 use App\Domain\IRC\Event\ConnectionLostEvent;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Domain\IRC\Server\ServerLink;
 use App\Domain\IRC\ValueObject\Hostname;
 use App\Domain\IRC\ValueObject\LinkPassword;
@@ -15,6 +12,9 @@ use App\Domain\IRC\ValueObject\Port;
 use App\Domain\IRC\ValueObject\ServerName;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

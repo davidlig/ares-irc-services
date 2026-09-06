@@ -14,7 +14,7 @@ use App\Application\NickServ\Service\NickForceService;
 use App\Application\NickServ\Service\NickProtectabilityResult;
 use App\Application\NickServ\Service\NickProtectabilityStatus;
 use App\Application\NickServ\Service\NickTargetValidator;
-use App\Application\Port\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 
 final class RenameCommand implements NickServCommandInterface, IrcopAuditableCommandInterface

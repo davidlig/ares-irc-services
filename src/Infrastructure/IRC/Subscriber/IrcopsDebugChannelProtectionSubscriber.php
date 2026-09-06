@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Subscriber;
 
 use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
-use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;

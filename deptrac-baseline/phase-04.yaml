@@ -3,12 +3,12 @@
 deptrac:
   skip_violations:
     App\Application\NickServ\BurstState:
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
     App\Application\NickServ\Command\Handler\DropCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Command\Handler\ForbidCommand:
       - App\Application\Command\CommandOutcome
@@ -24,7 +24,7 @@ deptrac:
       - App\Application\Command\CommandOutcome
       - App\Application\OperServ\IrcopAccessHelper
       - App\Application\OperServ\RootUserRegistry
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Security\PermissionRegistry
     App\Application\NickServ\Command\Handler\HistoryCommand:
       - App\Application\Command\CommandOutcome
@@ -33,14 +33,14 @@ deptrac:
     App\Application\NickServ\Command\Handler\IdentifyCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
     App\Application\NickServ\Command\Handler\InfoCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\ChanServ\Repository\ChannelAccessRepositoryInterface
       - App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface
     App\Application\NickServ\Command\Handler\NoexpireCommand:
@@ -62,14 +62,14 @@ deptrac:
       - App\Application\Mail\Message\SendEmail
       - App\Application\Port\AsyncMessageDispatcherInterface
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Command\Handler\RenameCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Command\Handler\ResendCommand:
       - App\Application\Command\CommandOutcome
@@ -99,12 +99,12 @@ deptrac:
       - App\Application\Port\EventBusInterface
     App\Application\NickServ\Command\Handler\SetVhostHandler:
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
     App\Application\NickServ\Command\Handler\StatusCommand:
       - App\Application\Command\CommandOutcome
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
     App\Application\NickServ\Command\Handler\SuspendCommand:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
@@ -124,7 +124,7 @@ deptrac:
       - App\Application\Command\CommandOutcome
       - App\Application\Command\IrcopAuditData
       - App\Application\Command\IrcopAuditableCommandInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
     App\Application\NickServ\Command\Handler\VerifyCommand:
       - App\Application\Command\CommandOutcome
     App\Application\NickServ\Command\HelpFormatterContextAdapter:
@@ -135,7 +135,7 @@ deptrac:
     App\Application\NickServ\Command\NickServCommandInterface:
       - App\Application\Command\CommandOutcome
     App\Application\NickServ\Command\NickServContext:
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - App\Application\Security\IrcopContextInterface
     App\Application\NickServ\IdentifiedSessionRegistry:
@@ -143,7 +143,7 @@ deptrac:
     App\Application\NickServ\IdentifiedUserVhostSyncService:
       - App\Application\Port\ActiveConnectionHolderInterface
       - App\Application\Port\NickChangePreservesIdentificationInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
       - App\Domain\OperServ\ValueObject\ForcedVhost
       - Psr\Log\LoggerInterface
@@ -157,7 +157,7 @@ deptrac:
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Maintenance\Pruner\IdentifiedSessionPruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
     App\Application\NickServ\Maintenance\Pruner\IdentifyFailedAttemptPruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
     App\Application\NickServ\Maintenance\Pruner\PendingEmailChangePruner:
@@ -170,7 +170,7 @@ deptrac:
       - App\Application\Maintenance\InMemoryPrunableInterface
     App\Application\NickServ\Maintenance\Pruner\SessionLanguagePruner:
       - App\Application\Maintenance\InMemoryPrunableInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
     App\Application\NickServ\Maintenance\PurgeExpiredPendingTask:
       - App\Application\Maintenance\MaintenanceTaskInterface
       - Psr\Log\LoggerInterface
@@ -185,53 +185,53 @@ deptrac:
     App\Application\NickServ\NickProtectionService:
       - App\Application\Port\ActiveConnectionHolderInterface
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Application\Port\NickChangePreservesIdentificationInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - Psr\Log\LoggerInterface
       - Psr\Log\NullLogger
     App\Application\NickServ\NickServClientKeyResolver:
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
     App\Application\NickServ\NickServService:
       - App\Application\Command\CommandOutcome
       - App\Application\Event\CommandExecutedEvent
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
       - App\Application\Port\TranslationInterface
       - App\Application\Port\UserLanguageResolverInterface
       - App\Application\Port\UserMessageTypeResolverInterface
       - Psr\Log\LoggerInterface
       - Psr\Log\NullLogger
     App\Application\NickServ\Security\AuthorizationContextInterface:
-      - App\Application\Port\SenderView
+      - App\Irc\Application\Port\In\SenderView
     App\Application\NickServ\Security\NickServIrcopPermission:
       - App\Application\Security\PermissionProviderInterface
     App\Application\NickServ\Service\ForbiddenNickService:
       - App\Application\Port\ActiveConnectionHolderInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Application\Port\TranslationInterface
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Service\NickDropService:
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - App\Application\Port\ServiceDebugNotifierInterface
       - App\Application\Port\TransactionManagerInterface
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Service\NickForceService:
       - App\Application\Port\EventBusInterface
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - Psr\Log\LoggerInterface
     App\Application\NickServ\Service\NickSuspensionService:
-      - App\Application\Port\NetworkUserLookupPort
+      - App\Irc\Application\Port\In\NetworkUserLookupPort
       - Psr\Log\LoggerInterface
       - Psr\Log\NullLogger
     App\Application\NickServ\Service\NickTargetValidator:
       - App\Application\OperServ\RootUserRegistry
       - App\Domain\OperServ\Repository\OperIrcopRepositoryInterface
     App\Infrastructure\NickServ\Bot\NickServBot:
-      - App\Domain\IRC\Connection\ConnectionInterface
-      - App\Domain\IRC\Event\NetworkBurstCompleteEvent
+      - App\Irc\Adapter\Out\Connection\ConnectionInterface
+      - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
       - App\Domain\IRC\LocalUserModeSyncInterface
       - App\Domain\IRC\ValueObject\Uid
       - App\Infrastructure\IRC\Connection\ActiveConnectionHolder
@@ -249,7 +249,7 @@ deptrac:
     App\Infrastructure\NickServ\Subscriber\NickProtectionSubscriber:
       - App\Application\Event\UserJoinedNetworkAppEvent
       - App\Domain\IRC\Event\IrcMessageProcessedEvent
-      - App\Domain\IRC\Event\NetworkBurstCompleteEvent
+      - App\Irc\Adapter\Event\NetworkBurstCompleteEvent
       - App\Domain\IRC\Event\UserModeChangedEvent
       - App\Domain\IRC\Event\UserNickChangedEvent
       - App\Domain\IRC\Event\UserQuitNetworkEvent

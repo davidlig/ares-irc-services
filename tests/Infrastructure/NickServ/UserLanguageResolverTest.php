@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Infrastructure\NickServ;
 
 use App\Application\NickServ\SessionLanguageRegistry;
-use App\Application\Port\SenderView;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\NickServ\UserLanguageResolver;
+use App\Irc\Application\Port\In\SenderView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

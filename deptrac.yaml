@@ -213,8 +213,6 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^App\\Bootstrap(?:\\|$)#'
-        - type: classNameRegex
-          value: '#^App\\Kernel$#'
 
     - name: External
       collectors:

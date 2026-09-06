@@ -8,14 +8,14 @@ use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
 use App\Application\Port\ActiveConnectionHolderInterface;
 use App\Application\Port\EventBusInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\NickChangePreservesIdentificationInterface;
-use App\Application\Port\SenderView;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickIdentifiedEvent;
 use App\Domain\NickServ\Event\UserDeidentifiedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 

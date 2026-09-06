@@ -46,7 +46,7 @@
             <directory>src</directory>
         </include>
         <exclude>
-            <file>src/Kernel.php</file>
+            <file>src/Bootstrap/Kernel.php</file>
         </exclude>
 
         <deprecationTrigger>

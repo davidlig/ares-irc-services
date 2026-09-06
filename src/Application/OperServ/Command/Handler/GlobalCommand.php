@@ -12,11 +12,11 @@ use App\Application\OperServ\Command\OperServContext;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\OperServ\Service\PseudoClientUidGenerator;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendNoticePort;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\ValueObject\GlobalMessageMask;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use ValueError;
 

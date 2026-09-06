@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Application\Shared;
 
-use App\Application\Port\ServiceNicknameProviderInterface;
-use App\Application\Shared\ServiceNicknameRegistry;
+use App\Shared\Application\Port\Out\ServiceNicknameProviderInterface;
+use App\Shared\Application\ServiceNicknameRegistry;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

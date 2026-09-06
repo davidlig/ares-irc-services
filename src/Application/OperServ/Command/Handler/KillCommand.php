@@ -13,10 +13,10 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use Psr\Log\LoggerInterface;
 
 use function array_slice;

@@ -6,12 +6,12 @@ namespace App\Application\ChanServ\Command;
 
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\SenderView;
 use App\Application\Security\IrcopPermissionDetector;
 use App\Application\Security\PermissionRegistry;
 use App\Application\Shared\Help\HelpableCommandInterface;
 use App\Application\Shared\Help\HelpFormatterContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
+use App\Irc\Application\Port\In\SenderView;
 
 use function strtolower;
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Port;
+namespace App\Irc\Application\Port\In;
 
 /**
  * Port implemented by Core: indicates whether the IRC link has completed the initial burst.

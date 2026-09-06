@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\IRC\Event;
+namespace App\Irc\Adapter\Event;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
 
 /**
  * Dispatched by the protocol handler just BEFORE it sends its own EOS/ENDBURST,

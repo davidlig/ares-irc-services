@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\Port\ChannelView;
 use App\Domain\IRC\Network\Channel;
 use App\Domain\IRC\Network\ChannelMemberRole;
 use App\Domain\IRC\Repository\ChannelRepositoryInterface;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Uid;
 use App\Infrastructure\IRC\ServiceBridge\CoreChannelLookupAdapter;
+use App\Irc\Application\Port\In\ChannelView;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

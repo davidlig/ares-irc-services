@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Protocol;
 
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
-use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Server\ServerLink;
 use App\Infrastructure\IRC\Protocol\AbstractProtocolHandler;
 use App\Infrastructure\IRC\Protocol\InspIRCd\InspIRCdProtocolHandler;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\OperServ\Bot;
 
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ProtocolModuleInterface;
 use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\SendNoticePort;
 use App\Application\Port\ServiceUidGeneratorInterface;
-use App\Domain\IRC\Connection\ConnectionInterface;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
 use App\Infrastructure\IRC\Connection\ActiveConnectionHolder;
 use App\Infrastructure\OperServ\Bot\OperServBot;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Out\Connection\ConnectionInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

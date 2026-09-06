@@ -6,7 +6,7 @@ namespace App\Application\NickServ\Maintenance\Pruner;
 
 use App\Application\Maintenance\InMemoryPrunableInterface;
 use App\Application\NickServ\SessionLanguageRegistry;
-use App\Application\Port\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 
 final readonly class SessionLanguagePruner implements InMemoryPrunableInterface
 {

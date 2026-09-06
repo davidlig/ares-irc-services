@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Application\Port;
+namespace App\Irc\Application\Port\In;
 
 /**
  * DTO for "channel on network" as seen by Services (e.g. ChanServ).

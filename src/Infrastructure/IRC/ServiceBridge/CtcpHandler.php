@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\ServiceBridge;
 
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\SendCtcpPort;
 use App\Application\Port\SendNoticePort;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;
 use App\Infrastructure\NickServ\UserLanguageResolver;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

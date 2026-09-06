@@ -6,9 +6,7 @@ namespace App\Infrastructure\IRC\Network\Adapter;
 
 use App\Domain\IRC\Event\ServerDelinkedEvent;
 use App\Domain\IRC\Event\UserJoinedNetworkEvent;
-use App\Domain\IRC\Message\IRCMessage;
 use App\Domain\IRC\Network\ChannelMemberRole;
-use App\Domain\IRC\Network\NetworkStateAdapterInterface;
 use App\Domain\IRC\Network\NetworkUser;
 use App\Domain\IRC\ValueObject\ChannelName;
 use App\Domain\IRC\ValueObject\Ident;
@@ -24,6 +22,8 @@ use App\Infrastructure\IRC\Network\Event\UserMetadataReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserModeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserNickChangeReceivedEvent;
 use App\Infrastructure\IRC\Network\Event\UserQuitReceivedEvent;
+use App\Irc\Adapter\Protocol\IRCMessage;
+use App\Irc\Adapter\Protocol\NetworkStateAdapterInterface;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;

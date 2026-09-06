@@ -9,8 +9,8 @@ use App\Application\Port\ProtocolServiceActionsInterface;
 use App\Application\Port\ServiceIntroductionFormatterInterface;
 use App\Application\Port\ServiceNickReservationInterface;
 use App\Application\Port\UserModeSupportInterface;
-use App\Domain\IRC\Protocol\ProtocolHandlerInterface;
 use App\Infrastructure\IRC\Runtime\ProtocolRuntimeModuleInterface;
+use App\Irc\Adapter\Protocol\ProtocolHandlerInterface;
 
 /**
  * InspIRCd protocol module: handler, service actions, introduction formatter, channel mode support, nick reservation.

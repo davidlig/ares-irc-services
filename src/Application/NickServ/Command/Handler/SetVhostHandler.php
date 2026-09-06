@@ -8,13 +8,13 @@ use App\Application\NickServ\Command\NickServContext;
 use App\Application\NickServ\VhostDisplayResolver;
 use App\Application\NickServ\VhostValidator;
 use App\Application\Port\EventBusInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Event\NickVhostChangedEvent;
 use App\Domain\NickServ\Repository\ForbiddenVhostRepositoryInterface;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\ValueObject\ForcedVhost;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 
 use function in_array;
 use function strtoupper;

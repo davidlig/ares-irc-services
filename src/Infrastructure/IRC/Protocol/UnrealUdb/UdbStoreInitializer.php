@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Protocol\UnrealUdb;
 
-use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\Udb\Repository\UdbBlockStateRepositoryInterface;
 use App\Domain\Udb\Repository\UdbRecordRepositoryInterface;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbBlock;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbChecksum;
 use App\Infrastructure\IRC\Protocol\UnrealUdb\Protocol\UdbPathCodec;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

@@ -8,8 +8,6 @@ deptrac:
       - App\Domain\NickServ\Entity\RegisteredNick
     App\Application\Security\IrcopContextInterface:
       - App\Domain\NickServ\Entity\RegisteredNick
-    App\Application\Shared\ServiceNicknameRegistry:
-      - App\Application\Port\ServiceNicknameProviderInterface
     App\Application\Shared\ServiceUidGenerator:
       - App\Application\Port\ActiveConnectionHolderInterface
       - App\Application\Port\ServiceUidGeneratorInterface

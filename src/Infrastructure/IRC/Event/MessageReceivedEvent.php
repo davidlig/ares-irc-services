@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\IRC\Event;
 
-use App\Domain\IRC\Message\IRCMessage;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use DateTimeImmutable;
 use Symfony\Contracts\EventDispatcher\Event;
 

@@ -6,7 +6,6 @@ namespace App\Infrastructure\ChanServ\Subscriber;
 
 use App\Application\ChanServ\Command\ChanServNotifierInterface;
 use App\Application\Port\ChanServDispatchPort;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\ServiceCommandListenerInterface;
 use App\Domain\ChanServ\Exception\ChannelAlreadyRegisteredException;
 use App\Domain\ChanServ\Exception\ChannelNotRegisteredException;
@@ -14,6 +13,7 @@ use App\Domain\ChanServ\Exception\InsufficientAccessException;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Infrastructure\ChanServ\Bot\ChanServBot;
 use App\Infrastructure\NickServ\UserMessageTypeResolver;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Contracts\Translation\TranslatorInterface;

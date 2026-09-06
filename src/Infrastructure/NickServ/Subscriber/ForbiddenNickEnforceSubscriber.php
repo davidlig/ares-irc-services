@@ -7,9 +7,9 @@ namespace App\Infrastructure\NickServ\Subscriber;
 use App\Application\NickServ\BurstState;
 use App\Application\NickServ\PendingNickRestoreRegistryInterface;
 use App\Application\NickServ\Service\ForbiddenNickService;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Domain\IRC\Event\UserNickChangedEvent;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Infrastructure\NickServ;
 
 use App\Application\NickServ\SessionLanguageRegistry;
-use App\Application\Port\SenderView;
 use App\Application\Port\UserLanguageResolverInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\SenderView;
 
 /**
  * Resolves the preferred language for any IRC user.

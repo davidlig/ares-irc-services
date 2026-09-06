@@ -6,7 +6,6 @@ namespace App\Tests\Infrastructure\Security\Voter;
 
 use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
-use App\Application\Port\SenderView;
 use App\Application\Security\IrcopContextInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
@@ -16,6 +15,7 @@ use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
 use App\Domain\OperServ\Repository\OperRoleRepositoryInterface;
 use App\Infrastructure\NickServ\Security\IrcServiceUser;
 use App\Infrastructure\Security\Voter\IrcopPermissionVoter;
+use App\Irc\Application\Port\In\SenderView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

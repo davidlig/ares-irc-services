@@ -6,10 +6,10 @@ namespace App\Application\NickServ\Service;
 
 use App\Application\NickServ\Command\NickServNotifierInterface;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Port\TranslationInterface;
 use App\Domain\NickServ\Entity\RegisteredNick;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use Psr\Log\LoggerInterface;
 
 use function sprintf;

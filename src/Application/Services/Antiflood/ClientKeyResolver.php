@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Services\Antiflood;
 
-use App\Application\Port\SenderView;
+use App\Irc\Application\Port\In\SenderView;
 
 /**
  * Resolves a stable client key for antiflood throttling.

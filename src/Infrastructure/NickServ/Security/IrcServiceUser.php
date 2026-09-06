@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\NickServ\Security;
 
-use App\Application\Port\SenderView;
+use App\Irc\Application\Port\In\SenderView;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**

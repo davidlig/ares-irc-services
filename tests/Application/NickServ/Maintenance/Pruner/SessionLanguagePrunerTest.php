@@ -6,7 +6,7 @@ namespace App\Tests\Application\NickServ\Maintenance\Pruner;
 
 use App\Application\NickServ\Maintenance\Pruner\SessionLanguagePruner;
 use App\Application\NickServ\SessionLanguageRegistry;
-use App\Application\Port\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

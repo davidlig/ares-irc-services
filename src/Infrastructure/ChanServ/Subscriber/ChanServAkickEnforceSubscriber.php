@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ChanServ\Subscriber;
 
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelServiceActionsPort;
-use App\Application\Port\ChannelView;
-use App\Application\Port\NetworkUserLookupPort;
-use App\Application\Port\SenderView;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\ChannelAkickRepositoryInterface;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
 use App\Domain\IRC\Event\UserJoinedChannelEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\Port\In\ChannelLookupPort;
+use App\Irc\Application\Port\In\ChannelView;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
+use App\Irc\Application\Port\In\SenderView;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

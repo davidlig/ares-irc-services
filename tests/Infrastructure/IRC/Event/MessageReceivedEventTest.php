@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\IRC\Event;
 
-use App\Domain\IRC\Message\IRCMessage;
 use App\Infrastructure\IRC\Event\MessageReceivedEvent;
+use App\Irc\Adapter\Protocol\IRCMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

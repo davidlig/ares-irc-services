@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Infrastructure\Security\Voter;
 
-use App\Application\Port\SenderView;
 use App\Application\Security\IrcopContextInterface;
 use App\Infrastructure\NickServ\Security\IrcServiceUser;
 use App\Infrastructure\Security\Voter\IdentifiedVoter;
+use App\Irc\Application\Port\In\SenderView;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

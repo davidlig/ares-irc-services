@@ -13,12 +13,12 @@ use App\Application\OperServ\IrcopAccessHelper;
 use App\Application\OperServ\RootUserRegistry;
 use App\Application\OperServ\Security\OperServPermission;
 use App\Application\Port\ActiveConnectionHolderInterface;
-use App\Application\Port\NetworkUserLookupPort;
 use App\Application\Shared\Time\RelativeExpiryParser;
 use App\Domain\NickServ\Repository\RegisteredNickRepositoryInterface;
 use App\Domain\OperServ\Entity\Gline;
 use App\Domain\OperServ\Repository\GlineRepositoryInterface;
 use App\Domain\OperServ\Repository\OperIrcopRepositoryInterface;
+use App\Irc\Application\Port\In\NetworkUserLookupPort;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 

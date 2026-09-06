@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace App\Infrastructure\IRC\Subscriber;
 
 use App\Application\Port\ActiveChannelModeSupportProviderInterface;
-use App\Application\Port\ChannelLookupPort;
 use App\Application\Port\ChannelModeSupportInterface;
 use App\Application\Port\ChannelServiceActionsPort;
 use App\Application\Port\ServiceDebugNotifierInterface;
 use App\Application\Shared\ServiceUidRegistry;
 use App\Domain\ChanServ\Entity\RegisteredChannel;
 use App\Domain\ChanServ\Repository\RegisteredChannelRepositoryInterface;
-use App\Domain\IRC\Event\NetworkBurstCompleteEvent;
-use App\Domain\IRC\Event\NetworkSyncCompleteEvent;
+use App\Irc\Adapter\Event\NetworkBurstCompleteEvent;
+use App\Irc\Adapter\Event\NetworkSyncCompleteEvent;
+use App\Irc\Application\Port\In\ChannelLookupPort;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
